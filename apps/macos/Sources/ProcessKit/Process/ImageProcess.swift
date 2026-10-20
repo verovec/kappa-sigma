@@ -34,6 +34,9 @@ package protocol ImageProcess {
 
   /// Values the user may apply, computed from `stats` only; never applied by the process.
   func suggestions(stats: LayerStats) -> [Suggestion]
+
+  /// Planes of the output for an input of `input` planes (the input's count by default).
+  static func outputChannels(input: Int) -> Int
 }
 
 extension ImageProcess {
@@ -42,6 +45,9 @@ extension ImageProcess {
 
   /// No suggestion.
   package func suggestions(stats: LayerStats) -> [Suggestion] { [] }
+
+  /// As many planes as the input.
+  package static func outputChannels(input: Int) -> Int { input }
 }
 
 /// Where a process belongs in a pipeline.
@@ -112,4 +118,6 @@ package enum ProcessError: Error, Equatable, Sendable {
   case sizeMismatch
   /// A layer the parameters need is not in the bundle (never replaced by another one, R2).
   case missingLayer(String)
+  /// A mask or parameter value that cannot be computed (a zero threshold, low > high…).
+  case invalidParameter(String)
 }

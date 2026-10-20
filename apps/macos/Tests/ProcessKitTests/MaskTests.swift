@@ -47,7 +47,7 @@ struct MaskTests {
 
   @Test(
     "feather turns a hard edge into a monotone ramp of 2·round(r / scale) in-between pixels",
-    arguments: [(4.0, 1.0, 8), (4.0, 2.0, 4), (3.0, 1.0, 6), (0.0, 1.0, 0)])
+    arguments: [(4.0, 1.0, 8), (4.0, 2.0, 4), (3.0, 1.0, 6), (0.0, 1.0, 0), (4.0, 16.0, 2)])
   func testFeatherRamp(radius: Double, scale: Double, inBetween: Int) throws {
     let device = try Self.device()
     let builder = try MaskBuilder(device: device)
@@ -88,6 +88,21 @@ struct MaskTests {
     ).read()[0]
     #expect(mask[7 * 15 + 7] == 1)
     #expect(mask[0] == 0 && mask[14 * 15 + 14] == 0)
+  }
+
+  @Test(
+    "a mask that cannot be computed is refused, never NaN",
+    arguments: [
+      MaskSource.stars(threshold: 0, radiusPx: 3), .stars(threshold: -1, radiusPx: 3),
+      .luminosityRange(low: 0.6, high: 0.3, softness: 0),
+      .luminosityRange(low: 0, high: 1, softness: -0.1),
+    ])
+  func testInvalidMasksAreRefused(source: MaskSource) throws {
+    let device = try Self.device()
+    #expect(throws: ProcessError.self) {
+      _ = try MaskBuilder(device: device).build(
+        Mask(source: source), image: Self.ramp(device: device), scale: 1)
+    }
   }
 
   /// 1 inside [low, high], linear ramps of width `softness` outside, 0 beyond.

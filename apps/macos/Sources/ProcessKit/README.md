@@ -38,7 +38,8 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   `ProcessContracts` runs every process under a half mask too.
 - `ProcessRegistry`: refuses duplicates and invalid schemas (`.px` without
   `previewExactOnlyAt1to1`, a default outside its bounds or options, infinite bounds);
-  `standard()` is validated like any registry and empty until E12's first process.
+  `standard()` is validated like any registry and lists the shipped processes (today:
+  `channel-combination`).
 
 ## How to add a process
 

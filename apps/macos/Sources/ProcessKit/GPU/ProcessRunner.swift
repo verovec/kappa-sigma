@@ -2,12 +2,13 @@ package import Metal
 
 /// Runs a process synchronously.
 ///
-/// One command buffer, waited on: Apply, contracts and tests. The viewer encodes previews into
-/// its own frame instead. A mask is applied here, after the process — never inside it.
+/// One command buffer, waited on: Apply, contracts and tests. A live preview encodes the same
+/// `render` and `MaskBlend` into its own frame. A mask is applied after the process — never
+/// inside it.
 package struct ProcessRunner {
   private let device: MTLDevice
   private let queue: MTLCommandQueue
-  private let blend: MTLComputePipelineState
+  private let blend: MaskBlend
 
   /// A runner on `device`.
   package init(device: MTLDevice) throws {
@@ -16,17 +17,19 @@ package struct ProcessRunner {
     }
     self.device = device
     self.queue = queue
-    blend = try ProcessLibrary.pipeline(device: device, file: "Mask.metal", function: "maskBlend")
+    blend = try MaskBlend(device: device)
   }
 
-  /// `process` of `input` at `scale` for `purpose`, into a new image of the same size; under
-  /// `mask` (one plane in [0, 1]), out = mask · processed + (1 − mask) · input.
+  /// `process` of `input` at `scale` for `purpose`, into a new image of the input's size (and the
+  /// process's plane count); under `mask`, out = mask · processed + (1 − mask) · input.
   package func run(
     _ process: any ImageProcess, input: GPUImage, stats: LayerStats, scale: Double = 1,
     purpose: RenderContext.Purpose = .apply, layers: [String: GPUImage] = [:],
     mask: GPUImage? = nil
   ) throws -> GPUImage {
-    let processed = try input.sameSize(device: device)
+    let channels = type(of: process).outputChannels(input: input.planes.count)
+    let processed = try GPUImage(
+      device: device, width: input.width, height: input.height, channels: channels)
     guard let commands = queue.makeCommandBuffer() else {
       throw ProcessError.commandFailed("command buffer")
     }
@@ -35,32 +38,13 @@ package struct ProcessRunner {
       context: RenderContext(commands: commands, scale: scale, purpose: purpose, layers: layers))
     var output = processed
     if let mask {
-      guard mask.width == input.width, mask.height == input.height else {
-        throw ProcessError.sizeMismatch
-      }
-      output = try input.sameSize(device: device)
-      try encodeBlend(input: input, processed: processed, mask: mask, into: output, commands)
+      output = try processed.sameSize(device: device)
+      try blend.encode(
+        into: commands, input: input, processed: processed, mask: mask, output: output)
     }
     commands.commit()
     commands.waitUntilCompleted()
     if let error = commands.error { throw ProcessError.commandFailed("\(error)") }
     return output
-  }
-
-  private func encodeBlend(
-    input: GPUImage, processed: GPUImage, mask: GPUImage, into output: GPUImage,
-    _ commands: MTLCommandBuffer
-  ) throws {
-    for plane in 0..<output.planes.count {
-      guard let encoder = commands.makeComputeCommandEncoder() else {
-        throw ProcessError.commandFailed("mask blend encoder")
-      }
-      encoder.setComputePipelineState(blend)
-      encoder.setTexture(input.planes[plane], index: 0)
-      encoder.setTexture(processed.planes[plane], index: 1)
-      encoder.setTexture(mask.planes[0], index: 2)
-      encoder.setTexture(output.planes[plane], index: 3)
-      MaskBuilder.dispatch(encoder, over: output)
-    }
   }
 }

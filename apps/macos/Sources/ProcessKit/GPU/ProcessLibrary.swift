@@ -29,10 +29,29 @@ package enum ProcessLibrary {
   package static func pipeline(
     device: MTLDevice, file: String, function: String
   ) throws -> MTLComputePipelineState {
+    try pipeline(library: library(device: device, file: file), function: function)
+  }
+
+  /// ProcessKit's bundled `Shaders/<file>`, compiled once for several pipelines.
+  package static func library(device: MTLDevice, file: String) throws -> MTLLibrary {
     let bundle = KitBundle.resolve(named: bundleName) { Bundle.module }
     guard let url = bundle.url(forResource: "Shaders/" + file, withExtension: nil),
       let source = try? String(contentsOf: url, encoding: .utf8)
-    else { throw ProcessError.shader("\(function): \(file) missing from ProcessKit's resources") }
-    return try pipeline(device: device, source: source, function: function)
+    else { throw ProcessError.shader("\(file) missing from ProcessKit's resources") }
+    do {
+      return try device.makeLibrary(source: source, options: ShaderLibrary.compileOptions)
+    } catch {
+      throw ProcessError.shader("\(file): \(error)")
+    }
+  }
+
+  /// The pipeline of `function` in a compiled `library`.
+  package static func pipeline(
+    library: MTLLibrary, function: String
+  ) throws -> MTLComputePipelineState {
+    guard let kernel = library.makeFunction(name: function) else {
+      throw ProcessError.shader("\(function): missing")
+    }
+    return try library.device.makeComputePipelineState(function: kernel)
   }
 }

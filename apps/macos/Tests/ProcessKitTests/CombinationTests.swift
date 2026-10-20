@@ -95,13 +95,49 @@ struct CombinationTests {
     }
   }
 
+  @Test("a palette replaces the sources only: weights, blacks and L opacity are kept")
+  func testPaletteKeepsTuning() throws {
+    var params = try Palette.hoo.params()
+    try params.set("rWeight", .number(1.8))
+    try params.set("gBlack", .number(0.02))
+    try params.set("lOpacity", .number(0.4))
+    let switched = try Palette.sho.apply(to: params)
+    #expect(switched.number("rWeight") == 1.8 && switched.number("gBlack") == 0.02)
+    #expect(switched.number("lOpacity") == 0.4)
+    #expect(switched.choice("rSource") == "SII")
+    #expect(Palette.matching(switched) == .sho)
+    var edited = switched
+    try edited.set("rSource", .choice("Ha"))
+    #expect(Palette.matching(edited) == nil)
+    #expect(
+      ChannelCombinationProcess.unavailableReason(params: edited, present: ["OIII"])
+        == "This combination needs the Ha layer")
+  }
+
+  @Test("a mono working image still gets an RGB result; a layer of another size is refused")
+  func testOutputAndLayerSizes() throws {
+    let device = try #require(MTLCreateSystemDefaultDevice())
+    let layers = try Self.layers(device: device, ids: ["R", "G", "B", "L"])
+    let process = try ChannelCombinationProcess(params: Palette.lrgb.params(), device: device)
+    let mono = try GPUImage(device: device, width: 4, height: 2, channels: 1)
+    let out = try ProcessRunner(device: device).run(
+      process, input: mono, stats: LayerStats(channels: []), layers: layers)
+    #expect(out.planes.count == 3)
+    var wrong = layers
+    wrong["G"] = try GPUImage(device: device, width: 2, height: 1, channels: 1)
+    #expect(throws: ProcessError.sizeMismatch) {
+      _ = try ProcessRunner(device: device).run(
+        process, input: mono, stats: LayerStats(channels: []), layers: wrong)
+    }
+  }
+
   @Test(
     "a palette missing a layer is unavailable with the reason; rendering refuses, no fallback",
     arguments: [
-      (Palette.hoo, Set(["RGB", "Ha"]), "HOO needs an OIII layer"),
-      (.sho, Set(["Ha", "OIII"]), "SHO needs an SII layer"),
-      (.lrgb, Set(["R", "G", "B"]), "LRGB needs an L layer"),
-      (.natural, Set(["Ha"]), "Natural needs an RGB layer"),
+      (Palette.hoo, Set(["RGB", "Ha"]), "HOO needs the OIII layer"),
+      (.sho, Set(["Ha", "OIII"]), "SHO needs the SII layer"),
+      (.lrgb, Set(["R", "G", "B"]), "LRGB needs the L layer"),
+      (.natural, Set(["Ha"]), "Natural needs the RGB layer"),
     ] as [(Palette, Set<String>, String)])
   func testMissingLayerIsExplicit(palette: Palette, present: Set<String>, reason: String) throws {
     let params = try palette.params()

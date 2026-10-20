@@ -45,9 +45,11 @@ package final class ViewerRenderer {
 
   /// Renders `frame` synchronously and returns the histogram (tests, exports).
   package func render(
-    image: ImageTexture, reference: ImageTexture?, frame: ViewerFrame, into output: MTLTexture
+    image: ImageTexture, reference: ImageTexture?, frame: ViewerFrame, into output: MTLTexture,
+    mask: MTLTexture? = nil
   ) throws -> [[Int]] {
-    let (_, bins) = try submit(image: image, reference: reference, frame: frame, output: output)
+    let (_, bins) = try submit(
+      image: image, reference: reference, frame: frame, output: output, mask: mask)
     return bins.map { Histogram.counts($0, channels: image.planes.count) } ?? []
   }
 
@@ -60,13 +62,15 @@ package final class ViewerRenderer {
   }
 
   private func submit(
-    image: ImageTexture, reference: ImageTexture?, frame: ViewerFrame, output: MTLTexture
+    image: ImageTexture, reference: ImageTexture?, frame: ViewerFrame, output: MTLTexture,
+    mask: MTLTexture? = nil
   ) throws -> (MTLCommandBuffer, MTLBuffer?) {
     guard let commands = queue.makeCommandBuffer() else {
       throw RenderError.commandFailed("command buffer")
     }
     let bins = try encode(
-      into: commands, image: image, reference: reference, frame: frame, output: output)
+      into: commands, image: image, reference: reference, frame: frame, output: output,
+      mask: mask)
     commands.commit()
     commands.waitUntilCompleted()
     if let error = commands.error { throw RenderError.commandFailed("\(error)") }

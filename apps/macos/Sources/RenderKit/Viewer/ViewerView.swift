@@ -1,3 +1,4 @@
+package import Metal
 package import SwiftUI
 
 /// The viewer: the image on the GPU, the region outline over it, the panel beside it.
@@ -6,22 +7,27 @@ package struct ViewerView: View {
   private let renderer: ViewerRenderer
   private let texture: ImageTexture
   private let reference: ImageTexture?
+  private let mask: MTLTexture?
 
   /// A viewer of `model.image` already uploaded as `texture`; `reference` is what the compare
-  /// key and split show (the current image when `nil`).
+  /// key and split show (the current image when `nil`); `mask` is the process mask the overlay
+  /// tints (`ViewerFrame.maskOverlay`).
   package init(
-    model: ViewerModel, renderer: ViewerRenderer, texture: ImageTexture, reference: ImageTexture?
+    model: ViewerModel, renderer: ViewerRenderer, texture: ImageTexture, reference: ImageTexture?,
+    mask: MTLTexture? = nil
   ) {
     self.model = model
     self.renderer = renderer
     self.texture = texture
     self.reference = reference
+    self.mask = mask
   }
 
   package var body: some View {
     HStack(spacing: 0) {
       ZStack(alignment: .topLeading) {
-        MetalSurface(model: model, renderer: renderer, texture: texture, reference: reference)
+        MetalSurface(
+          model: model, renderer: renderer, texture: texture, reference: reference, mask: mask)
         RegionOutline(model: model).allowsHitTesting(false)
       }
       .clipped()
@@ -38,9 +44,11 @@ private struct MetalSurface: NSViewRepresentable {
   let renderer: ViewerRenderer
   let texture: ImageTexture
   let reference: ImageTexture?
+  let mask: MTLTexture?
 
   func makeNSView(context: Context) -> ViewerMTKView {
-    ViewerMTKView(model: model, renderer: renderer, texture: texture, reference: reference)
+    ViewerMTKView(
+      model: model, renderer: renderer, texture: texture, reference: reference, mask: mask)
   }
 
   func updateNSView(_ view: ViewerMTKView, context: Context) {}

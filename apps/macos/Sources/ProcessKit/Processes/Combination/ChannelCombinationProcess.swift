@@ -21,11 +21,9 @@ package struct ChannelCombinationProcess: ImageProcess {
   package static let luminanceSources = ["none", "L", "Ha", "R", "G", "B"]
 
   package static let schema: ParamSchema = {
-    var specs = [
-      ParamSpec(
-        id: "palette", title: "Palette", level: .simple, choice: "natural",
-        of: Palette.allCases.map(\.rawValue) + ["custom"])
-    ]
+    // No "palette" parameter: a palette only fills the sources (`Palette.apply(to:)`), and the
+    // panel names the one the sources match (`Palette.matching`).
+    var specs: [ParamSpec] = []
     for (slot, name, source) in [
       ("r", "Red", "RGB.r"), ("g", "Green", "RGB.g"), ("b", "Blue", "RGB.b"),
     ] {
@@ -53,6 +51,9 @@ package struct ChannelCombinationProcess: ImageProcess {
     return ParamSchema(specs)
   }()
 
+  /// Always RGB, whatever the working image it replaces.
+  package static func outputChannels(input: Int) -> Int { 3 }
+
   package let params: ParamSet
   private let pipeline: MTLComputePipelineState
 
@@ -73,21 +74,24 @@ package struct ChannelCombinationProcess: ImageProcess {
     return needed
   }
 
-  /// Why `params` cannot run with only `present` layers ("HOO needs an OIII layer"), or `nil`.
+  /// Why `params` cannot run with only `present` layers ("HOO needs the OIII layer"), or `nil`.
   package static func unavailableReason(params: ParamSet, present: Set<String>) -> String? {
     guard let missing = layersNeeded(params: params).first(where: { !present.contains($0) }) else {
       return nil
     }
-    let name = Palette(rawValue: params.choice("palette"))?.title ?? "This combination"
-    return "\(name) needs an \(missing) layer"
+    let name = Palette.matching(params)?.title ?? "This combination"
+    return "\(name) needs the \(missing) layer"
   }
 
   package func render(
     _ input: GPUImage, stats: LayerStats, into output: GPUImage, context: RenderContext
   ) throws {
     guard output.planes.count == 3 else { throw ProcessError.sizeMismatch }
-    let slots = try ["rSource", "gSource", "bSource"].map { try planes(params.choice($0), context) }
-    let luminance = try planes(params.choice("lSource"), context)
+    let size = (width: output.width, height: output.height)
+    let slots = try ["rSource", "gSource", "bSource"].map {
+      try planes(params.choice($0), context, size: size)
+    }
+    let luminance = try planes(params.choice("lSource"), context, size: size)
     guard let encoder = context.commands.makeComputeCommandEncoder() else {
       throw ProcessError.commandFailed("combination encoder")
     }
@@ -123,9 +127,15 @@ package struct ChannelCombinationProcess: ImageProcess {
     let second: MTLTexture?
   }
 
-  private func planes(_ source: String, _ context: RenderContext) throws -> SlotPlanes {
+  private func planes(
+    _ source: String, _ context: RenderContext, size: (width: Int, height: Int)
+  ) throws -> SlotPlanes {
     let textures = try Self.layers(of: source).map { id -> MTLTexture in
       guard let layer = context.layers[id] else { throw ProcessError.missingLayer(id) }
+      // A layer of another size would be read at the wrong pixels: never silently.
+      guard layer.width == size.width, layer.height == size.height else {
+        throw ProcessError.sizeMismatch
+      }
       let plane = ["RGB.r": 0, "RGB.g": 1, "RGB.b": 2][source] ?? 0
       guard plane < layer.planes.count else { throw ProcessError.missingLayer(source) }
       return layer.planes[plane]

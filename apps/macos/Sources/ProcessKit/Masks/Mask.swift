@@ -15,12 +15,3 @@ package struct Mask: Equatable, Sendable {
     self.inverted = inverted
   }
 }
-
-/// What a mask is computed from (the image the process runs on).
-package enum MaskSource: Equatable, Sendable {
-  /// Rec. 709 luma in [low, high], with linear ramps of width `softness` outside.
-  case luminosityRange(low: Double, high: Double, softness: Double)
-  /// Stars proxy until a star layer exists (0055): luma above its local mean (box of
-  /// `radiusPx`) — 0 below `threshold`, ramping to 1 at twice it.
-  case stars(threshold: Double, radiusPx: Double)
-}

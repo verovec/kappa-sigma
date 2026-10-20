@@ -40,13 +40,26 @@ package enum Palette: String, CaseIterable, Sendable {
     }
   }
 
+  /// The slot parameters, in R, G, B, L order.
+  static let slots = ["rSource", "gSource", "bSource", "lSource"]
+
   /// The combination's default values with this palette's sources.
   package func params() throws -> ParamSet {
-    var params = ParamSet(schema: ChannelCombinationProcess.schema)
-    try params.set("palette", .choice(rawValue))
-    for (slot, source) in zip(["rSource", "gSource", "bSource", "lSource"], sources) {
+    try apply(to: ParamSet(schema: ChannelCombinationProcess.schema))
+  }
+
+  /// `params` with this palette's sources; weights, black points and L opacity are kept.
+  package func apply(to params: ParamSet) throws -> ParamSet {
+    var params = params
+    for (slot, source) in zip(Self.slots, sources) {
       try params.set(slot, .choice(source))
     }
     return params
+  }
+
+  /// The palette whose sources `params` has, or `nil` for a custom combination.
+  package static func matching(_ params: ParamSet) -> Self? {
+    let current = slots.map { params.choice($0) }
+    return allCases.first { $0.sources == current }
   }
 }

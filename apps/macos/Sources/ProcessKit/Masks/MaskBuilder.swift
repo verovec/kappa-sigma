@@ -15,16 +15,18 @@ package struct MaskBuilder {
     }
     self.device = device
     self.queue = queue
-    rangePipeline = try ProcessLibrary.pipeline(
-      device: device, file: "Mask.metal", function: "maskLuminosityRange")
-    starsPipeline = try ProcessLibrary.pipeline(
-      device: device, file: "Mask.metal", function: "maskStars")
-    blurPipeline = try ProcessLibrary.pipeline(
-      device: device, file: "Mask.metal", function: "maskBoxBlur")
+    let library = try ProcessLibrary.library(device: device, file: "Mask.metal")
+    rangePipeline = try ProcessLibrary.pipeline(library: library, function: "maskLuminosityRange")
+    starsPipeline = try ProcessLibrary.pipeline(library: library, function: "maskStars")
+    blurPipeline = try ProcessLibrary.pipeline(library: library, function: "maskBoxBlur")
   }
 
   /// `mask` of `image` at `scale` (full-resolution pixels per working pixel): one plane in [0, 1].
   package func build(_ mask: Mask, image: GPUImage, scale: Double) throws -> GPUImage {
+    if let problem = mask.source.problem { throw ProcessError.invalidParameter(problem) }
+    guard mask.featherPx.isFinite, mask.featherPx >= 0 else {
+      throw ProcessError.invalidParameter("feather \(mask.featherPx) px")
+    }
     let output = try GPUImage(device: device, width: image.width, height: image.height, channels: 1)
     let channels = Float(image.planes.count)
     let invert: Float = mask.inverted ? 1 : 0
@@ -67,9 +69,11 @@ package struct MaskBuilder {
     return both
   }
 
-  /// A pixel radius at the working scale.
+  /// A pixel radius at the working scale: rounded, and at least 1 when `radiusPx` is not 0, so a
+  /// coarse preview level keeps the mask Apply will use instead of collapsing it.
   static func workingRadius(_ radiusPx: Double, scale: Double) -> Int {
-    max(0, Int((radiusPx / max(scale, 1e-9)).rounded()))
+    guard radiusPx > 0 else { return 0 }
+    return max(1, Int((radiusPx / max(scale, 1e-9)).rounded()))
   }
 
   private func run(

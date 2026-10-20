@@ -18,7 +18,7 @@ struct CaptureFrameTests {
   )
   func testCaptureFrame_coreCards() throws {
     let url = try TestFITS.write(
-      "x.fits", in: ScratchDirectory.url, width: 64, height: 48,
+      "x.fits", in: InventoryBuilderFallbackTests.folder("scan"), width: 64, height: 48,
       cards: [
         "IMAGETYP": "LIGHT", "FILTER": "Ha", "GAIN": "180", "OFFSET": "30", "XBINNING": "2",
         "EXPTIME": "300.0", "OBJECT": "M42",
@@ -40,7 +40,7 @@ struct CaptureFrameTests {
   @Test(
     "a real GAIN 0 is metadata; no GAIN card is not; SWCREATE is the creator", .scratchDirectory)
   func testCaptureFrame_gainZeroVsAbsent() throws {
-    let dir = try ScratchDirectory.url
+    let dir = try InventoryBuilderFallbackTests.folder("scan")
     let zero = try Self.frame(
       TestFITS.write(
         "g0.fits", in: dir, cards: ["IMAGETYP": "LIGHT", "GAIN": "0", "SWCREATE": "ASICAP"]))
@@ -56,7 +56,7 @@ struct CaptureFrameTests {
   func testCaptureFrame_expoinusAndBayer() throws {
     let frame = try Self.frame(
       TestFITS.write(
-        "lights/a.fit", in: ScratchDirectory.url,
+        "lights/a.fit", in: InventoryBuilderFallbackTests.folder("scan"),
         cards: ["IMAGETYP": "'Light'", "EXPOINUS": "30000000", "BAYERPAT": "'rggb'"]))
     #expect(frame.exposureMs == 30000)
     #expect(frame.bayer == "RGGB")
@@ -66,7 +66,7 @@ struct CaptureFrameTests {
 
   @Test("BAYERPAT NONE is mono; NAXIS3 = 3 is colour already debayered", .scratchDirectory)
   func testCaptureFrame_bayerNoneAndRGB() throws {
-    let dir = try ScratchDirectory.url
+    let dir = try InventoryBuilderFallbackTests.folder("scan")
     let none = try Self.frame(TestFITS.write("a.fit", in: dir, cards: ["BAYERPAT": "'NONE'"]))
     #expect(none.bayer.isEmpty)
     let rgb = try Self.frame(
@@ -84,7 +84,8 @@ struct CaptureFrameTests {
   func testCaptureFrame_dateObsAndNight() throws {
     let frame = try Self.frame(
       TestFITS.write(
-        "a.fit", in: ScratchDirectory.url, cards: ["DATE-OBS": "'2023-02-28T03:40:12.874142'"]))
+        "a.fit", in: InventoryBuilderFallbackTests.folder("scan"),
+        cards: ["DATE-OBS": "'2023-02-28T03:40:12.874142'"]))
     #expect(frame.dateObs == "2023-02-28T03:40:12.874142")
     #expect(frame.dateObsMs == 1_677_555_612_874)
     #expect(frame.session == "2023-02-27")
@@ -117,7 +118,8 @@ struct CaptureFrameTests {
     .scratchDirectory)
   func testCaptureFrame_flatFilterFromSlotAlias() throws {
     let url = try TestFITS.write(
-      "flats/2023-02-28-0601_0-3-CapObj_0000.FIT", in: ScratchDirectory.url, cards: [:])
+      "flats/2023-02-28-0601_0-3-CapObj_0000.FIT", in: InventoryBuilderFallbackTests.folder("scan"),
+      cards: [:])
     try Data("EFW Slot = 3(Alias: Red)\nExposure = 1.5s\n".utf8)
       .write(to: URL(fileURLWithPath: url.path + ".txt"))
     let frame = try Self.frame(url)
@@ -144,7 +146,7 @@ struct CaptureFrameTests {
   func testCaptureFrame_nonFiniteValues(value: String) throws {
     let frame = try Self.frame(
       TestFITS.write(
-        "a.fit", in: ScratchDirectory.url,
+        "a.fit", in: InventoryBuilderFallbackTests.folder("scan"),
         cards: ["IMAGETYP": "'Light'", "EXPTIME": value, "CCD-TEMP": value]))
     #expect(frame.exposureMs == 0)
     #expect(!frame.hasTemp)

@@ -32,7 +32,7 @@ struct InventoryOracleTests {
     .scratchDirectory, arguments: ["golden-single-night", "golden-two-night"])
   func testMatchesRecordedInventory(name: String) throws {
     let oracle = try OracleFixtureTests.committedCase(name)
-    let root = try ScratchDirectory.url
+    let root = try InventoryBuilderFallbackTests.folder("scan")
     let input = root.appendingPathComponent("in")
     try HeaderFixture.load(name).materialize(under: input)
     let differences = try Self.differences(
@@ -45,7 +45,7 @@ struct InventoryOracleTests {
     .scratchDirectory)
   func testMatchesRecordedInventory_detectsChanges() throws {
     let oracle = try OracleFixtureTests.committedCase("golden-single-night")
-    let root = try ScratchDirectory.url
+    let root = try InventoryBuilderFallbackTests.folder("scan")
     try HeaderFixture.load("golden-single-night").materialize(
       under: root.appendingPathComponent("in"))
     let zone = try TimeZone(identifier: oracle.manifest.timezone).unwrapped("timezone")

@@ -24,7 +24,7 @@ struct InventoryBuilderTests {
 
   @Test("types, filters and sets of a classic folder; two Ha lights are one set", .scratchDirectory)
   func testInventoryBuilder_classifiesAndGroups() throws {
-    let dir = try ScratchDirectory.url
+    let dir = try InventoryBuilderFallbackTests.folder("scan")
     try TestFITS.write(
       "ha_1.fits", in: dir, pixel: 1200,
       cards: Self.asi("'Light Frame'", filter: "'Ha'", exptime: "300.0"))
@@ -53,7 +53,7 @@ struct InventoryBuilderTests {
 
   @Test("old ASICAP colour: EXPOINUS makes it a 90 s light, the CFA stays", .scratchDirectory)
   func testInventoryBuilder_expoinusOSC() throws {
-    let dir = try ScratchDirectory.url
+    let dir = try InventoryBuilderFallbackTests.folder("scan")
     try TestFITS.write(
       "osc_0001.fits", in: dir, pixel: 2400,
       cards: ["GAIN": "200", "BAYERPAT": "'GRBG'", "EXPOINUS": "90000000"])
@@ -68,7 +68,7 @@ struct InventoryBuilderTests {
   @Test(
     "a mono rig's BAYERPAT is cleared on filtered lights and their calibration", .scratchDirectory)
   func testInventoryBuilder_spuriousBayer() throws {
-    let dir = try ScratchDirectory.url
+    let dir = try InventoryBuilderFallbackTests.folder("scan")
     for (index, filter) in ["'L'", "'R'", "'G'", "'B'", "'Ha'"].enumerated() {
       try TestFITS.write(
         "light_\(index).fits", in: dir, pixel: 2400,
@@ -96,7 +96,7 @@ struct InventoryBuilderTests {
       ("mono", ColorModel.mono, 2), ("bayer", .osc, 1), ("rgb", .osc, 1), ("mixed", .mixed, 2),
     ])
   func testInventoryBuilder_colorModel(seed: String, expected: ColorModel, lights: Int) throws {
-    let dir = try ScratchDirectory.url
+    let dir = try InventoryBuilderFallbackTests.folder("scan")
     let light = ["IMAGETYP": "'Light'"]
     let rgb = [
       [UInt16](repeating: 1200, count: 64), [UInt16](repeating: 1100, count: 64),
@@ -133,7 +133,7 @@ struct InventoryBuilderTests {
 
   @Test("a dual-band clip on a colour camera stays one-shot-colour on disk", .scratchDirectory)
   func testInventoryBuilder_dualbandFolder() throws {
-    let dir = try ScratchDirectory.url
+    let dir = try InventoryBuilderFallbackTests.folder("scan")
     for name in ["l_1.fits", "l_2.fits", "l_3.fits"] {
       try TestFITS.write(
         name, in: dir, width: 16, height: 16, planes: [Self.mosaic(16, flat: false)],
@@ -150,7 +150,7 @@ struct InventoryBuilderTests {
   @Test(
     "lights and calibration in two folders merge into one complete inventory", .scratchDirectory)
   func testInventoryBuilder_scanMany() throws {
-    let root = try ScratchDirectory.url
+    let root = try InventoryBuilderFallbackTests.folder("scan")
     let lights = root.appendingPathComponent("lights")
     let calibration = root.appendingPathComponent("calib")
     try TestFITS.write(
@@ -193,7 +193,7 @@ struct InventoryBuilderTests {
 
   @Test("an excluded set is dropped before the filter mapping and reported", .scratchDirectory)
   func testInventoryBuilder_excludeBeforeMapping() throws {
-    let dir = try ScratchDirectory.url
+    let dir = try InventoryBuilderFallbackTests.folder("scan")
     for index in 0..<2 {
       try TestFITS.write(
         "v_\(index).fits", in: dir,
@@ -220,7 +220,8 @@ struct InventoryBuilderTests {
   @Test(
     "a folder that cannot be listed is an error naming it, not an empty capture", .scratchDirectory)
   func testInventoryBuilder_unreadableRoot() throws {
-    let missing = try ScratchDirectory.url.appendingPathComponent("nope").path
+    let missing = try InventoryBuilderFallbackTests.folder("scan").appendingPathComponent("nope")
+      .path
     #expect(throws: InspectError.unreadableFolder(missing)) {
       try Self.builder.scan(paths: [missing])
     }
@@ -230,7 +231,7 @@ struct InventoryBuilderTests {
     "an explicit colour choice is resolved before verdicts, nights and warnings are computed",
     .scratchDirectory)
   func testInventoryBuilder_colorChoiceBeforeFinalize() throws {
-    let dir = try ScratchDirectory.url
+    let dir = try InventoryBuilderFallbackTests.folder("scan")
     let dated = ["IMAGETYP": "'Light'", "DATE-OBS": "'2024-03-01T22:10:00'"]
     try TestFITS.write(
       "l.fits", in: dir, pixel: 1200, cards: dated.merging(["FILTER": "'L'"]) { $1 })

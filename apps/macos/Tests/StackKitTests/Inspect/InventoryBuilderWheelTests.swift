@@ -28,7 +28,7 @@ struct InventoryBuilderWheelTests {
     "physical slots win over an off-by-one info.txt; a sibling folder uses the default wheel",
     .scratchDirectory)
   func testInventoryBuilder_wheelSlotDespiteOffByOne() throws {
-    let root = try ScratchDirectory.url
+    let root = try InventoryBuilderFallbackTests.folder("scan")
     let capObj = root.appendingPathComponent("M33/CapObj")
     try FileManager.default.createDirectory(at: capObj, withIntermediateDirectories: true)
     try Data("L R G B Ha\nL L\n300 gain\n-15°\n".utf8).write(
@@ -52,7 +52,7 @@ struct InventoryBuilderWheelTests {
     "capture order is not slot order: the legend is learned per folder (ngc6992)", .scratchDirectory
   )
   func testInventoryBuilder_narrowbandByPhysicalSlot() throws {
-    let root = try ScratchDirectory.url.appendingPathComponent("ngc6992")
+    let root = try InventoryBuilderFallbackTests.folder("scan").appendingPathComponent("ngc6992")
     let autorun = root.appendingPathComponent("autorun")
     try FileManager.default.createDirectory(at: autorun, withIntermediateDirectories: true)
     try Data("O3 250 gain\nHa 250 gain\nL 100 gain\nR 100\nG 100\n10 x 60s\n".utf8)
@@ -74,7 +74,7 @@ struct InventoryBuilderWheelTests {
 
   @Test("no sidecar, a bare data/ folder: the file-name slot names the filter", .scratchDirectory)
   func testInventoryBuilder_filenameSlot() throws {
-    let data = try ScratchDirectory.url.appendingPathComponent("m27/data")
+    let data = try InventoryBuilderFallbackTests.folder("scan").appendingPathComponent("m27/data")
     for (index, slot) in [1, 2, 3, 4].enumerated() {
       try TestFITS.write(
         "2019-08-29_2\(index)_00_00Z/2019-08-29-22\(index)0_5-\(slot)-L_0000.FIT", in: data,
@@ -104,7 +104,7 @@ struct InventoryBuilderWheelTests {
     "SharpCap's CapObj under darks/flats/offset types by the grandparent; flats split per slot",
     .scratchDirectory)
   func testInventoryBuilder_capObjUnderCalibration() throws {
-    let root = try ScratchDirectory.url
+    let root = try InventoryBuilderFallbackTests.folder("scan")
     for slot in 1...3 {
       for index in 0..<2 {
         try Self.capObjFrame(
@@ -140,7 +140,7 @@ struct InventoryBuilderWheelTests {
 
   @Test("unlabeled lights separate into five sets by the wheel's order", .scratchDirectory)
   func testInventoryBuilder_detectsUnlabeledChannels() throws {
-    let dir = try ScratchDirectory.url
+    let dir = try InventoryBuilderFallbackTests.folder("scan")
     let levels: [String: UInt16] = ["L": 3000, "R": 1100, "G": 1180, "B": 1050, "Ha": 300]
     let order = ["L", "R", "G", "B", "Ha"]
     var second = 0
@@ -167,7 +167,7 @@ struct InventoryBuilderWheelTests {
 
   @Test("labeled filters stay metadata-driven: no detection", .scratchDirectory)
   func testInventoryBuilder_labeledFilters() throws {
-    let dir = try ScratchDirectory.url
+    let dir = try InventoryBuilderFallbackTests.folder("scan")
     for (block, filter) in ["L", "R", "G", "B"].enumerated() {
       for index in 0..<4 {
         try TestFITS.write(

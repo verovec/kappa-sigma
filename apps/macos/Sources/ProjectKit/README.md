@@ -12,6 +12,18 @@ GRDB 7), and later `images/`, `recipes/`, `history/` (design §4.5). No UI, no A
   `-shm` files GRDB's persistent WAL leaves behind.
 - `ProjectPackageError` names the path in every case.
 
+## The schema (card 0068)
+
+- `project.db` follows `SCHEMA.md`: sources, stacks, images, history steps, snapshots, recipes,
+  pipelines, user profiles. `create` and `open` migrate to the latest version.
+- `ProjectStore` (`package.store`) is the typed access: plain value models (`ProjectSource`,
+  `ProjectStack`, `ProjectImage`, `HistoryStep`, `ImageSnapshot`), parameterized SQL, timestamps
+  in Unix ms from an injectable clock, and `diskBudgetBytes()` for the Studio.
+- Migrations are SQL file pairs run by our `Migrator`, not GRDB's `DatabaseMigrator`, which cannot
+  migrate down.
+- A project moved in the Finder while open is reopened at its new place on the next Save
+  (`ProjectDocument`): SQLite derives its WAL paths from the path it opened.
+
 ## Why `NSDocument` over the package, not SwiftUI `FileDocument`
 
 `FileDocument`/`ReferenceFileDocument` save through `FileWrapper`: every save writes a new package
@@ -23,9 +35,10 @@ lives in a temporary package until its first save moves it; quitting deletes an 
 
 ## How to extend
 
-- Tables, indexes and migrations belong to card 0068: one `DatabaseMigrator` migration per file,
-  never edited after merge, `created_at`/`updated_at` as int64 ms (`conventions/database-conventions.md`).
-  Run them from `create` and `open`; keep `application_id` as is.
+- A new table or column: add the next `Migrations/NNNN_name.{up,down}.sql` pair (never edit a
+  merged one), update `SCHEMA.md`, add typed accessors to a `ProjectStore+<Topic>.swift` extension.
+  `created_at`/`updated_at` as int64 ms (`conventions/database-conventions.md`); keep
+  `application_id` as is.
 - Anything stored next to `project.db` (images, recipes) must survive `copy(to:)`: it copies every
   item of the folder except the database files, which go through SQLite's online backup.
 - Allowed dependencies: `ImageKit`, `GRDB` (`Tests/TestSupport/BoundaryRules.swift`).

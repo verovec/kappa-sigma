@@ -64,8 +64,10 @@ with sources, is `docs/engineering/swift-quality-playbook.md` — read it once p
 
 ## Persistence, processes, localisation
 
-- SQLite through GRDB (`DatabasePool` per open document, `DatabaseMigrator`, one migration per
-  file, never edited after merge). The document is an `NSDocument` over the `.astrostack` package
+- SQLite through GRDB (`DatabasePool` per open document). Migrations are SQL pairs
+  `ProjectKit/Migrations/NNNN_name.{up,down}.sql` run by ProjectKit's `Migrator` (GRDB's
+  `DatabaseMigrator` has no down migration — card 0068); one pair per change, never edited after
+  merge, `SCHEMA.md` kept current. The document is an `NSDocument` over the `.astrostack` package
   so the database and images stay in place on save.
 - External tools run through `swift-subprocess` (never `Foundation.Process`): FIFOs opened by us,
   timeout via task group, teardown SIGTERM → SIGKILL. A missing tool is a typed error surfaced

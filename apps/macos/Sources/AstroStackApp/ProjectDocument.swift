@@ -60,6 +60,7 @@ package final class ProjectDocument: NSDocument {
   /// even if the folder moved since it was opened. Any other operation copies the package to
   /// `url`; only Save (first save of an untitled project) and Save As move the document there.
   private func write(to url: URL, for saveOperation: NSDocument.SaveOperationType) throws {
+    if saveOperation == .saveOperation { try followMove(to: url) }
     guard let project else { throw CocoaError(.fileWriteUnknown) }
     if (saveOperation == .saveOperation && !isTemporary) || Self.isSameFile(project.url, url) {
       try project.save()
@@ -73,11 +74,44 @@ package final class ProjectDocument: NSDocument {
     self.project = moved
   }
 
+  /// Follows a move of the package in the Finder as soon as AppKit reports it.
+  ///
+  /// AppKit sets `fileURL` when its file presenter sees the move. The property is nonisolated in
+  /// the SDK; a change off the main thread is left to the next Save, which follows the move too.
+  nonisolated override package var fileURL: URL? {
+    didSet {
+      guard Thread.isMainThread, let url = fileURL else { return }
+      MainActor.assumeIsolated {
+        do {
+          try followMove(to: url)
+        } catch {
+          Self.logger.error("reopening the moved project at \(url.path) failed: \(error)")
+        }
+      }
+    }
+  }
+
+  /// Reopens a titled project's package at `url` when its folder moved there while open: SQLite
+  /// derives its WAL paths from the path it opened, so the old pool must not be used any more.
+  private func followMove(to url: URL) throws {
+    guard let project, !isTemporary, Self.wasMoved(project.url, to: url) else { return }
+    let reopened = try ProjectPackage.open(at: url)
+    release(project)
+    self.project = reopened
+  }
+
   /// Closes the package (deleting an unsaved untitled one) before closing the document.
   override package func close() {
     if let project { release(project) }
     project = nil
     super.close()
+  }
+
+  /// True when the folder opened at `opened` is gone and AppKit now names an existing `current`.
+  private static func wasMoved(_ opened: URL, to current: URL) -> Bool {
+    let manager = FileManager.default
+    return !isSameFile(opened, current) && !manager.fileExists(atPath: opened.path)
+      && manager.fileExists(atPath: current.path)
   }
 
   private static func isSameFile(_ lhs: URL, _ rhs: URL) -> Bool {

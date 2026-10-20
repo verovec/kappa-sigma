@@ -4,8 +4,9 @@ internal import GRDB
 /// An AstroStack project on disk: a `.astrostack` folder holding `project.db` (design §4.5).
 ///
 /// The database is edited in place through one `DatabasePool` (WAL) for as long as the package
-/// is open; saving checkpoints the WAL so `project.db` alone holds every committed change. The
-/// schema belongs to the migrations of card 0068; this type only owns the folder and the file.
+/// is open; saving checkpoints the WAL so `project.db` alone holds every committed change.
+/// `create` and `open` bring the schema to the latest migration (`Migrations/`, `SCHEMA.md`);
+/// `store` is the typed access to it.
 public final class ProjectPackage {
   /// The file name extension of a package.
   public static let fileExtension = "astrostack"
@@ -18,11 +19,16 @@ public final class ProjectPackage {
 
   /// The folder the package lives in.
   public let url: URL
+  /// Typed access to `project.db`.
+  package let store: ProjectStore
   private let pool: DatabasePool
 
-  private init(url: URL, pool: DatabasePool) {
+  /// Wraps an open pool and migrates it to the latest schema.
+  private init(url: URL, pool: DatabasePool) throws {
     self.url = url
     self.pool = pool
+    self.store = ProjectStore(pool: pool, migrations: try MigrationCatalog.bundled())
+    try store.migrate(to: nil)
   }
 
   /// Creates a new package with an empty `project.db` at `url`; never overwrites anything.
@@ -36,7 +42,7 @@ public final class ProjectPackage {
     try pool.writeWithoutTransaction { db in
       try db.execute(sql: "PRAGMA application_id = \(applicationID)")
     }
-    let package = ProjectPackage(url: url, pool: pool)
+    let package = try ProjectPackage(url: url, pool: pool)
     // The id must reach the main file now: `open` reads it from there, even after a crash.
     try package.save()
     return package
@@ -54,7 +60,13 @@ public final class ProjectPackage {
     guard try applicationID(of: database) == applicationID else {
       throw ProjectPackageError.foreignDatabase(path: url.path)
     }
-    return ProjectPackage(url: url, pool: try DatabasePool(path: database.path))
+    let pool = try DatabasePool(path: database.path)
+    do {
+      return try ProjectPackage(url: url, pool: pool)
+    } catch {
+      try? pool.close()
+      throw error
+    }
   }
 
   /// The application id in the SQLite file header, or 0 for an empty or non-SQLite file.

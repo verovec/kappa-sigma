@@ -262,7 +262,7 @@ skill pick-card attend donc la fin des checks (`gh pr checks --watch` puis véri
   tolérance 1e-5 rel pour Accelerate, bits exacts seulement sur scripts/masters.
 - **0049** ProcessKit : contrats `PreviewEqualsApply`/`NoHiddenState`/`PxUnitsScale`, `ShaderTypes.h`
   unique, `diagnose-api-breaking-changes` activé en CI dès la première API `public`.
-- **0068** ProjectKit : GRDB `DatabaseMigrator`, migrations immuables, ms int64, strict memory safety.
+- **0068** ProjectKit : migrations SQL up/down (`Migrator` maison, `DatabaseMigrator` sans down), immuables, ms int64, strict memory safety.
 - **0061** HelpKit : `.xcstrings` par cible, `#bundle`, Markdown GFM, porte de couverture fr/en.
 - **0064** : le test `RepoHygieneTests` reprend `scripts/hygiene.sh` en Swift.
 - **0065** : Metal Toolchain en CI, signature — réévaluer runner self-hosted vs hébergé.

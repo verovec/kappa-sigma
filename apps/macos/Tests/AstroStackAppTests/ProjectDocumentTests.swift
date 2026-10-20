@@ -101,6 +101,42 @@ struct ProjectDocumentTests {
     document.close()
   }
 
+  @Test(
+    "a project moved in the Finder while open reopens at its new place on Save",
+    .scratchDirectory)
+  func testProjectDocument_save_followsMovedPackage() throws {
+    let scratch = try ScratchDirectory.url
+    let original = scratch.appendingPathComponent("M31.astrostack")
+    try ProjectPackage.create(at: original).close()
+    let document = try ProjectDocument(contentsOf: original, ofType: Self.type)
+
+    let moved = scratch.appendingPathComponent("Moved.astrostack")
+    try FileManager.default.moveItem(at: original, to: moved)
+    try document.writeSafely(to: moved, ofType: Self.type, for: .saveOperation)
+
+    #expect(document.packageURL == moved)
+    document.close()
+    #expect(!FileManager.default.fileExists(atPath: original.path))
+    let items = try FileManager.default.contentsOfDirectory(atPath: moved.path)
+    #expect(items == ["project.db"])
+  }
+
+  @Test("when AppKit reports the move (fileURL), the package reopens at once", .scratchDirectory)
+  func testProjectDocument_fileURL_followsMove() throws {
+    let scratch = try ScratchDirectory.url
+    let original = scratch.appendingPathComponent("M31.astrostack")
+    try ProjectPackage.create(at: original).close()
+    let document = try ProjectDocument(contentsOf: original, ofType: Self.type)
+
+    let moved = scratch.appendingPathComponent("Moved.astrostack")
+    try FileManager.default.moveItem(at: original, to: moved)
+    document.fileURL = moved
+
+    #expect(document.packageURL == moved)
+    document.close()
+    #expect(try FileManager.default.contentsOfDirectory(atPath: moved.path) == ["project.db"])
+  }
+
   @Test("reading again (revert) closes the package opened before", .scratchDirectory)
   func testProjectDocument_revert_closesPreviousPackage() throws {
     let url = try ScratchDirectory.url.appendingPathComponent("M31.astrostack")

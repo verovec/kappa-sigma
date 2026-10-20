@@ -41,7 +41,8 @@ let package = Package(
       exclude: ["README.md"], swiftSettings: safe),
     .target(
       name: "ProjectKit", dependencies: [.product(name: "GRDB", package: "GRDB.swift")],
-      exclude: ["README.md"], swiftSettings: safe),
+      exclude: ["README.md", "SCHEMA.md"], resources: [.copy("Migrations")],
+      swiftSettings: safe),
     .target(
       name: "StackKit", dependencies: ["ImageKit", "ProjectKit"],
       exclude: ["README.md"], swiftSettings: common),
@@ -69,7 +70,8 @@ let package = Package(
       name: "ProcessKitTests", dependencies: ["ProcessKit", "TestSupport"],
       swiftSettings: common),
     .testTarget(
-      name: "ProjectKitTests", dependencies: ["ProjectKit", "TestSupport"],
+      name: "ProjectKitTests",
+      dependencies: ["ProjectKit", "TestSupport", .product(name: "GRDB", package: "GRDB.swift")],
       swiftSettings: common),
     .testTarget(
       name: "StackKitTests", dependencies: ["StackKit", "TestSupport"],

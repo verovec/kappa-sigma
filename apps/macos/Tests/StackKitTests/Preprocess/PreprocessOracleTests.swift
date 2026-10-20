@@ -20,19 +20,26 @@ struct PreprocessOracleTests {
       var sequences: [String: String] = [:]
       var trails: [String: [(Bool, Double)]] = [:]
       for channel in grades {
-        let folder = "light_" + channel.filter
-        sequences[folder] = channel.metrics.map { metric in
-          let (dx, dy) = (metric.shiftX ?? 0, metric.shiftY ?? 0)
-          return "R0 \(metric.fwhm) \(metric.wfwhm) \(metric.roundness) \(metric.quality) "
-            + "\(metric.background) \(metric.starCount) H 1 0 \(dx) 0 1 \(dy) 0 0 1"
-        }.joined(separator: "\n")
-        trails[folder] = channel.metrics.map { ($0.trailDetected, $0.trailScore ?? 0) }
+        // One night: `light_<F>`. Several: `merged_<F>`, the real frames only (the recording
+        // also lists the duplicates the legacy dirty-folder bug stacked, with empty paths).
+        let real = channel.metrics.filter { !$0.path.isEmpty }
+        for (folder, metrics) in [("light_" + channel.filter, channel.metrics), ("merged_" + channel.filter, real)] {
+          sequences[folder] = metrics.map(Self.line).joined(separator: "\n")
+          trails[folder] = metrics.map { ($0.trailDetected, $0.trailScore ?? 0) }
+        }
       }
       self.sequences = sequences
       self.trails = trails
     }
 
-    /// The verdict for `pp_light_0000N.fits` in `light_<F>`.
+    /// A recorded grade as a `.seq` registration line (a pure translation by the recorded shift).
+    static func line(_ metric: OracleChannelGrades.Metric) -> String {
+      let (dx, dy) = (metric.shiftX ?? 0, metric.shiftY ?? 0)
+      return "R0 \(metric.fwhm) \(metric.wfwhm) \(metric.roundness) \(metric.quality) "
+        + "\(metric.background) \(metric.starCount) H 1 0 \(dx) 0 1 \(dy) 0 0 1"
+    }
+
+    /// The verdict for frame N of a `light_<F>` or `merged_<F>` folder.
     func trail(_ frame: URL) -> (detected: Bool, score: Double)? {
       let index = Int(frame.deletingPathExtension().lastPathComponent.suffix(5)) ?? 0
       guard let verdicts = trails[frame.deletingLastPathComponent().lastPathComponent],
@@ -43,17 +50,20 @@ struct PreprocessOracleTests {
   }
 
   /// Runs the golden case; returns the Siril double and the result.
-  static func run(root: URL, oracle: OracleCase) async throws -> (PipelineSiril, PreprocessResult) {
+  /// The recorded case (a) hit the 12% cap (run.json warnings); the rectangle itself is pixels.
+  static let cappedEdge = EdgeCropper.Measurement(
+    rect: EdgeRect(x0: 30, y0: 30, x1: 226, y1: 226), capped: true, width: 256, height: 256)
+
+  static func run(
+    root: URL, oracle: OracleCase, edge: EdgeCropper.Measurement = cappedEdge,
+    fails: @escaping @Sendable (String) -> Bool = { _ in false }
+  ) async throws -> (PipelineSiril, PreprocessResult) {
     let inventory = try MasterBuilderTests.scan(oracle.manifest.caseName, under: root)
     let playback = Playback(try oracle.grades())
-    let siril = PipelineSiril(sequence: { playback.sequences[$0] })
+    let siril = PipelineSiril(sequence: { playback.sequences[$0] }, fails: fails)
     let tools = Preprocessor.Tools(
       runner: siril.runner, trailProbe: { frame, _ in playback.trail(frame) },
-      // The recorded run hit the 12% cap (run.json warnings); the rectangle itself is pixels.
-      edgeMeasure: { _ in
-        .init(
-          rect: EdgeRect(x0: 30, y0: 30, x1: 226, y1: 226), capped: true, width: 256, height: 256)
-      })
+      edgeMeasure: { _ in edge })
     let request = PreprocessRequest(
       inventory: inventory, output: root.appendingPathComponent("out/TESTFIELD/\(runID)"),
       work: root.appendingPathComponent("work/run_\(runID)"), runID: runID)

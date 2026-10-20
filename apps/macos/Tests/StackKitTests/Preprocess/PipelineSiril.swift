@@ -21,12 +21,16 @@ final class PipelineSiril: Sendable {
   let solve: @Sendable (String) -> Double?
   /// Output file names this Siril never writes (a frame that did not register).
   let missing: Set<String>
+  /// Scripts this Siril fails (after recording them).
+  let fails: @Sendable (String) -> Bool
 
   init(
     sequence: @escaping @Sendable (String) -> String? = { _ in nil },
     solve: @escaping @Sendable (String) -> Double? = { _ in nil }, missing: Set<String> = [],
+    fails: @escaping @Sendable (String) -> Bool = { _ in false },
     onRun: @escaping @Sendable (String) -> Void = { _ in }
   ) {
+    self.fails = fails
     self.sequence = sequence
     self.solve = solve
     self.missing = missing
@@ -41,6 +45,7 @@ final class PipelineSiril: Sendable {
       self.state.withLock { $0.append(Call(script: text, directory: directory)) }
       self.onRun(text)
       try Task.checkCancellation()
+      if self.fails(text) { throw SirilError.scriptFailed(exitCode: 1, hint: "fake failure") }
       var (loaded, solved) = ("", false)
       for line in text.split(separator: "\n").map(String.init) {
         if line.hasPrefix("load ") { loaded = String(line.dropFirst(5)) }
@@ -68,6 +73,7 @@ final class PipelineSiril: Sendable {
     switch verb {
     case "link", "convert": try ingest(words[1], in: directory)
     case "register": try register(words[1], in: directory)
+    case "calibrate": try ingest("pp_" + words[1], in: directory)
     case "calibrate_single":
       try Self.frame(directory.appendingPathComponent("pp_" + words[1] + ".fits"))
     case "seqapplyreg": try applyRegistration(words[1], in: directory)

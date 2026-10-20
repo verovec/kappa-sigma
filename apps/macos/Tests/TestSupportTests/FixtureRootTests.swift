@@ -17,6 +17,16 @@ struct FixtureRootTests {
     #expect(LiveFixtures.root(home: home)?.standardizedFileURL == fixtures.standardizedFileURL)
   }
 
+  @Test("ASTROSTACK_SKIP_LIVE=1 hides the fixtures: CI on the PO's Mac skips live suites", .scratchDirectory)
+  func testFixtureRoot_root_skippedByEnvironment() throws {
+    let home = try ScratchDirectory.url
+    let fixtures = home.appendingPathComponent("Documents/astro/fixtures", isDirectory: true)
+    try FileManager.default.createDirectory(at: fixtures, withIntermediateDirectories: true)
+    #expect(LiveFixtures.root(home: home, environment: ["ASTROSTACK_SKIP_LIVE": "1"]) == nil)
+    #expect(LiveFixtures.root(home: home, environment: ["ASTROSTACK_SKIP_LIVE": "0"]) != nil)
+    #expect(LiveFixtures.root(home: home, environment: [:]) != nil)
+  }
+
   @Test("a plain file where the folder should be does not count", .scratchDirectory)
   func testFixtureRoot_root_fileIsNotAFolder() throws {
     let home = try ScratchDirectory.url

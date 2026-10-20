@@ -8,6 +8,13 @@ package import Testing
 package enum LiveFixtures {
   /// `<home>/Documents/astro/fixtures` when it is a folder, `nil` otherwise.
   package static func root(home: URL) -> URL? {
+    root(home: home, environment: [:])
+  }
+
+  /// As `root(home:)`, but `nil` when `ASTROSTACK_SKIP_LIVE=1`: CI on the PO's Mac (self-hosted
+  /// runner) has the fixtures on disk yet runs exactly what the hosted runner runs.
+  package static func root(home: URL, environment: [String: String]) -> URL? {
+    guard environment["ASTROSTACK_SKIP_LIVE"] != "1" else { return nil }
     let root = home.appendingPathComponent("Documents/astro/fixtures", isDirectory: true)
     let isFolder = (try? root.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory
     return isFolder == true ? root : nil
@@ -16,7 +23,9 @@ package enum LiveFixtures {
   /// The root for the current user (`$HOME`), or `nil`.
   package static var root: URL? {
     let home = ProcessInfo.processInfo.environment["HOME"].map { URL(fileURLWithPath: $0) }
-    return root(home: home ?? FileManager.default.homeDirectoryForCurrentUser)
+    return root(
+      home: home ?? FileManager.default.homeDirectoryForCurrentUser,
+      environment: ProcessInfo.processInfo.environment)
   }
 }
 

@@ -19,7 +19,7 @@ struct FinishOracleTests {
       }
     }
     #expect(manifest.provenance.run == "M_31/20261018_191749")
-    #expect(manifest.crop == FinishManifest.Crop(x: 2612, y: 1704, width: 1024, height: 768))
+    #expect(manifest.crop == FinishManifest.Crop(x: 2471, y: 1497, width: 1024, height: 768))
   }
 
   @Test("HOME without the fixtures folder: no root, the live suite skips", .scratchDirectory)

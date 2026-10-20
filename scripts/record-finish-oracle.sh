@@ -24,7 +24,7 @@ comp_flags=(-coverage-crop -crop 0.005 -base-bg 0.085 -ha-bg 0.12 -ha-black 0.11
   -ha-screen 0.95 -oiii-bg 0.12 -oiii-black 0.126 -oiii-screen 0.80 -oiii-boost 1.25
   -star-radius 4 -layer-smooth 0 -sat-masked)
 stark=0.25
-crop=(2612 1704 1024 768)   # centre of 6248×4176: ((6248 − 1024) / 2, (4176 − 768) / 2)
+crop=(2471 1497 1024 768)   # centre of the 5967×3763 base: ((5967 − 1024) / 2, (3763 − 768) / 2)
 
 echo "▶ build the tools (copies only)"
 rm -rf "$out/tools-src" "$out/bin" "$out/full" "$out/crop"
@@ -44,23 +44,23 @@ done
 bin="$out/bin"
 
 echo "▶ centre crop of the three layers (Siril)"
-for layer in rgb_base syn_Ha syn_OIII; do cp "$run/$layer.fits" "$out/full/$layer.fits"; done
 {
   echo "requires 1.4.0"; echo "setext fits"
   for layer in rgb_base syn_Ha syn_OIII; do
-    echo "load $out/full/$layer.fits"; echo "crop ${crop[*]}"; echo "save $layer"
+    echo "load $run/$layer.fits"; echo "crop ${crop[*]}"; echo "save $layer"
   done
 } > "$out/crop/crop.ssf"
 "$siril" -d "$out/crop" -s "$out/crop/crop.ssf" > "$out/crop/crop.log" 2>&1
 rm "$out/crop/crop.ssf"
 
-chain() { # $1 = folder holding rgb_base / syn_Ha / syn_OIII
+chain() { # $1 = output folder, $2 = folder holding rgb_base / syn_Ha / syn_OIII (read only)
+  local layers="$2"
   (cd "$1"
-    "$bin/hdrcomp" -in rgb_base.fits -out hdr_only.fits "${hdr_flags[@]}"
-    "$bin/astrocomp" -base hdr_only.fits -ha syn_Ha.fits -oiii syn_OIII.fits "${comp_flags[@]}" \
-      -sat 0 -out screens_only.png
-    "$bin/astrocomp" -base hdr_only.fits -ha syn_Ha.fits -oiii syn_OIII.fits "${comp_flags[@]}" \
-      -sat 0.32 -out haplus_full.png
+    "$bin/hdrcomp" -in "$layers/rgb_base.fits" -out hdr_only.fits "${hdr_flags[@]}"
+    "$bin/astrocomp" -base hdr_only.fits -ha "$layers/syn_Ha.fits" -oiii "$layers/syn_OIII.fits" \
+      "${comp_flags[@]}" -sat 0 -out screens_only.png
+    "$bin/astrocomp" -base hdr_only.fits -ha "$layers/syn_Ha.fits" -oiii "$layers/syn_OIII.fits" \
+      "${comp_flags[@]}" -sat 0.32 -out haplus_full.png
     "$starnet" --input haplus_full.png --output starless.png
     "$bin/stardesat" haplus_full.png starless.png haplus_final.png "$stark" 1.0
     for r in 25 50 75; do
@@ -68,9 +68,9 @@ chain() { # $1 = folder holding rgb_base / syn_Ha / syn_OIII
     done
   ) > "$1/chain.log" 2>&1
 }
-echo "▶ chain on the full frame"; chain "$out/full"
-echo "▶ chain on the crop"; chain "$out/crop"
-rm "$out/full"/{rgb_base,syn_Ha,syn_OIII}.fits   # the full layers stay in the run folder
+# The full-frame layers are read in place (the run folder is never written).
+echo "▶ chain on the full frame"; chain "$out/full" "$run"
+echo "▶ chain on the crop"; chain "$out/crop" "$out/crop"
 
 echo "▶ SHA256SUMS + manifest.json"
 (cd "$out" && find full crop tools-src -type f \( -name '*.fits' -o -name '*.png' -o -name '*.go' \) \
@@ -96,7 +96,7 @@ tools_json() { local first=1; for f in $(cd "$out" && find tools-src -name '*.go
   printf '{\n  "provenance": {"run": "M_31/20261018_191749", "runNumber": 78, "recorded": "%s",\n' "$(date +%F)"
   printf '    "chain": "v9 HaPlus: hdrcomp → astrocomp → starnet2 → stardesat",\n'
   printf '    "versions": {"go": "%s", "siril": "%s", "starnet2": "%s"},\n' \
-    "$(go version | cut -d' ' -f3)" "$("$siril" --version 2>/dev/null | head -1 | tr -d '"')" "user install ($starnet)"
+    "$(go version | cut -d' ' -f3)" "$("$siril" --version 2>/dev/null | grep -i '^siril [0-9]' | head -1)" "user install ($starnet)"
   printf '    "tools": [%s]},\n' "$(tools_json)"
   printf '  "crop": {"x": %s, "y": %s, "width": %s, "height": %s},\n' "${crop[@]}"
   printf '  "layers": [%s, %s, %s],\n' "$(file_json crop/rgb_base.fits)" "$(file_json crop/syn_Ha.fits)" "$(file_json crop/syn_OIII.fits)"

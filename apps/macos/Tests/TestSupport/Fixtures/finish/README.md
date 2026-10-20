@@ -6,6 +6,9 @@ StarNet2 → stardesat (k 0.25, tiers 25/50/75). It ran on run #78 (`M_31/202610
 images, the crop layers and the tool sources live in `~/Documents/astro/fixtures/finish/`
 (data rule R7), with `SHA256SUMS`.
 
+Sizes: the run's base is 5967×3763 (already cropped), the crop is its centre at (2471, 1497).
+astrocomp's `-coverage-crop -crop 0.005` trims every PNG stage: 5907×3725 full, 1014×760 crop.
+
 Stages: `hdr_only` (hdrcomp FITS), `screens_only` (astrocomp `-sat 0`), `haplus_full`,
 `starless`, `haplus_final` (stardesat r 1), `stars_25/50/75`. Each stage records its flags and
 inputs, and the hash and size of `full/<stage>` and `crop/<stage>`. Parity tests read them

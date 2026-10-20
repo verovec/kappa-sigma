@@ -12,7 +12,13 @@ No UI, no Metal: RenderKit uploads what ImageKit produces.
 - `write` rewrites a float32 image with the file's own cards: an unchanged image gives the same
   bytes (extensions kept).
 - `AstroImage` (non-Sendable class, `planes[c][y * width + x]`), `ImageMetadata` (filter, camera,
-  gain, exposure, Bayer pattern, object, row order).
+  gain, exposure, Bayer pattern, object, row order, plate solution).
+- `WCS` (card 0042): the TAN / TAN-SIP solution Siril's solver writes (`CD`, `PC` × `CDELT`, or
+  `CDELT` + `CROTA2`; SIP `A_p_q`/`B_p_q` applied before the matrix), array pixel → RA/Dec.
+  Pinned within 1″ by an independent tangent-plane vector oracle (`WCSTests`), with run #76's
+  solution (SIP shifts its corners by ~2 px, ~6″). Other projections give `nil`, never a guess.
+- `KitBundle` (card 0042): a kit's SwiftPM resource bundle from `Contents/Resources` in the app,
+  `Bundle.module` otherwise.
 - `centerSample(maxCount:)`: the legacy `fits.Stats` read — a contiguous run from the middle of
   the data unit, physical values in double, without decoding the image (inspect, card 0046).
 - `Pyramid`: 2×2 block means with vDSP (never stride sampling, so noise stays representative),

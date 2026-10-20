@@ -14,6 +14,8 @@ package struct ImageMetadata: Equatable, Sendable {
   package var object: String?
   /// The order rows are stored in; pixels are kept in that order.
   package var rowOrder: RowOrder
+  /// The TAN plate solution, when the header has one.
+  package var wcs: WCS?
 
   /// Metadata read from `header`.
   package init(header: FITSHeader) {
@@ -24,5 +26,6 @@ package struct ImageMetadata: Equatable, Sendable {
     bayerPattern = header.string("BAYERPAT")
     object = header.string("OBJECT")
     rowOrder = header.string("ROWORDER")?.uppercased() == "TOP-DOWN" ? .topDown : .bottomUp
+    wcs = WCS(header: header)
   }
 }

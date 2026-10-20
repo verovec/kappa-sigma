@@ -15,7 +15,9 @@ struct DownsampleCropTests {
 
   static let ramp: [Float] = (0..<20).map(Float.init)
 
-  @Test("the smallest factor that fits, max or mean pooled per cell, ragged edges included", .scratchDirectory)
+  @Test(
+    "the smallest factor that fits, max or mean pooled per cell, ragged edges included",
+    .scratchDirectory)
   func testDownsampled_pooling() throws {
     let (file, _) = try Self.file(FITSBytes.float32(width: 5, height: 4, planes: [Self.ramp]))
     let max = try file.downsampled(maxDimension: 3, pooling: .max)
@@ -46,7 +48,9 @@ struct DownsampleCropTests {
     #expect(image.planes[2] == [-6, -7, -8, -11, -12, -13])
   }
 
-  @Test("a 16-bit source crops to float32 physical values; an empty rectangle is an error", .scratchDirectory)
+  @Test(
+    "a 16-bit source crops to float32 physical values; an empty rectangle is an error",
+    .scratchDirectory)
   func testWriteCrop_int16AndEmpty() throws {
     let (file, _) = try Self.file(FITSBytes.int16(width: 2, height: 2, raw: [-32768, 0, 1, 32767]))
     let out = try ScratchDirectory.url.appendingPathComponent("trim.fits")

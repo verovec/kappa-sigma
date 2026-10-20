@@ -34,16 +34,22 @@ struct TrailDetectorTests {
 
   @Test("a star field is not flagged; a clear streak is")
   func testTrailDetector_detects() {
-    #expect(!TrailDetector.detect(Self.grid(width: 200, height: 200, trail: false), width: 200, height: 200).detected)
-    let streak = TrailDetector.detect(Self.grid(width: 200, height: 200, trail: true), width: 200, height: 200)
+    #expect(
+      !TrailDetector.detect(
+        Self.grid(width: 200, height: 200, trail: false), width: 200, height: 200
+      ).detected)
+    let streak = TrailDetector.detect(
+      Self.grid(width: 200, height: 200, trail: true), width: 200, height: 200)
     #expect(streak.detected)
     #expect(streak.score > TrailDetector.voteFraction)
   }
 
   @Test("too small, flat or mismatched grids say nothing")
   func testTrailDetector_guards() {
-    #expect(TrailDetector.detect([Double](repeating: 1, count: 100), width: 10, height: 10) == (false, 0))
-    #expect(TrailDetector.detect([Double](repeating: 1, count: 400), width: 20, height: 20) == (false, 0))
+    #expect(
+      TrailDetector.detect([Double](repeating: 1, count: 100), width: 10, height: 10) == (false, 0))
+    #expect(
+      TrailDetector.detect([Double](repeating: 1, count: 400), width: 20, height: 20) == (false, 0))
     #expect(TrailDetector.detect([1, 2, 3], width: 20, height: 20) == (false, 0))
   }
 }

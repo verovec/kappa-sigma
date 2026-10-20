@@ -31,8 +31,10 @@ struct GraderTests {
   @Test("an elongated frame is rejected below the roundness floor")
   func testGrader_elongated() {
     let grades = Self.graded([
-      Self.frame(1, fwhm: 3, roundness: 0.97, stars: 30), Self.frame(2, fwhm: 3, roundness: 0.96, stars: 30),
-      Self.frame(3, fwhm: 3, roundness: 0.97, stars: 30), Self.frame(4, fwhm: 3, roundness: 0.50, stars: 30),
+      Self.frame(1, fwhm: 3, roundness: 0.97, stars: 30),
+      Self.frame(2, fwhm: 3, roundness: 0.96, stars: 30),
+      Self.frame(3, fwhm: 3, roundness: 0.97, stars: 30),
+      Self.frame(4, fwhm: 3, roundness: 0.50, stars: 30),
     ])
     #expect(Array(Self.rejected(grades).keys) == [4])
   }
@@ -40,23 +42,31 @@ struct GraderTests {
   @Test("near-identical frames are not rejected because MAD is tiny")
   func testGrader_tightSet() {
     let grades = Self.graded([
-      Self.frame(1, fwhm: 3.12, roundness: 0.97, stars: 30), Self.frame(2, fwhm: 3.12, roundness: 0.97, stars: 31),
-      Self.frame(3, fwhm: 3.11, roundness: 0.97, stars: 30), Self.frame(4, fwhm: 3.13, roundness: 0.97, stars: 29),
+      Self.frame(1, fwhm: 3.12, roundness: 0.97, stars: 30),
+      Self.frame(2, fwhm: 3.12, roundness: 0.97, stars: 31),
+      Self.frame(3, fwhm: 3.11, roundness: 0.97, stars: 30),
+      Self.frame(4, fwhm: 3.13, roundness: 0.97, stars: 29),
     ])
     #expect(Self.rejected(grades).isEmpty)
   }
 
   @Test("a soft frame, clouds and a trail are rejected")
   func testGrader_softCloudsTrail() {
-    let soft = Self.graded((1...4).map { Self.frame($0, fwhm: 2, roundness: 0.97, stars: 30) } + [Self.frame(5, fwhm: 4, roundness: 0.97, stars: 30)])
+    let soft = Self.graded(
+      (1...4).map { Self.frame($0, fwhm: 2, roundness: 0.97, stars: 30) } + [
+        Self.frame(5, fwhm: 4, roundness: 0.97, stars: 30)
+      ])
     #expect(Self.rejected(soft)[5] == "soft frame (FWHM 4.00 vs median 2.00)")
     let clouds = Self.graded([
-      Self.frame(1, fwhm: 3, roundness: 0.97, stars: 40), Self.frame(2, fwhm: 3, roundness: 0.97, stars: 38),
-      Self.frame(3, fwhm: 3, roundness: 0.97, stars: 41), Self.frame(4, fwhm: 3, roundness: 0.97, stars: 5),
+      Self.frame(1, fwhm: 3, roundness: 0.97, stars: 40),
+      Self.frame(2, fwhm: 3, roundness: 0.97, stars: 38),
+      Self.frame(3, fwhm: 3, roundness: 0.97, stars: 41),
+      Self.frame(4, fwhm: 3, roundness: 0.97, stars: 5),
     ])
     #expect(Self.rejected(clouds)[4] == "few stars (5 vs median 40) — likely clouds")
     let trail = Self.graded([
-      Self.frame(1, fwhm: 3, roundness: 0.97, stars: 30), Self.frame(2, fwhm: 3, roundness: 0.97, stars: 30),
+      Self.frame(1, fwhm: 3, roundness: 0.97, stars: 30),
+      Self.frame(2, fwhm: 3, roundness: 0.97, stars: 30),
       Self.frame(3, fwhm: 3, roundness: 0.97, stars: 30, trail: true, trailScore: 0.9),
     ])
     #expect(Self.rejected(trail)[3] == "trail detected (score 0.90)")
@@ -65,7 +75,8 @@ struct GraderTests {
   @Test("the two sharpest flagged frames are restored for Siril's stack minimum, reason kept")
   func testGrader_stackMinimum() {
     let grades = Self.graded([
-      Self.frame(1, fwhm: 3, roundness: 0.4, stars: 30), Self.frame(2, fwhm: 4, roundness: 0.3, stars: 30),
+      Self.frame(1, fwhm: 3, roundness: 0.4, stars: 30),
+      Self.frame(2, fwhm: 4, roundness: 0.3, stars: 30),
       Self.frame(3, fwhm: 5, roundness: 0.3, stars: 30),
     ])
     #expect(Array(Self.rejected(grades).keys) == [3])
@@ -85,7 +96,12 @@ struct GraderTests {
   @Test(
     "keepAtLeast restores the best rejected up to n, capped by what registered",
     arguments: [
-      ([flagged(1, fwhm: 2, reason: "soft"), flagged(2, fwhm: 3, reason: "soft"), flagged(3, fwhm: 4, reason: "soft")], [0, 1]),
+      (
+        [
+          flagged(1, fwhm: 2, reason: "soft"), flagged(2, fwhm: 3, reason: "soft"),
+          flagged(3, fwhm: 4, reason: "soft"),
+        ], [0, 1]
+      ),
       ([flagged(1, fwhm: 2, reason: "trail"), flagged(2, fwhm: 0, reason: "not registered")], [0]),
       ([frame(1, fwhm: 2), frame(2, fwhm: 3), flagged(3, fwhm: 4, reason: "soft")], [0, 1]),
     ])
@@ -97,7 +113,9 @@ struct GraderTests {
 
   @Test("the 1-based indices to unselect are the rejected ones")
   func testGrader_rejectedIndices() {
-    let grades = [Self.frame(1, fwhm: 2), Self.flagged(2, fwhm: 2, reason: "x"), Self.frame(3, fwhm: 2)]
+    let grades = [
+      Self.frame(1, fwhm: 2), Self.flagged(2, fwhm: 2, reason: "x"), Self.frame(3, fwhm: 2),
+    ]
     #expect(Grader.rejectedIndices(grades) == [2])
   }
 
@@ -112,15 +130,18 @@ struct GraderTests {
   @Test("per-night spans judge each night against itself (task #354)")
   func testGrader_softNightSurvivesPerSpan() {
     #expect(!Self.rejected(Self.graded(Self.sharp(1, 8) + Self.soft(9, 8))).isEmpty)
-    #expect(Self.rejected(Self.graded(Self.sharp(1, 8) + Self.soft(9, 8), spans: [0..<8, 8..<16])).isEmpty)
+    #expect(
+      Self.rejected(Self.graded(Self.sharp(1, 8) + Self.soft(9, 8), spans: [0..<8, 8..<16])).isEmpty
+    )
   }
 
   @Test("absolute rules stay global inside any span")
   func testGrader_absoluteFloors() {
-    let night = Self.soft(1, 6) + [
-      Self.frame(7, fwhm: 4.8, roundness: 0.40, stars: 25, background: 0.03),
-      Self.frame(8, fwhm: 4.8, roundness: 0.72, stars: 25, trail: true, trailScore: 3),
-    ]
+    let night =
+      Self.soft(1, 6) + [
+        Self.frame(7, fwhm: 4.8, roundness: 0.40, stars: 25, background: 0.03),
+        Self.frame(8, fwhm: 4.8, roundness: 0.72, stars: 25, trail: true, trailScore: 3),
+      ]
     let grades = Self.graded(night + Self.sharp(9, 6), spans: [0..<8, 8..<14])
     #expect(Set(Self.rejected(grades).keys) == [7, 8])
   }
@@ -140,7 +161,8 @@ struct GraderTests {
       Self.frame(1, fwhm: 3, roundness: 0.9, stars: 30, trail: true, trailScore: 2),
       Self.frame(2, fwhm: 3, roundness: 0.9, stars: 30, trail: true, trailScore: 2),
     ]
-    #expect(Set(Self.rejected(Self.graded(bad + Self.sharp(3, 4), spans: [0..<2, 2..<6])).keys) == [1, 2])
+    #expect(
+      Set(Self.rejected(Self.graded(bad + Self.sharp(3, 4), spans: [0..<2, 2..<6])).keys) == [1, 2])
   }
 
   @Test("one span over everything is exactly the ungrouped grading")

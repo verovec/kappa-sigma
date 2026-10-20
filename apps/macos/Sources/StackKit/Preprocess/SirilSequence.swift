@@ -22,7 +22,9 @@ package struct SirilSequence: Equatable, Sendable {
   /// 0-based reference image; -1 when unset.
   package var reference = -1
 
-  /// Parses `.seq` text. `R0 fwhm wfwhm roundness quality background nbstars H h00 … h22`
+  /// Parses `.seq` text.
+  ///
+  /// `R0 fwhm wfwhm roundness quality background nbstars H h00 … h22`
   /// (Siril 1.4.3); `nan`/`inf` read as 0, the dropped-frame sentinel.
   package init(parsing text: String) {
     for line in text.split(separator: "\n") {
@@ -32,7 +34,9 @@ package struct SirilSequence: Equatable, Sendable {
         reference = Int(Self.number(fields[6]))
       } else if tag == "I", fields.count >= 3 {
         included.append(fields[2] == "1")
-      } else if tag.count >= 2, tag.first == "R", tag.dropFirst().first?.isASCIIDigit == true, fields.count >= 7 {
+      } else if tag.count >= 2, tag.first == "R", tag.dropFirst().first?.isASCIIDigit == true,
+        fields.count >= 7
+      {
         metrics.append(Self.metric(fields))
       }
     }

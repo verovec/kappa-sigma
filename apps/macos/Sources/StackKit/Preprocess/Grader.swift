@@ -35,12 +35,14 @@ package enum Grader {
 
   /// Grades in place; `spans` (positions in `grades`) scope the relative rules per capture night;
   /// empty means one population.
-  package static func grade(_ grades: inout [FrameGrade], spans: [Range<Int>] = [], options: Options = Options()) {
+  package static func grade(
+    _ grades: inout [FrameGrade], spans: [Range<Int>] = [], options: Options = Options()
+  ) {
     for span in spans.isEmpty ? [0..<grades.count] : spans {
       let range = span.clamped(to: 0..<grades.count)
       guard !range.isEmpty else { continue }
       let stats = Statistics(grades[range])
-      guard stats.count > 0 else { continue }
+      guard stats.registered > 0 else { continue }
       for index in range { reject(&grades[index], stats: stats, options: options) }
     }
     keepAtLeast(&grades, stackMinimum)
@@ -73,22 +75,27 @@ package enum Grader {
     }
     if grade.roundness > 0 {
       if grade.roundness < options.roundnessFloor {
-        reasons.append(
-          "trailed/elongated stars (roundness \(fixed(grade.roundness)) < \(fixed(options.roundnessFloor)))")
-      } else if stats.count >= minFramesForStats && stats.roundnessMAD > 0
+        let floor = fixed(options.roundnessFloor)
+        reasons.append("trailed/elongated stars (roundness \(fixed(grade.roundness)) < \(floor))")
+      } else if stats.registered >= minFramesForStats && stats.roundnessMAD > 0
         && grade.roundness < stats.roundnessMedian - options.roundnessSigma * stats.roundnessMAD
       {
+        let median = fixed(stats.roundnessMedian)
         reasons.append(
-          "elongated vs session (roundness \(fixed(grade.roundness)) < median \(fixed(stats.roundnessMedian)))")
+          "elongated vs session (roundness \(fixed(grade.roundness)) < median \(median))")
       }
     }
-    if stats.count >= minFramesForStats { reasons += relativeReasons(grade, stats: stats, options: options) }
+    if stats.registered >= minFramesForStats {
+      reasons += relativeReasons(grade, stats: stats, options: options)
+    }
     guard !reasons.isEmpty else { return }
     grade.rejected = true
     grade.rejectReason = reasons.joined(separator: "; ")
   }
 
-  private static func relativeReasons(_ grade: FrameGrade, stats: Statistics, options: Options) -> [String] {
+  private static func relativeReasons(_ grade: FrameGrade, stats: Statistics, options: Options)
+    -> [String]
+  {
     var reasons: [String] = []
     if stats.fwhmMedian > 0 && grade.fwhm > stats.fwhmMedian * (1 + minRelativeFWHM)
       && grade.fwhm > stats.fwhmMedian + options.fwhmSigma * stats.fwhmMAD
@@ -101,9 +108,11 @@ package enum Grader {
     {
       reasons.append("high sky background")
     }
-    if stats.starMedian >= minStarsForRule && Double(grade.starCount) < options.starCountFraction * stats.starMedian {
-      reasons.append(
-        "few stars (\(grade.starCount) vs median \(String(format: "%.0f", stats.starMedian))) — likely clouds")
+    if stats.starMedian >= minStarsForRule
+      && Double(grade.starCount) < options.starCountFraction * stats.starMedian
+    {
+      let median = String(format: "%.0f", stats.starMedian)
+      reasons.append("few stars (\(grade.starCount) vs median \(median)) — likely clouds")
     }
     return reasons
   }
@@ -112,7 +121,7 @@ package enum Grader {
 
   /// Median and σ (MAD × 1.4826) of a population's registered frames.
   struct Statistics {
-    var count = 0
+    var registered = 0
     var fwhmMedian = 0.0
     var fwhmMAD = 0.0
     var backgroundMedian = 0.0
@@ -122,13 +131,13 @@ package enum Grader {
     var starMedian = 0.0
 
     init(_ grades: ArraySlice<FrameGrade>) {
-      let registered = grades.filter { $0.fwhm > 0 }
-      count = registered.count
-      guard count > 0 else { return }
-      (fwhmMedian, fwhmMAD) = Self.sigma(registered.map(\.fwhm))
-      (backgroundMedian, backgroundMAD) = Self.sigma(registered.map(\.background))
-      (roundnessMedian, roundnessMAD) = Self.sigma(registered.map(\.roundness))
-      starMedian = Robust.median(registered.map { Double($0.starCount) })
+      let frames = grades.filter { $0.fwhm > 0 }
+      registered = frames.count
+      guard registered > 0 else { return }
+      (fwhmMedian, fwhmMAD) = Self.sigma(frames.map(\.fwhm))
+      (backgroundMedian, backgroundMAD) = Self.sigma(frames.map(\.background))
+      (roundnessMedian, roundnessMAD) = Self.sigma(frames.map(\.roundness))
+      starMedian = Robust.median(frames.map { Double($0.starCount) })
     }
 
     /// The upper median and the MAD scaled to σ.

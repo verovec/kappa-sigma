@@ -4,14 +4,14 @@ import Foundation
 /// BSCALE 1: what Siril's calibrated frames are and what the normaliser may rewrite).
 enum FloatFITS {
   @discardableResult
-  static func write(_ url: URL, width: Int, height: Int, planes: [[Float]]) throws -> URL {
+  static func write(_ url: URL, width: Int, height: Int, planes: [[Float]], cards extra: [String] = []) throws -> URL {
     var cards = [
       TestFITS.card("SIMPLE", "T"), TestFITS.card("BITPIX", "-32"),
       TestFITS.card("NAXIS", planes.count > 1 ? "3" : "2"), TestFITS.card("NAXIS1", "\(width)"),
       TestFITS.card("NAXIS2", "\(height)"),
     ]
     if planes.count > 1 { cards.append(TestFITS.card("NAXIS3", "\(planes.count)")) }
-    cards += [TestFITS.card("BZERO", "0"), TestFITS.card("BSCALE", "1")]
+    cards += [TestFITS.card("BZERO", "0"), TestFITS.card("BSCALE", "1")] + extra
     var text = cards.joined() + "END".padding(toLength: 80, withPad: " ", startingAt: 0)
     while text.utf8.count % 2880 != 0 { text += " " }
     var data = Data(text.utf8)

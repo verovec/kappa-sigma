@@ -7,6 +7,14 @@ package struct FrameSet: Equatable, Sendable {
   /// The clip filter of a one-shot-colour light set; a projection of `Inventory.filterSets`.
   package var filterSet: FilterSet = .unknown
 
+  /// A set of `frames` grouped from positions `indices`.
+  package init(key: SetKey, frames: [CaptureFrame], indices: [Int], filterSet: FilterSet = .unknown) {
+    self.key = key
+    self.frames = frames
+    self.indices = indices
+    self.filterSet = filterSet
+  }
+
   package var count: Int { frames.count }
   package var totalIntegrationMs: Int { frames.reduce(0) { $0 + $1.exposureMs } }
 

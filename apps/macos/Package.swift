@@ -32,14 +32,23 @@ let package = Package(
   ],
   targets: [
     .target(
+      name: "StringCatalog", dependencies: [],
+      exclude: ["README.md"], swiftSettings: safe),
+    .executableTarget(
+      name: "CatalogTool", dependencies: ["StringCatalog"],
+      swiftSettings: common),
+    .plugin(name: "CatalogPlugin", capability: .buildTool(), dependencies: ["CatalogTool"]),
+    .target(
       name: "ImageKit", dependencies: [],
       exclude: ["README.md"], swiftSettings: common),
     .target(
       name: "RenderKit", dependencies: ["ImageKit"],
-      exclude: ["README.md"], resources: [.copy("Shaders")], swiftSettings: common),
+      exclude: ["README.md", "Localizable.xcstrings"], resources: [.copy("Shaders")],
+      swiftSettings: common, plugins: ["CatalogPlugin"]),
     .target(
       name: "ProcessKit", dependencies: ["ImageKit", "RenderKit"],
-      exclude: ["README.md"], resources: [.copy("Shaders")], swiftSettings: safe),
+      exclude: ["README.md", "Localizable.xcstrings"], resources: [.copy("Shaders")],
+      swiftSettings: safe, plugins: ["CatalogPlugin"]),
     .target(
       name: "ProjectKit", dependencies: ["ImageKit", .product(name: "GRDB", package: "GRDB.swift")],
       exclude: ["README.md", "SCHEMA.md"], resources: [.copy("Migrations")],
@@ -58,13 +67,16 @@ let package = Package(
     .executableTarget(
       name: "AstroStackApp",
       dependencies: ["ImageKit", "RenderKit", "ProcessKit", "ProjectKit", "StackKit", "HelpKit"],
-      swiftSettings: app),
+      exclude: ["Localizable.xcstrings"], swiftSettings: app, plugins: ["CatalogPlugin"]),
 
     .target(
       name: "TestSupport", dependencies: [],
-      path: "Tests/TestSupport", swiftSettings: common),
+      path: "Tests/TestSupport", resources: [.copy("Fixtures")], swiftSettings: common),
     .testTarget(
       name: "TestSupportTests", dependencies: ["TestSupport"],
+      resources: [.copy("Fixtures")], swiftSettings: common),
+    .testTarget(
+      name: "StringCatalogTests", dependencies: ["StringCatalog", "TestSupport"],
       resources: [.copy("Fixtures")], swiftSettings: common),
     .testTarget(
       name: "ImageKitTests", dependencies: ["ImageKit", "TestSupport"],
@@ -74,7 +86,7 @@ let package = Package(
       swiftSettings: common),
     .testTarget(
       name: "ProcessKitTests",
-      dependencies: ["ProcessKit", "ImageKit", "HelpKit", "TestSupport"],
+      dependencies: ["ProcessKit", "ImageKit", "HelpKit", "StringCatalog", "TestSupport"],
       resources: [.copy("Fixtures")], swiftSettings: common),
     .testTarget(
       name: "ProjectKitTests",
@@ -89,7 +101,8 @@ let package = Package(
     .testTarget(
       name: "AstroStackAppTests",
       dependencies: [
-        "AstroStackApp", "ImageKit", "ProjectKit", "RenderKit", "StackKit", "TestSupport",
+        "AstroStackApp", "ImageKit", "ProjectKit", "RenderKit", "StackKit", "StringCatalog",
+        "TestSupport",
       ],
       swiftSettings: common),
   ]

@@ -27,8 +27,9 @@ struct ImportFormatTests {
   func testSensorAndNight() {
     #expect(
       ImportFormat.sensor(SetKey(type: .light, gain: 100, offset: 50, bin: 1)) == "g100 o50 b1")
-    #expect(ImportFormat.night("2026-10-17") == "Night of 2026-10-17")
-    #expect(ImportFormat.night("") == "Shared calibration and undated frames")
+    #expect(ImportFormat.night("2026-10-17").text("en") == "Night of 2026-10-17")
+    #expect(ImportFormat.night("").text("en") == "Shared calibration and undated frames")
+    #expect(ImportFormat.night("2026-10-17").text("fr") == "Nuit du 2026-10-17")
   }
 
   @Test(
@@ -45,6 +46,22 @@ struct ImportFormatTests {
         "excluded (proposed: build from 2 frames)", "missing",
       ]))
   func testStatus(status: ImportPlan.Status, text: String) {
-    #expect(ImportFormat.status(status) == text)
+    #expect(ImportFormat.status(status).text("en") == text)
+  }
+
+  @Test(
+    "the calibration statuses in French, nested sentences and plurals included",
+    arguments: zip(
+      [
+        ImportPlan.Status.library(path: "/lib/master_BIAS_g100o50_b1.fits", frames: 1),
+        .build(frames: 1), .build(frames: 20), .excluded(.build(frames: 2)), .missing,
+      ],
+      [
+        "bibliothèque\u{a0}: master_BIAS_g100o50_b1.fits (1 pose)",
+        "à construire depuis 1 pose", "à construire depuis 20 poses",
+        "exclu (proposé\u{a0}: à construire depuis 2 poses)", "manquant",
+      ]))
+  func testStatusInFrench(status: ImportPlan.Status, text: String) {
+    #expect(ImportFormat.status(status).text("fr") == text)
   }
 }

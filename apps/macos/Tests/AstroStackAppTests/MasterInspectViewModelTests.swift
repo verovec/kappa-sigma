@@ -154,8 +154,9 @@ struct MasterInspectViewModelTests {
     let (sheet, model) = try await Self.model(recorder)
     await model.rebuild()
     #expect(recorder.rebuilt.isEmpty)
-    #expect(model.pendingReplace?.contains("/lib/dark.fits") == true)
-    #expect(model.pendingReplace?.contains("20 frames") == true)
+    #expect(model.pendingReplace?.text("en").contains("/lib/dark.fits") == true)
+    #expect(model.pendingReplace?.text("en").contains("20 frames") == true)
+    #expect(model.pendingReplace?.text("fr").contains("20 poses") == true)
     #expect(model.error == nil)
 
     await model.rebuild(replace: true)

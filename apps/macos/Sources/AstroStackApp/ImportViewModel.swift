@@ -12,12 +12,14 @@ package final class ImportViewModel {
   package typealias Planning = @Sendable (ImportRequest) async throws -> ImportPlan
 
   /// The channels a light filter can be mapped to: the canonical filters, or dropped.
-  package static let channels = Filter.allCases.map(\.rawValue) + ["ignore"]
+  package static let channels = Filter.allCases.map(\.rawValue) + [ignored]
+  /// The channel that drops a filter from the stack.
+  package static let ignored = "ignore"
 
   package private(set) var request = ImportRequest(paths: [])
   package private(set) var plan: ImportPlan?
   package private(set) var isScanning = false
-  package private(set) var error: String?
+  package private(set) var error: UserFacingError?
   /// The sets the user excluded, as they were listed when excluded (a scan drops them).
   package private(set) var excludedRows: [ImportPlan.SetRow] = []
 
@@ -140,7 +142,7 @@ package final class ImportViewModel {
         guard !Task.isCancelled else { return }
         plan = nil
         scanned = nil
-        self.error = "\(error)"
+        self.error = UserFacingError(error)
       }
       isScanning = false
     }

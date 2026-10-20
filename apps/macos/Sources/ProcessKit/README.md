@@ -41,6 +41,13 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   `standard()` is validated like any registry and lists the shipped processes (today:
   `channel-combination`).
 
+## Strings (card 0073)
+
+`Localizable.xcstrings` holds every title a panel shows — process, parameter and palette titles —
+in en/fr; the English title is the key, resolved with `ProcessKitResources.title(_:)`.
+`ProcessTitleCatalogTests` fails when a registered title has no key or a key no title. Rules:
+`Sources/StringCatalog/README.md`.
+
 ## How to add a process
 
 1. A type conforming to `ImageProcess` in `ProcessKit/Processes/<Name>/`, its kernel in a
@@ -50,7 +57,8 @@ non-destructive history, recipes and the registry (design §2, §4.1).
 3. `previewExactOnlyAt1to1 = true` if any parameter is `.px`.
 4. Register it in `ProcessRegistry.standard`.
 5. Write `HelpKit/Help/{fr,en}/process/<id>.md`: ≤ 5 lines, ≤ 90 words each (gated).
-6. Tests: `ProcessContracts(...).violations(of:params:)` is empty, plus the kernel against a CPU
+6. Add its title and every parameter title, en + fr, to `ProcessKit/Localizable.xcstrings` (gated).
+7. Tests: `ProcessContracts(...).violations(of:params:)` is empty, plus the kernel against a CPU
    oracle with its tolerance stated.
 
 Allowed dependencies: `ImageKit`, `RenderKit` (`Tests/TestSupport/BoundaryRules.swift`).

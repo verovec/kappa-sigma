@@ -16,24 +16,32 @@ package final class ImageViewerWindow: NSWindowController, NSWindowDelegate {
 
   /// Asks for a FITS file and shows it.
   static func choose() {
+    let panel = imagePanel()
+    guard panel.runModal() == .OK, let url = panel.url else { return }
+    show(url)
+  }
+
+  /// The file picker: one FITS file (`.fit`, `.fits`, `.fts`).
+  package static func imagePanel() -> NSOpenPanel {
     let panel = NSOpenPanel()
     panel.allowedContentTypes = ["fit", "fits", "fts"].compactMap {
       UTType(filenameExtension: $0)
     }
     panel.allowsMultipleSelection = false
-    guard panel.runModal() == .OK, let url = panel.url else { return }
-    show(url)
+    return panel
   }
 
-  /// Opens `url` in a viewer window; a failure is shown, never swallowed.
+  /// Opens `url` in a viewer window; a failure goes to `report` (an alert), never swallowed.
   @discardableResult
-  package static func show(_ url: URL) -> Task<Void, Never> {
+  package static func show(
+    _ url: URL, report: @escaping @MainActor (any Error) -> Void = { NSAlert(error: $0).runModal() }
+  ) -> Task<Void, Never> {
     Task {
       do {
         try await open(url)
       } catch {
         logger.error("cannot open \(url.path, privacy: .public): \(error, privacy: .public)")
-        NSAlert(error: error).runModal()
+        report(error)
       }
     }
   }
@@ -43,7 +51,7 @@ package final class ImageViewerWindow: NSWindowController, NSWindowDelegate {
   package static func open(_ url: URL) async throws -> ImageViewerWindow {
     guard let device = MTLCreateSystemDefaultDevice() else { throw RenderError.noDevice }
     let renderer = try ViewerRenderer(device: device)
-    let loaded = try await Loaded.read(url, device: device)
+    let loaded = try await LoadedImage.read(url, device: device)
     let model = ViewerModel(image: loaded.image, autoSTF: loaded.autoSTF)
     let view = ViewerView(model: model, renderer: renderer, texture: loaded.texture, reference: nil)
     let controller = ImageViewerWindow(view: view, title: url.lastPathComponent)
@@ -75,32 +83,5 @@ package final class ImageViewerWindow: NSWindowController, NSWindowDelegate {
 
   package func windowWillClose(_ notification: Notification) {
     Self.opened.removeAll { $0 === self }
-  }
-
-  /// The decoded image, its textures and its autostretch, built off the main actor.
-  private nonisolated struct Loaded {
-    let image: AstroImage
-    let texture: ImageTexture
-    let autoSTF: [STFParameters]
-
-    /// FITS decode, pyramid + upload and statistics: CPU-bound, never on the main actor.
-    @concurrent
-    nonisolated static func read(_ url: URL, device: MTLDevice) async throws -> sending Self {
-      let started = ContinuousClock.now
-      let image = try FITSFile.read(at: url).image()
-      let decoded = ContinuousClock.now
-      let texture = try ImageTexture(
-        device: device, width: image.width, height: image.height, planes: image.planes)
-      let uploaded = ContinuousClock.now
-      let autoSTF = AutoSTF.compute(planes: image.planes, linked: false)
-      logger.info(
-        """
-        opened \(url.lastPathComponent, privacy: .public) \(image.width)×\(image.height)×\
-        \(image.planes.count), \(texture.mipLevels) mip levels: read \
-        \(decoded - started, privacy: .public), upload \(uploaded - decoded, privacy: .public), \
-        STF \(ContinuousClock.now - uploaded, privacy: .public)
-        """)
-      return Self(image: image, texture: texture, autoSTF: autoSTF)
-    }
   }
 }

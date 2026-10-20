@@ -15,9 +15,13 @@ package struct ProjectWindowView: View {
     VStack(spacing: 0) {
       if model.sources.isEmpty {
         ContentUnavailableView {
-          Label("Empty project", systemImage: "sparkles")
+          Label {
+            Text(.app("Empty project"))
+          } icon: {
+            Image(systemName: "sparkles")
+          }
         } description: {
-          Text("Import a capture night to see how it will be calibrated and stacked.")
+          Text(.app("Import a capture night to see how it will be calibrated and stacked."))
         } actions: {
           importButton
         }
@@ -32,7 +36,7 @@ package struct ProjectWindowView: View {
         .padding(8)
       }
       if let error = model.error {
-        Text(error).foregroundStyle(.red).padding(8)
+        Text(error.message).foregroundStyle(.red).padding(8)
       }
     }
     .frame(minWidth: 640, minHeight: 400)
@@ -49,6 +53,6 @@ package struct ProjectWindowView: View {
   }
 
   private var importButton: some View {
-    Button("Import Captures…") { model.startImport() }
+    Button(.app("Import Captures…")) { model.startImport() }
   }
 }

@@ -21,6 +21,8 @@ package struct BoundaryRules: Sendable {
   /// entry is a design decision: change it here, in the same PR as `Package.swift`.
   package static let astroStack = Self(
     allowedDependencies: [
+      "StringCatalog": [],
+      "CatalogTool": ["StringCatalog"],
       "ImageKit": [],
       "RenderKit": ["ImageKit"],
       "ProcessKit": ["ImageKit", "RenderKit"],

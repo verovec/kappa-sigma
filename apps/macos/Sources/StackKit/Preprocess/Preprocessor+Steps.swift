@@ -94,7 +94,8 @@ extension Preprocessor {
         let base = channels[filter] ?? ""
         return BundleWriter.Input(
           filter: filter, file: request.output.appendingPathComponent(base + ".fits"),
-          source: String(base.prefix { $0 != "_" }), continuumK: continuum[filter])
+          source: LayerPrecedence.stage(of: base) ?? String(base.prefix { $0 != "_" }),
+          continuumK: continuum[filter])
       },
       to: request.output)
   }

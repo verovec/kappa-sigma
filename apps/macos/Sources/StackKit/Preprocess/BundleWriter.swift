@@ -33,6 +33,19 @@ package struct BundleWriter: Sendable {
   package func write(runID: String, colorModel: ColorModel, layers: [Input], to folder: URL) throws
     -> LinearBundle
   {
+    let bundle = try measure(runID: runID, colorModel: colorModel, layers: layers)
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+    try encoder.encode(bundle).write(
+      to: folder.appendingPathComponent(Self.fileName), options: .atomic)
+    return bundle
+  }
+
+  /// The bundle of `layers` without writing it (a legacy run is read-only): one grid, stats on
+  /// every pixel.
+  package func measure(runID: String, colorModel: ColorModel, layers: [Input]) throws
+    -> LinearBundle
+  {
     let files = try layers.map { (input: $0, file: try FITSFile.read(at: $0.file)) }
     let grids = files.map { entry in
       LinearBundle.Grid(
@@ -49,14 +62,7 @@ package struct BundleWriter: Sendable {
         file: input.file.lastPathComponent, source: input.source,
         stats: LayerStats.measure(try file.image().planes), continuumK: input.continuumK)
     }
-    let bundle = LinearBundle(
-      runID: runID, colorModel: colorModel, grid: grid,
-      layers: measured)
-    let encoder = JSONEncoder()
-    encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-    try encoder.encode(bundle).write(
-      to: folder.appendingPathComponent(Self.fileName), options: .atomic)
-    return bundle
+    return LinearBundle(runID: runID, colorModel: colorModel, grid: grid, layers: measured)
   }
 
   /// The bundle in `folder`.

@@ -8,14 +8,43 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
     Self.launchImage == nil
   }
 
-  /// `-openImage <path>` on the command line opens that FITS in the viewer at launch.
+  /// `-openImage <path>` opens that FITS in the viewer at launch; `-openRun <folder>` opens a
+  /// legacy run into the untitled project.
   package func applicationDidFinishLaunching(_ notification: Notification) {
-    if let path = Self.launchImage { ImageViewerWindow.show(URL(fileURLWithPath: path)) }
+    Task { await Self.openLaunchArguments(UserDefaults.standard) }
+  }
+
+  /// Opens what `-openImage` / `-openRun` name in `defaults` (the command line's arguments).
+  package static func openLaunchArguments(
+    _ defaults: UserDefaults,
+    report: @escaping @MainActor (any Error) -> Void = { NSAlert(error: $0).runModal() }
+  ) async {
+    if let path = defaults.string(forKey: "openImage") {
+      await ImageViewerWindow.show(URL(fileURLWithPath: path), report: report).value
+    }
+    if let path = defaults.string(forKey: "openRun") {
+      let window = await LegacyRunWindow.open(
+        URL(fileURLWithPath: path), into: LegacyRunWindow.projectDocument(), report: report)
+      if let window, let base = window.model.source.layers.first?.id {
+        // A failed load shows in the window (`failure`); nothing is swallowed.
+        try? await window.model.select(base)
+      }
+    }
+  }
+
+  /// File › Open Run…: a legacy run, read-only, its layers in a sidebar.
+  @objc package func openRun(_ sender: Any?) {
+    LegacyRunWindow.choose()
   }
 
   /// File › Open Image…: a FITS in the viewer.
   @objc package func openImage(_ sender: Any?) {
     ImageViewerWindow.choose()
+  }
+
+  /// AstroStack › Settings…: the interface language.
+  @objc package func showSettings(_ sender: Any?) {
+    SettingsWindow.show()
   }
 
   private static var launchImage: String? { UserDefaults.standard.string(forKey: "openImage") }

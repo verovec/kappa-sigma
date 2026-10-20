@@ -72,8 +72,13 @@ with sources, is `docs/engineering/swift-quality-playbook.md` — read it once p
 - External tools run through `swift-subprocess` (never `Foundation.Process`): FIFOs opened by us,
   timeout via task group, teardown SIGTERM → SIGKILL. A missing tool is a typed error surfaced
   as an install card, never a fallback (R2).
-- Strings in a `Localizable.xcstrings` per target, resolved with `bundle: #bundle`; help content
-  is Markdown in resources. No generated catalog symbols in the MainActor-isolated app target.
+- Strings in a `Localizable.xcstrings` per target, compiled to `en`/`fr` `.lproj` tables by the
+  `CatalogPlugin` build tool (CLT SwiftPM ships `.xcstrings` uncompiled) and shown as a
+  `LocalizedStringResource` of the kit's `KitBundle` (`.app("…")`, `.renderKit("…")`) — never
+  `#bundle`/`Bundle.module` (traps in the packaged `.app`) nor `String(localized:bundle:)` (ignores
+  the user's language). Every key has `en` + `fr`, gated by tests and the build
+  (`Sources/StringCatalog/README.md`); help content is Markdown in resources. No generated catalog
+  symbols in the MainActor-isolated app target.
 
 ## Legacy Go as reference, never as code
 

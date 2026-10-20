@@ -53,7 +53,7 @@ struct ProjectWindowModelTests {
     window.startImport()
     window.add(ImportRequest(paths: ["/c/A"]))
     #expect(window.sources.isEmpty)
-    #expect(window.error?.contains("not open") == true, "Add never fails silently")
+    #expect(window.error == .projectClosed, "Add never fails silently")
   }
 
   @Test("the live planner reindexes the library into the project, then scans", .scratchDirectory)

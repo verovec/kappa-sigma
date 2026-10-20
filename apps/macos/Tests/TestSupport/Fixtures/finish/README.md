@@ -1,0 +1,33 @@
+# Finishing oracles (card 0067)
+
+`manifest.json` pins the PO's validated v9 "HaPlus" finishing chain: hdrcomp → astrocomp →
+StarNet2 → stardesat (k 0.25, tiers 25/50/75). It ran on run #78 (`M_31/20261018_191749`, 76 BB +
+34 DB frames) and on a 1024×768 centre crop of its layers. Only this text is committed. The
+images, the crop layers and the tool sources live in `~/Documents/astro/fixtures/finish/`
+(data rule R7), with `SHA256SUMS`.
+
+Sizes: the run's base is 5967×3763 (already cropped), the crop is its centre at (2471, 1497).
+Siril's `crop` counts y from the top of the displayed image: in these bottom-up files the crop
+starts at stored row 3763 − 1497 − 768 = 1498. The centre holds the galaxy core.
+astrocomp's `-coverage-crop -crop 0.005` trims every PNG stage: 5907×3725 full, 1014×760 crop.
+
+Stages: `hdr_only` (hdrcomp FITS), `screens_only` (astrocomp `-sat 0`), `haplus_full`,
+`starless`, `haplus_final` (stardesat r 1), `stars_25/50/75`. Each stage records its flags and
+inputs, and the hash and size of `full/<stage>` and `crop/<stage>`. Parity tests read them
+through `FinishOracle` and skip where the folder is absent (CI). `LiveFinishOracleTests` checks
+every hash and size. It also checks that the full-frame `haplus_final`, `starless` and
+`stars_25/50/75` reproduce the PO's run #78 deliverables (`M31_v9style_hdr_HaPlus*.png`, hashes
+pinned under `validated`) within `tolerance` (1/255, mean and max). The re-render differs only by
+16-bit rounding: max 0.22/255.
+
+## Regenerate
+
+```sh
+scripts/record-finish-oracle.sh      # Go, Siril 1.4, /usr/local/bin/starnet2
+cp ~/Documents/astro/fixtures/finish/manifest.json apps/macos/Tests/TestSupport/Fixtures/finish/
+```
+
+The script builds the Go tools from copies kept in the fixtures folder. The sources are
+kappa-sigma's gitignored `tasks-context/tools` plus the legacy `internal/imgops`, read only. No Go
+enters this repo and nothing is written into the run folder. Re-recording changes the hashes:
+justify it in the PR body (`Test-change:`).

@@ -78,7 +78,7 @@ let package = Package(
       dependencies: ["ProjectKit", "TestSupport", .product(name: "GRDB", package: "GRDB.swift")],
       swiftSettings: common),
     .testTarget(
-      name: "StackKitTests", dependencies: ["StackKit", "TestSupport"],
+      name: "StackKitTests", dependencies: ["StackKit", "ProjectKit", "TestSupport"],
       resources: [.copy("Fixtures")], swiftSettings: common),
     .testTarget(
       name: "HelpKitTests", dependencies: ["HelpKit", "TestSupport"],

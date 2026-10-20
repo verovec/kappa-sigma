@@ -22,6 +22,12 @@ package struct OracleChannelGrades: Decodable, Sendable {
     package let rejected: Bool
     /// Why, when rejected.
     package let rejectReason: String?
+    /// Translation against the reference, in pixels; absent for the reference itself.
+    package let shiftX: Double?
+    package let shiftY: Double?
+    /// The trail detector's verdict on the calibrated frame.
+    @OmittedFalse package var trailDetected: Bool
+    package let trailScore: Double?
   }
 
   /// OBJECT.

@@ -13,6 +13,8 @@ No UI, no Metal: RenderKit uploads what ImageKit produces.
   bytes (extensions kept).
 - `AstroImage` (non-Sendable class, `planes[c][y * width + x]`), `ImageMetadata` (filter, camera,
   gain, exposure, Bayer pattern, object, row order).
+- `centerSample(maxCount:)`: the legacy `fits.Stats` read — a contiguous run from the middle of
+  the data unit, physical values in double, without decoding the image (inspect, card 0046).
 - `Pyramid`: 2×2 block means with vDSP (never stride sampling, so noise stays representative),
   halving until the long side is ≤ 512 px; `build` runs `@concurrent`. 22 Mpx × 3 planes: 0.04 s.
 - `ImageExport`: 16-bit TIFF/PNG via ImageIO for deliverables, top row first, values clamped.

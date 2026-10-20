@@ -86,7 +86,7 @@ package struct FITSFile: Sendable {
   static func padding(_ count: Int) -> Int { (block - count % block) % block }
 
   /// Runs `body`, naming `path` in any `FITSError` it throws.
-  private static func withPath<T>(_ path: String?, _ body: () throws -> T) throws -> T {
+  static func withPath<T>(_ path: String?, _ body: () throws -> T) throws -> T {
     do {
       return try body()
     } catch let error as FITSError {

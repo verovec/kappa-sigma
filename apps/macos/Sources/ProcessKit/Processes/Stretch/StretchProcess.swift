@@ -58,7 +58,8 @@ package struct StretchProcess: ImageProcess {
 
   package init(params: ParamSet, device: MTLDevice) throws {
     self.params = params
-    pipeline = try ProcessLibrary.pipeline(device: device, file: "Stretch.metal", function: "stretch")
+    pipeline = try ProcessLibrary.pipeline(
+      device: device, file: "Stretch.metal", function: "stretch")
   }
 
   /// Siril's autostretch (−2.8σ, background 0.25, linked), the deep-sky preset's 0.90 headroom,

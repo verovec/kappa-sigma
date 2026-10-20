@@ -8,10 +8,10 @@ import Foundation
 ///   Siril's `ght` implements them.
 /// - Headroom: the legacy `nightscape.CompressHighlights` shoulder.
 enum StretchOracle {
-  static func mtf(_ x: Double, _ m: Double) -> Double {
+  static func mtf(_ x: Double, _ midtone: Double) -> Double {
     if x <= 0 { return 0 }
     if x >= 1 { return 1 }
-    return (m - 1) * x / ((2 * m - 1) * x - m)
+    return (midtone - 1) * x / ((2 * midtone - 1) * x - midtone)
   }
 
   /// (c0, m) of one channel, or of the averaged channels when linked.
@@ -28,29 +28,32 @@ enum StretchOracle {
 
   // MARK: GHS
 
-  /// The base transform T and its derivative for intensity `b`, strength `d`.
-  static func base(_ x: Double, b: Double, d: Double) -> (value: Double, slope: Double) {
-    if b == -1 { return (log(1 + d * x), d / (1 + d * x)) }
+  /// The base transform T and its derivative for intensity `b` and strength D.
+  static func base(_ x: Double, b: Double, strength: Double) -> (value: Double, slope: Double) {
+    if b == -1 { return (log(1 + strength * x), strength / (1 + strength * x)) }
     if b < 0 {
       return (
-        (1 - pow(1 - b * d * x, (b + 1) / b)) / (d * (b + 1)), pow(1 - b * d * x, 1 / b)
+        (1 - pow(1 - b * strength * x, (b + 1) / b)) / (strength * (b + 1)),
+        pow(1 - b * strength * x, 1 / b)
       )
     }
-    if b == 0 { return (1 - exp(-d * x), d * exp(-d * x)) }
-    return (1 - pow(1 + b * d * x, -1 / b), d * pow(1 + b * d * x, -(1 + b) / b))
+    if b == 0 { return (1 - exp(-strength * x), strength * exp(-strength * x)) }
+    return (
+      1 - pow(1 + b * strength * x, -1 / b), strength * pow(1 + b * strength * x, -(1 + b) / b)
+    )
   }
 
   /// The piecewise curve before normalisation.
-  static func ghsRaw(_ x: Double, d: Double, b: Double, lp: Double, sp: Double, hp: Double)
+  static func ghsRaw(_ x: Double, strength: Double, b: Double, lp: Double, sp: Double, hp: Double)
     -> Double
   {
     if x < lp {
-      let edge = base(sp - lp, b: b, d: d)
+      let edge = base(sp - lp, b: b, strength: strength)
       return -edge.value + edge.slope * (x - lp)
     }
-    if x < sp { return -base(sp - x, b: b, d: d).value }
-    if x < hp { return base(x - sp, b: b, d: d).value }
-    let edge = base(hp - sp, b: b, d: d)
+    if x < sp { return -base(sp - x, b: b, strength: strength).value }
+    if x < hp { return base(x - sp, b: b, strength: strength).value }
+    let edge = base(hp - sp, b: b, strength: strength)
     return edge.value + edge.slope * (x - hp)
   }
 
@@ -58,12 +61,12 @@ enum StretchOracle {
   static func ghs(_ x: Double, stretch: Double, b: Double, lp: Double, sp: Double, hp: Double)
     -> Double
   {
-    let d = exp(stretch) - 1
+    let strength = exp(stretch) - 1
     let clamped = min(max(x, 0), 1)
-    guard d > 0 else { return clamped }
-    let low = ghsRaw(0, d: d, b: b, lp: lp, sp: sp, hp: hp)
-    let high = ghsRaw(1, d: d, b: b, lp: lp, sp: sp, hp: hp)
-    return (ghsRaw(clamped, d: d, b: b, lp: lp, sp: sp, hp: hp) - low) / (high - low)
+    guard strength > 0 else { return clamped }
+    let low = ghsRaw(0, strength: strength, b: b, lp: lp, sp: sp, hp: hp)
+    let high = ghsRaw(1, strength: strength, b: b, lp: lp, sp: sp, hp: hp)
+    return (ghsRaw(clamped, strength: strength, b: b, lp: lp, sp: sp, hp: hp) - low) / (high - low)
   }
 
   // MARK: Headroom and asinh

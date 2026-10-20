@@ -71,10 +71,12 @@ struct StretchUniforms {
     min(max(median + clip * madn, 0), 0.999_999)
   }
 
-  /// The GHS coefficients: D = e^stretch − 1, the base transform's value and slope at the
-  /// protection points, and the normalisation f(0) → 0, f(1) → 1. D = 0 is the identity.
+  /// The GHS coefficients.
+  ///
+  /// D = e^stretch − 1, the base transform's value and slope at the protection points, and the
+  /// normalisation f(0) → 0, f(1) → 1. D = 0 is the identity.
   private mutating func setGHS(_ params: ParamSet) throws {
-    let (b, d) = (params.number("ghsIntensity"), exp(params.number("ghsStretch")) - 1)
+    let (b, strength) = (params.number("ghsIntensity"), exp(params.number("ghsStretch")) - 1)
     let (lp, sp, hp) = (
       params.number("ghsShadows"), params.number("ghsSymmetry"), params.number("ghsHighlights")
     )
@@ -82,12 +84,13 @@ struct StretchUniforms {
       throw ProcessError.invalidParameter(
         "GHS needs shadow protection ≤ symmetry point ≤ highlight protection")
     }
-    let low = GHS.base(sp - lp, b: b, d: d)
-    let high = GHS.base(hp - sp, b: b, d: d)
-    let raw = { (x: Double) in GHS.raw(x, b: b, d: d, lp: lp, sp: sp, hp: hp) }
-    let range = d > 0 ? raw(1) - raw(0) : 0
+    let low = GHS.base(sp - lp, b: b, strength: strength)
+    let high = GHS.base(hp - sp, b: b, strength: strength)
+    let raw = { (x: Double) in GHS.raw(x, b: b, strength: strength, lp: lp, sp: sp, hp: hp) }
+    let range = strength > 0 ? raw(1) - raw(0) : 0
     let coefficients = [
-      b, d, lp, sp, hp, d > 0 ? raw(0) : 0, range > 0 ? 1 / range : 0, low.value, low.slope,
+      b, strength, lp, sp, hp, strength > 0 ? raw(0) : 0, range > 0 ? 1 / range : 0, low.value,
+      low.slope,
       high.value, high.slope,
     ]
     for (offset, value) in coefficients.enumerated() { values[Slot.ghs + offset] = Float(value) }

@@ -36,10 +36,22 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   `round(px / scale)`: a hard edge becomes a linear ramp) + invert, built by `MaskBuilder`.
   `ProcessRunner.run(…, mask:)` blends `m·processed + (1 − m)·input` — no process masks itself, and
   `ProcessContracts` runs every process under a half mask too.
+- **StretchProcess** (card 0050), the first non-linear step, one kernel (`Stretch.metal`) with
+  three modes after an optional headroom cap (legacy `CompressHighlights`: tanh shoulder on the
+  0.299/0.587/0.114 luminance, every channel scaled alike):
+  - `mtf`: Siril's autostretch from the bundle `LayerStats` — c0 = median + clip·MADN, m =
+    MTF(target, median − c0), linked = mean median and MADN — with RenderKit's `MTF`;
+  - `ghs`: the Generalised Hyperbolic Stretch equations (`GHS`; ln(D+1), b, SP, LP ≤ SP ≤ HP,
+    D = 0 is the identity);
+  - `asinh`: ratio-preserving above a black point.
+
+  Every coefficient is computed on the CPU (`StretchUniforms`) from the panel values and the
+  stats; "autostretch like Siril" and the deep-sky 0.90 headroom are suggestions, not defaults
+  hidden in the shader. No panel yet: the Studio renders the schema generically (0075/0076).
 - `ProcessRegistry`: refuses duplicates and invalid schemas (`.px` without
   `previewExactOnlyAt1to1`, a default outside its bounds or options, infinite bounds);
   `standard()` is validated like any registry and lists the shipped processes (today:
-  `channel-combination`).
+  `channel-combination`, `stretch`).
 
 ## Strings (card 0073)
 

@@ -3,7 +3,9 @@ import ProcessKit
 import Testing
 
 /// `StretchProcess`: the shader against `StretchOracle` on ramps and noise fields.
-@Suite("Stretch: MTF, GHS and asinh, with the headroom cap", .enabled(if: MTLCreateSystemDefaultDevice() != nil))
+@Suite(
+  "Stretch: MTF, GHS and asinh, with the headroom cap",
+  .enabled(if: MTLCreateSystemDefaultDevice() != nil))
 struct StretchTests {
   static let width = 64
   static let height = 4
@@ -162,7 +164,8 @@ struct StretchTests {
   func testContracts() throws {
     let device = try #require(MTLCreateSystemDefaultDevice())
     for count in [1, 3] {
-      let input = try GPUImage(device: device, width: Self.width, height: Self.height, planes: Self.planes(count))
+      let input = try GPUImage(
+        device: device, width: Self.width, height: Self.height, planes: Self.planes(count))
       let contracts = try ProcessContracts(
         device: device, input: input,
         stats: LayerStats(channels: Array(Self.stats.channels.prefix(count))))
@@ -183,14 +186,16 @@ struct StretchTests {
   @Test("suggestions: Siril's autostretch, the deep-sky headroom, GHS on the background")
   func testSuggestions() throws {
     let device = try #require(MTLCreateSystemDefaultDevice())
-    let process = try StretchProcess(params: ParamSet(schema: StretchProcess.schema), device: device)
+    let process = try StretchProcess(
+      params: ParamSet(schema: StretchProcess.schema), device: device)
     let suggestions = process.suggestions(stats: Self.stats)
     #expect(
       suggestions.map(\.paramID) == [
         "shadowsClip", "targetBackground", "linked", "headroom", "ghsSymmetry",
       ])
     // The mean of the channel medians, as linked mode averages them.
-    guard case .number(let symmetry) = suggestions.first(where: { $0.paramID == "ghsSymmetry" })?.value
+    guard
+      case .number(let symmetry) = suggestions.first(where: { $0.paramID == "ghsSymmetry" })?.value
     else {
       Issue.record("no GHS symmetry suggestion")
       return
@@ -203,8 +208,10 @@ struct StretchTests {
   func testGHSOrdering() throws {
     #expect(throws: ProcessError.self) {
       _ = try Self.run(
-        ["mode": .choice("ghs"), "ghsStretch": .number(2), "ghsSymmetry": .number(0.1),
-         "ghsShadows": .number(0.3)], planes: Self.planes(1))
+        [
+          "mode": .choice("ghs"), "ghsStretch": .number(2), "ghsSymmetry": .number(0.1),
+          "ghsShadows": .number(0.3),
+        ], planes: Self.planes(1))
     }
   }
 
@@ -212,7 +219,9 @@ struct StretchTests {
   func testHeadroomMonotoneRatioPreserving() throws {
     // Bright linear cores up to 2× the white point; hues whose channels stay under 1 at the ceiling.
     let planes: [[Float]] = [1.0, 0.9, 0.8].map { hue in
-      (0..<Self.width * Self.height).map { Float(hue) * 2 * Float($0) / Float(Self.width * Self.height) }
+      (0..<Self.width * Self.height).map {
+        Float(hue) * 2 * Float($0) / Float(Self.width * Self.height)
+      }
     }
     // GHS at D = 0 is the identity: what comes out is the headroom stage alone.
     let out = try Self.run(

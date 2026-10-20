@@ -53,6 +53,7 @@ struct StretchLiveTests {
     #expect(ours.count == siril.planes.count)
     let differences = zip(ours, siril.planes).flatMap { zip($0, $1).map { Double(abs($0 - $1)) } }
     let mean = differences.reduce(0, +) / Double(differences.count)
-    #expect(mean <= 1.0 / 255, "mean |Δ| \(mean * 255)/255, max \((differences.max() ?? 0) * 255)/255")
+    #expect(
+      mean <= 1.0 / 255, "mean |Δ| \(mean * 255)/255, max \((differences.max() ?? 0) * 255)/255")
   }
 }

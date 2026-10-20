@@ -1,5 +1,17 @@
 internal import Foundation
 
+/// The frames a candidate is judged against: their residuals and sky noises.
+struct Witnesses {
+  var residuals: [[Float]]
+  var skies: [Double]
+}
+
+/// A frame's own residual (taken before any pass) and its sky noise.
+struct OwnResidual {
+  var plane: [Float]
+  var sky: Double
+}
+
 /// One 64-step stretch of a segment's swath (`corridorWindow`): the unique plane indices inside
 /// the swath over t ∈ [t0, t1].
 struct CorridorWindow {
@@ -37,11 +49,11 @@ enum TrailCorridor {
         t1: min(segment.t1, segment.t0 + Double(bucket + 1) * windowLength))
     }
     var seen = Set<Int>()
-    let (px, py) = (segment.nx * segment.c, segment.ny * segment.c)
-    var t = segment.t0
-    while t <= segment.t1 {
-      let bucket = min(Int((t - segment.t0) / windowLength), count - 1)
-      let (bx, by) = (px - t * segment.ny, py + t * segment.nx)
+    let (px, py) = (segment.nx * segment.rho, segment.ny * segment.rho)
+    var along = segment.t0
+    while along <= segment.t1 {
+      let bucket = min(Int((along - segment.t0) / windowLength), count - 1)
+      let (bx, by) = (px - along * segment.ny, py + along * segment.nx)
       var offset = -segment.width
       while offset <= segment.width {
         let x = Int((bx + offset * segment.nx).rounded())
@@ -51,7 +63,7 @@ enum TrailCorridor {
         }
         offset += 1
       }
-      t += 1
+      along += 1
     }
     return windows
   }
@@ -75,13 +87,15 @@ enum TrailCorridor {
     return (lit, pixels)
   }
 
-  /// The fraction of observing witnesses lit over one window (`witnessWindowFrac`); a witness
-  /// below −3σ there has no data (zero fill reads −median). Nil under three observers.
+  /// The fraction of observing witnesses lit over one window (`witnessWindowFrac`).
+  ///
+  /// A witness below −3σ there has no data (zero fill reads −median). Nil under three observers.
   static func witnessFraction(
-    _ window: CorridorWindow, residuals: [[Float]], skies: [Double], skip: Int
+    _ window: CorridorWindow, witnesses: Witnesses, skip: Int
   ) -> Double? {
+    let skies = witnesses.skies
     var (lit, observing) = (0, 0)
-    for (witness, residual) in residuals.enumerated() where witness != skip {
+    for (witness, residual) in witnesses.residuals.enumerated() where witness != skip {
       var sum = 0.0
       for pixel in window.pixels { sum += Double(residual[pixel]) }
       let mean = sum / Double(window.pixels.count)
@@ -95,10 +109,10 @@ enum TrailCorridor {
   /// The median, over the lit windows, of the witness fraction (`fixedPatternFrac`); nil when no
   /// lit window had enough observers.
   static func recurrence(
-    _ windows: [CorridorWindow], lit: [Int], residuals: [[Float]], skies: [Double], skip: Int
+    _ windows: [CorridorWindow], lit: [Int], witnesses: Witnesses, skip: Int
   ) -> Double? {
     let fractions = lit.filter { !windows[$0].pixels.isEmpty }.compactMap {
-      witnessFraction(windows[$0], residuals: residuals, skies: skies, skip: skip)
+      witnessFraction(windows[$0], witnesses: witnesses, skip: skip)
     }.sorted()
     return fractions.isEmpty ? nil : fractions[fractions.count / 2]
   }
@@ -106,14 +120,14 @@ enum TrailCorridor {
   /// The candidate's lit runs to paint when it is a real trail, nil when it is walking noise or
   /// cannot be judged (`validTrailBasis`). `skip` is the frame's own index in the basis, or −1.
   static func validate(
-    _ segment: TrailSegment, own: [Float], sky: Double, residuals: [[Float]], skies: [Double],
-    skip: Int, size: (width: Int, height: Int), isZero: (Int) -> Bool
+    _ segment: TrailSegment, own: OwnResidual, witnesses: Witnesses, skip: Int,
+    size: (width: Int, height: Int), isZero: (Int) -> Bool
   ) -> [TrailSegment]? {
     let windows = windows(segment, width: size.width, height: size.height)
-    let lit = lit(windows, own: own, sky: sky, isZero: isZero)
+    let lit = lit(windows, own: own.plane, sky: own.sky, isZero: isZero)
     guard !lit.windows.isEmpty, lit.pixels >= minimumPixels,
       let fraction = recurrence(
-        windows, lit: lit.windows, residuals: residuals, skies: skies, skip: skip),
+        windows, lit: lit.windows, witnesses: witnesses, skip: skip),
       fraction < fixedPatternFraction
     else { return nil }
     return runs(segment, windows: windows, lit: lit.windows)

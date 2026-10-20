@@ -27,7 +27,7 @@ struct TrailSegmentDetectorTests {
   func testSingleDiagonal() throws {
     var plane = Self.plane(seed: 2)
     TrailSynth.addStreak(
-      &plane, width: Self.side, height: Self.side, from: (40, 40), to: (260, 260),
+      &plane, size: (Self.side, Self.side), from: (40, 40), to: (260, 260),
       amplitude: 0.1, sigma: 0.8)
     let segments = Self.detect(plane)
     let segment = try #require(segments.count == 1 ? segments.first : nil)
@@ -39,10 +39,10 @@ struct TrailSegmentDetectorTests {
   func testTwoCrossing() throws {
     var plane = Self.plane(seed: 3)
     TrailSynth.addStreak(
-      &plane, width: Self.side, height: Self.side, from: (40, 40), to: (260, 260),
+      &plane, size: (Self.side, Self.side), from: (40, 40), to: (260, 260),
       amplitude: 0.1, sigma: 0.8)
     TrailSynth.addStreak(
-      &plane, width: Self.side, height: Self.side, from: (40, 260), to: (260, 40),
+      &plane, size: (Self.side, Self.side), from: (40, 260), to: (260, 40),
       amplitude: 0.1, sigma: 0.8)
     let segments = Self.detect(plane)
     try #require(segments.count == 2)
@@ -65,7 +65,7 @@ struct TrailSegmentDetectorTests {
   func testShortStreak() {
     var plane = Self.plane(seed: 7)
     TrailSynth.addStreak(
-      &plane, width: Self.side, height: Self.side, from: (130, 130), to: (170, 170),
+      &plane, size: (Self.side, Self.side), from: (130, 130), to: (170, 170),
       amplitude: 0.1, sigma: 0.8)
     #expect(Self.detect(plane).isEmpty)
   }
@@ -86,7 +86,7 @@ struct TrailSegmentDetectorTests {
   func testGaussianWidth() throws {
     var plane = Self.plane(background: 0.05, sigma: 0.003, seed: 10)
     TrailSynth.addStreak(
-      &plane, width: Self.side, height: Self.side, from: (75, 150), to: (225, 150),
+      &plane, size: (Self.side, Self.side), from: (75, 150), to: (225, 150),
       amplitude: 0.05, sigma: 2)
     let segments = Self.detect(plane)
     let segment = try #require(segments.count == 1 ? segments.first : nil)
@@ -97,7 +97,7 @@ struct TrailSegmentDetectorTests {
   func testExtentToBorders() throws {
     var plane = Self.plane(background: 0.05, sigma: 0.003, seed: 11)
     TrailSynth.addStreak(
-      &plane, width: Self.side, height: Self.side, from: (45, 150), to: (255, 150),
+      &plane, size: (Self.side, Self.side), from: (45, 150), to: (255, 150),
       amplitude: 0.4, sigma: 0.8)
     let segments = Self.detect(plane)
     let segment = try #require(segments.count == 1 ? segments.first : nil)
@@ -109,7 +109,7 @@ struct TrailSegmentDetectorTests {
   func testExtentEndpointPad() throws {
     var plane = Self.plane(background: 0.05, sigma: 0.003, seed: 12)
     TrailSynth.addStreak(
-      &plane, width: Self.side, height: Self.side, from: (100, 150), to: (200, 150),
+      &plane, size: (Self.side, Self.side), from: (100, 150), to: (200, 150),
       amplitude: 0.4, sigma: 0.8)
     let segments = Self.detect(plane)
     let segment = try #require(segments.count == 1 ? segments.first : nil)

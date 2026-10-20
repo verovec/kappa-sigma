@@ -87,8 +87,10 @@ package actor Preprocessor {
     return result
   }
 
-  /// Which nights feed which channel (lane): a capture measured both broadband and dual-band
-  /// stacks two lanes. A mono + colour mix is refused before anything runs.
+  /// Which nights feed which channel (lane).
+  ///
+  /// A capture measured both broadband and dual-band stacks two lanes. A mono + colour mix is
+  /// refused before anything runs.
   package static func plan(_ inventory: Inventory) throws -> NightPlan {
     guard inventory.colorModel != .mixed else { throw PreprocessError.mixedColorModel }
     let split = FilterSetLanes.splits(inventory)

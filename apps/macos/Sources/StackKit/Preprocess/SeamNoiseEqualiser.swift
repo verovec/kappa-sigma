@@ -21,8 +21,10 @@ package enum SeamNoiseEqualiser {
   /// The treatment of a master with `planes` planes.
   package static func mode(planes: Int) -> String { planes == 3 ? "luminance" : "mono" }
 
-  /// Equalises the master at `url` with `grid`; soft-fails, with the reason, leaving it untouched.
-  /// A master needing W·H·4·10 bytes over `budget` is skipped (the starlet planes it holds).
+  /// Equalises the master at `url` with `grid`.
+  ///
+  /// Soft-fails, with the reason, leaving it untouched. A master needing W·H·4·10 bytes over
+  /// `budget` is skipped (the starlet planes it holds).
   package static func equalise(
     _ url: URL, grid: CoverageGrid, budget: Int64 = TrailMaskBudget.bytes()
   ) -> Record {

@@ -1,7 +1,9 @@
 internal import Foundation
 
-/// The coverage-aware mean residual (`meanAccum`): a frame counts at a pixel only where it has
-/// data, so rotated zero-fill borders do not drag the mean negative. Float sums, as the legacy.
+/// The coverage-aware mean residual (`meanAccum`).
+///
+/// A frame counts at a pixel only where it has data, so rotated zero-fill borders do not drag the
+/// mean negative. Float sums, as the legacy.
 struct MeanResidual {
   var sum: [Float]
   var count: [UInt16]
@@ -24,9 +26,10 @@ struct MeanResidual {
   }
 }
 
-/// A sky track several satellites reused (`transient/recurring.go`): too faint per frame, absent
-/// from the median, but coherent in the mean residual, exactly as it would sum in the stack.
-/// Each frame repairs only the windows it lights.
+/// A sky track several satellites reused (`transient/recurring.go`).
+///
+/// Too faint per frame, absent from the median, but coherent in the mean residual, exactly as it
+/// would sum in the stack. Each frame repairs only the windows it lights.
 struct RecurringCorridor {
   var segment: TrailSegment
   var windows: [CorridorWindow]
@@ -36,21 +39,23 @@ struct RecurringCorridor {
   /// The mean-plane trails not already on the median's lines, with their shared fractions
   /// (`buildRecurring`).
   static func find(
-    mean: [Float], medianSegments: [TrailSegment], residuals: [[Float]], skies: [Double],
+    mean: [Float], medianSegments: [TrailSegment], witnesses: Witnesses,
     k: Double, size: (width: Int, height: Int)
   ) -> [Self] {
-    TrailSegmentDetector.detect(mean, width: size.width, height: size.height, params: .residual(k: k))
-      .filter { !coveredByMedian($0, medianSegments) }
-      .map { segment in
-        let windows = TrailCorridor.windows(segment, width: size.width, height: size.height)
-        let shared = windows.map { window in
-          window.pixels.isEmpty
-            ? 0
-            : TrailCorridor.witnessFraction(window, residuals: residuals, skies: skies, skip: -1)
-              ?? 0
-        }
-        return Self(segment: segment, windows: windows, shared: shared)
+    TrailSegmentDetector.detect(
+      mean, width: size.width, height: size.height, params: .residual(k: k)
+    )
+    .filter { !coveredByMedian($0, medianSegments) }
+    .map { segment in
+      let windows = TrailCorridor.windows(segment, width: size.width, height: size.height)
+      let shared = windows.map { window in
+        window.pixels.isEmpty
+          ? 0
+          : TrailCorridor.witnessFraction(window, witnesses: witnesses, skip: -1)
+            ?? 0
       }
+      return Self(segment: segment, windows: windows, shared: shared)
+    }
   }
 
   /// Whether `segment` runs along a median segment: normals within 2° (either sign), offsets
@@ -58,22 +63,23 @@ struct RecurringCorridor {
   static func coveredByMedian(_ segment: TrailSegment, _ medianSegments: [TrailSegment]) -> Bool {
     let cosineTolerance = 0.9994
     return medianSegments.contains { other in
-      var (dot, offset) = (segment.nx * other.nx + segment.ny * other.ny, other.c)
+      var (dot, offset) = (segment.nx * other.nx + segment.ny * other.ny, other.rho)
       if dot < 0 { (dot, offset) = (-dot, -offset) }
       return dot >= cosineTolerance
-        && abs(segment.c - offset) <= 2 * max(segment.width, other.width)
+        && abs(segment.rho - offset) <= 2 * max(segment.width, other.width)
     }
   }
 
-  /// Repairs `frame` along the corridor (`maskFrameRecurring`): its lit windows ±1, from the
-  /// median, or from the local sky where the basis shares the window (contaminated median).
-  /// Mode changes inside a run are nudged open so no pixel is painted twice; `corridor` seeds the
-  /// local-sky noise.
+  /// Repairs `frame` along the corridor (`maskFrameRecurring`).
+  ///
+  /// Its lit windows ±1, from the median, or from the local sky where the basis shares the window
+  /// (contaminated median). Mode changes inside a run are nudged open so no pixel is painted twice;
+  /// `corridor` seeds the local-sky noise.
   func repair(
-    _ frame: inout TrailMaskPlanes.Frame, own: [Float], sky: Double, median: [[Float]],
-    corridor: Int, size: (width: Int, height: Int)
+    _ frame: inout TrailMaskPlanes.Frame, own: OwnResidual, median: [[Float]], corridor: Int,
+    size: (width: Int, height: Int)
   ) -> Int {
-    let lit = TrailCorridor.lit(windows, own: own, sky: sky) {
+    let lit = TrailCorridor.lit(windows, own: own.plane, sky: own.sky) {
       TrailMaskPlanes.isZero(frame, $0)
     }
     guard !lit.windows.isEmpty, lit.pixels >= TrailCorridor.minimumPixels else { return 0 }
@@ -111,9 +117,11 @@ struct RecurringCorridor {
     var out: [Group] = []
     var index = 0
     while index < list.count {
-      var group = Group(first: list[index], last: list[index], localSky: local(list[index]), openEnd: false)
+      var group = Group(
+        first: list[index], last: list[index], localSky: local(list[index]), openEnd: false)
       var next = index + 1
-      while next < list.count, list[next] == list[next - 1] + 1, local(list[next]) == group.localSky {
+      while next < list.count, list[next] == list[next - 1] + 1, local(list[next]) == group.localSky
+      {
         group.last = list[next]
         next += 1
       }

@@ -2,10 +2,12 @@ package import Foundation
 internal import ImageKit
 
 extension TrailMask {
-  /// `mask` under a memory budget (`transient.MaskCrossFrameStreamed`): only `basis` evenly spaced
-  /// frames are resident (their residuals feed the median, the validation and the mean); every
-  /// frame is then read, masked and rewritten one at a time. A basis covering every frame
-  /// reproduces `mask` bit for bit. Frames that change are rewritten in place, headers kept.
+  /// `mask` under a memory budget (`transient.MaskCrossFrameStreamed`).
+  ///
+  /// Only `basis` evenly spaced frames are resident (their residuals feed the median, the
+  /// validation and the mean); every frame is then read, masked and rewritten one at a time. A
+  /// basis covering every frame reproduces `mask` bit for bit. Frames that change are rewritten in
+  /// place, headers kept.
   package static func maskStreamed(_ urls: [URL], k: Double, basis: Int) async throws
     -> TrailMaskReport
   {
@@ -26,8 +28,8 @@ extension TrailMask {
       let own = TrailMaskPlanes.residual(frame, median: context.median)
       var record = TrailMaskReport.Frame(index: index + 1)
       maskFrame(
-        &frame, own: own, sky: TrailMaskPlanes.residualSky(own), skip: positions[index] ?? -1,
-        context: context, into: &record, rejected: &report.rejected)
+        &frame, own: OwnResidual(plane: own, sky: TrailMaskPlanes.residualSky(own)),
+        skip: positions[index] ?? -1, context: context, into: &record)
       report.frames.append(record)
       if record.maskedPixels > 0 {
         image.planes = frame

@@ -8,31 +8,34 @@ import Testing
 /// `trailmask_budget_test.go`.
 @Suite("TrailMask streamed — one frame at a time against a bounded basis", .serialized)
 struct TrailMaskStreamedTests {
-  typealias F = TrailMaskFrames
+  typealias Frames = TrailMaskFrames
 
   static func files(_ count: Int, amplitude: (Int) -> Float) throws -> [URL] {
-    try F.write(
-      (0..<count).map { F.frame($0, amplitude: amplitude($0)) }, in: ScratchDirectory.url)
+    try Frames.write(
+      (0..<count).map { Frames.frame($0, amplitude: amplitude($0)) }, in: ScratchDirectory.url)
   }
 
   @Test("a basis covering every frame reproduces the in-memory pass bit for bit", .scratchDirectory)
   func testFullBasisMatchesInMemory() async throws {
     let amplitude: (Int) -> Float = { $0 == 0 ? 0.6 : 0 }
-    var frames = (0..<8).map { [F.frame($0, amplitude: amplitude($0))] }
-    let inMemory = try await TrailMask.mask(&frames, width: F.side, height: F.side, k: 3)
+    var frames = (0..<8).map { [Frames.frame($0, amplitude: amplitude($0))] }
+    let inMemory = try await TrailMask.mask(&frames, width: Frames.side, height: Frames.side, k: 3)
     let urls = try Self.files(8, amplitude: amplitude)
     let streamed = try await TrailMask.maskStreamed(urls, k: 3, basis: 100)
     #expect(streamed.summary == inMemory.summary)
-    #expect(try F.read(urls[0]) == frames[0][0])
+    #expect(try Frames.read(urls[0]) == frames[0][0])
   }
 
-  @Test("a five-frame basis over ten still paints a streak in a frame outside it", .scratchDirectory)
+  @Test(
+    "a five-frame basis over ten still paints a streak in a frame outside it", .scratchDirectory)
   func testSmallBasisCleansTrail() async throws {
     let urls = try Self.files(10) { $0 == 3 ? 0.6 : 0 }
     let summary = try await TrailMask.maskStreamed(urls, k: 3, basis: 5).summary
     #expect(summary.segments >= 1 && summary.rejected == 0)
-    let plane = try F.read(urls[3])
-    #expect(F.maxAlongDiagonal(plane) < 0.2 && abs(F.starPixel(plane) - F.starValue) <= 0.05)
+    let plane = try Frames.read(urls[3])
+    #expect(
+      Frames.maxAlongDiagonal(plane) < 0.2
+        && abs(Frames.starPixel(plane) - Frames.starValue) <= 0.05)
   }
 
   @Test("the fixed-pattern test holds against an 8-of-10 basis", .scratchDirectory)
@@ -44,18 +47,18 @@ struct TrailMaskStreamedTests {
 
   @Test("the recurring pass repairs a frame left out of the basis", .scratchDirectory)
   func testRecurringOnSubsetBasis() async throws {
-    var frames = (0..<10).map { F.frame($0) }
+    var frames = (0..<10).map { Frames.frame($0) }
     for index in frames.indices {
       let start = 20 + 27 * Double(index)
-      F.addStreak(&frames[index], amplitude: 0.6, along: start...(start + 30))
+      Frames.addStreak(&frames[index], amplitude: 0.6, along: start...(start + 30))
     }
-    let urls = try F.write(frames, in: ScratchDirectory.url)
+    let urls = try Frames.write(frames, in: ScratchDirectory.url)
     let summary = try await TrailMask.maskStreamed(urls, k: 3, basis: 8).summary
     #expect(summary.recurring >= 1)
-    let plane = try F.read(urls[4])
+    let plane = try Frames.read(urls[4])
     let middle = 20 + 27 * 4 + 15
-    #expect(plane[middle * F.side + middle] < 0.2)
-    #expect(abs(F.starPixel(plane) - F.starValue) <= 0.05)
+    #expect(plane[middle * Frames.side + middle] < 0.2)
+    #expect(abs(Frames.starPixel(plane) - Frames.starValue) <= 0.05)
   }
 
   @Test(

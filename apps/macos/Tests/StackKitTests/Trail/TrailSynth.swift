@@ -14,16 +14,17 @@ enum TrailSynth {
   /// Adds a straight streak from (ax, ay) to (bx, by): amp·exp(−d²/2σ²) on every pixel whose
   /// projection lies on the segment, d its perpendicular distance.
   static func addStreak(
-    _ plane: inout [Float], width: Int, height: Int, from a: (Double, Double),
-    to b: (Double, Double), amplitude: Double, sigma: Double
+    _ plane: inout [Float], size: (width: Int, height: Int), from start: (Double, Double),
+    to end: (Double, Double), amplitude: Double, sigma: Double
   ) {
-    let (dx, dy) = (b.0 - a.0, b.1 - a.1)
+    let (width, height) = size
+    let (dx, dy) = (end.0 - start.0, end.1 - start.1)
     let length = hypot(dx, dy)
     let (ux, uy) = (dx / length, dy / length)
     let (nx, ny) = (-uy, ux)
     for y in 0..<height {
       for x in 0..<width {
-        let (rx, ry) = (Double(x) - a.0, Double(y) - a.1)
+        let (rx, ry) = (Double(x) - start.0, Double(y) - start.1)
         let along = rx * ux + ry * uy
         guard along >= 0, along <= length else { continue }
         let distance = rx * nx + ry * ny

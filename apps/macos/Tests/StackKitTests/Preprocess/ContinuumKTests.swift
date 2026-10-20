@@ -32,7 +32,8 @@ struct ContinuumKTests {
   func testHaAgainstR() throws {
     let red = Self.ramp()
     let layers = [
-      "R": try Self.write("combine_R", [red]), "Ha": try Self.write("combine_Ha", [Self.line(0.5, of: red)]),
+      "R": try Self.write("combine_R", [red]),
+      "Ha": try Self.write("combine_Ha", [Self.line(0.5, of: red)]),
     ]
     let fit = try #require(try ContinuumK.measure(line: "Ha", layers: layers).fit)
     #expect(abs(fit.k - 0.5) <= 0.01 && fit.reference == "R")

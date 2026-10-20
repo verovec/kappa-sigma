@@ -13,11 +13,11 @@ struct TrailSwathTests {
 
   /// The line y = `row` over the whole width.
   static func horizontal(_ row: Double, width: Double) -> TrailSegment {
-    TrailSegment(nx: 0, ny: 1, c: row, t0: -1e6, t1: 1e6, width: width)
+    TrailSegment(nx: 0, ny: 1, rho: row, t0: -1e6, t1: 1e6, width: width)
   }
 
   static func swathStats(_ plane: [Float], width: Int, height: Int, _ segment: TrailSegment)
-    -> (mean: Double, variance: Double, count: Int)
+    -> (mean: Double, variance: Double, pixels: Int)
   {
     var (sum, squares, count) = (0.0, 0.0, 0)
     for y in 0..<height {
@@ -40,7 +40,7 @@ struct TrailSwathTests {
     let painted = TrailSwath.paintLocalBackground(
       &plane, width: 200, height: 200, segment: segment, seed: 42)
     let stats = Self.swathStats(plane, width: 200, height: 200, segment)
-    try #require(painted > 0 && stats.count > 0)
+    try #require(painted > 0 && stats.pixels > 0)
     #expect(abs(stats.mean - (0.1 + 0.0005 * 100)) <= 0.02 && stats.variance > 0)
   }
 
@@ -68,7 +68,7 @@ struct TrailSwathTests {
     "the swath honours the extent and ±Width of the line",
     arguments: [(100.0, 100.0, true), (10, 100, false), (100, 110, false)])
   func testContains(x: Double, y: Double, expected: Bool) {
-    let segment = TrailSegment(nx: 0, ny: 1, c: 100, t0: -150, t1: -50, width: 4)
+    let segment = TrailSegment(nx: 0, ny: 1, rho: 100, t0: -150, t1: -50, width: 4)
     #expect(segment.contains(x: x, y: y) == expected)
   }
 

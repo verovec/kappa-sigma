@@ -8,20 +8,19 @@ extension TrailSegmentDetector {
     var weight: Double
   }
 
-  /// The pooled line refined at full resolution (`refineSegment`): a flux-weighted principal-axis
-  /// fit, a Gaussian width from the perpendicular profile, then the extent. Never fails: on
-  /// degenerate weights the pooled line and a 2 px width stay.
+  /// The pooled line refined at full resolution (`refineSegment`).
+  ///
+  /// A flux-weighted principal-axis fit, a Gaussian width from the perpendicular profile, then the
+  /// extent. Never fails: on degenerate weights the pooled line and a 2 px width stay.
   static func refine(
     _ plane: [Float], width: Int, height: Int, grid: Grid, inliers: [Int], line: HoughLine
   ) -> TrailSegment {
     var segment = TrailSegment(
-      nx: line.cosine, ny: line.sine, c: line.rho * Double(grid.factor), width: 2)
-    let background = PhotomStats.percentile(PhotomStats.subsample(plane, limit: 100_000), 50)
+      nx: line.cosine, ny: line.sine, rho: line.rho * Double(grid.factor), width: 2)
     let points = swath(
-      plane, width: width, height: height, segment: segment, grid: grid, inliers: inliers,
-      background: background)
+      plane, width: width, height: height, segment: segment, grid: grid, inliers: inliers)
     if points.count >= 8 {
-      if let fitted = fitLine(points) { (segment.nx, segment.ny, segment.c) = fitted }
+      if let fitted = fitLine(points) { (segment.nx, segment.ny, segment.rho) = fitted }
       segment.width = profileWidth(points, segment)
     }
     setExtent(&segment, grid: grid, inliers: inliers, width: width, height: height)
@@ -42,9 +41,10 @@ extension TrailSegmentDetector {
   /// Pixels within ⊥±8f of the pooled line and the inlier extent ±5%, weighted by v − background
   /// when positive (`gatherSwath`); only the band's bounding box is scanned.
   static func swath(
-    _ plane: [Float], width: Int, height: Int, segment: TrailSegment, grid: Grid, inliers: [Int],
-    background: Double
+    _ plane: [Float], width: Int, height: Int, segment: TrailSegment, grid: Grid, inliers: [Int]
   ) -> [WeightedPoint] {
+    // The plane's median, from an evenly spaced subsample (`fullMedian`).
+    let background = PhotomStats.percentile(PhotomStats.subsample(plane, limit: 100_000), 50)
     let (dx, dy) = segment.direction
     let centres = centres(inliers, grid: grid)
     let along = centres.map { $0.0 * dx + $0.1 * dy }
@@ -62,9 +62,9 @@ extension TrailSegmentDetector {
     for y in y0...y1 {
       for x in x0...x1 {
         let (fx, fy) = (Double(x), Double(y))
-        guard abs(fx * segment.nx + fy * segment.ny - segment.c) <= band else { continue }
-        let t = fx * dx + fy * dy
-        guard t >= from && t <= to else { continue }
+        guard abs(fx * segment.nx + fy * segment.ny - segment.rho) <= band else { continue }
+        let along = fx * dx + fy * dy
+        guard along >= from && along <= to else { continue }
         let weight = Double(plane[y * width + x]) - background
         if weight > 0 { points.append(WeightedPoint(x: fx, y: fy, weight: weight)) }
       }
@@ -72,7 +72,7 @@ extension TrailSegmentDetector {
     return points
   }
 
-  /// The flux-weighted principal-axis line as (nx, ny, c); nil when the weight is zero.
+  /// The flux-weighted principal-axis line as (nx, ny, rho); nil when the weight is zero.
   static func fitLine(_ points: [WeightedPoint]) -> (Double, Double, Double)? {
     var (total, sumX, sumY) = (0.0, 0.0, 0.0)
     for point in points {

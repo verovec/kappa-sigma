@@ -83,9 +83,10 @@ extension ChannelStacker {
     finish(master, into: &outcome)
   }
 
-  /// The registered frames' cross-frame pass (`applyTrailMask`): saturated cores repaired first,
-  /// then the trail mask when k > 0, one note for both. Under five frames nothing runs; a
-  /// failure is noted and the frames are stacked as they are.
+  /// The registered frames' cross-frame pass (`applyTrailMask`).
+  ///
+  /// Saturated cores repaired first, then the trail mask when k > 0, one note for both. Under five
+  /// frames nothing runs; a failure is noted and the frames are stacked as they are.
   package func maskRegistered(
     _ files: [URL], saturationCeilings: [Float], into outcome: inout ChannelOutcome
   ) async throws {

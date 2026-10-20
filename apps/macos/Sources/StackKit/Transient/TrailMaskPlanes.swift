@@ -2,7 +2,9 @@ internal import Accelerate
 internal import Foundation
 
 /// The cross-frame statistics of the trail mask (`transient/planes.go`, the blanket pass and
-/// `residualSky`). A frame is its planes, `frame[channel][pixel]`.
+/// `residualSky`).
+///
+/// A frame is its planes, `frame[channel][pixel]`.
 enum TrailMaskPlanes {
   typealias Frame = [[Float]]
 

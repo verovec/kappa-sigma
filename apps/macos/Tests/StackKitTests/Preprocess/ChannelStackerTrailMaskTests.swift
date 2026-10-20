@@ -7,7 +7,7 @@ import Testing
 /// stack at the preset's k, recorded on the channel, soft-failing.
 @Suite("ChannelStacker trail mask — the registered frames cleaned before the stack", .serialized)
 struct ChannelStackerTrailMaskTests {
-  typealias F = TrailMaskFrames
+  typealias Frames = TrailMaskFrames
 
   static func outcome() -> ChannelOutcome {
     let key = SetKey(
@@ -26,34 +26,35 @@ struct ChannelStackerTrailMaskTests {
 
   @Test("deepsky and nebula mask at k = 3, as the legacy presets did")
   func testPresetK() {
-    #expect(PreprocessSettings().trailMaskK == 3 && PreprocessSettings.preset(.nebula).trailMaskK == 3)
+    #expect(
+      PreprocessSettings().trailMaskK == 3 && PreprocessSettings.preset(.nebula).trailMaskK == 3)
   }
 
   @Test("at k = 3 the trailed frame is cleaned, recorded and noted", .scratchDirectory)
   func testMasked() async throws {
-    let urls = try F.write(
-      (0..<8).map { F.frame($0, amplitude: $0 == 5 ? 0.6 : 0) }, in: ScratchDirectory.url)
+    let urls = try Frames.write(
+      (0..<8).map { Frames.frame($0, amplitude: $0 == 5 ? 0.6 : 0) }, in: ScratchDirectory.url)
     var outcome = Self.outcome()
     try await Self.stacker(k: 3).maskRegistered(urls, saturationCeilings: [], into: &outcome)
     let summary = try #require(outcome.trailMask)
     #expect(summary.segments >= 1 && summary.frames == 8 && summary.saturatedPixels == 0)
     #expect(outcome.selection.notes.last?.hasPrefix("cross-frame trail mask: cleaned ") == true)
-    #expect(F.maxAlongDiagonal(try F.read(urls[5])) < 0.2)
+    #expect(Frames.maxAlongDiagonal(try Frames.read(urls[5])) < 0.2)
   }
 
   @Test("k = 0 and no saturation repair: nothing runs, nothing is noted", .scratchDirectory)
   func testOff() async throws {
-    let urls = try F.write(
-      (0..<8).map { F.frame($0, amplitude: $0 == 5 ? 0.6 : 0) }, in: ScratchDirectory.url)
+    let urls = try Frames.write(
+      (0..<8).map { Frames.frame($0, amplitude: $0 == 5 ? 0.6 : 0) }, in: ScratchDirectory.url)
     var outcome = Self.outcome()
     try await Self.stacker(k: 0).maskRegistered(urls, saturationCeilings: [], into: &outcome)
     #expect(outcome.trailMask == nil && outcome.selection.notes.isEmpty)
-    #expect(F.maxAlongDiagonal(try F.read(urls[5])) > 0.5)
+    #expect(Frames.maxAlongDiagonal(try Frames.read(urls[5])) > 0.5)
   }
 
   @Test("an unreadable frame skips the mask with a note; the stack goes on", .scratchDirectory)
   func testSoftFail() async throws {
-    var urls = try F.write((0..<6).map { F.frame($0) }, in: ScratchDirectory.url)
+    var urls = try Frames.write((0..<6).map { Frames.frame($0) }, in: ScratchDirectory.url)
     urls[3] = try ScratchDirectory.url.appendingPathComponent("missing.fits")
     var outcome = Self.outcome()
     try await Self.stacker(k: 3).maskRegistered(urls, saturationCeilings: [], into: &outcome)

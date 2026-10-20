@@ -20,7 +20,9 @@ struct EmissionLayersTests {
       height: height, planes: planes)
   }
 
-  @Test("broadband + dual-band: Hα and [OIII] split, scales fitted on the colour base", .scratchDirectory)
+  @Test(
+    "broadband + dual-band: Hα and [OIII] split, scales fitted on the colour base",
+    .scratchDirectory)
   func testSplitCapture() throws {
     let out = try ScratchDirectory.url
     _ = try Self.write("trim_RGB", [Self.ramp(1), Self.ramp(0.8), Self.ramp(0.6)])
@@ -46,7 +48,8 @@ struct EmissionLayersTests {
     #expect(abs((continuum["Ha"] ?? 0) - 0.5) <= 0.01 && notes.count == 1)
     var lone: [String] = []
     let (_, none) = Preprocessor.emission(["Ha": "trim_Ha"], out: out, notes: &lone)
-    #expect(none.isEmpty && lone == ["Ha: continuum scale not fitted — no broadband channel (R/L) to estimate the continuum from"])
+    let reason = "no broadband channel (R/L) to estimate the continuum from"
+    #expect(none.isEmpty && lone == ["Ha: continuum scale not fitted — " + reason])
   }
 
   @Test("the composite base: the one colour master, emission layers set aside")

@@ -82,6 +82,9 @@ struct FilterSetLanesTests {
 
   @Test("non-canonical lanes sort deterministically after the canonical filters")
   func testOrderedDeterministic() {
-    #expect(ChannelAligner.ordered(["L", "RGB-dualband", "RGB", "Zz"]) == ["L", "RGB", "RGB-dualband", "Zz"])
+    #expect(
+      ChannelAligner.ordered(["L", "RGB-dualband", "RGB", "Zz"]) == [
+        "L", "RGB", "RGB-dualband", "Zz",
+      ])
   }
 }

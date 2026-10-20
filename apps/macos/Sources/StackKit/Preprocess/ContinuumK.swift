@@ -1,9 +1,10 @@
 package import Foundation
 internal import ImageKit
 
-/// The continuum scale k of an emission layer (`lineContinuumSubtract`): excess = line − k·ref
-/// cancels stars and broadband structure, leaving the true emission. Measured and recorded on
-/// the bundle (R2: a value shown); the subtraction itself is the Studio's (0051).
+/// The continuum scale k of an emission layer (`lineContinuumSubtract`).
+///
+/// Excess = line − k·ref cancels stars and broadband structure, leaving the true emission. Measured
+/// and recorded on the bundle (R2: a value shown); the subtraction itself is the Studio's (0051).
 ///
 /// k is the median line/ref ratio over the continuum-bright reference pixels (P85 < ref < P99.9,
 /// at most 2 M strided samples). References: Hα and [SII] take R then L, [OIII] G, B then L, as
@@ -39,7 +40,10 @@ package enum ContinuumK {
     guard let reference = filters.first(where: { layers[$0] != nil }) ?? colour,
       let referenceURL = layers[reference]
     else {
-      return (nil, "no broadband channel (\(filters.joined(separator: "/"))) to estimate the continuum from")
+      return (
+        nil,
+        "no broadband channel (\(filters.joined(separator: "/"))) to estimate the continuum from"
+      )
     }
     let lineImage = try FITSFile.read(at: lineURL).image()
     let referenceImage = try FITSFile.read(at: referenceURL).image()
@@ -47,8 +51,11 @@ package enum ContinuumK {
     guard lineImage.width == referenceImage.width, lineImage.height == referenceImage.height,
       plane < referenceImage.planes.count
     else {
-      return (nil, "\(line) \(lineImage.width)×\(lineImage.height) vs \(reference) "
-        + "\(referenceImage.width)×\(referenceImage.height) — masters not co-registered")
+      return (
+        nil,
+        "\(line) \(lineImage.width)×\(lineImage.height) vs \(reference) "
+          + "\(referenceImage.width)×\(referenceImage.height) — masters not co-registered"
+      )
     }
     switch scale(line: lineImage.planes[0], reference: referenceImage.planes[plane]) {
     case .success(let k): return (Fit(k: k, reference: reference), nil)
@@ -67,8 +74,10 @@ package enum ContinuumK {
     let low = PhotomStats.percentile(sample, selection.low)
     let high = PhotomStats.percentile(sample, selection.high)
     guard low > 1e-6, high > low else {
-      return .failure(Refusal(text: "reference too dark/flat to calibrate the continuum "
-        + "(P85=\(String(format: "%.2g", low)))"))
+      return .failure(
+        Refusal(
+          text: "reference too dark/flat to calibrate the continuum "
+            + "(P85=\(String(format: "%.2g", low)))"))
     }
     let stride = reference.count / 2_000_000 + 1
     var ratios: [Float] = []
@@ -77,7 +86,8 @@ package enum ContinuumK {
       if Double(value) > low && Double(value) < high { ratios.append(line[index] / value) }
     }
     guard ratios.count >= minimumSamples else {
-      return .failure(Refusal(text: "only \(ratios.count) continuum-bright pixels — cannot fit a stable scale"))
+      return .failure(
+        Refusal(text: "only \(ratios.count) continuum-bright pixels — cannot fit a stable scale"))
     }
     let k = PhotomStats.percentile(ratios, 50)
     guard k > 0, k.isFinite else {

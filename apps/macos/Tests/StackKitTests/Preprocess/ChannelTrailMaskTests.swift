@@ -6,12 +6,14 @@ import Testing
 /// `ChannelTrailMask` is `maskChannelTrails` + `summarizeTrailMask` (`pipeline/trailmask.go`):
 /// the in-memory pass while the channel fits the budget, the streamed one above it, the cleaned
 /// frames rewritten in place, one note in the legacy wording.
-@Suite("ChannelTrailMask — a channel's registered frames masked within the memory budget", .serialized)
+@Suite(
+  "ChannelTrailMask — a channel's registered frames masked within the memory budget", .serialized)
 struct ChannelTrailMaskTests {
-  typealias F = TrailMaskFrames
+  typealias Frames = TrailMaskFrames
 
   static func files() throws -> [URL] {
-    try F.write((0..<8).map { F.frame($0, amplitude: $0 == 2 ? 0.6 : 0) }, in: ScratchDirectory.url)
+    try Frames.write(
+      (0..<8).map { Frames.frame($0, amplitude: $0 == 2 ? 0.6 : 0) }, in: ScratchDirectory.url)
   }
 
   @Test(
@@ -23,7 +25,7 @@ struct ChannelTrailMaskTests {
     #expect(masked.summary.segments >= 1 && masked.summary.frames == 8)
     #expect(masked.mode?.hasPrefix("streamed, 8-frame basis under a 0.0 GiB") ?? true)
     #expect((masked.mode == nil) == (mode == nil))
-    #expect(F.maxAlongDiagonal(try F.read(urls[2])) < 0.2)
+    #expect(Frames.maxAlongDiagonal(try Frames.read(urls[2])) < 0.2)
     #expect(masked.note.hasPrefix("cross-frame trail mask: cleaned "))
   }
 

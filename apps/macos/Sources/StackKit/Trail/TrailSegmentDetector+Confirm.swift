@@ -23,8 +23,8 @@ extension TrailSegmentDetector {
     var (low, high, squares, absolute) = (Double.infinity, -Double.infinity, 0.0, 0.0)
     for cell in inliers {
       let (x, y) = (Double(cell % grid.width), Double(cell / grid.width))
-      let t = x * dx + y * dy
-      (low, high) = (min(low, t), max(high, t))
+      let along = x * dx + y * dy
+      (low, high) = (min(low, along), max(high, along))
       let distance = x * line.cosine + y * line.sine - line.rho
       squares += distance * distance
       absolute += abs(distance)

@@ -17,9 +17,8 @@ package enum TrailMask {
   struct Context {
     var median: [[Float]]
     var sigma: [[Float]]
-    /// The witnesses' residuals and sky noises (the whole sequence, or the streamed basis).
-    var residuals: [[Float]]
-    var skies: [Double]
+    /// The whole sequence, or the streamed basis.
+    var witnesses: Witnesses
     var medianSegments: [TrailSegment]
     var recurring: [RecurringCorridor]
     var k: Double
@@ -38,9 +37,9 @@ package enum TrailMask {
     for index in frames.indices {
       try Task.checkCancellation()
       var frame = TrailMaskReport.Frame(index: index + 1)
-      maskFrame(
-        &frames[index], own: context.residuals[index], sky: context.skies[index], skip: index,
-        context: context, into: &frame, rejected: &report.rejected)
+      let own = OwnResidual(
+        plane: context.witnesses.residuals[index], sky: context.witnesses.skies[index])
+      maskFrame(&frames[index], own: own, skip: index, context: context, into: &frame)
       report.frames.append(frame)
     }
     return report
@@ -64,31 +63,32 @@ package enum TrailMask {
     let size = (width, height)
     let medianSegments = TrailMaskPlanes.medianTrails(median, width: width, height: height)
     let recurring = RecurringCorridor.find(
-      mean: mean.plane, medianSegments: medianSegments, residuals: residuals, skies: skies, k: k,
+      mean: mean.plane, medianSegments: medianSegments,
+      witnesses: Witnesses(residuals: residuals, skies: skies), k: k,
       size: size)
     return Context(
-      median: median, sigma: sigma, residuals: residuals, skies: skies,
+      median: median, sigma: sigma, witnesses: Witnesses(residuals: residuals, skies: skies),
       medianSegments: medianSegments, recurring: recurring, k: k, size: size)
   }
 
   /// The four passes on one frame; `own` is its residual taken before any pass, `skip` its
   /// position among the witnesses (−1 when it is not one).
   static func maskFrame(
-    _ frame: inout TrailMaskPlanes.Frame, own: [Float], sky: Double, skip: Int, context: Context,
-    into record: inout TrailMaskReport.Frame, rejected: inout Int
+    _ frame: inout TrailMaskPlanes.Frame, own: OwnResidual, skip: Int, context: Context,
+    into record: inout TrailMaskReport.Frame
   ) {
     let size = context.size
     record.maskedPixels += TrailMaskPlanes.blanket(
       &frame, median: context.median, sigma: context.sigma, k: context.k)
     let candidates = TrailSegmentDetector.detect(
-      own, width: size.width, height: size.height, params: .residual(k: context.k))
+      own.plane, width: size.width, height: size.height, params: .residual(k: context.k))
     for candidate in candidates {
       guard
         let runs = TrailCorridor.validate(
-          candidate, own: own, sky: sky, residuals: context.residuals, skies: context.skies,
-          skip: skip, size: size, isZero: { TrailMaskPlanes.isZero(frame, $0) })
+          candidate, own: own, witnesses: context.witnesses, skip: skip, size: size,
+          isZero: { TrailMaskPlanes.isZero(frame, $0) })
       else {
-        rejected += 1
+        record.rejected += 1
         continue
       }
       record.segments += 1
@@ -102,7 +102,7 @@ package enum TrailMask {
     }
     for (index, corridor) in context.recurring.enumerated() {
       record.maskedPixels += corridor.repair(
-        &frame, own: own, sky: sky, median: context.median, corridor: index, size: size)
+        &frame, own: own, median: context.median, corridor: index, size: size)
     }
     for (index, segment) in context.medianSegments.enumerated() {
       for channel in frame.indices {

@@ -111,8 +111,8 @@ package enum TrailSegmentDetector {
       for gx in 0..<grid.width {
         let (x, y) = (Double(gx), Double(gy))
         guard abs(x * line.cosine + y * line.sine - line.rho) <= half else { continue }
-        let t = x * dx + y * dy
-        if t >= low && t <= high { grid.cells[gy * grid.width + gx] = median }
+        let along = x * dx + y * dy
+        if along >= low && along <= high { grid.cells[gy * grid.width + gx] = median }
       }
     }
   }

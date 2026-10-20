@@ -1,3 +1,4 @@
+package import Foundation
 internal import Observation
 package import StackKit
 
@@ -13,14 +14,14 @@ package final class MasterInspectViewModel {
   package private(set) var inspection: MasterInspection?
   /// The library masters this role could take, with the matcher's verdict on each (`load`).
   package private(set) var alternatives: [MasterAlternative] = []
-  package private(set) var error: String?
+  package private(set) var error: UserFacingError?
   package private(set) var isWorking = false
   /// Siril's last percentage during a rebuild.
   package private(set) var progress: Int?
   /// What the last rebuild reported.
   package private(set) var notes: [String] = []
   /// Set when a rebuild would overwrite a library master: what would be lost, awaiting a yes.
-  package private(set) var pendingReplace: String?
+  package private(set) var pendingReplace: LocalizedStringResource?
 
   private let sheet: ImportViewModel
 
@@ -99,7 +100,9 @@ package final class MasterInspectViewModel {
         self.sheet.rescan()
       } catch CalibrationError.wouldReplace(let path, let frames) {
         self.pendingReplace =
-          "replaces \(path)" + (frames > 0 ? " (\(frames) frames)" : "") + " in the library"
+          frames > 0
+          ? .app("replaces \(path) (\(ImportFormat.frames(frames))) in the library")
+          : .app("replaces \(path) in the library")
       }
     }
     await shown.value
@@ -112,7 +115,7 @@ package final class MasterInspectViewModel {
       try await body()
       error = nil
     } catch {
-      self.error = "\(error)"
+      self.error = UserFacingError(error)
     }
   }
 

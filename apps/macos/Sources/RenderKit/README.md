@@ -36,6 +36,13 @@ processes run (design §4.1, §4.6).
 - Frame budget (`LiveViewerPerfTests`, live-only): 22 Mpx RGB, 3024×1964 view, STF + histogram:
   **1.5 ms** mean GPU time on the M5 Pro (budget 16 ms).
 
+## Strings (card 0073)
+
+`Localizable.xcstrings` holds the viewer chrome in en/fr, compiled by `CatalogPlugin` into
+`RenderKitResources.bundle` (the same bundle the shaders load from); resolve with
+`.renderKit("…")`. `ViewerPanel` still shows English literals: card 0074 switches it to the
+catalog with its number formats. Rules: `Sources/StringCatalog/README.md`.
+
 ## Coordinates
 
 View coordinates are drawable pixels (points × backing scale), top-left origin. `ViewTransform`

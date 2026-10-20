@@ -8,7 +8,7 @@ package final class ProjectWindowModel {
   package private(set) var sources: [ProjectSource] = []
   /// The open Import sheet's model, `nil` when no sheet is shown.
   package var importing: ImportViewModel?
-  package private(set) var error: String?
+  package private(set) var error: UserFacingError?
 
   private let store: () -> ProjectStore?
   private let services: (ProjectStore?) -> ImportServices
@@ -43,7 +43,7 @@ package final class ProjectWindowModel {
   /// Recording is idempotent per folder: after a failure part-way, Add again records the rest.
   package func add(_ request: ImportRequest) {
     guard let store = store() else {
-      error = "this project is not open any more; reopen it and import again"
+      error = .projectClosed
       return
     }
     do {
@@ -54,7 +54,7 @@ package final class ProjectWindowModel {
       refresh()
     } catch {
       refresh()
-      self.error = "\(error)"
+      self.error = UserFacingError(error)
     }
   }
 
@@ -64,7 +64,7 @@ package final class ProjectWindowModel {
       sources = try store()?.sources() ?? []
       error = nil
     } catch {
-      self.error = "\(error)"
+      self.error = UserFacingError(error)
     }
   }
 }

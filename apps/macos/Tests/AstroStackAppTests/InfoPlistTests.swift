@@ -1,6 +1,7 @@
 import AstroStackApp
 import Foundation
 import ProjectKit
+import StringCatalog
 import TestSupport
 import Testing
 
@@ -32,6 +33,13 @@ struct InfoPlistTests {
     #expect((type["UTTypeConformsTo"] as? [String])?.contains("com.apple.package") == true)
     let tags = type["UTTypeTagSpecification"] as? [String: [String]]
     #expect(tags?["public.filename-extension"] == [ProjectPackage.fileExtension])
+  }
+
+  @Test("the bundle declares French and English, English as its development language")
+  func testDeclaresFrenchAndEnglish() throws {
+    let plist = try Self.plist()
+    #expect(plist["CFBundleLocalizations"] as? [String] == StringCatalog.languages)
+    #expect(plist["CFBundleDevelopmentRegion"] as? String == "en")
   }
 
   @Test("the bundle runs the executable the bundle script installs, on macOS 26")

@@ -1,7 +1,10 @@
-internal import Foundation
+package import Foundation
 package import StackKit
 
 /// How the Import sheet writes the plan's values: text only, nothing decided here.
+///
+/// Sentences come from the app's catalog; units and numbers are written here until
+/// `AstroFormat` (card 0074) formats them per locale.
 package nonisolated enum ImportFormat {
   /// `300 s`, `2.5 s`, `5 ms`; `—` when the type carries no exposure.
   package static func exposure(_ ms: Int) -> String {
@@ -23,22 +26,28 @@ package nonisolated enum ImportFormat {
   }
 
   /// A night's heading.
-  package static func night(_ session: String) -> String {
-    session.isEmpty ? "Shared calibration and undated frames" : "Night of \(session)"
+  package static func night(_ session: String) -> LocalizedStringResource {
+    session.isEmpty ? .app("Shared calibration and undated frames") : .app("Night of \(session)")
   }
 
   /// What a calibration cell will do.
-  package static func status(_ status: ImportPlan.Status) -> String {
+  package static func status(_ status: ImportPlan.Status) -> LocalizedStringResource {
     switch status {
     case .library(let path, let frames):
       let name = URL(fileURLWithPath: path).lastPathComponent
-      return frames > 0 ? "library: \(name) (\(frames) frames)" : "library: \(name)"
+      return frames > 0
+        ? .app("library: \(name) (\(Self.frames(frames)))") : .app("library: \(name)")
     case .build(let frames):
-      return "build from \(frames) frame\(frames == 1 ? "" : "s")"
+      return .app("build from \(frames) frames")
     case .excluded(let proposed):
-      return "excluded (proposed: \(Self.status(proposed)))"
+      return .app("excluded (proposed: \(Self.status(proposed)))")
     case .missing:
-      return "missing"
+      return .app("missing")
     }
+  }
+
+  /// A frame count, singular or plural.
+  package static func frames(_ count: Int) -> LocalizedStringResource {
+    .app("\(count) frames")
   }
 }

@@ -1,5 +1,4 @@
 package import Foundation
-internal import ImageKit
 package import Metal
 
 /// RenderKit's Metal library.
@@ -13,8 +12,6 @@ package enum ShaderLibrary {
   package static let sourceFiles = ["Display.metal", "Histogram.metal"]
   /// Every kernel the library must expose.
   package static let kernelNames: Set<String> = ["display", "histogram", "shaderLayout"]
-  /// SwiftPM's resource bundle for RenderKit.
-  private static let bundleName = "AstroStack_RenderKit.bundle"
 
   /// The precompiled library if bundled, else the runtime-compiled one.
   package static func load(device: MTLDevice) throws -> MTLLibrary {
@@ -51,7 +48,7 @@ package enum ShaderLibrary {
 
   /// The folder holding the `.metal` sources and `ShaderTypes.h`.
   package static func sourceFolder() throws -> URL {
-    let bundle = KitBundle.resolve(named: bundleName) { Bundle.module }
+    let bundle = RenderKitResources.bundle
     guard let folder = bundle.url(forResource: "Shaders", withExtension: nil) else {
       throw RenderError.shaderSourcesMissing(path: bundle.bundleURL.path)
     }

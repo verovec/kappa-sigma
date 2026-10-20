@@ -3,6 +3,7 @@ import AstroStackApp
 import Foundation
 import ProjectKit
 import StackKit
+import StringCatalog
 import SwiftUI
 import TestSupport
 import Testing
@@ -66,5 +67,55 @@ struct ImportSheetTests {
     host.layoutSubtreeIfNeeded()
     #expect(window.sources.count == 1)
     #expect(host.fittingSize.width >= 640)
+  }
+
+  @Test("the sheet lays out in every state in each language", arguments: ["en", "fr"])
+  func testSheetLaysOutInLanguage(_ language: String) async throws {
+    let planner = ImportViewModelTests.FakePlanner()
+    let model = ImportViewModel(planning: planner.planning)
+    let host = Self.host(
+      ImportSheet(model: model, onAdd: { _ in }, onCancel: {}, addError: .projectClosed)
+        .environment(\.locale, Locale(identifier: language)))
+    model.choose(folder: URL(fileURLWithPath: "/c/M31-DB"))
+    await model.settled()
+    let rows = try #require(model.plan).nights.flatMap(\.sets)
+    model.exclude(rows[1])
+    await model.settled()
+    host.layoutSubtreeIfNeeded()
+    planner.failure = InspectError.unreadableFolder("/c/M31-DB")
+    model.rescan()
+    await model.settled()
+    host.layoutSubtreeIfNeeded()
+    #expect(host.fittingSize.width >= 820)
+  }
+
+  @Test(
+    "a view shows the app catalog's text in its locale",
+    arguments: zip(
+      ["en", "fr"], ["Empty project", "Projet vide"]))
+  func testViewsResolveTheirLocale(language: String, expected: String) {
+    let locale = Locale(identifier: language)
+    let resolved = Self.host(Text(.app("Empty project")).fixedSize().environment(\.locale, locale))
+    let verbatim = Self.host(Text(verbatim: expected).fixedSize().environment(\.locale, locale))
+    #expect(resolved.fittingSize == verbatim.fittingSize)
+  }
+
+  /// The screens migrated by card 0073; ImportFormat's units wait for AstroFormat (0074).
+  static let migrated = [
+    "ProjectWindowView", "ProjectWindowModel", "ImportSheet", "ImportInventoryView",
+    "ImportOverridesView", "ImportCalibrationView", "SettingsView", "MasterInspectView",
+    "MasterInspectViewModel", "MasterFormat",
+    "UserFacingError",
+  ]
+
+  @Test("the project window and import sheet carry no English literal outside the catalog")
+  func testNoEnglishLiteralOutsideTheCatalog() throws {
+    let root = try ModuleBoundary.packageRoot(from: #filePath) + "/Sources/AstroStackApp/"
+    let catalog = try StringCatalog(
+      contentsOf: URL(fileURLWithPath: root + "Localizable.xcstrings"))
+    for file in Self.migrated {
+      let source = try String(contentsOfFile: root + file + ".swift", encoding: .utf8)
+      #expect(CatalogAudit.uncatalogued(in: source, file: file, catalog: catalog) == [])
+    }
   }
 }

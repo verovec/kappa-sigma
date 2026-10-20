@@ -37,8 +37,8 @@ struct MasterInspectViewTests {
       [
         MasterFormat.value(0.0076334), MasterFormat.percent(-3.333), MasterFormat.percent(59.19),
         MasterFormat.name("/lib/master_FLAT_15000ms_g100o50_b1_0C.fits"),
-        MasterFormat.verdict(.chosen), MasterFormat.verdict(.otherSensor("")),
-        MasterFormat.verdict(.otherSensor("1 master from another sensor")),
+        MasterFormat.verdict(.chosen).text("en"), MasterFormat.verdict(.otherSensor("")).text("en"),
+        MasterFormat.verdict(.otherSensor("1 master from another sensor")).text("en"),
       ],
       [
         "0.0076334", "-3.33 %", "+59.19 %", "master_FLAT_15000ms_g100o50_b1_0C.fits", "applied",
@@ -52,7 +52,8 @@ struct MasterInspectViewTests {
     "matches and forced verdicts say why",
     arguments: [MasterAlternative.Verdict.matches, .needsForce])
   func testVerdictReasons(verdict: MasterAlternative.Verdict) {
-    #expect(MasterFormat.verdict(verdict).count > 10)
+    #expect(MasterFormat.verdict(verdict).text("en").count > 10)
+    #expect(MasterFormat.verdict(verdict).text("fr") != MasterFormat.verdict(verdict).text("en"))
   }
 
   @Test("the live services measure a master on disk, off the main actor", .scratchDirectory)

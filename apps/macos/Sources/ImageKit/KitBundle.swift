@@ -17,4 +17,14 @@ package enum KitBundle {
     }
     return fallback()
   }
+
+  /// `key` in the string catalog compiled into `bundle` (card 0073); `locale` pins the language
+  /// (tests), the user's languages (`AppleLanguages`) otherwise.
+  package static func string(
+    _ key: String.LocalizationValue, in bundle: Bundle, locale: Locale? = nil
+  ) -> LocalizedStringResource {
+    var resource = LocalizedStringResource(key, bundle: .atURL(bundle.bundleURL))
+    if let locale { resource.locale = locale }
+    return resource
+  }
 }

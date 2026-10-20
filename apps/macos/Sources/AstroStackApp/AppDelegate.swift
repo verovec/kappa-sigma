@@ -42,6 +42,11 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
     ImageViewerWindow.choose()
   }
 
+  /// AstroStack › Settings…: the interface language.
+  @objc package func showSettings(_ sender: Any?) {
+    SettingsWindow.show()
+  }
+
   private static var launchImage: String? { UserDefaults.standard.string(forKey: "openImage") }
 
   /// AppKit does not close documents on quit; closing them checkpoints each `project.db` and

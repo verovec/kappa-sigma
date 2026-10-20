@@ -31,7 +31,7 @@ struct LiveImportSheetTests {
     model.choose(folder: capture)
     await model.settled()
 
-    let plan = try #require(model.plan, "\(model.error ?? "")")
+    let plan = try #require(model.plan, "\(model.error?.errorDescription ?? "")")
     let lights = plan.nights.flatMap(\.sets).filter { $0.type == .light }
     #expect(lights.map(\.count) == [36])
     let cells = try #require(plan.calibration.first).cells

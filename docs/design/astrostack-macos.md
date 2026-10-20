@@ -28,7 +28,7 @@ Exigences dérivées, numérotées pour que chaque epic s'y rattache :
 | R4 | Intensifier des couches à la main | curseurs par couche (Hα, OIII, SII, L, R, G, B), aperçu instantané, valeur = effet |
 | R5 | Automatiser le répétitif, garder la main sur l'ajustable | **profils** (objet × filtres × caméra) qui prédéfinissent un **pipeline** avec des **points d'arrêt** où l'humain reprend la main ; rejouer un pipeline sur une nouvelle nuit en un clic |
 | R6 | Le meilleur empilement possible, sur Siril et l'open source | Siril 1.4.x pour calibration/registration/empilement/SPCC ; GraXpert ; StarNet (installé par l'utilisateur) ; aucune dépendance propriétaire |
-| R7 | `input/` et `output/` intouchés | l'app lit `input/` et les anciens runs d'`output/` en lecture seule ; ses propres données vivent ailleurs |
+| R7 | captures et anciens runs intouchés | l'app lit `~/Documents/astro/captures/` et les anciens runs de `~/Documents/astro/runs/` en lecture seule ; ses propres données vivent ailleurs ; **aucune donnée dans un dépôt git** (PO 2026-10-20) |
 | R8 | Multichrome (OSC) d'abord, mono ensuite | OSC BB+DB livré avant les profils mono LRGB+Ha |
 
 ---
@@ -39,10 +39,10 @@ Exigences dérivées, numérotées pour que chaque epic s'y rattache :
 
 | dossier | taille | statut |
 |---|---|---|
-| `input/` | 73 Go | **lecture seule** : captures (M31-BB/DB, IC1848, NGC7000-BB/DB, M45, SH2-132 et leurs `-ngccal`) |
-| `output/` | 132 Go | **lecture seule** : 32 runs avec `run.json`, modes `deepsky`/`nebula` uniquement ; l'app sait les ouvrir (masters, `rgb_base`, `syn_*`, finals) |
-| `library/` | 26 Go | masters de calibration empilés (bias/darks/flats). **À conserver** : rebuildable depuis `input/` mais au prix d'heures de calcul ; non cité par le PO, à confirmer |
-| `work/` | 0,8 Go | scratch, jetable |
+| `~/Documents/astro/captures/` (ex-`input/`, déplacé le 2026-10-20) | 73 Go | **lecture seule** : captures (M31-BB/DB, IC1848, NGC7000-BB/DB, M45, SH2-132 et leurs `-ngccal`) |
+| `~/Documents/astro/runs/` (ex-`output/`) | 132 Go | **lecture seule** : 32 runs avec `run.json`, modes `deepsky`/`nebula` uniquement ; l'app sait les ouvrir (masters, `rgb_base`, `syn_*`, finals) |
+| `~/Documents/astro/library/` (ex-`library/`) | 26 Go | masters de calibration empilés (bias/darks/flats). **À conserver** : rebuildable depuis `input/` mais au prix d'heures de calcul ; non cité par le PO, à confirmer |
+| `work/` (stacking-astro) | 0,8 Go | scratch de l'ancien moteur, jetable |
 
 ### 1.2 Code (chiffres mesurés le 19/10)
 
@@ -239,11 +239,11 @@ justifie (c'est exactement ce que fait la §3 : tout le non-linéaire est déjà
 ### 4.5 Données et fichiers
 
 - **Projets** : `~/AstroStack/Projects/<Objet>.astrostack/` (SQLite `project.db` + `images/` en FITS
-  float32 + `recipes/` + `history/`). Jamais dans `input/` ni `output/`.
-- **Import** : `input/<...>` référencé par chemin, jamais copié ni modifié ; les anciens runs
-  `output/<Objet>/<run>/` s'ouvrent en lecture seule comme **source de bundle** (masters,
+  float32 + `recipes/` + `history/`). Jamais dans les dossiers de captures ni de runs.
+- **Import** : `~/Documents/astro/captures/<...>` référencé par chemin, jamais copié ni modifié ; les anciens runs
+  `~/Documents/astro/runs/<Objet>/<run>/` s'ouvrent en lecture seule comme **source de bundle** (masters,
   `rgb_base.fits`, `syn_*.fits`) pour rejouer un rendu sans re-stacker.
-- **Bibliothèque de calibration** : `library/` réutilisée telle quelle (mêmes clés `g{gain}o{offset}_b{bin}`).
+- **Bibliothèque de calibration** : `~/Documents/astro/library/` réutilisée telle quelle (mêmes clés `g{gain}o{offset}_b{bin}`).
 - **Scratch** : `~/Library/Caches/AstroStack/` (budget et nettoyage visibles dans l'app — le PO a déjà
   eu ~0,65 Go/pose de scratch non nettoyé).
 
@@ -410,5 +410,5 @@ Studio, elle n'est plus la première valeur de l'app.
 4. **Xcode sera installé** par le PO (prérequis d'E10 ; composant Metal Toolchain inclus).
 5. ~~Monorepo~~ → **nouveau dépôt `kappa-sigma`** (PO, 2026-10-20) : l'app et `core/` vivent dans
    `github.com/verovec/kappa-sigma` ; le moteur Go y est copié comme matière première et oracle de
-   tests, sans `frontend/`, Docker ni MCP ; `input/`, `output/`, `library/` restent dans
-   `stacking-astro` et sont liés en lecture seule. E19 ne supprime plus que le reste du moteur legacy.
+   tests, sans `frontend/`, Docker ni MCP ; les captures, runs et masters vivent dans
+   `~/Documents/astro/{captures,runs,library}`, hors de tout dépôt, lus en lecture seule. E19 ne supprime plus que le reste du moteur legacy.

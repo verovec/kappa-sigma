@@ -11,9 +11,11 @@ the Go engine (`internal/`, `cmd/`, `migrations/`, module renamed `github.com/ve
 `docs/`, `conventions/`, `.claude/` skills/hooks/agents, CI (`.github/workflows/tests.yml`),
 `justfile`, and the gitignored planning state (`cards/`, `roadmap.md`, `stacking-doc.md`,
 `tasks-context/`). **Not migrated**: `frontend/`, Docker/Compose, `mcp-servers/`, the Siril MCP
-config — the web product is over. `input/`, `output/`, `library/`, `work/` are **symlinks** to
-`../stacking-astro/...` (gitignored): the capture data, the 32 legacy runs and the master library
-stay where they are and are **read-only** for this app (requirement R7).
+config — the web product is over. **No astro data lives in any repo any more** (PO, 2026-10-20):
+captures are in `~/Documents/astro/captures/<Target>/…`, the 32 legacy runs in `~/Documents/astro/runs/<Target>/<run>/`, the master
+library in `~/Documents/astro/library/` (see `~/Documents/astro/README.md`). The app reads them **read-only**
+(requirement R7) and keeps its own projects elsewhere (design §4.5). The old engine in
+`../stacking-astro` points at the same folders through its `.env`.
 
 **Role of the legacy Go engine here.** It is the *source material* E11 carves `core/` from (0044,
 0066) and the *test oracle* for byte-identity (`internal/pipeline/golden_live_test.go`,

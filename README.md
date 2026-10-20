@@ -6,7 +6,8 @@ PixInsight-like Studio with real-time Metal previews — every setting visible, 
 **Status: work in progress (2026-10-20).** The app does not exist yet. This repository holds the design
 (`docs/design/astrostack-macos.md`), the Go engine the app's core is being carved from (`internal/`,
 `cmd/`), and the build/test gates. The previous web-based engine lives in the sibling repo
-`stacking-astro`; its capture data, runs and master library are reused read-only.
+`stacking-astro`. Capture data, legacy runs and the master library live outside any repo in
+`~/Documents/astro/{captures,runs,library}` and are read read-only.
 
 ## Prerequisites (host, macOS)
 

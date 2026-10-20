@@ -26,6 +26,17 @@ struct ViewerRendererTests {
     #expect(bins[0][Int(plane[5] * 255 + 0.5)] == 1)
   }
 
+  @Test("a timed frame reports the GPU time it took")
+  func testRenderTimed() throws {
+    let device = try GPU.requireDevice()
+    let image = try ImageTexture(
+      device: device, width: 4, height: 4, planes: [[Float](repeating: 0.5, count: 16)])
+    let frame = ViewerFrame(transform: ViewTransform(scale: 1, origin: .zero), stf: nil)
+    let seconds = try ViewerRenderer(device: device).renderTimed(
+      image: image, frame: frame, into: try GPU.output(width: 4, height: 4))
+    #expect(seconds > 0 && seconds < 1)
+  }
+
   @Test("the compare frame selects the reference with its split")
   func testCompareFrame() throws {
     let device = try GPU.requireDevice()

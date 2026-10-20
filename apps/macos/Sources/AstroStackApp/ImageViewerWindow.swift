@@ -1,17 +1,18 @@
-import AppKit
-import ImageKit
-import Metal
-import RenderKit
-import SwiftUI
-import UniformTypeIdentifiers
-import os
+package import AppKit
+package import Foundation
+internal import ImageKit
+internal import Metal
+package import RenderKit
+internal import SwiftUI
+internal import UniformTypeIdentifiers
+internal import os
 
 /// A window showing one FITS image in the Metal viewer (until the Studio, E12, hosts it).
-final class ImageViewerWindow: NSWindowController, NSWindowDelegate {
+package final class ImageViewerWindow: NSWindowController, NSWindowDelegate {
   private nonisolated static let logger = Logger(
     subsystem: "fr.astrostack", category: "App/viewer")
   /// Windows kept alive while open.
-  private static var open: [ImageViewerWindow] = []
+  private static var opened: [ImageViewerWindow] = []
 
   /// Asks for a FITS file and shows it.
   static func choose() {
@@ -24,26 +25,38 @@ final class ImageViewerWindow: NSWindowController, NSWindowDelegate {
     show(url)
   }
 
-  /// Reads `url` off the main actor and opens a viewer window on it; a failure is shown, never
-  /// swallowed.
-  static func show(_ url: URL) {
+  /// Opens `url` in a viewer window; a failure is shown, never swallowed.
+  @discardableResult
+  package static func show(_ url: URL) -> Task<Void, Never> {
     Task {
       do {
-        guard let device = MTLCreateSystemDefaultDevice() else { throw RenderError.noDevice }
-        let renderer = try ViewerRenderer(device: device)
-        let loaded = try await Loaded.read(url, device: device)
-        let model = ViewerModel(image: loaded.image, autoSTF: loaded.autoSTF)
-        let view = ViewerView(
-          model: model, renderer: renderer, texture: loaded.texture, reference: nil)
-        let controller = ImageViewerWindow(view: view, title: url.lastPathComponent)
-        open.append(controller)
-        controller.showWindow(nil)
+        try await open(url)
       } catch {
         logger.error("cannot open \(url.path, privacy: .public): \(error, privacy: .public)")
         NSAlert(error: error).runModal()
       }
     }
   }
+
+  /// Reads `url` off the main actor and shows it in a new viewer window.
+  @discardableResult
+  package static func open(_ url: URL) async throws -> ImageViewerWindow {
+    guard let device = MTLCreateSystemDefaultDevice() else { throw RenderError.noDevice }
+    let renderer = try ViewerRenderer(device: device)
+    let loaded = try await Loaded.read(url, device: device)
+    let model = ViewerModel(image: loaded.image, autoSTF: loaded.autoSTF)
+    let view = ViewerView(model: model, renderer: renderer, texture: loaded.texture, reference: nil)
+    let controller = ImageViewerWindow(view: view, title: url.lastPathComponent)
+    controller.model = model
+    opened.append(controller)
+    controller.showWindow(nil)
+    return controller
+  }
+
+  /// The viewer windows currently open.
+  package static var openWindows: [ImageViewerWindow] { opened }
+  /// The shown image's viewer state.
+  package private(set) var model: ViewerModel?
 
   private init(view: ViewerView, title: String) {
     let window = NSWindow(
@@ -60,8 +73,8 @@ final class ImageViewerWindow: NSWindowController, NSWindowDelegate {
   @available(*, unavailable)
   required init?(coder: NSCoder) { nil }
 
-  func windowWillClose(_ notification: Notification) {
-    Self.open.removeAll { $0 === self }
+  package func windowWillClose(_ notification: Notification) {
+    Self.opened.removeAll { $0 === self }
   }
 
   /// The decoded image, its textures and its autostretch, built off the main actor.

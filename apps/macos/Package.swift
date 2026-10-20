@@ -84,7 +84,8 @@ let package = Package(
       name: "HelpKitTests", dependencies: ["HelpKit", "TestSupport"],
       swiftSettings: common),
     .testTarget(
-      name: "AstroStackAppTests", dependencies: ["AstroStackApp", "ProjectKit", "TestSupport"],
+      name: "AstroStackAppTests",
+      dependencies: ["AstroStackApp", "ImageKit", "ProjectKit", "RenderKit", "TestSupport"],
       swiftSettings: common),
   ]
 )

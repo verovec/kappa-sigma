@@ -1,12 +1,12 @@
-internal import AppKit
-internal import MetalKit
+package import AppKit
+package import MetalKit
 internal import os
 
 /// The Metal surface of the viewer: draws `model.frame` on demand and turns events into model
 /// changes — scroll/pinch zoom around the cursor, drag with the current tool, ⌥ held to compare,
 /// ⌘0 / ⌘1 through the responder chain (`zoomToFit(_:)`, `zoomToActualSize(_:)`).
 @MainActor
-final class ViewerMTKView: MTKView, MTKViewDelegate {
+package final class ViewerMTKView: MTKView, MTKViewDelegate {
   private nonisolated static let logger = Logger(
     subsystem: "fr.astrostack", category: "RenderKit/viewer")
   private nonisolated static let signposter = OSSignposter(logger: logger)
@@ -24,7 +24,8 @@ final class ViewerMTKView: MTKView, MTKViewDelegate {
   /// The newest histogram buffer: read on the main actor once its frame completes.
   private var pendingBins: (frame: Int, bins: MTLBuffer)?
 
-  init(
+  /// A surface drawing `texture` (and `reference` for compare) with `renderer`, driven by `model`.
+  package init(
     model: ViewerModel, renderer: ViewerRenderer, texture: ImageTexture, reference: ImageTexture?
   ) {
     self.model = model
@@ -45,12 +46,12 @@ final class ViewerMTKView: MTKView, MTKViewDelegate {
     preconditionFailure("ViewerMTKView is created in code")
   }
 
-  override var isFlipped: Bool { true }
-  override var acceptsFirstResponder: Bool { true }
+  override package var isFlipped: Bool { true }
+  override package var acceptsFirstResponder: Bool { true }
 
   /// Takes the keyboard (⌥, ⌘0, ⌘1 work before any click) and drops the compare key when the
   /// window stops being key — the ⌥ release then goes to another app.
-  override func viewDidMoveToWindow() {
+  override package func viewDidMoveToWindow() {
     super.viewDidMoveToWindow()
     let center = NotificationCenter.default
     center.removeObserver(self, name: NSWindow.didResignKeyNotification, object: nil)
@@ -65,7 +66,7 @@ final class ViewerMTKView: MTKView, MTKViewDelegate {
     model.compareKeyHeld = false
   }
 
-  override func updateTrackingAreas() {
+  override package func updateTrackingAreas() {
     super.updateTrackingAreas()
     trackingAreas.forEach(removeTrackingArea)
     addTrackingArea(
@@ -75,7 +76,7 @@ final class ViewerMTKView: MTKView, MTKViewDelegate {
 
   // MARK: - Drawing
 
-  func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
+  package func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
     model.viewSize = SIMD2(Double(size.width), Double(size.height))
     if !fitted, size.width > 0, size.height > 0 {
       fitted = true
@@ -83,7 +84,7 @@ final class ViewerMTKView: MTKView, MTKViewDelegate {
     }
   }
 
-  func draw(in view: MTKView) {
+  package func draw(in view: MTKView) {
     guard let drawable = currentDrawable, let commands = renderer.queue.makeCommandBuffer() else {
       return
     }
@@ -124,16 +125,16 @@ final class ViewerMTKView: MTKView, MTKViewDelegate {
 
   // MARK: - Events
 
-  override func scrollWheel(with event: NSEvent) {
+  override package func scrollWheel(with event: NSEvent) {
     let step = event.hasPreciseScrollingDeltas ? 0.01 : 0.1
     model.zoom(by: exp(Double(event.scrollingDeltaY) * step), atView: viewPoint(event))
   }
 
-  override func magnify(with event: NSEvent) {
+  override package func magnify(with event: NSEvent) {
     model.zoom(by: 1 + Double(event.magnification), atView: viewPoint(event))
   }
 
-  override func mouseDown(with event: NSEvent) {
+  override package func mouseDown(with event: NSEvent) {
     window?.makeFirstResponder(self)
     let point = viewPoint(event)
     if event.clickCount == 2, model.tool == .region {
@@ -143,7 +144,7 @@ final class ViewerMTKView: MTKView, MTKViewDelegate {
     dragLast = point
   }
 
-  override func mouseDragged(with event: NSEvent) {
+  override package func mouseDragged(with event: NSEvent) {
     guard let start = dragStart, let last = dragLast else { return }
     let point = viewPoint(event)
     model.drag(from: model.tool == .pan ? last : start, to: point, tool: model.tool)
@@ -151,21 +152,21 @@ final class ViewerMTKView: MTKView, MTKViewDelegate {
     model.hover(atView: point)
   }
 
-  override func mouseUp(with event: NSEvent) {
+  override package func mouseUp(with event: NSEvent) {
     dragStart = nil
     dragLast = nil
   }
 
-  override func mouseMoved(with event: NSEvent) {
+  override package func mouseMoved(with event: NSEvent) {
     model.hover(atView: viewPoint(event))
   }
 
-  override func flagsChanged(with event: NSEvent) {
+  override package func flagsChanged(with event: NSEvent) {
     model.compareKeyHeld = event.modifierFlags.contains(.option)
   }
 
-  @objc func zoomToFit(_ sender: Any?) { model.zoomToFit() }
-  @objc func zoomToActualSize(_ sender: Any?) { model.zoomToActualSize() }
+  @objc package func zoomToFit(_ sender: Any?) { model.zoomToFit() }
+  @objc package func zoomToActualSize(_ sender: Any?) { model.zoomToActualSize() }
 
   /// The event's location in drawable pixels, top-left origin.
   private func viewPoint(_ event: NSEvent) -> SIMD2<Double> {

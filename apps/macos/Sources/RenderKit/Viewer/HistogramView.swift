@@ -1,10 +1,15 @@
-internal import SwiftUI
+package import SwiftUI
 
 /// 256-bin histogram per channel, log counts, R/G/B overlaid (grey for mono).
-struct HistogramView: View {
+package struct HistogramView: View {
   let bins: [[Int]]
 
-  var body: some View {
+  /// A plot of `bins[channel][bin]`.
+  package init(bins: [[Int]]) {
+    self.bins = bins
+  }
+
+  package var body: some View {
     Canvas { context, size in
       let peak = log1p(Double(bins.joined().max() ?? 0))
       guard peak > 0 else { return }

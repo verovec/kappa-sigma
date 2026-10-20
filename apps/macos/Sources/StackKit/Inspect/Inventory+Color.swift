@@ -65,7 +65,7 @@ extension Inventory {
 
   /// Names unlabeled colour lights `RGB` in an OSC scan, so every channel has a name
   /// (`nameColorChannel`). A mixed scan keeps them unnamed: no single run should stack them.
-  mutating func nameColorChannel() {
+  package mutating func nameColorChannel() {
     guard colorModel == .osc else { return }
     for index in frames.indices
     where frames[index].type == .light && frames[index].isColor && frames[index].filter.isEmpty {

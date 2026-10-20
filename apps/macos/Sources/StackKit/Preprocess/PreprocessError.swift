@@ -1,0 +1,36 @@
+internal import Foundation
+
+/// Why a preprocessing step failed.
+package enum PreprocessError: Error, Equatable, Sendable {
+  /// Grading left fewer frames than Siril's two-frame stack minimum.
+  case belowStackMinimum(survivors: Int, registered: Int)
+  /// The bundle's layers do not share one geometry.
+  case mixedDimensions([String])
+  /// Another run already holds this target's output folder.
+  case targetBusy(String)
+  /// No channel produced a master.
+  case noChannels([String])
+  /// A filter captured over several nights: the multi-night merge is card 0066.
+  case multiNight([String])
+  /// Mono and colour lights together: no single run stacks them.
+  case mixedColorModel
+}
+
+extension PreprocessError: LocalizedError {
+  package var errorDescription: String? {
+    switch self {
+    case .belowStackMinimum(let survivors, let registered):
+      "\(survivors) of \(registered) registered frames survived grading — "
+        + "below Siril's two-frame stack minimum"
+    case .mixedDimensions(let layers):
+      "the bundle's layers have different dimensions: \(layers.joined(separator: ", "))"
+    case .targetBusy(let path): "another run is already writing \(path)"
+    case .noChannels(let errors):
+      "no channel could be stacked: \(errors.joined(separator: "; "))"
+    case .multiNight(let filters):
+      "\(filters.joined(separator: ", ")) span several nights — multi-night stacking is not "
+        + "available yet; select one night"
+    case .mixedColorModel: "the capture mixes mono and colour lights — stack them as separate runs"
+    }
+  }
+}

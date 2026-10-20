@@ -16,6 +16,10 @@ package struct FITSFile: Sendable {
   /// The file read, when there is one: every error names it.
   let path: String?
 
+  /// Everything after the primary header: what the oracle hashes compare, since Siril stamps a
+  /// creation date in every header.
+  package var dataUnit: Data { body }
+
   /// Reads the file at `url` (memory-mapped; `write` replaces files atomically, so a mapping
   /// is never truncated under a reader).
   package static func read(at url: URL) throws -> Self {

@@ -34,6 +34,9 @@ package protocol ImageProcess {
 
   /// Values the user may apply, computed from `stats` only; never applied by the process.
   func suggestions(stats: LayerStats) -> [Suggestion]
+
+  /// Planes of the output for an input of `input` planes (the input's count by default).
+  static func outputChannels(input: Int) -> Int
 }
 
 extension ImageProcess {
@@ -42,6 +45,9 @@ extension ImageProcess {
 
   /// No suggestion.
   package func suggestions(stats: LayerStats) -> [Suggestion] { [] }
+
+  /// As many planes as the input.
+  package static func outputChannels(input: Int) -> Int { input }
 }
 
 /// Where a process belongs in a pipeline.
@@ -70,12 +76,18 @@ package struct RenderContext {
   package let scale: Double
   /// Preview or Apply: `ProcessContracts` checks it changes nothing.
   package let purpose: Purpose
+  /// The bundle's layers by id (`RGB`, `R`, `G`, `B`, `L`, `Ha`, `OIII`, `SII`…), at the same
+  /// size as the input: what a process reads besides its input (combination, screens).
+  package let layers: [String: GPUImage]
 
-  /// A context encoding into `commands` at `scale` for `purpose`.
-  package init(commands: MTLCommandBuffer, scale: Double, purpose: Purpose) {
+  /// A context encoding into `commands` at `scale` for `purpose`, with the bundle `layers`.
+  package init(
+    commands: MTLCommandBuffer, scale: Double, purpose: Purpose, layers: [String: GPUImage] = [:]
+  ) {
     self.commands = commands
     self.scale = scale
     self.purpose = purpose
+    self.layers = layers
   }
 }
 
@@ -104,4 +116,8 @@ package enum ProcessError: Error, Equatable, Sendable {
   case commandFailed(String)
   /// Two images of different sizes or plane counts where one size is required.
   case sizeMismatch
+  /// A layer the parameters need is not in the bundle (never replaced by another one, R2).
+  case missingLayer(String)
+  /// A mask or parameter value that cannot be computed (a zero threshold, low > high…).
+  case invalidParameter(String)
 }

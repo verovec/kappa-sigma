@@ -63,6 +63,7 @@ package enum ShaderLayoutProbe {
     uniforms.originX = 19
     uniforms.originY = 20
     uniforms.flipRows = 24
+    uniforms.maskOverlay = 25
     return uniforms
   }
 
@@ -77,6 +78,8 @@ package enum ShaderLayoutProbe {
     let flags = [
       uniforms.channels, uniforms.stfEnabled, uniforms.clippingOverlay, uniforms.compareMode,
     ]
-    return lanes.map(\.bitPattern) + flags + floats.map(\.bitPattern) + [uniforms.flipRows]
+    return lanes.map(\.bitPattern) + flags + floats.map(\.bitPattern) + [
+      uniforms.flipRows, uniforms.maskOverlay,
+    ]
   }
 }

@@ -37,7 +37,7 @@ app-build:
 
 # Build, then open the app (and the given `.astrostack` projects); returns when the app quits.
 app-run *projects: app-build
-    open -W -n -a "{{app}}" {{projects}}
+    open -W -n -a "{{justfile_directory()}}/{{app}}" {{projects}}
 
 # Run the whole Swift suite (live suites self-skip without host tools/fixtures). Args pass through.
 # ATTACHMENTS_PATH (set by CI) collects Attachment.record() outputs such as diff images.

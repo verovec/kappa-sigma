@@ -25,9 +25,21 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   out are copies.
 - `Recipe` (format v1): JSON export; import clamps values, and unknown keys or parameters are
   warnings while an unknown process or a newer format is an error.
+- **ChannelCombinationProcess** (card 0054), the first node of every pipeline: slots R/G/B/L ← bundle
+  layer planes (`RenderContext.layers`: `RGB`, `R`, `G`, `B`, `L`, `Ha`, `OIII`, `SII`),
+  `w·max(x − black, 0)` per slot, Foraxx's green = √(Hα·OIII), L replaces the luminance at its
+  opacity. `Palette` (natural, HOO, SHO, HOS, Foraxx, LRGB) fills the source slots only. A
+  missing layer gives `unavailableReason` ("HOO needs an OIII layer") and `ProcessError.missingLayer`
+  — never another layer (R2).
+- **Masks** (card 0054): `Mask` = `MaskSource` (luminosity range with linear soft edges; stars
+  proxy = luma above its local mean, until 0055's star layer) + feather (box blur of
+  `round(px / scale)`: a hard edge becomes a linear ramp) + invert, built by `MaskBuilder`.
+  `ProcessRunner.run(…, mask:)` blends `m·processed + (1 − m)·input` — no process masks itself, and
+  `ProcessContracts` runs every process under a half mask too.
 - `ProcessRegistry`: refuses duplicates and invalid schemas (`.px` without
   `previewExactOnlyAt1to1`, a default outside its bounds or options, infinite bounds);
-  `standard()` is validated like any registry and empty until E12's first process.
+  `standard()` is validated like any registry and lists the shipped processes (today:
+  `channel-combination`).
 
 ## How to add a process
 

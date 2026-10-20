@@ -53,10 +53,7 @@ enum CalibrationPlanOracle {
   static func select(_ set: FrameSet, inventory: Inventory, masters: [CalibrationMaster])
     -> CalibrationSelection
   {
-    let pool = DimensionGuard.keepMatching(masters, lightPath: set.frames.first?.path ?? "")
-    var selection = CalibrationMatcher.match(LightRef(set, in: inventory), masters: pool.masters)
-    if let note = pool.note { selection.notes.append(note) }
-    return selection
+    CalibrationMatcher.select(set, in: inventory, masters: masters)
   }
 
   private static func name(_ selection: CalibrationSelection, _ role: String) -> String {

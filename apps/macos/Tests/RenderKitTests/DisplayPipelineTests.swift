@@ -62,6 +62,26 @@ struct DisplayPipelineTests {
     #expect(halves.map(\.x) == [0.25, 0.25, 1, 0.5], "left of the split: reference")
   }
 
+  @Test("the mask overlay tints by half the mask, in red; without it the mask is not shown")
+  func testMaskOverlay() throws {
+    let device = try GPU.requireDevice()
+    let image = try GPU.texture([0.2, 0.2, 0.2], width: 3, height: 1)
+    let mask = try GPU.texture([1, 0.5, 0], width: 3, height: 1)
+    var uniforms = DisplayUniforms(image: image, stf: nil)
+    let pipeline = try DisplayPipeline(device: device, library: ShaderLibrary.load(device: device))
+    let output = try GPU.output(width: 3, height: 1)
+    try pipeline.render(
+      current: image, reference: nil, mask: mask.planes[0], into: output, uniforms: uniforms)
+    #expect(GPU.read(output).map(\.x) == [0.2, 0.2, 0.2], "overlay off")
+    uniforms.maskOverlay = 1
+    try pipeline.render(
+      current: image, reference: nil, mask: mask.planes[0], into: output, uniforms: uniforms)
+    let shown = GPU.read(output)
+    #expect(abs(shown[0].x - 0.6) < 1e-6 && abs(shown[0].y - 0.1) < 1e-6 && shown[0].w == 1)
+    #expect(abs(shown[1].x - 0.4) < 1e-6 && abs(shown[1].y - 0.15) < 1e-6)
+    #expect(shown[2] == SIMD4(0.2, 0.2, 0.2, 1))
+  }
+
   @Test("a bottom-up image shows its last stored row at the top, as Siril does")
   func testBottomUpRowsFlipped() throws {
     let image = try GPU.texture([0.1, 0.2, 0.3, 0.4, 0.5, 0.6], width: 2, height: 3)

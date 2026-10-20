@@ -15,6 +15,8 @@ package final class ViewerMTKView: MTKView, MTKViewDelegate {
   private let renderer: ViewerRenderer
   private let texture: ImageTexture
   private let reference: ImageTexture?
+  /// The process mask the Studio shows with `ViewerFrame.maskOverlay` (one plane, image size).
+  private let mask: MTLTexture?
   private var dragStart: SIMD2<Double>?
   private var dragLast: SIMD2<Double>?
   private var fitted = false
@@ -26,12 +28,14 @@ package final class ViewerMTKView: MTKView, MTKViewDelegate {
 
   /// A surface drawing `texture` (and `reference` for compare) with `renderer`, driven by `model`.
   package init(
-    model: ViewerModel, renderer: ViewerRenderer, texture: ImageTexture, reference: ImageTexture?
+    model: ViewerModel, renderer: ViewerRenderer, texture: ImageTexture, reference: ImageTexture?,
+    mask: MTLTexture? = nil
   ) {
     self.model = model
     self.renderer = renderer
     self.texture = texture
     self.reference = reference
+    self.mask = mask
     super.init(frame: .zero, device: renderer.device)
     delegate = self
     colorPixelFormat = .bgra8Unorm
@@ -95,7 +99,7 @@ package final class ViewerMTKView: MTKView, MTKViewDelegate {
     do {
       let bins = try renderer.encode(
         into: commands, image: texture, reference: reference, frame: frame,
-        output: drawable.texture, histogram: counting)
+        output: drawable.texture, histogram: counting, mask: mask)
       frameNumber += 1
       let number = frameNumber
       if let bins {

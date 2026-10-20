@@ -14,7 +14,8 @@ processes run (design §4.1, §4.6).
   - `DisplayPipeline` (`display` kernel): view pixel → image via `origin + (gid + ½)·scale`, mip
     level `floor(log2 scale)`, optional STF per channel, clipping overlay (≥ 1 red, ≤ 0 blue),
     compare (reference everywhere, or left of a split column), bottom-up rows flipped
-    (`ROWORDER`). Pinned to the CPU STF within 1/65535 (`DisplayPipelineTests`).
+    (`ROWORDER`), and the process mask as a red tint (`ViewerFrame.maskOverlay`, texture 7).
+    Pinned to the CPU STF within 1/65535 (`DisplayPipelineTests`).
   - `Histogram` (`histogram` kernel): 256 bins × channel of clamp(x), sampled every `stride`
     pixels inside a region; exact counts (atomics).
   - `ShaderLibrary`: a bundled `RenderKit.metallib` if present, else `makeLibrary(source:)` of the

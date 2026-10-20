@@ -36,12 +36,12 @@ let package = Package(
       exclude: ["README.md"], swiftSettings: common),
     .target(
       name: "RenderKit", dependencies: ["ImageKit"],
-      exclude: ["README.md"], swiftSettings: common),
+      exclude: ["README.md"], resources: [.copy("Shaders")], swiftSettings: common),
     .target(
       name: "ProcessKit", dependencies: ["ImageKit", "RenderKit"],
       exclude: ["README.md"], swiftSettings: safe),
     .target(
-      name: "ProjectKit", dependencies: [.product(name: "GRDB", package: "GRDB.swift")],
+      name: "ProjectKit", dependencies: ["ImageKit", .product(name: "GRDB", package: "GRDB.swift")],
       exclude: ["README.md", "SCHEMA.md"], resources: [.copy("Migrations")],
       swiftSettings: safe),
     .target(
@@ -84,7 +84,8 @@ let package = Package(
       name: "HelpKitTests", dependencies: ["HelpKit", "TestSupport"],
       swiftSettings: common),
     .testTarget(
-      name: "AstroStackAppTests", dependencies: ["AstroStackApp", "ProjectKit", "TestSupport"],
+      name: "AstroStackAppTests",
+      dependencies: ["AstroStackApp", "ImageKit", "ProjectKit", "RenderKit", "TestSupport"],
       swiftSettings: common),
   ]
 )

@@ -1,14 +1,10 @@
 internal import Foundation
-internal import ImageKit
 package import Metal
 internal import RenderKit
 
 /// Builds a process's compute pipelines with RenderKit's compile options (Metal 3.1, fast-math
 /// off): every process kernel is oracle-pinned.
 package enum ProcessLibrary {
-  /// SwiftPM's resource bundle for ProcessKit.
-  private static let bundleName = "AstroStack_ProcessKit.bundle"
-
   /// The pipeline of `function` in the Metal `source`.
   package static func pipeline(
     device: MTLDevice, source: String, function: String
@@ -34,7 +30,7 @@ package enum ProcessLibrary {
 
   /// ProcessKit's bundled `Shaders/<file>`, compiled once for several pipelines.
   package static func library(device: MTLDevice, file: String) throws -> MTLLibrary {
-    let bundle = KitBundle.resolve(named: bundleName) { Bundle.module }
+    let bundle = ProcessKitResources.bundle
     guard let url = bundle.url(forResource: "Shaders/" + file, withExtension: nil),
       let source = try? String(contentsOf: url, encoding: .utf8)
     else { throw ProcessError.shader("\(file) missing from ProcessKit's resources") }

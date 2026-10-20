@@ -7,27 +7,32 @@ struct ImportCalibrationView: View {
   var plan: ImportPlan
 
   var body: some View {
-    GroupBox("Calibration plan") {
+    GroupBox {
       VStack(alignment: .leading, spacing: 10) {
         Toggle(
-          "Force these masters even when they do not match",
           isOn: Binding(
-            get: { model.request.forceCalibration }, set: { model.setForceCalibration($0) }))
+            get: { model.request.forceCalibration }, set: { model.setForceCalibration($0) })
+        ) {
+          Text(.app("Force these masters even when they do not match"))
+        }
         ForEach(plan.calibration) { channel in channelView(channel) }
       }
       .frame(maxWidth: .infinity, alignment: .leading)
+    } label: {
+      Text(.app("Calibration plan"))
     }
   }
 
   private func channelView(_ channel: ImportPlan.Channel) -> some View {
     VStack(alignment: .leading, spacing: 4) {
       Text(
-        "\(channel.filter) · \(ImportFormat.exposure(channel.key.exposureMs)) · "
+        verbatim: "\(channel.filter) · \(ImportFormat.exposure(channel.key.exposureMs)) · "
           + "\(ImportFormat.temperature(channel.key))"
           + (channel.key.session.isEmpty ? "" : " · \(channel.key.session)")
       )
       .font(.headline)
       ForEach(channel.cells) { cell in cellView(cell) }
+      // StackKit's matcher notes, as it words them.
       ForEach(channel.notes, id: \.self) { note in
         Label(note, systemImage: "info.circle").font(.caption).foregroundStyle(.secondary)
       }
@@ -40,8 +45,11 @@ struct ImportCalibrationView: View {
       isOn: Binding(
         get: { Self.isApplied(cell.status) }, set: { model.setIncluded($0, cell) })
     ) {
-      Text("\(cell.role.rawValue): \(ImportFormat.status(cell.status))")
-        .foregroundStyle(cell.status == .missing ? Color.orange : Color.primary)
+      HStack(spacing: 0) {
+        Text(verbatim: "\(cell.role.rawValue): ")
+        Text(ImportFormat.status(cell.status))
+      }
+      .foregroundStyle(cell.status == .missing ? Color.orange : Color.primary)
     }
     .disabled(cell.status == .missing)
   }

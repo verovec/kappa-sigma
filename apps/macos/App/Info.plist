@@ -6,6 +6,11 @@
 <dict>
   <key>CFBundleDevelopmentRegion</key>
   <string>en</string>
+  <key>CFBundleLocalizations</key>
+  <array>
+    <string>en</string>
+    <string>fr</string>
+  </array>
   <key>CFBundleExecutable</key>
   <string>AstroStack</string>
   <key>CFBundleIdentifier</key>

@@ -122,7 +122,7 @@ struct ImportViewModelTests {
     model.rescan()
     await model.settled()
     #expect(model.plan == nil)
-    #expect(model.error?.contains("/c/M31-DB") == true)
+    #expect(model.error == .inspect(.unreadableFolder("/c/M31-DB")))
   }
 
   @Test("the light filters offered for mapping are the scan's own, in canonical order")

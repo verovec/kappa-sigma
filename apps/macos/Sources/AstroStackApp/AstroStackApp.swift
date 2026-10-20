@@ -12,8 +12,9 @@ enum AstroStackApp {
     let app = NSApplication.shared
     let delegate = AppDelegate()
     app.delegate = delegate
-    app.mainMenu = MainMenu.make()
-    app.windowsMenu = app.mainMenu?.item(withTitle: "Window")?.submenu
+    let menu = MainMenu.make()
+    app.mainMenu = menu
+    app.windowsMenu = MainMenu.windowsMenu(in: menu)
     app.setActivationPolicy(.regular)
     withExtendedLifetime(delegate) { app.run() }
   }

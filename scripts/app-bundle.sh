@@ -14,7 +14,8 @@ rm -rf "$app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cp "$bin/AstroStackApp" "$app/Contents/MacOS/AstroStack"
 cp App/Info.plist "$app/Contents/Info.plist"
-# SwiftPM resource bundles (dependencies' privacy manifests today, kit resources later).
-find "$bin" -maxdepth 1 -name '*.bundle' -exec cp -R {} "$app/Contents/Resources/" \;
+# SwiftPM resource bundles: kit resources (shaders, migrations, compiled string catalogs) and
+# dependencies' privacy manifests; test bundles left over from `swift test` stay out.
+find "$bin" -maxdepth 1 -name '*.bundle' ! -name '*Tests.bundle' -exec cp -R {} "$app/Contents/Resources/" \;
 codesign --force --sign - --timestamp=none "$app" >/dev/null
 echo "built $pkg/$app"

@@ -26,6 +26,8 @@ package enum SirilCommand: Equatable, Sendable {
   case seqsubsky(seq: String, degree: Int, prefix: String)
   case load(String)
   case save(String)
+  /// Multiplies the loaded image by a factor, written as given (`fmul 1.0`).
+  case fmul(String)
   case savepng(String)
   case savetif(String)
   case mirrorx
@@ -72,6 +74,7 @@ package enum SirilCommand: Equatable, Sendable {
     switch self {
     case .load(let name): "load \(name)"
     case .save(let name): "save \(name)"
+    case .fmul(let factor): "fmul \(factor)"
     case .savepng(let name): "savepng \(name)"
     case .savetif(let name): "savetif \(name)"
     case .mirrorx: "mirrorx"

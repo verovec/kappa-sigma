@@ -25,6 +25,13 @@ package enum SirilScripts {
     ])
   }
 
+  /// A single-frame pool promoted as the master (`PromoteLoneFrameScript`): Siril has no
+  /// one-image sequences, so the lone frame is converted, re-encoded (`fmul 1.0` under
+  /// `set32bits`) and saved, in the same 32-bit [0,1] convention as a stacked master.
+  package static func promoteLoneFrame(seq: String, out: String) -> SirilScript {
+    SirilScript([.convert(seq: seq), .load("\(seq)_00001"), .fmul("1.0"), .save(out)])
+  }
+
   /// A flat master, calibrated by the bias when there is one (`StackFlatScript`).
   package static func stackFlat(
     seq: String, out: String, bias: String?, frames: Int, options: StackOptions

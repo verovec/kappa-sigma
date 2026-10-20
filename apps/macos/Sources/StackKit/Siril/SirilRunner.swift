@@ -14,11 +14,21 @@ package struct SirilRunner: Sendable {
       _ script: SirilScript, _ directory: URL, _ onLine: @escaping @Sendable (SirilLine) -> Void
     ) async throws -> String
 
+  /// A runner from its closure (tests record scripts and play Siril's file side).
+  package init(
+    run:
+      @escaping @Sendable (
+        _ script: SirilScript, _ directory: URL, _ onLine: @escaping @Sendable (SirilLine) -> Void
+      ) async throws -> String
+  ) {
+    self.run = run
+  }
+
   /// A runner over the `siril-cli` at `binary`, with optional CPU/memory limits.
   package static func live(binary: String, limits: SirilLimits = SirilLimits()) -> Self {
-    Self { script, directory, onLine in
+    Self(run: { script, directory, onLine in
       try await runScript(script, in: directory, binary: binary, limits: limits, onLine: onLine)
-    }
+    })
   }
 
   private static func runScript(

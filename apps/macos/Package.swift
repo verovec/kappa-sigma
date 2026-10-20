@@ -49,7 +49,7 @@ let package = Package(
       dependencies: [
         "ImageKit", "ProjectKit", .product(name: "Subprocess", package: "swift-subprocess"),
       ],
-      exclude: ["README.md", "Siril/README.md", "Inspect/README.md"], swiftSettings: common),
+      exclude: ["README.md", "Siril/README.md", "Inspect/README.md", "Calibration/README.md"], swiftSettings: common),
     .target(
       name: "HelpKit", dependencies: [],
       exclude: ["README.md"], resources: [.copy("Help")], swiftSettings: safe),
@@ -79,7 +79,7 @@ let package = Package(
       dependencies: ["ProjectKit", "TestSupport", .product(name: "GRDB", package: "GRDB.swift")],
       swiftSettings: common),
     .testTarget(
-      name: "StackKitTests", dependencies: ["StackKit", "TestSupport"],
+      name: "StackKitTests", dependencies: ["StackKit", "ProjectKit", "TestSupport"],
       resources: [.copy("Fixtures")], swiftSettings: common),
     .testTarget(
       name: "HelpKitTests", dependencies: ["HelpKit", "TestSupport"],

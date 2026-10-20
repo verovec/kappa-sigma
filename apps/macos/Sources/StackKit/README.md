@@ -4,8 +4,9 @@ Preprocessing, ported from the legacy Go engine (`../stacking-astro`, read-only)
 library, Siril driver, grading, multi-night, bundle; GraXpert and StarNet drivers (design §4.1, §4.3).
 
 **State:** the oracle seam (card 0044, `Oracle/`), the Siril driver (0045, `Siril/README.md`) and
-inspect (0046, `Inspect/README.md`: folders → classified frames → sets). Cards 0047 (calibration)
-and 0048 (pipeline) port against the same oracles.
+inspect (0046, `Inspect/README.md`: folders → classified frames → sets) and calibration (0047,
+`Calibration/README.md`: masters, library index, matching). Card 0048 (pipeline) ports against
+the same oracles.
 
 ## Oracle cases
 

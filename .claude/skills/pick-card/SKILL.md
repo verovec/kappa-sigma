@@ -62,14 +62,17 @@ what the card already answers; do not skip what it points at.
   (Linux: the suite may only grow — a deleted or edited existing test, or a lower
   test count, fails unless the PR body has a `Test-change: <why>` line) and
   `hygiene · lint · build · test` (macOS: `just ci`, live suites self-skip).
-- **The worker merges; the PO is not in the loop** (PO decision 2026-10-20). Wait
-  with `gh pr checks <n> --watch`, then confirm every check reports `pass` via
-  `gh pr checks <n>` (the watch exits 0 even on failure), then
-  `gh pr merge <n> --squash --delete-branch`. Never `--auto`: this repo has no
-  branch protection, gh would merge before CI finishes. CI red → fix on the branch
-  and push; after **two** red rounds on the same card, stop, set `blocked` with the
-  failing check in the Journal, and report. Never merge red, never weaken a test to
-  get green, never skip the `/code-review` of §5.
+- **The worker merges; the PO is not in the loop** (PO decision 2026-10-20), and the
+  only way to do it is **`just merge <n>`** (`scripts/merge-pr.sh`): it waits for the
+  checks, refuses unless every CI job exists and is green on the PR's current head,
+  then squash-merges and deletes the branch. Never call `gh pr merge` directly, never
+  `--auto` (no branch protection here). A refusal → fix on the branch and push; after
+  **two** red rounds on the same card, stop, set `blocked` with the failing check in
+  the Journal, and report. Never weaken a test to get green, never skip the
+  `/code-review` of §5.
+- The `test continuity` job also refuses production code without tests: a PR that
+  touches `apps/macos/Sources` must touch `Tests/` or raise the test count, or carry a
+  `No-test: <why>` line in the body (pure configuration, wiring — nothing else).
 - `Manual:` acceptance items (open the app, take a screenshot) are performed by the
   worker with `just app-run` and recorded in the PR body; they never wait for the PO.
 

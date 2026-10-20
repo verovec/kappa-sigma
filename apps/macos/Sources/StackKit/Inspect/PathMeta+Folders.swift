@@ -1,7 +1,9 @@
 extension PathMeta {
   /// The frame type the nearest explicitly-typed ancestor folder names, matched per word so
-  /// `darks_0gain_300s` types and `darkstar` does not. SharpCap's `CapObj` folder (written under
-  /// both light and calibration trees) names a light only when no ancestor states a type.
+  /// `darks_0gain_300s` types and `darkstar` does not.
+  ///
+  /// SharpCap's `CapObj` folder (written under both light and calibration trees) names a light only
+  /// when no ancestor states a type.
   package static func typeFromFolders(_ path: String) -> FrameType {
     let folders = parentFolders(path)
     if let type = folders.lazy.map(typeFromFolderName).first(where: { $0 != .unknown }) {
@@ -11,7 +13,9 @@ extension PathMeta {
   }
 
   /// A filter folder: the FIRST word of an ordinary folder (`Ha_300s`, `Red`, `V`), or ANY word of
-  /// a calibration folder (`flats_0gain_Ha`). Nearest parent wins; `""` when none.
+  /// a calibration folder (`flats_0gain_Ha`).
+  ///
+  /// Nearest parent wins; `""` when none.
   package static func filterFromFolders(_ path: String) -> String {
     for folder in parentFolders(path) {
       let words = folder.split(whereSeparator: isSeparator).map(String.init)

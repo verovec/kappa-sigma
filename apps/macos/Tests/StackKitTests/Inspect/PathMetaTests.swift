@@ -8,25 +8,29 @@ struct PathMetaTests {
     "ASIStudio file names carry type, filter, exposure, gain, temperature and bin",
     arguments: [
       (
-        "input/galaxy/L/Light_ASIImg_30sec_Bin1_filter-L_-20.0C_gain300_2025-03-27_232804_frame0001.fit",
+        "input/galaxy/L/"
+          + "Light_ASIImg_30sec_Bin1_filter-L_-20.0C_gain300_2025-03-27_232804_frame0001.fit",
         PathMeta(
           type: .light, filter: "L", exposureMs: 30000, gain: 300, tempMilliC: -20000,
           hasTemp: true, bin: 1)
       ),
       (
-        "input/galaxy/Darks/Dark_ASIImg_30sec_Bin1_filter-B_-20.0C_gain300_2025-03-28_025415_frame0001.fit",
+        "input/galaxy/Darks/"
+          + "Dark_ASIImg_30sec_Bin1_filter-B_-20.0C_gain300_2025-03-28_025415_frame0001.fit",
         PathMeta(
           type: .dark, filter: "B", exposureMs: 30000, gain: 300, tempMilliC: -20000,
           hasTemp: true, bin: 1)
       ),
       (
-        "input/galaxy/Bias/Bias_ASIImg_0.001sec_Bin1_filter-L_-19.5C_gain300_2025-03-28_023107_frame0021.fit",
+        "input/galaxy/Bias/"
+          + "Bias_ASIImg_0.001sec_Bin1_filter-L_-19.5C_gain300_2025-03-28_023107_frame0021.fit",
         PathMeta(
           type: .bias, filter: "L", exposureMs: 1, gain: 300, tempMilliC: -19500, hasTemp: true,
           bin: 1)
       ),
       (
-        "input/galaxy/Flats/Ha/Flat_ASIImg_0.2sec_Bin1_filter-Ha_-20.0C_gain300_2025-03-28_031453_frame0001.fit",
+        "input/galaxy/Flats/Ha/"
+          + "Flat_ASIImg_0.2sec_Bin1_filter-Ha_-20.0C_gain300_2025-03-28_031453_frame0001.fit",
         PathMeta(
           type: .flat, filter: "Ha", exposureMs: 200, gain: 300, tempMilliC: -20000,
           hasTemp: true, bin: 1)
@@ -100,7 +104,10 @@ struct PathMetaTests {
       ("input/M33/CapObj/2021-08-14_00_47/2021-08-14-0047_6-1-CapObj_0000.FIT", 1),
       ("input/M27/data/2019/2019-08-29-2220_5-2-L_0000.FIT", 2),
       ("input/C2019/autorun/2020-04-13-2239_3-4-autorun_0018.FIT", 4),
-      ("input/galaxy/L/Light_ASIImg_30sec_filter-L_frame0001.fit", 0),
+      (
+        "input/galaxy/L/"
+          + "Light_ASIImg_30sec_filter-L_frame0001.fit", 0
+      ),
     ])
   func testPathMeta_wheelSlot(path: String, expected: Int) {
     #expect(PathMeta(path: path).wheelSlot == expected)

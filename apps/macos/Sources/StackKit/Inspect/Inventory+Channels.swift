@@ -40,13 +40,17 @@ extension Inventory {
       fingerprints[index] = print
     }
     detectUnlabeled(lights, fingerprints: fingerprints, options: options)
-    if options.detectTransitions { flagLabeled(lights, fingerprints: fingerprints, options: options) }
+    if options.detectTransitions {
+      flagLabeled(lights, fingerprints: fingerprints, options: options)
+    }
   }
 
   private mutating func detectUnlabeled(
-    _ lights: [Int], fingerprints: [Int: ChannelDetector.Fingerprint], options: ChannelDetector.Options
+    _ lights: [Int], fingerprints: [Int: ChannelDetector.Fingerprint],
+    options: ChannelDetector.Options
   ) {
-    for group in groups(lights.filter { frames[$0].filter.isEmpty }, by: { ConfigKey(frames[$0]) }) {
+    for group in groups(lights.filter { frames[$0].filter.isEmpty }, by: { ConfigKey(frames[$0]) })
+    {
       let result = ChannelDetector.detect(samples(group, fingerprints), options: options)
       let byPath = Dictionary(result.assignments.map { ($0.path, $0) }, uniquingKeysWith: { $1 })
       for index in group {
@@ -61,7 +65,8 @@ extension Inventory {
   }
 
   private mutating func flagLabeled(
-    _ lights: [Int], fingerprints: [Int: ChannelDetector.Fingerprint], options: ChannelDetector.Options
+    _ lights: [Int], fingerprints: [Int: ChannelDetector.Fingerprint],
+    options: ChannelDetector.Options
   ) {
     let labeled = lights.filter { !frames[$0].filter.isEmpty && frames[$0].classSource != .signal }
     for group in groups(labeled, by: { "\(ConfigKey(frames[$0]))|\(frames[$0].filter)" }) {
@@ -95,7 +100,9 @@ extension Inventory {
       var order = position
       if frame.dateObsMs > 0 {
         order = frame.dateObsMs
-      } else if let match = frame.path.firstMatch(of: /(?i)frame[-_]?0*(\d+)/), let number = Int(match.1) {
+      } else if let match = frame.path.firstMatch(of: /(?i)frame[-_]?0*(\d+)/),
+        let number = Int(match.1)
+      {
         order = number
       }
       return ChannelDetector.Sample(
@@ -117,7 +124,8 @@ extension Inventory {
       detection.runs[base + assignment.runIndex].wheelTransitions += 1
     }
     let current = detection.overallConfidence
-    detection.overallConfidence = current == 0 ? result.overallConfidence : min(current, result.overallConfidence)
+    detection.overallConfidence =
+      current == 0 ? result.overallConfidence : min(current, result.overallConfidence)
     channelDetection = detection
     if result.overallConfidence < Self.lowConfidence {
       warnings.append(

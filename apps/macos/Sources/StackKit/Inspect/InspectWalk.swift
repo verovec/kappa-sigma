@@ -17,7 +17,9 @@ enum InspectWalk {
     return type == .typeDirectory
   }
 
-  private static func visit(_ folder: String, isRoot: Bool, skippingOutput: Bool, into out: inout [String]) {
+  private static func visit(
+    _ folder: String, isRoot: Bool, skippingOutput: Bool, into out: inout [String]
+  ) {
     let name = PathMeta.baseName(folder)
     if !isRoot && (name.hasPrefix(".") || (skippingOutput && name.lowercased() == "output")) {
       return

@@ -1,10 +1,11 @@
 package import Foundation
 
 /// Scans capture folders into an `Inventory` (`inspect.ScanMany`): each folder is walked and its
-/// frames classified on their own (header, names, `info.txt`, wheel slots, pixel curves, wheel-order
-/// detection); grouping, verdicts and completeness warnings run ONCE over the union, so the
-/// calibration in one folder satisfies the lights of another. Deep-sky FITS only: phone/DSLR raws,
-/// TIFF stills and videos are not ported.
+/// frames classified on their own (header, names, `info.txt`, wheel slots, pixel curves,
+/// wheel-order detection); grouping, verdicts and completeness warnings run ONCE over the union, so
+/// the calibration in one folder satisfies the lights of another.
+///
+/// Deep-sky FITS only: phone/DSLR raws, TIFF stills and videos are not ported.
 package struct InventoryBuilder: Sendable {
   /// The site's zone: it decides each frame's observing night.
   package var timeZone: TimeZone
@@ -20,9 +21,12 @@ package struct InventoryBuilder: Sendable {
     self.pixels = pixels
   }
 
-  /// Scans `paths` (folders) with the user's overrides. One folder is its own root; several
-  /// merge under their common parent.
-  package func scan(paths: [String], overrides: InspectOverrides = InspectOverrides()) throws -> Inventory {
+  /// Scans `paths` (folders) with the user's overrides.
+  ///
+  /// One folder is its own root; several merge under their common parent.
+  package func scan(paths: [String], overrides: InspectOverrides = InspectOverrides()) throws
+    -> Inventory
+  {
     guard !paths.isEmpty else { throw InspectError.noFolders }
     let roots = paths.map(Self.clean)
     var merged = Inventory(root: roots.count == 1 ? roots[0] : Self.commonParent(roots), frames: [])
@@ -45,7 +49,8 @@ package struct InventoryBuilder: Sendable {
       let ext = (path as NSString).pathExtension.lowercased()
       guard Self.fitsExtensions.contains(ext) else { continue }
       do {
-        inventory.frames.append(try CaptureFrame(reading: URL(fileURLWithPath: path), timeZone: timeZone))
+        inventory.frames.append(
+          try CaptureFrame(reading: URL(fileURLWithPath: path), timeZone: timeZone))
       } catch {
         inventory.warnings.append("skip \(InspectWalk.relative(path, to: root)): \(error)")
       }
@@ -79,7 +84,9 @@ package struct InventoryBuilder: Sendable {
       let removed = inventory.excludeSets(overrides.excludeSets)
       if removed.frames > 0 {
         inventory.warnings.append(
-          "\(removed.frames) frame(s) in \(removed.sets) set(s) excluded by user (stray-light artifact)")
+          "\(removed.frames) frame(s) in \(removed.sets) set(s) excluded by user "
+            + "(stray-light artifact)"
+        )
       }
     }
     inventory.applyFilterMapping(overrides.filterMap)
@@ -99,7 +106,11 @@ package struct InventoryBuilder: Sendable {
 
   /// The longest shared folder prefix of several roots (display only).
   package static func commonParent(_ roots: [String]) -> String {
-    guard var parts = roots.first.map({ clean($0).split(separator: "/", omittingEmptySubsequences: false) }) else {
+    guard
+      var parts = roots.first.map({
+        clean($0).split(separator: "/", omittingEmptySubsequences: false)
+      })
+    else {
       return ""
     }
     for root in roots.dropFirst() {

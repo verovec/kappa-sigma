@@ -2,8 +2,9 @@ internal import Foundation
 
 /// What a capture's file and folder names say (`internal/inspect/filename.go`), for the many
 /// programs that omit IMAGETYP/FILTER, e.g.
-/// `Light_ASIImg_30sec_Bin1_filter-B_-20.0C_gain300_2025-03-27_234852_frame0001.fit`.
-/// It only ever fills what the header lacked.
+///
+/// `Light_ASIImg_30sec_Bin1_filter-B_-20.0C_gain300_2025-03-27_234852_frame0001.fit`. It only ever
+/// fills what the header lacked.
 package struct PathMeta: Equatable, Sendable {
   package var type: FrameType
   package var filter: String

@@ -85,7 +85,11 @@ struct ChannelDetectorTests {
   @Test("a star-rich run is never cheaply narrowband; neutral richness reduces to brightness")
   func testChannelDetector_emission() {
     #expect(abs(ChannelDetector.emission("Ha", level: 0, richness: 0)) < 1e-9)
-    #expect(ChannelDetector.emission("Ha", level: 0, richness: 1) > ChannelDetector.emission("R", level: 0, richness: 1))
-    #expect(abs(ChannelDetector.emission("Ha", level: 0.3, richness: 0.5) - (0.5 * 0.3 + 0.5 * 0.5)) < 1e-9)
+    #expect(
+      ChannelDetector.emission("Ha", level: 0, richness: 1)
+        > ChannelDetector.emission("R", level: 0, richness: 1))
+    #expect(
+      abs(ChannelDetector.emission("Ha", level: 0.3, richness: 0.5) - (0.5 * 0.3 + 0.5 * 0.5))
+        < 1e-9)
   }
 }

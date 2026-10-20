@@ -8,7 +8,8 @@ package struct FrameSet: Equatable, Sendable {
   package var filterSet: FilterSet = .unknown
 
   /// A set of `frames` grouped from positions `indices`.
-  package init(key: SetKey, frames: [CaptureFrame], indices: [Int], filterSet: FilterSet = .unknown) {
+  package init(key: SetKey, frames: [CaptureFrame], indices: [Int], filterSet: FilterSet = .unknown)
+  {
     self.key = key
     self.frames = frames
     self.indices = indices
@@ -18,9 +19,11 @@ package struct FrameSet: Equatable, Sendable {
   package var count: Int { frames.count }
   package var totalIntegrationMs: Int { frames.reduce(0) { $0 + $1.exposureMs } }
 
-  /// Groups the typed frames of a scan (`buildSets`). Only when lights and flats span several
-  /// known nights does a key carry the night, so a single-night scan keeps its legacy keys.
-  package static func group(_ frames: [CaptureFrame]) -> [FrameSet] {
+  /// Groups the typed frames of a scan (`buildSets`).
+  ///
+  /// Only when lights and flats span several known nights does a key carry the night, so a
+  /// single-night scan keeps its legacy keys.
+  package static func group(_ frames: [CaptureFrame]) -> [Self] {
     let split = Night.spansSeveral(frames)
     var groups: [SetKey: [Int]] = [:]
     var order: [SetKey] = []
@@ -33,7 +36,8 @@ package struct FrameSet: Equatable, Sendable {
       TemperatureClusters.split(groups[key] ?? [], of: frames, type: key.type).map { cluster in
         var clusterKey = key
         clusterKey.tempBucketC = cluster.bucketC
-        return FrameSet(key: clusterKey, frames: cluster.indices.map { frames[$0] }, indices: cluster.indices)
+        return Self(
+          key: clusterKey, frames: cluster.indices.map { frames[$0] }, indices: cluster.indices)
       }
     }
     return sets.sorted { SetKey.precedes($0.key, $1.key) }

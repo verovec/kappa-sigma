@@ -2,6 +2,7 @@ internal import Foundation
 
 /// A hand-written `info.txt` beside bare-named legacy captures (`internal/inspect/manifest.go`):
 /// the capture order, one filter token per sub-run, plus gain, exposure and temperature, e.g.
+///
 /// `LLL RR GG BB Ha Ha` / `gain L200 RGB250 Ha300`. A metadata FALLBACK: it only fills blanks.
 package struct CaptureManifest: Equatable, Sendable {
   /// One capture sub-run, in capture order (`LLL` is three slots).
@@ -130,7 +131,8 @@ private struct ManifestLines {
       }
       if let exposure = exposureMs(token) {
         sequence.exposureMs = exposure
-      } else if token.lowercased() != "gain", let filters = CaptureManifest.expandFilterWord(token) {
+      } else if token.lowercased() != "gain", let filters = CaptureManifest.expandFilterWord(token)
+      {
         sequence.filters += filters
       }
     }

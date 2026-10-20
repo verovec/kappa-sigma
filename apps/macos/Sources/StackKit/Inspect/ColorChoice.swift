@@ -20,7 +20,9 @@ package enum ColorChoice: String, CaseIterable, Sendable {
 extension Inventory {
   /// Applies an explicit colour choice (`ResolveColorModel`): drops the contradicting LIGHTS
   /// (calibration frames carry no colour identity in the matcher), rewrites the verdict and names
-  /// surviving colour lights. `auto` is a deliberate no-op. Throws when no light matches.
+  /// surviving colour lights.
+  ///
+  /// `auto` is a deliberate no-op. Throws when no light matches.
   package mutating func resolve(_ choice: ColorChoice) throws {
     guard choice != .auto else { return }
     let hadLights = frames.contains { $0.type == .light }
@@ -46,7 +48,8 @@ extension Inventory {
     if removed > 0 {
       let dropped = choice == .mono ? "one-shot-color" : "monochrome"
       let label = choice == .mono ? "monochrome stack" : "colour stack"
-      warnings.append("\(removed) \(dropped) light frame(s) excluded — this run was submitted as a \(label)")
+      warnings.append(
+        "\(removed) \(dropped) light frame(s) excluded — this run was submitted as a \(label)")
     }
   }
 

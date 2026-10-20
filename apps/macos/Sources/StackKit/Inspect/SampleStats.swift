@@ -1,6 +1,8 @@
 /// Robust summary of a contiguous pixel sample (`fits.summarize`): what the frame classifier and
-/// wheel-order detection compare. Order statistics are taken by index (`sorted[n/2]`, the upper
-/// middle), exactly as the legacy engine took them.
+/// wheel-order detection compare.
+///
+/// Order statistics are taken by index (`sorted[n/2]`, the upper middle), exactly as the legacy
+/// engine took them.
 package struct SampleStats: Equatable, Sendable {
   package let count: Int
   package let mean: Double

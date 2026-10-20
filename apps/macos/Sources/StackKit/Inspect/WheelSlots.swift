@@ -11,9 +11,11 @@ package enum WheelSlots {
     slot >= 1 && slot <= legend.count ? legend[slot - 1] : "S\(slot)"
   }
 
-  /// Names the frames of a manifest's folders from their slots, learning slot → filter by
-  /// pairing each chronological folder with the manifest token at the same position (capture
-  /// order is not slot order). Returns `false` when no frame carries a slot.
+  /// Names the frames of a manifest's folders from their slots, learning slot → filter by pairing
+  /// each chronological folder with the manifest token at the same position (capture order is not
+  /// slot order).
+  ///
+  /// Returns `false` when no frame carries a slot.
   static func assign(
     _ manifest: CaptureManifest, folders: [String], byFolder: [String: [Int]],
     to inventory: inout Inventory
@@ -22,7 +24,8 @@ package enum WheelSlots {
     guard indices.contains(where: { inventory.frames[$0].wheelSlot > 0 }) else { return false }
     var names = learnedNames(manifest, folders: folders, byFolder: byFolder, inventory: &inventory)
     if names.isEmpty {
-      names = Dictionary(uniqueKeysWithValues: defaultLegend.enumerated().map { ($0.offset + 1, $0.element) })
+      names = Dictionary(
+        uniqueKeysWithValues: defaultLegend.enumerated().map { ($0.offset + 1, $0.element) })
     }
     var gains: [String: Int] = [:]
     var exposures: [String: Int] = [:]

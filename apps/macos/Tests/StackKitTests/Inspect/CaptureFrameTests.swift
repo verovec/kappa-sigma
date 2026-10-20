@@ -13,7 +13,9 @@ struct CaptureFrameTests {
     try CaptureFrame(reading: url, timeZone: paris)
   }
 
-  @Test("the core cards fill type, filter, gain, offset, bin, exposure, size, object", .scratchDirectory)
+  @Test(
+    "the core cards fill type, filter, gain, offset, bin, exposure, size, object", .scratchDirectory
+  )
   func testCaptureFrame_coreCards() throws {
     let url = try TestFITS.write(
       "x.fits", in: ScratchDirectory.url, width: 64, height: 48,
@@ -35,7 +37,8 @@ struct CaptureFrameTests {
     #expect(frame.object == "M42")
   }
 
-  @Test("a real GAIN 0 is metadata; no GAIN card is not; SWCREATE is the creator", .scratchDirectory)
+  @Test(
+    "a real GAIN 0 is metadata; no GAIN card is not; SWCREATE is the creator", .scratchDirectory)
   func testCaptureFrame_gainZeroVsAbsent() throws {
     let dir = try ScratchDirectory.url
     let zero = try Self.frame(
@@ -48,7 +51,8 @@ struct CaptureFrameTests {
     #expect(!absent.hasGain)
   }
 
-  @Test("ASICAP's EXPOINUS (µs) is the exposure; a BAYERPAT makes the frame colour", .scratchDirectory)
+  @Test(
+    "ASICAP's EXPOINUS (µs) is the exposure; a BAYERPAT makes the frame colour", .scratchDirectory)
   func testCaptureFrame_expoinusAndBayer() throws {
     let frame = try Self.frame(
       TestFITS.write(
@@ -67,14 +71,16 @@ struct CaptureFrameTests {
     #expect(none.bayer.isEmpty)
     let rgb = try Self.frame(
       TestFITS.write(
-        "rgb.fit", in: dir, width: 4, height: 4, planes: Array(repeating: [UInt16](repeating: 1, count: 16), count: 3),
+        "rgb.fit", in: dir, width: 4, height: 4,
+        planes: Array(repeating: [UInt16](repeating: 1, count: 16), count: 3),
         cards: ["BAYERPAT": "'RGGB'"]))
     #expect(rgb.channels == 3)
     #expect(rgb.isColor)
     #expect(!rgb.needsDebayer)
   }
 
-  @Test("DATE-OBS gives epoch ms and the observing night, bucketed at local noon", .scratchDirectory)
+  @Test(
+    "DATE-OBS gives epoch ms and the observing night, bucketed at local noon", .scratchDirectory)
   func testCaptureFrame_dateObsAndNight() throws {
     let frame = try Self.frame(
       TestFITS.write(
@@ -106,9 +112,12 @@ struct CaptureFrameTests {
     #expect(Night.key(ms: CaptureFrame.parseDateObs(utc), in: Self.paris) == expected)
   }
 
-  @Test("a flat's filter comes from the sidecar's slot alias once its folder typed it", .scratchDirectory)
+  @Test(
+    "a flat's filter comes from the sidecar's slot alias once its folder typed it",
+    .scratchDirectory)
   func testCaptureFrame_flatFilterFromSlotAlias() throws {
-    let url = try TestFITS.write("flats/2023-02-28-0601_0-3-CapObj_0000.FIT", in: ScratchDirectory.url, cards: [:])
+    let url = try TestFITS.write(
+      "flats/2023-02-28-0601_0-3-CapObj_0000.FIT", in: ScratchDirectory.url, cards: [:])
     try Data("EFW Slot = 3(Alias: Red)\nExposure = 1.5s\n".utf8)
       .write(to: URL(fileURLWithPath: url.path + ".txt"))
     let frame = try Self.frame(url)

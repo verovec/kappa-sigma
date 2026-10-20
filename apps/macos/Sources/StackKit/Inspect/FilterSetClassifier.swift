@@ -24,6 +24,7 @@ package struct ChannelSky: Equatable, Sendable {
 }
 
 /// Was a one-shot-colour night shot through a dual-band clip (`internal/inspect/filterset.go`)?
+///
 /// Two signals — the sky rate in electrons and the colour — must BOTH agree, else `unknown`: a
 /// wrong verdict mis-stacks a night, an honest unknown costs nothing.
 package enum FilterSetClassifier {
@@ -40,8 +41,9 @@ package enum FilterSetClassifier {
   /// Frames sampled per set: the sky is a property of the night.
   static let sampleFrames = 3
 
-  /// The verdict for a sky (ADU above the floor) at an exposure and an EGAIN (e⁻/ADU). No EGAIN
-  /// or no exposure is no verdict: an ADU threshold measures the gain as much as the sky.
+  /// The verdict for a sky (ADU above the floor) at an exposure and an EGAIN (e⁻/ADU).
+  ///
+  /// No EGAIN or no exposure is no verdict: an ADU threshold measures the gain as much as the sky.
   package static func classify(_ sky: ChannelSky, exposureMs: Int, eGain: Double) -> FilterSet {
     guard exposureMs > 0, eGain > 0, eGain.isFinite else { return .unknown }
     let rate = sky.scaled(normalizeExposureMs / Double(exposureMs))
@@ -60,13 +62,16 @@ package enum FilterSetClassifier {
 
   /// The per-channel sky of an undebayered mosaic, each primary read at its own cell position;
   /// `nil` for an unknown pattern or a frame too small.
-  package static func cfaSky(_ pixels: [Float], width: Int, height: Int, pattern: String) -> ChannelSky? {
+  package static func cfaSky(_ pixels: [Float], width: Int, height: Int, pattern: String)
+    -> ChannelSky?
+  {
     let key = pattern.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
     guard let cell = offsets[key], width >= 2, height >= 2, pixels.count >= width * height else {
       return nil
     }
     let cells = (width / 2) * (height / 2)
-    let stride = cells <= sampleCap ? 1 : Int((Double(cells) / Double(sampleCap)).squareRoot().rounded(.up))
+    let stride =
+      cells <= sampleCap ? 1 : Int((Double(cells) / Double(sampleCap)).squareRoot().rounded(.up))
     var red: [Double] = []
     var green: [Double] = []
     var blue: [Double] = []

@@ -16,7 +16,9 @@ enum InventoryJSON {
       "warnings": inventory.warnings.isEmpty ? NSNull() : inventory.warnings.map(normalize) as Any,
       "color_model": inventory.colorModel.rawValue,
     ]
-    if !inventory.filterSets.isEmpty { out["filter_sets"] = inventory.filterSets.mapValues(\.rawValue) }
+    if !inventory.filterSets.isEmpty {
+      out["filter_sets"] = inventory.filterSets.mapValues(\.rawValue)
+    }
     if !inventory.sessions.isEmpty { out["sessions"] = inventory.sessions.map(session) }
     return out
   }
@@ -31,16 +33,20 @@ enum InventoryJSON {
     let optional: [(String, Any, Bool)] = [
       ("filter", frame.filter, !frame.filter.isEmpty), ("has_gain", true, frame.hasGain),
       ("egain", frame.eGain, frame.eGain != 0), ("bayer", frame.bayer, !frame.bayer.isEmpty),
-      ("channels", frame.channels, frame.channels != 0), ("object", frame.object, !frame.object.isEmpty),
+      ("channels", frame.channels, frame.channels != 0),
+      ("object", frame.object, !frame.object.isEmpty),
       ("instrument", frame.instrument, !frame.instrument.isEmpty),
-      ("creator", frame.creator, !frame.creator.isEmpty), ("telescope", frame.telescope, !frame.telescope.isEmpty),
-      ("date_obs", frame.dateObs, !frame.dateObs.isEmpty), ("session", frame.session, !frame.session.isEmpty),
+      ("creator", frame.creator, !frame.creator.isEmpty),
+      ("telescope", frame.telescope, !frame.telescope.isEmpty),
+      ("date_obs", frame.dateObs, !frame.dateObs.isEmpty),
+      ("session", frame.session, !frame.session.isEmpty),
       ("wheel_slot", frame.wheelSlot, frame.wheelSlot != 0),
       ("filter_confidence", frame.filterConfidence, frame.filterConfidence != 0),
       ("wheel_transition", true, frame.wheelTransition),
       ("focal_len_mm", frame.focalLengthMM, frame.focalLengthMM != 0),
       ("pixel_size_um", frame.pixelSizeUm, frame.pixelSizeUm != 0),
-      ("objctra", frame.objectRA, !frame.objectRA.isEmpty), ("objctdec", frame.objectDec, !frame.objectDec.isEmpty),
+      ("objctra", frame.objectRA, !frame.objectRA.isEmpty),
+      ("objctdec", frame.objectDec, !frame.objectDec.isEmpty),
     ]
     for (key, value, present) in optional where present { out[key] = value }
     return out
@@ -56,7 +62,9 @@ enum InventoryJSON {
     if !key.filter.isEmpty { keyObject["filter"] = key.filter }
     if !key.session.isEmpty { keyObject["session"] = key.session }
     if key.color { keyObject["color"] = true }
-    var out: Object = ["key": keyObject, "count": set.count, "total_integration_ms": set.totalIntegrationMs]
+    var out: Object = [
+      "key": keyObject, "count": set.count, "total_integration_ms": set.totalIntegrationMs,
+    ]
     if set.filterSet != .unknown { out["filter_set"] = set.filterSet.rawValue }
     return out
   }
@@ -86,7 +94,7 @@ enum InventoryJSON {
     guard JSONSerialization.isValidJSONObject([value]),
       let data = try? JSONSerialization.data(withJSONObject: [value], options: [.sortedKeys])
     else { return "\(value)" }
-    return String(decoding: data, as: UTF8.self)
+    return String(bytes: data, encoding: .utf8) ?? "\(value)"
   }
 
   /// Every difference between a recorded inventory and ours, as readable lines. Session configs
@@ -95,11 +103,13 @@ enum InventoryJSON {
     var out: [String] = []
     for key in ["root", "color_model", "videos", "warnings", "filter_sets"]
     where text(recorded[key] ?? NSNull()) != text(actual[key] ?? NSNull()) {
-      out.append("\(key): recorded \(text(recorded[key] ?? NSNull())) ≠ \(text(actual[key] ?? NSNull()))")
+      out.append(
+        "\(key): recorded \(text(recorded[key] ?? NSNull())) ≠ \(text(actual[key] ?? NSNull()))")
     }
     out += pairwise("frames", recorded["frames"], actual["frames"])
     out += pairwise("sets", recorded["sets"], actual["sets"])
-    out += pairwise("sessions", sortedConfigs(recorded["sessions"]), sortedConfigs(actual["sessions"]))
+    out += pairwise(
+      "sessions", sortedConfigs(recorded["sessions"]), sortedConfigs(actual["sessions"]))
     return out
   }
 

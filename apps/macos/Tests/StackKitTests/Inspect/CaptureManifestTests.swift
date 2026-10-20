@@ -13,7 +13,8 @@ struct CaptureManifestTests {
   @Test("the documented form: a filter sequence, then a per-filter gain map")
   func testCaptureManifest_canonical() {
     let manifest = CaptureManifest(parsing: "LLL RR GG BB Ha Ha\ngain L200 RGB250 Ha300\n")
-    #expect(manifest.slots.map(\.filter) == ["L", "L", "L", "R", "R", "G", "G", "B", "B", "Ha", "Ha"])
+    #expect(
+      manifest.slots.map(\.filter) == ["L", "L", "L", "R", "R", "G", "G", "B", "B", "Ha", "Ha"])
     #expect(manifest.slots.allSatisfy { $0.hasGain })
     #expect(manifest.slots.map(\.gain) == [200, 200, 200, 250, 250, 250, 250, 250, 250, 300, 300])
   }
@@ -98,7 +99,10 @@ struct CaptureManifestTests {
 
   @Test("the legend is the distinct filters in capture order, else the canonical wheel")
   func testCaptureManifest_legend() {
-    #expect(CaptureManifest(parsing: "LLL R G B Ha\nLLL R G B Ha\nLLL\n").legend == ["L", "R", "G", "B", "Ha"])
+    #expect(
+      CaptureManifest(parsing: "LLL R G B Ha\nLLL R G B Ha\nLLL\n").legend == [
+        "L", "R", "G", "B", "Ha",
+      ])
     #expect(CaptureManifest(parsing: "LLLRGBHaHa\n").legend == ["L", "R", "G", "B", "Ha"])
     #expect(CaptureManifest(parsing: "").legend == Filter.allCases.map(\.rawValue))
   }
@@ -113,7 +117,8 @@ struct CaptureManifestTests {
     #expect(WheelSlots.filter(slot: 7, legend: WheelSlots.defaultLegend) == "SII")
   }
 
-  static func unknownFrames(in dir: URL, runs: [String], perRun: [String]) throws -> [CaptureFrame] {
+  static func unknownFrames(in dir: URL, runs: [String], perRun: [String]) throws -> [CaptureFrame]
+  {
     try runs.flatMap { run in
       let folder = dir.appendingPathComponent(run)
       try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
@@ -132,7 +137,8 @@ struct CaptureManifestTests {
       "2021-08-14_00_20_00Z",
     ]
     var inventory = Inventory(
-      root: root.path, frames: try Self.unknownFrames(in: folder, runs: runs, perRun: ["a.fit", "b.fit"]))
+      root: root.path,
+      frames: try Self.unknownFrames(in: folder, runs: runs, perRun: ["a.fit", "b.fit"]))
     CaptureManifest.apply(under: root.path, to: &inventory)
 
     let expected = [

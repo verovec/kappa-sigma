@@ -10,7 +10,8 @@ struct SharpcapSidecarTests {
     "keys are read by full name; slot aliases count only when they name a filter",
     arguments: [
       (
-        "[ZWO ASI1600MM Pro]\nEFW Slot = 1(Alias: 1)\nExposure = 30s\nGain = 300\nTemperature = -15.0 C\n",
+        "[ZWO ASI1600MM Pro]\nEFW Slot = 1(Alias: 1)\nExposure = 30s\nGain = 300\n"
+          + "Temperature = -15.0 C\n",
         SharpcapSidecar(
           slot: 1, gain: 300, hasGain: true, exposureMs: 30000, tempMilliC: -15000, hasTemp: true)
       ),
@@ -25,7 +26,8 @@ struct SharpcapSidecarTests {
         SharpcapSidecar(gain: 200, hasGain: true, exposureMs: 60000)
       ),
       (
-        "[ZWO ASI1600MM Pro]\nAuto Exp Target Brightness = 100\nBrightness = 10\nEFW Slot = 4(Alias: B)\nExposure = 10ms\nGain = 0\nTemperature = -17.0 C\n",
+        "[ZWO ASI1600MM Pro]\nAuto Exp Target Brightness = 100\nBrightness = 10\n"
+          + "EFW Slot = 4(Alias: B)\nExposure = 10ms\nGain = 0\nTemperature = -17.0 C\n",
         SharpcapSidecar(
           slot: 4, slotAlias: "B", hasGain: true, offset: 10, hasOffset: true, exposureMs: 10,
           tempMilliC: -17000, hasTemp: true)

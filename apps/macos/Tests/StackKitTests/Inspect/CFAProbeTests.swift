@@ -29,7 +29,12 @@ struct CFAProbeTests {
       (lattice(500, 500, 500, 500), .mono), (lattice(500, 501, 500, 501), .mono),
       (lattice(500, 510, 510, 500), .unknown), (lattice(500, 502, 500, 502), .mono),
       (PixelPlanes(width: 0, height: 0, planes: [[]]), .unknown),
-      (PixelPlanes(width: 4, height: 4, planes: Array(repeating: [Float](repeating: 0, count: 16), count: 3)), .unknown),
+      (
+        PixelPlanes(
+          width: 4, height: 4,
+          planes: Array(repeating: [Float](repeating: 0, count: 16), count: 3)),
+        .unknown
+      ),
     ])
   func testCFAProbe_structure(image: PixelPlanes, expected: CFAVerdict) {
     #expect(CFAProbe.verdict(image) == expected)
@@ -129,7 +134,8 @@ struct CFAProbeTests {
         Self.frame("osc.fits", .light, instrument: "ASI2600MC"),
         Self.frame("osc_flat.fits", .flat, instrument: "ASI2600MC"),
       ])
-    inventory.clearSpuriousBayer(pixels: Self.pixels { $0.hasPrefix("mono") ? Self.mono : Self.mosaic })
+    inventory.clearSpuriousBayer(
+      pixels: Self.pixels { $0.hasPrefix("mono") ? Self.mono : Self.mosaic })
     #expect(inventory.frames.map(\.bayer) == ["", "", "RGGB", "RGGB"])
   }
 

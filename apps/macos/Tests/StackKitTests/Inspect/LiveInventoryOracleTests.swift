@@ -23,7 +23,8 @@ struct LiveInventoryOracleTests {
     "the committed header fixture is the recorded in/ folder (RECORD=1 rewrites it)",
     arguments: ["golden-single-night", "golden-two-night"])
   func testLiveInventoryOracle_headerFixture(name: String) throws {
-    let input = try Self.liveCase(name).directory.deletingLastPathComponent().appendingPathComponent("in")
+    let input = try Self.liveCase(name).directory.deletingLastPathComponent()
+      .appendingPathComponent("in")
     let live = try HeaderFixture.read(root: input)
     if ProcessInfo.processInfo.environment["RECORD"] == "1" {
       try live.write(to: HeaderFixture.sourceURL(name))
@@ -31,7 +32,9 @@ struct LiveInventoryOracleTests {
     #expect(try live == HeaderFixture.load(name))
   }
 
-  @Test("the synthetic cases' real in/ frames give the recorded inventory", arguments: ["golden-single-night", "golden-two-night"])
+  @Test(
+    "the synthetic cases' real in/ frames give the recorded inventory",
+    arguments: ["golden-single-night", "golden-two-night"])
   func testLiveInventoryOracle_synthetic(name: String) throws {
     let oracle = try Self.liveCase(name)
     let root = oracle.directory.deletingLastPathComponent()

@@ -1,5 +1,6 @@
-/// What the user asserted about a scan (`inspect.ScanOptions` + the run's colour knob). Every
-/// override is visible and wins over detection (R2): detection only fills the blanks.
+/// What the user asserted about a scan (`inspect.ScanOptions` + the run's colour knob).
+///
+/// Every override is visible and wins over detection (R2): detection only fills the blanks.
 package struct InspectOverrides: Equatable, Sendable {
   /// Signal-based filter detection for unlabeled lights, and wheel-transition flags.
   package var detectChannels = true

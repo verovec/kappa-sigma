@@ -10,9 +10,11 @@ extension Inventory {
     return color == voters.count ? .osc : .mixed
   }
 
-  /// Clears a BAYERPAT a mono rig's capture program stamped (`clearSpuriousBayer`), PER
-  /// INSTRUMENT and only after the pixels were asked: a colour camera behind a clip filter named
-  /// `L-eXtreme` keeps its mosaic. A declined probe keeps the old clearing, with a warning.
+  /// Clears a BAYERPAT a mono rig's capture program stamped (`clearSpuriousBayer`), PER INSTRUMENT
+  /// and only after the pixels were asked: a colour camera behind a clip filter named `L-eXtreme`
+  /// keeps its mosaic.
+  ///
+  /// A declined probe keeps the old clearing, with a warning.
   package mutating func clearSpuriousBayer(pixels: PixelReader) {
     var byInstrument: [String: [Int]] = [:]
     for (index, frame) in frames.enumerated() {
@@ -32,8 +34,9 @@ extension Inventory {
     }
     if declined > 0 {
       warnings.append(
-        "\(declined) frame(s) carry both a BAYERPAT card and a filter name, and their pixels do not "
-          + "settle whether the sensor is a colour mosaic — treating them as monochrome, as before. "
+        "\(declined) frame(s) carry both a BAYERPAT card and a filter name, and their pixels "
+          + "do not settle whether the sensor is a colour mosaic — treating them as monochrome, "
+          + "as before. "
           + "If this is a colour camera behind a clip filter, say so with the colour/mono selector")
     }
   }
@@ -64,7 +67,9 @@ extension Inventory {
   }
 
   /// Names unlabeled colour lights `RGB` in an OSC scan, so every channel has a name
-  /// (`nameColorChannel`). A mixed scan keeps them unnamed: no single run should stack them.
+  /// (`nameColorChannel`).
+  ///
+  /// A mixed scan keeps them unnamed: no single run should stack them.
   package mutating func nameColorChannel() {
     guard colorModel == .osc else { return }
     for index in frames.indices

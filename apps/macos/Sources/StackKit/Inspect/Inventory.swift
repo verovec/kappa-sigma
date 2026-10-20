@@ -67,10 +67,12 @@ package struct Inventory: Equatable, Sendable {
     return (drop.count, excluded.count)
   }
 
-  /// A copy holding only the frames `keep` accepts, regrouped and re-summarized afresh (so a
-  /// subset on one night collapses back to unsplit sets). Channel detection is dropped.
-  package func subset(_ keep: (CaptureFrame) -> Bool) -> Inventory {
-    var out = Inventory(root: root, frames: frames.filter(keep))
+  /// A copy holding only the frames `keep` accepts, regrouped and re-summarized afresh (so a subset
+  /// on one night collapses back to unsplit sets).
+  ///
+  /// Channel detection is dropped.
+  package func subset(_ keep: (CaptureFrame) -> Bool) -> Self {
+    var out = Self(root: root, frames: frames.filter(keep))
     out.warnings = warnings
     out.sets = FrameSet.group(out.frames)
     out.sessions = SessionInfo.summary(out.frames)

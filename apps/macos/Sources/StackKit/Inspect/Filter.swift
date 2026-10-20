@@ -1,10 +1,11 @@
 internal import Foundation
 
 /// The ONE canonical list of photometric filters (CLAUDE.md): wheel/display order, aliases,
-/// narrowband flags. Port of `internal/filters/filters.go`; never re-declare a filter list.
+/// narrowband flags.
 ///
-/// Frames keep their filter as a `String`, because a custom filter the user has not mapped yet
-/// passes through verbatim; this type is the vocabulary that string is checked against.
+/// Port of `internal/filters/filters.go`; never re-declare a filter list.  Frames keep their filter
+/// as a `String`, because a custom filter the user has not mapped yet passes through verbatim; this
+/// type is the vocabulary that string is checked against.
 package enum Filter: String, CaseIterable, Sendable {
   case luminance = "L"
   case red = "R"
@@ -14,14 +15,18 @@ package enum Filter: String, CaseIterable, Sendable {
   case oxygenIII = "OIII"
   case sulfurII = "SII"
 
-  /// The channel name of a one-shot-colour frame. Deliberately not a case: it has no wheel rank,
-  /// no narrowband answer and no slot in the emission-screen tables.
+  /// The channel name of a one-shot-colour frame.
+  ///
+  /// Deliberately not a case: it has no wheel rank, no narrowband answer and no slot in the
+  /// emission-screen tables.
   package static let color = "RGB"
 
   /// Spellings capture programs use for "no filter — this is colour".
   private static let colorAliases: Set<String> = ["rgb", "osc", "color", "colour", "bayer"]
 
-  /// Every alias, lowercased, of each filter. Johnson V reads as green (old R/V/B sessions).
+  /// Every alias, lowercased, of each filter.
+  ///
+  /// Johnson V reads as green (old R/V/B sessions).
   private static let aliases: [String: Self] = [
     "l": .luminance, "lum": .luminance, "luminance": .luminance, "clear": .luminance,
     "r": .red, "red": .red,
@@ -63,7 +68,9 @@ package enum Filter: String, CaseIterable, Sendable {
     return left != right ? left < right : lhs < rhs
   }
 
-  /// Whether `raw` explicitly says one-shot colour. An empty name is unknown, not colour.
+  /// Whether `raw` explicitly says one-shot colour.
+  ///
+  /// An empty name is unknown, not colour.
   package static func isColor(_ raw: String) -> Bool {
     colorAliases.contains(raw.trimmingCharacters(in: .whitespaces).lowercased())
   }

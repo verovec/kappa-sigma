@@ -101,17 +101,24 @@ package enum ChannelDetector {
     var result = Result(order: options.order, overallConfidence: labels.overall)
     for (index, members) in runs.enumerated() {
       let paths = members.map { ordered[$0].path }
-      result.runs.append(Run(filter: labels.filters[index], paths: paths, confidence: labels.confidence[index]))
+      result.runs.append(
+        Run(filter: labels.filters[index], paths: paths, confidence: labels.confidence[index]))
       result.assignments += paths.map {
-        Assignment(path: $0, filter: labels.filters[index], runIndex: index, confidence: labels.confidence[index])
+        Assignment(
+          path: $0, filter: labels.filters[index], runIndex: index,
+          confidence: labels.confidence[index])
       }
     }
-    if options.detectTransitions { flagTransitions(ordered, runs: runs, into: &result.assignments, options: options) }
+    if options.detectTransitions {
+      flagTransitions(ordered, runs: runs, into: &result.assignments, options: options)
+    }
     return result
   }
 
   /// Runs of already-labeled samples, with only the transition flags (`FlagTransitions`).
-  package static func flagTransitions(_ samples: [Sample], options: Options = Options()) -> [Assignment] {
+  package static func flagTransitions(_ samples: [Sample], options: Options = Options())
+    -> [Assignment]
+  {
     guard !samples.isEmpty else { return [] }
     let ordered = stableSorted(samples)
     let runs = segment(ordered, options: options)
@@ -124,7 +131,10 @@ package enum ChannelDetector {
 
   private static func stableSorted(_ samples: [Sample]) -> [Sample] {
     samples.enumerated()
-      .sorted { $0.element.order != $1.element.order ? $0.element.order < $1.element.order : $0.offset < $1.offset }
+      .sorted {
+        $0.element.order != $1.element.order
+          ? $0.element.order < $1.element.order : $0.offset < $1.offset
+      }
       .map(\.element)
   }
 
@@ -134,7 +144,9 @@ package enum ChannelDetector {
   ) {
     for members in runs where members.count >= options.transitionLookahead + 1 {
       let first = samples[members[0]]
-      let reference = members[1...options.transitionLookahead].map { samples[$0].fingerprint.background }
+      let reference = members[1...options.transitionLookahead].map {
+        samples[$0].fingerprint.background
+      }
       let (median, mad) = Robust.medianMAD(reference)
       guard median > 0 else { continue }
       let delta = abs(first.fingerprint.background - median)

@@ -8,8 +8,10 @@ package struct FrameStat: Equatable, Sendable {
   package var brightFraction: Double
   /// Local maxima above median + 6·MAD: stars and hot pixels.
   package var peaks: Int
-  /// The curve was measured. An unmeasured all-zero curve looks like a bias at the floor and
-  /// must never be classified from (the legacy engine's phantom-BIAS bug).
+  /// The curve was measured.
+  ///
+  /// An unmeasured all-zero curve looks like a bias at the floor and must never be classified from
+  /// (the legacy engine's phantom-BIAS bug).
   package var measured: Bool
 
   /// A curve; `measured: false` for a frame whose pixels could not be read.
@@ -37,7 +39,7 @@ package enum FrameClassifier {
   static let flatBrightFloorRatio = 4.0
   static let flatMaxNonUniformity = 0.08
   static let biasFloorRatio = 1.5
-  /// The exposed-level cut sits a quarter of the way from the darkest frame to the brightest…
+  /// The exposed-level cut sits a quarter of the way from the darkest frame to the brightest.
   static let exposedMinFraction = 0.25
   /// …and only when the brightest is at least 20× the darkest.
   static let exposedMinRatio = 20.0
@@ -79,7 +81,9 @@ package enum FrameClassifier {
   }
 
   /// The median above which a frame recorded a scene, when the batch holds clearly black and
-  /// clearly exposed frames; `nil` otherwise. Can only add lights, never remove them.
+  /// clearly exposed frames; `nil` otherwise.
+  ///
+  /// Can only add lights, never remove them.
   package static func exposedLevel(_ stats: [FrameStat]) -> Double? {
     let medians = stats.filter(\.measured).map(\.median)
     guard let low = medians.min(), let high = medians.max(), high > 0,

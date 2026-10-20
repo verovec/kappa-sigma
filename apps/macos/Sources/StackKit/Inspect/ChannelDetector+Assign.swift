@@ -30,8 +30,9 @@ extension ChannelDetector {
     return max(0, min(1, spread)) * max(0, 1 - 2 * averageEmission)
   }
 
-  /// How badly a run fits a filter from its normalized brightness and star richness. A faint run
-  /// is cheaply narrowband only when stars are absent too.
+  /// How badly a run fits a filter from its normalized brightness and star richness.
+  ///
+  /// A faint run is cheaply narrowband only when stars are absent too.
   package static func emission(_ filter: String, level: Double, richness: Double) -> Double {
     let score = 0.5 * level + 0.5 * richness
     if filter == "L" { return 1 - score }

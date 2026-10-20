@@ -90,7 +90,8 @@ struct FrameClassifierTests {
       FrameStat(exposureMs: 0, median: 0.0153), FrameStat(exposureMs: 0, median: 0.0458),
     ]
     #expect(FrameClassifier.exposedLevel(ordinary) == nil)
-    #expect(FrameClassifier.exposedLevel([FrameStat(exposureMs: 0, median: 0.5, measured: false)]) == nil)
+    #expect(
+      FrameClassifier.exposedLevel([FrameStat(exposureMs: 0, median: 0.5, measured: false)]) == nil)
   }
 
   @Test("an ordinary deep-sky batch keeps the old decision: a uniform dim frame is calibration")

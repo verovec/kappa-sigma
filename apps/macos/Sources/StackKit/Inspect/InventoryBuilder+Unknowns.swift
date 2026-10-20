@@ -2,14 +2,17 @@ internal import Foundation
 
 extension InventoryBuilder {
   /// Types the frames header, names and manifests left unknown from their pixel curves, compared
-  /// across the folder (`classifyUnknowns`). A frame with no curve and no capture metadata at all
-  /// is a processed leftover and stays unknown.
+  /// across the folder (`classifyUnknowns`).
+  ///
+  /// A frame with no curve and no capture metadata at all is a processed leftover and stays
+  /// unknown.
   func classifyUnknowns(_ inventory: inout Inventory) {
     let unknown = inventory.frames.indices.filter { inventory.frames[$0].type == .unknown }
     guard !unknown.isEmpty else { return }
     let stats = unknown.map { index in
       let frame = inventory.frames[index]
-      return pixels.stats(frame.path, sample: Self.statsSample)?.frameStat(exposureMs: frame.exposureMs)
+      return pixels.stats(frame.path, sample: Self.statsSample)?.frameStat(
+        exposureMs: frame.exposureMs)
         ?? FrameStat(exposureMs: frame.exposureMs, measured: false)
     }
     let types = FrameClassifier.byStats(stats)
@@ -19,7 +22,9 @@ extension InventoryBuilder {
       let name = InspectWalk.relative(frame.path, to: inventory.root)
       if !stat.measured && frame.exposureMs == 0 && !frame.hasGain && frame.dateObs.isEmpty {
         inventory.warnings.append(
-          "\(name) has no type, no capture metadata and unreadable pixels — skipped as a processed leftover")
+          "\(name) has no type, no capture metadata and unreadable pixels — "
+            + "skipped as a processed leftover"
+        )
         continue
       }
       inventory.frames[index].type = types[position]

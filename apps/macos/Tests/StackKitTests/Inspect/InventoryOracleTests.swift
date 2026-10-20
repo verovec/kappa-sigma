@@ -10,7 +10,8 @@ import Testing
 struct InventoryOracleTests {
   static func recorded(_ oracle: OracleCase) throws -> InventoryJSON.Object {
     let data = try Data(contentsOf: oracle.directory.appendingPathComponent("inventory.json"))
-    return try (JSONSerialization.jsonObject(with: data) as? InventoryJSON.Object).unwrapped("inventory.json")
+    return try (JSONSerialization.jsonObject(with: data) as? InventoryJSON.Object).unwrapped(
+      "inventory.json")
   }
 
   /// Scans `roots` in the case's timezone and compares with its recorded inventory.
@@ -34,17 +35,23 @@ struct InventoryOracleTests {
     let root = try ScratchDirectory.url
     let input = root.appendingPathComponent("in")
     try HeaderFixture.load(name).materialize(under: input)
-    let differences = try Self.differences(oracle, roots: [input], replacing: [(root.path, "<ROOT>")])
+    let differences = try Self.differences(
+      oracle, roots: [input], replacing: [(root.path, "<ROOT>")])
     #expect(differences.isEmpty, "\(differences.joined(separator: "\n"))")
   }
 
-  @Test("the comparison is not vacuous: one changed field, set or warning is reported", .scratchDirectory)
+  @Test(
+    "the comparison is not vacuous: one changed field, set or warning is reported",
+    .scratchDirectory)
   func testMatchesRecordedInventory_detectsChanges() throws {
     let oracle = try OracleFixtureTests.committedCase("golden-single-night")
     let root = try ScratchDirectory.url
-    try HeaderFixture.load("golden-single-night").materialize(under: root.appendingPathComponent("in"))
+    try HeaderFixture.load("golden-single-night").materialize(
+      under: root.appendingPathComponent("in"))
     let zone = try TimeZone(identifier: oracle.manifest.timezone).unwrapped("timezone")
-    let inventory = try InventoryBuilder(timeZone: zone).scan(paths: [root.appendingPathComponent("in").path])
+    let inventory = try InventoryBuilder(timeZone: zone).scan(paths: [
+      root.appendingPathComponent("in").path
+    ])
     let normalize = { (text: String) in text.replacingOccurrences(of: root.path, with: "<ROOT>") }
     let recorded = try Self.recorded(oracle)
 
@@ -55,8 +62,14 @@ struct InventoryOracleTests {
     var warned = inventory
     warned.warnings = ["extra"]
     for changed in [filter, sets, warned] {
-      #expect(!InventoryJSON.differences(recorded: recorded, actual: InventoryJSON.object(changed, normalize: normalize)).isEmpty)
+      #expect(
+        !InventoryJSON.differences(
+          recorded: recorded, actual: InventoryJSON.object(changed, normalize: normalize)
+        ).isEmpty)
     }
-    #expect(InventoryJSON.differences(recorded: recorded, actual: InventoryJSON.object(inventory, normalize: normalize)).isEmpty)
+    #expect(
+      InventoryJSON.differences(
+        recorded: recorded, actual: InventoryJSON.object(inventory, normalize: normalize)
+      ).isEmpty)
   }
 }

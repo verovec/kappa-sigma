@@ -8,10 +8,10 @@ package struct SessionInfo: Equatable, Sendable {
 
   /// Per-night counts, time window and light configurations, sorted by night with the undated
   /// bucket last; empty when no frame carries a night.
-  package static func summary(_ frames: [CaptureFrame]) -> [SessionInfo] {
-    var nights: [String: SessionInfo] = [:]
+  package static func summary(_ frames: [CaptureFrame]) -> [Self] {
+    var nights: [String: Self] = [:]
     for frame in frames where frame.type != .video {
-      var info = nights[frame.session] ?? SessionInfo(key: frame.session)
+      var info = nights[frame.session] ?? Self(key: frame.session)
       info.counts[frame.type, default: 0] += 1
       if frame.dateObsMs > 0 {
         if info.startMs == 0 || frame.dateObsMs < info.startMs { info.startMs = frame.dateObsMs }
@@ -45,11 +45,11 @@ package struct SessionConfig: Hashable, Sendable {
 
   /// The light configurations of `night`, sorted by filter, exposure, gain (then the fields Go
   /// left to an unstable sort, so the order is deterministic).
-  static func configs(_ frames: [CaptureFrame], night: String) -> [SessionConfig] {
-    var counts: [SessionConfig: Int] = [:]
+  static func configs(_ frames: [CaptureFrame], night: String) -> [Self] {
+    var counts: [Self: Int] = [:]
     for frame in frames where frame.type == .light && frame.session == night {
       let label = frame.hasTemp ? Int((frame.tempC / 5).rounded()) * 5 : 0
-      let config = SessionConfig(
+      let config = Self(
         filter: frame.filter, exposureMs: frame.exposureMs, gain: frame.gain,
         offset: frame.offset, bin: frame.binX, tempBucketC: label)
       counts[config, default: 0] += 1
@@ -62,7 +62,9 @@ package struct SessionConfig: Hashable, Sendable {
     .sorted { lhs, rhs in
       if lhs.filter != rhs.filter { return lhs.filter < rhs.filter }
       return [lhs.exposureMs, lhs.gain, lhs.offset, lhs.bin, -lhs.tempBucketC]
-        .lexicographicallyPrecedes([rhs.exposureMs, rhs.gain, rhs.offset, rhs.bin, -rhs.tempBucketC])
+        .lexicographicallyPrecedes([
+          rhs.exposureMs, rhs.gain, rhs.offset, rhs.bin, -rhs.tempBucketC,
+        ])
     }
   }
 }

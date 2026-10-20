@@ -1,8 +1,10 @@
 internal import Foundation
 
 /// The `<frame>.txt` capture settings SharpCap/ASICAP write beside each FITS
-/// (`internal/inspect/sidecar.go`). `EFW Slot` is ground-truth filter identity for mono captures
-/// with no FILTER card; `Brightness` is ZWO's offset. Only the keys inspect uses are read.
+/// (`internal/inspect/sidecar.go`).
+///
+/// `EFW Slot` is ground-truth filter identity for mono captures with no FILTER card; `Brightness`
+/// is ZWO's offset. Only the keys inspect uses are read.
 package struct SharpcapSidecar: Equatable, Sendable {
   package var slot: Int
   /// Canonical filter from `(Alias: L)`; `""` when absent or not a filter name.
@@ -35,7 +37,8 @@ package struct SharpcapSidecar: Equatable, Sendable {
   /// it holds nothing useful.
   package static func read(beside path: String) -> Self? {
     guard let data = FileManager.default.contents(atPath: path + ".txt") else { return nil }
-    let sidecar = Self(parsing: String(decoding: data, as: UTF8.self))
+    guard let text = String(bytes: data, encoding: .utf8) else { return nil }
+    let sidecar = Self(parsing: text)
     let useful =
       sidecar.slot > 0 || sidecar.hasGain || sidecar.hasOffset || sidecar.exposureMs > 0
       || sidecar.hasTemp

@@ -89,7 +89,9 @@ struct InventoryTests {
     #expect(!inventory.sets.contains { $0.key.filter == "R" })
   }
 
-  @Test("an unknown id or an empty list excludes nothing", arguments: [["LIGHT|nope|X|e1|g0o0b1|i0|t0|s:"], []])
+  @Test(
+    "an unknown id or an empty list excludes nothing",
+    arguments: [["LIGHT|nope|X|e1|g0o0b1|i0|t0|s:"], []])
   func testInventory_excludeSetsNoOp(ids: [String]) {
     var inventory = Self.excludable()
     let removed = inventory.excludeSets(ids)
@@ -99,7 +101,8 @@ struct InventoryTests {
   }
 
   static func subsetFixture() -> Inventory {
-    func frame(_ path: String, _ filter: String, _ night: String, _ type: FrameType) -> CaptureFrame {
+    func frame(_ path: String, _ filter: String, _ night: String, _ type: FrameType) -> CaptureFrame
+    {
       var frame = CaptureFrame(path: path)
       frame.type = type
       frame.filter = filter

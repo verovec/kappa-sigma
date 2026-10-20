@@ -102,7 +102,10 @@ struct FrameSetTests {
   func testFrameSet_clusterOrderAndMedian() {
     let ordered = FrameSet.group(Self.frames(.dark, [-10.2, -9.8, -10.0]))
     #expect(ordered.count == 1)
-    #expect(ordered.first?.frames.map(\.path) == ["/f/DARK_000.fit", "/f/DARK_001.fit", "/f/DARK_002.fit"])
+    #expect(
+      ordered.first?.frames.map(\.path) == [
+        "/f/DARK_000.fit", "/f/DARK_001.fit", "/f/DARK_002.fit",
+      ])
     let median = FrameSet.group(Self.frames(.dark, [-12.0, -10.0, -10.0, -10.0, -9.0]))
     #expect(median.first?.key.tempBucketC == -10)
   }

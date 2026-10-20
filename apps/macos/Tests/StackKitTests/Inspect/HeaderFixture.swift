@@ -14,7 +14,8 @@ struct HeaderFixture: Codable, Equatable {
   var files: [File]
 
   static func url(_ name: String) -> URL? {
-    Bundle.module.url(forResource: "\(name).headers", withExtension: "json", subdirectory: "Fixtures/inspect")
+    Bundle.module.url(
+      forResource: "\(name).headers", withExtension: "json", subdirectory: "Fixtures/inspect")
   }
 
   /// Where `RECORD=1` writes: the source tree, next to this file.
@@ -39,9 +40,13 @@ struct HeaderFixture: Codable, Equatable {
         var cards: [String] = []
         var offset = 0
         while offset + 80 <= data.count {
-          let card = String(decoding: data[offset..<offset + 80], as: UTF8.self)
+          let card = String(bytes: data[offset..<offset + 80], encoding: .ascii) ?? ""
           offset += 80
-          if card.hasPrefix("END ") || card == "END".padding(toLength: 80, withPad: " ", startingAt: 0) { break }
+          if card.hasPrefix("END ")
+            || card == "END".padding(toLength: 80, withPad: " ", startingAt: 0)
+          {
+            break
+          }
           cards.append(card)
         }
         return File(path: path, cards: cards)
@@ -51,7 +56,8 @@ struct HeaderFixture: Codable, Equatable {
   func write(to url: URL) throws {
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
-    try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+    try FileManager.default.createDirectory(
+      at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
     try (encoder.encode(self) + Data("\n".utf8)).write(to: url)
   }
 
@@ -60,11 +66,14 @@ struct HeaderFixture: Codable, Equatable {
   func materialize(under root: URL) throws {
     for file in files {
       let url = root.appendingPathComponent(file.path)
-      try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+      try FileManager.default.createDirectory(
+        at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
       var text = file.cards.joined() + "END".padding(toLength: 80, withPad: " ", startingAt: 0)
       while text.utf8.count % 2880 != 0 { text += " " }
       var size = abs(Self.value(file.cards, "BITPIX")) / 8
-      for axis in 1...max(Self.value(file.cards, "NAXIS"), 1) { size *= Self.value(file.cards, "NAXIS\(axis)") }
+      for axis in 1...max(Self.value(file.cards, "NAXIS"), 1) {
+        size *= Self.value(file.cards, "NAXIS\(axis)")
+      }
       let padded = (size + 2879) / 2880 * 2880
       try (Data(text.utf8) + Data(count: padded)).write(to: url)
     }

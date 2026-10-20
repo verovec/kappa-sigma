@@ -1,7 +1,9 @@
 extension FilterSetClassifier {
-  /// Stamps a verdict on every one-shot-colour LIGHT set (`annotateFilterSets`): a bounded
-  /// sample of frames per set, the scan's own bias pedestal subtracted. Without a bias or dark
-  /// there is no honest answer. Overrides win outright, even where nothing was measured.
+  /// Stamps a verdict on every one-shot-colour LIGHT set (`annotateFilterSets`): a bounded sample
+  /// of frames per set, the scan's own bias pedestal subtracted.
+  ///
+  /// Without a bias or dark there is no honest answer. Overrides win outright, even where nothing
+  /// was measured.
   package static func annotate(
     _ inventory: inout Inventory, overrides: [String: FilterSet], pixels: PixelReader
   ) {
@@ -26,7 +28,8 @@ extension FilterSetClassifier {
       r: median(skies.map(\.r)) - floor, g: median(skies.map(\.g)) - floor,
       b: median(skies.map(\.b)) - floor)
     let eGains = set.frames.map(\.eGain).filter { $0 > 0 }
-    return classify(above, exposureMs: set.key.exposureMs, eGain: eGains.isEmpty ? 0 : median(eGains))
+    return classify(
+      above, exposureMs: set.key.exposureMs, eGain: eGains.isEmpty ? 0 : median(eGains))
   }
 
   /// The electronic pedestal: the BIAS frames' level, else the DARKs' (slightly high, which

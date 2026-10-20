@@ -2,7 +2,9 @@ internal import Foundation
 
 extension CaptureManifest {
   /// Finds every `info.txt` (or `info.txt.txt`) under `root` and fills the frames of its capture
-  /// sub-folders (`applyManifests`). Best-effort: every problem becomes a warning.
+  /// sub-folders (`applyManifests`).
+  ///
+  /// Best-effort: every problem becomes a warning.
   package static func apply(under root: String, to inventory: inout Inventory) {
     let manifests = InspectWalk.files(under: root, skippingOutput: false).filter { path in
       PathMeta.baseName(path).wholeMatch(of: /(?i)info\.txt(\.txt)?/) != nil
@@ -19,13 +21,17 @@ extension CaptureManifest {
 
   /// One manifest: physical wheel slots, when the frames carry them, make it a slot→name legend;
   /// otherwise its slots map positionally onto the chronological capture sub-folders.
-  private static func apply(manifestAt path: String, byFolder: [String: [Int]], to inventory: inout Inventory) {
+  private static func apply(
+    manifestAt path: String, byFolder: [String: [Int]], to inventory: inout Inventory
+  ) {
     let label = InspectWalk.relative(path, to: inventory.root)
-    guard let data = FileManager.default.contents(atPath: path) else {
+    guard let data = FileManager.default.contents(atPath: path),
+      let text = String(bytes: data, encoding: .utf8)
+    else {
       inventory.warnings.append("\(label): read failed")
       return
     }
-    let manifest = CaptureManifest(parsing: String(decoding: data, as: UTF8.self))
+    let manifest = CaptureManifest(parsing: text)
     inventory.warnings += manifest.warnings.map { "\(label): \($0)" }
     let folders = captureFolders(in: InspectWalk.parent(path), byFolder: byFolder)
     if WheelSlots.assign(manifest, folders: folders, byFolder: byFolder, to: &inventory) { return }

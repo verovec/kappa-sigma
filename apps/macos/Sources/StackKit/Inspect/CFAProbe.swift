@@ -5,9 +5,11 @@ package enum CFAVerdict: Sendable {
   case unknown
 }
 
-/// Is a frame really a colour mosaic? Answered from the pixels, not the FILTER card
-/// (`internal/inspect/cfaprobe.go`): under four dyes the sub-lattices split by tens of percent
-/// with the two greens together; one mono sensor differs only by noise.
+/// Is a frame really a colour mosaic?
+///
+/// Answered from the pixels, not the FILTER card (`internal/inspect/cfaprobe.go`): under four dyes
+/// the sub-lattices split by tens of percent with the two greens together; one mono sensor differs
+/// only by noise.
 package enum CFAProbe {
   /// Colour split (R vs B vs the green pair) above which the frame is a mosaic.
   static let minColorSplit = 0.03
@@ -23,19 +25,21 @@ package enum CFAProbe {
       let means = subLatticeMeans(image.planes[0], width: image.width, height: image.height)
     else { return .unknown }
     // In every pattern the greens are the (1,0)/(0,1) diagonal, R and B the other one.
-    let green = (means.m10 + means.m01) / 2
-    let mean = (means.m00 + means.m10 + means.m01 + means.m11) / 4
+    let green = (means[1] + means[2]) / 2
+    let mean = (means[0] + means[1] + means[2] + means[3]) / 4
     guard mean > 0 else { return .unknown }
-    let values = [means.m00, green, means.m11]
+    let values = [means[0], green, means[3]]
     let colorSplit = ((values.max() ?? 0) - (values.min() ?? 0)) / mean
-    let greenSplit = abs(means.m10 - means.m01) / mean
+    let greenSplit = abs(means[1] - means[2]) / mean
     if colorSplit >= minColorSplit && greenSplit <= colorSplit * maxGreenSplit { return .cfa }
     if colorSplit <= maxFlatSplit { return .mono }
     return .unknown
   }
 
-  /// A bounded sample that must AGREE: one frame is a weak witness and a wrong verdict destroys
-  /// a session. Anything unreadable is not evidence.
+  /// A bounded sample that must AGREE: one frame is a weak witness and a wrong verdict destroys a
+  /// session.
+  ///
+  /// Anything unreadable is not evidence.
   package static func verdict(_ frames: [CaptureFrame], pixels: PixelReader) -> CFAVerdict {
     var verdict = CFAVerdict.unknown
     for frame in FilterSetClassifier.sample(frames, count: sampleFrames) {
@@ -47,9 +51,10 @@ package enum CFAProbe {
     return verdict
   }
 
+  /// The means of the (0,0), (1,0), (0,1), (1,1) positions of the 2×2 cell.
   private static func subLatticeMeans(
     _ pixels: [Float], width: Int, height: Int
-  ) -> (m00: Double, m10: Double, m01: Double, m11: Double)? {
+  ) -> [Double]? {
     guard pixels.count >= width * height else { return nil }
     var sums = [0.0, 0.0, 0.0, 0.0]
     var count = 0
@@ -64,6 +69,6 @@ package enum CFAProbe {
     }
     guard count > 0 else { return nil }
     let total = Double(count)
-    return (sums[0] / total, sums[1] / total, sums[2] / total, sums[3] / total)
+    return sums.map { $0 / total }
   }
 }

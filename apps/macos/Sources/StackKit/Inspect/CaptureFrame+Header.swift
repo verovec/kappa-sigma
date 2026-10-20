@@ -87,7 +87,9 @@ struct LegacyCards {
   }
 
   func double(_ key: String) -> Double? {
-    string(key).flatMap { Double($0.replacingOccurrences(of: "D", with: "E", options: .caseInsensitive)) }
+    string(key).flatMap {
+      Double($0.replacingOccurrences(of: "D", with: "E", options: .caseInsensitive))
+    }
   }
 
   func int(_ key: String) -> Int? {

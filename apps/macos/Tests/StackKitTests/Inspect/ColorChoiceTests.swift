@@ -42,14 +42,25 @@ struct ColorChoiceTests {
   }
 
   static let rows: [Row] = [
-    Row(testDescription: "auto leaves mono", choice: .auto, frames: [mono, monoR], model: .mono, lights: 2),
-    Row(testDescription: "auto leaves colour", choice: .auto, frames: [color, color], model: .osc, lights: 2),
-    Row(testDescription: "auto leaves mixed", choice: .auto, frames: [mono, color], model: .mixed, lights: 2),
-    Row(testDescription: "mono on mono", choice: .mono, frames: [mono, monoR], model: .mono, lights: 2),
     Row(
-      testDescription: "mono on mixed drops colour", choice: .mono, frames: [mono, color], model: .mono,
+      testDescription: "auto leaves mono", choice: .auto, frames: [mono, monoR], model: .mono,
+      lights: 2),
+    Row(
+      testDescription: "auto leaves colour", choice: .auto, frames: [color, color], model: .osc,
+      lights: 2),
+    Row(
+      testDescription: "auto leaves mixed", choice: .auto, frames: [mono, color], model: .mixed,
+      lights: 2),
+    Row(
+      testDescription: "mono on mono", choice: .mono, frames: [mono, monoR], model: .mono, lights: 2
+    ),
+    Row(
+      testDescription: "mono on mixed drops colour", choice: .mono, frames: [mono, color],
+      model: .mono,
       lights: 1, warning: "monochrome stack"),
-    Row(testDescription: "osc on colour", choice: .osc, frames: [color, color], model: .osc, lights: 2),
+    Row(
+      testDescription: "osc on colour", choice: .osc, frames: [color, color], model: .osc, lights: 2
+    ),
     Row(
       testDescription: "osc on mixed drops mono", choice: .osc, frames: [mono, color], model: .osc,
       lights: 1, warning: "colour stack"),
@@ -96,7 +107,9 @@ struct ColorChoiceTests {
 
   @Test(
     "the wire value is a closed enum; empty is auto",
-    arguments: [("", ColorChoice.auto), ("auto", .auto), ("mono", .mono), ("osc", .osc), ("OSC", .osc)])
+    arguments: [
+      ("", ColorChoice.auto), ("auto", .auto), ("mono", .mono), ("osc", .osc), ("OSC", .osc),
+    ])
   func testColorChoice_parse(raw: String, expected: ColorChoice) throws {
     #expect(try ColorChoice(parsing: raw) == expected)
   }

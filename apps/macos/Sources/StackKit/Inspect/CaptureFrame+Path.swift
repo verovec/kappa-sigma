@@ -41,7 +41,9 @@ extension CaptureFrame {
   }
 
   /// Fills what the header left blank from the SharpCap sidecar, then from the file and folder
-  /// names (`backfillMeta`). Header values always win; no pixels are read.
+  /// names (`backfillMeta`).
+  ///
+  /// Header values always win; no pixels are read.
   mutating func backfillFromPath() {
     let sidecar = SharpcapSidecar.read(beside: path)
     if let sidecar { apply(sidecar) }

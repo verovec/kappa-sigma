@@ -16,8 +16,10 @@ enum TemperatureClusters {
     var bucketC: Int
   }
 
-  /// Splits the frames at `indices` of `frames` (one group) into clusters. Types without a
-  /// temperature stay one cluster at bucket 0; frames with no temperature form their own.
+  /// Splits the frames at `indices` of `frames` (one group) into clusters.
+  ///
+  /// Types without a temperature stay one cluster at bucket 0; frames with no temperature form
+  /// their own.
   static func split(_ indices: [Int], of frames: [CaptureFrame], type: FrameType) -> [Cluster] {
     guard type.usesTemperature else { return [Cluster(indices: indices, bucketC: 0)] }
     let without = indices.filter { !frames[$0].hasTemp }
@@ -67,9 +69,11 @@ enum TemperatureClusters {
       for index in runs.indices where runs[index].count <= stragglerMaxFrames && runs.count > 1 {
         let run = runs[index]
         let previousGap =
-          index > 0 ? celsius(run[0]) - celsius(runs[index - 1][runs[index - 1].count - 1]) : .infinity
+          index > 0
+          ? celsius(run[0]) - celsius(runs[index - 1][runs[index - 1].count - 1]) : .infinity
         let nextGap =
-          index + 1 < runs.count ? celsius(runs[index + 1][0]) - celsius(run[run.count - 1]) : .infinity
+          index + 1 < runs.count
+          ? celsius(runs[index + 1][0]) - celsius(run[run.count - 1]) : .infinity
         if previousGap <= gapC && previousGap <= nextGap {
           runs[index - 1] += run
         } else if nextGap <= gapC {

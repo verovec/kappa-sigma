@@ -33,7 +33,7 @@ package struct PixelReader: Sendable {
   }
 
   /// FITS files on disk.
-  package static let files = PixelReader(
+  package static let files = Self(
     planes: { path in
       let image = try FITSFile.read(at: URL(fileURLWithPath: path)).image()
       return PixelPlanes(width: image.width, height: image.height, planes: image.planes)

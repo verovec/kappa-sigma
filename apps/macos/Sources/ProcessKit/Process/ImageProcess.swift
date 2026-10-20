@@ -35,6 +35,9 @@ package protocol ImageProcess {
   /// Values the user may apply, computed from `stats` only; never applied by the process.
   func suggestions(stats: LayerStats) -> [Suggestion]
 
+  /// Every `Suggestion.reason` the process can give: English keys of its catalog (gated in fr).
+  static var suggestionReasons: [String] { get }
+
   /// Planes of the output for an input of `input` planes (the input's count by default).
   static func outputChannels(input: Int) -> Int
 }
@@ -45,6 +48,9 @@ extension ImageProcess {
 
   /// No suggestion.
   package func suggestions(stats: LayerStats) -> [Suggestion] { [] }
+
+  /// No suggestion reason.
+  package static var suggestionReasons: [String] { [] }
 
   /// As many planes as the input.
   package static func outputChannels(input: Int) -> Int { input }

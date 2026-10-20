@@ -1,6 +1,22 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "Black point": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Black point"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Point noir"
+          }
+        }
+      }
+    },
     "Blue": {
       "localizations": {
         "en": {
@@ -77,6 +93,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Foraxx"
+          }
+        }
+      }
+    },
+    "GHS symmetry point on the background median: the stretch opens the faint signal": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GHS symmetry point on the background median: the stretch opens the faint signal"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "point de symétrie GHS sur la médiane du fond : l’étirement ouvre le signal faible"
           }
         }
       }
@@ -161,6 +193,38 @@
         }
       }
     },
+    "Highlight headroom": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Highlight headroom"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marge des hautes lumières"
+          }
+        }
+      }
+    },
+    "Highlight protection": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Highlight protection"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Protection des hautes lumières"
+          }
+        }
+      }
+    },
     "L black": {
       "localizations": {
         "en": {
@@ -225,6 +289,38 @@
         }
       }
     },
+    "Linked channels": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Linked channels"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canaux liés"
+          }
+        }
+      }
+    },
+    "Local intensity b": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local intensity b"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intensité locale b"
+          }
+        }
+      }
+    },
     "Luminance": {
       "localizations": {
         "en": {
@@ -237,6 +333,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Luminance"
+          }
+        }
+      }
+    },
+    "Mode": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mode"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mode"
           }
         }
       }
@@ -317,6 +429,182 @@
           "stringUnit": {
             "state": "translated",
             "value": "SHO"
+          }
+        }
+      }
+    },
+    "Shadow protection": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shadow protection"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Protection des ombres"
+          }
+        }
+      }
+    },
+    "Shadows clip": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shadows clip"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Écrêtage des ombres"
+          }
+        }
+      }
+    },
+    "Stretch": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stretch"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Étirement"
+          }
+        }
+      }
+    },
+    "Stretch factor ln(D+1)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stretch factor ln(D+1)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Facteur d’étirement ln(D+1)"
+          }
+        }
+      }
+    },
+    "Stretch factor β": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stretch factor β"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Facteur d’étirement β"
+          }
+        }
+      }
+    },
+    "Symmetry point": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Symmetry point"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Point de symétrie"
+          }
+        }
+      }
+    },
+    "Target background": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Target background"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fond cible"
+          }
+        }
+      }
+    },
+    "autostretch like Siril: background at 0.25": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "autostretch like Siril: background at 0.25"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "autostretch comme Siril : fond à 0,25"
+          }
+        }
+      }
+    },
+    "autostretch like Siril: one curve for every channel keeps the colour balance": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "autostretch like Siril: one curve for every channel keeps the colour balance"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "autostretch comme Siril : une même courbe pour tous les canaux garde l’équilibre des couleurs"
+          }
+        }
+      }
+    },
+    "autostretch like Siril: shadows 2.8σ below the background": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "autostretch like Siril: shadows 2.8σ below the background"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "autostretch comme Siril : ombres 2,8σ sous le fond"
+          }
+        }
+      }
+    },
+    "the deep-sky preset caps linear cores at 0.90 so star colours survive the stretch": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the deep-sky preset caps linear cores at 0.90 so star colours survive the stretch"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "le préréglage ciel profond plafonne les cœurs linéaires à 0,90 pour que les étoiles gardent leur couleur"
           }
         }
       }

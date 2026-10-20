@@ -86,7 +86,9 @@ let package = Package(
       swiftSettings: common),
     .testTarget(
       name: "ProcessKitTests",
-      dependencies: ["ProcessKit", "ImageKit", "HelpKit", "StringCatalog", "TestSupport"],
+      dependencies: [
+        "ProcessKit", "ImageKit", "HelpKit", "StackKit", "StringCatalog", "TestSupport",
+      ],
       resources: [.copy("Fixtures")], swiftSettings: common),
     .testTarget(
       name: "ProjectKitTests",

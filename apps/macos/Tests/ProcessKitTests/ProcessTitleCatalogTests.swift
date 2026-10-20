@@ -19,7 +19,7 @@ struct ProcessTitleCatalogTests {
     let types = try ProcessRegistry.standard().types
     return Set(
       types.map { $0.title } + types.flatMap { $0.schema.specs.map(\.title) }
-        + Palette.allCases.map(\.title))
+        + types.flatMap { $0.suggestionReasons } + Palette.allCases.map(\.title))
   }
 
   @Test("every title is a key, and every key is a title (none stale)")

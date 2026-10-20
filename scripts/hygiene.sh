@@ -28,7 +28,8 @@ bad=$(git ls-files -s | awk '$1 == "120000" { print $4 }' || true)
 [ -z "$bad" ] || report "symlinks tracked:"$'\n'"$bad"
 
 # 4. Large blobs never belong in git (goldens live outside, manifests inside).
-bad=$(git ls-files -z | xargs -0 stat -f '%z %N' 2>/dev/null | awk '$1 > 2000000 { print $2 " (" $1 " bytes)" }' || true)
+# wc -c rather than stat: BSD and GNU stat disagree on flags, this job also runs on Linux.
+bad=$(git ls-files -z | xargs -0 wc -c | awk '$2 != "total" && $1 > 2000000 { print $2 " (" $1 " bytes)" }' || true)
 [ -z "$bad" ] || report "files over 2 MB tracked:"$'\n'"$bad"
 
 # 5. The planning state stays local (gitignored by design).

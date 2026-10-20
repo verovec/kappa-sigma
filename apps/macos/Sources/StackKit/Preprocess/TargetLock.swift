@@ -1,4 +1,4 @@
-internal import Foundation
+package import Foundation
 internal import Synchronization
 
 /// One run per target: the output folders held by running preprocessors, process-wide.

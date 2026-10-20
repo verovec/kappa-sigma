@@ -44,7 +44,11 @@ final class PipelineSiril: Sendable {
       var (loaded, solved) = ("", false)
       for line in text.split(separator: "\n").map(String.init) {
         if line.hasPrefix("load ") { loaded = String(line.dropFirst(5)) }
-        if line.hasPrefix("platesolve"), let determinant = self.solve(loaded) {
+        if line.hasPrefix("platesolve") {
+          // Siril fails the script when the solve fails.
+          guard let determinant = self.solve(loaded) else {
+            throw SirilError.scriptFailed(exitCode: 1, hint: "Plate solving failed")
+          }
           try self.solved(determinant, in: directory, script: text)
           solved = true
         }

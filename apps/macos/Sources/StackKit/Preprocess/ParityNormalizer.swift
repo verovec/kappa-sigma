@@ -42,7 +42,12 @@ package struct ParityNormalizer: Sendable {
 
   /// The parity sign of a master's solved WCS: −1 (East-left), +1 (mirrored), 0 when unsolved.
   func probe(_ master: String) async throws -> Int {
-    let (folder, base) = Self.split(master)
+    try await probeWithReason(master).sign
+  }
+
+  /// The parity sign of an image's solved WCS and, when undetermined, why (`probeImageParity`).
+  func probeWithReason(_ image: String) async throws -> (sign: Int, reason: String) {
+    let (folder, base) = Self.split(image)
     let probe = folder.appendingPathComponent(Self.probeName + ".fits")
     defer { try? FileManager.default.removeItem(at: probe) }
     do {
@@ -52,10 +57,15 @@ package struct ParityNormalizer: Sendable {
     } catch is CancellationError {
       throw CancellationError()
     } catch {
-      return 0
+      return (0, "parity undetermined (plate-solve failed) — flip not applied")
     }
-    guard let determinant = try? FITSFile.read(at: probe).header.cdDeterminant else { return 0 }
-    return determinant < 0 ? -1 : 1
+    guard let file = try? FITSFile.read(at: probe) else {
+      return (0, "parity undetermined (no solved WCS) — flip not applied")
+    }
+    guard let determinant = file.header.cdDeterminant else {
+      return (0, "parity undetermined (WCS lacks CD/PC matrix) — flip not applied")
+    }
+    return (determinant < 0 ? -1 : 1, "")
   }
 
   private func mirror(

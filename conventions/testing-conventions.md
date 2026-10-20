@@ -10,45 +10,24 @@
 
 General: arrange-act-assert structure; tests colocated with the code they test; clean state at the **start** of each test, not the end; prefer real dependencies (real DB in a container) over mocks where practical.
 
-## Go
+## Swift (the whole codebase)
 
-- Frameworks: stdlib `testing`, `testify/require` (preconditions) + `testify/assert` (verification), `dockertest` for real Postgres/ClickHouse, `httptest` for external APIs.
-- **Table-driven** tests with `t.Run` per case.
-- Naming: `TestType_Method_Scenario` or `TestFunc_Scenario` (e.g. `TestUser_Search_CaseInsensitive`).
-- Test files next to the code; integration tests `*_integration_test.go`.
-- No `sqlmock`/`gomock` — use real DBs. No hardcoded ports (use `freeport`). No build tags for categorization — use naming.
-
-```go
-func TestUser_Search(t *testing.T) {
-    db := testdb.Get(t); db.AutoMigrate(&User{})
-    tests := []struct{ name, query string; seed []User; want int }{
-        {"case insensitive", "ACME", []User{{Name: "acme"}, {Name: "other"}}, 1},
-        {"no match", "zzz", []User{{Name: "acme"}}, 0},
-    }
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            db.Exec("DELETE FROM users")
-            for _, u := range tt.seed { db.Create(&u) }
-            got, err := User{}.Search(db, tt.query)
-            require.NoError(t, err); assert.Len(t, got, tt.want)
-        })
-    }
-}
-```
-
-## Python
-
-- `pytest`. Test files `test_*.py` (colocated or under `tests/`). Functions `test_*`.
-- **`@pytest.mark.parametrize`** for table-driven cases. Fixtures for setup/teardown.
-- `pytest.raises(SpecificError)` for error paths. `pytest-asyncio` for async code.
-- No real network — use a local container (testcontainers / a Compose service) or an HTTP mock (`respx`/`responses`). No `time.sleep` for synchronization.
-
-## Vue / TypeScript
-
-- `vitest` + `@vue/test-utils` + `@pinia/testing` (+ `happy-dom`). Playwright for E2E.
-- File naming `<Name>.spec.ts`, colocated with the unit under test.
-- Mock stores via `createTestingPinia({ createSpy: vi.fn })`; mock modules via `vi.mock('@/...')`.
-- No real HTTP, no `setTimeout`, no execution-order reliance.
+- Framework: **Swift Testing** (`@Test`, `#expect`, `#require`), `@Suite` per type; XCTest only
+  where a measurement API needs it (`XCTMetric` for GPU/frame budgets).
+- **Table-driven**: `@Test(arguments: [...])` over an array of cases; one case = one row.
+- Naming: `test<Type>_<Method>_<Scenario>` or a sentence string in `@Test("…")`; one behaviour
+  per test.
+- Test targets colocated per module in `Package.swift` (`<Module>Tests`); fixtures under
+  `Tests/<Module>Tests/Fixtures/` and **pixel-free** (JSON, scripts, checksums). Images and
+  anything derived from captures live in `~/Documents/astro/fixtures/` and the test **skips**
+  (`try #require(...)`/`withKnownIssue`) when they are absent — those are *live* tests, run on
+  the PO's Mac before a PR, never on CI.
+- Oracles: every port from the legacy Go engine (`../stacking-astro`) is pinned by a recorded
+  oracle (emitted Siril scripts, frame selections, master checksums, reference renders); a
+  numeric tolerance is stated in the test, never implied.
+- GPU: a Metal shader is tested against a CPU oracle on synthetic textures (ramps, noise fields,
+  checkerboards) with an explicit tolerance; frame-budget tests are live-only.
+- No sleeps, no shared mutable state, no execution-order reliance; temp dirs per test.
 
 ## When to write tests / when not
 

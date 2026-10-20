@@ -1,0 +1,16 @@
+{
+  "run": "M_31/20261018_191749",
+  "siril": "siril 1.4.4",
+  "scale": 65535,
+  "tolerance": 0.05,
+  "files": [
+    {"name": "aligned_RGB-dualband.fits", "sha256": "30c1b543586a6b033f0296a977406b9f21d320eb0f358d18bd77bffafbb8f801", "width": 5967, "height": 3763, "channels": [{"mean": 3461.3, "min": 3426.4, "max": 66567.0},{"mean": 3460.5, "min": 3390.0, "max": 59042.1},{"mean": 3459.6, "min": 3404.1, "max": 52806.7}]},
+    {"name": "aligned_RGB.fits", "sha256": "da3ead2713b460d880f213f74632716376bdd030c17b238f284e229257d6eefa", "width": 5967, "height": 3763, "channels": [{"mean": 872.4, "min": 851.3, "max": 61838.7},{"mean": 874.4, "min": 852.6, "max": 61876.2},{"mean": 872.8, "min": 852.9, "max": 54187.9}]},
+    {"name": "master_RGB-dualband.fits", "sha256": "7136dd0fbf88dfc188c85849163287a4359b3c1cee2b8edd17d34527a5764403", "width": 6248, "height": 4176, "channels": [{"mean": 3461.0, "min": 3298.9, "max": 65535.0},{"mean": 3460.3, "min": 3027.6, "max": 62696.8},{"mean": 3459.5, "min": 3439.4, "max": 54429.0}]},
+    {"name": "master_RGB.fits", "sha256": "56134bc1da5adf6dbcabcc336aa13742a42fd16999216b24465f9ebd9866afea", "width": 6248, "height": 4176, "channels": [{"mean": 869.0, "min": 7.1, "max": 61838.7},{"mean": 871.0, "min": 7.8, "max": 65534.7},{"mean": 869.5, "min": 7.8, "max": 58649.9}]},
+    {"name": "rgb_base_stretch.fits", "sha256": "ce0cc4809ff47ccbee1698aadcf1186ee2362a3954b8189415203fb6276fa251", "width": 5967, "height": 3763, "channels": [{"mean": 7378.1, "min": 0.0, "max": 65535.0},{"mean": 7184.8, "min": 0.0, "max": 65509.2},{"mean": 6873.4, "min": 0.0, "max": 65498.6}]},
+    {"name": "rgb_base.fits", "sha256": "2f74772f58d8b7d22068fb4b0cf148ae8d13125a5d2b3e4b564dcfb21be3ce75", "width": 5967, "height": 3763, "channels": [{"mean": 872.9, "min": 851.7, "max": 61838.6},{"mean": 871.0, "min": 856.5, "max": 42614.6},{"mean": 870.1, "min": 856.1, "max": 37437.2}]},
+    {"name": "syn_Ha.fits", "sha256": "c8cb5dc5adab91cab2a8d24cc2f9972ee9fba3f88bf98161bc0451ae42242a43", "width": 5967, "height": 3763, "channels": [{"mean": 3461.3, "min": 3426.4, "max": 66567.0}]},
+    {"name": "syn_OIII.fits", "sha256": "0c3d9a92fb8289cb01830124edf6fc5a7c2b6527a029dc8a2b319b8be26c38ff", "width": 5967, "height": 3763, "channels": [{"mean": 3461.0, "min": 3428.3, "max": 59042.1}]}
+  ]
+}

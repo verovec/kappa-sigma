@@ -43,7 +43,8 @@ General: arrange-act-assert structure; tests colocated with the code they test; 
   `NoHiddenState`, `PxUnitsScale`; every module passes the module-boundary test; a process without
   a fr+en help card fails the coverage gate.
 - No sleeps, no shared mutable state, no execution-order reliance; temp dirs per test (a custom
-  `TestScoping` trait provides the scratch dir); clean state at the start.
+  `TestScoping` trait provides the scratch dir); clean state at the start. The trait also removes
+  the dir when the test ends (live tests write tens of GB) and sweeps leftovers older than a day.
 - Benchmarks (`package-benchmark`) run locally with tight thresholds (`just bench`); on CI only
   wide relative thresholds are trusted.
 

@@ -54,21 +54,22 @@ ID = next free 4-digit number in the roadmap Queue (never reused); file
 `cards/NNNN-slug.md`. Section by section:
 
 - **Context** — why the card exists + the pointers needed to work it
-  (`internal/pkg/file.go:123`, `stacking-doc.md §N`, `tasks-context/x.md`). 5–10 lines,
+  (`apps/macos/Sources/<Kit>/File.swift:123`; legacy rule being ported:
+  `../stacking-astro/internal/pkg/file.go:123`, `stacking-doc.md §N`, `tasks-context/x.md`). 5–10 lines,
   no pasted code, nothing a pointer already says.
-- **Approach** — what to REUSE (exact packages/functions, verified via gitnexus — never
-  from memory), what to add and where, each rejected alternative in one line. Honour
+- **Approach** — what to REUSE (exact Swift types/functions, verified by reading the kits — never
+  from memory; for a port, the legacy Go rule found via gitnexus `repo:"astronomy"`), what to add and where, each rejected alternative in one line. Honour
   the repo invariants: un-configured runs stay byte-identical, no soft-fail to a
-  different algorithm, single-sourced catalogues (`stackalg`, `filters`). If the
+  different algorithm, single-sourced catalogues (`Filter`, the knob schema), Swift only, no pixels in the repo. If the
   approach needs a weird pattern or a special-case cascade, the scoping is wrong —
   rescope now, not at build time.
-- **Acceptance criteria** — verifiable and test-shaped: each names the Go test that
-  proves it (`TestType_Method_Scenario`, table-driven, per
-  `conventions/testing-conventions.md`). Always keep the template's final criterion:
+- **Acceptance criteria** — verifiable and test-shaped: each names the Swift test that
+  proves it (`<Type>Tests.test<Method>_<Scenario>`, table-driven, per
+  `conventions/testing-conventions.md`; a port names its recorded oracle). Always keep the template's final criterion:
   existing suite green, no test weakened without justification.
 - **Todos** — strict TDD order, red → green → refactor per slice; the first todo is
-  always a failing test. If the card adds a wire knob, include its `paramDocs` glossary
-  entry (en + fr) and doc row as todos.
+  always a failing test. If the card adds a process or a knob, include its fr/en help card
+  (0049 gate) and `KnobSchema` doc entry as todos.
 
 ## 4 · Register
 

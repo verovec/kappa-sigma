@@ -17,7 +17,9 @@ struct FixtureRootTests {
     #expect(LiveFixtures.root(home: home)?.standardizedFileURL == fixtures.standardizedFileURL)
   }
 
-  @Test("ASTROSTACK_SKIP_LIVE=1 hides the fixtures: CI on the PO's Mac skips live suites", .scratchDirectory)
+  @Test(
+    "ASTROSTACK_SKIP_LIVE=1 hides the fixtures: CI on the PO's Mac skips live suites",
+    .scratchDirectory)
   func testFixtureRoot_root_skippedByEnvironment() throws {
     let home = try ScratchDirectory.url
     let fixtures = home.appendingPathComponent("Documents/astro/fixtures", isDirectory: true)

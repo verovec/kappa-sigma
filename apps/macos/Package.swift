@@ -71,7 +71,7 @@ let package = Package(
 
     .target(
       name: "TestSupport", dependencies: [],
-      path: "Tests/TestSupport", swiftSettings: common),
+      path: "Tests/TestSupport", resources: [.copy("Fixtures")], swiftSettings: common),
     .testTarget(
       name: "TestSupportTests", dependencies: ["TestSupport"],
       resources: [.copy("Fixtures")], swiftSettings: common),

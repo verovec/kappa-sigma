@@ -25,6 +25,8 @@ struct CalibrationLibraryTests {
     try Self.master("master_FLAT_15000ms_g100o50_b1_0C_n2026-09-22", in: library, sig: nil)
     try Data("ignored".utf8).write(to: library.appendingPathComponent("master_DARK_300000ms_g100o50_b1_-17C_defects.lst"))
     try FileManager.default.createDirectory(at: library.appendingPathComponent("catalogues"), withIntermediateDirectories: true)
+    // A half-written master the legacy engine left behind is never a candidate.
+    try Self.master(".tmp_run_20260907_100642_master_DARK_60000ms_g0o50_b1_-11C", in: library, sig: nil)
     let package = try Self.package(in: root)
     defer { try? package.close() }
     let index = CalibrationLibrary(folder: library)
@@ -64,7 +66,8 @@ struct LiveCalibrationLibraryTests {
     let folder = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Documents/astro/library")
     guard FileManager.default.fileExists(atPath: folder.path) else { try Test.cancel("no ~/Documents/astro/library") }
     let rows = try CalibrationLibrary(folder: folder).scan()
-    let fits = try FileManager.default.contentsOfDirectory(atPath: folder.path).filter { $0.hasSuffix(".fits") }
+    let fits = try FileManager.default.contentsOfDirectory(atPath: folder.path)
+      .filter { $0.hasSuffix(".fits") && !$0.hasPrefix(".") }
     #expect(rows.count == fits.count)
     #expect(rows.allSatisfy { $0.width > 0 && $0.height > 0 })
   }

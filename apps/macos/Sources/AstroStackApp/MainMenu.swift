@@ -68,6 +68,7 @@ package enum MainMenu {
         (.app("New Project", locale: locale), #selector(NSDocumentController.newDocument(_:)), "n"),
         (.app("Open…", locale: locale), #selector(NSDocumentController.openDocument(_:)), "o"),
         (.app("Open Image…", locale: locale), #selector(AppDelegate.openImage(_:)), "O"),
+        (.app("Open Run…", locale: locale), #selector(AppDelegate.openRun(_:)), "r"),
         nil,
         (.app("Close", locale: locale), #selector(NSWindow.performClose(_:)), "w"),
         (.app("Save", locale: locale), #selector(NSDocument.save(_:)), "s"),

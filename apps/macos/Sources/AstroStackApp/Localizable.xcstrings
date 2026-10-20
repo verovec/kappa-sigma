@@ -777,6 +777,22 @@
         }
       }
     },
+    "Open Run…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Run…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir un run…"
+          }
+        }
+      }
+    },
     "Open…": {
       "localizations": {
         "en": {

@@ -27,6 +27,9 @@ struct MainMenuTests {
       menu: "File", title: "Close", french: ("Fichier", "Fermer"), key: "w", modifiers: .command,
       action: "performClose:"),
     Item(
+      menu: "File", title: "Open Run…", french: ("Fichier", "Ouvrir un run…"), key: "r",
+      modifiers: .command, action: "openRun:"),
+    Item(
       menu: "File", title: "Save", french: ("Fichier", "Enregistrer"), key: "s",
       modifiers: .command, action: "saveDocument:"),
     Item(

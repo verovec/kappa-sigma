@@ -36,6 +36,8 @@ package struct LegacyRunSource: Sendable {
   package let layers: [Layer]
   /// The run's own bundle, when this app wrote one.
   package let bundle: LinearBundle?
+  /// Where the layer files are: the folder holding `bundle.json` (the run, or its `linear/`).
+  package let layerFolder: URL
   /// The pixel grid every layer shares.
   package let grid: LinearBundle.Grid
 
@@ -48,7 +50,9 @@ package struct LegacyRunSource: Sendable {
     runID = run.runID
     object = run.object
     colorModel = run.colorModel
-    bundle = Self.ownBundle(in: folder)
+    let own = Self.ownBundle(in: folder)
+    bundle = own?.bundle
+    layerFolder = own?.folder ?? folder
     if let bundle {
       layers = bundle.layers.map {
         Layer(
@@ -59,7 +63,7 @@ package struct LegacyRunSource: Sendable {
       layers = try LegacyLayerDiscovery.layers(in: folder, frames: run.frames)
     }
     guard !layers.isEmpty else { throw LegacyRunError.noLayers(folder.path) }
-    grid = try Self.checkGrid(layers, in: folder)
+    grid = try Self.checkGrid(layers, in: layerFolder)
   }
 
   /// Records the run in the project: its path only, read-only (no layer is copied).
@@ -68,10 +72,15 @@ package struct LegacyRunSource: Sendable {
     try store.addSource(kind: .legacyRun, path: folder.standardizedFileURL.path)
   }
 
-  /// `bundle.json` at the run's root or in `linear/` (an app-made stack), if readable.
-  private static func ownBundle(in folder: URL) -> LinearBundle? {
+  /// The file of `layer`.
+  package func url(of layer: Layer) -> URL {
+    layerFolder.appendingPathComponent(layer.file)
+  }
+
+  /// `bundle.json` at the run's root or in `linear/` (an app-made stack) and its folder.
+  private static func ownBundle(in folder: URL) -> (bundle: LinearBundle, folder: URL)? {
     for candidate in [folder, folder.appendingPathComponent("linear")] {
-      if let bundle = try? BundleWriter.read(from: candidate) { return bundle }
+      if let bundle = try? BundleWriter.read(from: candidate) { return (bundle, candidate) }
     }
     return nil
   }
@@ -97,18 +106,7 @@ extension LinearBundle {
     return try BundleWriter().measure(
       runID: source.runID, colorModel: source.colorModel,
       layers: source.layers.map {
-        BundleWriter.Input(
-          filter: $0.id, file: source.folder.appendingPathComponent($0.file), source: $0.source)
+        BundleWriter.Input(filter: $0.id, file: source.url(of: $0), source: $0.source)
       })
   }
-}
-
-/// Why a folder does not open as a legacy run.
-package enum LegacyRunError: Error, Equatable, Sendable {
-  /// `run.json` is missing or unreadable.
-  case notARun(String)
-  /// No layer file in the folder.
-  case noLayers(String)
-  /// Layers of different sizes: each layer and its size.
-  case mixedDimensions([String])
 }

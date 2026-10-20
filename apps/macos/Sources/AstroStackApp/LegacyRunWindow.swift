@@ -1,7 +1,7 @@
 package import AppKit
 package import Foundation
 import RenderKit
-package import SwiftUI
+import SwiftUI
 import os
 
 /// File › Open Run…: a finished legacy run (`~/Documents/astro/runs/<Object>/<run_id>/`) opened
@@ -20,8 +20,16 @@ package final class LegacyRunWindow: NSWindowController, NSWindowDelegate {
   static func choose() {
     let panel = runPanel()
     guard panel.runModal() == .OK, let folder = panel.url else { return }
-    let document = NSDocumentController.shared.currentDocument as? ProjectDocument
-    Task { await open(folder, into: document) { NSAlert(error: $0).runModal() } }
+    Task { await open(folder, into: projectDocument()) { NSAlert(error: $0).runModal() } }
+  }
+
+  /// The project a run opened now belongs to: the frontmost project, or the only one open (a run
+  /// or image window may be in front).
+  package static func projectDocument() -> ProjectDocument? {
+    let controller = NSDocumentController.shared
+    if let current = controller.currentDocument as? ProjectDocument { return current }
+    let projects = controller.documents.compactMap { $0 as? ProjectDocument }
+    return projects.count == 1 ? projects.first : nil
   }
 
   /// The folder picker: folders only, starting in `~/Documents/astro/runs`.
@@ -53,7 +61,7 @@ package final class LegacyRunWindow: NSWindowController, NSWindowDelegate {
   package static func open(_ folder: URL, into document: ProjectDocument?) async throws
     -> LegacyRunWindow
   {
-    let model = try LegacyRunModel(folder: folder)
+    let model = try await LegacyRunModel.open(folder: folder)
     try document?.importLegacyRun(model.source)
     let controller = LegacyRunWindow(model: model)
     opened.append(controller)
@@ -79,55 +87,5 @@ package final class LegacyRunWindow: NSWindowController, NSWindowDelegate {
 
   package func windowWillClose(_ notification: Notification) {
     Self.opened.removeAll { $0 === self }
-  }
-}
-
-/// The Layers sidebar and the viewer of the selected layer.
-package struct LegacyRunView: View {
-  let model: LegacyRunModel
-  @State private var selection: String?
-  @State private var error: String?
-
-  /// The sidebar starts on the layer the model already shows (`-openRun` selects the base).
-  package init(model: LegacyRunModel) {
-    self.model = model
-    _selection = State(initialValue: model.selected)
-  }
-
-  package var body: some View {
-    NavigationSplitView {
-      List(model.rows, selection: $selection) { row in
-        VStack(alignment: .leading) {
-          Text(row.name).font(.headline)
-          Text(row.detail).font(.caption).foregroundStyle(.secondary)
-        }
-      }
-      .navigationTitle("Layers")
-      .frame(minWidth: 240)
-      .task(id: selection) { await load(selection) }
-    } detail: {
-      if let viewer = model.viewer {
-        ViewerView(
-          model: viewer.model, renderer: viewer.renderer, texture: viewer.texture, reference: nil
-        )
-        .id(model.selected)
-      } else {
-        ContentUnavailableView(
-          error ?? "Choose a layer", systemImage: "square.3.layers.3d",
-          description: Text("Read-only: nothing in the run folder is ever written."))
-      }
-    }
-  }
-
-  /// Loads the chosen layer; choosing another cancels a load still running.
-  private func load(_ id: String?) async {
-    guard let id else { return }
-    do {
-      try await model.select(id)
-    } catch is CancellationError {
-      return
-    } catch {
-      self.error = "\(error)"
-    }
   }
 }

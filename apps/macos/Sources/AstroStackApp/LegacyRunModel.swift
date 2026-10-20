@@ -26,14 +26,27 @@ package final class LegacyRunModel {
 
   /// The opened run.
   package let source: LegacyRunSource
-  /// The selected layer's id.
+  /// The layer shown in the viewer.
   package private(set) var selected: String?
-  /// The selected layer, once loaded.
+  /// The shown layer, once loaded.
   package private(set) var viewer: Viewer?
+  /// Why the last chosen layer could not be shown (the previous one stays).
+  package private(set) var failure: String?
+  @ObservationIgnored private var renderer: ViewerRenderer?
 
-  /// Opens the run at `folder` (read-only; headers only until a layer is selected).
-  package init(folder: URL) throws {
-    source = try LegacyRunSource(folder: folder)
+  /// A model of the run `source` (already opened).
+  package init(source: LegacyRunSource) {
+    self.source = source
+  }
+
+  /// Opens the run at `folder` off the main actor: listing, JSON and FITS headers.
+  package static func open(folder: URL) async throws -> LegacyRunModel {
+    LegacyRunModel(source: try await read(folder))
+  }
+
+  @concurrent
+  private nonisolated static func read(_ folder: URL) async throws -> LegacyRunSource {
+    try LegacyRunSource(folder: folder)
   }
 
   /// "M_31 · 20261018_191749".
@@ -51,18 +64,33 @@ package final class LegacyRunModel {
   }
 
   /// Loads layer `id` off the main actor and shows it.
+  ///
+  /// A failure keeps the layer shown before and is reported (`failure`), so choosing the layer
+  /// again retries.
   package func select(_ id: String) async throws {
-    guard let layer = source.layers.first(where: { $0.id == id }) else { return }
     guard id != selected || viewer == nil else { return }  // already shown
+    guard let layer = source.layers.first(where: { $0.id == id }) else { return }
+    do {
+      let renderer = try self.renderer ?? Self.makeRenderer()
+      self.renderer = renderer
+      let loaded = try await LoadedImage.read(source.url(of: layer), device: renderer.device)
+      try Task.checkCancellation()
+      selected = id
+      failure = nil
+      viewer = Viewer(
+        model: ViewerModel(image: loaded.image, autoSTF: loaded.autoSTF), renderer: renderer,
+        texture: loaded.texture)
+    } catch is CancellationError {
+      throw CancellationError()
+    } catch {
+      failure = "\(layer.file): \(error)"
+      throw error
+    }
+  }
+
+  /// One renderer for the window: its pipelines are compiled once, not per layer.
+  private static func makeRenderer() throws -> ViewerRenderer {
     guard let device = MTLCreateSystemDefaultDevice() else { throw RenderError.noDevice }
-    selected = id
-    let renderer = try ViewerRenderer(device: device)
-    let loaded = try await LoadedImage.read(
-      source.folder.appendingPathComponent(layer.file), device: device)
-    try Task.checkCancellation()
-    guard selected == id else { return }  // another layer was chosen meanwhile
-    viewer = Viewer(
-      model: ViewerModel(image: loaded.image, autoSTF: loaded.autoSTF), renderer: renderer,
-      texture: loaded.texture)
+    return try ViewerRenderer(device: device)
   }
 }

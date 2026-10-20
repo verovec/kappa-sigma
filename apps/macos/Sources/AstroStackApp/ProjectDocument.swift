@@ -105,7 +105,10 @@ package final class ProjectDocument: NSDocument {
   @discardableResult
   package func importLegacyRun(_ source: LegacyRunSource) throws -> ProjectSource {
     guard let project else { throw CocoaError(.fileReadUnknown) }
-    return try source.record(in: project.store)
+    let recorded = try source.record(in: project.store)
+    // The project changed: an untitled one must offer to be saved, not be discarded silently.
+    updateChangeCount(.changeDone)
+    return recorded
   }
 
   /// The sources the project records; `nil` without an open package.

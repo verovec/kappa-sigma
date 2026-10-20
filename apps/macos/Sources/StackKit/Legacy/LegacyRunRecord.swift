@@ -54,8 +54,9 @@ struct LegacyRunRecord {
       Stages.self, from: Data(contentsOf: folder.appendingPathComponent("stages.json")))
     let color = stages?.preset?.color.flatMap { ColorModel(rawValue: $0.lowercased()) } ?? .osc
     var frames: [String: Int] = [:]
+    // Keyed like the layer files: an unfiltered channel ("") is the `mono` tag.
     for channel in run.channels ?? [] {
-      if let count = channel.stackedFrames { frames[channel.filter] = count }
+      if let count = channel.stackedFrames { frames[ChannelTag.of(channel.filter)] = count }
     }
     return Self(object: run.object, runID: run.runID, colorModel: color, frames: frames)
   }
@@ -68,7 +69,9 @@ struct LegacyRunRecord {
 
   static func frames(for id: String, source: String, in frames: [String: Int]) -> Int? {
     if source == "syn" {
-      return frames.first { LegacyLayerDiscovery.isDualBand($0.key) }?.value
+      // Several dual-band channels: the first by name, the same on every launch.
+      let dualBand = frames.keys.filter(LegacyLayerDiscovery.isDualBand).sorted()
+      return dualBand.first.flatMap { frames[$0] }
     }
     return frames[id]
   }

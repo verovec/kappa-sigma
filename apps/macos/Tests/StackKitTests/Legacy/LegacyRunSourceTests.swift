@@ -162,6 +162,40 @@ struct LegacyRunSourceTests {
     #expect(try LinearBundle.build(fromLegacyRun: source) == written)
   }
 
+  @Test("a bundle in linear/ resolves its layer files there", .scratchDirectory)
+  func testBundleInLinearFolder() throws {
+    let run = try LegacyRunFixture.make(in: ScratchDirectory.url, files: [], color: "mono")
+    let linear = run.appendingPathComponent("linear")
+    _ = try LegacyRunFixture.make(in: linear, files: ["trim_L"], color: "mono")
+    let stack = linear.appendingPathComponent("20261018_191749")
+    try BundleWriter().write(
+      runID: "20261018_191749", colorModel: .mono,
+      layers: [
+        BundleWriter.Input(
+          filter: "L", file: stack.appendingPathComponent("trim_L.fits"), source: "trim")
+      ],
+      to: linear)
+    try FileManager.default.moveItem(
+      at: stack.appendingPathComponent("trim_L.fits"),
+      to: linear.appendingPathComponent("trim_L.fits"))
+    let source = try LegacyRunSource(folder: run)
+    #expect(source.layers.map(\.id) == ["L"])
+    #expect(source.url(of: source.layers[0]) == linear.appendingPathComponent("trim_L.fits"))
+    #expect(try LinearBundle.build(fromLegacyRun: source).layers.map(\.file) == ["trim_L.fits"])
+  }
+
+  @Test(
+    "frames: an unfiltered channel matches its tag; two dual-band channels pick by name",
+    .scratchDirectory)
+  func testFramesAreDeterministic() throws {
+    let run = try LegacyRunFixture.make(
+      in: ScratchDirectory.url, files: ["master_mono", "syn_Ha"],
+      channels: [("", 12), ("RGB-dualband", 34), ("L-dualband", 20)], color: "mono")
+    let source = try LegacyRunSource(folder: run)
+    let frames = Dictionary(uniqueKeysWithValues: source.layers.map { ($0.id, $0.frames) })
+    #expect(frames == ["mono": 12, "Ha": 20], "L-dualband sorts before RGB-dualband")
+  }
+
   static func setWritable(_ writable: Bool, _ folder: URL) throws {
     let mode: Int16 = writable ? 0o755 : 0o555
     let fileMode: Int16 = writable ? 0o644 : 0o444

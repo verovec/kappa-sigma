@@ -15,14 +15,18 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
   }
 
   /// Opens what `-openImage` / `-openRun` name in `defaults` (the command line's arguments).
-  package static func openLaunchArguments(_ defaults: UserDefaults) async {
+  package static func openLaunchArguments(
+    _ defaults: UserDefaults,
+    report: @escaping @MainActor (any Error) -> Void = { NSAlert(error: $0).runModal() }
+  ) async {
     if let path = defaults.string(forKey: "openImage") {
-      await ImageViewerWindow.show(URL(fileURLWithPath: path)).value
+      await ImageViewerWindow.show(URL(fileURLWithPath: path), report: report).value
     }
     if let path = defaults.string(forKey: "openRun") {
-      let document = NSDocumentController.shared.documents.first as? ProjectDocument
-      let window = try? await LegacyRunWindow.open(URL(fileURLWithPath: path), into: document)
+      let window = await LegacyRunWindow.open(
+        URL(fileURLWithPath: path), into: LegacyRunWindow.projectDocument(), report: report)
       if let window, let base = window.model.source.layers.first?.id {
+        // A failed load shows in the window (`failure`); nothing is swallowed.
         try? await window.model.select(base)
       }
     }

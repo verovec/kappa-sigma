@@ -39,7 +39,7 @@ struct LegacyRunWindowTests {
     .scratchDirectory)
   func testLayersAndSelection() async throws {
     let folder = try Self.run(in: ScratchDirectory.url)
-    let model = try LegacyRunModel(folder: folder)
+    let model = try await LegacyRunModel.open(folder: folder)
     #expect(model.title == "M_31 · 20261018_191749")
     #expect(model.rows.map(\.name) == ["RGB", "Ha", "OIII"])
     #expect(
@@ -66,13 +66,14 @@ struct LegacyRunWindowTests {
     let sources = try #require(try document.projectSources())
     #expect(sources.map(\.path) == [folder.standardizedFileURL.path])
     #expect(sources.allSatisfy { $0.kind == .legacyRun && $0.readOnly })
+    #expect(document.isDocumentEdited, "the project changed: it offers to be saved")
     controller.window?.close()
     second.window?.close()
   }
 
   @Test("the window's view lays out the sidebar and the selected layer's viewer", .scratchDirectory)
   func testViewLaysOut() async throws {
-    let model = try LegacyRunModel(folder: Self.run(in: ScratchDirectory.url))
+    let model = try await LegacyRunModel.open(folder: Self.run(in: ScratchDirectory.url))
     let empty = NSHostingView(rootView: LegacyRunView(model: model))
     empty.frame = NSRect(x: 0, y: 0, width: 900, height: 600)
     empty.layoutSubtreeIfNeeded()
@@ -99,6 +100,31 @@ struct LegacyRunWindowTests {
       LegacyRunWindow.openWindows.first { $0.model.source.folder.path == folder.path })
     #expect(window.model.selected == "RGB" && window.model.viewer != nil)
     window.window?.close()
+  }
+
+  @Test(
+    "a layer that fails to load keeps the one shown, says why, and can be retried",
+    .scratchDirectory)
+  func testFailedLoadKeepsPreviousLayer() async throws {
+    let folder = try Self.run(in: ScratchDirectory.url)
+    let model = try await LegacyRunModel.open(folder: folder)
+    try await model.select("RGB")
+    try Data("broken".utf8).write(to: folder.appendingPathComponent("syn_Ha.fits"))
+    await #expect(throws: (any Error).self) { try await model.select("Ha") }
+    #expect(model.selected == "RGB" && model.viewer?.model.image.planes.count == 3)
+    #expect(model.failure?.hasPrefix("syn_Ha.fits") == true)
+    await #expect(throws: (any Error).self) { try await model.select("Ha") }
+  }
+
+  @Test("-openRun on a folder that is not a run reports the error", .scratchDirectory)
+  func testLaunchArgumentReportsFailure() async throws {
+    let suite = "fr.astrostack.tests.launch.\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: suite))
+    defer { defaults.removePersistentDomain(forName: suite) }
+    defaults.set(try ScratchDirectory.url.path, forKey: "openRun")
+    var reported = 0
+    await AppDelegate.openLaunchArguments(defaults) { _ in reported += 1 }
+    #expect(reported == 1)
   }
 
   @Test("the folder picker starts in the runs folder and picks folders only")

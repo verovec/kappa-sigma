@@ -7,7 +7,7 @@ package import StackKit
 package final class ProjectWindowModel {
   package private(set) var sources: [ProjectSource] = []
   /// The open Import sheet's model, `nil` when no sheet is shown.
-  package var importing: ImportViewModel?
+  package private(set) var importing: ImportViewModel?
   package private(set) var error: UserFacingError?
 
   private let store: () -> ProjectStore?
@@ -34,8 +34,15 @@ package final class ProjectWindowModel {
 
   /// Opens the Import sheet on a fresh request.
   package func startImport() {
+    closeImport()
     let services = services(store())
     importing = ImportViewModel(planning: services.planning, masters: services.masters)
+  }
+
+  /// Closes the Import sheet and stops its scan, which would otherwise run on for minutes.
+  package func closeImport() {
+    importing?.cancel()
+    importing = nil
   }
 
   /// Records the imported folders as read-only sources of the project and closes the sheet.
@@ -50,7 +57,7 @@ package final class ProjectWindowModel {
       for path in request.paths {
         try store.addSource(kind: .night, path: path)
       }
-      importing = nil
+      closeImport()
       refresh()
     } catch {
       refresh()

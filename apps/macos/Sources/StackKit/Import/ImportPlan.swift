@@ -48,6 +48,8 @@ package struct ImportPlan: Equatable, Sendable {
     /// The `calib_exclude` token of this cell.
     package var suggestionID: String
     package var status: Status
+    /// The master applied, or the one the user excluded; `nil` for a gap.
+    package var master: CalibrationMaster?
     package var id: String { suggestionID }
   }
 
@@ -100,18 +102,19 @@ package struct ImportPlan: Equatable, Sendable {
     applied: CalibrationPreview.Channel, excluded: [String]
   ) -> Cell {
     let id = CalibrationMatcher.suggestionID(light, role: role)
-    let status: Status
     if let suggestion = applied.suggestions.first(where: { $0.role == role }) {
-      status = Self.status(suggestion)
-    } else if excluded.contains(id),
+      return Cell(
+        role: role, suggestionID: id, status: Self.status(suggestion), master: suggestion.master)
+    }
+    if excluded.contains(id),
       let suggestion = proposed.suggestions.first(where: { $0.role == role })
     {
-      status = .excluded(Self.status(suggestion))
-    } else {
-      // Dropped as a consequence (a -opt dark without its bias): a gap, explained by the notes.
-      status = .missing
+      return Cell(
+        role: role, suggestionID: id, status: .excluded(Self.status(suggestion)),
+        master: suggestion.master)
     }
-    return Cell(role: role, suggestionID: id, status: status)
+    // Dropped as a consequence (a -opt dark without its bias): a gap, explained by the notes.
+    return Cell(role: role, suggestionID: id, status: .missing)
   }
 
   private static func status(_ suggestion: CalibrationPreview.Suggestion) -> Status {

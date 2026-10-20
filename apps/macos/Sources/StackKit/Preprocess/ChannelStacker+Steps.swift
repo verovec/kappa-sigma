@@ -42,7 +42,9 @@ extension ChannelStacker {
 
   /// Grades the registered frames and stacks the survivors (`finishStackedChannel`).
   func gradeAndStack(
-    _ light: Light, frames: [CaptureFrame], into outcome: inout ChannelOutcome, out: URL
+    _ light: Light, frames: [CaptureFrame], spans: [Range<Int>] = [],
+    preReject: [Int: String] = [:],
+    saturationCeilings: [Float] = [], into outcome: inout ChannelOutcome, out: URL
   ) async throws {
     let sequence: SirilSequence
     do {
@@ -53,7 +55,9 @@ extension ChannelStacker {
     }
     let size = settings.trailDownsample
     // Each probe reads a whole frame: a cancelled run stops between them.
-    let graded = try ChannelGrading.grade(sequence, frames: frames, settings: settings) { index in
+    let graded = try ChannelGrading.grade(
+      sequence, frames: frames, settings: settings, preReject: preReject, spans: spans
+    ) { index in
       try Task.checkCancellation()
       return trailProbe(light.frame(light.calibrated, index + 1), size)
     }
@@ -69,9 +73,29 @@ extension ChannelStacker {
     {
       warn(warning, into: &outcome)
     }
+    if !saturationCeilings.isEmpty {
+      try repairSaturation(
+        light, grades: graded.grades, ceilings: saturationCeilings, into: &outcome)
+    }
     let master = out.appendingPathComponent("master_" + ChannelTag.of(outcome.filter))
     try await stackOrCopy(light, graded: graded, master: master, into: &outcome)
     finish(master, into: &outcome)
+  }
+
+  /// The saturated-core repair on the registered frames (`applyTrailMask` with k = 0): the
+  /// merge-order ceilings follow the registered numbering; under five frames nothing runs.
+  func repairSaturation(
+    _ light: Light, grades: [FrameGrade], ceilings: [Float], into outcome: inout ChannelOutcome
+  ) throws {
+    let registered = zip(grades, ceilings).filter { $0.0.fwhm > 0 }.map(\.1)
+    guard registered.count >= 5 else { return }
+    let files = registered.indices.map { light.frame(light.registered, $0 + 1) }
+    let repaired = try SaturationRepair.repair(files, ceilings: registered).reduce(0, +)
+    guard repaired > 0 else { return }
+    outcome.selection.notes.append(
+      "cross-frame trail mask: cleaned 0 pixels (0.00%) across \(files.count) frames — "
+        + "0 trail segment(s) in 0 frame(s), 0 candidate(s) rejected as fixed pattern, "
+        + "\(repaired) sensor-saturated core px repaired from unsaturated nights")
   }
 
   /// One registered frame is the master; fewer than two survivors cannot stack; otherwise Siril

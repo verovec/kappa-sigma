@@ -80,6 +80,9 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
   private static func message(_ error: CalibrationError) -> LocalizedStringResource {
     switch error {
     case .unreadableLibrary(let path): .app("The calibration library \(path) cannot be read.")
+    case .notAMaster(let path): .app("\(path) is not a calibration master: its name says nothing.")
+    case .wouldReplace(let path, _): .app("Rebuilding would replace the library master \(path).")
+    case .unreadableMaster(let path): .app("The master \(path) cannot be measured.")
     case .masterFailed(let name, let reason):
       .app("Siril could not build the master \(name): \(reason)")
     }

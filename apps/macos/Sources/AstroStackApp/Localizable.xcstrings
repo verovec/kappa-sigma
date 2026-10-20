@@ -1,6 +1,22 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%@ is not a calibration master: its name says nothing.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is not a calibration master: its name says nothing."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ n’est pas un master de calibration : son nom ne dit rien."
+          }
+        }
+      }
+    },
     "%lld frames": {
       "localizations": {
         "en": {
@@ -37,6 +53,22 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "%lld×%lld · %@ · built %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld×%lld · %@ · built %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld×%lld · %@ · construit le %@"
           }
         }
       }
@@ -521,6 +553,38 @@
         }
       }
     },
+    "Include": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Include"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inclure"
+          }
+        }
+      }
+    },
+    "Inspect %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inspect %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inspecter %@"
+          }
+        }
+      }
+    },
     "Language": {
       "localizations": {
         "en": {
@@ -533,6 +597,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Langue"
+          }
+        }
+      }
+    },
+    "Lets every mismatched master through, for all light sets": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lets every mismatched master through, for all light sets"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Laisse passer tous les masters non concordants, pour tous les lots de brutes"
           }
         }
       }
@@ -713,6 +793,22 @@
         }
       }
     },
+    "Other masters for this role": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Other masters for this role"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autres masters pour ce rôle"
+          }
+        }
+      }
+    },
     "Overrides": {
       "localizations": {
         "en": {
@@ -745,6 +841,22 @@
         }
       }
     },
+    "Preview": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preview"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aperçu"
+          }
+        }
+      }
+    },
     "Quit AstroStack": {
       "localizations": {
         "en": {
@@ -757,6 +869,54 @@
           "stringUnit": {
             "state": "translated",
             "value": "Quitter AstroStack"
+          }
+        }
+      }
+    },
+    "Rebuild from the capture": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rebuild from the capture"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reconstruire depuis la capture"
+          }
+        }
+      }
+    },
+    "Rebuilding %@: confirm with Replace": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rebuilding %@: confirm with Replace"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reconstruction : %@ — confirmez avec Remplacer"
+          }
+        }
+      }
+    },
+    "Rebuilding would replace the library master %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rebuilding would replace the library master %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La reconstruction remplacerait le master %@ de la bibliothèque."
           }
         }
       }
@@ -789,6 +949,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Relancer"
+          }
+        }
+      }
+    },
+    "Replace": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replace"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remplacer"
           }
         }
       }
@@ -1145,6 +1321,22 @@
         }
       }
     },
+    "The master %@ cannot be measured.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The master %@ cannot be measured."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le master %@ ne peut pas être mesuré."
+          }
+        }
+      }
+    },
     "The new language applies when AstroStack relaunches.": {
       "localizations": {
         "en": {
@@ -1237,6 +1429,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Annuler"
+          }
+        }
+      }
+    },
+    "Use forced matches": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use forced matches"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Forcer les correspondances"
           }
         }
       }
@@ -1337,6 +1545,54 @@
         }
       }
     },
+    "another sensor": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "another sensor"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "autre capteur"
+          }
+        }
+      }
+    },
+    "applied": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "applied"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "appliqué"
+          }
+        }
+      }
+    },
+    "applied only when forced (gain, exposure or temperature differs)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "applied only when forced (gain, exposure or temperature differs)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "appliqué seulement si forcé (gain, temps de pose ou température différent)"
+          }
+        }
+      }
+    },
     "as detected": {
       "localizations": {
         "en": {
@@ -1393,6 +1649,38 @@
         }
       }
     },
+    "clipped %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "clipped %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "écrêté %@"
+          }
+        }
+      }
+    },
+    "corners vs centre %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "corners vs centre %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "coins / centre %@"
+          }
+        }
+      }
+    },
     "excluded (proposed: %@)": {
       "localizations": {
         "en": {
@@ -1405,6 +1693,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "exclu (proposé : %@)"
+          }
+        }
+      }
+    },
+    "hot pixels %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "hot pixels %lld"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "pixels chauds %lld"
           }
         }
       }
@@ -1457,6 +1761,38 @@
         }
       }
     },
+    "matches, ranked below the applied one": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "matches, ranked below the applied one"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "correspond, classé après celui appliqué"
+          }
+        }
+      }
+    },
+    "median %@ · σ (MAD) %@ · min %@ · max %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "median %@ · σ (MAD) %@ · min %@ · max %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "médiane %@ · σ (MAD) %@ · min %@ · max %@"
+          }
+        }
+      }
+    },
     "missing": {
       "localizations": {
         "en": {
@@ -1469,6 +1805,54 @@
           "stringUnit": {
             "state": "translated",
             "value": "manquant"
+          }
+        }
+      }
+    },
+    "quadrants %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "quadrants %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "quadrants %@"
+          }
+        }
+      }
+    },
+    "replaces %@ (%@) in the library": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "replaces %@ (%@) in the library"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "remplace %@ (%@) dans la bibliothèque"
+          }
+        }
+      }
+    },
+    "replaces %@ in the library": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "replaces %@ in the library"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "remplace %@ dans la bibliothèque"
           }
         }
       }

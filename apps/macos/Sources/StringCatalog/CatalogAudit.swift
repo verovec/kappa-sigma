@@ -35,19 +35,27 @@ package enum CatalogAudit {
   /// The literals of `source` a user would read that are not keys of `catalog`.
   ///
   /// Such a literal shows in English whatever the language. Literals without a letter (`—`,
-  /// `\(count)`) and literals passed to a code label (`systemImage:`) are not text.
+  /// `\(count)`, `%.2f %%`) and literals passed to a code label (`systemImage:`) are not text.
   package static func uncatalogued(
     in source: String, file: String, catalog: StringCatalog
   ) -> [CatalogViolation] {
     let keys = Set(catalog.strings.keys.map(LiteralShape.ofKey))
     return SourceLiterals.of(source).compactMap { literal in
       let shape = LiteralShape.ofLiteral(literal.content)
-      let isText = shape.replacing(LiteralShape.hole, with: "").contains(where: \.isLetter)
+      let isText = words(of: shape).contains(where: \.isLetter)
       guard isText, !codeLabels.contains(literal.label ?? ""), !keys.contains(shape) else {
         return nil
       }
       return .uncatalogued(literal: literal.content, file: file, line: literal.line)
     }
+  }
+
+  /// The text of a literal's shape without its holes and `printf` specifiers (`"%.2f %%"` is
+  /// a format, not words).
+  private static func words(of shape: String) -> String {
+    var text = shape.replacing(LiteralShape.hole, with: "")
+    for match in FormatSpecifiers.matches(in: text).reversed() { text.removeSubrange(match.range) }
+    return text
   }
 
   // MARK: - One localization

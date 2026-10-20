@@ -60,13 +60,13 @@ struct SourceLiteralsTests {
     #expect(LiteralShape.ofKey("Say \"hi\"") == LiteralShape.ofLiteral(#"Say \"hi\""#))
   }
 
-  @Test("an English literal outside the catalog is reported; symbols and numbers are not")
+  @Test("an English literal outside the catalog is reported; symbols, numbers, formats are not")
   func testUncatalogued() throws {
     let catalog = try Catalogs.fixture("valid")
     let source = #"""
       Text("Night of \(session)")
       Label("Warnings", systemImage: "exclamationmark.triangle")
-      Text("—"); Text("\(row.count)")
+      Text("—"); Text("\(row.count)"); String(format: "%.2f %%", value)
       """#
     #expect(
       CatalogAudit.uncatalogued(in: source, file: "View.swift", catalog: catalog) == [

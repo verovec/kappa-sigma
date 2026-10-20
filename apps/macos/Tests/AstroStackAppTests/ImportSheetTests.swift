@@ -103,7 +103,8 @@ struct ImportSheetTests {
   /// The screens migrated by card 0073; ImportFormat's units wait for AstroFormat (0074).
   static let migrated = [
     "ProjectWindowView", "ProjectWindowModel", "ImportSheet", "ImportInventoryView",
-    "ImportOverridesView", "ImportCalibrationView", "SettingsView",
+    "ImportOverridesView", "ImportCalibrationView", "SettingsView", "MasterInspectView",
+    "MasterInspectViewModel", "MasterFormat",
     "UserFacingError",
   ]
 

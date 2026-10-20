@@ -23,14 +23,18 @@ package final class ImportViewModel {
   /// The sets the user excluded, as they were listed when excluded (a scan drops them).
   package private(set) var excludedRows: [ImportPlan.SetRow] = []
 
+  /// What a master's disclosure can do (inspect, rebuild, preview); `nil` hides it.
+  package let masters: MasterServices?
+
   private let planning: Planning
   private var scan: Task<Void, Never>?
   /// The request the shown plan's scan was made for.
   private var scanned: ImportRequest?
 
-  /// A model planning through `planning`.
-  package init(planning: @escaping Planning) {
+  /// A model planning through `planning`, with the master `masters` services if any.
+  package init(planning: @escaping Planning, masters: MasterServices? = nil) {
     self.planning = planning
+    self.masters = masters
   }
 
   /// The light filters as captured, in canonical order: the rows of the filter map.

@@ -60,6 +60,16 @@ struct UserFacingErrorTests {
     Case(
       error: CalibrationError.masterFailed(name: "master_BIAS", reason: "no frames"),
       names: "master_BIAS", english: "Siril could not build the master master_BIAS: no frames"),
+    Case(
+      error: CalibrationError.notAMaster("/lib/notes.fits"), names: "/lib/notes.fits",
+      english: "/lib/notes.fits is not a calibration master: its name says nothing."),
+    Case(
+      error: CalibrationError.wouldReplace(path: "/lib/dark.fits", frames: 20),
+      names: "/lib/dark.fits",
+      english: "Rebuilding would replace the library master /lib/dark.fits."),
+    Case(
+      error: CalibrationError.unreadableMaster("/lib/bias.fits"), names: "/lib/bias.fits",
+      english: "The master /lib/bias.fits cannot be measured."),
   ]
 
   @Test("every Siril and import error has an English and a French sentence", arguments: cases)

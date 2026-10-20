@@ -1,0 +1,7 @@
+requires 1.2.0
+setext fits
+set32bits
+rgbcomp trim_R trim_G trim_B -lum=trim_L -out=combined
+load combined
+subsky 1
+save combined

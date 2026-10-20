@@ -1,0 +1,207 @@
+{
+  "channels": [
+    {
+      "filter": "L",
+      "object": "TESTFIELD",
+      "selection": {
+        "bias": {
+          "bin": 1,
+          "exposure_ms": 0,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_BIAS_g100o10_b1.fits",
+          "temp_milli_c": -10000,
+          "type": "BIAS"
+        },
+        "dark": {
+          "bin": 1,
+          "exposure_ms": 10000,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_DARK_10000ms_g100o10_b1_-10C.fits",
+          "temp_milli_c": -10000,
+          "type": "DARK"
+        },
+        "flat": {
+          "bin": 1,
+          "exposure_ms": 5,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_FLAT_5ms_g100o10_b1_0C.fits",
+          "temp_milli_c": -10000,
+          "type": "FLAT"
+        },
+        "notes": [
+          "no L flat — using the session flat (corrects shared dust/vignetting)"
+        ]
+      }
+    },
+    {
+      "filter": "R",
+      "object": "TESTFIELD",
+      "selection": {
+        "bias": {
+          "bin": 1,
+          "exposure_ms": 0,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_BIAS_g100o10_b1.fits",
+          "temp_milli_c": -10000,
+          "type": "BIAS"
+        },
+        "dark": {
+          "bin": 1,
+          "exposure_ms": 10000,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_DARK_10000ms_g100o10_b1_-10C.fits",
+          "temp_milli_c": -10000,
+          "type": "DARK"
+        },
+        "flat": {
+          "bin": 1,
+          "exposure_ms": 5,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_FLAT_5ms_g100o10_b1_0C.fits",
+          "temp_milli_c": -10000,
+          "type": "FLAT"
+        },
+        "notes": [
+          "no R flat — using the session flat (corrects shared dust/vignetting)"
+        ]
+      }
+    },
+    {
+      "filter": "G",
+      "object": "TESTFIELD",
+      "selection": {
+        "bias": {
+          "bin": 1,
+          "exposure_ms": 0,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_BIAS_g100o10_b1.fits",
+          "temp_milli_c": -10000,
+          "type": "BIAS"
+        },
+        "dark": {
+          "bin": 1,
+          "exposure_ms": 10000,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_DARK_10000ms_g100o10_b1_-10C.fits",
+          "temp_milli_c": -10000,
+          "type": "DARK"
+        },
+        "flat": {
+          "bin": 1,
+          "exposure_ms": 5,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_FLAT_5ms_g100o10_b1_0C.fits",
+          "temp_milli_c": -10000,
+          "type": "FLAT"
+        },
+        "notes": [
+          "no G flat — using the session flat (corrects shared dust/vignetting)"
+        ]
+      }
+    },
+    {
+      "filter": "B",
+      "object": "TESTFIELD",
+      "selection": {
+        "bias": {
+          "bin": 1,
+          "exposure_ms": 0,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_BIAS_g100o10_b1.fits",
+          "temp_milli_c": -10000,
+          "type": "BIAS"
+        },
+        "dark": {
+          "bin": 1,
+          "exposure_ms": 10000,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_DARK_10000ms_g100o10_b1_-10C.fits",
+          "temp_milli_c": -10000,
+          "type": "DARK"
+        },
+        "flat": {
+          "bin": 1,
+          "exposure_ms": 5,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_FLAT_5ms_g100o10_b1_0C.fits",
+          "temp_milli_c": -10000,
+          "type": "FLAT"
+        },
+        "notes": [
+          "no B flat — using the session flat (corrects shared dust/vignetting)"
+        ]
+      }
+    }
+  ],
+  "masters": [
+    {
+      "bin": 1,
+      "exposure_ms": 0,
+      "frame_count": 3,
+      "gain": 100,
+      "has_temp": true,
+      "offset": 10,
+      "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_BIAS_g100o10_b1.fits",
+      "temp_milli_c": -10000,
+      "type": "BIAS"
+    },
+    {
+      "bin": 1,
+      "exposure_ms": 10000,
+      "frame_count": 3,
+      "gain": 100,
+      "has_temp": true,
+      "offset": 10,
+      "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_DARK_10000ms_g100o10_b1_-10C.fits",
+      "temp_milli_c": -10000,
+      "type": "DARK"
+    },
+    {
+      "bin": 1,
+      "exposure_ms": 5,
+      "frame_count": 3,
+      "gain": 100,
+      "has_temp": true,
+      "offset": 10,
+      "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_FLAT_5ms_g100o10_b1_0C.fits",
+      "temp_milli_c": -10000,
+      "type": "FLAT"
+    }
+  ]
+}

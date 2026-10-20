@@ -1,0 +1,307 @@
+{
+  "channels": [
+    {
+      "filter": "L",
+      "groups": [
+        {
+          "bias": "master_BIAS_g100o10_b1.fits",
+          "dark": "master_DARK_30000ms_g100o10_b1_-10C.fits",
+          "filter": "L",
+          "flat": "master_FLAT_B_5ms_g100o10_b1_0C_n2020-05-15.fits",
+          "flat_source": "run",
+          "frames": 2,
+          "session": "2020-05-15"
+        },
+        {
+          "bias": "master_BIAS_g100o10_b1.fits",
+          "dark": "master_DARK_10000ms_g100o10_b1_-10C.fits",
+          "filter": "L",
+          "flat": "master_FLAT_5ms_g100o10_b1_0C_n2024-03-01.fits",
+          "flat_source": "run",
+          "frames": 3,
+          "session": "2024-03-01"
+        }
+      ],
+      "object": "TESTFIELD",
+      "selection": {
+        "bias": {
+          "bin": 1,
+          "exposure_ms": 0,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_BIAS_g100o10_b1.fits",
+          "temp_milli_c": -10000,
+          "type": "BIAS"
+        },
+        "dark": {
+          "bin": 1,
+          "exposure_ms": 30000,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_DARK_30000ms_g100o10_b1_-10C.fits",
+          "temp_milli_c": -10000,
+          "type": "DARK"
+        },
+        "flat": {
+          "bin": 1,
+          "exposure_ms": 5,
+          "filter": "B",
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_FLAT_B_5ms_g100o10_b1_0C_n2020-05-15.fits",
+          "session": "2020-05-15",
+          "temp_milli_c": -10000,
+          "type": "FLAT"
+        },
+        "notes": [
+          "no L flat — using the B flat (corrects shared dust/vignetting)",
+          "session 0: parity undetermined (plate-solve failed) — flip not applied",
+          "session 0: parity undetermined (plate-solve failed) — flip not applied",
+          "group \"2020-05-15 · L g100 o10 30000ms t-10C\": measured scale 1.05 disagrees with header exposure/gain — check GAIN header",
+          "capture offsets: slow/irregular offsets (median step 1.6 px, coherence 0.76, span 112.2 px): only partial fixed-pattern decorrelation — explicit random dithering (~10 px between subs) would improve rejection"
+        ]
+      }
+    },
+    {
+      "filter": "R",
+      "groups": [
+        {
+          "bias": "master_BIAS_g100o10_b1.fits",
+          "dark": "master_DARK_30000ms_g100o10_b1_-10C.fits",
+          "filter": "R",
+          "flat": "master_FLAT_B_5ms_g100o10_b1_0C_n2020-05-15.fits",
+          "flat_source": "run",
+          "frames": 2,
+          "session": "2020-05-15"
+        },
+        {
+          "bias": "master_BIAS_g100o10_b1.fits",
+          "dark": "master_DARK_10000ms_g100o10_b1_-10C.fits",
+          "filter": "R",
+          "flat": "master_FLAT_5ms_g100o10_b1_0C_n2024-03-01.fits",
+          "flat_source": "run",
+          "frames": 3,
+          "session": "2024-03-01"
+        }
+      ],
+      "object": "TESTFIELD",
+      "selection": {
+        "bias": {
+          "bin": 1,
+          "exposure_ms": 0,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_BIAS_g100o10_b1.fits",
+          "temp_milli_c": -10000,
+          "type": "BIAS"
+        },
+        "dark": {
+          "bin": 1,
+          "exposure_ms": 30000,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_DARK_30000ms_g100o10_b1_-10C.fits",
+          "temp_milli_c": -10000,
+          "type": "DARK"
+        },
+        "flat": {
+          "bin": 1,
+          "exposure_ms": 5,
+          "filter": "B",
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_FLAT_B_5ms_g100o10_b1_0C_n2020-05-15.fits",
+          "session": "2020-05-15",
+          "temp_milli_c": -10000,
+          "type": "FLAT"
+        },
+        "notes": [
+          "no R flat — using the B flat (corrects shared dust/vignetting)",
+          "group \"2020-05-15 · R g100 o10 30000ms t-10C\": measured scale 1.05 disagrees with header exposure/gain — check GAIN header",
+          "capture offsets: slow/irregular offsets (median step 1.6 px, coherence 0.76, span 112.2 px): only partial fixed-pattern decorrelation — explicit random dithering (~10 px between subs) would improve rejection"
+        ]
+      }
+    },
+    {
+      "filter": "G",
+      "groups": [
+        {
+          "bias": "master_BIAS_g100o10_b1.fits",
+          "dark": "master_DARK_10000ms_g100o10_b1_-10C.fits",
+          "filter": "G",
+          "flat": "master_FLAT_5ms_g100o10_b1_0C_n2024-03-01.fits",
+          "flat_source": "run",
+          "frames": 3,
+          "session": "2024-03-01"
+        }
+      ],
+      "object": "TESTFIELD",
+      "selection": {
+        "bias": {
+          "bin": 1,
+          "exposure_ms": 0,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_BIAS_g100o10_b1.fits",
+          "temp_milli_c": -10000,
+          "type": "BIAS"
+        },
+        "dark": {
+          "bin": 1,
+          "exposure_ms": 10000,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_DARK_10000ms_g100o10_b1_-10C.fits",
+          "temp_milli_c": -10000,
+          "type": "DARK"
+        },
+        "flat": {
+          "bin": 1,
+          "exposure_ms": 5,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_FLAT_5ms_g100o10_b1_0C_n2024-03-01.fits",
+          "session": "2024-03-01",
+          "temp_milli_c": -10000,
+          "type": "FLAT"
+        },
+        "notes": [
+          "no G flat — using the session flat (corrects shared dust/vignetting)"
+        ]
+      }
+    },
+    {
+      "filter": "B",
+      "groups": [
+        {
+          "bias": "master_BIAS_g100o10_b1.fits",
+          "dark": "master_DARK_10000ms_g100o10_b1_-10C.fits",
+          "filter": "B",
+          "flat": "master_FLAT_B_5ms_g100o10_b1_0C_n2020-05-15.fits",
+          "flat_source": "run",
+          "frames": 3,
+          "session": "2024-03-01"
+        }
+      ],
+      "object": "TESTFIELD",
+      "selection": {
+        "bias": {
+          "bin": 1,
+          "exposure_ms": 0,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_BIAS_g100o10_b1.fits",
+          "temp_milli_c": -10000,
+          "type": "BIAS"
+        },
+        "dark": {
+          "bin": 1,
+          "exposure_ms": 10000,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_DARK_10000ms_g100o10_b1_-10C.fits",
+          "temp_milli_c": -10000,
+          "type": "DARK"
+        },
+        "flat": {
+          "bin": 1,
+          "exposure_ms": 5,
+          "filter": "B",
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_FLAT_B_5ms_g100o10_b1_0C_n2020-05-15.fits",
+          "session": "2020-05-15",
+          "temp_milli_c": -10000,
+          "type": "FLAT"
+        },
+        "notes": [
+          "no 2024-03-01 flat — using the night 2020-05-15 flat (dust may have moved between nights)"
+        ]
+      }
+    }
+  ],
+  "masters": [
+    {
+      "bin": 1,
+      "exposure_ms": 0,
+      "frame_count": 3,
+      "gain": 100,
+      "has_temp": true,
+      "offset": 10,
+      "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_BIAS_g100o10_b1.fits",
+      "temp_milli_c": -10000,
+      "type": "BIAS"
+    },
+    {
+      "bin": 1,
+      "exposure_ms": 10000,
+      "frame_count": 3,
+      "gain": 100,
+      "has_temp": true,
+      "offset": 10,
+      "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_DARK_10000ms_g100o10_b1_-10C.fits",
+      "temp_milli_c": -10000,
+      "type": "DARK"
+    },
+    {
+      "bin": 1,
+      "exposure_ms": 30000,
+      "frame_count": 3,
+      "gain": 100,
+      "has_temp": true,
+      "offset": 10,
+      "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_DARK_30000ms_g100o10_b1_-10C.fits",
+      "temp_milli_c": -10000,
+      "type": "DARK"
+    },
+    {
+      "bin": 1,
+      "exposure_ms": 5,
+      "frame_count": 3,
+      "gain": 100,
+      "has_temp": true,
+      "offset": 10,
+      "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_FLAT_5ms_g100o10_b1_0C_n2024-03-01.fits",
+      "session": "2024-03-01",
+      "temp_milli_c": -10000,
+      "type": "FLAT"
+    },
+    {
+      "bin": 1,
+      "exposure_ms": 5,
+      "filter": "B",
+      "frame_count": 3,
+      "gain": 100,
+      "has_temp": true,
+      "offset": 10,
+      "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_FLAT_B_5ms_g100o10_b1_0C_n2020-05-15.fits",
+      "session": "2020-05-15",
+      "temp_milli_c": -10000,
+      "type": "FLAT"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+requires 1.2.0
+setext fits
+set32bits
+link light -out=.
+register light -2pass -transf=homography

@@ -1,0 +1,77 @@
+{
+  "anchor_night": "2024-03-01",
+  "channels": [
+    {
+      "filter": "L",
+      "groups": [
+        {
+          "overlap_frac": 1,
+          "rotation_deg": 35.000377601593215,
+          "session": "2020-05-15"
+        },
+        {
+          "overlap_frac": 0.9922331295542705,
+          "rotation_deg": 0.0015294668911797701,
+          "session": "2024-03-01"
+        }
+      ],
+      "object": "TESTFIELD",
+      "pre_rejected": []
+    },
+    {
+      "filter": "R",
+      "groups": [
+        {
+          "overlap_frac": 1,
+          "rotation_deg": 35.000377601593215,
+          "session": "2020-05-15"
+        },
+        {
+          "overlap_frac": 0.9922331295542705,
+          "rotation_deg": 0.0015294668911797701,
+          "session": "2024-03-01"
+        }
+      ],
+      "object": "TESTFIELD",
+      "pre_rejected": []
+    },
+    {
+      "filter": "G",
+      "groups": [
+        {
+          "session": "2024-03-01"
+        }
+      ],
+      "object": "TESTFIELD",
+      "pre_rejected": []
+    },
+    {
+      "filter": "B",
+      "groups": [
+        {
+          "session": "2024-03-01"
+        }
+      ],
+      "object": "TESTFIELD",
+      "pre_rejected": []
+    }
+  ],
+  "setref": [
+    {
+      "command": "setref light 4",
+      "script": "0012_merged_L.ssf"
+    },
+    {
+      "command": "setref light 4",
+      "script": "0018_merged_R.ssf"
+    },
+    {
+      "command": "setref light 2",
+      "script": "0022_merged_G.ssf"
+    },
+    {
+      "command": "setref light 2",
+      "script": "0026_merged_B.ssf"
+    }
+  ]
+}

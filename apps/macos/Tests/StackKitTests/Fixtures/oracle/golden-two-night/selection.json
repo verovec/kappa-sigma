@@ -1,0 +1,105 @@
+{
+  "channels": [
+    {
+      "filter": "L",
+      "groups": [
+        {
+          "rejected_frames": 0,
+          "session": "2020-05-15",
+          "stacked_frames": 2
+        },
+        {
+          "rejected_frames": 0,
+          "session": "2024-03-01",
+          "stacked_frames": 3
+        }
+      ],
+      "input_frames": 5,
+      "kept": [
+        "\u003cROOT\u003e/in/lights_b/light_b_L_0.fits",
+        "\u003cROOT\u003e/in/lights_b/light_b_L_1.fits",
+        "\u003cROOT\u003e/in/lights/light_L_0.fits",
+        "\u003cROOT\u003e/in/lights/light_L_1.fits",
+        "\u003cROOT\u003e/in/lights/light_L_2.fits",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "object": "TESTFIELD",
+      "rejected": [],
+      "stacked_frames": 10
+    },
+    {
+      "filter": "R",
+      "groups": [
+        {
+          "rejected_frames": 0,
+          "session": "2020-05-15",
+          "stacked_frames": 2
+        },
+        {
+          "rejected_frames": 0,
+          "session": "2024-03-01",
+          "stacked_frames": 3
+        }
+      ],
+      "input_frames": 5,
+      "kept": [
+        "\u003cROOT\u003e/in/lights_b/light_b_R_0.fits",
+        "\u003cROOT\u003e/in/lights_b/light_b_R_1.fits",
+        "\u003cROOT\u003e/in/lights/light_R_0.fits",
+        "\u003cROOT\u003e/in/lights/light_R_1.fits",
+        "\u003cROOT\u003e/in/lights/light_R_2.fits",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "object": "TESTFIELD",
+      "rejected": [],
+      "stacked_frames": 10
+    },
+    {
+      "filter": "G",
+      "groups": [
+        {
+          "rejected_frames": 0,
+          "session": "2024-03-01",
+          "stacked_frames": 3
+        }
+      ],
+      "input_frames": 3,
+      "kept": [
+        "\u003cROOT\u003e/in/lights/light_G_0.fits",
+        "\u003cROOT\u003e/in/lights/light_G_1.fits",
+        "\u003cROOT\u003e/in/lights/light_G_2.fits"
+      ],
+      "object": "TESTFIELD",
+      "rejected": [],
+      "stacked_frames": 3
+    },
+    {
+      "filter": "B",
+      "groups": [
+        {
+          "rejected_frames": 0,
+          "session": "2024-03-01",
+          "stacked_frames": 3
+        }
+      ],
+      "input_frames": 3,
+      "kept": [
+        "\u003cROOT\u003e/in/lights/light_B_0.fits",
+        "\u003cROOT\u003e/in/lights/light_B_1.fits",
+        "\u003cROOT\u003e/in/lights/light_B_2.fits"
+      ],
+      "object": "TESTFIELD",
+      "rejected": [],
+      "stacked_frames": 3
+    }
+  ],
+  "unselect": []
+}

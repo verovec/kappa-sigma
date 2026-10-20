@@ -1,0 +1,25 @@
+{
+  "channels": [
+    {
+      "filter": "L",
+      "object": "TESTFIELD",
+      "pre_rejected": []
+    },
+    {
+      "filter": "R",
+      "object": "TESTFIELD",
+      "pre_rejected": []
+    },
+    {
+      "filter": "G",
+      "object": "TESTFIELD",
+      "pre_rejected": []
+    },
+    {
+      "filter": "B",
+      "object": "TESTFIELD",
+      "pre_rejected": []
+    }
+  ],
+  "setref": []
+}

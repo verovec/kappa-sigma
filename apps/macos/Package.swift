@@ -73,7 +73,7 @@ let package = Package(
       swiftSettings: common),
     .testTarget(
       name: "StackKitTests", dependencies: ["StackKit", "TestSupport"],
-      swiftSettings: common),
+      resources: [.copy("Fixtures")], swiftSettings: common),
     .testTarget(
       name: "HelpKitTests", dependencies: ["HelpKit", "TestSupport"],
       swiftSettings: common),

@@ -1,0 +1,6 @@
+requires 1.2.0
+setext fits
+set32bits
+link light -out=.
+seqsubsky light 1 -prefix=flat_
+register flat_light -2pass -transf=homography

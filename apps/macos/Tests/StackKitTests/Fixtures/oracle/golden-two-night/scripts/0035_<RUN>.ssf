@@ -1,0 +1,8 @@
+requires 1.2.0
+setext fits
+set32bits
+load combined
+autostretch -linked
+satu 0.12
+savepng final
+savetif final

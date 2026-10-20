@@ -1,0 +1,6 @@
+requires 1.2.0
+setext fits
+set32bits
+load <ROOT>/work/run_<RUN>/05_stretched/lum_mono.tif
+savetif <ROOT>/out/TESTFIELD/<RUN>/final_luminance
+savepng <ROOT>/out/TESTFIELD/<RUN>/final_luminance

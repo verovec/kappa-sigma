@@ -1,0 +1,198 @@
+[
+  {
+    "filter": "L",
+    "metrics": [
+      {
+        "background": 0.00384543,
+        "fwhm": 4.87372,
+        "index": 1,
+        "path": "\u003cROOT\u003e/in/lights/light_L_0.fits",
+        "quality": 0,
+        "rejected": false,
+        "roundness": 0.994937,
+        "star_count": 36,
+        "trail_detected": false,
+        "trail_score": 0.375,
+        "wfwhm": 4.87372
+      },
+      {
+        "background": 0.00374381,
+        "fwhm": 4.86465,
+        "index": 2,
+        "path": "\u003cROOT\u003e/in/lights/light_L_1.fits",
+        "quality": 0,
+        "rejected": false,
+        "roundness": 0.99862,
+        "shift_x": -1.49824,
+        "shift_y": 0.505717,
+        "star_count": 36,
+        "trail_detected": false,
+        "trail_score": 0.37109375,
+        "wfwhm": 4.86465
+      },
+      {
+        "background": 0.00387816,
+        "fwhm": 4.87332,
+        "index": 3,
+        "path": "\u003cROOT\u003e/in/lights/light_L_2.fits",
+        "quality": 0,
+        "rejected": false,
+        "roundness": 0.994977,
+        "shift_x": -3.00012,
+        "shift_y": 0.999517,
+        "star_count": 36,
+        "trail_detected": false,
+        "trail_score": 0.37109375,
+        "wfwhm": 4.87332
+      }
+    ],
+    "object": "TESTFIELD"
+  },
+  {
+    "filter": "R",
+    "metrics": [
+      {
+        "background": 0.00384543,
+        "fwhm": 4.87372,
+        "index": 1,
+        "path": "\u003cROOT\u003e/in/lights/light_R_0.fits",
+        "quality": 0,
+        "rejected": false,
+        "roundness": 0.994937,
+        "star_count": 36,
+        "trail_detected": false,
+        "trail_score": 0.375,
+        "wfwhm": 4.87372
+      },
+      {
+        "background": 0.00374381,
+        "fwhm": 4.86465,
+        "index": 2,
+        "path": "\u003cROOT\u003e/in/lights/light_R_1.fits",
+        "quality": 0,
+        "rejected": false,
+        "roundness": 0.99862,
+        "shift_x": -1.49824,
+        "shift_y": 0.505717,
+        "star_count": 36,
+        "trail_detected": false,
+        "trail_score": 0.37109375,
+        "wfwhm": 4.86465
+      },
+      {
+        "background": 0.00387816,
+        "fwhm": 4.87332,
+        "index": 3,
+        "path": "\u003cROOT\u003e/in/lights/light_R_2.fits",
+        "quality": 0,
+        "rejected": false,
+        "roundness": 0.994977,
+        "shift_x": -3.00012,
+        "shift_y": 0.999517,
+        "star_count": 36,
+        "trail_detected": false,
+        "trail_score": 0.37109375,
+        "wfwhm": 4.87332
+      }
+    ],
+    "object": "TESTFIELD"
+  },
+  {
+    "filter": "G",
+    "metrics": [
+      {
+        "background": 0.00384543,
+        "fwhm": 4.87372,
+        "index": 1,
+        "path": "\u003cROOT\u003e/in/lights/light_G_0.fits",
+        "quality": 0,
+        "rejected": false,
+        "roundness": 0.994937,
+        "star_count": 36,
+        "trail_detected": false,
+        "trail_score": 0.375,
+        "wfwhm": 4.87372
+      },
+      {
+        "background": 0.00374381,
+        "fwhm": 4.86465,
+        "index": 2,
+        "path": "\u003cROOT\u003e/in/lights/light_G_1.fits",
+        "quality": 0,
+        "rejected": false,
+        "roundness": 0.99862,
+        "shift_x": -1.49824,
+        "shift_y": 0.505717,
+        "star_count": 36,
+        "trail_detected": false,
+        "trail_score": 0.37109375,
+        "wfwhm": 4.86465
+      },
+      {
+        "background": 0.00387816,
+        "fwhm": 4.87332,
+        "index": 3,
+        "path": "\u003cROOT\u003e/in/lights/light_G_2.fits",
+        "quality": 0,
+        "rejected": false,
+        "roundness": 0.994977,
+        "shift_x": -3.00012,
+        "shift_y": 0.999517,
+        "star_count": 36,
+        "trail_detected": false,
+        "trail_score": 0.37109375,
+        "wfwhm": 4.87332
+      }
+    ],
+    "object": "TESTFIELD"
+  },
+  {
+    "filter": "B",
+    "metrics": [
+      {
+        "background": 0.00384543,
+        "fwhm": 4.87372,
+        "index": 1,
+        "path": "\u003cROOT\u003e/in/lights/light_B_0.fits",
+        "quality": 0,
+        "rejected": false,
+        "roundness": 0.994937,
+        "star_count": 36,
+        "trail_detected": false,
+        "trail_score": 0.375,
+        "wfwhm": 4.87372
+      },
+      {
+        "background": 0.00374381,
+        "fwhm": 4.86465,
+        "index": 2,
+        "path": "\u003cROOT\u003e/in/lights/light_B_1.fits",
+        "quality": 0,
+        "rejected": false,
+        "roundness": 0.99862,
+        "shift_x": -1.49824,
+        "shift_y": 0.505717,
+        "star_count": 36,
+        "trail_detected": false,
+        "trail_score": 0.37109375,
+        "wfwhm": 4.86465
+      },
+      {
+        "background": 0.00387816,
+        "fwhm": 4.87332,
+        "index": 3,
+        "path": "\u003cROOT\u003e/in/lights/light_B_2.fits",
+        "quality": 0,
+        "rejected": false,
+        "roundness": 0.994977,
+        "shift_x": -3.00012,
+        "shift_y": 0.999517,
+        "star_count": 36,
+        "trail_detected": false,
+        "trail_score": 0.37109375,
+        "wfwhm": 4.87332
+      }
+    ],
+    "object": "TESTFIELD"
+  }
+]

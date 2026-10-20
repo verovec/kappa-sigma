@@ -25,4 +25,9 @@ package actor LibraryIndex {
     indexed = masters
     return masters
   }
+
+  /// Forgets the index: a master was just written into the library.
+  package func invalidate() {
+    indexed = nil
+  }
 }

@@ -17,8 +17,17 @@ built, each light set's bias/dark/flat, per-night groups).
 | `PoolSignature` | `poolsig`, `.sig` | which frames a master was stacked from: reuse only when proven |
 | `CalibrationLibrary` | `library.go` + Postgres index | indexes `~/Documents/astro/library` into `project.db` (`calibration_masters`, migration 0002); the folder is the truth |
 | `MasterBuilder` | `BuildMasters`, `BuildOrReuseMasters` | bias → dark-flat → dark → flat through Siril (0045 scripts); `.direct` into a run folder, `.atomic` (`.tmp_<run>_<name>` + rename) into the library; `.sig` written once the master is in place |
+| `MasterStats`, `MasterWarning`, `MasterInspection` | `calibscan` (one-off audit) | a master's median, σ (MAD), min/max, quadrants, corner/centre (flats), clipped %, hot pixels (darks); the documented thresholds it crosses (card 0071) |
 
 ## Rules worth knowing
+
+- Master statistics are measured, shown and never acted on (R2). Sampling steps are odd and the
+  vignetting is taken on 2×2 block means: an even step reads ONE Bayer colour per patch, which
+  made a dual-band OSC flat read "+59 % brighter corners" (it is −3 %). Thresholds:
+  `MasterWarning` (corners brighter than centre; flat median < 10 % of full scale — M 45's
+  corrupted lot sat at 6 %; > 0.1 % clipped; dark hot pixels > 0.5 %).
+- `MasterBuilder.rebuild` stacks one set straight into the library (`.atomic`); `onLine` streams
+  Siril's lines (progress) for every build.
 
 - R2: every fallback is a note (`no L flat — using the session flat…`, cross-night, forced,
   borrowed from the library, cross-set refusal); nothing is applied silently.

@@ -11,23 +11,31 @@ package final class ProjectWindowModel {
   package private(set) var error: String?
 
   private let store: () -> ProjectStore?
-  private let planning: (ProjectStore?) -> ImportViewModel.Planning
+  private let services: (ProjectStore?) -> ImportServices
 
-  /// A window over the document's current store (it changes when the package moves).
+  /// A window over the document's current store (it changes when the package moves); each sheet
+  /// gets fresh `services`.
   package init(
     store: @escaping () -> ProjectStore?,
-    planning: @escaping (ProjectStore?) -> ImportViewModel.Planning = {
-      ImportPlanning.live(store: $0)
-    }
+    services: @escaping (ProjectStore?) -> ImportServices = { ImportPlanning.services(store: $0) }
   ) {
     self.store = store
-    self.planning = planning
+    self.services = services
     refresh()
+  }
+
+  /// A window whose sheets plan with `planning` and have no master services.
+  package convenience init(
+    store: @escaping () -> ProjectStore?,
+    planning: @escaping (ProjectStore?) -> ImportViewModel.Planning
+  ) {
+    self.init(store: store, services: { ImportServices(planning: planning($0)) })
   }
 
   /// Opens the Import sheet on a fresh request.
   package func startImport() {
-    importing = ImportViewModel(planning: planning(store()))
+    let services = services(store())
+    importing = ImportViewModel(planning: services.planning, masters: services.masters)
   }
 
   /// Records the imported folders as read-only sources of the project and closes the sheet.

@@ -2,9 +2,6 @@ internal import CryptoKit
 internal import Foundation
 
 extension MasterBuilder {
-  /// Master builds do not stream Siril's lines anywhere yet (0048 wires progress).
-  static let quiet: @Sendable (SirilLine) -> Void = { _ in }
-
   /// Stacks one set (`buildOne`): link its frames as sequence `cal`, run the script, publish the
   /// `.fits`, write the `.sig`, drop the scratch.
   func buildOne(
@@ -56,14 +53,14 @@ extension MasterBuilder {
     let frames = set.count
     if frames == 1 {
       _ = try await runner.run(
-        SirilScripts.promoteLoneFrame(seq: "cal", out: target), sequence, Self.quiet)
+        SirilScripts.promoteLoneFrame(seq: "cal", out: target), sequence, onLine)
       return MasterNotes.lonePromotion(name, type: type)
     }
     let options = recipes.options(type)
     guard type == .flat else {
       _ = try await runner.run(
         SirilScripts.stackMaster(seq: "cal", out: target, frames: frames, options: options),
-        sequence, Self.quiet)
+        sequence, onLine)
       return MasterNotes.thinDarkPool(name, type: type, frames: frames)
     }
     let bias = Self.flatBias(set.key, built)
@@ -71,7 +68,7 @@ extension MasterBuilder {
       _ = try await runner.run(
         SirilScripts.stackFlat(
           seq: "cal", out: target, bias: bias, frames: frames, options: options), sequence,
-        Self.quiet
+        onLine
       )
       return nil
     } catch let error where bias != nil && !(error is CancellationError) {
@@ -84,7 +81,7 @@ extension MasterBuilder {
         try Self.link(set.frames.map(\.path), into: retry)
         _ = try await runner.run(
           SirilScripts.stackFlat(
-            seq: "cal", out: target, bias: nil, frames: frames, options: options), retry, Self.quiet
+            seq: "cal", out: target, bias: nil, frames: frames, options: options), retry, onLine
         )
       } catch {
         throw error

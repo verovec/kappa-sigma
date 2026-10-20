@@ -63,6 +63,15 @@ extension Preprocessor {
     ).align(
       masters, folder: request.work.appendingPathComponent("04_aligned"), out: request.output,
       journal: &journal)
+    if request.settings.coverageCrop {
+      // Multi-night channels carry coverage: cut every input to the field all of them cover.
+      let grids = result.channels.reduce(into: [String: CoverageGrid]()) { grids, channel in
+        if let grid = channel.coverage, channel.error == nil { grids[channel.filter] = grid }
+      }
+      (channels, result.coverageCrop) = CoverageCrop.apply(
+        channels, grids: grids, minimumFraction: request.settings.coverageMinimumFraction,
+        out: request.output, journal: &journal)
+    }
     if request.settings.edgeCrop {
       (channels, result.crop) = EdgeCropper(measure: tools.edgeMeasure).apply(
         channels, out: request.output, journal: &journal)

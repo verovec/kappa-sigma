@@ -29,6 +29,8 @@ package struct PreprocessSettings: Equatable, Sendable {
   package var seamNoiseEqualisation = true
   /// Repair sensor-saturated cores from unsaturated nights before the stack (`CoreSatMask`).
   package var coreSaturationRepair = true
+  /// Cut the combine inputs to the field every channel covers (`CoverageCrop`).
+  package var coverageCrop = true
   /// The fraction of frames a cell needs to count as covered (`CoverageMinFrac`).
   package var coverageMinimumFraction = 0.30
   /// Where the parity probes' `platesolve` looks (`"RA,DEC"`): stacked masters lose their

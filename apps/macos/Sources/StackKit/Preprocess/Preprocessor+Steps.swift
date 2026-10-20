@@ -16,18 +16,33 @@ extension Preprocessor {
     return built.pool
   }
 
-  /// One channel's step, its master previewed when there is one.
+  /// One channel's step (the plan's nights of `lane`), its master previewed when there is one.
   func stackChannel(
-    _ set: FrameSet, request: PreprocessRequest, pool: [CalibrationMaster], emitter: RunEmitter
+    _ lane: String, plan: NightPlan, request: PreprocessRequest, pool: [CalibrationMaster],
+    parity: ParityCache, emitter: RunEmitter
   ) async throws -> ChannelOutcome {
-    emitter.begin("grading + stacking \(set.key.object) \(set.key.filter)")
+    let groups = plan.channels[lane] ?? []
+    let object = groups.first?.key.object ?? ""
+    emitter.begin(
+      "grading + stacking \(object) \(lane)" + (groups.count > 1 ? " (\(groups.count) groups)" : "")
+    )
     // The stacker journals its own Siril lines and warnings.
     let stacker = ChannelStacker(
       runner: tools.runner, settings: request.settings, trailProbe: tools.trailProbe
     ) { emitter.line($0) }
-    let outcome = try await stacker.stack(
-      set, filter: set.key.filter, inventory: request.inventory, masters: pool, work: request.work,
-      out: request.output)
+    let outcome: ChannelOutcome
+    if plan.anchored {
+      // Every channel of an anchored run lands on the anchor night's canvas, a one-night one too.
+      outcome = try await GroupedChannelStacker(
+        stacker: stacker, parity: parity, anchorNight: plan.anchorNight
+      ).stack(
+        groups, filter: lane, inventory: request.inventory, masters: pool, work: request.work,
+        out: request.output)
+    } else {
+      outcome = try await stacker.stack(
+        groups[0], filter: lane, inventory: request.inventory, masters: pool, work: request.work,
+        out: request.output)
+    }
     if let master = outcome.masterPath {
       preview(URL(fileURLWithPath: master), emitter: emitter)
     }
@@ -52,6 +67,15 @@ extension Preprocessor {
     ).align(
       masters, folder: request.work.appendingPathComponent("04_aligned"), out: request.output,
       journal: &journal)
+    if request.settings.coverageCrop {
+      // Multi-night channels carry coverage: cut every input to the field all of them cover.
+      let grids = result.channels.reduce(into: [String: CoverageGrid]()) { grids, channel in
+        if let grid = channel.coverage, channel.error == nil { grids[channel.filter] = grid }
+      }
+      (channels, result.coverageCrop) = CoverageCrop.apply(
+        channels, grids: grids, minimumFraction: request.settings.coverageMinimumFraction,
+        out: request.output, journal: &journal)
+    }
     if request.settings.edgeCrop {
       (channels, result.crop) = EdgeCropper(measure: tools.edgeMeasure).apply(
         channels, out: request.output, journal: &journal)

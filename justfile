@@ -37,7 +37,7 @@ app-build:
 
 # Build, then open the app (and the given `.astrostack` projects); returns when the app quits.
 app-run *projects: app-build
-    open -W -n -a "{{app}}" {{projects}}
+    open -W -n -a "{{justfile_directory()}}/{{app}}" {{projects}}
 
 # Run the whole Swift suite (live suites self-skip without host tools/fixtures). Args pass through.
 # ATTACHMENTS_PATH (set by CI) collects Attachment.record() outputs such as diff images.
@@ -51,6 +51,10 @@ test-unit *args:
 # Only the `Live…` suites (host tools + ~/Documents/astro/fixtures), serial.
 test-live *args:
     cd {{pkg}} && swift test {{swiftflags}} --no-parallel --filter Live ${ATTACHMENTS_PATH:+--attachments-path "$ATTACHMENTS_PATH"} {{args}}
+
+# The `Live…` suites in a release build: the heavy ones (real multi-night captures) only run optimised.
+test-heavy *args:
+    cd {{pkg}} && swift test -c release {{swiftflags}} --no-parallel --filter Live {{args}}
 
 # Coverage report (lcov + summary) under apps/macos/.build/coverage.
 coverage:

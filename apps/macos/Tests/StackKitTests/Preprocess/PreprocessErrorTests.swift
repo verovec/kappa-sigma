@@ -12,7 +12,6 @@ struct PreprocessErrorTests {
       (.mixedDimensions(["R 64×64", "G 32×32"]), "R 64×64, G 32×32"),
       (.targetBusy("/p/out"), "/p/out"),
       (.noChannels(["L: no stars"]), "L: no stars"),
-      (.multiNight(["L", "Ha"]), "L, Ha span several nights"),
       (.mixedColorModel, "mono and colour"),
     ])
   func testDescriptions(error: PreprocessError, fragment: String) {

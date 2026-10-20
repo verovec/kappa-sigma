@@ -19,6 +19,20 @@ package struct PreprocessSettings: Equatable, Sendable {
   package var backgroundDegree = 1
   /// `rmgreen` type of the neutralization.
   package var scnr = 0
+  /// Map every night onto the anchor night's photometric scale before the merge (`PhotomNorm`).
+  package var photometricNormalisation = true
+  /// Flatten each frame's own sky gradient before a multi-night registration (`FlattenBg`).
+  package var flattenBackground = true
+  /// Re-fit each night's sky offset on the overlap with the anchor night (`SeamOffsetRefit`).
+  package var seamOffsetRefit = true
+  /// Even out the noise depth where coverage changes, on the stacked master (`SeamNoiseEq`).
+  package var seamNoiseEqualisation = true
+  /// Repair sensor-saturated cores from unsaturated nights before the stack (`CoreSatMask`).
+  package var coreSaturationRepair = true
+  /// Cut the combine inputs to the field every channel covers (`CoverageCrop`).
+  package var coverageCrop = true
+  /// The fraction of frames a cell needs to count as covered (`CoverageMinFrac`).
+  package var coverageMinimumFraction = 0.30
   /// Where the parity probes' `platesolve` looks (`"RA,DEC"`): stacked masters lose their
   /// pointing cards, so without it they rarely solve and the parity check is skipped (it says so).
   package var solveCoordinates: String?

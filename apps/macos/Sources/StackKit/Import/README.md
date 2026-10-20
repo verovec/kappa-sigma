@@ -38,6 +38,15 @@ app's `ImportPlanning.plan` is `@concurrent` and indexes the library first.
   `ImportPlanner.needsScan(from:to:)` says when one does, `ImportPlanner.replanned` rematches the
   kept `inventory` + `library`.
 
+## Master disclosure (card 0071)
+
+- `Cell.master`: the master applied (or the one excluded); `sourceSet(of:)` the capture set it
+  stands for (`CalibrationMaster.satisfies`) — what "Rebuild" stacks.
+- `alternatives(for:of:)`: every library master of the role, each run alone through the matcher:
+  `chosen`, `matches` (loses on rank), `needsForce`, `otherSensor(note)`. The legacy request has
+  no per-set pick: the user's choices are `calib_exclude` and the global
+  `force_calibration_frames`.
+
 ## How to extend
 
 - A new user choice: a field on `ImportRequest` under its legacy key (round-trip test in

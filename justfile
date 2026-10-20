@@ -52,6 +52,10 @@ test-unit *args:
 test-live *args:
     cd {{pkg}} && swift test {{swiftflags}} --no-parallel --filter Live ${ATTACHMENTS_PATH:+--attachments-path "$ATTACHMENTS_PATH"} {{args}}
 
+# The `Live…` suites in a release build: the heavy ones (real multi-night captures) only run optimised.
+test-heavy *args:
+    cd {{pkg}} && swift test -c release {{swiftflags}} --no-parallel --filter Live {{args}}
+
 # Coverage report (lcov + summary) under apps/macos/.build/coverage.
 coverage:
     ./scripts/coverage.sh {{pkg}} {{swiftflags}}

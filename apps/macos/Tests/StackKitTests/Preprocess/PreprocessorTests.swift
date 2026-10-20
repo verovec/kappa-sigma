@@ -100,7 +100,7 @@ struct PreprocessorTests {
   }
 
   @Test(
-    "a second run on the same output is refused; multi-night and mixed captures too",
+    "a second run on the same output is refused, and a mixed capture; two nights are planned",
     .scratchDirectory)
   func testRefusals() async throws {
     let request = try Self.request()
@@ -119,10 +119,10 @@ struct PreprocessorTests {
     var other = light
     other.key.session = "another night"
     twoNights.sets.append(other)
-    #expect(throws: PreprocessError.multiNight([light.key.filter])) {
-      _ = try Preprocessor.lightSets(twoNights)
-    }
+    // Since 0066 a second night is planned as a group of its channel, not refused.
+    let plan = try Preprocessor.plan(twoNights)
+    #expect(plan.anchored && plan.channels[light.key.filter]?.count == 2)
     twoNights.colorModel = .mixed
-    #expect(throws: PreprocessError.mixedColorModel) { _ = try Preprocessor.lightSets(twoNights) }
+    #expect(throws: PreprocessError.mixedColorModel) { _ = try Preprocessor.plan(twoNights) }
   }
 }

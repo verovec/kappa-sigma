@@ -7,6 +7,8 @@ package struct PreprocessResult: Equatable, Sendable {
   package var channels: [ChannelOutcome] = []
   /// The edge crop applied to the combine inputs, if any.
   package var crop: EdgeCropper.Crop?
+  /// The common-coverage crop of a multi-night run, if any channel carries coverage.
+  package var coverageCrop: CoverageCrop.Record?
   /// The linear colour composite, if the channels make one.
   package var combinedPath: String?
   package var bundle: LinearBundle?

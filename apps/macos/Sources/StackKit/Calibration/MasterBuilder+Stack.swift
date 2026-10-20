@@ -30,6 +30,11 @@ extension MasterBuilder {
       }
       try Self.publish(
         target: target, final: final, signature: PoolSignature.of(paths), frames: paths.count)
+      // A dark's raw pool also yields its defect map, applied per light with -cc=bpm.
+      if type == .dark, let note = DarkDefects.build(master: final + ".fits", frames: paths) {
+        result.warnings.append(note)
+      }
+      try Task.checkCancellation()
     } catch is CancellationError {
       Self.discard(target)
       throw CancellationError()

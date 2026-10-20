@@ -49,6 +49,51 @@ the planes averaged:
 `continuum_k` is set by the multi-night Hα continuum (0066). 0043 builds the same type from a
 legacy run.
 
+## Several nights (card 0066)
+
+`NightPlan` groups each channel's light sets per night. When one channel has two or more,
+the run is anchored: the anchor night covers the most channels, then has the most frames, then
+is the latest. Every channel then takes `GroupedChannelStacker` (`processChannelGroups`), a
+one-night channel included, so all masters land on the anchor night's canvas.
+
+1. **Per night:** link, then `calibrate` with the night's own masters (`calibrate_single` for a
+   lone frame); strip BAYERPAT; check parity with `ParityCache`. One no-flip solve per session,
+   seeded by `solveCoordinates` (filled from the lights' OBJCTRA/OBJCTDEC when the request
+   carries none); a mirrored session is flipped and the flip verified.
+2. **Photometry** (`StackKit/Photometry`, `photom`): each night is fitted onto the anchor night's
+   14-percentile curve (Theil–Sen), the no-clip gate is applied, and the frames are rewritten
+   `scale · p + offset`.
+3. **Merge:** `merged_<lane>` links every night's frames. A per-frame flatten (`seqsubsky 1`) is
+   followed by a two-pass homography registration. If the flatten fails, the folder is put back
+   to its links before a plain registration. The legacy engine re-linked the dirty folder and
+   stacked every frame twice (fixed, PO 2026-10-20).
+4. **Review** (`RegistrationReview`): the anchor night's middle frame is pinned (`setref`); a
+   transform overlapping the anchor field under 20% is a false star match and pre-rejected;
+   each night's rotation and overlap are recorded.
+5. **Seam offsets** (`SeamOffsetRefit`): each night's pedestal is re-measured against the
+   anchor's inside their shared footprint. The guarded Δ is added before `seqapplyreg`.
+6. `seqapplyreg -framing=current`, then grading per night (spans).
+7. **Saturated cores** (`SaturationRepair`): sensor-clipped pixels are replaced by the median of
+   the nights that still see them below their own ceiling (at least five). This is an exact
+   sparse pass, never the whole sequence in memory.
+8. Stack (weight `noise` when a night was rescaled beyond ×4). **Coverage** (`CoverageGrid`,
+   8-px cells) is computed, then the **seam noise** pass (`SeamNoiseEqualiser`, `StackKit/Noise`):
+   a weighted starlet denoise of strength √(depth_max/depth) − 1. The full-depth core stays byte
+   for byte; a colour master is denoised in luminance only.
+9. **At the combine:** `CoverageCrop` cuts the inputs to the field every channel covers
+   (`combine_<tag>`), before the edge trim.
+
+Calibration masters also get their dark **defect map** (`DarkDefects`, `<dark>_defects.lst`,
+applied with `-cc=bpm`).
+
+**Pins.** Case (b) in CI: scripts, selection, nights and setrefs, as recorded with the
+duplicate-frame fix. Case (b) live: calibration masters, G and B byte-identical; photometry and
+geometry within 1e-9 of `run.json`; the seam records, including the coverage-only `weight_max`,
+bit for bit. L and R are held to mean |Δ| ≤ 1e-3 of the recorded range, since they legitimately
+differ by the fix. Case (d) live: calibration masters by hash; records; the master within the
+same bound. The float ports (photometry apply, starlet, bilinear weights) fuse products where
+arm64 Go does.
+
 ## Rules worth knowing
 
 - R2: every decision is visible. A rejected frame carries its reason; a restored one says
@@ -73,8 +118,10 @@ legacy run.
 
 - The legacy finish (autostretch, GIMP, exports: scripts 0019–0022) belongs to the Studio (E12).
   Highlight headroom is a stretch-time step on copies, so it never touches the linear layers.
-- Multi-night groups, lanes, seams, photometry and the transient mask: 0066. The dual-band lane
-  split: with 0066's lanes.
+- The cross-frame transient trail mask (k > 0), the broadband/dual-band lanes with the
+  `syn_Ha`/`syn_OIII` split and `continuum_k`: a follow-up card (PO 2026-10-20). No recorded
+  oracle exercises them; the trail mask stays off until then.
+- The mosaic union canvas (`Mosaic`) is not ported.
 - AI background, linear denoise, the cosmetic repair of never-dark-calibrated masters and the
   dither report are off or no-ops in the deep-sky golden. They come back as Studio processes or
   with the frame review (0069–0071).

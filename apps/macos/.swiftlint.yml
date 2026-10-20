@@ -23,7 +23,8 @@ opt_in_rules:
   - fatal_error_message
   - prefer_self_in_static_references
   - redundant_type_annotation
-  - sorted_imports
+  # sorted_imports is NOT enabled: swift-format's OrderedImports owns import order, and the two
+  # disagree on case (SwiftLint folds it: Testing < TestSupport; swift-format: TestSupport first).
   - private_outlet
   - discouraged_optional_boolean
   - empty_count

@@ -1,14 +1,17 @@
 # Task runner for Kappa-Sigma (AstroStack 2). Run `just` to see available recipes.
-# Host-native by design: the app and its Swift packages build on macOS with Xcode; there is no
-# container (Siril, GraXpert, StarNet and Metal are host-only). Card 0040 creates Package.swift;
-# every Swift recipe below guards on it until then. Why each gate exists:
-# docs/engineering/swift-quality-playbook.md §9.
+# Host-native by design: the app and its Swift packages build on macOS with the Command Line Tools
+# or Xcode; there is no container (Siril, GraXpert, StarNet and Metal are host-only). Why each
+# gate exists: docs/engineering/swift-quality-playbook.md §9.
 set shell := ["bash", "-uc"]
 set dotenv-load := true
 set export := true
 
 pkg := "apps/macos"
-_guard := "test -f " + pkg + "/Package.swift || { echo 'no Swift package yet — card 0040'; exit 0; }"
+app := pkg + "/.build/AstroStack.app"
+# Swift Testing search paths SwiftPM forgets on a CLT-only host; empty under Xcode.
+swiftflags := `./scripts/swift-test-flags.sh`
+# SwiftLint looks for sourcekitd in Xcode only; on a CLT-only host point it at the CLT.
+_sourcekit := 'dev="$(xcode-select -p)"; [ ! -d "$dev/usr/lib/sourcekitdInProc.framework" ] || export TOOLCHAIN_DIR="$dev"'
 
 # List all recipes.
 default:
@@ -28,37 +31,37 @@ doctor:
 hooks:
     @ln -sf "$(pwd)/scripts/git-hooks/pre-push" "$(git rev-parse --git-path hooks)/pre-push" && echo "pre-push hook installed"
 
-# Build the Swift packages and the app (debug).
+# Build the Swift packages and assemble apps/macos/.build/AstroStack.app (debug, ad-hoc signed).
 app-build:
-    @{{_guard}}; cd {{pkg}} && swift build
+    @./scripts/app-bundle.sh {{pkg}} {{swiftflags}}
 
-# Run the app from the debug build.
-app-run:
-    @{{_guard}}; cd {{pkg}} && swift run AstroStackApp
+# Build, then open the app (and the given `.astrostack` projects); returns when the app quits.
+app-run *projects: app-build
+    open -W -n -a "{{app}}" {{projects}}
 
 # Run the whole Swift suite (live suites self-skip without host tools/fixtures). Args pass through.
 # ATTACHMENTS_PATH (set by CI) collects Attachment.record() outputs such as diff images.
 test *args:
-    @{{_guard}}; cd {{pkg}} && swift test --parallel ${ATTACHMENTS_PATH:+--attachments-path "$ATTACHMENTS_PATH"} {{args}}
+    cd {{pkg}} && swift test {{swiftflags}} --parallel ${ATTACHMENTS_PATH:+--attachments-path "$ATTACHMENTS_PATH"} {{args}}
 
 # Fast loop: everything except the `Live…` suites.
 test-unit *args:
-    @{{_guard}}; cd {{pkg}} && swift test --parallel --skip Live {{args}}
+    cd {{pkg}} && swift test {{swiftflags}} --parallel --skip Live {{args}}
 
 # Only the `Live…` suites (host tools + ~/Documents/astro/fixtures), serial.
 test-live *args:
-    @{{_guard}}; cd {{pkg}} && swift test --no-parallel --filter Live ${ATTACHMENTS_PATH:+--attachments-path "$ATTACHMENTS_PATH"} {{args}}
+    cd {{pkg}} && swift test {{swiftflags}} --no-parallel --filter Live ${ATTACHMENTS_PATH:+--attachments-path "$ATTACHMENTS_PATH"} {{args}}
 
 # Coverage report (lcov + summary) under apps/macos/.build/coverage.
 coverage:
-    @{{_guard}}; ./scripts/coverage.sh {{pkg}}
+    ./scripts/coverage.sh {{pkg}} {{swiftflags}}
 
 # Format check + swift-format lint rules + SwiftLint metrics/house rules. Read-only; fails on issues.
 lint:
     #!/usr/bin/env bash
     set -euo pipefail
-    {{_guard}}
     command -v swiftlint >/dev/null || { echo "swiftlint missing: just setup"; exit 1; }
+    {{_sourcekit}}
     cd {{pkg}}
     swift format lint --strict --recursive --parallel Sources Tests
     swiftlint lint --strict --quiet
@@ -67,7 +70,7 @@ lint:
 fmt:
     #!/usr/bin/env bash
     set -euo pipefail
-    {{_guard}}
+    {{_sourcekit}}
     cd {{pkg}}
     swift format format --in-place --recursive --parallel Sources Tests
     command -v swiftlint >/dev/null && swiftlint lint --fix --quiet || true
@@ -78,16 +81,16 @@ hygiene:
 
 # Public API of the kits vs origin/main (run once a kit exposes `public` API — card 0049).
 api-check *targets:
-    @{{_guard}}; cd {{pkg}} && git fetch -q origin main && swift package diagnose-api-breaking-changes origin/main {{targets}}
+    cd {{pkg}} && git fetch -q origin main && swift package diagnose-api-breaking-changes origin/main {{targets}}
 
 # Dead-code scan (Periphery, optional, local only).
 deadcode:
-    @{{_guard}}; command -v periphery >/dev/null || { echo "periphery missing (optional): brew install peripheryapp/periphery/periphery"; exit 0; }
-    @{{_guard}}; cd {{pkg}} && periphery scan --retain-public --quiet
+    @command -v periphery >/dev/null || { echo "periphery missing (optional): brew install peripheryapp/periphery/periphery"; exit 0; }
+    cd {{pkg}} && periphery scan --retain-public --quiet
 
 # Benchmarks with local (tight) thresholds — package-benchmark, once a Benchmarks target exists.
 bench *args:
-    @{{_guard}}; cd {{pkg}} && swift package --disable-sandbox benchmark {{args}}
+    cd {{pkg}} && swift package --disable-sandbox benchmark {{args}}
 
 # Merge a PR into main — the only sanctioned way: refuses unless every CI check is green.
 merge pr:

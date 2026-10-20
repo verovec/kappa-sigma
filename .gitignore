@@ -84,3 +84,7 @@ cards
 /output
 /library
 /work
+
+# --- SwiftPM (apps/macos) — build products, including the assembled AstroStack.app ---
+.build/
+.swiftpm/

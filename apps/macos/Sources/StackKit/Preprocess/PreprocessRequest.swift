@@ -29,7 +29,9 @@ package struct PreprocessRequest: Sendable {
     self.mode = mode
     var applied = settings ?? .preset(mode)
     // The plate-solve hint is a value the run shows: filled from the lights when not given.
-    if applied.solveCoordinates == nil { applied.solveCoordinates = TargetCoordinates.from(inventory) }
+    if applied.solveCoordinates == nil {
+      applied.solveCoordinates = TargetCoordinates.from(inventory)
+    }
     self.settings = applied
     self.library = library
     self.output = output

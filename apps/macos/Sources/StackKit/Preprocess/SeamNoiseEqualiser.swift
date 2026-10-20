@@ -31,7 +31,8 @@ package enum SeamNoiseEqualiser {
     do {
       let file = try FITSFile.read(at: url)
       let image = try file.image()
-      let (weights, reason) = SeamNoiseWeights.weights(grid, width: image.width, height: image.height)
+      let (weights, reason) = SeamNoiseWeights.weights(
+        grid, width: image.width, height: image.height)
       guard let weights else {
         record.reason = reason
         return record
@@ -41,12 +42,14 @@ package enum SeamNoiseEqualiser {
       record.depthMax = Int(covered.max() ?? 0)
       record.weightMax = Double(weights.max() ?? 0)
       record.mode = mode(planes: image.planes.count)
-      record.sigmaBefore = StarletDenoiser.measure(image.planes[0], width: image.width, height: image.height)
+      record.sigmaBefore = StarletDenoiser.measure(
+        image.planes[0], width: image.width, height: image.height)
       var planes = image.planes
       StarletDenoiser.denoise(&planes, width: image.width, height: image.height, weights: weights)
       image.planes = planes
       try file.write(image, to: url)
-      record.sigmaAfter = StarletDenoiser.measure(image.planes[0], width: image.width, height: image.height)
+      record.sigmaAfter = StarletDenoiser.measure(
+        image.planes[0], width: image.width, height: image.height)
       record.applied = true
     } catch {
       record.reason = "seam noise equalization: \(ChannelStacker.describe(error))"

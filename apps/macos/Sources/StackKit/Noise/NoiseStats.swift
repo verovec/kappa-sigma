@@ -30,7 +30,9 @@ enum NoiseStats {
   }
 
   /// The tile (tx, ty) of a plane, clipped to its bounds.
-  static func tile(_ plane: [Float], width: Int, height: Int, x tileX: Int, y tileY: Int) -> [Double] {
+  static func tile(_ plane: [Float], width: Int, height: Int, x tileX: Int, y tileY: Int)
+    -> [Double]
+  {
     let (x0, y0) = (tileX * tileSize, tileY * tileSize)
     let (x1, y1) = (min(x0 + tileSize, width), min(y0 + tileSize, height))
     var out: [Double] = []
@@ -43,27 +45,35 @@ enum NoiseStats {
 
   /// Per-tile sigma of the first detail plane over its white-noise sigma, clamped to
   /// [0.25, 4]·σ_G; σ_G (median tile) and the 90th percentile (`tileSigmaGrid`).
-  static func tileSigmas(_ detail: [Float], width: Int, height: Int)
-    -> (grid: [Double], gridWidth: Int, gridHeight: Int, sigma: Double, p90: Double)
-  {
-    let (gridWidth, gridHeight) = ((width + tileSize - 1) / tileSize, (height + tileSize - 1) / tileSize)
+  static func tileSigmas(_ detail: [Float], width: Int, height: Int) -> TileSigmaGrid {
+    let (gridWidth, gridHeight) = (
+      (width + tileSize - 1) / tileSize, (height + tileSize - 1) / tileSize
+    )
     var grid: [Double] = []
     for tileY in 0..<gridHeight {
       for tileX in 0..<gridWidth {
-        grid.append(robustSigma(tile(detail, width: width, height: height, x: tileX, y: tileY)) / Starlet.whiteNoiseSigma[0])
+        grid.append(
+          robustSigma(tile(detail, width: width, height: height, x: tileX, y: tileY))
+            / Starlet.whiteNoiseSigma[0])
       }
     }
     let sorted = grid.sorted()
     let sigma = percentile(sorted: sorted, 50)
     let p90 = percentile(sorted: sorted, 90)
-    return (grid.map { min(max($0, 0.25 * sigma), 4 * sigma) }, gridWidth, gridHeight, sigma, p90)
+    return TileSigmaGrid(
+      grid: grid.map { min(max($0, 0.25 * sigma), 4 * sigma) }, gridWidth: gridWidth,
+      gridHeight: gridHeight, sigma: sigma, p90: p90)
   }
 
   /// A pixel index as a fractional tile coordinate (tile centres at integers).
-  static func gridCoordinate(_ index: Int) -> Double { (Double(index) + 0.5) / Double(tileSize) - 0.5 }
+  static func gridCoordinate(_ index: Int) -> Double {
+    (Double(index) + 0.5) / Double(tileSize) - 0.5
+  }
 
   /// A grid sampled bilinearly at (gx, gy), clamped to its edges (`bilinearSample`).
-  static func bilinear(_ grid: [Double], width: Int, height: Int, x gx: Double, y gy: Double) -> Double {
+  static func bilinear(_ grid: [Double], width: Int, height: Int, x gx: Double, y gy: Double)
+    -> Double
+  {
     let (x, y) = (min(max(gx, 0), Double(width - 1)), min(max(gy, 0), Double(height - 1)))
     let (x0, y0) = (Int(x.rounded(.down)), Int(y.rounded(.down)))
     let (x1, y1) = (min(x0 + 1, width - 1), min(y0 + 1, height - 1))
@@ -75,11 +85,11 @@ enum NoiseStats {
     return top.addingProduct(fy, bottom - top)
   }
 
-  /// The Hermite S-curve: 0 for x ≤ a, 1 for x ≥ b.
-  static func smoothstep(_ a: Double, _ b: Double, _ x: Double) -> Double {
-    guard a < b else { return x < a ? 0 : 1 }
-    let t = min(max((x - a) / (b - a), 0), 1)
-    return t * t * (3 - 2 * t)
+  /// The Hermite S-curve: 0 for x ≤ lower, 1 for x ≥ upper.
+  static func smoothstep(_ lower: Double, _ upper: Double, _ x: Double) -> Double {
+    guard lower < upper else { return x < lower ? 0 : 1 }
+    let ramp = min(max((x - lower) / (upper - lower), 0), 1)
+    return ramp * ramp * (3 - 2 * ramp)
   }
 
   /// sign(v) · max(|v| − t, 0).

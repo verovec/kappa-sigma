@@ -28,7 +28,9 @@ package struct CoverageGrid: Equatable, Sendable {
     self.init(canvasWidth: frameWidth, canvasHeight: frameHeight, scale: scale)
     for (index, homography) in homographies where !rejected(index) {
       frames += 1
-      guard let quad = Self.quad(homography, width: frameWidth, height: frameHeight) else { continue }
+      guard let quad = Self.quad(homography, width: frameWidth, height: frameHeight) else {
+        continue
+      }
       accumulate(quad)
     }
   }
@@ -36,12 +38,16 @@ package struct CoverageGrid: Equatable, Sendable {
   /// The frame's corners on the canvas; nil for a degenerate homography.
   static func quad(_ homography: [Double], width: Int, height: Int) -> [(Double, Double)]? {
     var quad: [(Double, Double)] = []
-    for (x, y) in [(0.0, 0.0), (Double(width), 0), (Double(width), Double(height)), (0, Double(height))] {
+    for (x, y) in [
+      (0.0, 0.0), (Double(width), 0), (Double(width), Double(height)), (0, Double(height)),
+    ] {
       let w = homography[6] * x + homography[7] * y + homography[8]
       guard w != 0, !w.isNaN else { return nil }
       quad.append(
-        ((homography[0] * x + homography[1] * y + homography[2]) / w,
-          (homography[3] * x + homography[4] * y + homography[5]) / w))
+        (
+          (homography[0] * x + homography[1] * y + homography[2]) / w,
+          (homography[3] * x + homography[4] * y + homography[5]) / w
+        ))
     }
     return quad
   }
@@ -51,11 +57,14 @@ package struct CoverageGrid: Equatable, Sendable {
     let xs = quad.map(\.0)
     let ys = quad.map(\.1)
     let (x0, y0) = (max(0, Int(xs.min() ?? 0) / scale), max(0, Int(ys.min() ?? 0) / scale))
-    let (x1, y1) = (min(width - 1, Int(xs.max() ?? 0) / scale), min(height - 1, Int(ys.max() ?? 0) / scale))
+    let (x1, y1) = (
+      min(width - 1, Int(xs.max() ?? 0) / scale), min(height - 1, Int(ys.max() ?? 0) / scale)
+    )
     guard x0 <= x1, y0 <= y1 else { return }
     for row in y0...y1 {
       let cy = (Double(row) + 0.5) * Double(scale)
-      for column in x0...x1 where Self.inside(quad, x: (Double(column) + 0.5) * Double(scale), y: cy) {
+      for column in x0...x1
+      where Self.inside(quad, x: (Double(column) + 0.5) * Double(scale), y: cy) {
         counts[row * width + column] += 1
       }
     }
@@ -65,8 +74,8 @@ package struct CoverageGrid: Equatable, Sendable {
   static func inside(_ quad: [(Double, Double)], x: Double, y: Double) -> Bool {
     var sign = 0.0
     for index in 0..<4 {
-      let (a, b) = (quad[index], quad[(index + 1) % 4])
-      let cross = (b.0 - a.0) * (y - a.1) - (b.1 - a.1) * (x - a.0)
+      let (start, end) = (quad[index], quad[(index + 1) % 4])
+      let cross = (end.0 - start.0) * (y - start.1) - (end.1 - start.1) * (x - start.0)
       if cross == 0 { continue }
       if sign == 0 {
         sign = cross

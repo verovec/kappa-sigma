@@ -9,8 +9,12 @@ extension PhotometricNormaliser {
   ) -> PhotomGroupRecord {
     var record = PhotomGroupRecord(skipping: group)
     record.isReference = isReference
-    var (transform, curve) = measure(group, onto: reference, referenceMeta: referenceMeta, notes: &notes)
-    if !isReference, let (degraded, note) = degradeClipping(group.label, transform, group: curve, reference: reference) {
+    var (transform, curve) = measure(
+      group, onto: reference, referenceMeta: referenceMeta, notes: &notes)
+    if !isReference,
+      let (degraded, note) = degradeClipping(
+        group.label, transform, group: curve, reference: reference)
+    {
       transform = degraded
       record.reverted = true
       notes.append(note)
@@ -23,15 +27,19 @@ extension PhotometricNormaliser {
     record.metaDisagree = transform.metaDisagree
     record.metaSeeded = transform.metaSeeded
     record.saturatedFraction = curve.saturatedFraction
-    record.saturationCeiling = transform.offset.addingProduct(transform.scale, Double(FrameCurve.saturationLevel))
+    record.saturationCeiling = transform.offset.addingProduct(
+      transform.scale, Double(FrameCurve.saturationLevel))
     if record.saturatedFraction > saturationNoteFraction {
       notes.append(
-        "group \"\(group.label)\": \(String(format: "%.2f", record.saturatedFraction * 100))% of pixels near "
-          + "sensor saturation — the clipped core carries no photometric information (the pre-stack "
-          + "repair draws on unsaturated nights)")
+        "group \"\(group.label)\": "
+          + "\(String(format: "%.2f", record.saturatedFraction * 100))% of pixels near "
+          + "sensor saturation — the clipped core carries no photometric information "
+          + "(the pre-stack repair draws on unsaturated nights)")
     }
     notes += warnings(group.label, transform)
-    guard !isReference, !transform.isIdentity(referenceNoise: reference.noise) else { return record }
+    guard !isReference, !transform.isIdentity(referenceNoise: reference.noise) else {
+      return record
+    }
     do {
       try apply(transform, to: group.paths)
       record.applied = true
@@ -39,14 +47,17 @@ extension PhotometricNormaliser {
       notes.append(
         Task.isCancelled
           ? "group \"\(group.label)\": photometric normalization cancelled"
-          : "photometric normalization skipped for group \"\(group.label)\": frames are not 32-bit float")
+          : "photometric normalization skipped for group \"\(group.label)\": "
+            + "frames are not 32-bit float"
+      )
     }
     return record
   }
 
   /// The median transform over the group's probe frames, and its median curve.
   static func measure(
-    _ group: PhotomGroup, onto reference: FrameCurve, referenceMeta: PhotomMeta, notes: inout [String]
+    _ group: PhotomGroup, onto reference: FrameCurve, referenceMeta: PhotomMeta,
+    notes: inout [String]
   ) -> (PhotomTransform, FrameCurve) {
     var fits: [PhotomTransform] = []
     var curves: [FrameCurve] = []
@@ -56,7 +67,8 @@ extension PhotometricNormaliser {
         continue
       }
       curves.append(curve)
-      fits.append(CurveFit.fit(curve, onto: reference, frameMeta: group.meta, referenceMeta: referenceMeta))
+      fits.append(
+        CurveFit.fit(curve, onto: reference, frameMeta: group.meta, referenceMeta: referenceMeta))
     }
     guard !fits.isEmpty else { return (PhotomTransform(), FrameCurve()) }
     var transform = PhotomTransform(
@@ -81,8 +93,10 @@ extension PhotometricNormaliser {
     return best
   }
 
-  /// Rewrites each frame in place as `scale · p + offset`; only float32 frames with BZERO 0 and
-  /// BSCALE 1 (`OverwriteData`'s requirement), checked before any is touched.
+  /// Rewrites each frame in place as `scale · p + offset`.
+  ///
+  /// Only float32 frames with BZERO 0 and BSCALE 1 (`OverwriteData`'s requirement), checked before
+  /// any is touched.
   static func apply(_ transform: PhotomTransform, to paths: [String]) throws {
     for path in paths {
       try Task.checkCancellation()

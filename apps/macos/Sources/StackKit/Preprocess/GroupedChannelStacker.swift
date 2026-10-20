@@ -8,11 +8,16 @@ internal import ImageKit
 package struct GroupedChannelStacker: Sendable {
   package var stacker: ChannelStacker
   package var parity: ParityCache
+  /// The plan's anchor night: every other night is mapped and registered onto it.
+  package var anchorNight: String
 
-  /// A grouped stacker sharing `stacker`'s runner, settings and probes; `parity` is the run's.
-  package init(stacker: ChannelStacker, parity: ParityCache) {
+  /// A grouped stacker sharing the runner, settings and probes of `stacker`.
+  ///
+  /// `parity` is the run's cache, shared by every channel.
+  package init(stacker: ChannelStacker, parity: ParityCache, anchorNight: String) {
     self.stacker = stacker
     self.parity = parity
+    self.anchorNight = anchorNight
   }
 
   var settings: PreprocessSettings { stacker.settings }
@@ -28,8 +33,8 @@ package struct GroupedChannelStacker: Sendable {
 
   /// Stacks `groups` (one per night, in plan order) as channel `filter`.
   package func stack(
-    _ groups: [FrameSet], filter: String, anchorNight: String, inventory: Inventory,
-    masters: [CalibrationMaster], work: URL, out: URL
+    _ groups: [FrameSet], filter: String, inventory: Inventory, masters: [CalibrationMaster],
+    work: URL, out: URL
   ) async throws -> ChannelOutcome {
     let representative = CalibrationMatcher.select(groups[0], in: inventory, masters: masters)
     var outcome = ChannelOutcome(groups[0], filter: filter, selection: representative)
@@ -37,7 +42,9 @@ package struct GroupedChannelStacker: Sendable {
     var merge = Merge()
     for (index, group) in groups.enumerated() {
       try await calibrate(
-        group, index: index, filter: filter, inventory: inventory, masters: masters, work: work,
+        group, filter: filter,
+        selection: CalibrationMatcher.select(group, in: inventory, masters: masters),
+        folder: work.appendingPathComponent("light_\(ChannelTag.sanitize(filter))_g\(index)"),
         into: &merge, outcome: &outcome)
     }
     guard !merge.calibrated.isEmpty else {
@@ -52,19 +59,20 @@ package struct GroupedChannelStacker: Sendable {
     if settings.photometricNormalisation && merge.photometry.count > 1 {
       normalise(&merge, anchor: anchor, into: &outcome)
     }
-    try await mergeAndStack(merge, anchor: anchor, filter: filter, work: work, out: out, into: &outcome)
+    try await mergeAndStack(
+      merge, anchor: anchor, filter: filter, work: work, out: out, into: &outcome)
     return outcome
   }
 
-  /// One night: linked, calibrated with its own masters (`calibrate_single` for a lone frame),
-  /// BAYERPAT stripped, parity-corrected. A night that fails costs only its own frames.
+  /// One night.
+  ///
+  /// Linked, calibrated with its own masters (`calibrate_single` for a lone frame), BAYERPAT
+  /// stripped, parity-corrected. A night that fails costs only its own frames.
   private func calibrate(
-    _ group: FrameSet, index: Int, filter: String, inventory: Inventory, masters: [CalibrationMaster],
-    work: URL, into merge: inout Merge, outcome: inout ChannelOutcome
+    _ group: FrameSet, filter: String, selection: CalibrationSelection, folder: URL,
+    into merge: inout Merge, outcome: inout ChannelOutcome
   ) async throws {
     let label = group.key.session.isEmpty ? "current session" : group.key.session
-    let folder = work.appendingPathComponent("light_\(ChannelTag.sanitize(filter))_g\(index)")
-    let selection = CalibrationMatcher.select(group, in: inventory, masters: masters)
     let light = ChannelStacker.Light(
       folder: folder, masters: ChannelStacker.masters(selection, frames: group.frames),
       ingest: SirilIngest(paths: group.frames.map(\.path)))
@@ -80,7 +88,8 @@ package struct GroupedChannelStacker: Sendable {
       throw CancellationError()
     } catch {
       stacker.warn(
-        "\(label) · \(filter): group failed, its \(group.count) frame(s) skipped — \(ChannelStacker.describe(error))",
+        "\(label) · \(filter): group failed, its \(group.count) frame(s) skipped — "
+          + "\(ChannelStacker.describe(error))",
         into: &outcome)
       return
     }
@@ -118,13 +127,17 @@ package struct GroupedChannelStacker: Sendable {
   }
 
   /// A channel whose whole integration is one calibrated frame (`promoteLoneCalibrated`).
-  private func promoteLone(_ frame: String, filter: String, out: URL, into outcome: inout ChannelOutcome)
+  private func promoteLone(
+    _ frame: String, filter: String, out: URL, into outcome: inout ChannelOutcome
+  )
     async throws
   {
     stacker.warn(
-      "\(filter): only 1 calibrated frame in total — using it as the channel master (no registration/stacking)",
+      "\(filter): only 1 calibrated frame in total — using it as the channel master "
+        + "(no registration/stacking)",
       into: &outcome)
-    let master = out.appendingPathComponent("master_" + ChannelTag.of(filter)).appendingPathExtension("fits")
+    let master = out.appendingPathComponent("master_" + ChannelTag.of(filter))
+      .appendingPathExtension("fits")
     try FileReplace.copy(URL(fileURLWithPath: frame), over: master)
     outcome.stackedFrames = 1
     outcome.masterPath = master.path

@@ -16,14 +16,16 @@ extension Preprocessor {
     return built.pool
   }
 
-  /// One channel's step, its master previewed when there is one.
+  /// One channel's step (the plan's nights of `lane`), its master previewed when there is one.
   func stackChannel(
-    _ lane: String, groups: [FrameSet], plan: NightPlan, request: PreprocessRequest,
-    pool: [CalibrationMaster], parity: ParityCache, emitter: RunEmitter
+    _ lane: String, plan: NightPlan, request: PreprocessRequest, pool: [CalibrationMaster],
+    parity: ParityCache, emitter: RunEmitter
   ) async throws -> ChannelOutcome {
+    let groups = plan.channels[lane] ?? []
     let object = groups.first?.key.object ?? ""
     emitter.begin(
-      "grading + stacking \(object) \(lane)" + (groups.count > 1 ? " (\(groups.count) groups)" : ""))
+      "grading + stacking \(object) \(lane)" + (groups.count > 1 ? " (\(groups.count) groups)" : "")
+    )
     // The stacker journals its own Siril lines and warnings.
     let stacker = ChannelStacker(
       runner: tools.runner, settings: request.settings, trailProbe: tools.trailProbe
@@ -31,9 +33,11 @@ extension Preprocessor {
     let outcome: ChannelOutcome
     if plan.anchored {
       // Every channel of an anchored run lands on the anchor night's canvas, a one-night one too.
-      outcome = try await GroupedChannelStacker(stacker: stacker, parity: parity).stack(
-        groups, filter: lane, anchorNight: plan.anchorNight, inventory: request.inventory, masters: pool,
-        work: request.work, out: request.output)
+      outcome = try await GroupedChannelStacker(
+        stacker: stacker, parity: parity, anchorNight: plan.anchorNight
+      ).stack(
+        groups, filter: lane, inventory: request.inventory, masters: pool, work: request.work,
+        out: request.output)
     } else {
       outcome = try await stacker.stack(
         groups[0], filter: lane, inventory: request.inventory, masters: pool, work: request.work,

@@ -8,7 +8,8 @@ struct TargetCoordinatesTests {
   @Test(
     "sexagesimal and decimal forms; a sign counts for the declination only, as in Go",
     arguments: [
-      ("00 42 44.3", "+41 16 09", 10.684583333, 41.269166667), ("00:42:44.3", "-05:23:00", 10.684583333, -5.383333333),
+      ("00 42 44.3", "+41 16 09", 10.684583333, 41.269166667),
+      ("00:42:44.3", "-05:23:00", 10.684583333, -5.383333333),
       ("10.6846", "41.2692", 10.6846, 41.2692), ("-00 30 00", "-00 30 00", 7.5, -0.5),
     ])
   func testParse(ra: String, dec: String, wantRA: Double, wantDec: Double) throws {
@@ -18,7 +19,8 @@ struct TargetCoordinatesTests {
 
   @Test("empty or unparseable is no hint")
   func testInvalid() {
-    #expect(TargetCoordinates.rightAscension("") == nil && TargetCoordinates.declination("12 ab") == nil)
+    #expect(
+      TargetCoordinates.rightAscension("") == nil && TargetCoordinates.declination("12 ab") == nil)
     #expect(TargetCoordinates.rightAscension("1 2 3 4") == nil)
   }
 
@@ -29,7 +31,9 @@ struct TargetCoordinatesTests {
     frame.objectDec = "+41 16 09"
     var inventory = Inventory(root: "/", frames: [])
     inventory.sets = [
-      FrameSet(key: SetKey(type: .light, filter: "L"), frames: [CaptureFrame(path: "/b.fits"), frame], indices: [0, 1])
+      FrameSet(
+        key: SetKey(type: .light, filter: "L"), frames: [CaptureFrame(path: "/b.fits"), frame],
+        indices: [0, 1])
     ]
     #expect(TargetCoordinates.from(inventory) == "10.68458,41.26917")
     inventory.sets[0].frames.removeLast()

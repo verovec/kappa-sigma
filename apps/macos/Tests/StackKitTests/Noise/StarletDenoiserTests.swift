@@ -25,10 +25,16 @@ struct StarletDenoiserTests {
       (margin..<(width - margin)).map { Double(plane[row * width + $0]) }
     }
     let mean = values.reduce(0, +) / Double(values.count)
-    return max(0, values.map { $0 * $0 }.reduce(0, +) / Double(values.count) - mean * mean).squareRoot()
+    return max(0, values.map { $0 * $0 }.reduce(0, +) / Double(values.count) - mean * mean)
+      .squareRoot()
   }
 
-  @Test("decompose then reconstruct is exact to 1e-5 on odd, non-square planes; a flat plane has no detail")
+  @Test(
+    """
+    decompose then reconstruct is exact to 1e-5 on odd, non-square planes; a flat plane has \
+    no detail
+    """
+  )
   func testRoundTripAndConstant() {
     let (w, h) = (131, 77)
     let plane = Self.noisy(w, h, seed: 7)
@@ -57,7 +63,8 @@ struct StarletDenoiserTests {
   func testWeights() {
     let small = Self.noisy(128, 128, seed: 11)
     var untouched = [small]
-    StarletDenoiser.denoise(&untouched, width: 128, height: 128, weights: .init(repeating: 0, count: 128 * 128))
+    StarletDenoiser.denoise(
+      &untouched, width: 128, height: 128, weights: .init(repeating: 0, count: 128 * 128))
     #expect(untouched[0] == small)
 
     let (w, h) = (256, 256)
@@ -65,7 +72,10 @@ struct StarletDenoiserTests {
     var planes = [original]
     let weights = (0..<w * h).map { $0 % w >= w / 2 ? Float(1.5) : 0 }
     StarletDenoiser.denoise(&planes, width: w, height: h, weights: weights)
-    #expect((0..<h).allSatisfy { row in planes[0][(row * w)..<(row * w + w / 2)] == original[(row * w)..<(row * w + w / 2)] })
+    #expect(
+      (0..<h).allSatisfy { row in
+        planes[0][(row * w)..<(row * w + w / 2)] == original[(row * w)..<(row * w + w / 2)]
+      })
     let before = Self.variance(original, width: w, columns: (w / 2 + 8)..<(w - 8), height: h)
     let after = Self.variance(planes[0], width: w, columns: (w / 2 + 8)..<(w - 8), height: h)
     #expect(after < before * 0.8)
@@ -77,15 +87,20 @@ struct StarletDenoiserTests {
     let mean = Self.noisy(w, h, seed: 31)
     let chroma = (0..<w * h).map { 0.004 * Float($0 % w % 64) / 64 }
     let original = [
-      zip(mean, chroma).map { $0 + $1 }, zip(mean, chroma).map { $0 - $1 / 2 }, zip(mean, chroma).map { $0 - $1 / 2 },
+      zip(mean, chroma).map { $0 + $1 }, zip(mean, chroma).map { $0 - $1 / 2 },
+      zip(mean, chroma).map { $0 - $1 / 2 },
     ]
     var planes = original
     let weights = (0..<w * h).map { $0 % w >= w / 2 ? Float(2) : 0 }
     StarletDenoiser.denoise(&planes, width: w, height: h, weights: weights)
     let after = (0..<w * h).map { (planes[0][$0] + planes[1][$0] + planes[2][$0]) / 3 }
-    #expect((0..<w * h).allSatisfy { abs(Double(chroma[$0]) - Double(planes[0][$0] - after[$0])) <= 1e-5 })
+    #expect(
+      (0..<w * h).allSatisfy { abs(Double(chroma[$0]) - Double(planes[0][$0] - after[$0])) <= 1e-5 }
+    )
     let columns = (w / 2 + 8)..<(w - 8)
-    #expect(Self.variance(after, width: w, columns: columns, height: h) < Self.variance(mean, width: w, columns: columns, height: h) * 0.8)
+    #expect(
+      Self.variance(after, width: w, columns: columns, height: h) < Self.variance(
+        mean, width: w, columns: columns, height: h) * 0.8)
     var zero = original
     StarletDenoiser.denoise(&zero, width: w, height: h, weights: .init(repeating: 0, count: w * h))
     #expect(zero == original)

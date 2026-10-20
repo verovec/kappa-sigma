@@ -23,7 +23,9 @@ package actor ParityCache {
 
   /// Flips `group`'s calibrated frames (`<base>_00001…` in `folder`) when its session is mirrored;
   /// returns the note ("" when nothing happened) and whether the frames are mirrored on disk.
-  package func correct(_ group: FrameSet, folder: URL, base: String) async throws -> (note: String, flipped: Bool) {
+  package func correct(_ group: FrameSet, folder: URL, base: String) async throws -> (
+    note: String, flipped: Bool
+  ) {
     let names = (1...max(1, group.count)).map { base + String(format: "_%05d", $0) }
     let first = folder.appendingPathComponent(names[0] + ".fits").path
     let key = Self.key(group)
@@ -42,7 +44,11 @@ package actor ParityCache {
     } catch is CancellationError {
       throw CancellationError()
     } catch {
-      return ("session 0: parity flip failed (\(ChannelStacker.describe(error))) — frames left unmirrored", false)
+      return (
+        "session 0: parity flip failed (\(ChannelStacker.describe(error))) "
+          + "— frames left unmirrored",
+        false
+      )
     }
     return try await verify(key, names: names, folder: folder, first: first)
   }
@@ -53,8 +59,13 @@ package actor ParityCache {
     -> (note: String, flipped: Bool)
   {
     switch try await normalizer.probe(first) {
-    case -1: return ("session 0: mirror-corrected (parity flip, verified) so it stacks with the other sessions", true)
-    case 0: return ("session 0: mirror-corrected (parity flip; verification probe undetermined)", true)
+    case -1:
+      return (
+        "session 0: mirror-corrected (parity flip, verified) so it stacks with the other sessions",
+        true
+      )
+    case 0:
+      return ("session 0: mirror-corrected (parity flip; verification probe undetermined)", true)
     default: break
     }
     seen[key] = 0
@@ -64,10 +75,15 @@ package actor ParityCache {
       throw CancellationError()
     } catch {
       return (
-        "session 0: parity flip did not verify AND undo failed (\(ChannelStacker.describe(error))) — frames may be mirrored",
+        "session 0: parity flip did not verify AND undo failed "
+          + "(\(ChannelStacker.describe(error))) — frames may be mirrored",
         true
       )
     }
-    return ("session 0: parity flip did not verify (probe still reads mirrored) — frames left as captured", false)
+    return (
+      "session 0: parity flip did not verify (probe still reads mirrored) "
+        + "— frames left as captured",
+      false
+    )
   }
 }

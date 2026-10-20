@@ -31,7 +31,9 @@ extension GroupedChannelStacker {
   }
 
   /// Folds the grading back onto each night (`recordGroupContributions`).
-  static func contributions(_ nights: [NightRecord], spans: [Range<Int>], grades: [FrameGrade]) -> [NightRecord] {
+  static func contributions(_ nights: [NightRecord], spans: [Range<Int>], grades: [FrameGrade])
+    -> [NightRecord]
+  {
     zip(nights, spans).map { night, span in
       var record = night
       let graded = span.filter { $0 < grades.count }.map { grades[$0] }

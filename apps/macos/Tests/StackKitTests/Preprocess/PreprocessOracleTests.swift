@@ -23,7 +23,9 @@ struct PreprocessOracleTests {
         // One night: `light_<F>`. Several: `merged_<F>`, the real frames only (the recording
         // also lists the duplicates the legacy dirty-folder bug stacked, with empty paths).
         let real = channel.metrics.filter { !$0.path.isEmpty }
-        for (folder, metrics) in [("light_" + channel.filter, channel.metrics), ("merged_" + channel.filter, real)] {
+        for (folder, metrics) in [
+          ("light_" + channel.filter, channel.metrics), ("merged_" + channel.filter, real),
+        ] {
           sequences[folder] = metrics.map(Self.line).joined(separator: "\n")
           trails[folder] = metrics.map { ($0.trailDetected, $0.trailScore ?? 0) }
         }

@@ -24,8 +24,9 @@ struct CurveFitTests {
 
   /// The exact inverse affine of `reference`: an ideal fit recovers scale and offset.
   static func affine(_ reference: FrameCurve, scale: Double, offset: Double) -> FrameCurve {
-    let q = reference.q.map { ($0 - offset) / scale }
-    return FrameCurve(q: q, background: q[3], noise: reference.noise / scale)
+    let quantiles = reference.quantiles.map { ($0 - offset) / scale }
+    return FrameCurve(
+      quantiles: quantiles, background: quantiles[3], noise: reference.noise / scale)
   }
 
   static let zwo = "ZWO ASI1600MM Pro"
@@ -37,7 +38,7 @@ struct CurveFitTests {
     #expect(abs(exact.scale - 1.8) <= 1e-9 && abs(exact.offset - 0.02) <= 1e-9)
     #expect(!exact.clamped && !exact.metaDisagree && !exact.metaSeeded && exact.residual < 1e-6)
     var corrupt = Self.affine(reference, scale: 1.8, offset: 0.02)
-    corrupt.q[11] *= 3
+    corrupt.quantiles[11] *= 3
     #expect(abs(CurveFit.fit(corrupt, onto: reference).scale - 1.8) <= 1.8 * 0.01)
   }
 
@@ -47,7 +48,8 @@ struct CurveFitTests {
     let high = CurveFit.fit(Self.affine(reference, scale: 12, offset: 0), onto: reference)
     #expect(high.scale == 10 && high.clamped)
     let frameMeta = PhotomMeta(exposureMs: 30000, gain: 250, gainKnown: true, instrument: Self.zwo)
-    let referenceMeta = PhotomMeta(exposureMs: 30000, gain: 400, gainKnown: true, instrument: Self.zwo)
+    let referenceMeta = PhotomMeta(
+      exposureMs: 30000, gain: 400, gainKnown: true, instrument: Self.zwo)
     let gain = CurveFit.fit(
       Self.affine(reference, scale: 5.623, offset: 0.01), onto: reference, frameMeta: frameMeta,
       referenceMeta: referenceMeta)
@@ -85,13 +87,17 @@ struct CurveFitTests {
       referenceMeta: PhotomMeta(exposureMs: 30000, gain: 250, gainKnown: true, instrument: zwo),
       scale: 1.0 / 3.0, tolerance: 1e-9, seeded: true),
     Seed(
-      name: "flat curves without metadata are identity", frame: (0.05, 0.003), reference: (0.05, 0.003),
-      frameMeta: PhotomMeta(), referenceMeta: PhotomMeta(), scale: 1, tolerance: 1e-9, seeded: false),
+      name: "flat curves without metadata are identity", frame: (0.05, 0.003),
+      reference: (0.05, 0.003),
+      frameMeta: PhotomMeta(), referenceMeta: PhotomMeta(), scale: 1, tolerance: 1e-9, seeded: false
+    ),
     Seed(
       name: "differing gains on an unconfirmed law have no prediction", frame: (0.05, 0.003),
       reference: (0.05, 0.003),
-      frameMeta: PhotomMeta(exposureMs: 30000, gain: 0, gainKnown: true, instrument: "Canon EOS Ra"),
-      referenceMeta: PhotomMeta(exposureMs: 60000, gain: 120, gainKnown: true, instrument: "Canon EOS Ra"),
+      frameMeta: PhotomMeta(
+        exposureMs: 30000, gain: 0, gainKnown: true, instrument: "Canon EOS Ra"),
+      referenceMeta: PhotomMeta(
+        exposureMs: 60000, gain: 120, gainKnown: true, instrument: "Canon EOS Ra"),
       scale: 1, tolerance: 1e-9, seeded: false),
     Seed(
       name: "an unknown gain has no prediction", frame: (0.05, 0.003), reference: (0.05, 0.003),
@@ -99,7 +105,8 @@ struct CurveFitTests {
       referenceMeta: PhotomMeta(exposureMs: 600_000, instrument: zwo), scale: 1, tolerance: 1e-9,
       seeded: false),
     Seed(
-      name: "ASICAP as creator confirms the gain law", frame: (0.45, 0.003), reference: (0.0203, 0.003),
+      name: "ASICAP as creator confirms the gain law", frame: (0.45, 0.003),
+      reference: (0.0203, 0.003),
       frameMeta: PhotomMeta(exposureMs: 15000, gain: 450, gainKnown: true, creator: "ASICAP  "),
       referenceMeta: PhotomMeta(exposureMs: 120_000, gain: 0, gainKnown: true, creator: "ASICap"),
       scale: 8 * pow(10, -450.0 / 200.0), tolerance: 1e-6, seeded: true),
@@ -127,9 +134,11 @@ struct CurveFitTests {
     let zwoFit = CurveFit.fit(
       curve, onto: curve,
       frameMeta: PhotomMeta(exposureMs: 60000, gain: 0, gainKnown: true, instrument: Self.zwo),
-      referenceMeta: PhotomMeta(exposureMs: 60000, gain: 120, gainKnown: true, instrument: Self.zwo))
+      referenceMeta: PhotomMeta(exposureMs: 60000, gain: 120, gainKnown: true, instrument: Self.zwo)
+    )
     #expect(abs(zwoFit.scale - 1) <= 1e-9 && zwoFit.metaDisagree && !zwoFit.metaSeeded)
-    let canon = PhotomMeta(exposureMs: 60000, gain: 120, gainKnown: true, instrument: "Canon EOS Ra")
+    let canon = PhotomMeta(
+      exposureMs: 60000, gain: 120, gainKnown: true, instrument: "Canon EOS Ra")
     let equal = CurveFit.fit(curve, onto: curve, frameMeta: canon, referenceMeta: canon)
     #expect(abs(equal.scale - 1) <= 1e-9 && !equal.metaDisagree)
   }
@@ -139,7 +148,8 @@ struct CurveFitTests {
     let seeded = CurveFit.fit(
       Self.flatCurve(0.288), onto: Self.flatCurve(0.014),
       frameMeta: PhotomMeta(exposureMs: 15000, gain: 450, gainKnown: true, instrument: Self.zwo),
-      referenceMeta: PhotomMeta(exposureMs: 120_000, gain: 450, gainKnown: true, instrument: Self.zwo))
+      referenceMeta: PhotomMeta(
+        exposureMs: 120_000, gain: 450, gainKnown: true, instrument: Self.zwo))
     #expect(seeded.method == .seeded && abs(seeded.scale - 8) <= 1e-9)
     #expect(seeded.backgroundDisagree && seeded.metaSeeded)
     let floor = CurveFit.fit(Self.flatCurve(0.0002), onto: Self.flatCurve(0.05))

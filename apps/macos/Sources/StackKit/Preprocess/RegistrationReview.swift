@@ -32,13 +32,15 @@ package struct RegistrationReview: Equatable, Sendable {
 
   /// Reviews `sequence` over the nights' `spans`, `anchor` being the anchor night's span index;
   /// `width`/`height` are the frames' size (0: the gate is skipped, with a warning).
-  package init(_ sequence: SirilSequence, spans: [Range<Int>], anchor: Int, width: Int, height: Int) {
+  package init(_ sequence: SirilSequence, spans: [Range<Int>], anchor: Int, width: Int, height: Int)
+  {
     groups = Array(repeating: Group(), count: spans.count)
     let metrics = sequence.metrics
     let registered = { (index: Int) in
       index >= 0 && index < metrics.count && metrics[index].fwhm > 0 && metrics[index].hasHomography
     }
-    var reference = anchor >= 0 && anchor < spans.count ? Self.anchorReference(spans[anchor], registered) : nil
+    var reference =
+      anchor >= 0 && anchor < spans.count ? Self.anchorReference(spans[anchor], registered) : nil
     if let reference {
       referenceIndex = reference + 1
     } else {
@@ -50,7 +52,8 @@ package struct RegistrationReview: Equatable, Sendable {
       warnings.append("frame dimensions unreadable — transform review skipped")
       return
     }
-    review(metrics, spans: spans, reference: reference, width: Double(width), height: Double(height))
+    review(
+      metrics, spans: spans, reference: reference, width: Double(width), height: Double(height))
   }
 
   /// The anchor span's middle frame when it registered, else the nearest registered one,
@@ -68,7 +71,8 @@ package struct RegistrationReview: Equatable, Sendable {
   }
 
   private mutating func review(
-    _ metrics: [SirilSequence.Metric], spans: [Range<Int>], reference: Int, width: Double, height: Double
+    _ metrics: [SirilSequence.Metric], spans: [Range<Int>], reference: Int, width: Double,
+    height: Double
   ) {
     let referenceH = metrics[reference].homography
     for (night, span) in spans.enumerated() {
@@ -82,8 +86,8 @@ package struct RegistrationReview: Equatable, Sendable {
         if overlap < Self.absurdOverlap {
           groups[night].absurd += 1
           preReject[index] =
-            "absurd registration transform (\(Int((overlap * 100).rounded()))% overlap with the anchor "
-            + "field) — false star match"
+            "absurd registration transform (\(Int((overlap * 100).rounded()))% overlap "
+            + "with the anchor field) — false star match"
           continue
         }
         rotations.append(Homography.rotationDegrees(relative))

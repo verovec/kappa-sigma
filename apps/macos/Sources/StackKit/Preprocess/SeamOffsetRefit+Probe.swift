@@ -14,7 +14,9 @@ extension SeamOffsetRefit {
     var gridHeight: Int { (height + CoverageGrid.cellSize - 1) / CoverageGrid.cellSize }
 
     /// Both nights' overlap curves, the guarded Δ, and the frames rewritten (`refitOneGroup`).
-    func measure(_ span: Range<Int>, against anchor: Range<Int>, into record: Record) throws -> Record {
+    func measure(_ span: Range<Int>, against anchor: Range<Int>, into record: Record) throws
+      -> Record
+    {
       var record = record
       guard let group = try curve(span) else {
         record.reason = "overlap region too thin to measure on the group's frames"
@@ -45,8 +47,12 @@ extension SeamOffsetRefit {
     func curve(_ span: Range<Int>) throws -> FrameCurve? {
       var curves: [FrameCurve] = []
       let indices = kept(span)
-      let step = indices.count > SeamOffsetRefit.maxProbeFrames ? indices.count / SeamOffsetRefit.maxProbeFrames : 1
-      for index in stride(from: 0, to: indices.count, by: step).map({ indices[$0] }).prefix(SeamOffsetRefit.maxProbeFrames) {
+      let step =
+        indices.count > SeamOffsetRefit.maxProbeFrames
+        ? indices.count / SeamOffsetRefit.maxProbeFrames : 1
+      for index in stride(from: 0, to: indices.count, by: step).map({ indices[$0] }).prefix(
+        SeamOffsetRefit.maxProbeFrames)
+      {
         try Task.checkCancellation()
         guard let image = try? FITSFile.read(at: frame(index)).image(),
           let homography = review.frameHomographies[index],
@@ -61,8 +67,12 @@ extension SeamOffsetRefit {
 
     /// The pixel's centre, through its frame's homography, lands in the overlap (`overlapKeepFn`).
     func keep(_ homography: [Double], x: Int, y: Int) -> Bool {
-      guard let point = Homography.apply(homography, x: Double(x) + 0.5, y: Double(y) + 0.5) else { return false }
-      let (column, row) = (Int(point.x) / CoverageGrid.cellSize, Int(point.y) / CoverageGrid.cellSize)
+      guard let point = Homography.apply(homography, x: Double(x) + 0.5, y: Double(y) + 0.5) else {
+        return false
+      }
+      let (column, row) = (
+        Int(point.x) / CoverageGrid.cellSize, Int(point.y) / CoverageGrid.cellSize
+      )
       guard column >= 0, row >= 0, column < gridWidth, row < gridHeight else { return false }
       return overlap[row * gridWidth + column]
     }

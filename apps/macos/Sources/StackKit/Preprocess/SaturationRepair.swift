@@ -1,11 +1,12 @@
 package import Foundation
 internal import ImageKit
 
-/// Repairs sensor-saturated cores before a multi-night stack (`transient/satmask.go`): after
-/// photometric normalisation each night's clipped plateau lands at its own level, below the true
-/// flux, and no rejection removes a coherent plateau. A saturated pixel takes the median of the
-/// frames that still see it below their ceiling — when at least five do; a core clipped everywhere
-/// has no true value to restore and is left alone.
+/// Repairs sensor-saturated cores before a multi-night stack (`transient/satmask.go`).
+///
+/// After photometric normalisation each night's clipped plateau lands at its own level, below the
+/// true flux, and no rejection removes a coherent plateau. A saturated pixel takes the median of
+/// the frames that still see it below their ceiling — when at least five do; a core clipped
+/// everywhere has no true value to restore and is left alone.
 ///
 /// Exact and memory-light: the saturated pixels are found frame by frame, only their values are
 /// gathered, then each frame is rewritten — never the whole sequence in memory.
@@ -16,7 +17,9 @@ package enum SaturationRepair {
 
   /// The repaired pixel count of each frame (`frames[i]` with ceiling `ceilings[i]`, 0 = disabled).
   package static func repair(_ frames: [URL], ceilings: [Float]) throws -> [Int] {
-    let thresholds = frames.indices.map { $0 < ceilings.count && ceilings[$0] > 0 ? ceilings[$0] * margin : 0 }
+    let thresholds = frames.indices.map {
+      $0 < ceilings.count && ceilings[$0] > 0 ? ceilings[$0] * margin : 0
+    }
     guard thresholds.contains(where: { $0 > 0 }) else { return frames.map { _ in 0 } }
     var saturated: [Set<Int>] = []
     for (index, url) in frames.enumerated() where thresholds[index] > 0 {
@@ -24,7 +27,9 @@ package enum SaturationRepair {
       let planes = try FITSFile.read(at: url).image().planes
       if saturated.isEmpty { saturated = Array(repeating: [], count: planes.count) }
       for (channel, plane) in planes.enumerated() where channel < saturated.count {
-        for (pixel, value) in plane.enumerated() where value >= thresholds[index] { saturated[channel].insert(pixel) }
+        for (pixel, value) in plane.enumerated() where value >= thresholds[index] {
+          saturated[channel].insert(pixel)
+        }
       }
     }
     let medians = try cleanMedians(frames, thresholds: thresholds, saturated: saturated)
@@ -35,7 +40,9 @@ package enum SaturationRepair {
 
   /// Per channel, the upper median of the clean (0 < v < threshold) samples at each saturated pixel,
   /// where at least five frames give one (`cleanMedianPlanes`).
-  static func cleanMedians(_ frames: [URL], thresholds: [Float], saturated: [Set<Int>]) throws -> [[Int: Float]] {
+  static func cleanMedians(_ frames: [URL], thresholds: [Float], saturated: [Set<Int>]) throws
+    -> [[Int: Float]]
+  {
     let keys = saturated.map { Array($0).sorted() }
     var samples = keys.map { $0.map { _ in [Float]() } }
     for (index, url) in frames.enumerated() where thresholds[index] > 0 {
@@ -50,7 +57,8 @@ package enum SaturationRepair {
     }
     return keys.indices.map { channel in
       var medians: [Int: Float] = [:]
-      for (slot, pixel) in keys[channel].enumerated() where samples[channel][slot].count >= minimumCleanSamples {
+      for (slot, pixel) in keys[channel].enumerated()
+      where samples[channel][slot].count >= minimumCleanSamples {
         let sorted = samples[channel][slot].sorted()
         medians[pixel] = sorted[sorted.count / 2]
       }

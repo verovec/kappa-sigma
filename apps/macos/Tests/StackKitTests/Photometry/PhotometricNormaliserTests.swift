@@ -30,36 +30,45 @@ struct PhotometricNormaliserTests {
   static func write(_ name: String, _ plane: [Float], copies: Int) throws -> [String] {
     try (0..<copies).map { index in
       try FloatFITS.write(
-        ScratchDirectory.url.appendingPathComponent("\(name)\(index).fits"), width: size, height: size,
+        ScratchDirectory.url.appendingPathComponent("\(name)\(index).fits"), width: size,
+        height: size,
         planes: [plane]
       ).path
     }
   }
 
-  @Test("a dim, offset night is scaled onto the reference; its median lands within 1%", .scratchDirectory)
+  @Test(
+    "a dim, offset night is scaled onto the reference; its median lands within 1%",
+    .scratchDirectory)
   func testScalesGroupToReference() throws {
     let reference = Self.skyPlane(seed: 12345)
-    let a = try Self.write("a", reference, copies: 3)
-    let b = try Self.write("b", reference.map { 0.5 * $0 + 0.01 }, copies: 3)
+    let pathsA = try Self.write("a", reference, copies: 3)
+    let pathsB = try Self.write("b", reference.map { 0.5 * $0 + 0.01 }, copies: 3)
     let (records, notes) = PhotometricNormaliser.normalise([
-      PhotomGroup(paths: a, label: "A", isReference: true), PhotomGroup(paths: b, label: "B"),
+      PhotomGroup(paths: pathsA, label: "A", isReference: true),
+      PhotomGroup(paths: pathsB, label: "B"),
     ])
     #expect(records.map(\.label) == ["A", "B"] && !records[0].applied && records[1].applied)
     #expect(abs(records[1].scale - 2) <= 0.05 && notes.isEmpty)
-    let (aCurve, bCurve) = (try PhotometricNormaliser.measure(a[0]), try PhotometricNormaliser.measure(b[0]))
-    #expect(abs(aCurve.q[5] - bCurve.q[5]) <= abs(aCurve.q[5]) * 0.01)
+    let (aCurve, bCurve) = (
+      try PhotometricNormaliser.measure(pathsA[0]), try PhotometricNormaliser.measure(pathsB[0])
+    )
+    #expect(abs(aCurve.quantiles[5] - bCurve.quantiles[5]) <= abs(aCurve.quantiles[5]) * 0.01)
   }
 
-  @Test("an identical night is left byte for byte; a 16-bit night cannot be rewritten", .scratchDirectory)
+  @Test(
+    "an identical night is left byte for byte; a 16-bit night cannot be rewritten",
+    .scratchDirectory)
   func testSkips() throws {
     let plane = Self.skyPlane(seed: 999)
-    let a = try Self.write("ha", plane, copies: 2)
-    let b = try Self.write("hb", plane, copies: 2)
-    let before = try Data(contentsOf: URL(fileURLWithPath: b[0]))
+    let pathsA = try Self.write("ha", plane, copies: 2)
+    let pathsB = try Self.write("hb", plane, copies: 2)
+    let before = try Data(contentsOf: URL(fileURLWithPath: pathsB[0]))
     let (same, _) = PhotometricNormaliser.normalise([
-      PhotomGroup(paths: a, label: "A", isReference: true), PhotomGroup(paths: b, label: "B"),
+      PhotomGroup(paths: pathsA, label: "A", isReference: true),
+      PhotomGroup(paths: pathsB, label: "B"),
     ])
-    let after = try Data(contentsOf: URL(fileURLWithPath: b[0]))
+    let after = try Data(contentsOf: URL(fileURLWithPath: pathsB[0]))
     #expect(!same[1].applied && after == before)
 
     let sixteen = try TestFITS.write(
@@ -67,7 +76,7 @@ struct PhotometricNormaliserTests {
       planes: [(0..<Self.size * Self.size).map { UInt16(1000 + $0 % 5000) }], cards: [:])
     let raw = try Data(contentsOf: sixteen)
     let (records, notes) = PhotometricNormaliser.normalise([
-      PhotomGroup(paths: [a[0]], label: "A", isReference: true),
+      PhotomGroup(paths: [pathsA[0]], label: "A", isReference: true),
       PhotomGroup(paths: [sixteen.path], label: "C16"),
     ])
     let untouched = try Data(contentsOf: sixteen)
@@ -75,19 +84,22 @@ struct PhotometricNormaliserTests {
     #expect(notes.contains { $0.contains("not 32-bit float") })
   }
 
-  @Test("flat narrowband nights take the gain prediction; the sky lands within 2%", .scratchDirectory)
+  @Test(
+    "flat narrowband nights take the gain prediction; the sky lands within 2%", .scratchDirectory)
   func testMetaSeededNarrowband() throws {
     let trueScale = 5.623
     let reference = Self.flatPlane(0.2, seed: 11)
-    let a = try Self.write("na", reference, copies: 2)
-    let b = try Self.write("nb", reference.map { $0 / Float(trueScale) }, copies: 2)
+    let pathsA = try Self.write("na", reference, copies: 2)
+    let pathsB = try Self.write("nb", reference.map { $0 / Float(trueScale) }, copies: 2)
     let zwo = "ZWO ASI1600MM Pro"
     let (records, notes) = PhotometricNormaliser.normalise([
       PhotomGroup(
-        paths: a, label: "Ha g400", meta: PhotomMeta(exposureMs: 30000, gain: 400, gainKnown: true, instrument: zwo),
+        paths: pathsA, label: "Ha g400",
+        meta: PhotomMeta(exposureMs: 30000, gain: 400, gainKnown: true, instrument: zwo),
         isReference: true, session: "2023-02-28"),
       PhotomGroup(
-        paths: b, label: "Ha g250", meta: PhotomMeta(exposureMs: 30000, gain: 250, gainKnown: true, instrument: zwo),
+        paths: pathsB, label: "Ha g250",
+        meta: PhotomMeta(exposureMs: 30000, gain: 250, gainKnown: true, instrument: zwo),
         sessionID: 42, session: "2023-03-15"),
     ])
     #expect(records[0].isReference && records[0].session == "2023-02-28")
@@ -95,11 +107,15 @@ struct PhotometricNormaliserTests {
     #expect(abs(records[1].scale - trueScale) <= trueScale * 0.02)
     #expect(records[1].sessionID == 42 && records[1].session == "2023-03-15")
     #expect(notes.contains { $0.contains("seeded from header exposure/gain") })
-    let (aCurve, bCurve) = (try PhotometricNormaliser.measure(a[0]), try PhotometricNormaliser.measure(b[0]))
+    let (aCurve, bCurve) = (
+      try PhotometricNormaliser.measure(pathsA[0]), try PhotometricNormaliser.measure(pathsB[0])
+    )
     #expect(abs(aCurve.background - bCurve.background) <= abs(aCurve.background) * 0.02)
   }
 
-  @Test("the no-clip gate runs inside the normaliser: offset-only, noise not amplified", .scratchDirectory)
+  @Test(
+    "the no-clip gate runs inside the normaliser: offset-only, noise not amplified",
+    .scratchDirectory)
   func testNoClipGateWiring() throws {
     var gaussian = SeededGaussian(seed: 3)
     let zeroSky = (0..<Self.size * Self.size).map { _ in Float(0.0001 + 0.001 * gaussian.next()) }
@@ -109,12 +125,14 @@ struct PhotometricNormaliserTests {
     let (records, notes) = PhotometricNormaliser.normalise([
       PhotomGroup(
         paths: reference, label: "deep",
-        meta: PhotomMeta(exposureMs: 120_000, gain: 450, gainKnown: true, instrument: zwo), isReference: true),
+        meta: PhotomMeta(exposureMs: 120_000, gain: 450, gainKnown: true, instrument: zwo),
+        isReference: true),
       PhotomGroup(
         paths: bright, label: "shallow-bright",
         meta: PhotomMeta(exposureMs: 15000, gain: 450, gainKnown: true, instrument: zwo)),
     ])
-    #expect(records[1].reverted && records[1].method == .offsetOnly && abs(records[1].scale - 1) <= 1e-9)
+    #expect(
+      records[1].reverted && records[1].method == .offsetOnly && abs(records[1].scale - 1) <= 1e-9)
     #expect(notes.contains { $0.contains("would clip its sky below zero") })
     #expect(try PhotometricNormaliser.measure(bright[0]).noise < 0.02)
   }

@@ -46,7 +46,8 @@ package enum Starlet {
           let base = row * width
           for column in 0..<width {
             dst[base + column] = kernel(
-              src[base + reflect(column - 2 * step, width)], src[base + reflect(column - step, width)],
+              src[base + reflect(column - 2 * step, width)],
+              src[base + reflect(column - step, width)],
               src[base + column], src[base + reflect(column + step, width)],
               src[base + reflect(column + 2 * step, width)])
           }
@@ -56,12 +57,17 @@ package enum Starlet {
     rows.withUnsafeBufferPointer { src in
       out.withUnsafeMutableBufferPointer { dst in
         for row in 0..<height {
-          let (r0, r1) = (reflect(row - 2 * step, height) * width, reflect(row - step, height) * width)
-          let (r3, r4) = (reflect(row + step, height) * width, reflect(row + 2 * step, height) * width)
+          let (r0, r1) = (
+            reflect(row - 2 * step, height) * width, reflect(row - step, height) * width
+          )
+          let (r3, r4) = (
+            reflect(row + step, height) * width, reflect(row + 2 * step, height) * width
+          )
           let r2 = row * width
           for column in 0..<width {
             dst[r2 + column] = kernel(
-              src[r0 + column], src[r1 + column], src[r2 + column], src[r3 + column], src[r4 + column])
+              src[r0 + column], src[r1 + column], src[r2 + column], src[r3 + column],
+              src[r4 + column])
           }
         }
       }
@@ -71,11 +77,14 @@ package enum Starlet {
 
   /// (1/16)·(a + 4b + 6c + 4d + e) in float32, the products fused as arm64 Go fuses them.
   @inline(__always)
-  static func kernel(_ a: Float, _ b: Float, _ c: Float, _ d: Float, _ e: Float) -> Float {
-    var sum = a.addingProduct(4, b)
-    sum = sum.addingProduct(6, c)
-    sum = sum.addingProduct(4, d)
-    return Float(1.0 / 16.0) * (sum + e)
+  static func kernel(
+    _ outerLeft: Float, _ innerLeft: Float, _ centre: Float, _ innerRight: Float,
+    _ outerRight: Float
+  ) -> Float {
+    var sum = outerLeft.addingProduct(4, innerLeft)
+    sum = sum.addingProduct(6, centre)
+    sum = sum.addingProduct(4, innerRight)
+    return Float(1.0 / 16.0) * (sum + outerRight)
   }
 
   /// Half-sample symmetric reflection into [0, n): −1 → 0, n → n − 1.

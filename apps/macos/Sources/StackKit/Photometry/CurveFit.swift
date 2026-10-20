@@ -1,6 +1,8 @@
-/// Fits a frame's curve onto a reference's (`photom.FitCurves`): a Theil–Sen slope over P5…P97.5,
-/// the median offset, the median misfit. A flat curve (span ≈ noise) is not measured: its scale is
-/// seeded from the exposure/gain prediction, else the background ratio, else identity.
+/// Fits a frame's curve onto a reference's (`photom.FitCurves`).
+///
+/// A Theil–Sen slope over P5…P97.5, the median offset, the median misfit. A flat curve (span ≈
+/// noise) is not measured: its scale is seeded from the exposure/gain prediction, else the
+/// background ratio, else identity.
 package enum CurveFit {
   /// The fit probes: P5 … P97.5.
   static let fitRange = 0...11
@@ -62,7 +64,8 @@ package enum CurveFit {
 
   /// The fit span is within `flatSpanSigmas` noise sigmas: nothing but sky in the probes.
   static func isFlat(_ curve: FrameCurve) -> Bool {
-    curve.q[fitRange.upperBound] - curve.q[fitRange.lowerBound] < flatSpanSigmas * curve.noise
+    curve.quantiles[fitRange.upperBound] - curve.quantiles[fitRange.lowerBound] < flatSpanSigmas
+      * curve.noise
   }
 
   /// The median of pairwise slopes; 1 when every frame gap is flat.
@@ -70,9 +73,9 @@ package enum CurveFit {
     var slopes: [Double] = []
     for first in fitRange {
       for second in (first + 1)..<(fitRange.upperBound + 1) {
-        let gap = frame.q[second] - frame.q[first]
+        let gap = frame.quantiles[second] - frame.quantiles[first]
         guard abs(gap) > tiny else { continue }
-        slopes.append((reference.q[second] - reference.q[first]) / gap)
+        slopes.append((reference.quantiles[second] - reference.quantiles[first]) / gap)
       }
     }
     return slopes.isEmpty ? 1 : PhotomStats.median(slopes)
@@ -80,15 +83,18 @@ package enum CurveFit {
 
   static func medianOffset(_ frame: FrameCurve, _ reference: FrameCurve, scale: Double) -> Double {
     // Fused as Go fuses `a - s*b` on arm64.
-    PhotomStats.median(fitRange.map { reference.q[$0].addingProduct(-scale, frame.q[$0]) })
+    PhotomStats.median(
+      fitRange.map { reference.quantiles[$0].addingProduct(-scale, frame.quantiles[$0]) })
   }
 
   /// The median |misfit| over the probes, over the reference's signal span (P97.5 − background).
   static func residual(
     _ frame: FrameCurve, _ reference: FrameCurve, scale: Double, offset: Double
   ) -> Double {
-    let span = max(tiny, reference.q[fitRange.upperBound] - reference.background)
+    let span = max(tiny, reference.quantiles[fitRange.upperBound] - reference.background)
     return PhotomStats.median(
-      fitRange.map { abs(reference.q[$0] - offset.addingProduct(scale, frame.q[$0])) / span })
+      fitRange.map {
+        abs(reference.quantiles[$0] - offset.addingProduct(scale, frame.quantiles[$0])) / span
+      })
   }
 }

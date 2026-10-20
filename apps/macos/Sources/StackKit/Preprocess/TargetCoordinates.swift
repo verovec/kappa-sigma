@@ -1,8 +1,10 @@
 internal import Foundation
 
 /// The target's position for plate solves, from the lights' own pointing (`targetQueryFor` +
-/// `skycat.ParseRA`/`ParseDec`): `"ra,dec"` in decimal degrees, five decimals. A catalogue lookup
-/// by object name is the import view's (0057).
+/// `skycat.ParseRA`/`ParseDec`).
+///
+/// `"ra,dec"` in decimal degrees, five decimals. A catalogue lookup by object name is the import
+/// view's (0057).
 package enum TargetCoordinates {
   /// The first light carrying a parseable OBJCTRA/OBJCTDEC pair; nil when none does.
   package static func from(_ inventory: Inventory) -> String? {

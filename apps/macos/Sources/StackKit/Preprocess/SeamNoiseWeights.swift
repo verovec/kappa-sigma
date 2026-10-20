@@ -10,19 +10,26 @@ package enum SeamNoiseWeights {
   static let minDepthRatio = 1.3
 
   /// The weights of a `width` × `height` master, or why the pass is skipped.
-  package static func weights(_ grid: CoverageGrid, width: Int, height: Int) -> (weights: [Float]?, reason: String) {
+  package static func weights(_ grid: CoverageGrid, width: Int, height: Int) -> (
+    weights: [Float]?, reason: String
+  ) {
     guard !grid.counts.isEmpty else { return (nil, "no coverage grid") }
-    guard grid.width == (width + grid.scale - 1) / grid.scale, grid.height == (height + grid.scale - 1) / grid.scale
+    guard grid.width == (width + grid.scale - 1) / grid.scale,
+      grid.height == (height + grid.scale - 1) / grid.scale
     else { return (nil, "coverage grid does not match the master canvas") }
     let covered = grid.counts.filter { $0 > 0 }
-    guard let deepest = covered.max(), let shallowest = covered.min() else { return (nil, "no covered cells") }
+    guard let deepest = covered.max(), let shallowest = covered.min() else {
+      return (nil, "no covered cells")
+    }
     guard Double(deepest) / Double(shallowest) >= minDepthRatio else {
       return (nil, "stack depth nearly uniform (\(shallowest)→\(deepest)) — no visible noise step")
     }
     let values = grid.counts.map { Float($0) }
     let coverage = grid.counts.map { $0 > 0 ? Float(1) : 0 }
-    let blurredValues = gaussianBlur(values, width: grid.width, height: grid.height, sigma: blurCells)
-    let blurredCoverage = gaussianBlur(coverage, width: grid.width, height: grid.height, sigma: blurCells)
+    let blurredValues = gaussianBlur(
+      values, width: grid.width, height: grid.height, sigma: blurCells)
+    let blurredCoverage = gaussianBlur(
+      coverage, width: grid.width, height: grid.height, sigma: blurCells)
     let cells = grid.counts.indices.map { index -> Float in
       guard grid.counts[index] > 0, blurredCoverage[index] > 1e-6 else { return 0 }
       let smooth = max(1, Double(blurredValues[index] / blurredCoverage[index]))
@@ -39,10 +46,13 @@ package enum SeamNoiseWeights {
     for row in 0..<height {
       let gy = (Double(row) + 0.5) / scale - 0.5
       for column in 0..<width {
-        let cell = min(row / grid.scale, grid.height - 1) * grid.width + min(column / grid.scale, grid.width - 1)
+        let cell =
+          min(row / grid.scale, grid.height - 1) * grid.width
+          + min(column / grid.scale, grid.width - 1)
         guard grid.counts[cell] > 0 else { continue }
         out[row * width + column] = bilinear(
-          cells, width: grid.width, height: grid.height, x: (Double(column) + 0.5) / scale - 0.5, y: gy)
+          cells, width: grid.width, height: grid.height, x: (Double(column) + 0.5) / scale - 0.5,
+          y: gy)
       }
     }
     return out
@@ -81,7 +91,9 @@ package enum SeamNoiseWeights {
     var lower = Int(ideal.rounded(.down))
     if lower % 2 == 0 { lower -= 1 }
     let upper = lower + 2
-    let numerator = 12 * sigma * sigma - Double(count * lower * lower) - Double(4 * count * lower) - Double(3 * count)
+    let numerator =
+      12 * sigma * sigma - Double(count * lower * lower) - Double(4 * count * lower)
+      - Double(3 * count)
     let small = Int((numerator / Double(-4 * lower - 4)).rounded(.toNearestOrAwayFromZero))
     return (0..<count).map { $0 < small ? lower : upper }
   }
@@ -99,7 +111,9 @@ package enum SeamNoiseWeights {
       for offset in -radius...radius { sum += Double(source[index(line, clamp(offset))]) }
       for position in 0..<length {
         destination[index(line, position)] = Float(sum * inverse)
-        sum += Double(source[index(line, clamp(position + radius + 1))]) - Double(source[index(line, clamp(position - radius))])
+        sum +=
+          Double(source[index(line, clamp(position + radius + 1))])
+          - Double(source[index(line, clamp(position - radius))])
       }
     }
   }

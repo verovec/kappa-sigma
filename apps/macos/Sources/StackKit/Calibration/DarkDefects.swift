@@ -82,7 +82,8 @@ package struct DarkDefects: Equatable, Sendable {
     var squares: [Double] = []
     var (width, height, used, topDown) = (0, 0, 0, false)
     for path in frames {
-      guard let file = try? FITSFile.read(at: URL(fileURLWithPath: path)), let image = try? file.image(),
+      guard let file = try? FITSFile.read(at: URL(fileURLWithPath: path)),
+        let image = try? file.image(),
         image.planes.count == 1
       else { continue }
       if used == 0 {

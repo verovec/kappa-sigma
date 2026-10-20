@@ -7,10 +7,15 @@ import Testing
 @Suite("RegistrationReview — the anchor reference, absurd transforms, per-night telemetry")
 struct RegistrationReviewTests {
   /// A rotation by `degrees` about (cx, cy), then a translation: a real cross-night transform.
-  static func rotation(_ degrees: Double, _ cx: Double, _ cy: Double, _ tx: Double, _ ty: Double) -> [Double] {
+  static func rotation(_ degrees: Double, _ cx: Double, _ cy: Double, _ tx: Double, _ ty: Double)
+    -> [Double]
+  {
     let radians = degrees * .pi / 180
-    let (c, s) = (cos(radians), sin(radians))
-    return [c, -s, cx - c * cx + s * cy + tx, s, c, cy - s * cx - c * cy + ty, 0, 0, 1]
+    let (cosine, sine) = (cos(radians), sin(radians))
+    return [
+      cosine, -sine, cx - cosine * cx + sine * cy + tx, sine, cosine,
+      cy - sine * cx - cosine * cy + ty, 0, 0, 1,
+    ]
   }
 
   static func line(_ h: [Double]) -> String {
@@ -28,9 +33,13 @@ struct RegistrationReviewTests {
   @Test("the anchor's middle frame is pinned; a 140° night is measured, not gated")
   func testAnchorsAndMeasures() throws {
     let (w, h) = (640.0, 480.0)
-    var lines = [(4.0, -2.0), (6, 1), (-3, 5)].map { Self.line(Self.rotation(140, w / 2, h / 2, $0.0, $0.1)) }
+    var lines = [(4.0, -2.0), (6, 1), (-3, 5)].map {
+      Self.line(Self.rotation(140, w / 2, h / 2, $0.0, $0.1))
+    }
     lines += (0..<7).map { Self.line(Self.rotation(0, 0, 0, Double($0), -Double($0))) }
-    let review = RegistrationReview(Self.sequence(reference: 6, lines), spans: [0..<3, 3..<10], anchor: 1, width: 640, height: 480)
+    let review = RegistrationReview(
+      Self.sequence(reference: 6, lines), spans: [0..<3, 3..<10], anchor: 1, width: 640, height: 480
+    )
     #expect(review.referenceIndex == 7 && review.warnings.isEmpty && review.preReject.isEmpty)
     let rotated = try #require(review.groups[0].rotationDegrees)
     let overlap = try #require(review.groups[0].overlapFraction)
@@ -44,7 +53,8 @@ struct RegistrationReviewTests {
     let lines = [(0.0, 0.0), (6000, -4000), (2, 1), (-1, 3), (1, -2)].map {
       Self.line(Self.rotation(0, 0, 0, $0.0, $0.1))
     }
-    let review = RegistrationReview(Self.sequence(reference: 0, lines), spans: [0..<5], anchor: 0, width: 640, height: 480)
+    let review = RegistrationReview(
+      Self.sequence(reference: 0, lines), spans: [0..<5], anchor: 0, width: 640, height: 480)
     #expect(review.referenceIndex == 3 && review.preReject.count == 1)
     #expect(review.preReject[1]?.contains("absurd registration transform") == true)
     let overlap = try #require(review.groups[0].overlapFraction)
@@ -60,9 +70,13 @@ struct RegistrationReviewTests {
     #expect(middle.referenceIndex == 4 && middle.groups[0].registered == 4)
 
     let lost = RegistrationReview(
-      Self.sequence(reference: 0, [id, Self.line(Self.rotation(0, 0, 0, 3, 1)), Self.unregistered, Self.unregistered]),
+      Self.sequence(
+        reference: 0,
+        [id, Self.line(Self.rotation(0, 0, 0, 3, 1)), Self.unregistered, Self.unregistered]),
       spans: [0..<2, 2..<4], anchor: 1, width: 640, height: 480)
-    #expect(lost.referenceIndex == 0 && lost.warnings.first?.contains("no anchor-night frame registered") == true)
+    #expect(
+      lost.referenceIndex == 0
+        && lost.warnings.first?.contains("no anchor-night frame registered") == true)
     #expect(lost.groups[0].overlapFraction != nil && lost.groups[1].registered == 0)
 
     let sizeless = RegistrationReview(
@@ -76,19 +90,23 @@ struct RegistrationReviewTests {
     let h = Self.rotation(30, 100, 80, 5, -3)
     let rel = try #require(Homography.relative(Homography.identity, h))
     #expect(zip(rel, h).allSatisfy { abs($0 - $1) <= 1e-9 })
-    let selfRel = try #require(Homography.relative(Self.rotation(140, 320, 240, 40, 25), Self.rotation(140, 320, 240, 40, 25)))
+    let selfRel = try #require(
+      Homography.relative(
+        Self.rotation(140, 320, 240, 40, 25), Self.rotation(140, 320, 240, 40, 25)))
     #expect(zip(selfRel, Homography.identity).allSatisfy { abs($0 - $1) <= 1e-9 })
     #expect(Homography.relative([Double](repeating: 0, count: 9), Homography.identity) == nil)
     let overlaps: [([Double], ClosedRange<Double>)] = [
       (Homography.identity, 0.999...1), (Self.rotation(0, 0, 0, 8, -5), 0.95...1),
-      (Self.rotation(140, 320, 240, 0, 0), 0.5...1), (Self.rotation(0, 0, 0, 6000, -4000), 0...0.001),
+      (Self.rotation(140, 320, 240, 0, 0), 0.5...1),
+      (Self.rotation(0, 0, 0, 6000, -4000), 0...0.001),
       (Self.rotation(0, 0, 0, 320, 0), 0.45...0.55), ([Double](repeating: 0, count: 9), 0...0),
     ]
     for (matrix, range) in overlaps {
       #expect(range.contains(Homography.footprintOverlap(matrix, width: 640, height: 480)))
     }
     for degrees in [0.0, 30, 140, -35, 179] {
-      #expect(abs(Homography.rotationDegrees(Self.rotation(degrees, 100, 100, 12, -7)) - degrees) <= 1e-9)
+      #expect(
+        abs(Homography.rotationDegrees(Self.rotation(degrees, 100, 100, 12, -7)) - degrees) <= 1e-9)
     }
   }
 }

@@ -31,14 +31,19 @@ package enum CoverageCrop {
     let fraction = Double(cells.area) / Double(first.width * first.height)
     let scale = first.scale
     var record = Record(
-      rect: EdgeRect(x0: cells.x0 * scale, y0: cells.y0 * scale, x1: cells.x1 * scale, y1: cells.y1 * scale),
+      rect: EdgeRect(
+        x0: cells.x0 * scale, y0: cells.y0 * scale, x1: cells.x1 * scale, y1: cells.y1 * scale),
       fraction: fraction)
     if fraction < minimumRectangle {
-      record.note = "common coverage rectangle is only \(Int((fraction * 100).rounded()))% of the canvas — keeping the full field"
+      record.note =
+        "common coverage rectangle is only \(Int((fraction * 100).rounded()))% of the canvas "
+        + "— keeping the full field"
       journal.warn("coverage crop skipped: " + record.note)
       return (channels, record)
     }
-    guard record.rect.width > 0, record.rect.height > 0, fraction <= 0.98 else { return (channels, record) }
+    guard record.rect.width > 0, record.rect.height > 0, fraction <= 0.98 else {
+      return (channels, record)
+    }
     var cropped: [String: String] = [:]
     for (filter, base) in channels.sorted(by: { $0.key < $1.key }) {
       let name = "combine_" + ChannelTag.of(filter)
@@ -48,7 +53,10 @@ package enum CoverageCrop {
           x1: record.rect.x1, y1: record.rect.y1)
         cropped[filter] = name
       } catch {
-        journal.warn("coverage crop failed on \(filter) (\(ChannelStacker.describe(error))) — combining uncropped")
+        journal.warn(
+          "coverage crop failed on \(filter) (\(ChannelStacker.describe(error))) "
+            + "— combining uncropped"
+        )
         return (channels, record)
       }
     }
@@ -72,7 +80,9 @@ package enum CoverageCrop {
     var heights = [Int](repeating: 0, count: width)
     var best = EdgeRect(x0: 0, y0: 0, x1: 0, y1: 0)
     for row in 0..<height {
-      for column in 0..<width { heights[column] = mask[row * width + column] ? heights[column] + 1 : 0 }
+      for column in 0..<width {
+        heights[column] = mask[row * width + column] ? heights[column] + 1 : 0
+      }
       var stack: [(start: Int, height: Int)] = []
       for column in 0...width {
         let bar = column < width ? heights[column] : 0

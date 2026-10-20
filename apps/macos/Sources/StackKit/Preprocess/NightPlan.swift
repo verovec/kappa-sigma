@@ -21,7 +21,9 @@ package struct NightPlan: Equatable, Sendable {
     for set in lights { channels[lane(set), default: []].append(set) }
     self.channels = channels.mapValues { groups in
       groups.sorted {
-        ($0.key.session, $0.key.exposureMs, $0.key.gain) < ($1.key.session, $1.key.exposureMs, $1.key.gain)
+        ($0.key.session, $0.key.exposureMs, $0.key.gain) < (
+          $1.key.session, $1.key.exposureMs, $1.key.gain
+        )
       }
     }
     anchored = channels.values.contains { $0.count > 1 }
@@ -40,7 +42,9 @@ package struct NightPlan: Equatable, Sendable {
       }
     }
     return filters.keys.max { lhs, rhs in
-      let (left, right) = ((filters[lhs]?.count ?? 0, frames[lhs] ?? 0), (filters[rhs]?.count ?? 0, frames[rhs] ?? 0))
+      let (left, right) = (
+        (filters[lhs]?.count ?? 0, frames[lhs] ?? 0), (filters[rhs]?.count ?? 0, frames[rhs] ?? 0)
+      )
       return left != right ? left < right : lhs < rhs
     } ?? ""
   }
@@ -48,13 +52,16 @@ package struct NightPlan: Equatable, Sendable {
   /// A channel's anchor group: on the anchor night, then the most frames, then the latest night.
   package static func anchorGroup(_ groups: [FrameSet], anchorNight: String) -> Int {
     var best = 0
-    for index in groups.indices.dropFirst() where outranks(groups[index], groups[best], anchorNight) {
+    for index in groups.indices.dropFirst() where outranks(groups[index], groups[best], anchorNight)
+    {
       best = index
     }
     return best
   }
 
-  private static func outranks(_ challenger: FrameSet, _ incumbent: FrameSet, _ night: String) -> Bool {
+  private static func outranks(_ challenger: FrameSet, _ incumbent: FrameSet, _ night: String)
+    -> Bool
+  {
     let (on, incumbentOn) = (challenger.key.session == night, incumbent.key.session == night)
     if on != incumbentOn { return on }
     if challenger.count != incumbent.count { return challenger.count > incumbent.count }

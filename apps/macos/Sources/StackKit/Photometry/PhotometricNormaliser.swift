@@ -13,7 +13,9 @@ package enum PhotometricNormaliser {
   static let saturationNoteFraction = 1e-5
 
   /// One record per group, and the notes.
-  package static func normalise(_ groups: [PhotomGroup]) -> (records: [PhotomGroupRecord], notes: [String]) {
+  package static func normalise(_ groups: [PhotomGroup]) -> (
+    records: [PhotomGroupRecord], notes: [String]
+  ) {
     guard !groups.isEmpty else { return ([], []) }
     let referenceIndex = reference(groups)
     let reference = groups[referenceIndex]
@@ -28,7 +30,9 @@ package enum PhotometricNormaliser {
         return (records + groups[index...].map(PhotomGroupRecord.init(skipping:)), notes)
       }
       records.append(
-        normalise(group, onto: curve, referenceMeta: reference.meta, isReference: index == referenceIndex, notes: &notes))
+        normalise(
+          group, onto: curve, referenceMeta: reference.meta, isReference: index == referenceIndex,
+          notes: &notes))
     }
     return (records, notes)
   }
@@ -54,7 +58,8 @@ package enum PhotometricNormaliser {
       curves.append(curve)
     }
     guard !curves.isEmpty else {
-      notes.append("photometric reference \"\(group.label)\": no readable frames — normalization skipped")
+      notes.append(
+        "photometric reference \"\(group.label)\": no readable frames — normalization skipped")
       return nil
     }
     return FrameCurve.median(curves)
@@ -68,6 +73,7 @@ package enum PhotometricNormaliser {
   /// At most `count` evenly strided paths (`evenSpaced`).
   static func evenSpaced(_ paths: [String], _ count: Int) -> [String] {
     guard count > 0, paths.count > count else { return paths }
-    return Array(stride(from: 0, to: paths.count, by: paths.count / count).map { paths[$0] }.prefix(count))
+    return Array(
+      stride(from: 0, to: paths.count, by: paths.count / count).map { paths[$0] }.prefix(count))
   }
 }

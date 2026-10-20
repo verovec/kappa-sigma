@@ -13,7 +13,9 @@ extension DarkDefects {
     var flagged = Set<Int>()
     func add(_ index: Int, _ kind: Character, _ category: Character, _ severity: Double) {
       guard flagged.insert(index).inserted else { return }
-      found.append(Pixel(x: index % width, y: index / width, kind: kind, category: category, severity: severity))
+      found.append(
+        Pixel(
+          x: index % width, y: index / width, kind: kind, category: category, severity: severity))
     }
     let (meanResiduals, meanScale) = Self.localResiduals(means, width: width, height: height)
     if meanScale > 0 {
@@ -28,7 +30,8 @@ extension DarkDefects {
     }
     let (sigmaResiduals, sigmaScale) = Self.localResiduals(sigmas, width: width, height: height)
     if sigmaScale > 0 {
-      for (index, residual) in sigmaResiduals.enumerated() where Double(residual) / sigmaScale > Self.unstableK {
+      for (index, residual) in sigmaResiduals.enumerated()
+      where Double(residual) / sigmaScale > Self.unstableK {
         add(index, "H", "u", Double(residual) / sigmaScale)
       }
     }
@@ -45,7 +48,9 @@ extension DarkDefects {
     let baseline = medianFilter5(values, width: width, height: height)
     let residuals = zip(values, baseline).map { $0 - $1 }
     let stride = residuals.count / statSample + 1
-    let sample = Swift.stride(from: 0, to: residuals.count, by: stride).map { Double(residuals[$0]) }.sorted()
+    let sample = Swift.stride(from: 0, to: residuals.count, by: stride).map {
+      Double(residuals[$0])
+    }.sorted()
     guard !sample.isEmpty else { return (residuals, 0) }
     let median = sample[sample.count / 2]
     let deviations = sample.map { abs($0 - median) }.sorted()
@@ -58,7 +63,9 @@ extension DarkDefects {
       var out = [Float](repeating: 0, count: source.count)
       for line in 0..<lines {
         for position in 0..<length {
-          let window = (max(0, position - 2)...min(length - 1, position + 2)).map { source[index(line, $0)] }.sorted()
+          let window = (max(0, position - 2)...min(length - 1, position + 2)).map {
+            source[index(line, $0)]
+          }.sorted()
           out[index(line, position)] = window[window.count / 2]
         }
       }

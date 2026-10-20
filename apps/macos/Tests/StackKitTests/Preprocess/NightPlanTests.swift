@@ -40,7 +40,9 @@ struct NightPlanTests {
     #expect(plan.anchored && plan.anchorNight == "2024-03-01")
     #expect(plan.nights == ["2020-05-15", "2024-03-01"])
     #expect(plan.channels["L"]?.map(\.key.session) == ["2020-05-15", "2024-03-01"])
-    let single = NightPlan([Self.group("2020-05-15", "L", frames: 2), Self.group("2020-05-15", "R", frames: 2)])
+    let single = NightPlan([
+      Self.group("2020-05-15", "L", frames: 2), Self.group("2020-05-15", "R", frames: 2),
+    ])
     #expect(!single.anchored && single.anchorNight.isEmpty)
   }
 

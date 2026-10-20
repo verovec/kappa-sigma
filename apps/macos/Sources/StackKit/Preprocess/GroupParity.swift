@@ -1,6 +1,8 @@
 /// A night's mirror parity from a no-flip plate solve of its first calibrated frame
-/// (`parityCache`): the sign of det(CD). East-left (det < 0) is the convention every night is
-/// brought to; a mirrored night is flipped with `mirrorx`, an unsolved one is left alone.
+/// (`parityCache`).
+///
+/// The sign of det(CD). East-left (det < 0) is the convention every night is brought to; a mirrored
+/// night is flipped with `mirrorx`, an unsolved one is left alone.
 package enum GroupParity: Equatable, Sendable {
   /// det(CD) < 0: the target convention.
   case eastLeft

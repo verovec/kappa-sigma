@@ -75,8 +75,7 @@ package actor Preprocessor {
     for lane in lanes {
       try Task.checkCancellation()
       let outcome = try await stackChannel(
-        lane, groups: plan.channels[lane] ?? [], plan: plan, request: request, pool: pool, parity: parity,
-        emitter: emitter)
+        lane, plan: plan, request: request, pool: pool, parity: parity, emitter: emitter)
       if let error = outcome.error {
         journal.warn("channel \(outcome.filter) failed — continuing without it: \(error)")
       }

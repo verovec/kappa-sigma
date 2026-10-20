@@ -14,7 +14,8 @@ extension PhotometricNormaliser {
         scale: ratio, offset: reference.background.addingProduct(-ratio, group.background),
         method: .bgMatched)
     } else {
-      degraded = PhotomTransform(scale: 1, offset: reference.background - group.background, method: .offsetOnly)
+      degraded = PhotomTransform(
+        scale: 1, offset: reference.background - group.background, method: .offsetOnly)
     }
     let note =
       "group \"\(label)\": transform ×\(String(format: "%.3g", transform.scale)) "
@@ -34,24 +35,32 @@ extension PhotometricNormaliser {
     var notes: [String] = []
     let scale = String(format: "%.3g", transform.scale)
     if transform.clamped {
-      notes.append("group \"\(label)\": photometric scale clamped to [0.1, 10] (measured out of range)")
+      notes.append(
+        "group \"\(label)\": photometric scale clamped to [0.1, 10] (measured out of range)")
     }
     if transform.metaDisagree {
-      notes.append("group \"\(label)\": measured scale \(scale) disagrees with header exposure/gain — check GAIN header")
+      notes.append(
+        "group \"\(label)\": measured scale \(scale) disagrees with header exposure/gain "
+          + "— check GAIN header"
+      )
     }
     if transform.metaSeeded {
       notes.append(
-        "group \"\(label)\": percentile curve too flat to measure (narrowband/sky pedestal) — scale \(scale) "
-          + "seeded from header exposure/gain")
+        "group \"\(label)\": percentile curve too flat to measure (narrowband/sky pedestal) "
+          + "— scale \(scale) seeded from header exposure/gain")
     }
     if transform.method == .bgMatched {
       notes.append(
-        "group \"\(label)\": scale \(scale) matched from the measured sky backgrounds (no trustworthy header prediction)")
+        "group \"\(label)\": scale \(scale) matched from the measured sky backgrounds "
+          + "(no trustworthy header prediction)"
+      )
     }
     if transform.backgroundDisagree {
       notes.append(
-        "group \"\(label)\": the measured sky-background ratio grossly disagrees with the confirmed header seed ×\(scale) — "
-          + "residual pedestal (missing darks) or a strong sky-brightness difference; the seed (object flux) was kept")
+        "group \"\(label)\": the measured sky-background ratio grossly disagrees with "
+          + "the confirmed header seed ×\(scale) — residual pedestal (missing darks) or a strong "
+          + "sky-brightness difference; the seed (object flux) was kept"
+      )
     }
     return notes
   }

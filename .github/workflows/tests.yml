@@ -2,10 +2,14 @@
 # may merge into main; the worker merges on its own once every check is green. Live suites (`Live…`, host Siril/GraXpert/StarNet, fixtures under
 # ~/Documents/astro) self-skip on the runner; the full host suite runs locally via `just check`.
 #
-# Cost: macOS minutes bill at 10× — a private repo on GitHub Free gets ~200 macOS minutes/month —
-# so this runs on pull requests only (a squash-merged green PR *is* main), caches .build and
-# cancels superseded runs. Rationale and alternatives (self-hosted runner on the PO's Mac):
-# docs/engineering/swift-quality-playbook.md §9.
+# The macOS job runs on the PO's Mac (self-hosted runner `[self-hosted, macOS, ARM64]`, PO decision
+# 2026-10-20): GitHub's hosted macOS arm64 runners repeatedly failed to pick jobs up ("not acquired
+# … even after multiple attempts", capacity constraints), and hosted macOS minutes bill at 10×.
+# The Mac must be on with the runner started; it has the Command Line Tools, not Xcode, so the
+# Xcode, Metal Toolchain and cache steps run only on a hosted image. `ASTROSTACK_SKIP_LIVE=1` makes
+# the live suites skip as they do on a hosted runner, even though the fixtures are on that disk.
+# Pull requests only (a squash-merged green PR *is* main); superseded runs are cancelled.
+# Background: docs/engineering/swift-quality-playbook.md §9.
 name: tests
 
 on:
@@ -41,16 +45,19 @@ jobs:
 
   swift:
     name: hygiene · lint · build · test
-    runs-on: macos-26
+    runs-on: [self-hosted, macOS, ARM64]
     timeout-minutes: 30
     env:
       PKG: apps/macos
+      ASTROSTACK_SKIP_LIVE: "1"
     steps:
       - uses: actions/checkout@v5
 
-      - uses: extractions/setup-just@v3
+      - name: just
+        run: command -v just >/dev/null || brew install just
 
       - name: Select the newest Xcode 26
+        if: runner.environment == 'github-hosted'
         run: |
           xc="$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)"
           [ -n "$xc" ] || xc="$(ls -d /Applications/Xcode*.app | sort -V | tail -1)"
@@ -62,14 +69,15 @@ jobs:
       # contested (runner-images #13080 vs #13014). Download it only when a package exists and
       # the compiler is missing — it is what turns .metal into .metallib.
       - name: Metal Toolchain
-        if: hashFiles('apps/macos/Package.swift') != ''
+        if: runner.environment == 'github-hosted' && hashFiles('apps/macos/Package.swift') != ''
         run: xcrun -sdk macosx metal --version || xcodebuild -downloadComponent metalToolchain
 
       - name: SwiftLint
         run: command -v swiftlint >/dev/null || brew install swiftlint
 
+      # A self-hosted runner keeps its workspace (and .build) between runs: no cache needed.
       - name: Cache SwiftPM build
-        if: hashFiles('apps/macos/Package.swift') != ''
+        if: runner.environment == 'github-hosted' && hashFiles('apps/macos/Package.swift') != ''
         uses: actions/cache@v4
         with:
           path: apps/macos/.build

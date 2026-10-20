@@ -1,5 +1,7 @@
 /// The light set being calibrated and the clip filter its night was shot through
-/// (`calib.LightRef`). The filter set sits beside the key, never in it: set ids are stored tokens.
+/// (`calib.LightRef`).
+///
+/// The filter set sits beside the key, never in it: set ids are stored tokens.
 package struct LightRef: Equatable, Sendable {
   package var key: SetKey
   /// `unknown` for every mono light and every colour night the pixels could not settle, which
@@ -16,6 +18,7 @@ package struct LightRef: Equatable, Sendable {
   /// place the run and the preview agree on a light's clip filter.
   package init(_ set: FrameSet, in inventory: Inventory) {
     let own = set.filterSet.isKnown ? set.filterSet : inventory.filterSets[set.key.id] ?? .unknown
-    self.init(key: set.key, filterSet: own.isKnown ? own : inventory.nightFilterSet(set.key.session))
+    self.init(
+      key: set.key, filterSet: own.isKnown ? own : inventory.nightFilterSet(set.key.session))
   }
 }

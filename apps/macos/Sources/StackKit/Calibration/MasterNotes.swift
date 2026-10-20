@@ -9,6 +9,7 @@ package enum MasterNotes {
   }
 
   /// Two darks degenerate every rejection to a mean: a cosmic ray survives into every light.
+  ///
   /// Bias and flats are high-signal frames, merely noisy at two; one frame is `lonePromotion`.
   package static func thinDarkPool(_ name: String, type: MasterType, frames: Int) -> String? {
     guard frames == 2, type.isThermal else { return nil }

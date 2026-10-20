@@ -2,13 +2,18 @@ internal import CryptoKit
 internal import Foundation
 
 extension MasterBuilder {
+  /// Master builds do not stream Siril's lines anywhere yet (0048 wires progress).
+  static let quiet: @Sendable (SirilLine) -> Void = { _ in }
+
   /// Stacks one set (`buildOne`): link its frames as sequence `cal`, run the script, publish the
   /// `.fits`, write the `.sig`, drop the scratch.
   func buildOne(
     _ set: FrameSet, built: [CalibrationMaster], folder: URL, work: URL, publish: Publish,
     into result: inout Result
   ) async throws -> CalibrationMaster {
-    guard let type = MasterType(set.key.type) else { throw CalibrationError.masterFailed(name: "", reason: "not a calibration set") }
+    guard let type = MasterType(set.key.type) else {
+      throw CalibrationError.masterFailed(name: "", reason: "not a calibration set")
+    }
     let name = MasterName.make(set.key, recipe: recipeTag(type))
     let final = folder.appendingPathComponent(name).path
     let target: String
@@ -21,10 +26,13 @@ extension MasterBuilder {
     defer { try? FileManager.default.removeItem(at: sequence) }
     do {
       try Self.link(paths, into: sequence)
-      if let note = try await stack(set, type: type, name: name, built: built, sequence: sequence, target: target) {
+      if let note = try await stack(
+        set, type: type, name: name, built: built, sequence: sequence, target: target)
+      {
         result.warnings.append(note)
       }
-      try Self.publish(target: target, final: final, signature: PoolSignature.of(paths), frames: paths.count)
+      try Self.publish(
+        target: target, final: final, signature: PoolSignature.of(paths), frames: paths.count)
     } catch is CancellationError {
       Self.discard(target)
       throw CancellationError()
@@ -37,34 +45,42 @@ extension MasterBuilder {
 
   /// Runs the right script; returns the pool note, if any (`stackMasterSet`).
   private func stack(
-    _ set: FrameSet, type: MasterType, name: String, built: [CalibrationMaster], sequence: URL, target: String
+    _ set: FrameSet, type: MasterType, name: String, built: [CalibrationMaster], sequence: URL,
+    target: String
   ) async throws -> String? {
     let frames = set.count
     if frames == 1 {
-      _ = try await runner.run(SirilScripts.promoteLoneFrame(seq: "cal", out: target), sequence) { _ in }
+      _ = try await runner.run(
+        SirilScripts.promoteLoneFrame(seq: "cal", out: target), sequence, Self.quiet)
       return MasterNotes.lonePromotion(name, type: type)
     }
     let options = recipes.options(type)
     guard type == .flat else {
-      _ = try await runner.run(SirilScripts.stackMaster(seq: "cal", out: target, frames: frames, options: options), sequence) { _ in }
+      _ = try await runner.run(
+        SirilScripts.stackMaster(seq: "cal", out: target, frames: frames, options: options),
+        sequence, Self.quiet)
       return MasterNotes.thinDarkPool(name, type: type, frames: frames)
     }
     let bias = Self.flatBias(set.key, built)
     do {
       _ = try await runner.run(
-        SirilScripts.stackFlat(seq: "cal", out: target, bias: bias, frames: frames, options: options), sequence
-      ) { _ in }
+        SirilScripts.stackFlat(
+          seq: "cal", out: target, bias: bias, frames: frames, options: options), sequence,
+        Self.quiet
+      )
       return nil
     } catch let error where bias != nil && !(error is CancellationError) {
       // The bias pedestal is a sliver of a flat's level; losing the flat costs the night its
       // vignetting and dust correction. Retry uncalibrated, on fresh links.
-      let retry = sequence.deletingLastPathComponent().appendingPathComponent(sequence.lastPathComponent + "_uncal")
+      let retry = sequence.deletingLastPathComponent().appendingPathComponent(
+        sequence.lastPathComponent + "_uncal")
       defer { try? FileManager.default.removeItem(at: retry) }
       do {
         try Self.link(set.frames.map(\.path), into: retry)
         _ = try await runner.run(
-          SirilScripts.stackFlat(seq: "cal", out: target, bias: nil, frames: frames, options: options), retry
-        ) { _ in }
+          SirilScripts.stackFlat(
+            seq: "cal", out: target, bias: nil, frames: frames, options: options), retry, Self.quiet
+        )
       } catch {
         throw error
       }
@@ -75,7 +91,9 @@ extension MasterBuilder {
   /// The dark-flat, else the bias, of the flat's camera (`flatBias`).
   static func flatBias(_ flat: SetKey, _ built: [CalibrationMaster]) -> String? {
     for type in [MasterType.darkFlat, .bias] {
-      if let master = built.first(where: { $0.type == type && $0.sameCamera(as: flat) }) { return master.path }
+      if let master = built.first(where: { $0.type == type && $0.sameCamera(as: flat) }) {
+        return master.path
+      }
     }
     return nil
   }
@@ -84,7 +102,8 @@ extension MasterBuilder {
   static func link(_ paths: [String], into folder: URL) throws {
     try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
     for (index, path) in paths.enumerated() {
-      let link = folder.appendingPathComponent(String(format: "%05d_", index + 1) + PathMeta.baseName(path))
+      let link = folder.appendingPathComponent(
+        String(format: "%05d_", index + 1) + PathMeta.baseName(path))
       try? FileManager.default.removeItem(at: link)
       try FileManager.default.createSymbolicLink(
         atPath: link.path, withDestinationPath: URL(fileURLWithPath: path).standardizedFileURL.path)
@@ -93,13 +112,15 @@ extension MasterBuilder {
 
   /// Writes the `.sig` first, then moves the master into place: when the `.fits` appears, its
   /// pool record is already there.
-  private static func publish(target: String, final: String, signature: String, frames: Int) throws {
+  private static func publish(target: String, final: String, signature: String, frames: Int) throws
+  {
     try Data(PoolSignature.format(hash: signature, frameCount: frames).utf8)
       .write(to: URL(fileURLWithPath: PoolSignature.sidecar(of: final + ".fits")), options: .atomic)
     guard target != final else { return }
     let manager = FileManager.default
     if manager.fileExists(atPath: final + ".fits") {
-      _ = try manager.replaceItemAt(URL(fileURLWithPath: final + ".fits"), withItemAt: URL(fileURLWithPath: target + ".fits"))
+      _ = try manager.replaceItemAt(
+        URL(fileURLWithPath: final + ".fits"), withItemAt: URL(fileURLWithPath: target + ".fits"))
     } else {
       try manager.moveItem(atPath: target + ".fits", toPath: final + ".fits")
     }

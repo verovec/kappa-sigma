@@ -16,23 +16,24 @@ struct PoolSignatureTests {
   @Test("order-independent; a resized, touched or dropped frame changes it", .scratchDirectory)
   func testPoolSignature_changes() throws {
     let dir = try ScratchDirectory.url
-    let a = try Self.write("a.fits", bytes: 100, in: dir)
-    let b = try Self.write("b.fits", bytes: 200, in: dir)
-    let signature = PoolSignature.of([a, b])
+    let first = try Self.write("a.fits", bytes: 100, in: dir)
+    let second = try Self.write("b.fits", bytes: 200, in: dir)
+    let signature = PoolSignature.of([first, second])
     #expect(signature.count == 64)
-    #expect(PoolSignature.of([b, a]) == signature)
+    #expect(PoolSignature.of([second, first]) == signature)
     _ = try Self.write("b.fits", bytes: 999, in: dir)
-    let resized = PoolSignature.of([a, b])
+    let resized = PoolSignature.of([first, second])
     #expect(resized != signature)
     try FileManager.default.setAttributes(
-      [.modificationDate: Date().addingTimeInterval(3600)], ofItemAtPath: b)
-    #expect(PoolSignature.of([a, b]) != resized)
-    #expect(PoolSignature.of([a]) != PoolSignature.of([a, b]))
+      [.modificationDate: Date().addingTimeInterval(3600)], ofItemAtPath: second)
+    #expect(PoolSignature.of([first, second]) != resized)
+    #expect(PoolSignature.of([first]) != PoolSignature.of([first, second]))
   }
 
   @Test(
     "the .sig sidecar reads v2 (hash + count) and v1 (hash alone); absent is nil",
-    .scratchDirectory, arguments: [("abc\n12", "abc", 12), ("abc\n", "abc", 0), ("  def  ", "def", 0)])
+    .scratchDirectory,
+    arguments: [("abc\n12", "abc", 12), ("abc\n", "abc", 0), ("  def  ", "def", 0)])
   func testPoolSignature_read(text: String, hash: String, count: Int) throws {
     let url = try ScratchDirectory.url.appendingPathComponent("m.sig")
     try Data(text.utf8).write(to: url)
@@ -53,7 +54,8 @@ struct PoolSignatureTests {
     let sig = dir.appendingPathComponent("master_DARK.sig")
     try Data(PoolSignature.format(hash: PoolSignature.of(mine), frameCount: 3).utf8).write(to: sig)
     #expect(PoolSignature.proves(master: master, builtFrom: mine))
-    try Data(PoolSignature.format(hash: PoolSignature.of(theirs), frameCount: 2).utf8).write(to: sig)
+    try Data(PoolSignature.format(hash: PoolSignature.of(theirs), frameCount: 2).utf8).write(
+      to: sig)
     #expect(!PoolSignature.proves(master: master, builtFrom: mine))
     try Data(PoolSignature.format(hash: PoolSignature.of(mine), frameCount: 3).utf8).write(to: sig)
     try Data("re-exported, different bytes".utf8).write(to: URL(fileURLWithPath: mine[0]))

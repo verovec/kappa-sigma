@@ -2,14 +2,18 @@ internal import Foundation
 
 extension CalibrationMatcher {
   /// The exposure-matched dark nearest in temperature (ties: the deeper stack).
-  static func bestDark(_ light: SetKey, _ masters: [CalibrationMaster], force: Bool) -> CalibrationMaster? {
+  static func bestDark(_ light: SetKey, _ masters: [CalibrationMaster], force: Bool)
+    -> CalibrationMaster?
+  {
     var best: CalibrationMaster?
     var bestDelta = Double.greatestFiniteMagnitude
     for master in masters where master.type == .dark && master.exposureMs == light.exposureMs {
       if !force && !master.sameCamera(as: light) { continue }
       let delta = master.temperatureDeltaC(to: light)
       if !force && delta > CalibrationMaster.temperatureToleranceC { continue }
-      if let current = best, !(delta < bestDelta || (delta == bestDelta && master.frameCount > current.frameCount)) {
+      if let current = best,
+        !(delta < bestDelta || (delta == bestDelta && master.frameCount > current.frameCount))
+      {
         continue
       }
       best = master
@@ -20,7 +24,9 @@ extension CalibrationMatcher {
 
   /// A same-camera dark of ANOTHER exposure for `-opt`: nearest temperature, then the longest
   /// exposure (scaling a deep signal down beats amplifying a shallow one), then the deepest stack.
-  static func bestScalableDark(_ light: SetKey, _ masters: [CalibrationMaster], force: Bool) -> CalibrationMaster? {
+  static func bestScalableDark(_ light: SetKey, _ masters: [CalibrationMaster], force: Bool)
+    -> CalibrationMaster?
+  {
     var best: CalibrationMaster?
     var bestDelta = Double.greatestFiniteMagnitude
     for master in masters where master.type == .dark && master.exposureMs != light.exposureMs {
@@ -43,23 +49,35 @@ extension CalibrationMatcher {
   /// gap, then temperature gap, then the deepest stack.
   static func closestDark(_ light: SetKey, _ masters: [CalibrationMaster]) -> CalibrationMaster? {
     masters.filter { $0.type == .dark }.enumerated().min { lhs, rhs in
-      let left = (abs(lhs.element.exposureMs - light.exposureMs), abs(lhs.element.tempMilliC - light.tempBucketC * 1000))
-      let right = (abs(rhs.element.exposureMs - light.exposureMs), abs(rhs.element.tempMilliC - light.tempBucketC * 1000))
+      let left = (
+        abs(lhs.element.exposureMs - light.exposureMs),
+        abs(lhs.element.tempMilliC - light.tempBucketC * 1000)
+      )
+      let right = (
+        abs(rhs.element.exposureMs - light.exposureMs),
+        abs(rhs.element.tempMilliC - light.tempBucketC * 1000)
+      )
       if left != right { return left < right }
-      if lhs.element.frameCount != rhs.element.frameCount { return lhs.element.frameCount > rhs.element.frameCount }
+      if lhs.element.frameCount != rhs.element.frameCount {
+        return lhs.element.frameCount > rhs.element.frameCount
+      }
       return lhs.offset < rhs.offset
     }?.element
   }
 
   /// A same-camera bias (forced: preferably same-camera, else any), the deepest first.
-  static func bestBias(_ light: SetKey, _ masters: [CalibrationMaster], force: Bool) -> CalibrationMaster? {
+  static func bestBias(_ light: SetKey, _ masters: [CalibrationMaster], force: Bool)
+    -> CalibrationMaster?
+  {
     var best: CalibrationMaster?
     for master in masters where master.type == .bias {
       if !force && !master.sameCamera(as: light) { continue }
       if let current = best {
         let mine = master.sameCamera(as: light)
         let theirs = current.sameCamera(as: light)
-        guard (mine && !theirs) || (mine == theirs && master.frameCount > current.frameCount) else { continue }
+        guard (mine && !theirs) || (mine == theirs && master.frameCount > current.frameCount) else {
+          continue
+        }
       }
       best = master
     }
@@ -75,21 +93,28 @@ extension CalibrationMatcher {
     _ light: SetKey, _ masters: [CalibrationMaster], sameFilter: Bool
   ) -> CalibrationMaster? {
     var best: CalibrationMaster?
-    for master in masters where master.type == .flat && (!sameFilter || master.filter == light.filter) {
+    for master in masters
+    where master.type == .flat && (!sameFilter || master.filter == light.filter) {
       if let current = best, !flatBeats(light, master, current) { continue }
       best = master
     }
     return best
   }
 
-  /// Same night first, then the nearest other night (dust drifts with time), then the same
-  /// camera, then depth. An undated flat ranks below every dated one on a multi-night run.
-  private static func flatBeats(_ light: SetKey, _ master: CalibrationMaster, _ best: CalibrationMaster) -> Bool {
+  /// Same night first, then the nearest other night (dust drifts with time), then the same camera,
+  /// then depth.
+  ///
+  /// An undated flat ranks below every dated one on a multi-night run.
+  private static func flatBeats(
+    _ light: SetKey, _ master: CalibrationMaster, _ best: CalibrationMaster
+  ) -> Bool {
     let mine = nightScore(light.session, master.session)
     let theirs = nightScore(light.session, best.session)
     if mine != theirs { return mine > theirs }
     if mine == 0 {
-      let gaps = (nightGapDays(light.session, master.session), nightGapDays(light.session, best.session))
+      let gaps = (
+        nightGapDays(light.session, master.session), nightGapDays(light.session, best.session)
+      )
       if gaps.0 != gaps.1 { return gaps.0 < gaps.1 }
     }
     let cameras = (master.sameCamera(as: light), best.sameCamera(as: light))

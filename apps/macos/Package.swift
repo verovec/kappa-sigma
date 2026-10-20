@@ -49,7 +49,7 @@ let package = Package(
       dependencies: [
         "ImageKit", "ProjectKit", .product(name: "Subprocess", package: "swift-subprocess"),
       ],
-      exclude: ["README.md", "Siril/README.md", "Inspect/README.md"], swiftSettings: common),
+      exclude: ["README.md", "Siril/README.md", "Inspect/README.md", "Calibration/README.md"], swiftSettings: common),
     .target(
       name: "HelpKit", dependencies: [],
       exclude: ["README.md"], swiftSettings: safe),

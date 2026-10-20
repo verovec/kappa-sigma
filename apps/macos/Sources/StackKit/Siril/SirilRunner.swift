@@ -16,9 +16,10 @@ package struct SirilRunner: Sendable {
 
   /// A runner from its closure (tests record scripts and play Siril's file side).
   package init(
-    run: @escaping @Sendable (
-      _ script: SirilScript, _ directory: URL, _ onLine: @escaping @Sendable (SirilLine) -> Void
-    ) async throws -> String
+    run:
+      @escaping @Sendable (
+        _ script: SirilScript, _ directory: URL, _ onLine: @escaping @Sendable (SirilLine) -> Void
+      ) async throws -> String
   ) {
     self.run = run
   }

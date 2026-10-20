@@ -9,11 +9,14 @@ import Testing
 struct CalibrationPlanOracleTests {
   static func recorded(_ oracle: OracleCase) throws -> CalibrationPlanOracle.Object {
     let data = try Data(contentsOf: oracle.directory.appendingPathComponent("calibration.json"))
-    return try (JSONSerialization.jsonObject(with: data) as? CalibrationPlanOracle.Object).unwrapped("calibration.json")
+    return try (JSONSerialization.jsonObject(with: data) as? CalibrationPlanOracle.Object)
+      .unwrapped("calibration.json")
   }
 
   /// Builds the masters with a recording Siril and compares the plan with the recording.
-  static func differences(_ oracle: OracleCase, inventory: Inventory, scratch: URL) async throws -> [String] {
+  static func differences(_ oracle: OracleCase, inventory: Inventory, scratch: URL) async throws
+    -> [String]
+  {
     let run = scratch.appendingPathComponent("work/run_R")
     let built = try await MasterBuilder(runner: RecordingSiril().runner).build(
       inventory, into: run.appendingPathComponent("masters"), work: run)

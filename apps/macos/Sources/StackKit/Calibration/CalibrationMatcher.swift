@@ -1,6 +1,7 @@
 internal import Foundation
 
-/// Picks the dark, flat and bias for a light set (`calib/match.go`), rule by rule:
+/// Picks the dark, flat and bias for a light set (`calib/match.go`), rule by rule.
+///
 /// - dark: same camera (gain/offset/bin) and exposure, nearest temperature within ±5 °C; else a
 ///   same-camera dark of another exposure scaled with `-opt` when a bias exists;
 /// - flat: the light's filter, else any flat (shared dust), ranked by night then camera then depth,
@@ -33,8 +34,10 @@ package enum CalibrationMatcher {
     selection.bias = bestBias(light, masters, force: force)
     chooseDark(light, masters, force: force, into: &selection)
     if force {
-      selection.notes += [forcedNote(light, selection.dark, .dark), forcedNote(light, selection.bias, .bias)]
-        .compactMap { $0 }
+      selection.notes += [
+        forcedNote(light, selection.dark, .dark), forcedNote(light, selection.bias, .bias),
+      ]
+      .compactMap { $0 }
     }
     chooseFlat(ref, masters, force: force, into: &selection)
     // Name both sets when refusing the other set's flats COST something; silent otherwise.
@@ -51,7 +54,8 @@ package enum CalibrationMatcher {
   }
 
   private static func chooseDark(
-    _ light: SetKey, _ masters: [CalibrationMaster], force: Bool, into selection: inout CalibrationSelection
+    _ light: SetKey, _ masters: [CalibrationMaster], force: Bool,
+    into selection: inout CalibrationSelection
   ) {
     if let dark = bestDark(light, masters, force: force) {
       selection.dark = dark
@@ -73,7 +77,8 @@ package enum CalibrationMatcher {
   }
 
   private static func chooseFlat(
-    _ ref: LightRef, _ masters: [CalibrationMaster], force: Bool, into selection: inout CalibrationSelection
+    _ ref: LightRef, _ masters: [CalibrationMaster], force: Bool,
+    into selection: inout CalibrationSelection
   ) {
     let light = ref.key
     guard let flat = bestFlat(light, masters) else {
@@ -88,7 +93,8 @@ package enum CalibrationMatcher {
     }
     if !light.session.isEmpty && !flat.session.isEmpty && flat.session != light.session {
       selection.notes.append(
-        "no \(light.session) flat — using the night \(flat.session) flat (dust may have moved between nights)")
+        "no \(light.session) flat — using the night \(flat.session) flat "
+          + "(dust may have moved between nights)")
     }
     if force && ref.filterSet.isKnown && flat.filterSet.isKnown && ref.filterSet != flat.filterSet {
       selection.notes.append(
@@ -103,7 +109,9 @@ package enum CalibrationMatcher {
     _ ref: LightRef, _ masters: [CalibrationMaster], force: Bool
   ) -> ([CalibrationMaster], Int) {
     guard !force, ref.filterSet.isKnown else { return (masters, 0) }
-    let kept = masters.filter { !($0.type == .flat && $0.filterSet.isKnown && $0.filterSet != ref.filterSet) }
+    let kept = masters.filter {
+      !($0.type == .flat && $0.filterSet.isKnown && $0.filterSet != ref.filterSet)
+    }
     return (kept, masters.count - kept.count)
   }
 
@@ -123,7 +131,9 @@ package enum CalibrationMatcher {
   }
 
   /// Why a forced master differs from the light; `nil` when it does not.
-  private static func forcedNote(_ light: SetKey, _ master: CalibrationMaster?, _ role: CalibrationRole) -> String? {
+  private static func forcedNote(
+    _ light: SetKey, _ master: CalibrationMaster?, _ role: CalibrationRole
+  ) -> String? {
     guard let master else { return nil }
     var differences: [String] = []
     if !master.sameCamera(as: light) {
@@ -139,11 +149,14 @@ package enum CalibrationMatcher {
       differences.append("\(celsius)°C (yours: ~\(yours)°C)")
     }
     guard !differences.isEmpty else { return nil }
-    return "forced \(role.rawValue) — applied despite mismatched \(differences.joined(separator: ", "))"
+    return
+      "forced \(role.rawValue) — applied despite mismatched \(differences.joined(separator: ", "))"
   }
 
   /// Removes the roles the user unchecked for this light set (`dropExcluded`).
-  private static func drop(_ excluded: [String], from input: CalibrationSelection, light: SetKey) -> CalibrationSelection {
+  private static func drop(_ excluded: [String], from input: CalibrationSelection, light: SetKey)
+    -> CalibrationSelection
+  {
     guard !excluded.isEmpty else { return input }
     let skip = Set(excluded)
     var selection = input

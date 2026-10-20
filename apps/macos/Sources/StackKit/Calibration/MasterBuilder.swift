@@ -2,7 +2,9 @@ package import Foundation
 
 /// Stacks the calibration sets of a scan into masters through Siril (`BuildMasters`,
 /// `BuildOrReuseMasters`): bias and dark-flats first (flats are calibrated with them), then darks,
-/// then flats. A set that fails is a warning, never the end of the run.
+/// then flats.
+///
+/// A set that fails is a warning, never the end of the run.
 package struct MasterBuilder: Sendable {
   /// Where a master is published.
   package enum Publish: Sendable {
@@ -42,7 +44,8 @@ package struct MasterBuilder: Sendable {
         try Task.checkCancellation()
         if reuse(set, from: &pool, inventory: inventory, into: &result) { continue }
         do {
-          var master = try await buildOne(set, built: pool, folder: folder, work: work, publish: publish, into: &result)
+          var master = try await buildOne(
+            set, built: pool, folder: folder, work: work, publish: publish, into: &result)
           master.stampFilterSet(of: set.key, in: inventory)
           pool.append(master)
           result.masters.append(master)
@@ -58,7 +61,8 @@ package struct MasterBuilder: Sendable {
   /// Reuses the library master of `set` when its pool is proven the same; otherwise drops it
   /// from the pool, so the matcher cannot pick it over the one about to be built.
   private func reuse(
-    _ set: FrameSet, from pool: inout [CalibrationMaster], inventory: Inventory, into result: inout Result
+    _ set: FrameSet, from pool: inout [CalibrationMaster], inventory: Inventory,
+    into result: inout Result
   ) -> Bool {
     guard let index = pool.firstIndex(where: { $0.fromLibrary && $0.satisfies(set.key) }),
       FileManager.default.fileExists(atPath: pool[index].path)
@@ -72,7 +76,8 @@ package struct MasterBuilder: Sendable {
       master.stampFilterSet(of: set.key, in: inventory)
       pool[index] = master
       result.masters.append(master)
-      result.warnings.append("reused library master \(type) (\(existing.frameCount) frames — same source frames)")
+      result.warnings.append(
+        "reused library master \(type) (\(existing.frameCount) frames — same source frames)")
       return true
     }
     result.warnings.append(

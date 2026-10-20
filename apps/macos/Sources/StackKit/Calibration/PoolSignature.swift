@@ -5,6 +5,7 @@ internal import Foundation
 /// sidecar (`poolSignature`, `formatPoolSig`): unchanged frames, identical master, reuse it.
 package enum PoolSignature {
   /// sha256 (hex) of each frame's `path|size|mtime ns`, sorted, so the order does not matter.
+  ///
   /// A frame that cannot be read signs as `path|?`. The legacy engine's signatures cannot match
   /// anyway: the frames they signed moved out of the repo (R7), so each master rebuilds once.
   package static func of(_ paths: [String]) -> String {

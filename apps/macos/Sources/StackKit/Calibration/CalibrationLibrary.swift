@@ -3,9 +3,10 @@ internal import ImageKit
 package import ProjectKit
 
 /// The calibration library folder (`~/Documents/astro/library`, reused as is) and its index in the
-/// project database (`calibration_masters`). The folder is the truth: a master is its file name
-/// (`MasterName`), its `.sig` (pool hash, depth) and its FITS header (pixel size); `reindex`
-/// makes the index equal the folder.
+/// project database (`calibration_masters`).
+///
+/// The folder is the truth: a master is its file name (`MasterName`), its `.sig` (pool hash, depth)
+/// and its FITS header (pixel size); `reindex` makes the index equal the folder.
 package struct CalibrationLibrary: Sendable {
   package var folder: URL
 

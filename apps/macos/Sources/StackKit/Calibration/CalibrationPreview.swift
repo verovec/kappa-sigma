@@ -27,11 +27,13 @@ package struct CalibrationPreview: Equatable, Sendable {
   package init(inventory: Inventory, masters: [CalibrationMaster], force: Bool = false) {
     channels = inventory.sets.filter { $0.key.type == .light }.map { set in
       let pool = DimensionGuard.keepMatching(masters, lightPath: set.frames.first?.path ?? "")
-      var selection = CalibrationMatcher.match(LightRef(set, in: inventory), masters: pool.masters, force: force)
+      var selection = CalibrationMatcher.match(
+        LightRef(set, in: inventory), masters: pool.masters, force: force)
       if let note = pool.note { selection.notes.append(note) }
       let suggestions = CalibrationRole.allCases.compactMap { role in
         selection.master(role).map {
-          Suggestion(id: CalibrationMatcher.suggestionID(set.key, role: role), role: role, master: $0)
+          Suggestion(
+            id: CalibrationMatcher.suggestionID(set.key, role: role), role: role, master: $0)
         }
       }
       return Channel(key: set.key, suggestions: suggestions, notes: selection.notes)
@@ -40,7 +42,9 @@ package struct CalibrationPreview: Equatable, Sendable {
 
   /// The masters a run would match against (`PreviewCandidates`): the library plus a path-less
   /// master for every calibration set no library master already satisfies.
-  package static func candidates(inventory: Inventory?, library: [CalibrationMaster]) -> [CalibrationMaster] {
+  package static func candidates(inventory: Inventory?, library: [CalibrationMaster])
+    -> [CalibrationMaster]
+  {
     guard let inventory else { return library }
     var out = library
     for type in MasterType.buildOrder {

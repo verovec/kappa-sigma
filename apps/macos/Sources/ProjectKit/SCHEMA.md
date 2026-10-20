@@ -1,6 +1,7 @@
 # project.db schema
 
-The schema of a `.astrostack` package's `project.db`, at migration **0001_init** (card 0068).
+The schema of a `.astrostack` package's `project.db`, at migration **0002_calibration_masters**
+(0001_init: card 0068; 0002: card 0047).
 Source of truth: `Migrations/NNNN_name.{up,down}.sql`; this page is the map. Every table has
 `id`, `created_at` and `updated_at`, the last two in int64 Unix milliseconds, except where noted.
 `ProjectStore` writes the timestamps.
@@ -17,6 +18,7 @@ Source of truth: `Migrations/NNNN_name.{up,down}.sql`; this page is the map. Eve
 | `recipes` | recipe (0059) | `name`, `body_json` | unique name; columns added by 0059 |
 | `pipelines` | pipeline (0059) | `name`, `body_json` | unique name |
 | `user_profiles` | user profile (0060) | `name`, `body_json` | unique name (the card's `profiles_user`, plural snake_case per the conventions) |
+| `calibration_masters` | master file of the calibration library (0047) | `path`, `type` (`BIAS`, `DARK`, `FLAT`, `DARKFLAT`), `filter`, `exposure_ms`, `gain`, `offset`, `bin`, `temp_milli_c`, `has_temp`, `session`, `recipe`, `frame_count`, `pool_hash`, `width`, `height`, `file_bytes`, `file_mtime_ms` | unique path; an index of `~/Documents/astro/library` (the folder is the truth, `CalibrationLibrary.reindex` rebuilds it); indexed on (type, gain, offset, bin) |
 
 Foreign keys are enforced (GRDB turns `PRAGMA foreign_keys` on) and every FK column is indexed.
 

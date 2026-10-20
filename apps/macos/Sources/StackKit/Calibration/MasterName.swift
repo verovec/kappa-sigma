@@ -17,14 +17,20 @@ package enum MasterName {
     return name
   }
 
-  /// The master a library file describes, or `nil` when the name is not a master's. The
-  /// temperature is the set's whole-degree bucket (the file name is all the folder records).
+  /// The master a library file describes, or `nil` when the name is not a master's.
+  ///
+  /// The temperature is the set's whole-degree bucket (the file name is all the folder records).
   package static func parse(_ path: String) -> CalibrationMaster? {
     let file = PathMeta.baseName(path)
     guard file.hasSuffix(".fits"),
       let match = String(file.dropLast(5)).wholeMatch(
         of:
-          /master_(BIAS|DARKFLAT|DARK|FLAT)(?:_([A-Za-z][A-Za-z0-9]*))?(?:_(\d+)ms)?_g(\d+)o(\d+)_b(\d+)(?:_(-?\d+)C)?(?:_n(\d{4}-\d{2}-\d{2}))?(?:_s([0-9a-f]+))?/),
+          #/
+          master_(BIAS|DARKFLAT|DARK|FLAT)
+          (?:_([A-Za-z][A-Za-z0-9]*))? (?:_(\d+)ms)?
+          _g(\d+)o(\d+)_b(\d+) (?:_(-?\d+)C)?
+          (?:_n(\d{4}-\d{2}-\d{2}))? (?:_s([0-9a-f]+))?
+          /#),
       let type = MasterType(rawValue: String(match.1)),
       let gain = Int(match.4), let offset = Int(match.5), let bin = Int(match.6)
     else { return nil }

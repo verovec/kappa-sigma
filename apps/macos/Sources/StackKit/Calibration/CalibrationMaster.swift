@@ -30,9 +30,10 @@ package struct CalibrationMaster: Equatable, Sendable {
   /// Darks are matched within this many °C of a light's temperature.
   package static let temperatureToleranceC = 5.0
 
-  /// Whether this master can stand for a calibration set (`masterMatchesSet`): same type,
-  /// camera, filter and night; same exposure except for bias; darks within ±5 °C. A per-night
-  /// flat set is never satisfied by a night-blind master (dust may have moved).
+  /// Whether this master can stand for a calibration set (`masterMatchesSet`): same type, camera,
+  /// filter and night; same exposure except for bias; darks within ±5 °C.
+  ///
+  /// A per-night flat set is never satisfied by a night-blind master (dust may have moved).
   package func satisfies(_ key: SetKey) -> Bool {
     guard MasterType(key.type) == type, gain == key.gain, offset == key.offset, bin == key.bin,
       filter == key.filter, session == key.session
@@ -52,8 +53,10 @@ package struct CalibrationMaster: Equatable, Sendable {
     gain == light.gain && offset == light.offset && bin == light.bin
   }
 
-  /// Gives a FLAT the clip filter of the night it was shot on (`stampFlatFilterSet`): a flat has
-  /// no sky to classify, so it inherits its night's lights. Darks and bias are closed-shutter.
+  /// Gives a FLAT the clip filter of the night it was shot on (`stampFlatFilterSet`): a flat has no
+  /// sky to classify, so it inherits its night's lights.
+  ///
+  /// Darks and bias are closed-shutter.
   package mutating func stampFilterSet(of key: SetKey, in inventory: Inventory?) {
     guard type == .flat, let inventory else { return }
     let night = inventory.nightFilterSet(key.session)

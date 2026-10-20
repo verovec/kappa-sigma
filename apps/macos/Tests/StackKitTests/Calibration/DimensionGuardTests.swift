@@ -11,7 +11,8 @@ struct DimensionGuardTests {
     try TestFITS.write(name, in: dir, width: width, height: height, cards: [:]).path
   }
 
-  @Test("same sensor keeps all; others are excluded and named, commonest size first", .scratchDirectory)
+  @Test(
+    "same sensor keeps all; others are excluded and named, commonest size first", .scratchDirectory)
   func testDimensionGuard_keepMatching() throws {
     let dir = try ScratchDirectory.url
     let light = try Self.frame("light.fits", 64, 48, in: dir)
@@ -26,25 +27,40 @@ struct DimensionGuardTests {
     #expect(same.note == nil)
     let one = DimensionGuard.keepMatching(pool([fitting, foreign]), lightPath: light)
     #expect(one.masters.map(\.path) == [fitting])
-    #expect(one.note == "1 calibration master(s) from another sensor (32×24) were not considered — these lights are 64×48")
+    #expect(
+      one.note
+        == "1 calibration master(s) from another sensor (32×24) were not considered — "
+        + "these lights are 64×48"
+    )
     let grouped = DimensionGuard.keepMatching(pool([foreign, other, foreign]), lightPath: light)
     #expect(grouped.masters.isEmpty)
     #expect(
       grouped.note
-        == "3 calibration master(s) from another sensor (32×24 (×2), 100×100) were not considered — these lights are 64×48")
-    #expect(DimensionGuard.keepMatching(pool(["", missing]), lightPath: light).masters.map(\.path) == ["", missing])
+        == "3 calibration master(s) from another sensor (32×24 (×2), 100×100) were not "
+        + "considered — these lights are 64×48"
+    )
+    #expect(
+      DimensionGuard.keepMatching(pool(["", missing]), lightPath: light).masters.map(\.path) == [
+        "", missing,
+      ])
     let raw = dir.appendingPathComponent("raw.dng").path
-    #expect(DimensionGuard.keepMatching(pool([foreign, other]), lightPath: raw).masters.map(\.path) == [foreign, other])
+    #expect(
+      DimensionGuard.keepMatching(pool([foreign, other]), lightPath: raw).masters.map(\.path) == [
+        foreign, other,
+      ])
   }
 
-  @Test("excluding a foreign RGB flat lets the capture's own flat be found (ASI2600MC)", .scratchDirectory)
+  @Test(
+    "excluding a foreign RGB flat lets the capture's own flat be found (ASI2600MC)",
+    .scratchDirectory)
   func testDimensionGuard_fallbackIntact() throws {
     let dir = try ScratchDirectory.url
     let light = try Self.frame("light.fits", 624, 417, in: dir)
     let own = try Self.frame("own_flat.fits", 624, 417, in: dir)
     let foreign = try Self.frame("foreign_flat.fits", 606, 404, in: dir)
     let pool = [
-      CalibrationFixtures.master(.flat, path: foreign, filter: "RGB", frames: 30, fromLibrary: true),
+      CalibrationFixtures.master(
+        .flat, path: foreign, filter: "RGB", frames: 30, fromLibrary: true),
       CalibrationFixtures.master(.flat, path: own, frames: 50),
     ]
     let key = SetKey(type: .light, filter: "RGB", color: true)
@@ -57,14 +73,14 @@ struct DimensionGuardTests {
   @Test("same dimensions: equal, transposed differs, unreadable is unknown", .scratchDirectory)
   func testDimensionGuard_sameDimensions() throws {
     let dir = try ScratchDirectory.url
-    let a = try Self.frame("a.fits", 64, 48, in: dir)
-    let b = try Self.frame("b.fits", 64, 48, in: dir)
-    let c = try Self.frame("c.fits", 48, 64, in: dir)
+    let first = try Self.frame("a.fits", 64, 48, in: dir)
+    let second = try Self.frame("b.fits", 64, 48, in: dir)
+    let transposed = try Self.frame("c.fits", 48, 64, in: dir)
     let absent = dir.appendingPathComponent("absent.fits").path
-    #expect(DimensionGuard.sameDimensions(a, b) == true)
-    #expect(DimensionGuard.sameDimensions(a, c) == false)
-    #expect(DimensionGuard.sameDimensions(absent, b) == nil)
-    #expect(DimensionGuard.sameDimensions(a, absent) == nil)
-    #expect(DimensionGuard.sameDimensions("", b) == nil)
+    #expect(DimensionGuard.sameDimensions(first, second) == (true, true))
+    #expect(DimensionGuard.sameDimensions(first, transposed) == (false, true))
+    #expect(!DimensionGuard.sameDimensions(absent, second).known)
+    #expect(!DimensionGuard.sameDimensions(first, absent).known)
+    #expect(!DimensionGuard.sameDimensions("", second).known)
   }
 }

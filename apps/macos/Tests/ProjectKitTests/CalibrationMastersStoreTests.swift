@@ -7,7 +7,9 @@ import Testing
 /// with the folder.
 @Suite("ProjectStore — the calibration library index")
 struct CalibrationMastersStoreTests {
-  static func row(_ name: String, type: String = "DARK", frames: Int = 10, hash: String = "h") -> CalibrationMasterRow {
+  static func row(_ name: String, type: String = "DARK", frames: Int = 10, hash: String = "h")
+    -> CalibrationMasterRow
+  {
     var row = CalibrationMasterRow(path: "/lib/\(name).fits", type: type)
     row.exposureMs = 300_000
     row.gain = 100
@@ -25,7 +27,9 @@ struct CalibrationMastersStoreTests {
     return row
   }
 
-  @Test("a sync inserts, updates what changed, deletes what is gone, and round-trips every field", .scratchDirectory)
+  @Test(
+    "a sync inserts, updates what changed, deletes what is gone, and round-trips every field",
+    .scratchDirectory)
   func testCalibrationMasters_sync() throws {
     let package = try ProjectStoreTests.newPackage()
     defer { try? package.close() }
@@ -34,12 +38,16 @@ struct CalibrationMastersStoreTests {
     #expect(first == CalibrationSyncReport(inserted: 2, updated: 0, deleted: 0))
     #expect(try store.calibrationMasters() == [Self.row("a"), Self.row("b", type: "BIAS")])
 
-    let second = try store.syncCalibrationMasters([Self.row("a", frames: 30, hash: "h2"), Self.row("c")])
+    let second = try store.syncCalibrationMasters([
+      Self.row("a", frames: 30, hash: "h2"), Self.row("c"),
+    ])
     #expect(second == CalibrationSyncReport(inserted: 1, updated: 1, deleted: 1))
     #expect(try store.calibrationMasters().map(\.path) == ["/lib/a.fits", "/lib/c.fits"])
     #expect(try store.calibrationMasters().first?.frameCount == 30)
 
-    let unchanged = try store.syncCalibrationMasters([Self.row("a", frames: 30, hash: "h2"), Self.row("c")])
+    let unchanged = try store.syncCalibrationMasters([
+      Self.row("a", frames: 30, hash: "h2"), Self.row("c"),
+    ])
     #expect(unchanged == CalibrationSyncReport(inserted: 0, updated: 0, deleted: 0))
   }
 
@@ -47,7 +55,9 @@ struct CalibrationMastersStoreTests {
   func testCalibrationMasters_typeCheck() throws {
     let package = try ProjectStoreTests.newPackage()
     defer { try? package.close() }
-    #expect(throws: (any Error).self) { try package.store.syncCalibrationMasters([Self.row("x", type: "LIGHT")]) }
+    #expect(throws: (any Error).self) {
+      try package.store.syncCalibrationMasters([Self.row("x", type: "LIGHT")])
+    }
     #expect(try package.store.calibrationMasters().isEmpty)
   }
 }

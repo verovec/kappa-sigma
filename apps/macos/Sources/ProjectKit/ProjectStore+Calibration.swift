@@ -7,11 +7,15 @@ extension ProjectStore {
   /// Makes the index equal `rows` (the folder's masters, by path) in one transaction: new paths
   /// inserted, changed rows updated, rows whose file is gone deleted.
   @discardableResult
-  package func syncCalibrationMasters(_ rows: [CalibrationMasterRow]) throws -> CalibrationSyncReport {
+  package func syncCalibrationMasters(_ rows: [CalibrationMasterRow]) throws
+    -> CalibrationSyncReport
+  {
     let stamp = now()
     return try pool.write { db in
       let existing = Dictionary(
-        try Row.fetchAll(db, sql: "SELECT * FROM calibration_masters").map { (Self.calibrationMaster($0).path, Self.calibrationMaster($0)) },
+        try Row.fetchAll(db, sql: "SELECT * FROM calibration_masters").map {
+          (Self.calibrationMaster($0).path, Self.calibrationMaster($0))
+        },
         uniquingKeysWith: { $1 })
       var report = CalibrationSyncReport(inserted: 0, updated: 0, deleted: 0)
       for row in rows {
@@ -38,18 +42,21 @@ extension ProjectStore {
   /// Every indexed master, by path.
   package func calibrationMasters() throws -> [CalibrationMasterRow] {
     try pool.read { db in
-      try Row.fetchAll(db, sql: "SELECT * FROM calibration_masters ORDER BY path").map(Self.calibrationMaster)
+      try Row.fetchAll(db, sql: "SELECT * FROM calibration_masters ORDER BY path").map(
+        Self.calibrationMaster)
     }
   }
 
   private static let columns = [
-    "type", "filter", "exposure_ms", "gain", "\"offset\"", "bin", "temp_milli_c", "has_temp", "session",
+    "type", "filter", "exposure_ms", "gain", "\"offset\"", "bin", "temp_milli_c", "has_temp",
+    "session",
     "recipe", "frame_count", "pool_hash", "width", "height", "file_bytes", "file_mtime_ms",
   ]
 
   private static func values(_ row: CalibrationMasterRow) -> [any DatabaseValueConvertible] {
     [
-      row.type, row.filter, row.exposureMs, row.gain, row.offset, row.bin, row.tempMilliC, row.hasTemp,
+      row.type, row.filter, row.exposureMs, row.gain, row.offset, row.bin, row.tempMilliC,
+      row.hasTemp,
       row.session, row.recipe, row.frameCount, row.poolHash, row.width, row.height, row.fileBytes,
       row.fileMtimeMs,
     ]

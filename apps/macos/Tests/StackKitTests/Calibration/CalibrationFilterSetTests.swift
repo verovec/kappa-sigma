@@ -74,7 +74,10 @@ struct CalibrationFilterSetTests {
 
   @Test("an unknown light set matches exactly like a plain key")
   func testCalibrationFilterSet_unknownIsIdentical() {
-    let masters = [Self.flat("2026-08-02", .broadband, frames: 50), Self.flat("2026-07-29", .dualband, frames: 5)]
+    let masters = [
+      Self.flat("2026-08-02", .broadband, frames: 50),
+      Self.flat("2026-07-29", .dualband, frames: 5),
+    ]
     let light = Self.light("2026-07-29")
     #expect(
       CalibrationMatcher.match(LightRef(key: light), masters: masters)
@@ -84,8 +87,10 @@ struct CalibrationFilterSetTests {
   @Test("darks and bias are closed-shutter: their filter set never gates them")
   func testCalibrationFilterSet_darksUnaffected() {
     let dark = Fixtures.master(
-      .dark, path: "dark.fits", exposureMs: 120_000, gain: 100, offset: 50, frames: 30, filterSet: .broadband)
-    let bias = Fixtures.master(.bias, path: "bias.fits", gain: 100, offset: 50, frames: 50, filterSet: .broadband)
+      .dark, path: "dark.fits", exposureMs: 120_000, gain: 100, offset: 50, frames: 30,
+      filterSet: .broadband)
+    let bias = Fixtures.master(
+      .bias, path: "bias.fits", gain: 100, offset: 50, frames: 50, filterSet: .broadband)
     let selection = CalibrationMatcher.match(
       LightRef(key: Self.light(Self.nightA), filterSet: .dualband), masters: [dark, bias])
     #expect(selection.dark?.path == "dark.fits")
@@ -96,7 +101,9 @@ struct CalibrationFilterSetTests {
   static func scan(_ lights: [(String, FilterSet)], calibration: [SetKey]) -> Inventory {
     var inventory = Inventory(root: "", frames: [])
     inventory.colorModel = .osc
-    inventory.sets = lights.map { Fixtures.set(light($0.0), count: 30) } + calibration.map { Fixtures.set($0, count: 20) }
+    inventory.sets =
+      lights.map { Fixtures.set(light($0.0), count: 30) }
+      + calibration.map { Fixtures.set($0, count: 20) }
     for (index, light) in lights.enumerated() where light.1.isKnown {
       inventory.filterSets[inventory.sets[index].key.id] = light.1
     }
@@ -112,13 +119,18 @@ struct CalibrationFilterSetTests {
   @Test(
     "a flat inherits its night's verdict; darks, bias and unmeasured nights stay unknown",
     arguments: [
-      ([(nightA, FilterSet.dualband)], oscCalibration(nightA, .flat, exposureMs: 2000), FilterSet.dualband),
+      (
+        [(nightA, FilterSet.dualband)], oscCalibration(nightA, .flat, exposureMs: 2000),
+        FilterSet.dualband
+      ),
       ([(nightA, .dualband)], oscCalibration(nightA, .dark, exposureMs: 120_000), .unknown),
       ([(nightA, .broadband)], oscCalibration(nightA, .bias), .unknown),
       ([(nightA, .unknown)], oscCalibration(nightA, .flat, exposureMs: 2000), .unknown),
       ([(nightA, .dualband)], oscCalibration(nightB, .flat, exposureMs: 2000), .unknown),
     ])
-  func testCalibrationFilterSet_stamp(lights: [(String, FilterSet)], key: SetKey, expected: FilterSet) {
+  func testCalibrationFilterSet_stamp(
+    lights: [(String, FilterSet)], key: SetKey, expected: FilterSet
+  ) {
     let inventory = Self.scan(lights, calibration: [key])
     var master = CalibrationMaster(type: MasterType(key.type) ?? .bias, path: "")
     master.stampFilterSet(of: key, in: inventory)

@@ -52,7 +52,8 @@ enum CalibrationFixtures {
 
   /// A calibration set of `count` placeholder frames, keyed the way inspect keys it.
   static func set(_ key: SetKey, count: Int = 1, paths: [String] = []) -> FrameSet {
-    let names = paths.isEmpty ? (0..<count).map { "/frames/\(key.type.rawValue)_\($0).fits" } : paths
+    let names =
+      paths.isEmpty ? (0..<count).map { "/frames/\(key.type.rawValue)_\($0).fits" } : paths
     let frames = names.map { CaptureFrame(path: $0) }
     return FrameSet(key: key, frames: frames, indices: Array(frames.indices))
   }

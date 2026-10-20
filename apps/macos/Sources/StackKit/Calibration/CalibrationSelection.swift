@@ -10,7 +10,8 @@ package struct CalibrationSelection: Equatable, Sendable {
 
   /// What `calibrate` applies.
   package var masters: CalibrationMasters {
-    CalibrationMasters(bias: bias?.path, dark: dark?.path, flat: flat?.path, darkOptimize: darkOptimize)
+    CalibrationMasters(
+      bias: bias?.path, dark: dark?.path, flat: flat?.path, darkOptimize: darkOptimize)
   }
 
   func master(_ role: CalibrationRole) -> CalibrationMaster? {

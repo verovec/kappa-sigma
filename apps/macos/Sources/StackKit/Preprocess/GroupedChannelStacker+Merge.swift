@@ -48,7 +48,8 @@ extension GroupedChannelStacker {
     var weighted = stacker
     weighted.settings.stack.weight = stackWeight(outcome.photometry, filter: filter, into: &outcome)
     try await weighted.gradeAndStack(
-      light, frames: merge.frames, spans: merge.spans, preReject: review.preReject, into: &outcome, out: out)
+      light, frames: merge.frames, spans: merge.spans, preReject: review.preReject,
+      saturationCeilings: saturationCeilings(merge, records: outcome.photometry), into: &outcome, out: out)
     outcome.frameHomographies = review.frameHomographies
     if let size {
       let grades = outcome.grades
@@ -91,6 +92,20 @@ extension GroupedChannelStacker {
     }
     try await stacker.run(SirilScripts.register2Pass(seq: "light", transformation: "homography"), in: folder)
     return "light"
+  }
+
+  /// Each merged frame's post-normalisation saturation ceiling (`satCeilings`): its night's
+  /// `scale · 0.97 + offset`, 0.97 for an untransformed night; empty when the repair is off or
+  /// the channel has a single night (no unsaturated night to draw on).
+  func saturationCeilings(_ merge: Merge, records: [PhotomGroupRecord]) -> [Float] {
+    guard settings.coreSaturationRepair, merge.spans.count >= 2 else { return [] }
+    var ceilings = [Float](repeating: 0, count: merge.calibrated.count)
+    for (night, span) in merge.spans.enumerated() {
+      let ceiling = night < records.count && records[night].saturationCeiling > 0
+        ? Float(records[night].saturationCeiling) : FrameCurve.saturationLevel
+      for index in span where index < ceilings.count { ceilings[index] = ceiling }
+    }
+    return ceilings
   }
 
   /// Removes everything but the `00001_…` links from a merge folder.

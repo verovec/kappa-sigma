@@ -5,6 +5,8 @@
 #   - the number of tests (`@Test` + `func test`) went down.
 # Either is allowed only when the PR body carries a line starting with `Test-change:` that
 # explains why (CI passes the body through PR_BODY). Adding tests never needs anything.
+# It also fails when production code changed (apps/macos/Sources) while no test was added or
+# touched — allowed only with a `No-test: <why>` line (pure configuration, wiring).
 # Usage: scripts/test-ratchet.sh <base-ref> <head-ref>
 set -euo pipefail
 base="${1:?base ref}"; head="${2:?head ref}"
@@ -26,8 +28,13 @@ echo "test-ratchet: $before → $after test functions ($base..$head)"
 [ -z "$deleted" ]  || printf 'test-ratchet: deleted test files:\n%s\n' "$deleted"
 [ -z "$weakened" ] || printf 'test-ratchet: existing test files with removed lines:\n%s\n' "$weakened"
 
-justified=0
+sources_dir="apps/macos/Sources"
+src_changed="$(git diff --name-only "$base" "$head" -- "$sources_dir" | grep -E '\.swift$' || true)"
+tests_touched="$(git diff --name-only "$base" "$head" -- "$tests_dir" | grep -E '\.swift$' || true)"
+
+justified=0; notest=0
 if printf '%s\n' "${PR_BODY:-}" | grep -qE '^\s*Test-change:\s*\S'; then justified=1; fi
+if printf '%s\n' "${PR_BODY:-}" | grep -qE '^\s*No-test:\s*\S'; then notest=1; fi
 
 fail=0
 if [ "$after" -lt "$before" ] && [ "$justified" -eq 0 ]; then
@@ -36,6 +43,11 @@ fi
 if { [ -n "$deleted" ] || [ -n "$weakened" ]; } && [ "$justified" -eq 0 ]; then
   echo "test-ratchet: FAILED — existing tests changed or removed without a 'Test-change:' justification in the PR body"; fail=1
 fi
+if [ -n "$src_changed" ] && [ -z "$tests_touched" ] && [ "$after" -le "$before" ] && [ "$notest" -eq 0 ]; then
+  printf 'test-ratchet: production code changed without any test:\n%s\n' "$src_changed"
+  echo "test-ratchet: FAILED — add tests, or justify with a 'No-test:' line in the PR body (configuration, wiring)"; fail=1
+fi
 [ "$fail" -eq 0 ] || exit 1
+[ "$notest" -eq 0 ] || echo "test-ratchet: untested change justified in the PR body (No-test:)"
 [ "$justified" -eq 0 ] || echo "test-ratchet: change justified in the PR body (Test-change:)"
 echo "test-ratchet: ok"

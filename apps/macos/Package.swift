@@ -27,7 +27,8 @@ let package = Package(
     .executable(name: "AstroStackApp", targets: ["AstroStackApp"])
   ],
   dependencies: [
-    .package(url: "https://github.com/groue/GRDB.swift.git", from: "7.11.1")
+    .package(url: "https://github.com/groue/GRDB.swift.git", from: "7.11.1"),
+    .package(url: "https://github.com/swiftlang/swift-subprocess.git", from: "1.0.2"),
   ],
   targets: [
     .target(
@@ -44,8 +45,11 @@ let package = Package(
       exclude: ["README.md", "SCHEMA.md"], resources: [.copy("Migrations")],
       swiftSettings: safe),
     .target(
-      name: "StackKit", dependencies: ["ImageKit", "ProjectKit"],
-      exclude: ["README.md"], swiftSettings: common),
+      name: "StackKit",
+      dependencies: [
+        "ImageKit", "ProjectKit", .product(name: "Subprocess", package: "swift-subprocess"),
+      ],
+      exclude: ["README.md", "Siril/README.md"], swiftSettings: common),
     .target(
       name: "HelpKit", dependencies: [],
       exclude: ["README.md"], swiftSettings: safe),

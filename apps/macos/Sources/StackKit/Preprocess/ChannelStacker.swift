@@ -8,7 +8,8 @@ internal import ImageKit
 /// A channel that fails is an outcome with an `error`, never the end of the run; cancellation is.
 package struct ChannelStacker: Sendable {
   /// The trail verdict of a calibrated frame, given its file and the downsampled size.
-  package typealias TrailProbe = @Sendable (_ frame: URL, _ size: Int) -> (detected: Bool, score: Double)?
+  package typealias TrailProbe =
+    @Sendable (_ frame: URL, _ size: Int) -> (detected: Bool, score: Double)?
 
   package var runner: SirilRunner
   package var settings: PreprocessSettings
@@ -19,7 +20,8 @@ package struct ChannelStacker: Sendable {
   /// A stacker; trails are probed on the pixels unless a test substitutes them.
   package init(
     runner: SirilRunner, settings: PreprocessSettings = PreprocessSettings(),
-    trailProbe: @escaping TrailProbe = Self.pixelTrail, report: @escaping @Sendable (String) -> Void = { _ in }
+    trailProbe: @escaping TrailProbe = Self.pixelTrail,
+    report: @escaping @Sendable (String) -> Void = { _ in }
   ) {
     self.runner = runner
     self.settings = settings
@@ -83,7 +85,9 @@ package struct ChannelStacker: Sendable {
 
   /// What `calibrate` applies: the selection, the dark's defect map when one sits beside it, and
   /// CFA-aware calibration when every frame is still a mosaic.
-  static func masters(_ selection: CalibrationSelection, frames: [CaptureFrame]) -> CalibrationMasters {
+  static func masters(_ selection: CalibrationSelection, frames: [CaptureFrame])
+    -> CalibrationMasters
+  {
     var masters = selection.masters
     masters.badPixelMap = selection.dark.flatMap { defectList(of: $0.path) }
     masters.cfa = !frames.isEmpty && frames.allSatisfy(\.needsDebayer)

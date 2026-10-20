@@ -1,7 +1,8 @@
 extension CalibrationMatcher {
-  /// What a run applies to one light set (`processChannel`'s selection): masters from another
-  /// sensor leave the POOL first (under `force` too), then the matcher picks, the pool's note
-  /// appended.
+  /// The selection a run applies to one light set (as `processChannel` does).
+  ///
+  /// Masters from another sensor leave the POOL first (under `force` too), then the matcher
+  /// picks, the pool's note appended.
   package static func select(
     _ set: FrameSet, in inventory: Inventory, masters: [CalibrationMaster], excluded: [String] = [],
     force: Bool = false

@@ -99,6 +99,6 @@ struct SirilSessionTests {
       try SirilTool.locate(environment: ["SIRIL_BIN": missing])
     }
     #expect(SirilTool.defaultPath == "/Applications/Siril.app/Contents/MacOS/siril-cli")
-    #expect(SirilMode.default == .script, "pipe mode waits for the 0048 byte-identity golden")
+    #expect(SirilMode.default == .pipe, "the 0048 golden is byte-identical in pipe mode")
   }
 }

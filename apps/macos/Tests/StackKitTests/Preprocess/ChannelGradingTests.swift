@@ -20,7 +20,8 @@ struct ChannelGradingTests {
     let text = [Self.line(fwhm: 3), "R0 0 0 0 0 0 0", Self.line(fwhm: 3.1), Self.line(fwhm: 9)]
       .joined(separator: "\n")
     let outcome = ChannelGrading.grade(
-      SirilSequence(parsing: text), frames: Self.frames(4), settings: .init(dropWheelTransition: false))
+      SirilSequence(parsing: text), frames: Self.frames(4),
+      settings: .init(dropWheelTransition: false))
     #expect(outcome.registeredCount == 3)
     #expect(outcome.grades[1].rejected)
     #expect(outcome.grades[1].rejectReason == ChannelGrading.unregisteredReason)
@@ -36,7 +37,8 @@ struct ChannelGradingTests {
     var frames = Self.frames(6)
     frames[0].wheelTransition = true
     let outcome = ChannelGrading.grade(
-      SirilSequence(parsing: "R0 0 0 0 0 0 0\n" + text), frames: [CaptureFrame(path: "/x")] + frames,
+      SirilSequence(parsing: "R0 0 0 0 0 0 0\n" + text),
+      frames: [CaptureFrame(path: "/x")] + frames,
       settings: .init(dropWheelTransition: true), preReject: [4: "transform review"])
     #expect(outcome.registeredCount == 6)
     #expect(outcome.grades[1].rejectReason == ChannelGrading.wheelTransitionReason)

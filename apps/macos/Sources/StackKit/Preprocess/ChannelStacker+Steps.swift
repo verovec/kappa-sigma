@@ -80,7 +80,9 @@ extension ChannelStacker {
     let count = graded.registeredCount
     if count == 1 {
       try Self.copy(light.frame(light.registered, 1), to: master)
-      warn("\(outcome.filter): only 1 frame registered — using it as the channel master (no stacking)", into: &outcome)
+      warn(
+        "\(outcome.filter): only 1 frame registered — using it as the channel master (no stacking)",
+        into: &outcome)
       return
     }
     let survivors = count - graded.rejectedRegistered.count

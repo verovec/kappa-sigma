@@ -16,9 +16,12 @@ package actor Preprocessor {
 
     /// The real tools over `runner`.
     package init(
-      runner: SirilRunner, trailProbe: @escaping ChannelStacker.TrailProbe = ChannelStacker.pixelTrail,
+      runner: SirilRunner,
+      trailProbe: @escaping ChannelStacker.TrailProbe = ChannelStacker.pixelTrail,
       edgeMeasure: @escaping EdgeCropper.Measure = EdgeCropper.pixels,
-      preview: @escaping @Sendable (URL, URL) throws -> Void = { try PreviewRenderer.render($0, to: $1) }
+      preview: @escaping @Sendable (URL, URL) throws -> Void = {
+        try PreviewRenderer.render($0, to: $1)
+      }
     ) {
       self.runner = runner
       self.trailProbe = trailProbe
@@ -36,7 +39,9 @@ package actor Preprocessor {
 
   /// Starts `request`; the stream ends with `.finished`, or throws the run's error (a
   /// `CancellationError` when the consumer cancelled).
-  package nonisolated func run(_ request: PreprocessRequest) -> AsyncThrowingStream<PreprocessEvent, any Error> {
+  package nonisolated func run(_ request: PreprocessRequest) -> AsyncThrowingStream<
+    PreprocessEvent, any Error
+  > {
     AsyncThrowingStream { continuation in
       let task = Task {
         do {
@@ -86,7 +91,9 @@ package actor Preprocessor {
     let lights = inventory.sets.filter { $0.key.type == .light }
     let filters = lights.map(\.key.filter)
     let repeated = Set(filters.filter { filter in filters.count { $0 == filter } > 1 })
-    guard repeated.isEmpty else { throw PreprocessError.multiNight(ChannelAligner.ordered(repeated)) }
+    guard repeated.isEmpty else {
+      throw PreprocessError.multiNight(ChannelAligner.ordered(repeated))
+    }
     return lights.sorted { Filter.less($0.key.filter, $1.key.filter) }
   }
 }

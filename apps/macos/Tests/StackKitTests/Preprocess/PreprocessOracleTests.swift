@@ -50,7 +50,10 @@ struct PreprocessOracleTests {
     let tools = Preprocessor.Tools(
       runner: siril.runner, trailProbe: { frame, _ in playback.trail(frame) },
       // The recorded run hit the 12% cap (run.json warnings); the rectangle itself is pixels.
-      edgeMeasure: { _ in (EdgeRect(x0: 30, y0: 30, x1: 226, y1: 226), true, 256, 256) })
+      edgeMeasure: { _ in
+        .init(
+          rect: EdgeRect(x0: 30, y0: 30, x1: 226, y1: 226), capped: true, width: 256, height: 256)
+      })
     let request = PreprocessRequest(
       inventory: inventory, output: root.appendingPathComponent("out/TESTFIELD/\(runID)"),
       work: root.appendingPathComponent("work/run_\(runID)"), runID: runID)
@@ -59,10 +62,13 @@ struct PreprocessOracleTests {
   }
 
   static func normalize(_ text: String, root: URL) -> String {
-    text.replacingOccurrences(of: root.path, with: "<ROOT>").replacingOccurrences(of: runID, with: "<RUN>")
+    text.replacingOccurrences(of: root.path, with: "<ROOT>").replacingOccurrences(
+      of: runID, with: "<RUN>")
   }
 
-  @Test("scripts byte-equal in order; kept/rejected frames, references and warnings as recorded", .scratchDirectory)
+  @Test(
+    "scripts byte-equal in order; kept/rejected frames, references and warnings as recorded",
+    .scratchDirectory)
   func testSingleNightScriptsAndSelection() async throws {
     let oracle = try OracleFixtureTests.committedCase("golden-single-night")
     let root = try InventoryBuilderFallbackTests.folder("scan")
@@ -71,7 +77,12 @@ struct PreprocessOracleTests {
     // The legacy finish (autostretch, GIMP, exports) is the Studio's now: scripts up to the
     // neutralized composite are this card's.
     let recorded = try oracle.scripts().filter { $0.number <= 18 }
-    let ours = siril.calls.map { (Self.normalize($0.directory.lastPathComponent, root: root), Self.normalize($0.script, root: root)) }
+    let ours = siril.calls.map {
+      (
+        Self.normalize($0.directory.lastPathComponent, root: root),
+        Self.normalize($0.script, root: root)
+      )
+    }
     #expect(ours.map(\.0) == recorded.map(\.directory))
     for (index, script) in recorded.enumerated() where index < ours.count {
       #expect(ours[index].1 == script.text, "script \(script.name)")
@@ -88,7 +99,9 @@ struct PreprocessOracleTests {
     }
     #expect(selection.unselect.isEmpty == !siril.calls.contains { $0.script.contains("unselect") })
     let registration = try oracle.registration()
-    let setrefs = siril.calls.flatMap { $0.script.split(separator: "\n").filter { $0.hasPrefix("setref") } }
+    let setrefs = siril.calls.flatMap {
+      $0.script.split(separator: "\n").filter { $0.hasPrefix("setref") }
+    }
     #expect(setrefs.map(String.init) == registration.setref.map(\.command))
     #expect(registration.channels.allSatisfy { $0.preRejected.isEmpty })
     let warnings = try oracle.run().warnings ?? []

@@ -1,12 +1,26 @@
 package import Foundation
 internal import ImageKit
 
-/// Crops every colour-combine input to the field the stack covers cleanly (`applyEdgeCrop`):
-/// `out/trim_<tag>.fits`, all channels cut to their COMMON rectangle so the combine sees one
+/// Crops every colour-combine input to the field the stack covers cleanly (`applyEdgeCrop`).
+///
+/// It writes `out/trim_<tag>.fits`, all channels cut to their COMMON rectangle so the combine sees one
 /// geometry. The masters and aligned files stay as the run recorded them.
 package struct EdgeCropper: Sendable {
   /// What a measurement returns for one image: the clean rectangle, the cap flag, the full size.
-  package typealias Measurement = (rect: EdgeRect, capped: Bool, width: Int, height: Int)
+  package struct Measurement: Equatable, Sendable {
+    package var rect: EdgeRect
+    package var capped: Bool
+    package var width: Int
+    package var height: Int
+
+    /// A measurement.
+    package init(rect: EdgeRect, capped: Bool, width: Int, height: Int) {
+      self.rect = rect
+      self.capped = capped
+      self.width = width
+      self.height = height
+    }
+  }
   /// Measures one combine input.
   package typealias Measure = @Sendable (URL) throws -> Measurement
 
@@ -28,7 +42,7 @@ package struct EdgeCropper: Sendable {
   package static let pixels: Measure = { url in
     let image = try FITSFile.read(at: url).image()
     let (rect, capped) = EdgeTrim.measure(image.planes, width: image.width, height: image.height)
-    return (rect, capped, image.width, image.height)
+    return Measurement(rect: rect, capped: capped, width: image.width, height: image.height)
   }
 
   /// Crops `channels` (filter → basename in `out`); returns the channels to combine and the
@@ -77,13 +91,16 @@ package struct EdgeCropper: Sendable {
           x1: common.x1, y1: common.y1)
         cropped[filter] = name
       } catch {
-        journal.warn("edge trim failed on \(filter) (\(ChannelStacker.describe(error))) — combining uncropped")
+        journal.warn(
+          "edge trim failed on \(filter) (\(ChannelStacker.describe(error))) — combining uncropped")
         return (channels, nil)
       }
     }
+    let (right, bottom) = (full.x1 - common.x1, full.y1 - common.y1)
     journal.line(
-      "✂ trimmed the stacking edge: \(full.width)×\(full.height) → \(common.width)×\(common.height) px "
-        + "(left \(common.x0), right \(full.x1 - common.x1), top \(common.y0), bottom \(full.y1 - common.y1))")
+      "✂ trimmed the stacking edge: \(full.width)×\(full.height) → "
+        + "\(common.width)×\(common.height) px (left \(common.x0), right \(right), "
+        + "top \(common.y0), bottom \(bottom))")
     let fraction = Double(common.area) / Double(max(1, full.area))
     return (cropped, Crop(rect: common, fraction: fraction))
   }

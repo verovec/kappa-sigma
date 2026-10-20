@@ -30,26 +30,29 @@ package struct BundleWriter: Sendable {
   package func write(runID: String, colorModel: ColorModel, layers: [Input], to folder: URL) throws
     -> LinearBundle
   {
-    let sizes = try layers.map { input -> (Input, FITSFile, Int, Int) in
-      let file = try FITSFile.read(at: input.file)
-      let layout = (file.header.int("NAXIS1") ?? 0, file.header.int("NAXIS2") ?? 0)
-      return (input, file, layout.0, layout.1)
+    let files = try layers.map { (input: $0, file: try FITSFile.read(at: $0.file)) }
+    let grids = files.map { entry in
+      LinearBundle.Grid(
+        width: entry.file.header.int("NAXIS1") ?? 0, height: entry.file.header.int("NAXIS2") ?? 0)
     }
-    guard let first = sizes.first else { throw PreprocessError.noChannels([]) }
-    guard sizes.allSatisfy({ $0.2 == first.2 && $0.3 == first.3 }) else {
-      throw PreprocessError.mixedDimensions(sizes.map { "\($0.0.filter) \($0.2)×\($0.3)" })
+    guard let grid = grids.first else { throw PreprocessError.noChannels([]) }
+    guard grids.allSatisfy({ $0 == grid }) else {
+      throw PreprocessError.mixedDimensions(
+        zip(layers, grids).map { "\($0.filter) \($1.width)×\($1.height)" })
     }
-    let measured = try sizes.map { input, file, _, _ in
+    let measured = try files.map { input, file in
       LinearBundle.Layer(
         id: input.filter, role: LinearBundle.Role(filter: input.filter),
         file: input.file.lastPathComponent, source: input.source,
         stats: LayerStats.measure(try file.image().planes))
     }
     let bundle = LinearBundle(
-      runID: runID, colorModel: colorModel, grid: .init(width: first.2, height: first.3), layers: measured)
+      runID: runID, colorModel: colorModel, grid: grid,
+      layers: measured)
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-    try encoder.encode(bundle).write(to: folder.appendingPathComponent(Self.fileName), options: .atomic)
+    try encoder.encode(bundle).write(
+      to: folder.appendingPathComponent(Self.fileName), options: .atomic)
     return bundle
   }
 

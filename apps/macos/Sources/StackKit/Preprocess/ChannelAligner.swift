@@ -41,12 +41,16 @@ package struct ChannelAligner: Sendable {
       throw CancellationError()
     } catch {
       journal.warn(
-        "cross-channel alignment failed, using unaligned channels: \(ChannelStacker.describe(error))",
+        "cross-channel alignment failed, using unaligned channels: "
+          + ChannelStacker.describe(error),
         live: false)
       return unaligned
     }
-    var (aligned, failed) = Self.collect(folder: folder, out: out, ordered: ordered, journal: &journal)
-    failed = try await rescue(failed, masters: masters, aligned: &aligned, work: folder.deletingLastPathComponent(), out: out)
+    var (aligned, failed) = Self.collect(
+      folder: folder, out: out, ordered: ordered, journal: &journal)
+    failed = try await rescue(
+      failed, masters: masters, aligned: &aligned, work: folder.deletingLastPathComponent(),
+      out: out)
     return Self.policy(aligned: aligned, unaligned: unaligned, failed: failed, journal: &journal)
   }
 

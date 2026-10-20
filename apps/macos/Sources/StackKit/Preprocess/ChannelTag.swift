@@ -4,7 +4,8 @@ package enum ChannelTag {
   package static func sanitize(_ text: String) -> String {
     let kept = text.unicodeScalars.compactMap { scalar -> Character? in
       if scalar == " " { return "_" }
-      let allowed = scalar.isASCII && (scalar.properties.isAlphabetic || ("0"..."9").contains(scalar))
+      let allowed =
+        scalar.isASCII && (scalar.properties.isAlphabetic || ("0"..."9").contains(scalar))
       return allowed || scalar == "-" || scalar == "_" ? Character(scalar) : nil
     }
     return kept.isEmpty ? "session" : String(kept)

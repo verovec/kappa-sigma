@@ -2,7 +2,9 @@ internal import Foundation
 
 extension Preprocessor {
   /// Step 1: the run's calibration masters; returns the pool the lights are matched against.
-  func buildMasters(_ request: PreprocessRequest, emitter: RunEmitter, into result: inout PreprocessResult)
+  func buildMasters(
+    _ request: PreprocessRequest, emitter: RunEmitter, into result: inout PreprocessResult
+  )
     async throws -> [CalibrationMaster]
   {
     emitter.begin("building master calibration frames")

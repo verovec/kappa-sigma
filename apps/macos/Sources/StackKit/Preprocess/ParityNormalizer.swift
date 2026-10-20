@@ -1,9 +1,11 @@
 internal import Foundation
 internal import ImageKit
 
-/// Gives every channel master the first solved channel's mirror parity before the masters are
-/// co-registered (`normalizeMasterParity`): star registration matches asterisms by chirality, so
-/// an opposite-parity master never registers. Masters whose parity cannot be read stay as they are.
+/// Gives every channel master the first solved channel's parity (`normalizeMasterParity`).
+///
+/// Run before the masters are co-registered: star registration matches asterisms by chirality,
+/// so an opposite-parity master never registers. Masters whose parity cannot be read stay as
+/// they are.
 package struct ParityNormalizer: Sendable {
   /// The throwaway image a probe saves beside the master.
   static let probeName = "_parity_probe"
@@ -33,7 +35,8 @@ package struct ParityNormalizer: Sendable {
       return
     }
     for filter in ordered where signs[filter] != 0 && signs[filter] != signs[reference] {
-      try await mirror(masters[filter] ?? "", filter: filter, reference: reference, journal: &journal)
+      try await mirror(
+        masters[filter] ?? "", filter: filter, reference: reference, journal: &journal)
     }
   }
 
@@ -68,7 +71,8 @@ package struct ParityNormalizer: Sendable {
       throw CancellationError()
     } catch {
       journal.warn(
-        "channel \(filter): parity flip failed (\(ChannelStacker.describe(error))) — master left mirrored",
+        "channel \(filter): parity flip failed (\(ChannelStacker.describe(error))) "
+          + "— master left mirrored",
         live: false)
     }
   }

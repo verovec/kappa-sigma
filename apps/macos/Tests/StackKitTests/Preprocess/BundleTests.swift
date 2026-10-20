@@ -13,7 +13,8 @@ struct BundleTests {
     let pixels = (0..<size * size).map { index -> UInt16 in
       index % 97 == 0 ? 60000 : offset + UInt16(index % 200)
     }
-    return try TestFITS.write(name, in: folder, width: size, height: size, planes: [pixels], cards: [:])
+    return try TestFITS.write(
+      name, in: folder, width: size, height: size, planes: [pixels], cards: [:])
   }
 
   @Test(
@@ -31,8 +32,9 @@ struct BundleTests {
       ],
       to: folder)
 
-    let json = try JSONSerialization.jsonObject(
-      with: Data(contentsOf: folder.appendingPathComponent("bundle.json"))) as? [String: Any]
+    let json =
+      try JSONSerialization.jsonObject(
+        with: Data(contentsOf: folder.appendingPathComponent("bundle.json"))) as? [String: Any]
     let object = try #require(json)
     #expect(Set(object.keys) == ["version", "run_id", "color_model", "grid", "layers"])
     #expect(object["run_id"] as? String == "R1" && object["color_model"] as? String == "mono")
@@ -40,7 +42,10 @@ struct BundleTests {
     let layers = try #require(object["layers"] as? [[String: Any]])
     #expect(layers.map { $0["role"] as? String } == ["lum", "line"])
     #expect(layers.map { $0["file"] as? String } == ["trim_L.fits", "trim_Ha.fits"])
-    #expect(Set((layers[0]["stats"] as? [String: Double])?.keys ?? [:].keys) == ["bg", "madn", "sky", "snr"])
+    #expect(
+      Set((layers[0]["stats"] as? [String: Double])?.keys ?? [:].keys) == [
+        "bg", "madn", "sky", "snr",
+      ])
 
     let values = (0..<4096).map { (index: Int) -> Double in
       let ramp = Double(index % 200)
@@ -61,16 +66,22 @@ struct BundleTests {
     #expect(throws: PreprocessError.mixedDimensions(["R 64×64", "G 32×32"])) {
       try BundleWriter().write(
         runID: "R1", colorModel: .mono,
-        layers: [.init(filter: "R", file: big, source: "trim"), .init(filter: "G", file: small, source: "trim")],
+        layers: [
+          .init(filter: "R", file: big, source: "trim"),
+          .init(filter: "G", file: small, source: "trim"),
+        ],
         to: folder)
     }
-    #expect(!FileManager.default.fileExists(atPath: folder.appendingPathComponent("bundle.json").path))
+    #expect(
+      !FileManager.default.fileExists(atPath: folder.appendingPathComponent("bundle.json").path))
   }
 
-  @Test("each filter has its role; a colour master is rgb", arguments: [
-    ("L", "lum"), ("R", "red"), ("G", "green"), ("B", "blue"), ("Ha", "line"), ("OIII", "line"),
-    ("SII", "line"), ("RGB", "rgb"), ("Custom", "line"),
-  ])
+  @Test(
+    "each filter has its role; a colour master is rgb",
+    arguments: [
+      ("L", "lum"), ("R", "red"), ("G", "green"), ("B", "blue"), ("Ha", "line"), ("OIII", "line"),
+      ("SII", "line"), ("RGB", "rgb"), ("Custom", "line"),
+    ])
   func testRoles(filter: String, role: String) {
     #expect(LinearBundle.Role(filter: filter).rawValue == role)
   }

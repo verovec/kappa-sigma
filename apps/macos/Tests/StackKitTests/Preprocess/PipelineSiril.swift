@@ -64,7 +64,8 @@ final class PipelineSiril: Sendable {
     switch verb {
     case "link", "convert": try ingest(words[1], in: directory)
     case "register": try register(words[1], in: directory)
-    case "calibrate_single": try Self.frame(directory.appendingPathComponent("pp_" + words[1] + ".fits"))
+    case "calibrate_single":
+      try Self.frame(directory.appendingPathComponent("pp_" + words[1] + ".fits"))
     case "seqapplyreg": try applyRegistration(words[1], in: directory)
     case "stack", "rgbcomp":
       if let out = words.first(where: { $0.hasPrefix("-out=") }) {
@@ -77,7 +78,9 @@ final class PipelineSiril: Sendable {
 
   /// The probe a solve saves: a frame whose CD matrix has `determinant`.
   private func solved(_ determinant: Double, in directory: URL, script: String) throws {
-    guard let save = script.split(separator: "\n").last(where: { $0.hasPrefix("save ") }) else { return }
+    guard let save = script.split(separator: "\n").last(where: { $0.hasPrefix("save ") }) else {
+      return
+    }
     let url = Self.target(String(save.dropFirst(5)), in: directory)
     try TestFITS.write(
       url.lastPathComponent, in: directory, width: 4, height: 4,
@@ -93,16 +96,19 @@ final class PipelineSiril: Sendable {
     let parsed = SirilSequence(parsing: text)
     var registered = 0
     for (index, metric) in parsed.metrics.enumerated() {
-      try Self.frame(directory.appendingPathComponent(target + String(format: "_%05d.fits", index + 1)))
+      try Self.frame(
+        directory.appendingPathComponent(target + String(format: "_%05d.fits", index + 1)))
       guard metric.fwhm > 0 else { continue }
       registered += 1
-      try frame(directory.appendingPathComponent("r_" + target + String(format: "_%05d.fits", registered)))
+      try frame(
+        directory.appendingPathComponent("r_" + target + String(format: "_%05d.fits", registered)))
     }
   }
 
   private func ingest(_ seq: String, in directory: URL) throws {
     for index in try Self.links(in: directory).indices {
-      try Self.frame(directory.appendingPathComponent(seq + String(format: "_%05d.fits", index + 1)))
+      try Self.frame(
+        directory.appendingPathComponent(seq + String(format: "_%05d.fits", index + 1)))
     }
   }
 
@@ -119,7 +125,8 @@ final class PipelineSiril: Sendable {
   }
 
   static func target(_ name: String, in directory: URL) -> URL {
-    let url = name.hasPrefix("/") ? URL(fileURLWithPath: name) : directory.appendingPathComponent(name)
+    let url =
+      name.hasPrefix("/") ? URL(fileURLWithPath: name) : directory.appendingPathComponent(name)
     return url.appendingPathExtension("fits")
   }
 

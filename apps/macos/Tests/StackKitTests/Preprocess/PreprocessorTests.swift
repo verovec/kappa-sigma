@@ -18,7 +18,10 @@ struct PreprocessorTests {
   static func tools(_ siril: PipelineSiril) -> Preprocessor.Tools {
     Preprocessor.Tools(
       runner: siril.runner, trailProbe: { _, _ in (false, 0.1) },
-      edgeMeasure: { _ in (EdgeRect(x0: 8, y0: 0, x1: 256, y1: 250), false, 256, 256) })
+      edgeMeasure: { _ in
+        .init(
+          rect: EdgeRect(x0: 8, y0: 0, x1: 256, y1: 250), capped: false, width: 256, height: 256)
+      })
   }
 
   /// Every event of a run, and its error.
@@ -67,7 +70,9 @@ struct PreprocessorTests {
       return
     }
     #expect(
-      result.bundle?.layers.map(\.file) == ["trim_L.fits", "trim_R.fits", "trim_G.fits", "trim_B.fits"])
+      result.bundle?.layers.map(\.file) == [
+        "trim_L.fits", "trim_R.fits", "trim_G.fits", "trim_B.fits",
+      ])
     #expect(result.crop?.rect == EdgeRect(x0: 8, y0: 0, x1: 256, y1: 250))
     try await Self.cancelMidRun()
   }
@@ -85,20 +90,29 @@ struct PreprocessorTests {
     #expect(error is CancellationError)
     #expect(!events.contains(where: Self.isFinished))
     let out = request.output
-    #expect(FileManager.default.fileExists(atPath: out.appendingPathComponent("master_R.fits").path))
-    #expect(!FileManager.default.fileExists(atPath: out.appendingPathComponent("master_G.fits").path))
-    #expect(!FileManager.default.fileExists(atPath: out.appendingPathComponent(BundleWriter.fileName).path))
+    #expect(
+      FileManager.default.fileExists(atPath: out.appendingPathComponent("master_R.fits").path))
+    #expect(
+      !FileManager.default.fileExists(atPath: out.appendingPathComponent("master_G.fits").path))
+    #expect(
+      !FileManager.default.fileExists(
+        atPath: out.appendingPathComponent(BundleWriter.fileName).path))
   }
 
-  @Test("a second run on the same output is refused; multi-night and mixed captures too", .scratchDirectory)
+  @Test(
+    "a second run on the same output is refused; multi-night and mixed captures too",
+    .scratchDirectory)
   func testRefusals() async throws {
     let request = try Self.request()
-    let slow = PipelineSiril(onRun: { _ in Thread.sleep(forTimeInterval: 0.05) })
-    async let first = Self.collect(Preprocessor(tools: Self.tools(slow)).run(request))
-    try await Task.sleep(for: .milliseconds(20))
-    let (_, second) = await Self.collect(Preprocessor(tools: Self.tools(PipelineSiril())).run(request))
-    #expect(second.map { String(describing: $0) }?.contains("targetBusy") == true)
-    #expect(await first.1 == nil)
+    // Another run holds the folder: this one is refused before anything runs.
+    try TargetLock.acquire(request.output)
+    let siril = PipelineSiril()
+    let (_, busy) = await Self.collect(Preprocessor(tools: Self.tools(siril)).run(request))
+    #expect(busy.map { String(describing: $0) }?.contains("targetBusy") == true)
+    #expect(siril.calls.isEmpty)
+    TargetLock.release(request.output)
+    let (_, free) = await Self.collect(Preprocessor(tools: Self.tools(siril)).run(request))
+    #expect(free == nil)
 
     var twoNights = request.inventory
     let light = try #require(twoNights.sets.first { $0.key.type == .light })

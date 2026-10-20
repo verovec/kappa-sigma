@@ -1,5 +1,6 @@
-/// One stacked channel (`ChannelResult`): its selection, grades and master, or why it failed. A
-/// failed channel is reported and the run continues without it.
+/// One stacked channel (`ChannelResult`): its selection, grades and master, or why it failed.
+///
+/// A failed channel is reported and the run continues without it.
 package struct ChannelOutcome: Equatable, Sendable {
   package var object: String
   /// The channel's filter (lane).
@@ -28,8 +29,9 @@ package struct ChannelOutcome: Equatable, Sendable {
   /// The frames kept and rejected, with reasons (`selection.json`).
   package var kept: [String] { grades.filter { !$0.rejected }.map(\.path) }
 
-  /// The grading warnings (`gradeWarnings`): frames Siril dropped, and frames restored to reach
-  /// the stack minimum. Empty on a healthy channel.
+  /// The grading warnings (`gradeWarnings`); empty on a healthy channel.
+  ///
+  /// Frames Siril dropped, and frames restored to reach the stack minimum.
   static func gradingWarnings(filter: String, grades: [FrameGrade], registered: Int, survivors: Int)
     -> [String]
   {

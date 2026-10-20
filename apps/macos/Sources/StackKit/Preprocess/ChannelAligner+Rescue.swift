@@ -20,7 +20,8 @@ extension ChannelAligner {
         aligned[filter] = name
       } catch {
         journal.warn(
-          "channel \(filter): alignment copy failed: \(ChannelStacker.describe(error))", live: false)
+          "channel \(filter): alignment copy failed: \(ChannelStacker.describe(error))", live: false
+        )
         failed.append(filter)
       }
     }
@@ -39,7 +40,10 @@ extension ChannelAligner {
     var still: [String] = []
     for filter in failed {
       let folder = work.appendingPathComponent("pair_" + ChannelTag.sanitize(filter))
-      if try await pair(reference: reference, master: masters[filter] ?? "", filter: filter, folder: folder, out: out) {
+      if try await pair(
+        reference: reference, master: masters[filter] ?? "", filter: filter, folder: folder,
+        out: out)
+      {
         aligned[filter] = "aligned_" + ChannelTag.of(filter)
       } else {
         still.append(filter)
@@ -57,7 +61,8 @@ extension ChannelAligner {
       _ = try await runner.run(SirilScripts.alignPair(seq: "pair"), folder) { _ in }
       let registered = folder.appendingPathComponent("r_pair_00002.fits")
       guard FileManager.default.fileExists(atPath: registered.path) else { return false }
-      try Self.replace(out.appendingPathComponent("aligned_\(ChannelTag.of(filter)).fits"), with: registered)
+      try Self.replace(
+        out.appendingPathComponent("aligned_\(ChannelTag.of(filter)).fits"), with: registered)
       return true
     } catch is CancellationError {
       throw CancellationError()

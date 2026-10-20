@@ -1,5 +1,7 @@
-/// The deep-sky preprocessing knobs this pipeline reads (the legacy `mode.Preset` fields of the
-/// single-night path); `init()` is the deepsky preset. Every value is applied as shown (R2).
+/// The deep-sky preprocessing knobs this pipeline reads (the legacy `mode.Preset` fields).
+///
+/// The single-night path's fields; `init()` is the deepsky preset. Every value is applied as
+/// shown (R2).
 package struct PreprocessSettings: Equatable, Sendable {
   /// The frame-rejection rules.
   package var grading = Grader.Options()

@@ -15,7 +15,9 @@ struct ChannelStackerTests {
     var out: URL { root.appendingPathComponent("out") }
 
     var lights: FrameSet {
-      get throws { try inventory.sets.first { $0.key.type == .light && $0.key.filter == "L" }.unwrapped("L") }
+      get throws {
+        try inventory.sets.first { $0.key.type == .light && $0.key.filter == "L" }.unwrapped("L")
+      }
     }
 
     static func make() async throws -> Self {
@@ -37,29 +39,41 @@ struct ChannelStackerTests {
 
   static let dropped = "R0 0 0 0 0 0 0"
 
-  @Test("an unregistered frame is graded out of the stack; the master loses its BAYERPAT", .scratchDirectory)
+  @Test(
+    "an unregistered frame is graded out of the stack; the master loses its BAYERPAT",
+    .scratchDirectory)
   func testStack_unregisteredFrame() async throws {
     let fixture = try await Fixture.make()
-    let siril = PipelineSiril { _ in [PipelineSiril.healthyLine, Self.dropped, PipelineSiril.healthyLine].joined(separator: "\n") }
+    let siril = PipelineSiril { _ in
+      [PipelineSiril.healthyLine, Self.dropped, PipelineSiril.healthyLine].joined(separator: "\n")
+    }
     let outcome = try await fixture.stack(siril)
     #expect(outcome.error == nil)
     #expect(outcome.stackedFrames == 2 && outcome.kept.count == 2)
     #expect(outcome.warnings == ["L: only 2/3 frames registered — 1 dropped (no stars matched)"])
     #expect(siril.calls.last?.script.contains("select r_pp_light_ 1 2\n") == true)
     let master = try #require(outcome.masterPath)
-    let header = try String(bytes: Data(contentsOf: URL(fileURLWithPath: master)).prefix(2880), encoding: .ascii)
+    let header = try String(
+      bytes: Data(contentsOf: URL(fileURLWithPath: master)).prefix(2880), encoding: .ascii)
     #expect(header?.contains("BAYERPAT") == false)
-    #expect(!FileManager.default.fileExists(atPath: fixture.work.appendingPathComponent("light_L").path))
+    #expect(
+      !FileManager.default.fileExists(atPath: fixture.work.appendingPathComponent("light_L").path))
   }
 
   @Test("one registered frame is the master; none is a channel error", .scratchDirectory)
   func testStack_oneOrNoneRegistered() async throws {
     let fixture = try await Fixture.make()
-    let one = try await fixture.stack(PipelineSiril { _ in [PipelineSiril.healthyLine, Self.dropped, Self.dropped].joined(separator: "\n") })
+    let one = try await fixture.stack(
+      PipelineSiril { _ in
+        [PipelineSiril.healthyLine, Self.dropped, Self.dropped].joined(separator: "\n")
+      })
     #expect(one.error == nil && one.stackedFrames == 1)
-    #expect(one.warnings.last == "L: only 1 frame registered — using it as the channel master (no stacking)")
+    #expect(
+      one.warnings.last
+        == "L: only 1 frame registered — using it as the channel master (no stacking)")
     #expect(FileManager.default.fileExists(atPath: try #require(one.masterPath)))
-    let none = try await fixture.stack(PipelineSiril { _ in [Self.dropped, Self.dropped, Self.dropped].joined(separator: "\n") })
+    let none = try await fixture.stack(
+      PipelineSiril { _ in [Self.dropped, Self.dropped, Self.dropped].joined(separator: "\n") })
     #expect(none.error == "no frames could be registered" && none.masterPath == nil)
   }
 
@@ -75,10 +89,13 @@ struct ChannelStackerTests {
     #expect(FileManager.default.fileExists(atPath: try #require(outcome.masterPath)))
   }
 
-  @Test("a Siril failure fails the channel, not the run; cancellation ends the run", .scratchDirectory)
+  @Test(
+    "a Siril failure fails the channel, not the run; cancellation ends the run", .scratchDirectory)
   func testStack_failureAndCancel() async throws {
     let fixture = try await Fixture.make()
-    let failing = SirilRunner { _, _, _ in throw SirilError.scriptFailed(exitCode: 1, hint: "no stars") }
+    let failing = SirilRunner { _, _, _ in
+      throw SirilError.scriptFailed(exitCode: 1, hint: "no stars")
+    }
     let outcome = try await ChannelStacker(runner: failing).stack(
       try fixture.lights, filter: "L", inventory: fixture.inventory, masters: fixture.masters,
       work: fixture.work, out: fixture.out)

@@ -24,6 +24,12 @@ package struct RegistrationReview: Equatable, Sendable {
   /// Each kept frame's homography relative to the reference (frame → canvas), by 0-based index.
   package var frameHomographies: [Int: [Double]] = [:]
 
+  /// A review that kept exactly these frames (what the refit and coverage read).
+  package init(frameHomographies: [Int: [Double]], nights: Int) {
+    groups = Array(repeating: Group(), count: nights)
+    self.frameHomographies = frameHomographies
+  }
+
   /// Reviews `sequence` over the nights' `spans`, `anchor` being the anchor night's span index;
   /// `width`/`height` are the frames' size (0: the gate is skipped, with a warning).
   package init(_ sequence: SirilSequence, spans: [Range<Int>], anchor: Int, width: Int, height: Int) {

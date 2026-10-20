@@ -26,6 +26,15 @@ extension GroupedChannelStacker {
       width: size?.width ?? 0, height: size?.height ?? 0)
     for warning in review.warnings { stacker.warn("\(filter): \(warning)", into: &outcome) }
     outcome.nights = Self.nights(merge, review: review)
+    // The homographies are known but no registered pixel is written yet: each night's pedestal
+    // can still be refitted in place before `seqapplyreg` reads the frames.
+    if settings.seamOffsetRefit && merge.nights.count > 1 {
+      let base = light.seq
+      outcome.seamOffsets = try SeamOffsetRefit.refit(
+        merge.nights, spans: merge.spans, anchor: anchor, review: review, width: size?.width ?? 0,
+        height: size?.height ?? 0
+      ) { folder.appendingPathComponent(base + String(format: "_%05d.fits", $0 + 1)) }
+    }
     do {
       try await stacker.run(
         SirilScripts.applyRegistration(seq: light.seq, reference: review.referenceIndex, framing: "current"),
@@ -41,6 +50,13 @@ extension GroupedChannelStacker {
     try await weighted.gradeAndStack(
       light, frames: merge.frames, spans: merge.spans, preReject: review.preReject, into: &outcome, out: out)
     outcome.frameHomographies = review.frameHomographies
+    if let size {
+      let grades = outcome.grades
+      outcome.coverage = CoverageGrid(
+        homographies: review.frameHomographies,
+        rejected: { $0 >= grades.count || grades[$0].rejected || grades[$0].fwhm <= 0 },
+        frameWidth: size.width, frameHeight: size.height)
+    }
     outcome.nights = Self.contributions(outcome.nights, spans: merge.spans, grades: outcome.grades)
     for night in outcome.nights where night.stacked == 0 && night.frames > 0 {
       stacker.warn(

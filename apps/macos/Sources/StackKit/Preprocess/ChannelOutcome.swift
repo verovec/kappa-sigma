@@ -22,6 +22,10 @@ package struct ChannelOutcome: Equatable, Sendable {
   package var nights: [NightRecord] = []
   /// Multi-night channels: each kept frame's homography onto the anchor canvas (coverage).
   package var frameHomographies: [Int: [Double]] = [:]
+  /// Multi-night channels: each non-anchor night's pedestal refit.
+  package var seamOffsets: [SeamOffsetRefit.Record] = []
+  /// Multi-night channels: where the stacked frames cover the anchor canvas.
+  package var coverage: CoverageGrid?
 
   /// A channel about to be processed.
   package init(_ set: FrameSet, filter: String, selection: CalibrationSelection) {

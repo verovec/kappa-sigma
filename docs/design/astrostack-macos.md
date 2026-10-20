@@ -265,6 +265,12 @@ cartes WCS conservées — ~400 lignes, testées contre les fichiers Siril de `o
 via ImageIO. Le lecteur Go de l'ancien moteur sert d'oracle : il émet une fois des checksums que le lecteur
 Swift doit reproduire au bit (carte 0041).
 
+**Implémenté (carte 0041, 20/10).** Le PO ayant interdit de toucher `stacking-astro`, l'oracle n'est
+pas un test Go : fichiers FITS synthétiques écrits d'après la norme en tests unitaires, et les 8 couches
+du run `M_31/20261018_191749` contre le `stat` de Siril lui-même (dimensions, moyenne/min/max par canal,
+réécriture identique à l'octet). Les règles du lecteur Go sont reprises (pas de retournement des lignes ;
+valeur = BZERO + BSCALE·brut en double puis float32). Voir `apps/macos/Sources/ImageKit/README.md`.
+
 ### 4.6 Pixel et aperçu
 
 Plans float32, pyramide mip calculée à l'import (moyennes par blocs), textures Metal `r32Float`.

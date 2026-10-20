@@ -62,7 +62,7 @@ let package = Package(
       resources: [.copy("Fixtures")], swiftSettings: common),
     .testTarget(
       name: "ImageKitTests", dependencies: ["ImageKit", "TestSupport"],
-      swiftSettings: common),
+      resources: [.copy("Fixtures")], swiftSettings: common),
     .testTarget(
       name: "RenderKitTests", dependencies: ["RenderKit", "TestSupport"],
       swiftSettings: common),

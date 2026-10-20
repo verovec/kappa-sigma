@@ -55,4 +55,13 @@ struct SharpcapSidecarTests {
     #expect(sidecar.gain == 250)
     #expect(SharpcapSidecar.read(beside: dir.appendingPathComponent("missing.FIT").path) == nil)
   }
+
+  @Test(
+    "a non-finite or huge sidecar value is ignored",
+    arguments: ["nan", "inf", String(repeating: "9", count: 400)])
+  func testSharpcapSidecar_nonFinite(value: String) {
+    let sidecar = SharpcapSidecar(parsing: "Exposure = \(value)s\nTemperature = \(value) C\n")
+    #expect(sidecar.exposureMs == 0)
+    #expect(!sidecar.hasTemp)
+  }
 }

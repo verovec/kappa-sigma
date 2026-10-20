@@ -1,3 +1,5 @@
+internal import Accelerate
+
 extension FilterSetClassifier {
   /// Stamps a verdict on every one-shot-colour LIGHT set (`annotateFilterSets`): a bounded sample
   /// of frames per set, the scan's own bias pedestal subtracted.
@@ -56,7 +58,7 @@ extension FilterSetClassifier {
       : cfaSky(first, width: image.width, height: image.height, pattern: frame.bayer)
     guard let sky else { return nil }
     // A real frame always has something above 1 ADU (a star, the pedestal): all ≤ 1 is normalized.
-    let normalized = image.planes.allSatisfy { ($0.max() ?? 0) <= 1 }
+    let normalized = image.planes.allSatisfy { $0.isEmpty || vDSP.maximum($0) <= 1 }
     return normalized ? sky.scaled(65535) : sky
   }
 

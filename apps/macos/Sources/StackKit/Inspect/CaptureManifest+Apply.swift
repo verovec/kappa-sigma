@@ -1,14 +1,17 @@
 internal import Foundation
 
 extension CaptureManifest {
-  /// Finds every `info.txt` (or `info.txt.txt`) under `root` and fills the frames of its capture
-  /// sub-folders (`applyManifests`).
+  /// Whether a file is a manifest: `info.txt` or `info.txt.txt`, any case.
+  static func isManifest(_ path: String) -> Bool {
+    PathMeta.baseName(path).wholeMatch(of: /(?i)info\.txt(\.txt)?/) != nil
+  }
+
+  /// Fills the frames of the capture sub-folders of each `info.txt` among `files`.
   ///
-  /// Best-effort: every problem becomes a warning.
-  package static func apply(under root: String, to inventory: inout Inventory) {
-    let manifests = InspectWalk.files(under: root, skippingOutput: false).filter { path in
-      PathMeta.baseName(path).wholeMatch(of: /(?i)info\.txt(\.txt)?/) != nil
-    }
+  /// `files` is the scan's own walk; the manifest only fills blanks (`applyManifests`) and every
+  /// problem becomes a warning.
+  package static func apply(files: [String], to inventory: inout Inventory) {
+    let manifests = files.filter(isManifest)
     guard !manifests.isEmpty else { return }
     var byFolder: [String: [Int]] = [:]
     for (index, frame) in inventory.frames.enumerated() {

@@ -30,15 +30,21 @@ extension CaptureFrame {
 
   private mutating func readAcquisition(_ cards: LegacyCards) {
     if let value = cards.string("FILTER") { filter = Filter.normalize(value) }
-    if let seconds = cards.exposureSeconds { exposureMs = Int((seconds * 1000).rounded()) }
+    if let seconds = cards.exposureSeconds,
+      let milliseconds = LegacyNumber.rounded(seconds, scale: 1000)
+    {
+      exposureMs = milliseconds
+    }
     if let gain = cards.int("GAIN") {
       self.gain = gain
       hasGain = true
     }
     if let offset = cards.int("OFFSET") { self.offset = offset }
     if let eGain = cards.double("EGAIN"), eGain > 0 { self.eGain = eGain }
-    if let celsius = cards.double("CCD-TEMP") {
-      tempMilliC = Int((celsius * 1000).rounded())
+    if let celsius = cards.double("CCD-TEMP"),
+      let milli = LegacyNumber.rounded(celsius, scale: 1000)
+    {
+      tempMilliC = milli
       hasTemp = true
     }
     if let bin = cards.int("XBINNING"), bin > 0 {
@@ -74,33 +80,5 @@ extension CaptureFrame {
       dateObsMs = Self.parseDateObs(date)
       session = Night.key(ms: dateObsMs, in: timeZone)
     }
-  }
-}
-
-/// Header cards read the way the legacy `fits.Header` accessors read them: values trimmed, `D`
-/// exponents accepted, integers falling back to a truncated float.
-struct LegacyCards {
-  let header: FITSHeader
-
-  func string(_ key: String) -> String? {
-    header.string(key)?.trimmingCharacters(in: .whitespacesAndNewlines)
-  }
-
-  func double(_ key: String) -> Double? {
-    string(key).flatMap {
-      Double($0.replacingOccurrences(of: "D", with: "E", options: .caseInsensitive))
-    }
-  }
-
-  func int(_ key: String) -> Int? {
-    guard let text = string(key) else { return nil }
-    if let value = Int(text) { return value }
-    guard let value = double(key), value.isFinite, abs(value) < 9.2e18 else { return nil }
-    return Int(value)
-  }
-
-  /// EXPTIME, else EXPOSURE, else ASICAP's EXPOINUS in microseconds.
-  var exposureSeconds: Double? {
-    double("EXPTIME") ?? double("EXPOSURE") ?? double("EXPOINUS").map { $0 / 1e6 }
   }
 }

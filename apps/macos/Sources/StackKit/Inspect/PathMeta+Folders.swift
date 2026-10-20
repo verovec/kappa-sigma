@@ -34,21 +34,6 @@ extension PathMeta {
     parentFolders(path).lazy.compactMap { gain(inName: $0.lowercased()) }.first ?? 0
   }
 
-  /// Whether a file name marks a processed output (`m27_R_stacked.tif`, `Autosave001.tif`).
-  package static func isProcessedName(_ path: String) -> Bool {
-    let base = baseName(path)
-    let stem = base.lastIndex(of: ".").map { String(base[..<$0]) } ?? base
-    return words(stem).contains { word in
-      processedWords.contains(word)
-        || processedWords.contains(String(word.reversed().drop(while: \.isNumber).reversed()))
-    }
-  }
-
-  private static let processedWords: Set<String> = [
-    "stacked", "stack", "master", "combined", "final", "mosaic", "annotated", "preview", "thumb",
-    "starless", "autosave",
-  ]
-
   /// A gain read per word, in three forms: `0gain` (suffix, wins first), `gain300` and `gain 300`.
   static func gain(inName low: String) -> Int? {
     let words = low.split(whereSeparator: isSeparator).map(String.init)

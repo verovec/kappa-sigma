@@ -5,9 +5,9 @@ internal import Foundation
 enum InspectWalk {
   /// Every non-folder entry under `root`, in walk order. `skippingOutput` also skips any folder
   /// named `output` (case-insensitive): the legacy pipeline's own results.
-  static func files(under root: String, skippingOutput: Bool) -> [String] {
+  static func files(under root: String, skippingOutput: Bool) throws -> [String] {
     var out: [String] = []
-    visit(root, isRoot: true, skippingOutput: skippingOutput, into: &out)
+    try visit(root, isRoot: true, skippingOutput: skippingOutput, into: &out)
     return out
   }
 
@@ -19,16 +19,20 @@ enum InspectWalk {
 
   private static func visit(
     _ folder: String, isRoot: Bool, skippingOutput: Bool, into out: inout [String]
-  ) {
+  ) throws {
     let name = PathMeta.baseName(folder)
     if !isRoot && (name.hasPrefix(".") || (skippingOutput && name.lowercased() == "output")) {
       return
     }
-    let names = (try? FileManager.default.contentsOfDirectory(atPath: folder)) ?? []
+    // An unlistable folder fails the scan, as Go's WalkDir did: an empty capture would hide a
+    // wrong path or a missing Full Disk Access.
+    guard let names = try? FileManager.default.contentsOfDirectory(atPath: folder) else {
+      throw InspectError.unreadableFolder(folder)
+    }
     for entry in names.sorted(by: { $0.utf8.lexicographicallyPrecedes($1.utf8) }) {
       let path = folder.hasSuffix("/") ? folder + entry : folder + "/" + entry
       if isFolder(path) {
-        visit(path, isRoot: false, skippingOutput: skippingOutput, into: &out)
+        try visit(path, isRoot: false, skippingOutput: skippingOutput, into: &out)
       } else {
         out.append(path)
       }

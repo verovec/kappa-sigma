@@ -81,8 +81,10 @@ package struct SharpcapSidecar: Equatable, Sendable {
     case "temperature":
       var number = value
       if number.hasSuffix("C") || number.hasSuffix("c") { number.removeLast() }
-      if let celsius = Double(Self.trim(number[...])) {
-        tempMilliC = Int((celsius * 1000).rounded())
+      if let celsius = LegacyNumber.finite(Self.trim(number[...])),
+        let milli = LegacyNumber.rounded(celsius, scale: 1000)
+      {
+        tempMilliC = milli
         hasTemp = true
       }
     default:
@@ -95,9 +97,10 @@ package struct SharpcapSidecar: Equatable, Sendable {
     let value = raw.lowercased()
     let units: [(suffix: String, scale: Double)] = [("ms", 1), ("us", 0.001), ("s", 1000)]
     guard let unit = units.first(where: { value.hasSuffix($0.suffix) }),
-      let number = Double(trim(value.dropLast(unit.suffix.count)))
+      let number = LegacyNumber.finite(trim(value.dropLast(unit.suffix.count))),
+      let milliseconds = LegacyNumber.rounded(number, scale: unit.scale)
     else { return 0 }
-    return Int((number * unit.scale).rounded())
+    return milliseconds
   }
 
   private static func trim(_ text: Substring) -> String {

@@ -4,32 +4,35 @@ extension Inventory {
   /// Below this, detection is surfaced for the user to override.
   static let lowConfidence = 0.45
 
-  /// The camera configuration and target lights are grouped by for detection; the filter is what
-  /// is being inferred, the exposure a per-frame signal.
+  /// The camera configuration and target lights are grouped by for detection; the exposure is a
+  /// per-frame signal. `filter` is empty when the filter is what is being inferred.
   private struct ConfigKey: Hashable {
     var object: String
     var gain: Int
     var offset: Int
     var tempBucket: Int
     var bin: Int
+    var filter: String
 
-    init(_ frame: CaptureFrame) {
+    init(_ frame: CaptureFrame, filter: String = "") {
       object = frame.object
       gain = frame.gain
       offset = frame.offset
       // Go's int() truncates toward zero.
       tempBucket = frame.hasTemp ? Int(frame.tempC / 5) * 5 : 0
       bin = frame.binX
+      self.filter = filter
     }
   }
 
   /// Fingerprints every mono light once, names unlabeled groups by wheel order, and flags
   /// wheel-transition frames on labeled groups too (`processChannels`).
-  mutating func detectChannels(pixels: PixelReader, options: ChannelDetector.Options) {
+  mutating func detectChannels(pixels: PixelReader, options: ChannelDetector.Options) throws {
     let lights = frames.indices.filter { frames[$0].type == .light && frames[$0].bayer.isEmpty }
     guard !lights.isEmpty else { return }
     var fingerprints: [Int: ChannelDetector.Fingerprint] = [:]
     for index in lights {
+      try Task.checkCancellation()
       var print = ChannelDetector.Fingerprint(exposureMs: frames[index].exposureMs)
       if let stats = pixels.stats(frames[index].path, sample: Self.channelSample) {
         print.background = stats.median
@@ -69,7 +72,7 @@ extension Inventory {
     options: ChannelDetector.Options
   ) {
     let labeled = lights.filter { !frames[$0].filter.isEmpty && frames[$0].classSource != .signal }
-    for group in groups(labeled, by: { "\(ConfigKey(frames[$0]))|\(frames[$0].filter)" }) {
+    for group in groups(labeled, by: { ConfigKey(frames[$0], filter: frames[$0].filter) }) {
       let flagged = Set(
         ChannelDetector.flagTransitions(samples(group, fingerprints), options: options)
           .filter(\.wheelTransition).map(\.path))

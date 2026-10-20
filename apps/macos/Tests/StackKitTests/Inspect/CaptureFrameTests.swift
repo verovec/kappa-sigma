@@ -137,4 +137,16 @@ struct CaptureFrameTests {
     frame.channels = channels
     #expect(frame.needsDebayer == expected)
   }
+
+  @Test(
+    "non-finite or overflowing numbers are absent, never a crash",
+    .scratchDirectory, arguments: ["NaN", "inf", "-inf", "1E400"])
+  func testCaptureFrame_nonFiniteValues(value: String) throws {
+    let frame = try Self.frame(
+      TestFITS.write(
+        "a.fit", in: ScratchDirectory.url,
+        cards: ["IMAGETYP": "'Light'", "EXPTIME": value, "CCD-TEMP": value]))
+    #expect(frame.exposureMs == 0)
+    #expect(!frame.hasTemp)
+  }
 }

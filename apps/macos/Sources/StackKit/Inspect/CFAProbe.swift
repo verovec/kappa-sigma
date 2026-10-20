@@ -1,10 +1,3 @@
-/// The probe's answer; `unknown` is a genuine third state that keeps today's behaviour.
-package enum CFAVerdict: Sendable {
-  case cfa
-  case mono
-  case unknown
-}
-
 /// Is a frame really a colour mosaic?
 ///
 /// Answered from the pixels, not the FILTER card (`internal/inspect/cfaprobe.go`): under four dyes

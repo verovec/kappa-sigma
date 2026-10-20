@@ -6,6 +6,8 @@ package enum InspectError: Error, Equatable, Sendable {
   case unknownColorChoice(String)
   /// The asserted colour model matches none of the scan's lights.
   case noLightsForColorModel(choice: String, dropped: Int)
+  /// A capture folder that does not exist or cannot be listed (path, permissions, TCC).
+  case unreadableFolder(String)
   /// `scan` was called without a folder.
   case noFolders
 }

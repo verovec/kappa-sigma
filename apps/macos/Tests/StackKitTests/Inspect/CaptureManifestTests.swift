@@ -97,16 +97,6 @@ struct CaptureManifestTests {
     #expect(CaptureManifest.expandFilterWord(word) == expected)
   }
 
-  @Test("the legend is the distinct filters in capture order, else the canonical wheel")
-  func testCaptureManifest_legend() {
-    #expect(
-      CaptureManifest(parsing: "LLL R G B Ha\nLLL R G B Ha\nLLL\n").legend == [
-        "L", "R", "G", "B", "Ha",
-      ])
-    #expect(CaptureManifest(parsing: "LLLRGBHaHa\n").legend == ["L", "R", "G", "B", "Ha"])
-    #expect(CaptureManifest(parsing: "").legend == Filter.allCases.map(\.rawValue))
-  }
-
   @Test("a slot past the legend is a stable placeholder; the default wheel reaches SII")
   func testWheelSlots_filterForSlot() {
     let legend = ["L", "R", "G", "B", "Ha"]
@@ -139,7 +129,8 @@ struct CaptureManifestTests {
     var inventory = Inventory(
       root: root.path,
       frames: try Self.unknownFrames(in: folder, runs: runs, perRun: ["a.fit", "b.fit"]))
-    CaptureManifest.apply(under: root.path, to: &inventory)
+    CaptureManifest.apply(
+      files: [folder.appendingPathComponent("info.txt").path], to: &inventory)
 
     let expected = [
       "2021-08-14_00_10_00Z": "L", "2021-08-14_00_20_00Z": "L", "2021-08-14_00_30_00Z": "R",
@@ -165,7 +156,8 @@ struct CaptureManifestTests {
       root: root.path,
       frames: try Self.unknownFrames(
         in: folder, runs: ["2021-08-14_00_10_00Z", "2021-08-14_00_20_00Z"], perRun: ["a.fit"]))
-    CaptureManifest.apply(under: root.path, to: &inventory)
+    CaptureManifest.apply(
+      files: [folder.appendingPathComponent("info.txt").path], to: &inventory)
 
     #expect(inventory.frames.map(\.filter) == ["L", "R"])
     #expect(inventory.frames.allSatisfy { $0.type == .light })

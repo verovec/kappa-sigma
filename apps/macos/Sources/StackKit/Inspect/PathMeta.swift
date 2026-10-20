@@ -42,12 +42,18 @@ package struct PathMeta: Equatable, Sendable {
     } else {
       filter = Self.filterFromFolders(path)
     }
-    if let match = low.firstMatch(of: /(\d*\.?\d+)\s*sec/), let seconds = Double(match.1) {
-      exposureMs = Int((seconds * 1000).rounded())
+    if let match = low.firstMatch(of: /(\d*\.?\d+)\s*sec/),
+      let seconds = LegacyNumber.finite(match.1),
+      let milliseconds = LegacyNumber.rounded(seconds, scale: 1000)
+    {
+      exposureMs = milliseconds
     }
     gain = Self.gain(inName: low) ?? Self.gainFromFolders(path)
-    if let match = name.firstMatch(of: /(-?\d+\.?\d*)C(?:_|\.|$)/), let celsius = Double(match.1) {
-      tempMilliC = Int((celsius * 1000).rounded())
+    if let match = name.firstMatch(of: /(-?\d+\.?\d*)C(?:_|\.|$)/),
+      let celsius = LegacyNumber.finite(match.1),
+      let milli = LegacyNumber.rounded(celsius, scale: 1000)
+    {
+      tempMilliC = milli
       hasTemp = true
     }
     if let match = low.firstMatch(of: /bin(\d+)/) { bin = Int(match.1) ?? 0 }

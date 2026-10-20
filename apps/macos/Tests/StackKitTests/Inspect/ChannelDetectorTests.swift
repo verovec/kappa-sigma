@@ -92,4 +92,14 @@ struct ChannelDetectorTests {
       abs(ChannelDetector.emission("Ha", level: 0.3, richness: 0.5) - (0.5 * 0.3 + 0.5 * 0.5))
         < 1e-9)
   }
+
+  @Test(
+    "a zero or negative lookahead disables transition flags instead of trapping",
+    arguments: [0, -1])
+  func testChannelDetector_lookaheadBounds(lookahead: Int) {
+    var options = ChannelDetector.Options()
+    options.transitionLookahead = lookahead
+    let result = ChannelDetector.detect(Self.block(firstBackground: 600), options: options)
+    #expect(!result.assignments.contains { $0.wheelTransition })
+  }
 }

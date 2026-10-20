@@ -6,10 +6,11 @@ extension InventoryBuilder {
   ///
   /// A frame with no curve and no capture metadata at all is a processed leftover and stays
   /// unknown.
-  func classifyUnknowns(_ inventory: inout Inventory) {
+  func classifyUnknowns(_ inventory: inout Inventory) throws {
     let unknown = inventory.frames.indices.filter { inventory.frames[$0].type == .unknown }
     guard !unknown.isEmpty else { return }
-    let stats = unknown.map { index in
+    let stats = try unknown.map { index in
+      try Task.checkCancellation()
       let frame = inventory.frames[index]
       return pixels.stats(frame.path, sample: Self.statsSample)?.frameStat(
         exposureMs: frame.exposureMs)

@@ -216,4 +216,33 @@ struct InventoryBuilderTests {
     #expect(
       inventory.warnings.contains("2 frame(s) in 1 set(s) excluded by user (stray-light artifact)"))
   }
+
+  @Test(
+    "a folder that cannot be listed is an error naming it, not an empty capture", .scratchDirectory)
+  func testInventoryBuilder_unreadableRoot() throws {
+    let missing = try ScratchDirectory.url.appendingPathComponent("nope").path
+    #expect(throws: InspectError.unreadableFolder(missing)) {
+      try Self.builder.scan(paths: [missing])
+    }
+  }
+
+  @Test(
+    "an explicit colour choice is resolved before verdicts, nights and warnings are computed",
+    .scratchDirectory)
+  func testInventoryBuilder_colorChoiceBeforeFinalize() throws {
+    let dir = try ScratchDirectory.url
+    let dated = ["IMAGETYP": "'Light'", "DATE-OBS": "'2024-03-01T22:10:00'"]
+    try TestFITS.write(
+      "l.fits", in: dir, pixel: 1200, cards: dated.merging(["FILTER": "'L'"]) { $1 })
+    let rgb = Array(repeating: [UInt16](repeating: 1200, count: 64), count: 3)
+    try TestFITS.write("rgb.fits", in: dir, width: 8, height: 8, planes: rgb, cards: dated)
+    var overrides = InspectOverrides()
+    overrides.colorModel = .osc
+    let inventory = try Self.builder.scan(paths: [dir.path], overrides: overrides)
+    #expect(inventory.colorModel == .osc)
+    #expect(!inventory.warnings.contains { $0.contains("mixes monochrome") })
+    #expect(inventory.sessions.first?.counts == [.light: 1])
+    #expect(inventory.frames.count == 1)
+    #expect(inventory.frames.allSatisfy { $0.isColor })
+  }
 }

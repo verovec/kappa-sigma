@@ -32,20 +32,21 @@ package struct InventoryBuilder: Sendable {
     var merged = Inventory(root: roots.count == 1 ? roots[0] : Self.commonParent(roots), frames: [])
     for root in roots {
       try Task.checkCancellation()
-      let folder = scanFrames(root: root, overrides: overrides)
+      let folder = try scanFrames(root: root, overrides: overrides)
       merged.frames += folder.frames
       merged.warnings += folder.warnings
       if merged.channelDetection == nil { merged.channelDetection = folder.channelDetection }
     }
-    finalize(&merged, overrides: overrides)
-    try merged.resolve(overrides.colorModel)
+    try finalize(&merged, overrides: overrides)
     return merged
   }
 
   /// One folder: read, then the per-folder fallbacks, in the legacy order.
-  private func scanFrames(root: String, overrides: InspectOverrides) -> Inventory {
+  private func scanFrames(root: String, overrides: InspectOverrides) throws -> Inventory {
     var inventory = Inventory(root: root, frames: [])
-    for path in InspectWalk.files(under: root, skippingOutput: true) {
+    let files = try InspectWalk.files(under: root, skippingOutput: true)
+    for path in files {
+      try Task.checkCancellation()
       let ext = (path as NSString).pathExtension.lowercased()
       guard Self.fitsExtensions.contains(ext) else { continue }
       do {
@@ -57,29 +58,31 @@ package struct InventoryBuilder: Sendable {
     }
     // info.txt first, so signal detection only runs on what the manifest could not name; physical
     // wheel slots before detection, so a known filter never goes to the guess-prone detector.
-    CaptureManifest.apply(under: root, to: &inventory)
+    CaptureManifest.apply(files: files, to: &inventory)
     WheelSlots.nameRemaining(&inventory)
     WheelSlots.warnUnnamed(&inventory)
-    classifyUnknowns(&inventory)
+    try classifyUnknowns(&inventory)
     if overrides.detectChannels {
       var options = overrides.channel
       if options.order.isEmpty { options = ChannelDetector.Options() }
-      inventory.detectChannels(pixels: pixels, options: options)
+      try inventory.detectChannels(pixels: pixels, options: options)
     }
     return inventory
   }
 
   /// The steps that must run once over every folder (`finalizeInventory`).
-  private func finalize(_ inventory: inout Inventory, overrides: InspectOverrides) {
+  private func finalize(_ inventory: inout Inventory, overrides: InspectOverrides) throws {
     inventory.clearSpuriousBayer(pixels: pixels)
     inventory.colorModel = inventory.lightColorModel
-    if inventory.colorModel == .mixed {
+    // An explicit choice answers the mixed folder: resolved before anything is keyed on it.
+    if inventory.colorModel == .mixed && overrides.colorModel == .auto {
       inventory.warnings.append(
         "this folder mixes monochrome and one-shot-color lights — one run cannot stack both; "
           + "process them from separate folders")
     }
     inventory.nameColorChannel()
     inventory.regroup()
+    try inventory.resolve(overrides.colorModel)
     if !overrides.excludeSets.isEmpty {
       let removed = inventory.excludeSets(overrides.excludeSets)
       if removed.frames > 0 {
@@ -91,6 +94,7 @@ package struct InventoryBuilder: Sendable {
     }
     inventory.applyFilterMapping(overrides.filterMap)
     // Last among the grouping steps: verdicts are stored against a set's final id.
+    try Task.checkCancellation()
     FilterSetClassifier.annotate(&inventory, overrides: overrides.filterSets, pixels: pixels)
     inventory.sessions = SessionInfo.summary(inventory.frames)
     if Night.spansSeveral(inventory.frames) { inventory.warnUndatedSplit() }

@@ -112,14 +112,4 @@ struct PathMetaTests {
   func testPathMeta_wheelSlot(path: String, expected: Int) {
     #expect(PathMeta(path: path).wheelSlot == expected)
   }
-
-  @Test(
-    "processed outputs are recognised by a whole word, copy counters included",
-    arguments: [
-      ("m27_R_stacked.tif", true), ("Autosave001.tif", true), ("master_dark.fits", true),
-      ("Light_0001.fit", false), ("masterpiece_light.fit", false),
-    ])
-  func testPathMeta_isProcessedName(name: String, expected: Bool) {
-    #expect(PathMeta.isProcessedName("/x/\(name)") == expected)
-  }
 }

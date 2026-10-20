@@ -1,13 +1,3 @@
-/// How a scan records colour (`inspect.ColorModel`), decided once from the lights.
-package enum ColorModel: String, Codable, Sendable {
-  /// A mono sensor behind a filter wheel; the default without colour evidence.
-  case mono
-  /// One-shot colour: every light carries the three primaries.
-  case osc
-  /// Both; no single run can stack them.
-  case mixed
-}
-
 /// The result of scanning capture folders (`inspect.Inventory`): every classified frame, the sets
 /// calibration and stacking consume, the nights, and the warnings shown to the user.
 package struct Inventory: Equatable, Sendable {

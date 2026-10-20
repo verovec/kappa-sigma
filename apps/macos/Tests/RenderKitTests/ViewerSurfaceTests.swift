@@ -64,11 +64,16 @@ struct ViewerSurfaceTests {
   func testResponderChainCommands() throws {
     let surface = try Self.surface()
     #expect(surface.window.firstResponder === surface.view)
-    surface.view.mtkView(surface.view, drawableSizeWillChange: CGSize(width: 200, height: 100))
-    #expect(surface.model.viewSize == SIMD2(200, 100))
+    // The first drawable size (the window's, × the display's backing scale) fits the image.
+    let first = surface.model.viewSize
+    #expect(first == SIMD2(100, 50) * surface.backing)
     #expect(
       surface.model.frame.transform
-        == .fit(imageWidth: 64, imageHeight: 32, viewWidth: 200, viewHeight: 100))
+        == .fit(imageWidth: 64, imageHeight: 32, viewWidth: first.x, viewHeight: first.y))
+    // Later resizes keep the user's zoom; ⌘0 fits the new size.
+    surface.view.mtkView(surface.view, drawableSizeWillChange: CGSize(width: 200, height: 100))
+    #expect(surface.model.viewSize == SIMD2(200, 100))
+    #expect(surface.model.frame.transform.scale == 64 / first.x)
 
     let responder = try #require(surface.window.firstResponder)
     #expect(responder.tryToPerform(#selector(ViewerMTKView.zoomToActualSize(_:)), with: nil))

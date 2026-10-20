@@ -42,11 +42,11 @@ package struct ProjectWindowView: View {
     .frame(minWidth: 640, minHeight: 400)
     .sheet(
       isPresented: Binding(
-        get: { model.importing != nil }, set: { if !$0 { model.importing = nil } })
+        get: { model.importing != nil }, set: { if !$0 { model.closeImport() } })
     ) {
       if let importing = model.importing {
         ImportSheet(
-          model: importing, onAdd: { model.add($0) }, onCancel: { model.importing = nil },
+          model: importing, onAdd: { model.add($0) }, onCancel: { model.closeImport() },
           addError: model.error)
       }
     }

@@ -148,6 +148,12 @@ package final class ImportViewModel {
     }
   }
 
+  /// Stops the scan in flight: the sheet is closing and nothing will read its plan.
+  package func cancel() {
+    scan?.cancel()
+    isScanning = false
+  }
+
   /// Waits for the scan in flight, if any.
   package func settled() async {
     await scan?.value

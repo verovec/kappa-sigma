@@ -108,6 +108,23 @@ struct ChannelStackerTests {
     }
   }
 
+  @Test(
+    "the pixel trail probe reads the frame downsampled; an unreadable frame has no verdict",
+    .scratchDirectory)
+  func testPixelTrail() throws {
+    let folder = try ScratchDirectory.url
+    // A diagonal streak over a faintly textured sky.
+    var streak = [UInt16](repeating: 1000, count: 64 * 64)
+    for index in streak.indices { streak[index] += UInt16(index % 7) }
+    for diagonal in 0..<64 { streak[diagonal * 64 + diagonal] = 60000 }
+    let frame = try TestFITS.write(
+      "streak.fits", in: folder, width: 64, height: 64, planes: [streak], cards: [:])
+    let verdict = ChannelStacker.pixelTrail(frame, 32)
+    #expect(verdict?.detected == true && (verdict?.score ?? 0) > TrailDetector.voteFraction)
+    let absent = ChannelStacker.pixelTrail(folder.appendingPathComponent("absent.fits"), 32)
+    #expect(absent == nil)
+  }
+
   @Test("tags keep letters, digits, - and _; spaces become _; an empty filter is mono")
   func testChannelTag() {
     #expect(ChannelTag.sanitize("H alpha/7é") == "H_alpha7")

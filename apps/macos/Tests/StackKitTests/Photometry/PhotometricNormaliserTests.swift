@@ -136,4 +136,21 @@ struct PhotometricNormaliserTests {
     #expect(notes.contains { $0.contains("would clip its sky below zero") })
     #expect(try PhotometricNormaliser.measure(bright[0]).noise < 0.02)
   }
+
+  @Test("without a flag the largest night is the reference; unreadable, nothing is rewritten")
+  func testReferenceFallbacks() {
+    let big = (1...10).map { "/nonexistent/big_\($0).fits" }
+    let (records, notes) = PhotometricNormaliser.normalise([
+      PhotomGroup(
+        paths: ["/nonexistent/small_1.fits", "/nonexistent/small_2.fits"], label: "small"),
+      PhotomGroup(paths: big, label: "big"),
+    ])
+    #expect(records.map(\.label) == ["small", "big"] && records.allSatisfy { !$0.applied })
+    // Seven evenly spaced probes of the ten, each a note, then the skip.
+    let probes = big.prefix(7).map { "photometric reference \"big\": unreadable frame \($0)" }
+    #expect(
+      notes == probes + [
+        "photometric reference \"big\": no readable frames — normalization skipped"
+      ])
+  }
 }

@@ -1,5 +1,6 @@
 import Foundation
 import StackKit
+import Synchronization
 import TestSupport
 import Testing
 
@@ -100,5 +101,60 @@ struct PreprocessTwoNightOracleTests {
     let work = root.appendingPathComponent("work/run_\(PreprocessOracleTests.runID)")
     let left = (try? FileManager.default.contentsOfDirectory(atPath: work.path)) ?? []
     #expect(!left.contains { $0.hasPrefix("light_") && $0.contains("_g") }, "\(left)")
+  }
+
+  @Test(
+    "a night whose calibration fails costs only its own frames; a channel left with none fails",
+    .scratchDirectory)
+  func testFailingNightIsSkipped() async throws {
+    let oracle = try OracleFixtureTests.committedCase("golden-two-night")
+    let root = try InventoryBuilderFallbackTests.folder("scan")
+    // The 2024-03-01 night is the one calibrated with the 10 s dark.
+    let (_, result) = try await PreprocessOracleTests.run(
+      root: root, oracle: oracle, edge: Self.fullField,
+      fails: {
+        $0.contains("seqsubsky")
+          || $0.contains("calibrate light -dark=") && $0.contains("DARK_10000ms")
+      })
+    let recorded = try oracle.selection().channels
+    for channel in result.channels where ["L", "R"].contains(channel.filter) {
+      let night = try #require(recorded.first { $0.filter == channel.filter }?.groups?.first)
+      #expect(channel.error == nil && channel.nights.count == 1, "\(channel.filter)")
+      #expect(channel.inputFrames == night.stackedFrames + night.rejectedFrames)
+    }
+    let skipped = ["L", "R", "G", "B"].map {
+      "2024-03-01 · \($0): group failed, its 3 frame(s) skipped — "
+        + "scriptFailed(exitCode: 1, hint: \"fake failure\")"
+    }
+    // G and B were captured on that night alone: the channel fails, the run goes on.
+    let lost = ["G", "B"].map {
+      "channel \($0) failed — continuing without it: \($0): every calibration group failed — "
+        + "see the group warnings"
+    }
+    #expect(result.warnings.filter { $0.contains("failed") } == skipped + lost)
+  }
+
+  @Test(
+    "a merged registration Siril cannot run fails its channel alone",
+    .scratchDirectory, arguments: ["register light -2pass", "seqapplyreg light"])
+  func testFailingRegistration(command: String) async throws {
+    let oracle = try OracleFixtureTests.committedCase("golden-two-night")
+    let root = try InventoryBuilderFallbackTests.folder("scan")
+    // L registers first: only its script fails.
+    let seen = Mutex(0)
+    let (_, result) = try await PreprocessOracleTests.run(
+      root: root, oracle: oracle, edge: Self.fullField,
+      fails: { script in
+        script.contains("seqsubsky")
+          || script.contains(command)
+            && seen.withLock { count in
+              count += 1
+              return count == 1
+            }
+      })
+    #expect(
+      result.channels.map { "\($0.filter) \($0.error != nil)" } == [
+        "L true", "R false", "G false", "B false",
+      ])
   }
 }

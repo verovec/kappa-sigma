@@ -84,4 +84,44 @@ struct ParityCacheTests {
     #expect(
       !sibling.flipped && sibling.note.isEmpty, "an unreliable session is cached as undetermined")
   }
+
+  @Test(
+    """
+    a flip Siril cannot run leaves the frames unmirrored; an unsolvable re-probe keeps the flip; \
+    a failed undo says the frames may be mirrored
+    """,
+    .scratchDirectory)
+  func testFlipFailures() async throws {
+    let failing = PipelineSiril(solve: Self.solves([1]), fails: { $0.contains("mirrorx") })
+    let unflipped = try await ParityCache(runner: failing.runner).correct(
+      Self.group(), folder: try Self.folder("f"), base: "pp_light")
+    #expect(
+      !unflipped.flipped && unflipped.note.hasPrefix("session 0: parity flip failed (")
+        && unflipped.note.hasSuffix("— frames left unmirrored"))
+
+    let unsure = PipelineSiril(solve: Self.solves([1, nil]))
+    let kept = try await ParityCache(runner: unsure.runner).correct(
+      Self.group(), folder: try Self.folder("u"), base: "pp_light")
+    #expect(
+      kept.flipped
+        && kept.note == "session 0: mirror-corrected (parity flip; verification probe undetermined)"
+    )
+
+    let mirrors = Mutex(0)
+    // The flip runs, the re-probe still reads mirrored, the undo fails.
+    let stuck = PipelineSiril(
+      solve: Self.solves([1, 1]),
+      fails: { script in
+        script.contains("mirrorx")
+          && mirrors.withLock { count in
+            count += 1
+            return count == 2
+          }
+      })
+    let left = try await ParityCache(runner: stuck.runner).correct(
+      Self.group(), folder: try Self.folder("x"), base: "pp_light")
+    #expect(
+      left.flipped && left.note.hasPrefix("session 0: parity flip did not verify AND undo failed")
+        && left.note.hasSuffix("— frames may be mirrored"))
+  }
 }

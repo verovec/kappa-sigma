@@ -82,4 +82,58 @@ struct PhotomGateTests {
       FrameCurve.masked(planes: Self.halves(64, 0.05, 0.30), width: 64, height: 64) { _, _ in true }
         == nil)
   }
+
+  /// A transform with the given flags, scale 2.5.
+  static func flagged(
+    method: PhotomTransform.Method = .measured, clamped: Bool = false, meta: Bool = false,
+    seeded: Bool = false, background: Bool = false
+  ) -> PhotomTransform {
+    var transform = PhotomTransform(scale: 2.5, method: method)
+    (transform.clamped, transform.metaDisagree) = (clamped, meta)
+    (transform.metaSeeded, transform.backgroundDisagree) = (seeded, background)
+    return transform
+  }
+
+  static let flaggedTransforms: [PhotomTransform] = [
+    flagged(), flagged(clamped: true), flagged(meta: true), flagged(seeded: true),
+    flagged(method: .bgMatched), flagged(background: true),
+  ]
+
+  static let flagNotes: [[String]] = [
+    [],
+    ["group \"N2\": photometric scale clamped to [0.1, 10] (measured out of range)"],
+    [
+      "group \"N2\": measured scale 2.5 disagrees with header exposure/gain — check GAIN header"
+    ],
+    [
+      "group \"N2\": percentile curve too flat to measure (narrowband/sky pedestal) — scale 2.5 "
+        + "seeded from header exposure/gain"
+    ],
+    [
+      "group \"N2\": scale 2.5 matched from the measured sky backgrounds (no trustworthy "
+        + "header prediction)"
+    ],
+    [
+      "group \"N2\": the measured sky-background ratio grossly disagrees with the confirmed "
+        + "header seed ×2.5 — residual pedestal (missing darks) or a strong sky-brightness "
+        + "difference; the seed (object flux) was kept"
+    ],
+  ]
+
+  @Test(
+    "each flag of a transform is one note, in the legacy order (transformWarnings)",
+    arguments: zip(flaggedTransforms, flagNotes))
+  func testWarnings(transform: PhotomTransform, expected: [String]) {
+    #expect(PhotometricNormaliser.warnings("N2", transform) == expected)
+  }
+
+  @Test("a colour frame is measured on the float32 mean of its first three planes")
+  func testColourFrameUsesThePlaneMean() {
+    let planes: [[Float]] = (0..<4).map { plane in
+      (0..<400).map { Float(($0 * 37 + plane * 11) % 101) / 101 }
+    }
+    let inverse = Float(1) / 3
+    let mean = (0..<400).map { (planes[0][$0] + planes[1][$0] + planes[2][$0]) * inverse }
+    #expect(FrameCurve(planes: planes) == FrameCurve(planes: [mean]))
+  }
 }

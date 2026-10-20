@@ -31,7 +31,7 @@ extension PhotometricNormaliser {
   }
 
   /// The notes a transform's flags call for (`transformWarnings`).
-  static func warnings(_ label: String, _ transform: PhotomTransform) -> [String] {
+  package static func warnings(_ label: String, _ transform: PhotomTransform) -> [String] {
     var notes: [String] = []
     let scale = String(format: "%.3g", transform.scale)
     if transform.clamped {

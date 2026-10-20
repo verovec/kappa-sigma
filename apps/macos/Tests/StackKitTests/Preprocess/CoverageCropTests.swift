@@ -112,4 +112,26 @@ struct CoverageCropTests {
       second.warnings.first?.hasPrefix("coverage crop skipped: common coverage rectangle is only")
         == true)
   }
+
+  @Test(
+    "a channel the crop cannot read leaves every channel uncropped, with a warning",
+    .scratchDirectory)
+  func testUnreadableChannelKeepsTheFullField() throws {
+    let out = try ScratchDirectory.url
+    try FloatFITS.write(
+      out.appendingPathComponent("aligned_G.fits"), width: 640, height: 480,
+      planes: [[Float](repeating: 0.1, count: 640 * 480)])
+    let full = CoverageGrid(
+      homographies: [0: Self.identity], rejected: { _ in false }, frameWidth: 640, frameHeight: 480)
+    let rotated = CoverageGrid(
+      homographies: [0: Self.rotation(30, 640, 480)], rejected: { _ in false }, frameWidth: 640,
+      frameHeight: 480)
+    var journal = PreprocessJournal()
+    // aligned_R.fits was never written.
+    let (channels, record) = CoverageCrop.apply(
+      ["R": "aligned_R", "G": "aligned_G"], grids: ["R": full, "G": rotated], minimumFraction: 0.3,
+      out: out, journal: &journal)
+    #expect(channels == ["R": "aligned_R", "G": "aligned_G"] && record?.applied == false)
+    #expect(journal.warnings.first?.hasPrefix("coverage crop failed on R (") == true)
+  }
 }

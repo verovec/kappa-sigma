@@ -1,32 +1,15 @@
-/// The robust statistics of the noise tools (`noise/stats.go`, `sigma.go`): 64-px tiles, MAD
-/// sigmas, numpy-interpolated percentiles, bilinear grid sampling.
+/// The robust statistics of the noise tools (`noise/stats.go`, `sigma.go`).
+///
+/// 64-px tiles, MAD sigmas, bilinear grid sampling; the medians and percentiles are the ones in
+/// `PhotomStats`, the single copy of the legacy interpolation.
 enum NoiseStats {
   static let tileSize = 64
-
-  /// The median (mean of the middle two for an even count); 0 when empty.
-  static func median(_ values: [Double]) -> Double {
-    guard !values.isEmpty else { return 0 }
-    let sorted = values.sorted()
-    let middle = sorted.count / 2
-    return sorted.count % 2 == 1 ? sorted[middle] : 0.5 * (sorted[middle - 1] + sorted[middle])
-  }
-
-  /// The linear-interpolated percentile of an ascending array; 0 when empty.
-  static func percentile(sorted: [Double], _ percent: Double) -> Double {
-    guard let first = sorted.first, let last = sorted.last else { return 0 }
-    if percent <= 0 { return first }
-    if percent >= 100 { return last }
-    let rank = percent / 100 * Double(sorted.count - 1)
-    let low = Int(rank.rounded(.down))
-    guard low + 1 < sorted.count else { return last }
-    return sorted[low].addingProduct(rank - Double(low), sorted[low + 1] - sorted[low])
-  }
 
   /// 1.4826 · MAD.
   static func robustSigma(_ values: [Double]) -> Double {
     guard !values.isEmpty else { return 0 }
-    let center = median(values)
-    return 1.4826 * median(values.map { abs($0 - center) })
+    let center = PhotomStats.median(values)
+    return 1.4826 * PhotomStats.median(values.map { abs($0 - center) })
   }
 
   /// The tile (tx, ty) of a plane, clipped to its bounds.
@@ -58,8 +41,8 @@ enum NoiseStats {
       }
     }
     let sorted = grid.sorted()
-    let sigma = percentile(sorted: sorted, 50)
-    let p90 = percentile(sorted: sorted, 90)
+    let sigma = PhotomStats.percentile(sorted: sorted, 50)
+    let p90 = PhotomStats.percentile(sorted: sorted, 90)
     return TileSigmaGrid(
       grid: grid.map { min(max($0, 0.25 * sigma), 4 * sigma) }, gridWidth: gridWidth,
       gridHeight: gridHeight, sigma: sigma, p90: p90)

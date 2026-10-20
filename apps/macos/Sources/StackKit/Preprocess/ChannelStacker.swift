@@ -101,7 +101,7 @@ package struct ChannelStacker: Sendable {
   /// The dark's `<name>_defects.lst` sidecar, when it exists (`DefectsListFor`).
   static func defectList(of master: String) -> String? {
     guard !master.isEmpty else { return nil }
-    let path = (master as NSString).deletingPathExtension + "_defects.lst"
+    let path = DarkDefects.listPath(of: master)
     return FileManager.default.fileExists(atPath: path) ? path : nil
   }
 

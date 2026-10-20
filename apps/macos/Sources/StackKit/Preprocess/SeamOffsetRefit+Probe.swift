@@ -81,7 +81,9 @@ extension SeamOffsetRefit {
     func add(_ delta: Float, to indices: [Int]) throws {
       for index in indices {
         try Task.checkCancellation()
-        let url = frame(index).resolvingSymlinksInPath()
+        // Never through the links: the atomic write replaces the merged entry itself, so a
+        // night folder's file, or a capture it links to, is never rewritten (R7).
+        let url = frame(index)
         let file = try FITSFile.read(at: url)
         let image = try file.image()
         image.planes = image.planes.map { $0.map { $0 + delta } }

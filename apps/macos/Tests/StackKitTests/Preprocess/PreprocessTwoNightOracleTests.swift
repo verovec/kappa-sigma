@@ -83,4 +83,22 @@ struct PreprocessTwoNightOracleTests {
     let recorded = (try oracle.run().warnings ?? []).filter { !$0.hasPrefix("finish quality") }
     #expect(result.warnings == recorded)
   }
+
+  @Test(
+    "a multi-night channel that fails is an outcome with an error; its night folders are removed",
+    .scratchDirectory)
+  func testFailingChannelKeepsTheRun() async throws {
+    let oracle = try OracleFixtureTests.committedCase("golden-two-night")
+    let root = try InventoryBuilderFallbackTests.folder("scan")
+    let (_, result) = try await PreprocessOracleTests.run(
+      root: root, oracle: oracle, edge: Self.fullField,
+      fails: { $0.contains("seqsubsky") || $0.contains("/master_L\n") || $0.hasSuffix("/master_L") }
+    )
+    let byFilter = Dictionary(uniqueKeysWithValues: result.channels.map { ($0.filter, $0) })
+    #expect(byFilter["L"]?.error != nil)
+    #expect(["R", "G", "B"].allSatisfy { byFilter[$0]?.error == nil })
+    let work = root.appendingPathComponent("work/run_\(PreprocessOracleTests.runID)")
+    let left = (try? FileManager.default.contentsOfDirectory(atPath: work.path)) ?? []
+    #expect(!left.contains { $0.hasPrefix("light_") && $0.contains("_g") }, "\(left)")
+  }
 }

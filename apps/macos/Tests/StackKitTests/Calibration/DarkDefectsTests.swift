@@ -97,4 +97,27 @@ struct DarkDefectsTests {
     #expect(DarkDefects.build(master: master, frames: Array(paths.prefix(5))) == nil)
     #expect(!FileManager.default.fileExists(atPath: list))
   }
+
+  @Test(
+    "the separable 5-median equals the sort of each clamped window",
+    arguments: [(7, 5), (1, 9), (12, 3)])
+  func testMedianFilterMatchesSortedWindows(width: Int, height: Int) {
+    var random = LCG(state: 7)
+    let values = (0..<width * height).map { _ in Float(random.next()) }
+    func reference(_ source: [Float], lines: Int, length: Int, index: (Int, Int) -> Int) -> [Float]
+    {
+      var out = source
+      for line in 0..<lines {
+        for position in 0..<length {
+          let window = (max(0, position - 2)...min(length - 1, position + 2))
+            .map { source[index(line, $0)] }.sorted()
+          out[index(line, position)] = window[window.count / 2]
+        }
+      }
+      return out
+    }
+    let rows = reference(values, lines: height, length: width) { $0 * width + $1 }
+    let expected = reference(rows, lines: width, length: height) { $1 * width + $0 }
+    #expect(DarkDefects.medianFilter5(values, width: width, height: height) == expected)
+  }
 }

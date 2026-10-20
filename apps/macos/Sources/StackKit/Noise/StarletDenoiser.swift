@@ -64,7 +64,8 @@ package enum StarletDenoiser {
     guard tiles.sigma > 0, tiles.sigma.isFinite else { return nil }
     let background = (0..<tiles.gridHeight).flatMap { tileY in
       (0..<tiles.gridWidth).map { tileX in
-        NoiseStats.median(NoiseStats.tile(smooth, width: width, height: height, x: tileX, y: tileY))
+        PhotomStats.median(
+          NoiseStats.tile(smooth, width: width, height: height, x: tileX, y: tileY))
       }
     }
     var scaleTwo = smooth

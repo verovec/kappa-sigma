@@ -1,3 +1,4 @@
+internal import Accelerate
 internal import Foundation
 internal import ImageKit
 
@@ -64,7 +65,8 @@ package struct DarkDefects: Equatable, Sendable {
   package static func build(master: String, frames: [String]) -> String? {
     let list = listPath(of: master)
     guard let defects = scan(frames), !defects.pixels.isEmpty else {
-      try? FileManager.default.removeItem(atPath: list)
+      // Cancelled mid-scan: nothing was measured, the list on disk stays.
+      if !Task.isCancelled { try? FileManager.default.removeItem(atPath: list) }
       return nil
     }
     do {
@@ -82,6 +84,8 @@ package struct DarkDefects: Equatable, Sendable {
     var squares: [Double] = []
     var (width, height, used, topDown) = (0, 0, 0, false)
     for path in frames {
+      // A cancelled master build stops here; MasterBuilder's own check then discards it.
+      if Task.isCancelled { return nil }
       guard let file = try? FITSFile.read(at: URL(fileURLWithPath: path)),
         let image = try? file.image(),
         image.planes.count == 1
@@ -94,10 +98,13 @@ package struct DarkDefects: Equatable, Sendable {
       } else if image.width != width || image.height != height {
         continue
       }
-      for (index, value) in image.planes[0].enumerated() {
-        let double = Double(value)
-        sum[index] += double
-        squares[index] += double * double
+      // Vectorised: the raw pool is dozens of 26 MP frames. Integer ADUs square exactly, so the
+      // fused multiply-add sums what the legacy loop sums.
+      let values = vDSP.floatToDouble(image.planes[0])
+      vDSP.add(sum, values, result: &sum)
+      squares.withUnsafeMutableBufferPointer { squares in
+        guard let base = squares.baseAddress else { return }
+        vDSP_vmaD(values, 1, values, 1, base, 1, base, 1, vDSP_Length(values.count))
       }
       used += 1
     }

@@ -37,6 +37,7 @@ extension MasterBuilder {
       if type == .dark, let note = DarkDefects.build(master: final + ".fits", frames: paths) {
         result.warnings.append(note)
       }
+      try Task.checkCancellation()
     } catch is CancellationError {
       Self.discard(target)
       throw CancellationError()

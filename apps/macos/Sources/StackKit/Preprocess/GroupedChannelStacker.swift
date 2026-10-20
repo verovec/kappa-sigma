@@ -39,21 +39,41 @@ package struct GroupedChannelStacker: Sendable {
     let representative = CalibrationMatcher.select(groups[0], in: inventory, masters: masters)
     var outcome = ChannelOutcome(groups[0], filter: filter, selection: representative)
     outcome.inputFrames = 0
-    var merge = Merge()
-    for (index, group) in groups.enumerated() {
-      try await calibrate(
-        group, filter: filter,
-        selection: CalibrationMatcher.select(group, in: inventory, masters: masters),
-        folder: work.appendingPathComponent("light_\(ChannelTag.sanitize(filter))_g\(index)"),
-        into: &merge, outcome: &outcome)
+    // The per-night calibrated copies are bulky: they go even when the run fails or is cancelled.
+    let folders = groups.indices.map {
+      work.appendingPathComponent("light_\(ChannelTag.sanitize(filter))_g\($0)")
     }
+    defer { for folder in folders { try? FileManager.default.removeItem(at: folder) } }
+    do {
+      var merge = Merge()
+      for (group, folder) in zip(groups, folders) {
+        try await calibrate(
+          group, filter: filter,
+          selection: CalibrationMatcher.select(group, in: inventory, masters: masters),
+          folder: folder, into: &merge, outcome: &outcome)
+      }
+      try await stack(merge, filter: filter, work: work, out: out, into: &outcome)
+    } catch is CancellationError {
+      throw CancellationError()
+    } catch {
+      // A failing channel is an outcome with an error, never the end of the run.
+      outcome.error = ChannelStacker.describe(error)
+    }
+    return outcome
+  }
+
+  /// The calibrated nights of a channel: normalised, merged, registered and stacked.
+  private func stack(
+    _ merge: Merge, filter: String, work: URL, out: URL, into outcome: inout ChannelOutcome
+  ) async throws {
+    var merge = merge
     guard !merge.calibrated.isEmpty else {
       outcome.error = "\(filter): every calibration group failed — see the group warnings"
-      return outcome
+      return
     }
     if merge.calibrated.count == 1 {
       try await promoteLone(merge.calibrated[0], filter: filter, out: out, into: &outcome)
-      return outcome
+      return
     }
     let anchor = NightPlan.anchorGroup(merge.nights, anchorNight: anchorNight)
     if settings.photometricNormalisation && merge.photometry.count > 1 {
@@ -61,7 +81,6 @@ package struct GroupedChannelStacker: Sendable {
     }
     try await mergeAndStack(
       merge, anchor: anchor, filter: filter, work: work, out: out, into: &outcome)
-    return outcome
   }
 
   /// One night.
@@ -94,7 +113,12 @@ package struct GroupedChannelStacker: Sendable {
       return
     }
     let paths = (1...group.count).map { light.frame(light.calibrated, $0).path }
-    for path in paths { try? FITSFile.stripKeyword("BAYERPAT", at: URL(fileURLWithPath: path)) }
+    for path in paths {
+      // Without masters the night's frames are links to the captures, which stay read-only (R7).
+      let url = URL(fileURLWithPath: path)
+      do { try FileReplace.detach(url) } catch { continue }
+      try? FITSFile.stripKeyword("BAYERPAT", at: url)
+    }
     let parity = try await parity.correct(group, folder: folder, base: light.calibrated)
     if !parity.note.isEmpty { outcome.selection.notes.append(parity.note) }
     merge.spans.append(merge.calibrated.count..<(merge.calibrated.count + paths.count))

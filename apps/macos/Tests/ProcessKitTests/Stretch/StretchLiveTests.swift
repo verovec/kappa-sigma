@@ -23,26 +23,29 @@ struct StretchLiveTests {
       minimum: sorted.first ?? 0, maximum: sorted.last ?? 1)
   }
 
-  @Test("mean |Δ| ≤ 1/255 against Siril autostretch -2.8 0.25 (unlinked)", .scratchDirectory)
-  func testMTFMatchesSirilAutostretch() async throws {
+  @Test(
+    "mean |Δ| ≤ 1/255 against Siril autostretch -2.8 0.25, unlinked and linked",
+    .scratchDirectory, arguments: [false, true])
+  func testMTFMatchesSirilAutostretch(linked: Bool) async throws {
     let root = try #require(FinishOracle.root)
     let manifest = try FinishOracle.manifest()
     let layer = try #require(manifest.layers.first { $0.path == "crop/rgb_base.fits" })
-    #expect(FinishOracle.verify([layer], root: root) == [], "the crop is the recorded one")
+    // Compared against anything else, the Δ would mean nothing: the crop must be the recorded one.
+    try #require(FinishOracle.verify([layer], root: root) == [])
     let scratch = try ScratchDirectory.url
     let crop = scratch.appendingPathComponent("crop.fits")
     try FITSFile.read(at: root.appendingPathComponent(layer.path))
       .writeCrop(to: crop, x0: 384, y0: 256, x1: 640, y1: 512)
 
     _ = try await SirilRunner.live(binary: try SirilTool.locate()).run(
-      SirilScript([.load("crop"), .autostretch(linked: false, target: 0.25), .save("siril")]),
+      SirilScript([.load("crop"), .autostretch(linked: linked, target: 0.25), .save("siril")]),
       scratch, { _ in })
     let siril = try FITSFile.read(at: scratch.appendingPathComponent("siril.fits")).image()
 
     let image = try FITSFile.read(at: crop).image()
     let device = try #require(MTLCreateSystemDefaultDevice())
     var params = ParamSet(schema: StretchProcess.schema)
-    try params.set("linked", .flag(false))
+    try params.set("linked", .flag(linked))
     let input = try GPUImage(
       device: device, width: image.width, height: image.height, planes: image.planes)
     let ours = try ProcessRunner(device: device).run(

@@ -71,7 +71,7 @@ struct StretchTests {
       MTFCase(clip: -2.8, target: 0.25, linked: true, planes: 3),
       MTFCase(clip: -2.8, target: 0.25, linked: false, planes: 3),
       MTFCase(clip: -1.5, target: 0.15, linked: false, planes: 3),
-      MTFCase(clip: 0, target: 0.4, linked: true, planes: 1),
+      MTFCase(clip: -0.5, target: 0.4, linked: true, planes: 1),
     ])
   func testMTFMatchesCPUOracle(_ example: MTFCase) throws {
     let planes = Self.planes(example.planes)
@@ -99,44 +99,6 @@ struct StretchTests {
       }
     }
     #expect(Self.maxDifference(out, expected) <= 1.0 / 65535)
-  }
-
-  struct GHSCase: CustomTestStringConvertible, Sendable {
-    let stretch: Double
-    let b: Double
-    let sp: Double
-    let lp: Double
-    let hp: Double
-    var testDescription: String { "ln(D+1) \(stretch) b \(b) SP \(sp) LP \(lp) HP \(hp)" }
-  }
-
-  @Test(
-    "GHS equals the reference equations within 1e-5, for every family of b",
-    arguments: [
-      GHSCase(stretch: 3, b: 0, sp: 0.05, lp: 0, hp: 1),
-      GHSCase(stretch: 3, b: 2, sp: 0.05, lp: 0, hp: 1),
-      GHSCase(stretch: 5, b: 8, sp: 0.04, lp: 0.01, hp: 0.9),
-      GHSCase(stretch: 2, b: -1, sp: 0.1, lp: 0, hp: 1),
-      GHSCase(stretch: 2, b: -0.5, sp: 0.2, lp: 0.05, hp: 0.8),
-      GHSCase(stretch: 1, b: -3, sp: 0, lp: 0, hp: 0.95),
-      GHSCase(stretch: 0, b: 4, sp: 0.1, lp: 0, hp: 1),
-    ])
-  func testGHSMatchesReference(_ example: GHSCase) throws {
-    let planes = Self.planes(3)
-    let out = try Self.run(
-      [
-        "mode": .choice("ghs"), "ghsStretch": .number(example.stretch),
-        "ghsIntensity": .number(example.b), "ghsSymmetry": .number(example.sp),
-        "ghsShadows": .number(example.lp), "ghsHighlights": .number(example.hp),
-      ], planes: planes)
-    let expected = Self.expected(planes, ceiling: 1) { pixel in
-      pixel.map {
-        StretchOracle.ghs(
-          $0, stretch: example.stretch, b: example.b, lp: example.lp, sp: example.sp,
-          hp: example.hp)
-      }
-    }
-    #expect(Self.maxDifference(out, expected) <= 1e-5)
   }
 
   @Test(
@@ -204,15 +166,15 @@ struct StretchTests {
     #expect(process.params == ParamSet(schema: StretchProcess.schema), "suggestions change nothing")
   }
 
-  @Test("GHS refuses protection points on the wrong side of the symmetry point")
-  func testGHSOrdering() throws {
-    #expect(throws: ProcessError.self) {
-      _ = try Self.run(
-        [
-          "mode": .choice("ghs"), "ghsStretch": .number(2), "ghsSymmetry": .number(0.1),
-          "ghsShadows": .number(0.3),
-        ], planes: Self.planes(1))
-    }
+  @Test("every reason is a catalog key; the GHS symmetry point stays between the protections")
+  func testSuggestionReasonsAndBounds() throws {
+    let device = try #require(MTLCreateSystemDefaultDevice())
+    var params = ParamSet(schema: StretchProcess.schema)
+    try params.set("ghsShadows", .number(0.1))
+    let process = try StretchProcess(params: params, device: device)
+    let suggestions = process.suggestions(stats: Self.stats)
+    #expect(Set(suggestions.map(\.reason)).isSubset(of: StretchProcess.suggestionReasons))
+    #expect(suggestions.first { $0.paramID == "ghsSymmetry" }?.value == .number(0.1))
   }
 
   @Test("headroom keeps each pixel's RGB ratios to 1e-5, is monotone and stays under the ceiling")

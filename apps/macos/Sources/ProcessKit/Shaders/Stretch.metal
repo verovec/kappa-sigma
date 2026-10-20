@@ -28,12 +28,30 @@ static float3 headroom(float3 rgb, uint planes, float ceiling, float knee) {
   return rgb * (compressed / lum);
 }
 
-// The GHS base transform T(x) of local intensity b and strength d.
+// log(1 + y) and exp(z) − 1 without cancellation (Kahan): MSL has neither log1p nor expm1, and
+// near the logarithmic family (b → −1, or b → 0⁺) the plain forms lose ~1e-5 in float32.
+static float log1pAccurate(float y) {
+  float u = 1.0f + y;
+  return u == 1.0f ? y : log(u) * (y / (u - 1.0f));
+}
+
+static float expm1Accurate(float z) {
+  float u = exp(z);
+  if (u == 1.0f) { return z; }
+  float um1 = u - 1.0f;
+  return um1 == -1.0f ? -1.0f : um1 * (z / log(u));
+}
+
+// The GHS base transform T(x) of local intensity b and strength d, in its cancellation-free form:
+// 1 − (1 + q)^k = −expm1(k · log1p(q)).
 static float ghsBase(float x, float b, float d) {
-  if (b == -1.0f) { return log(1.0f + d * x); }
-  if (b < 0.0f) { return (1.0f - pow(1.0f - b * d * x, (b + 1.0f) / b)) / (d * (b + 1.0f)); }
-  if (b == 0.0f) { return 1.0f - exp(-d * x); }
-  return 1.0f - pow(1.0f + b * d * x, -1.0f / b);
+  if (b == -1.0f) { return log1pAccurate(d * x); }
+  if (b < 0.0f) {
+    float k = (b + 1.0f) / b;
+    return -expm1Accurate(k * log1pAccurate(-b * d * x)) / (d * (b + 1.0f));
+  }
+  if (b == 0.0f) { return -expm1Accurate(-d * x); }
+  return -expm1Accurate(-log1pAccurate(b * d * x) / b);
 }
 
 static float ghs(float x, constant float *g) {
@@ -75,7 +93,9 @@ kernel void stretch(texture2d<float, access::read> inR [[texture(0)]],
                     uint2 gid [[thread_position_in_grid]]) {
   if (gid.x >= outR.get_width() || gid.y >= outR.get_height()) { return; }
   uint planes = uint(p[1]);
-  float3 rgb = float3(inR.read(gid).r, inG.read(gid).r, inB.read(gid).r);
+  float red = inR.read(gid).r;
+  // A mono image binds its plane to every slot: read it once.
+  float3 rgb = planes == 3 ? float3(red, inG.read(gid).r, inB.read(gid).r) : float3(red);
   rgb = headroom(rgb, planes, p[2], p[3]);
   float3 out = rgb;
   if (p[0] == 0.0f) {

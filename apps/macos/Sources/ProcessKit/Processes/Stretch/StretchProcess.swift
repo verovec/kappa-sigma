@@ -62,31 +62,33 @@ package struct StretchProcess: ImageProcess {
       device: device, file: "Stretch.metal", function: "stretch")
   }
 
+  /// The reasons the panel shows next to a suggestion: English keys of the catalog.
+  package static let suggestionReasons = [
+    "autostretch like Siril: shadows 2.8σ below the background",
+    "autostretch like Siril: background at 0.25",
+    "autostretch like Siril: one curve for every channel keeps the colour balance",
+    "the deep-sky preset caps linear cores at 0.90 so star colours survive the stretch",
+    "GHS symmetry point on the background median: the stretch opens the faint signal",
+  ]
+
   /// Siril's autostretch (−2.8σ, background 0.25, linked), the deep-sky preset's 0.90 headroom,
-  /// and the GHS symmetry point on the mean of the bundle medians; none is applied by itself.
+  /// and the GHS symmetry point on the layer's mean median, kept between the current protection
+  /// points; none is applied by itself.
   package func suggestions(stats: LayerStats) -> [Suggestion] {
+    let reasons = Self.suggestionReasons
     var suggestions = [
-      Suggestion(
-        paramID: "shadowsClip", value: .number(-2.8),
-        reason: "autostretch like Siril: shadows 2.8σ below the background"),
-      Suggestion(
-        paramID: "targetBackground", value: .number(0.25),
-        reason: "autostretch like Siril: background at 0.25"),
-      Suggestion(
-        paramID: "linked", value: .flag(true),
-        reason: "autostretch like Siril: one curve for every channel keeps the colour balance"),
-      Suggestion(
-        paramID: "headroom", value: .number(0.9),
-        reason: "the deep-sky preset caps linear cores at 0.90 so star colours survive the stretch"
-      ),
+      Suggestion(paramID: "shadowsClip", value: .number(-2.8), reason: reasons[0]),
+      Suggestion(paramID: "targetBackground", value: .number(0.25), reason: reasons[1]),
+      Suggestion(paramID: "linked", value: .flag(true), reason: reasons[2]),
+      Suggestion(paramID: "headroom", value: .number(0.9), reason: reasons[3]),
     ]
+    // LayerStats holds one entry per plane of the layer: the mean is this layer's background.
     if !stats.channels.isEmpty {
       let median = stats.channels.map(\.median).reduce(0, +) / Double(stats.channels.count)
+      let (low, high) = (params.number("ghsShadows"), params.number("ghsHighlights"))
       suggestions.append(
         Suggestion(
-          paramID: "ghsSymmetry", value: .number(min(max(median, 0), 1)),
-          reason: "GHS symmetry point on the background median: the stretch opens the faint signal"
-        ))
+          paramID: "ghsSymmetry", value: .number(min(max(median, low), high)), reason: reasons[4]))
     }
     return suggestions
   }

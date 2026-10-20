@@ -28,7 +28,8 @@ struct StretchUniforms {
     values[Slot.channels] = Float(channels)
     let ceiling = params.number("headroom")
     values[Slot.ceiling] = Float(ceiling)
-    values[Slot.knee] = Float(ceiling - 0.05 > 0 ? ceiling - 0.05 : ceiling * 0.9)
+    // The legacy knee: 0.05 under the ceiling (the schema keeps the ceiling ≥ 0.5).
+    values[Slot.knee] = Float(ceiling - 0.05)
     switch params.choice("mode") {
     case "ghs":
       values[Slot.mode] = 1
@@ -59,6 +60,12 @@ struct StretchUniforms {
       : used.map { ($0.median, $0.madn) }
     for (channel, pair) in pairs.enumerated() {
       let shadows = Self.shadows(median: pair.median, madn: pair.madn, clip: clip)
+      // At the median (clip 0, or a plane with no noise) the midtone is 0 and the curve is a
+      // hard black/white threshold: refused with the reason, never rendered or adjusted (R2).
+      guard pair.median - shadows > 0 else {
+        throw ProcessError.invalidParameter(
+          "the shadows clip reaches the background median (MADN \(pair.madn)): lower it")
+      }
       let base = Slot.mtf + 3 * channel
       values[base] = Float(shadows)
       values[base + 1] = Float(1 / (1 - shadows))

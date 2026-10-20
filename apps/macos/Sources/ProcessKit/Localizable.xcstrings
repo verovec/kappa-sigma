@@ -97,6 +97,22 @@
         }
       }
     },
+    "GHS symmetry point on the background median: the stretch opens the faint signal": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GHS symmetry point on the background median: the stretch opens the faint signal"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "point de symétrie GHS sur la médiane du fond : l’étirement ouvre le signal faible"
+          }
+        }
+      }
+    },
     "Green": {
       "localizations": {
         "en": {
@@ -525,6 +541,70 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fond cible"
+          }
+        }
+      }
+    },
+    "autostretch like Siril: background at 0.25": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "autostretch like Siril: background at 0.25"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "autostretch comme Siril : fond à 0,25"
+          }
+        }
+      }
+    },
+    "autostretch like Siril: one curve for every channel keeps the colour balance": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "autostretch like Siril: one curve for every channel keeps the colour balance"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "autostretch comme Siril : une même courbe pour tous les canaux garde l’équilibre des couleurs"
+          }
+        }
+      }
+    },
+    "autostretch like Siril: shadows 2.8σ below the background": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "autostretch like Siril: shadows 2.8σ below the background"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "autostretch comme Siril : ombres 2,8σ sous le fond"
+          }
+        }
+      }
+    },
+    "the deep-sky preset caps linear cores at 0.90 so star colours survive the stretch": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the deep-sky preset caps linear cores at 0.90 so star colours survive the stretch"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "le préréglage ciel profond plafonne les cœurs linéaires à 0,90 pour que les étoiles gardent leur couleur"
           }
         }
       }

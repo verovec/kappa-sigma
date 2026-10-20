@@ -50,7 +50,7 @@ let package = Package(
         "ImageKit", "ProjectKit", .product(name: "Subprocess", package: "swift-subprocess"),
       ],
       exclude: ["README.md", "Siril/README.md", "Inspect/README.md", "Calibration/README.md",
-        "Preprocess/README.md",
+        "Preprocess/README.md", "Import/README.md",
       ], swiftSettings: common),
     .target(
       name: "HelpKit", dependencies: [],
@@ -88,7 +88,9 @@ let package = Package(
       swiftSettings: common),
     .testTarget(
       name: "AstroStackAppTests",
-      dependencies: ["AstroStackApp", "ImageKit", "ProjectKit", "RenderKit", "TestSupport"],
+      dependencies: [
+        "AstroStackApp", "ImageKit", "ProjectKit", "RenderKit", "StackKit", "TestSupport",
+      ],
       swiftSettings: common),
   ]
 )

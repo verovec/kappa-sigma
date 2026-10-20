@@ -26,6 +26,8 @@ package struct ChannelOutcome: Equatable, Sendable {
   package var seamOffsets: [SeamOffsetRefit.Record] = []
   /// Multi-night channels: where the stacked frames cover the anchor canvas.
   package var coverage: CoverageGrid?
+  /// Multi-night channels: the seam noise pass on the master.
+  package var seamNoise: SeamNoiseEqualiser.Record?
 
   /// A channel about to be processed.
   package init(_ set: FrameSet, filter: String, selection: CalibrationSelection) {

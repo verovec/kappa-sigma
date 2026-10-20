@@ -57,6 +57,10 @@ extension GroupedChannelStacker {
         rejected: { $0 >= grades.count || grades[$0].rejected || grades[$0].fwhm <= 0 },
         frameWidth: size.width, frameHeight: size.height)
     }
+    // The full-depth core stays byte for byte; the shallow margins get the excess noise removed.
+    if settings.seamNoiseEqualisation, let path = outcome.masterPath, let grid = outcome.coverage {
+      outcome.seamNoise = SeamNoiseEqualiser.equalise(URL(fileURLWithPath: path), grid: grid)
+    }
     outcome.nights = Self.contributions(outcome.nights, spans: merge.spans, grades: outcome.grades)
     for night in outcome.nights where night.stacked == 0 && night.frames > 0 {
       stacker.warn(

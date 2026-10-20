@@ -23,12 +23,17 @@ package struct CalibrationPreview: Equatable, Sendable {
   package var channels: [Channel]
 
   /// Matches every light set against `masters` (normally `candidates`) through the same pool the
-  /// run uses: masters from another sensor are excluded first, under `force` too.
-  package init(inventory: Inventory, masters: [CalibrationMaster], force: Bool = false) {
+  /// run uses: masters from another sensor are excluded first, under `force` too; `excluded`
+  /// suggestion ids are dropped as the run drops them (`calib_exclude`).
+  package init(
+    inventory: Inventory, masters: [CalibrationMaster], excluded: [String] = [],
+    force: Bool = false
+  ) {
     channels = inventory.sets.filter { $0.key.type == .light }.map { set in
       let pool = DimensionGuard.keepMatching(masters, lightPath: set.frames.first?.path ?? "")
       var selection = CalibrationMatcher.match(
-        LightRef(set, in: inventory), masters: pool.masters, force: force)
+        LightRef(set, in: inventory), masters: pool.masters, excluded: excluded,
+        force: force)
       if let note = pool.note { selection.notes.append(note) }
       let suggestions = CalibrationRole.allCases.compactMap { role in
         selection.master(role).map {

@@ -28,6 +28,31 @@ static float3 headroom(float3 rgb, uint planes, float ceiling, float knee) {
   return rgb * (compressed / lum);
 }
 
+// The GHS base transform T(x) of local intensity b and strength d.
+static float ghsBase(float x, float b, float d) {
+  if (b == -1.0f) { return log(1.0f + d * x); }
+  if (b < 0.0f) { return (1.0f - pow(1.0f - b * d * x, (b + 1.0f) / b)) / (d * (b + 1.0f)); }
+  if (b == 0.0f) { return 1.0f - exp(-d * x); }
+  return 1.0f - pow(1.0f + b * d * x, -1.0f / b);
+}
+
+static float ghs(float x, constant float *g) {
+  x = clamp(x, 0.0f, 1.0f);
+  float b = g[0], d = g[1], lp = g[2], sp = g[3], hp = g[4];
+  if (d <= 0.0f) { return x; }
+  float f;
+  if (x < lp) {
+    f = -g[7] + g[8] * (x - lp);
+  } else if (x < sp) {
+    f = -ghsBase(sp - x, b, d);
+  } else if (x < hp) {
+    f = ghsBase(x - sp, b, d);
+  } else {
+    f = g[9] + g[10] * (x - hp);
+  }
+  return (f - g[5]) * g[6];
+}
+
 kernel void stretch(texture2d<float, access::read> inR [[texture(0)]],
                     texture2d<float, access::read> inG [[texture(1)]],
                     texture2d<float, access::read> inB [[texture(2)]],
@@ -45,6 +70,8 @@ kernel void stretch(texture2d<float, access::read> inR [[texture(0)]],
     for (uint c = 0; c < planes; ++c) {
       out[c] = mtf((rgb[c] - p[4 + 3 * c]) * p[5 + 3 * c], p[6 + 3 * c]);
     }
+  } else if (p[0] == 1.0f) {
+    for (uint c = 0; c < planes; ++c) { out[c] = ghs(rgb[c], p + 13); }
   }
   outR.write(float4(out.r), gid);
   if (planes == 3) {

@@ -98,4 +98,74 @@ struct StretchTests {
     }
     #expect(Self.maxDifference(out, expected) <= 1.0 / 65535)
   }
+
+  struct GHSCase: CustomTestStringConvertible, Sendable {
+    let stretch: Double
+    let b: Double
+    let sp: Double
+    let lp: Double
+    let hp: Double
+    var testDescription: String { "ln(D+1) \(stretch) b \(b) SP \(sp) LP \(lp) HP \(hp)" }
+  }
+
+  @Test(
+    "GHS equals the reference equations within 1e-5, for every family of b",
+    arguments: [
+      GHSCase(stretch: 3, b: 0, sp: 0.05, lp: 0, hp: 1),
+      GHSCase(stretch: 3, b: 2, sp: 0.05, lp: 0, hp: 1),
+      GHSCase(stretch: 5, b: 8, sp: 0.04, lp: 0.01, hp: 0.9),
+      GHSCase(stretch: 2, b: -1, sp: 0.1, lp: 0, hp: 1),
+      GHSCase(stretch: 2, b: -0.5, sp: 0.2, lp: 0.05, hp: 0.8),
+      GHSCase(stretch: 1, b: -3, sp: 0, lp: 0, hp: 0.95),
+      GHSCase(stretch: 0, b: 4, sp: 0.1, lp: 0, hp: 1),
+    ])
+  func testGHSMatchesReference(_ example: GHSCase) throws {
+    let planes = Self.planes(3)
+    let out = try Self.run(
+      [
+        "mode": .choice("ghs"), "ghsStretch": .number(example.stretch),
+        "ghsIntensity": .number(example.b), "ghsSymmetry": .number(example.sp),
+        "ghsShadows": .number(example.lp), "ghsHighlights": .number(example.hp),
+      ], planes: planes)
+    let expected = Self.expected(planes, ceiling: 1) { pixel in
+      pixel.map {
+        StretchOracle.ghs(
+          $0, stretch: example.stretch, b: example.b, lp: example.lp, sp: example.sp,
+          hp: example.hp)
+      }
+    }
+    #expect(Self.maxDifference(out, expected) <= 1e-5)
+  }
+
+  @Test("GHS refuses protection points on the wrong side of the symmetry point")
+  func testGHSOrdering() throws {
+    #expect(throws: ProcessError.self) {
+      _ = try Self.run(
+        ["mode": .choice("ghs"), "ghsStretch": .number(2), "ghsSymmetry": .number(0.1),
+         "ghsShadows": .number(0.3)], planes: Self.planes(1))
+    }
+  }
+
+  @Test("headroom keeps each pixel's RGB ratios to 1e-5, is monotone and stays under the ceiling")
+  func testHeadroomMonotoneRatioPreserving() throws {
+    // Bright linear cores up to 2× the white point; hues whose channels stay under 1 at the ceiling.
+    let planes: [[Float]] = [1.0, 0.9, 0.8].map { hue in
+      (0..<Self.width * Self.height).map { Float(hue) * 2 * Float($0) / Float(Self.width * Self.height) }
+    }
+    // GHS at D = 0 is the identity: what comes out is the headroom stage alone.
+    let out = try Self.run(
+      ["mode": .choice("ghs"), "ghsStretch": .number(0), "headroom": .number(0.9)], planes: planes)
+    let expected = Self.expected(planes, ceiling: 0.9) { $0 }
+    #expect(Self.maxDifference(out, expected) <= 1e-6)
+    for index in 0..<Self.width * Self.height where planes[0][index] > 0 {
+      #expect(abs(out[1][index] / out[0][index] - 0.9) <= 1e-5)
+      #expect(abs(out[2][index] / out[0][index] - 0.8) <= 1e-5)
+    }
+    let luma = (0..<Self.width * Self.height).map {
+      0.299 * out[0][$0] + 0.587 * out[1][$0] + 0.114 * out[2][$0]
+    }
+    // float32: near the tanh asymptote the recomputed luminance moves by an ulp (1e-6).
+    #expect(zip(luma, luma.dropFirst()).allSatisfy { $0 <= $1 + 1e-6 })
+    #expect((luma.max() ?? 1) <= 0.9 + 1e-6)
+  }
 }

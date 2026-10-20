@@ -15,6 +15,11 @@ package struct PreprocessSettings: Equatable, Sendable {
   package var stack = StackOptions.lights
   /// The trail probe's downsampled size (`trailDownsample`).
   package var trailDownsample = 512
+  /// The cross-frame transient mask on the registered frames, in per-pixel σ above the median
+  /// (`TrailMaskK`).
+  ///
+  /// 0 is off. Trails, cosmic rays and hot pixels are cleaned before the stack.
+  package var trailMaskK = 3.0
   /// Background degree of the combine's and the neutralization's `subsky`.
   package var backgroundDegree = 1
   /// `rmgreen` type of the neutralization.

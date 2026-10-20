@@ -68,7 +68,7 @@ struct PreprocessOracleTests {
       edgeMeasure: { _ in edge })
     let request = PreprocessRequest(
       inventory: inventory, output: root.appendingPathComponent("out/TESTFIELD/\(runID)"),
-      work: root.appendingPathComponent("work/run_\(runID)"), runID: runID)
+      work: root.appendingPathComponent("work/run_\(runID)"), runID: runID, settings: .recorded)
     let result = try await Preprocessor(tools: tools).perform(request) { _ in }
     return (siril, result)
   }

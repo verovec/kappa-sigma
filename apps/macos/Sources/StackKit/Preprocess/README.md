@@ -11,8 +11,8 @@ script **and** pipe mode and gets byte-identical masters, aligned channels and t
 | # | Step title | Type | Legacy |
 |---|---|---|---|
 | 1 | building master calibration frames | `MasterBuilder` (0047) | `BuildMasters` |
-| 2… | grading + stacking `<object> <filter>` (one per light set, canonical filter order) | `ChannelStacker` → `ChannelGrading` → `Grader` | `processChannel`, `finishStackedChannel`, `gradeChannel`, `stackSelectedOrCopy`, `finishLinearMaster` (BAYERPAT strip) |
-| n+1 | aligning channels | `ChannelAligner` (+ `ParityNormalizer`), then `EdgeCropper` (`EdgeTrim`) | `alignChannels`, `normalizeMasterParity`, `retryPairAlign`, `applyAlignPolicy`, `applyEdgeCrop`, `measureEdgeTrim` |
+| 2… | grading + stacking `<object> <lane>` (one per lane, canonical filter order) | `ChannelStacker` → `ChannelGrading` → `Grader`, then `maskRegistered` (`SaturationRepair`, `ChannelTrailMask`) | `processChannel`, `finishStackedChannel`, `gradeChannel`, `applyTrailMask`, `stackSelectedOrCopy`, `finishLinearMaster` (BAYERPAT strip) |
+| n+1 | aligning channels | `ChannelAligner` (+ `ParityNormalizer`), `CoverageCrop`, `EdgeCropper` (`EdgeTrim`), then `emission` (`DualbandSplit`, `ContinuumK`) | `alignChannels`, `normalizeMasterParity`, `retryPairAlign`, `applyAlignPolicy`, `applyEdgeCrop`, `measureEdgeTrim`, `dualSetChannels`, `lineContinuumSubtract` (k only) |
 | n+2 | combining channels (Siril) | `ChannelCombiner` | `buildCombine` + `NeutralizeScript` |
 | n+3 | writing the linear bundle | `BundleWriter` | new (E04 design) |
 
@@ -20,21 +20,48 @@ Each step emits `.progress(step, steps, title, percent, line)` and each master a
 emit `.preview(stage, pngPath)` (`PreviewRenderer`: an asinh display stretch, display only). The
 last event is `.finished(PreprocessResult)`. Cancelling the consuming task stops the run between
 Siril commands. Finished masters stay, and the bundle, written last, never appears. A second run
-on the same output folder throws `targetBusy` (`TargetLock`). Multi-night captures
-(`multiNight`, card 0066) and mono + colour mixes (`mixedColorModel`) are refused before
-anything runs.
+on the same output folder throws `targetBusy` (`TargetLock`). Mono + colour mixes
+(`mixedColorModel`) are refused before anything runs.
 
 Layout, as the legacy engine had it: `work/` holds `masters/`, `light_<lane>/` (removed once
 stacked), `04_aligned/` and `pair_<lane>/`. `output/` holds `master_<tag>.fits`,
-`aligned_<tag>.fits`, `trim_<tag>.fits`, `combined.fits`, the `*_preview.png` files and
-`bundle.json`.
+`aligned_<tag>.fits`, `trim_<tag>.fits`, a split capture's `syn_Ha.fits` / `syn_OIII.fits`,
+`combined.fits`, the `*_preview.png` files and `bundle.json`.
+
+## Lanes and emission layers (card 0081)
+
+A one-shot-colour scan holding BOTH a measured broadband and a measured dual-band light set
+(`FilterSetLanes.splits`) stacks two lanes: `RGB` and `RGB-dualband`. The lane renames the
+stack, never the light, so calibration still matches on the real key. One verdict alone, or an
+unclassified set, keeps the single lane (a dual-band-only capture is not split). At the
+alignment the broadband master leads and is pinned as the reference
+(`SirilScripts.alignMastersReference`: one pass, `-2pass` would override the pin), then, after
+the crops, the registered dual-band master is separated (`DualbandSplit`): `syn_Ha` = red,
+`syn_OIII` = max(green, blue). The lane leaves the channel map; with no broadband master left it
+is the colour channel itself, unsplit. The composite is built from the colour base alone.
+
+Every emission layer then gets its continuum scale `continuum_k` (`ContinuumK`: the median
+line/ref ratio over the P85–P99.9 reference pixels): Hα and [SII] against R then L, [OIII] against
+G, B then L, and past those a colour base's red (or green) plane — which the legacy list lacked.
+Each split and each scale (or why there is none) is a `PreprocessResult.notes` line. The palette-
+gated split of a dual-band-only capture (`duobandChannels`) and the excess layer itself are the
+Studio's (0051).
+
+## The cross-frame trail mask (card 0081)
+
+After grading, every registered frame goes through `ChannelStacker.maskRegistered`: the saturated
+cores first (multi-night), then the trail mask at `PreprocessSettings.trailMaskK` (deepsky and
+nebula 3.0, 0 = off), in memory or streamed under the memory budget
+(`Transient/README.md`). What it cleaned is `ChannelOutcome.trailMask` and one note in the legacy
+wording; a failure is a note and the frames stack as they are. The 0044 cases were recorded with
+the mask off: their tests run `PreprocessSettings.recorded` (k = 0).
 
 ## The bundle (`LinearBundle`, `bundle.json`)
 
 ```
 {version: 1, run_id, color_model: mono|osc, grid: {width, height},
  layers: [{id: <filter>, role: lum|red|green|blue|rgb|line, file: trim_L.fits,
-           source: trim|aligned|master, stats: {bg, madn, sky, snr}, continuum_k?}]}
+           source: trim|aligned|master|syn, stats: {bg, madn, sky, snr}, continuum_k?}]}
 ```
 
 Layers are the combine inputs (trim > aligned > master), in canonical filter order, and
@@ -46,7 +73,8 @@ the planes averaged:
 - `sky` is the median of the pixels ≤ `bg + 3·madn`;
 - `snr` is `bg / madn`.
 
-`continuum_k` is set by the multi-night Hα continuum (0066). 0043 builds the same type from a
+`continuum_k` is a line layer's continuum scale (`ContinuumK`, card 0081); `source` is `syn` for
+a layer separated from a colour master. 0043 builds the same type from a
 legacy run.
 
 ## Several nights (card 0066)
@@ -118,9 +146,6 @@ arm64 Go does.
 
 - The legacy finish (autostretch, GIMP, exports: scripts 0019–0022) belongs to the Studio (E12).
   Highlight headroom is a stretch-time step on copies, so it never touches the linear layers.
-- The cross-frame transient trail mask (k > 0), the broadband/dual-band lanes with the
-  `syn_Ha`/`syn_OIII` split and `continuum_k`: a follow-up card (PO 2026-10-20). No recorded
-  oracle exercises them; the trail mask stays off until then.
 - The mosaic union canvas (`Mosaic`) is not ported.
 - AI background, linear denoise, the cosmetic repair of never-dark-calibrated masters and the
   dither report are off or no-ops in the deep-sky golden. They come back as Studio processes or

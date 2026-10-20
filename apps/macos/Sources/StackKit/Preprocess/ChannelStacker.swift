@@ -16,6 +16,8 @@ package struct ChannelStacker: Sendable {
   package var trailProbe: TrailProbe
   /// Live journal: Siril's lines and the channel's `⚠` warnings.
   package var report: @Sendable (String) -> Void
+  /// Bytes the cross-frame trail mask may hold before it streams (`TrailMaskBudget`).
+  package var memoryBudget = TrailMaskBudget.bytes()
 
   /// A stacker; trails are probed on the pixels unless a test substitutes them.
   package init(

@@ -28,7 +28,10 @@ package struct ChannelAligner: Sendable {
     let unaligned = Dictionary(
       uniqueKeysWithValues: masters.keys.map { ($0, "master_" + ChannelTag.of($0)) })
     guard masters.count >= 2 else { return unaligned }
-    let ordered = Self.ordered(masters.keys)
+    // A split capture pins its broadband master as the reference: it is the colour base, and
+    // the narrowband pointing must not define the canvas.
+    let ordered = FilterSetLanes.dualbandLast(Self.ordered(masters.keys))
+    let pinned = FilterSetLanes.dualbandLane(in: ordered) != nil
     if let mismatch = Self.dimensionMismatch(masters, ordered: ordered) {
       journal.warn(mismatch)
       return unaligned
@@ -36,7 +39,10 @@ package struct ChannelAligner: Sendable {
     try await parity.normalize(masters, ordered: ordered, journal: &journal)
     do {
       try Self.link(ordered.map { masters[$0] ?? "" }, names: ordered, into: folder)
-      _ = try await runner.run(SirilScripts.alignMasters(seq: "ch"), folder) { _ in }
+      let script =
+        pinned
+        ? SirilScripts.alignMastersReference(seq: "ch") : SirilScripts.alignMasters(seq: "ch")
+      _ = try await runner.run(script, folder) { _ in }
     } catch is CancellationError {
       throw CancellationError()
     } catch {

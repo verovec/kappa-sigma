@@ -26,7 +26,7 @@ struct PreprocessTwoNightLiveTests {
     let inventory = try InventoryBuilder(timeZone: zone).scan(paths: [input.path])
     let request = PreprocessRequest(
       inventory: inventory, output: root.appendingPathComponent("out/TESTFIELD/\(runID)"),
-      work: root.appendingPathComponent("work/run_\(runID)"), runID: runID)
+      work: root.appendingPathComponent("work/run_\(runID)"), runID: runID, settings: .recorded)
     let tools = Preprocessor.Tools(runner: .live(binary: try SirilTool.locate()))
     return try await Preprocessor(tools: tools).perform(request) { _ in }
   }

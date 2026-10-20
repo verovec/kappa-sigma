@@ -13,6 +13,8 @@ package enum SeamNoiseEqualiser {
     package var sigmaBefore = 0.0
     package var sigmaAfter = 0.0
     package var applied = false
+    /// Skipped because the master would not fit the memory budget.
+    package var overBudget = false
     package var reason = ""
     /// `luminance` for a colour master (chroma kept), `mono` for one plane.
     package var mode = ""
@@ -21,8 +23,13 @@ package enum SeamNoiseEqualiser {
   /// The treatment of a master with `planes` planes.
   package static func mode(planes: Int) -> String { planes == 3 ? "luminance" : "mono" }
 
-  /// Equalises the master at `url` with `grid`; soft-fails, with the reason, leaving it untouched.
-  package static func equalise(_ url: URL, grid: CoverageGrid) -> Record {
+  /// Equalises the master at `url` with `grid`.
+  ///
+  /// Soft-fails, with the reason, leaving it untouched. A master needing W·H·4·10 bytes over
+  /// `budget` is skipped (the starlet planes it holds).
+  package static func equalise(
+    _ url: URL, grid: CoverageGrid, budget: Int64 = TrailMaskBudget.bytes()
+  ) -> Record {
     var record = Record()
     guard !Task.isCancelled else {
       record.reason = "cancelled"
@@ -31,6 +38,12 @@ package enum SeamNoiseEqualiser {
     do {
       let file = try FITSFile.read(at: url)
       let image = try file.image()
+      let need = Int64(image.width) * Int64(image.height) * 4 * 10
+      guard need <= budget else {
+        record.overBudget = true
+        record.reason = "skipped: needs ~\(need >> 20) MB, over the memory budget"
+        return record
+      }
       let (weights, reason) = SeamNoiseWeights.weights(
         grid, width: image.width, height: image.height)
       guard let weights else {

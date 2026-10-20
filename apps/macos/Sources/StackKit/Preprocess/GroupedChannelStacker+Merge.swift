@@ -81,7 +81,12 @@ extension GroupedChannelStacker {
     }
     // The full-depth core stays byte for byte; the shallow margins get the excess noise removed.
     if settings.seamNoiseEqualisation, let path = outcome.masterPath, let grid = outcome.coverage {
-      outcome.seamNoise = SeamNoiseEqualiser.equalise(URL(fileURLWithPath: path), grid: grid)
+      let record = SeamNoiseEqualiser.equalise(
+        URL(fileURLWithPath: path), grid: grid, budget: stacker.memoryBudget)
+      outcome.seamNoise = record
+      if record.overBudget {
+        stacker.warn("\(filter): seam noise equalization \(record.reason)", into: &outcome)
+      }
     }
     outcome.nights = Self.contributions(outcome.nights, spans: merge.spans, grades: outcome.grades)
     for night in outcome.nights where night.stacked == 0 && night.frames > 0 {

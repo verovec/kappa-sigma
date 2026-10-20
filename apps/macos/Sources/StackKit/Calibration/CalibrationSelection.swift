@@ -8,6 +8,9 @@ package struct CalibrationSelection: Equatable, Sendable {
   /// `dark` has another exposure and is scaled onto the light by Siril (`-opt`); always with a bias.
   package var darkOptimize = false
 
+  /// An empty selection: no master, no note.
+  package init() {}
+
   /// What `calibrate` applies.
   package var masters: CalibrationMasters {
     CalibrationMasters(

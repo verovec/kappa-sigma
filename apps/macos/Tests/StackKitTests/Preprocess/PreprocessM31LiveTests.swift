@@ -37,7 +37,8 @@ struct PreprocessM31LiveTests {
     let root = try ScratchDirectory.url
     let request = PreprocessRequest(
       inventory: inventory, output: root.appendingPathComponent("out/M_31/\(Self.runID)"),
-      work: root.appendingPathComponent("work/run_\(Self.runID)"), runID: Self.runID)
+      work: root.appendingPathComponent("work/run_\(Self.runID)"), runID: Self.runID,
+      settings: .recorded)
     let tools = Preprocessor.Tools(runner: .live(binary: try SirilTool.locate()))
     let result = try await Preprocessor(tools: tools).perform(request) { _ in }
 

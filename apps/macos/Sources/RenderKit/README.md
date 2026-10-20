@@ -40,8 +40,9 @@ processes run (design §4.1, §4.6).
 
 `Localizable.xcstrings` holds the viewer chrome in en/fr, compiled by `CatalogPlugin` into
 `RenderKitResources.bundle` (the same bundle the shaders load from); resolve with
-`.renderKit("…")`. `ViewerPanel` still shows English literals: card 0074 switches it to the
-catalog with its number formats. Rules: `Sources/StringCatalog/README.md`.
+`.renderKit("…")`. `ViewerPanel` reads its words from it (tool and stretch labels included,
+never `rawValue.capitalized`) and formats its numbers in the view's `\.locale` (card 0074).
+Rules: `Sources/StringCatalog/README.md`.
 
 ## Coordinates
 

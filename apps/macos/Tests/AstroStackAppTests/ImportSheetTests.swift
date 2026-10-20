@@ -104,7 +104,7 @@ struct ImportSheetTests {
   static let migrated = [
     "ProjectWindowView", "ProjectWindowModel", "ImportSheet", "ImportInventoryView",
     "ImportOverridesView", "ImportCalibrationView", "SettingsView", "MasterInspectView",
-    "MasterInspectViewModel", "MasterFormat",
+    "MasterInspectViewModel", "MasterFormat", "LegacyRunView", "LegacyRunModel",
     "UserFacingError",
   ]
 

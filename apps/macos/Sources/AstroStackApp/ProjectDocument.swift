@@ -179,7 +179,7 @@ package final class ProjectDocument: NSDocument {
       styleMask: [.titled, .closable, .miniaturizable, .resizable],
       backing: .buffered, defer: false)
     let model = ProjectWindowModel(store: { [weak self] in self?.project?.store })
-    let content = NSHostingView(rootView: ProjectWindowView(model: model))
+    let content = NSHostingView(rootView: ProjectWindowView(model: model).interfaceLocale())
     // Only the minimum size comes from SwiftUI; the window keeps its own frame.
     content.sizingOptions = [.minSize]
     window.contentView = content

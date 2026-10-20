@@ -77,7 +77,9 @@ with sources, is `docs/engineering/swift-quality-playbook.md` — read it once p
   `LocalizedStringResource` of the kit's `KitBundle` (`.app("…")`, `.renderKit("…")`) — never
   `#bundle`/`Bundle.module` (traps in the packaged `.app`) nor `String(localized:bundle:)` (ignores
   the user's language). Every key has `en` + `fr`, gated by tests and the build
-  (`Sources/StringCatalog/README.md`); help content is Markdown in resources. No generated catalog
+  (`Sources/StringCatalog/README.md`); numbers and units through `AstroFormat`, terms through
+  the HelpKit glossary — never `String(format:)` nor an enum's `rawValue` on screen; help
+  content is Markdown in resources. No generated catalog
   symbols in the MainActor-isolated app target.
 
 ## Legacy Go as reference, never as code

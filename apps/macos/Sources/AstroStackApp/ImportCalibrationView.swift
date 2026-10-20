@@ -5,6 +5,7 @@ internal import SwiftUI
 struct ImportCalibrationView: View {
   var model: ImportViewModel
   var plan: ImportPlan
+  @Environment(\.locale) private var locale
 
   var body: some View {
     GroupBox {
@@ -26,8 +27,8 @@ struct ImportCalibrationView: View {
   private func channelView(_ channel: ImportPlan.Channel) -> some View {
     VStack(alignment: .leading, spacing: 4) {
       Text(
-        verbatim: "\(channel.filter) · \(ImportFormat.exposure(channel.key.exposureMs)) · "
-          + "\(ImportFormat.temperature(channel.key))"
+        verbatim: "\(channel.filter) · \(format.exposure(ms: channel.key.exposureMs)) · "
+          + "\(ImportFormat.temperature(channel.key, in: format))"
           + (channel.key.session.isEmpty ? "" : " · \(channel.key.session)")
       )
       .font(.headline)
@@ -41,7 +42,7 @@ struct ImportCalibrationView: View {
             // A new plan is a new disclosure: its @State model must not outlive the cell.
             .id("\(cell.suggestionID)|\(cell.master?.path ?? "")|\(cell.status)")
           } label: {
-            Text(.app("Inspect \(cell.role.rawValue)"))
+            Text(.app("Inspect \(role(cell))"))
           }
           .font(.caption)
         }
@@ -60,12 +61,19 @@ struct ImportCalibrationView: View {
         get: { Self.isApplied(cell.status) }, set: { model.setIncluded($0, cell) })
     ) {
       HStack(spacing: 0) {
-        Text(verbatim: "\(cell.role.rawValue): ")
+        Text(verbatim: "\(role(cell)): ")
         Text(ImportFormat.status(cell.status))
       }
       .foregroundStyle(cell.status == .missing ? Color.orange : Color.primary)
     }
     .disabled(cell.status == .missing)
+  }
+
+  private var format: AstroFormat { AstroFormat(locale: locale) }
+
+  /// A master's role, worded as the frames it is stacked from (« Offsets »).
+  private func role(_ cell: ImportPlan.Cell) -> String {
+    AppGlossary.label(cell.role.frameType.termID, locale: locale)
   }
 
   static func isApplied(_ status: ImportPlan.Status) -> Bool {

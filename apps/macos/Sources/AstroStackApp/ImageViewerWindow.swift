@@ -72,7 +72,7 @@ package final class ImageViewerWindow: NSWindowController, NSWindowDelegate {
       styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered,
       defer: false)
     window.title = title
-    window.contentView = NSHostingView(rootView: view)
+    window.contentView = NSHostingView(rootView: view.interfaceLocale())
     window.center()
     super.init(window: window)
     window.delegate = self

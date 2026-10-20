@@ -3,21 +3,12 @@ package import StackKit
 
 /// How the Import sheet writes the plan's values: text only, nothing decided here.
 ///
-/// Sentences come from the app's catalog; units and numbers are written here until
-/// `AstroFormat` (card 0074) formats them per locale.
+/// Sentences come from the app's catalog, values from `AstroFormat` in the view's locale; this
+/// type only holds the plan's rules (which types carry a temperature, how masters name a sensor).
 package nonisolated enum ImportFormat {
-  /// `300 s`, `2.5 s`, `5 ms`; `—` when the type carries no exposure.
-  package static func exposure(_ ms: Int) -> String {
-    guard ms > 0 else { return "—" }
-    guard ms >= 1000 else { return "\(ms) ms" }
-    let seconds = Double(ms) / 1000
-    return seconds == seconds.rounded() ? "\(Int(seconds)) s" : "\(seconds) s"
-  }
-
   /// The temperature cluster of the thermal types (`−17 °C`); `—` for the others.
-  package static func temperature(_ key: SetKey) -> String {
-    guard key.type.usesTemperature else { return "—" }
-    return key.tempBucketC < 0 ? "−\(-key.tempBucketC) °C" : "\(key.tempBucketC) °C"
+  package static func temperature(_ key: SetKey, in format: AstroFormat) -> String {
+    key.type.usesTemperature ? format.temperature(celsius: key.tempBucketC) : "—"
   }
 
   /// Gain, offset and binning, as masters name them.
@@ -36,7 +27,7 @@ package nonisolated enum ImportFormat {
     case .library(let path, let frames):
       let name = URL(fileURLWithPath: path).lastPathComponent
       return frames > 0
-        ? .app("library: \(name) (\(Self.frames(frames)))") : .app("library: \(name)")
+        ? .app("library: \(name) (\(AstroFormat.frameCount(frames)))") : .app("library: \(name)")
     case .build(let frames):
       return .app("build from \(frames) frames")
     case .excluded(let proposed):
@@ -44,10 +35,5 @@ package nonisolated enum ImportFormat {
     case .missing:
       return .app("missing")
     }
-  }
-
-  /// A frame count, singular or plural.
-  package static func frames(_ count: Int) -> LocalizedStringResource {
-    .app("\(count) frames")
   }
 }

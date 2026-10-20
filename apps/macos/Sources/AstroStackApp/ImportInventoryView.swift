@@ -5,6 +5,7 @@ internal import SwiftUI
 struct ImportInventoryView: View {
   var model: ImportViewModel
   var plan: ImportPlan
+  @Environment(\.locale) private var locale
 
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
@@ -32,15 +33,18 @@ struct ImportInventoryView: View {
     .app("Temp."), .app("Frames"), .app("Filter set"),
   ]
 
+  private var format: AstroFormat { AstroFormat(locale: locale) }
+
   private func setRow(_ row: ImportPlan.SetRow) -> some View {
     GridRow {
-      Text(verbatim: row.type.rawValue)
+      Text(verbatim: AppGlossary.label(row.type.termID, locale: locale))
+        .help(AppGlossary.term(row.type.termID, locale: locale).definition)
       Text(verbatim: row.key.object.isEmpty ? "—" : row.key.object)
       Text(verbatim: row.filter.isEmpty ? "—" : row.filter)
-      Text(verbatim: ImportFormat.exposure(row.key.exposureMs)).monospacedDigit()
+      Text(verbatim: format.exposure(ms: row.key.exposureMs)).monospacedDigit()
       Text(verbatim: ImportFormat.sensor(row.key)).monospacedDigit()
-      Text(verbatim: ImportFormat.temperature(row.key)).monospacedDigit()
-      Text(verbatim: "\(row.count)").monospacedDigit()
+      Text(verbatim: ImportFormat.temperature(row.key, in: format)).monospacedDigit()
+      Text(verbatim: format.integer(row.count)).monospacedDigit()
       filterSet(row)
       Button(.app("Exclude")) { model.exclude(row) }
         .disabled(!model.canExclude(row))
@@ -61,7 +65,9 @@ struct ImportInventoryView: View {
           get: { model.request.filterSets[row.id] ?? row.filterSet },
           set: { model.setFilterSet($0, for: row) })
       ) {
-        ForEach(FilterSet.allCases, id: \.self) { Text(verbatim: $0.rawValue).tag($0) }
+        ForEach(FilterSet.allCases, id: \.self) {
+          Text(verbatim: AppGlossary.label($0.termID, locale: locale)).tag($0)
+        }
       } label: {
         Text(.app("Filter set"))
       }

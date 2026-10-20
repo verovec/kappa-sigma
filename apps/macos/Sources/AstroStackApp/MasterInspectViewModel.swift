@@ -101,7 +101,7 @@ package final class MasterInspectViewModel {
       } catch CalibrationError.wouldReplace(let path, let frames) {
         self.pendingReplace =
           frames > 0
-          ? .app("replaces \(path) (\(ImportFormat.frames(frames))) in the library")
+          ? .app("replaces \(path) (\(AstroFormat.frameCount(frames))) in the library")
           : .app("replaces \(path) in the library")
       }
     }

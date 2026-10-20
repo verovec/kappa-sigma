@@ -5,6 +5,7 @@ package import SwiftUI
 /// other masters the role could take, and the user's choices (card 0071).
 package struct MasterInspectView: View {
   @State var model: MasterInspectViewModel
+  @Environment(\.locale) private var locale
 
   /// The disclosure of the master behind `model`.
   package init(model: MasterInspectViewModel) {
@@ -35,21 +36,29 @@ package struct MasterInspectView: View {
     .task { await model.load() }
   }
 
+  private var format: AstroFormat { AstroFormat(locale: locale) }
+
   private func stats(_ inspection: MasterInspection) -> some View {
     let stats = inspection.stats
     return VStack(alignment: .leading, spacing: 2) {
-      let built = inspection.builtAt.formatted(date: .abbreviated, time: .shortened)
-      let frames = ImportFormat.frames(inspection.frames)
+      let built = inspection.builtAt.formatted(
+        .dateTime.locale(locale).day().month().year().hour().minute())
+      let frames = format.frames(inspection.frames)
       Text(.app("\(inspection.width)×\(inspection.height) · \(frames) · built \(built)"))
-      let (median, madn) = (MasterFormat.value(stats.median), MasterFormat.value(stats.madn))
-      let (low, high) = (MasterFormat.value(stats.min), MasterFormat.value(stats.max))
+      let (median, madn) = (
+        format.significant(stats.median, digits: 5), format.significant(stats.madn, digits: 5)
+      )
+      let (low, high) = (
+        format.significant(stats.min, digits: 5), format.significant(stats.max, digits: 5)
+      )
       Text(.app("median \(median) · σ (MAD) \(madn) · min \(low) · max \(high)"))
-      let quadrants = stats.quadrantMedians.map(MasterFormat.value).joined(separator: " / ")
+      let quadrants = stats.quadrantMedians.map { format.significant($0, digits: 5) }.joined(
+        separator: " / ")
       Text(.app("quadrants \(quadrants)"))
       if let vignetting = stats.vignettingPct {
-        Text(.app("corners vs centre \(MasterFormat.percent(vignetting))"))
+        Text(.app("corners vs centre \(format.percent(vignetting))"))
       }
-      Text(.app("clipped \(MasterFormat.percent(stats.clippedPct))"))
+      Text(.app("clipped \(format.percent(stats.clippedPct))"))
       if let hot = stats.hotPixels { Text(.app("hot pixels \(hot)")) }
     }
     .font(.caption.monospacedDigit())

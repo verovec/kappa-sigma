@@ -35,13 +35,14 @@ struct MasterInspectViewTests {
     "values, percentages, names and verdicts read as written",
     arguments: zip(
       [
-        MasterFormat.value(0.0076334), MasterFormat.percent(-3.333), MasterFormat.percent(59.19),
+        english.significant(0.0076334, digits: 5), english.percent(-3.333).plain,
+        english.percent(59.19).plain,
         MasterFormat.name("/lib/master_FLAT_15000ms_g100o50_b1_0C.fits"),
         MasterFormat.verdict(.chosen).text("en"), MasterFormat.verdict(.otherSensor("")).text("en"),
         MasterFormat.verdict(.otherSensor("1 master from another sensor")).text("en"),
       ],
       [
-        "0.0076334", "-3.33 %", "+59.19 %", "master_FLAT_15000ms_g100o50_b1_0C.fits", "applied",
+        "0.0076334", "−3.33 %", "+59.19 %", "master_FLAT_15000ms_g100o50_b1_0C.fits", "applied",
         "another sensor", "1 master from another sensor",
       ]))
   func testFormat(text: String, expected: String) {
@@ -71,4 +72,12 @@ struct MasterInspectViewTests {
     #expect(abs(inspection.stats.median - 0.0076) < 1e-6)
     #expect(inspection.warnings.isEmpty)
   }
+}
+
+/// The English values the master disclosure tests read.
+private let english = AstroFormat(locale: Locale(identifier: "en_US"))
+
+extension String {
+  /// The text with its no-break spaces written as plain spaces.
+  fileprivate var plain: String { replacing("\u{a0}", with: " ") }
 }

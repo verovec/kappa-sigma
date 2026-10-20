@@ -36,5 +36,15 @@ bad=$(git ls-files -z | xargs -0 wc -c | awk '$2 != "total" && $1 > 2000000 { pr
 bad=$(printf '%s\n' "$files" | grep -E '^(roadmap\.md|cards/|stacking-doc\.md)' || true)
 [ -z "$bad" ] || report "local planning files tracked:"$'\n'"$bad"
 
+# 6. No enum raw value shown as a label (card 0074): a word on screen comes from the glossary
+#    (HelpKit) or a string catalog, so it exists in French and English.
+views=$(printf '%s\n' "$files" | grep -E '^apps/macos/Sources/(AstroStackApp|RenderKit)/.*\.swift$' || true)
+#    Caught: a raw value passed to a view or catalog call, interpolated into a string, or
+#    capitalized for display.
+bad=$( [ -z "$views" ] || printf '%s\n' "$views" | tr '\n' '\0' | xargs -0 grep -nHE \
+  '(Text|Label|Button|LabeledContent|\.app|\.renderKit)\(.*rawValue|\\\([^)]*rawValue|rawValue\.capitalized' \
+  || true)
+[ -z "$bad" ] || report "enum raw values shown as labels (use AppGlossary or the catalog):"$'\n'"$bad"
+
 if [ "$fail" -ne 0 ]; then echo "hygiene: FAILED"; exit 1; fi
 echo "hygiene: ok"

@@ -53,6 +53,18 @@ static float ghs(float x, constant float *g) {
   return (f - g[5]) * g[6];
 }
 
+// Ratio-preserving asinh: every channel scaled by asinh(β·L) / (asinh(β)·L) of the luminance
+// above the black point; a channel over 1 scales the whole pixel down (hue kept).
+static float3 asinhStretch(float3 rgb, uint planes, constant float *a) {
+  float3 lifted = max((rgb - a[1]) / (1.0f - a[1]), 0.0f);
+  if (a[0] <= 0.0f) { return min(lifted, 1.0f); }
+  float lum = luminance(lifted, planes);
+  if (lum <= 0.0f) { return float3(0.0f); }
+  float3 scaled = lifted * (asinh(a[0] * lum) * a[2] / lum);
+  float peak = planes == 3 ? max(scaled.r, max(scaled.g, scaled.b)) : scaled.r;
+  return peak > 1.0f ? scaled / peak : scaled;
+}
+
 kernel void stretch(texture2d<float, access::read> inR [[texture(0)]],
                     texture2d<float, access::read> inG [[texture(1)]],
                     texture2d<float, access::read> inB [[texture(2)]],
@@ -72,6 +84,8 @@ kernel void stretch(texture2d<float, access::read> inR [[texture(0)]],
     }
   } else if (p[0] == 1.0f) {
     for (uint c = 0; c < planes; ++c) { out[c] = ghs(rgb[c], p + 13); }
+  } else {
+    out = asinhStretch(rgb, planes, p + 24);
   }
   outR.write(float4(out.r), gid);
   if (planes == 3) {

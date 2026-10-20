@@ -137,6 +137,22 @@ struct StretchTests {
     #expect(Self.maxDifference(out, expected) <= 1e-5)
   }
 
+  @Test(
+    "asinh equals the ratio-preserving reference within 1e-5 (β = 0 is a black-point lift)",
+    arguments: zip([0.0, 10, 150, 500, 50], [0.0, 0.0, 0.01, 0.03, 0.2]))
+  func testAsinhMatchesReference(beta: Double, black: Double) throws {
+    for count in [1, 3] {
+      let planes = Self.planes(count)
+      let out = try Self.run(
+        ["mode": .choice("asinh"), "asinhStretch": .number(beta), "asinhBlack": .number(black)],
+        planes: planes)
+      let expected = Self.expected(planes, ceiling: 1) {
+        StretchOracle.asinhStretch($0, beta: beta, black: black)
+      }
+      #expect(Self.maxDifference(out, expected) <= 1e-5, "\(count) plane(s)")
+    }
+  }
+
   @Test("GHS refuses protection points on the wrong side of the symmetry point")
   func testGHSOrdering() throws {
     #expect(throws: ProcessError.self) {

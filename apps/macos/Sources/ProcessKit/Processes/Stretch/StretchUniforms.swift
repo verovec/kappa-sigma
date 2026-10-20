@@ -93,5 +93,11 @@ struct StretchUniforms {
     for (offset, value) in coefficients.enumerated() { values[Slot.ghs + offset] = Float(value) }
   }
 
-  private mutating func setAsinh(_ params: ParamSet) {}
+  /// β, the black point and 1 / asinh(β) (0 when β = 0: the stretch is then the black lift).
+  private mutating func setAsinh(_ params: ParamSet) {
+    let beta = params.number("asinhStretch")
+    values[Slot.asinh] = Float(beta)
+    values[Slot.asinh + 1] = Float(params.number("asinhBlack"))
+    values[Slot.asinh + 2] = beta > 0 ? Float(1 / asinh(beta)) : 0
+  }
 }

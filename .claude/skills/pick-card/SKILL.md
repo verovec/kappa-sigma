@@ -58,23 +58,54 @@ what the card already answers; do not skip what it points at.
   attribution anywhere in history).
 - Push and `gh pr create` — title = the card title in commit style, body = card ID,
   the acceptance criteria as a checklist, and the review notes.
-- CI (`.github/workflows/tests.yml`) runs the hermetic unit suite on the PR. Merge
-  only when green: wait with `gh pr checks <n> --watch`, then confirm every check
-  actually reports `pass` via `gh pr checks <n>` (the watch exits 0 even on failure),
-  then `gh pr merge <n> --squash`. Use `--auto` ONLY if main has branch protection
-  with required checks — without it, gh falls through to an immediate merge and the
-  PR lands before CI finishes. CI red → fix on the branch; never merge red, never
-  bypass the review.
+- CI (`.github/workflows/tests.yml`) runs two jobs on the PR: `test continuity`
+  (Linux: the suite may only grow — a deleted or edited existing test, or a lower
+  test count, fails unless the PR body has a `Test-change: <why>` line) and
+  `hygiene · lint · build · test` (macOS: `just ci`, live suites self-skip).
+- **The worker merges; the PO is not in the loop** (PO decision 2026-10-20). Wait
+  with `gh pr checks <n> --watch`, then confirm every check reports `pass` via
+  `gh pr checks <n>` (the watch exits 0 even on failure), then
+  `gh pr merge <n> --squash --delete-branch`. Never `--auto`: this repo has no
+  branch protection, gh would merge before CI finishes. CI red → fix on the branch
+  and push; after **two** red rounds on the same card, stop, set `blocked` with the
+  failing check in the Journal, and report. Never merge red, never weaken a test to
+  get green, never skip the `/code-review` of §5.
+- `Manual:` acceptance items (open the app, take a screenshot) are performed by the
+  worker with `just app-run` and recorded in the PR body; they never wait for the PO.
 
 ## 7 · Release
 
 After the merge: card frontmatter `done` (acceptance boxes ticked), Queue row `done`,
-Journal line `YYYY-MM-DD · NNNN · done (PR #N)`. `git switch main && git pull`, delete
-the branch. If the session must end before the merge, leave a Journal line saying
-exactly where the card stands — a claim without a journal trail is a protocol
-violation.
+Journal line `YYYY-MM-DD · NNNN · done (PR #N) · next: <one line the next card must
+know — a seam, a decision, a tolerance, a gotcha>`. `git switch main && git pull`,
+delete the local branch, then **`just check` on main** so the next card starts from a
+proven green state (host-tool drift shows up here, not in the middle of a port). If
+`just coverage` exceeds `apps/macos/.coverage-floor`, raise the floor to the new whole
+percent on the next card's branch. If the session must end before the merge, leave a
+Journal line saying exactly where the card stands — a claim without a journal trail
+is a protocol violation.
+
+## 8 · Chain
+
+The PO works the roadmap by the epic, not by the card: unless told to stop after one
+card, go back to **§1** after every release and claim the next eligible card. The
+chain stops by itself, with a report, when:
+
+- nothing is eligible (blocked dependencies, or the Queue is empty);
+- the next card is a **planning** card (0058, 0062, 0063, 0065: they produce cards
+  and need PO decisions) — write it as far as the card allows, then stop;
+- a card hits the sanity valve (§4) or two red CI rounds (§6);
+- a card needs something only the PO can provide (an install, a capture, a licence).
+
+Continuity between cards is mechanical, never remembered: the previous card's
+`next:` Journal line is read in §3; every module ships a `README.md` that says how to
+extend it (cards 0044 and 0049 demand one — keep them current); the full suite of
+every earlier card runs on each PR; the test-continuity job refuses a shrinking
+suite. A test that no longer describes the behaviour is changed in the open, with a
+`Test-change:` line and the reason in the PR body, never silently.
 
 ## Report
 
-One short paragraph: what merged (PR link), the tests that now pin the behaviour, and
-anything the next card should know.
+After each card: one short paragraph — what merged (PR link), the tests that now pin
+the behaviour, the `next:` line. At the end of a chain: the cards merged, the card
+that stopped the chain and why, and what the PO must decide or provide.

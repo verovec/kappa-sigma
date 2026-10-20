@@ -82,7 +82,11 @@ package struct ChannelAligner: Sendable {
   }
 
   /// `0_<F>.fits`, `1_<F>.fits`… so Siril's `link` numbers the sequence in channel order.
+  ///
+  /// The folder starts empty: Siril's `link` takes every FITS in it, and `collect` would accept a
+  /// previous run's registered frames.
   static func link(_ paths: [String], names: [String], into folder: URL) throws {
+    try? FileManager.default.removeItem(at: folder)
     try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
     for (index, (path, name)) in zip(paths, names).enumerated() {
       let link = folder.appendingPathComponent("\(index)_\(name).fits")

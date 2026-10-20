@@ -24,6 +24,27 @@ struct SirilPipeRunnerTests {
     #expect(FileManager.default.fileExists(atPath: folder.path))
   }
 
+  @Test(
+    "two scripts on one session never interleave: each runs whole, from its own folder",
+    .scratchDirectory)
+  func testPipeRunner_scriptsAreUnits() async throws {
+    let scratch = try ScratchDirectory.url
+    let runner = SirilRunner.make(
+      mode: .pipe, binary: try FakeSiril.install(in: scratch), work: scratch)
+    let sink = LineSink()
+    let script = SirilScript([.load("x"), .save("y"), .load("z")])
+    async let first = runner.run(script, scratch.appendingPathComponent("a")) { sink.append($0) }
+    async let second = runner.run(script, scratch.appendingPathComponent("b")) { sink.append($0) }
+    _ = try await (first, second)
+    let done = sink.lines.map(\.text).filter { $0.hasPrefix("done ") }
+    #expect(done.count == 14)
+    for start in [0, 7] {
+      let unit = done[start..<start + 7]
+      #expect(unit.first?.hasPrefix("done cd ") == true)
+      #expect(unit.dropFirst().allSatisfy { !$0.hasPrefix("done cd ") })
+    }
+  }
+
   @Test("script mode is one siril-cli -s per script", .scratchDirectory)
   func testScriptMode() async throws {
     let scratch = try ScratchDirectory.url

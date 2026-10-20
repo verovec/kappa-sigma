@@ -52,8 +52,10 @@ extension ChannelStacker {
       return
     }
     let size = settings.trailDownsample
-    let graded = ChannelGrading.grade(sequence, frames: frames, settings: settings) { index in
-      trailProbe(light.frame(light.calibrated, index + 1), size)
+    // Each probe reads a whole frame: a cancelled run stops between them.
+    let graded = try ChannelGrading.grade(sequence, frames: frames, settings: settings) { index in
+      try Task.checkCancellation()
+      return trailProbe(light.frame(light.calibrated, index + 1), size)
     }
     outcome.grades = graded.grades
     outcome.stackedFrames = graded.registeredCount - graded.rejectedRegistered.count
@@ -79,7 +81,8 @@ extension ChannelStacker {
   ) async throws {
     let count = graded.registeredCount
     if count == 1 {
-      try Self.copy(light.frame(light.registered, 1), to: master)
+      try FileReplace.copy(
+        light.frame(light.registered, 1), over: master.appendingPathExtension("fits"))
       warn(
         "\(outcome.filter): only 1 frame registered — using it as the channel master (no stacking)",
         into: &outcome)
@@ -105,7 +108,8 @@ extension ChannelStacker {
       "\(outcome.filter): only 1 frame captured — using it as the channel master "
         + "(no registration/stacking)", into: &outcome)
     let master = out.appendingPathComponent("master_" + ChannelTag.of(outcome.filter))
-    try Self.copy(light.frame(light.calibrated, 1), to: master)
+    try FileReplace.copy(
+      light.frame(light.calibrated, 1), over: master.appendingPathExtension("fits"))
     outcome.stackedFrames = 1
     finish(master, into: &outcome)
   }
@@ -120,12 +124,5 @@ extension ChannelStacker {
     } catch {
       outcome.selection.notes.append("BAYERPAT strip skipped: \(Self.describe(error))")
     }
-  }
-
-  /// Copies a frame to `<base>.fits`, replacing it.
-  private static func copy(_ frame: URL, to base: URL) throws {
-    let target = base.appendingPathExtension("fits")
-    try? FileManager.default.removeItem(at: target)
-    try FileManager.default.copyItem(at: frame.resolvingSymlinksInPath(), to: target)
   }
 }

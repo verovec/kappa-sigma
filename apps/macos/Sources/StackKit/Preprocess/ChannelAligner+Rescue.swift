@@ -16,7 +16,7 @@ extension ChannelAligner {
       }
       let name = "aligned_" + ChannelTag.of(filter)
       do {
-        try replace(out.appendingPathComponent(name + ".fits"), with: registered)
+        try FileReplace.copy(registered, over: out.appendingPathComponent(name + ".fits"))
         aligned[filter] = name
       } catch {
         journal.warn(
@@ -61,19 +61,13 @@ extension ChannelAligner {
       _ = try await runner.run(SirilScripts.alignPair(seq: "pair"), folder) { _ in }
       let registered = folder.appendingPathComponent("r_pair_00002.fits")
       guard FileManager.default.fileExists(atPath: registered.path) else { return false }
-      try Self.replace(
-        out.appendingPathComponent("aligned_\(ChannelTag.of(filter)).fits"), with: registered)
+      try FileReplace.copy(
+        registered, over: out.appendingPathComponent("aligned_\(ChannelTag.of(filter)).fits"))
       return true
     } catch is CancellationError {
       throw CancellationError()
     } catch {
       return false
     }
-  }
-
-  /// Copies `source` (links resolved) over `target`.
-  static func replace(_ target: URL, with source: URL) throws {
-    try? FileManager.default.removeItem(at: target)
-    try FileManager.default.copyItem(at: source.resolvingSymlinksInPath(), to: target)
   }
 }

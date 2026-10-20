@@ -19,10 +19,27 @@ package struct PreprocessSettings: Equatable, Sendable {
   package var backgroundDegree = 1
   /// `rmgreen` type of the neutralization.
   package var scnr = 0
+  /// Where the parity probes' `platesolve` looks (`"RA,DEC"`): stacked masters lose their
+  /// pointing cards, so without it they rarely solve and the parity check is skipped (it says so).
+  package var solveCoordinates: String?
 
   /// The deepsky preset, with optional overrides.
   package init(dropWheelTransition: Bool = true, register2Pass: Bool = false) {
     self.dropWheelTransition = dropWheelTransition
     self.register2Pass = register2Pass
+  }
+
+  /// The legacy preset of `mode` (`mode.Preset`): nebula grades more leniently (faint, diffuse
+  /// targets) and models the sky with a degree-2 polynomial.
+  package static func preset(_ mode: PreprocessRequest.Mode) -> Self {
+    var settings = Self()
+    guard mode == .nebula else { return settings }
+    settings.grading.roundnessFloor = 0.50
+    settings.grading.roundnessSigma = 3.0
+    settings.grading.fwhmSigma = 3.0
+    settings.grading.backgroundSigma = 3.0
+    settings.grading.starCountFraction = 0.4
+    settings.backgroundDegree = 2
+    return settings
   }
 }

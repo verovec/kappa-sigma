@@ -124,6 +124,21 @@ struct ChannelAlignerTests {
         == true)
   }
 
+  @Test("a previous run's registered frame is never taken for this run's", .scratchDirectory)
+  func testStaleFolder() async throws {
+    let (masters, out, work) = try Self.masters(["R", "G", "B"])
+    let folder = work.appendingPathComponent("04_aligned")
+    try PipelineSiril.frame(folder.appendingPathComponent("r_ch_00002.fits"))
+    try PipelineSiril.frame(folder.appendingPathComponent("7_Ha.fits"))
+    var journal = PreprocessJournal()
+    let siril = PipelineSiril(missing: ["r_ch_00002.fits", "r_pair_00002.fits"])
+    let aligned = try await ChannelAligner(runner: siril.runner).align(
+      masters, folder: folder, out: out, journal: &journal)
+    #expect(aligned["G"] == "master_G", "G did not register this time: all channels unaligned")
+    #expect(
+      !FileManager.default.fileExists(atPath: folder.appendingPathComponent("7_Ha.fits").path))
+  }
+
   @Test("one channel is passed through, nothing run", .scratchDirectory)
   func testSingleChannel() async throws {
     let siril = PipelineSiril()

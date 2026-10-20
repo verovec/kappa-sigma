@@ -38,6 +38,7 @@ struct LightScriptTests {
         setfindstar -sigma=0.5 -roundness=0.42 -relax=on
         setref pair 1
         register pair
+        setfindstar reset
 
         """))
   }

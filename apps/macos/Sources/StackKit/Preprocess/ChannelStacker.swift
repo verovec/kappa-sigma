@@ -47,6 +47,10 @@ package struct ChannelStacker: Sendable {
     let selection = CalibrationMatcher.select(set, in: inventory, masters: masters)
     var outcome = ChannelOutcome(set, filter: filter, selection: selection)
     let folder = work.appendingPathComponent("light_" + ChannelTag.sanitize(filter))
+    // Siril's `link` takes every FITS in the folder: a previous run's frames must not be there,
+    // and the bulky calibrated copies go even when the run is cancelled.
+    try? FileManager.default.removeItem(at: folder)
+    defer { try? FileManager.default.removeItem(at: folder) }
     do {
       try MasterBuilder.link(set.frames.map(\.path), into: folder)
       let light = Light(
@@ -63,7 +67,6 @@ package struct ChannelStacker: Sendable {
     } catch {
       outcome.error = Self.describe(error)
     }
-    try? FileManager.default.removeItem(at: folder)
     return outcome
   }
 

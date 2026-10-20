@@ -26,6 +26,8 @@ package enum SirilCommand: Equatable, Sendable {
   case setref(seq: String, index: Int)
   /// Relaxed star detection, for a pair registration rescue.
   case setfindstarRelaxed
+  /// Back to the default star detection (a pipe session outlives the script that relaxed it).
+  case setfindstarReset
   case seqapplyreg(seq: String, framing: String?)
   case seqsubsky(seq: String, degree: Int, prefix: String)
   case load(String)
@@ -69,6 +71,7 @@ package enum SirilCommand: Equatable, Sendable {
       "stack \(seq) \(clause)" + (filterIncluded ? " -filter-incl" : "") + " -out=\(out)"
     case .setref(let seq, let index): "setref \(seq) \(index)"
     case .setfindstarRelaxed: "setfindstar -sigma=0.5 -roundness=0.42 -relax=on"
+    case .setfindstarReset: "setfindstar reset"
     case .seqapplyreg(let seq, let framing):
       "seqapplyreg \(seq)" + (framing.map { " -framing=\($0)" } ?? "")
     case .seqsubsky(let seq, let degree, let prefix): "seqsubsky \(seq) \(degree) -prefix=\(prefix)"

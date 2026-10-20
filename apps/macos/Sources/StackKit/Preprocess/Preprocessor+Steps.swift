@@ -47,7 +47,9 @@ extension Preprocessor {
     }
     try Task.checkCancellation()
     emitter.begin("aligning channels")
-    var channels = try await ChannelAligner(runner: reporting(emitter)).align(
+    var channels = try await ChannelAligner(
+      runner: reporting(emitter), coordinates: request.settings.solveCoordinates
+    ).align(
       masters, folder: request.work.appendingPathComponent("04_aligned"), out: request.output,
       journal: &journal)
     if request.settings.edgeCrop {

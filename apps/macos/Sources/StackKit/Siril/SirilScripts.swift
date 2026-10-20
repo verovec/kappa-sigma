@@ -113,11 +113,14 @@ package enum SirilScripts {
     ])
   }
 
-  /// One master registered onto a pinned reference, star detection relaxed (`AlignPairScript`).
+  /// One master registered onto a pinned reference, star detection relaxed then reset
+  /// (`AlignPairScript` + the reset a long-lived pipe session needs).
   package static func alignPair(seq: String) -> SirilScript {
     SirilScript([
       .link(seq: seq), .setfindstarRelaxed, .setref(seq: seq, index: 1),
       .register(seq: seq, twoPass: false, transformation: nil),
+      // A pipe session outlives this script: later registrations must see the default detection.
+      .setfindstarReset,
     ])
   }
 

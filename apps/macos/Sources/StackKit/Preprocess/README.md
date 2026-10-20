@@ -58,7 +58,16 @@ legacy run.
   cancellation, the lock and the up-front refusals end a run.
 - Tests substitute `Preprocessor.Tools`: Siril (`PipelineSiril` plays its file side), the trail
   probe and the edge measurement, which are the only decisions read from pixels.
-- `SirilMode.default` is `.pipe`; `SirilRunner.make(mode:binary:work:)` builds either mode.
+- `SirilMode.default` is `.pipe`; `SirilRunner.make(mode:binary:work:)` builds either mode. A
+  pipe session runs each script as one unit (`SirilSession.execScript`), and the pair rescue
+  ends with `setfindstar reset` because the session outlives the script that relaxed it.
+- Settings come from `PreprocessSettings.preset(mode)` (deepsky, or nebula: lenient grading and a
+  degree-2 sky) unless the request carries its own. `solveCoordinates` feeds the parity
+  probes' `platesolve`. Stacked masters lose their pointing cards, so without it they rarely
+  solve, and the run says the parity check was skipped. Filling it from the target is the
+  import view's job (0056).
+- Every sequence folder (`light_<lane>`, `04_aligned`, `pair_<lane>`) is emptied before
+  `link`, because Siril takes every FITS it finds there.
 
 ## Not ported here (and why)
 

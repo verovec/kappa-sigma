@@ -57,6 +57,12 @@ struct DownsampleCropTests {
     try file.writeCrop(to: out, x0: 1, y0: 0, x1: 9, y1: 2)
     let cropped = try FITSFile.read(at: out)
     #expect(cropped.header.int("BITPIX") == -32)
+    // A fresh header: the source's other cards (a WCS, a checksum) would be wrong after a crop.
+    #expect(
+      cropped.header.cards.map(\.keyword) == [
+        "SIMPLE", "BITPIX", "NAXIS", "NAXIS1", "NAXIS2", "BZERO", "BSCALE", "PROGRAM",
+      ])
+    #expect(cropped.header.string("PROGRAM") == "astrostack")
     #expect(try cropped.image().planes == [[32768, 65535]])
     #expect(throws: (any Error).self) { try file.writeCrop(to: out, x0: 2, y0: 0, x1: 2, y1: 2) }
   }

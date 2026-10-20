@@ -16,7 +16,7 @@ extension SirilCommand {
       .stack(
         seq: "r_light_", clause: "rej winsorized 3 3 -norm=addscale", filterIncluded: true, out: "m"
       ),
-      .setref(seq: "light", index: 1), .setfindstarRelaxed,
+      .setref(seq: "light", index: 1), .setfindstarRelaxed, .setfindstarReset,
       .seqapplyreg(seq: "light", framing: "min"),
       .seqsubsky(seq: "light", degree: 1, prefix: "flat_"), .load("missing"), .fmul("1.0"),
       .save("out"),

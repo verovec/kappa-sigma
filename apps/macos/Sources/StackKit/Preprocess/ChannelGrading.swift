@@ -17,14 +17,15 @@ package enum ChannelGrading {
   package static let unregisteredReason = "could not register (too few/elongated stars)"
   package static let wheelTransitionReason = "filter-wheel transition (off-brightness first frame)"
 
-  /// Grades `sequence`; `trail` probes the calibrated frame at a 0-based index (nil: unreadable),
+  /// Grades `sequence`; `trail` probes the calibrated frame at a 0-based index (nil: unreadable;
+  /// it may throw to stop, as on cancellation),
   /// `preReject` carries upstream rejections by 0-based index, `spans` scope the relative rules.
   package static func grade(
     _ sequence: SirilSequence, frames: [CaptureFrame], settings: PreprocessSettings,
     preReject: [Int: String] = [:], spans: [Range<Int>] = [],
-    trail: (Int) -> (detected: Bool, score: Double)? = { _ in nil }
-  ) -> Outcome {
-    var grades = sequence.metrics.enumerated().map { index, metric in
+    trail: (Int) throws -> (detected: Bool, score: Double)? = { _ in nil }
+  ) rethrows -> Outcome {
+    var grades = try sequence.metrics.enumerated().map { index, metric in
       var grade = FrameGrade(
         index: index + 1, path: index < frames.count ? frames[index].path : "", sequence: metric)
       if metric.fwhm <= 0 {
@@ -37,7 +38,7 @@ package enum ChannelGrading {
       } else if settings.dropWheelTransition, index < frames.count, frames[index].wheelTransition {
         (grade.rejected, grade.rejectReason) = (true, wheelTransitionReason)
       }
-      if let probe = trail(index) { (grade.trailDetected, grade.trailScore) = probe }
+      if let probe = try trail(index) { (grade.trailDetected, grade.trailScore) = probe }
       return grade
     }
     Grader.grade(&grades, spans: spans, options: settings.grading)

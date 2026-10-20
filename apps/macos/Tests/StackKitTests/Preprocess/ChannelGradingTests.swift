@@ -16,10 +16,10 @@ struct ChannelGradingTests {
   }
 
   @Test("an unregistered frame is rejected and absent from the registered numbering")
-  func testUnregisteredFrame() {
+  func testUnregisteredFrame() throws {
     let text = [Self.line(fwhm: 3), "R0 0 0 0 0 0 0", Self.line(fwhm: 3.1), Self.line(fwhm: 9)]
       .joined(separator: "\n")
-    let outcome = ChannelGrading.grade(
+    let outcome = try ChannelGrading.grade(
       SirilSequence(parsing: text), frames: Self.frames(4),
       settings: .init(dropWheelTransition: false))
     #expect(outcome.registeredCount == 3)
@@ -32,11 +32,11 @@ struct ChannelGradingTests {
   }
 
   @Test("an upstream rejection and a wheel transition keep their reasons; indices are registered")
-  func testPreRejectAndTransition() {
+  func testPreRejectAndTransition() throws {
     let text = (0..<6).map { _ in Self.line(fwhm: 3) }.joined(separator: "\n")
     var frames = Self.frames(6)
     frames[0].wheelTransition = true
-    let outcome = ChannelGrading.grade(
+    let outcome = try ChannelGrading.grade(
       SirilSequence(parsing: "R0 0 0 0 0 0 0\n" + text),
       frames: [CaptureFrame(path: "/x")] + frames,
       settings: .init(dropWheelTransition: true), preReject: [4: "transform review"])

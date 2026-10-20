@@ -63,21 +63,25 @@ extension FITSFile {
 
   /// Writes the rectangle [x0, x1) × [y0, y1), clamped to the image, as a float32 FITS.
   ///
-  /// Physical values (`cropFITS`), the source's other cards kept. Replaces `url` atomically.
+  /// Physical values under a fresh header, as `cropFITS` wrote it: the structure, BZERO 0 /
+  /// BSCALE 1, the source's ROWORDER (rows stay in file order) and PROGRAM. Nothing else is
+  /// carried over: a WCS or checksum of the uncropped frame would be wrong. Replaces `url`
+  /// atomically; a decoding error names the source, a write error the destination.
   package func writeCrop(to url: URL, x0: Int, y0: Int, x1: Int, y1: Int) throws {
+    let image = try image()
     try Self.withPath(url.path) {
-      let image = try image()
       let (left, top) = (Swift.max(0, x0), Swift.max(0, y0))
       let (right, bottom) = (Swift.min(image.width, x1), Swift.min(image.height, y1))
       guard right > left, bottom > top else { throw FITSError.dimensionMismatch }
-      let width = right - left
       let planes = image.planes.map { plane in
         (top..<bottom).flatMap { row in
           plane[(row * image.width + left)..<(row * image.width + right)]
         }
       }
-      let cards = Self.croppedCards(header.cards, width: width, height: bottom - top)
-      var text = cards.map(\.raw).joined() + "END" + String(repeating: " ", count: 77)
+      let cards = Self.cropCards(
+        width: right - left, height: bottom - top, planes: planes.count,
+        rowOrder: header.string("ROWORDER"))
+      var text = cards.joined() + "END" + String(repeating: " ", count: 77)
       text += String(repeating: " ", count: Self.padding(text.utf8.count))
       var out = Data(text.utf8)
       let data = FITSDecoder.encodeFloat32(planes, bzero: 0, bscale: 1)
@@ -87,27 +91,33 @@ extension FITSFile {
     }
   }
 
-  /// The source cards for a float32 image of the new size: BITPIX −32, NAXIS1/2 replaced, no
-  /// BZERO/BSCALE (values are physical).
-  private static func croppedCards(_ cards: [FITSHeader.Card], width: Int, height: Int)
-    -> [FITSHeader.Card]
-  {
-    cards.compactMap { card in
-      switch card.keyword {
-      case "BZERO", "BSCALE": nil
-      case "BITPIX": FITSHeader.Card(raw: integerCard("BITPIX", -32))
-      case "NAXIS1": FITSHeader.Card(raw: integerCard("NAXIS1", width))
-      case "NAXIS2": FITSHeader.Card(raw: integerCard("NAXIS2", height))
-      default: card
-      }
-    }
+  /// The header of a cropped float32 image (`WriteFITS`).
+  static func cropCards(width: Int, height: Int, planes: Int, rowOrder: String?) -> [String] {
+    var cards = [
+      valueCard("SIMPLE", "T"), valueCard("BITPIX", "-32"),
+      valueCard("NAXIS", planes == 3 ? "3" : "2"), valueCard("NAXIS1", String(width)),
+      valueCard("NAXIS2", String(height)),
+    ]
+    if planes == 3 { cards.append(valueCard("NAXIS3", "3")) }
+    cards += [valueCard("BZERO", "0."), valueCard("BSCALE", "1.")]
+    if let rowOrder { cards.append(stringCard("ROWORDER", rowOrder)) }
+    cards.append(stringCard("PROGRAM", "astrostack"))
+    return cards
   }
 
-  /// A fixed-format integer card (value right-aligned in columns 11–30).
-  private static func integerCard(_ keyword: String, _ value: Int) -> String {
+  /// A fixed-format card, value right-aligned in columns 11–30.
+  private static func valueCard(_ keyword: String, _ value: String) -> String {
     let key = keyword.padding(toLength: 8, withPad: " ", startingAt: 0)
-    let number = String(value)
-    let field = String(repeating: " ", count: Swift.max(0, 20 - number.count)) + number
+    let field = String(repeating: " ", count: Swift.max(0, 20 - value.count)) + value
     return (key + "= " + field).padding(toLength: cardLength, withPad: " ", startingAt: 0)
+  }
+
+  /// A fixed-format string card quoted from column 11 (quotes doubled, at least 8 characters).
+  private static func stringCard(_ keyword: String, _ value: String) -> String {
+    let key = keyword.padding(toLength: 8, withPad: " ", startingAt: 0)
+    let quoted = value.replacingOccurrences(of: "'", with: "''")
+    let padded = quoted.padding(toLength: Swift.max(8, quoted.count), withPad: " ", startingAt: 0)
+    return String((key + "= '" + padded + "'").prefix(cardLength))
+      .padding(toLength: cardLength, withPad: " ", startingAt: 0)
   }
 }

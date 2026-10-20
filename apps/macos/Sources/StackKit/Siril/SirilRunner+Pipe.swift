@@ -6,14 +6,11 @@ extension SirilRunner {
   package static func pipe(_ session: SirilSession) -> Self {
     Self(run: { script, directory, onLine in
       try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-      var log = ""
-      for command in ["cd \"\(directory.path)\""]
-        + script.render().split(separator: "\n").map(String.init)
-      {
-        let lines = try await session.exec(command, onLine: onLine)
-        log += lines.map { $0 + "\n" }.joined()
-      }
-      return log
+      let commands =
+        ["cd \"\(directory.path)\""] + script.render().split(separator: "\n").map(String.init)
+      // One unit: another script's `cd` must not land between this one's commands.
+      let lines = try await session.execScript(commands, onLine: onLine)
+      return lines.map { $0 + "\n" }.joined()
     })
   }
 

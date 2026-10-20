@@ -17,11 +17,17 @@ package enum SirilCommand: Equatable, Sendable {
   case link(seq: String)
   case convert(seq: String)
   case calibrate(seq: String, arguments: [String])
+  /// One image, for a set Siril cannot make a sequence of.
+  case calibrateSingle(image: String, arguments: [String])
   case register(seq: String, twoPass: Bool, transformation: String?)
   case select(seq: String, from: Int, to: Int)
   case unselect(seq: String, from: Int, to: Int)
   case stack(seq: String, clause: String, filterIncluded: Bool, out: String)
   case setref(seq: String, index: Int)
+  /// Relaxed star detection, for a pair registration rescue.
+  case setfindstarRelaxed
+  /// Back to the default star detection (a pipe session outlives the script that relaxed it).
+  case setfindstarReset
   case seqapplyreg(seq: String, framing: String?)
   case seqsubsky(seq: String, degree: Int, prefix: String)
   case load(String)
@@ -54,6 +60,8 @@ package enum SirilCommand: Equatable, Sendable {
     case .convert(let seq): "convert \(seq) -out=."
     case .calibrate(let seq, let arguments):
       "calibrate \(seq) \(arguments.joined(separator: " ")) -prefix=pp_"
+    case .calibrateSingle(let image, let arguments):
+      "calibrate_single \(image) \(arguments.joined(separator: " ")) -prefix=pp_"
     case .register(let seq, let twoPass, let transformation):
       "register \(seq)" + (twoPass ? " -2pass" : "")
         + (transformation.map { " -transf=\($0)" } ?? "")
@@ -62,6 +70,8 @@ package enum SirilCommand: Equatable, Sendable {
     case .stack(let seq, let clause, let filterIncluded, let out):
       "stack \(seq) \(clause)" + (filterIncluded ? " -filter-incl" : "") + " -out=\(out)"
     case .setref(let seq, let index): "setref \(seq) \(index)"
+    case .setfindstarRelaxed: "setfindstar -sigma=0.5 -roundness=0.42 -relax=on"
+    case .setfindstarReset: "setfindstar reset"
     case .seqapplyreg(let seq, let framing):
       "seqapplyreg \(seq)" + (framing.map { " -framing=\($0)" } ?? "")
     case .seqsubsky(let seq, let degree, let prefix): "seqsubsky \(seq) \(degree) -prefix=\(prefix)"

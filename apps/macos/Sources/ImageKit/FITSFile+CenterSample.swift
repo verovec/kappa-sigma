@@ -24,7 +24,7 @@ extension FITSFile {
   }
 
   /// One big-endian stored value as a double.
-  private static func stored(_ bytes: UnsafeRawPointer, bitpix: Int) -> Double {
+  static func stored(_ bytes: UnsafeRawPointer, bitpix: Int) -> Double {
     switch bitpix {
     case 16: Double(Int16(bigEndian: bytes.loadUnaligned(as: Int16.self)))
     case 32: Double(Int32(bigEndian: bytes.loadUnaligned(as: Int32.self)))

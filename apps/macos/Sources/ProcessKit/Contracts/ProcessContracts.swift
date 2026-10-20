@@ -31,13 +31,24 @@ package struct ProcessContracts {
   private let runner: ProcessRunner
   private let input: GPUImage
   private let stats: LayerStats
+  private let layers: [String: GPUImage]
+  /// 1 on the left half, 0 on the right: every process also runs under it.
+  private let halfMask: GPUImage
 
-  /// Contracts run on `input` (non-uniform, so any change shows) with `stats`.
-  package init(device: MTLDevice, input: GPUImage, stats: LayerStats) throws {
+  /// Contracts run on `input` (non-uniform, so any change shows) with `stats` and the bundle
+  /// `layers` a process reads.
+  package init(
+    device: MTLDevice, input: GPUImage, stats: LayerStats, layers: [String: GPUImage] = [:]
+  ) throws {
     self.device = device
     runner = try ProcessRunner(device: device)
     self.input = input
     self.stats = stats
+    self.layers = layers
+    let row = (0..<input.width).map { Float($0 < input.width / 2 ? 1 : 0) }
+    halfMask = try GPUImage(
+      device: device, width: input.width, height: input.height,
+      planes: [Array([[Float]](repeating: row, count: input.height).joined())])
   }
 
   /// Every contract `type` breaks with `params` (empty: it passes).
@@ -49,6 +60,9 @@ package struct ProcessContracts {
     if !Self.identical(preview, apply) {
       found.append(Violation(contract: .previewEqualsApply, detail: "preview ≠ apply at 1:1"))
     }
+    if let detail = try maskedViolation(of: process) {
+      found.append(Violation(contract: .previewEqualsApply, detail: detail))
+    }
     if !Self.identical(apply, try render(process, purpose: .apply)) {
       found.append(Violation(contract: .noHiddenState, detail: "a second render differs"))
     }
@@ -58,6 +72,23 @@ package struct ProcessContracts {
       }
     }
     return found
+  }
+
+  /// Under the half mask: preview = apply, and the unmasked half is the input, bit for bit.
+  private func maskedViolation(of process: any ImageProcess) throws -> String? {
+    let preview = try render(process, purpose: .preview, mask: halfMask)
+    let apply = try render(process, purpose: .apply, mask: halfMask)
+    guard Self.identical(preview, apply) else { return "preview ≠ apply under a mask" }
+    let original = input.read()
+    for (plane, values) in apply.enumerated() {
+      for (index, value) in values.enumerated()
+      where index % input.width >= input.width / 2
+        && value.bitPattern != original[plane][index].bitPattern
+      {
+        return "the unmasked half changed under a mask"
+      }
+    }
+    return nil
   }
 
   /// `id` at its upper bound `v`, scale 2, against `v / 2` at scale 1.
@@ -81,9 +112,13 @@ package struct ProcessContracts {
   }
 
   private func render(
-    _ process: any ImageProcess, scale: Double = 1, purpose: RenderContext.Purpose = .apply
+    _ process: any ImageProcess, scale: Double = 1, purpose: RenderContext.Purpose = .apply,
+    mask: GPUImage? = nil
   ) throws -> [[Float]] {
-    try runner.run(process, input: input, stats: stats, scale: scale, purpose: purpose).read()
+    try runner.run(
+      process, input: input, stats: stats, scale: scale, purpose: purpose, layers: layers,
+      mask: mask
+    ).read()
   }
 
   /// Bit-identical planes (NaN included).

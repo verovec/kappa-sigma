@@ -63,6 +63,25 @@ struct ImageViewerWindowTests {
     controller.window?.close()
   }
 
+  @Test("the image picker accepts FITS files only, one at a time")
+  func testImagePanel() {
+    let panel = ImageViewerWindow.imagePanel()
+    #expect(!panel.allowsMultipleSelection)
+    #expect(
+      Set(panel.allowedContentTypes.compactMap(\.preferredFilenameExtension)).isSuperset(of: [
+        "fits"
+      ]))
+  }
+
+  @Test("Open Image… on a file that is not FITS reports the error", .scratchDirectory)
+  func testShowReportsFailure() async throws {
+    let url = try ScratchDirectory.url.appendingPathComponent("broken.fits")
+    try Data("nope".utf8).write(to: url)
+    var reported = 0
+    await ImageViewerWindow.show(url) { _ in reported += 1 }.value
+    #expect(reported == 1)
+  }
+
   @Test("a file that is not FITS is an error, and no window opens", .scratchDirectory)
   func testOpenRefusesNonFITS() async throws {
     let url = try ScratchDirectory.url.appendingPathComponent("notes.fits")

@@ -19,15 +19,59 @@ package struct MasterBuilder: Sendable {
   package struct Result: Equatable, Sendable {
     package var masters: [CalibrationMaster] = []
     package var warnings: [String] = []
+    /// What the light matcher chooses from: the library minus the masters a rebuild superseded,
+    /// plus every master built or reused.
+    package var pool: [CalibrationMaster] = []
+
+    /// A result of `masters` built and `warnings` raised.
+    package init(
+      masters: [CalibrationMaster] = [], warnings: [String] = [], pool: [CalibrationMaster] = []
+    ) {
+      self.masters = masters
+      self.warnings = warnings
+      self.pool = pool
+    }
   }
 
   package var runner: SirilRunner
   package var recipes: MasterRecipes
+  /// Every line Siril prints while stacking (progress for the UI); dropped by default.
+  package var onLine: @Sendable (SirilLine) -> Void
 
   /// A builder running scripts through `runner` with the given recipes.
-  package init(runner: SirilRunner, recipes: MasterRecipes = MasterRecipes()) {
+  package init(
+    runner: SirilRunner, recipes: MasterRecipes = MasterRecipes(),
+    onLine: @escaping @Sendable (SirilLine) -> Void = { _ in }
+  ) {
     self.runner = runner
     self.recipes = recipes
+    self.onLine = onLine
+  }
+
+  /// Rebuilds the master of one calibration `set` of `inventory` straight into the shared
+  /// `library` (the Import sheet's "Rebuild"): atomic publish, the library's other masters as the
+  /// pool (a flat is calibrated with the library bias).
+  ///
+  /// A rebuild always stacks: the master it replaces is dropped from the pool, even when its
+  /// `.sig` proves the same frames. It never replaces a library file unasked: without `replace`
+  /// it throws `wouldReplace` with what would be lost.
+  package func rebuild(
+    _ set: FrameSet, of inventory: Inventory, library: URL, work: URL,
+    pool: [CalibrationMaster] = [], replace: Bool = false
+  ) async throws -> Result {
+    guard let type = MasterType(set.key.type) else { return Result() }
+    let final = library.appendingPathComponent(MasterName.make(set.key, recipe: recipeTag(type)))
+      .appendingPathExtension("fits").path
+    if !replace && FileManager.default.fileExists(atPath: final) {
+      let frames = PoolSignature.read(at: PoolSignature.sidecar(of: final))?.frameCount ?? 0
+      throw CalibrationError.wouldReplace(path: final, frames: frames)
+    }
+    var single = inventory
+    single.sets = [set]
+    let runID = "rebuild_\(UUID().uuidString.prefix(8))"
+    return try await build(
+      single, into: library, work: work, publish: .atomic(runID: runID),
+      library: pool.filter { !($0.type == type && $0.satisfies(set.key)) })
   }
 
   /// Builds every calibration set of `inventory` into `folder`, reusing a `library` master
@@ -55,6 +99,7 @@ package struct MasterBuilder: Sendable {
         }
       }
     }
+    result.pool = pool
     return result
   }
 

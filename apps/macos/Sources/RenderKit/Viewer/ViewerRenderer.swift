@@ -29,10 +29,11 @@ package final class ViewerRenderer {
   /// the viewer counts again only when those change.
   package func encode(
     into commands: MTLCommandBuffer, image: ImageTexture, reference: ImageTexture?,
-    frame: ViewerFrame, output: MTLTexture, histogram counting: Bool = true
+    frame: ViewerFrame, output: MTLTexture, histogram counting: Bool = true,
+    mask: MTLTexture? = nil
   ) throws -> MTLBuffer? {
     try display.encode(
-      into: commands, current: image, reference: reference, output: output,
+      into: commands, current: image, reference: reference, mask: mask, output: output,
       uniforms: frame.uniforms(for: image))
     guard counting else { return nil }
     let bins = try histogram.makeBins(channels: image.planes.count)
@@ -44,9 +45,11 @@ package final class ViewerRenderer {
 
   /// Renders `frame` synchronously and returns the histogram (tests, exports).
   package func render(
-    image: ImageTexture, reference: ImageTexture?, frame: ViewerFrame, into output: MTLTexture
+    image: ImageTexture, reference: ImageTexture?, frame: ViewerFrame, into output: MTLTexture,
+    mask: MTLTexture? = nil
   ) throws -> [[Int]] {
-    let (_, bins) = try submit(image: image, reference: reference, frame: frame, output: output)
+    let (_, bins) = try submit(
+      image: image, reference: reference, frame: frame, output: output, mask: mask)
     return bins.map { Histogram.counts($0, channels: image.planes.count) } ?? []
   }
 
@@ -59,13 +62,15 @@ package final class ViewerRenderer {
   }
 
   private func submit(
-    image: ImageTexture, reference: ImageTexture?, frame: ViewerFrame, output: MTLTexture
+    image: ImageTexture, reference: ImageTexture?, frame: ViewerFrame, output: MTLTexture,
+    mask: MTLTexture? = nil
   ) throws -> (MTLCommandBuffer, MTLBuffer?) {
     guard let commands = queue.makeCommandBuffer() else {
       throw RenderError.commandFailed("command buffer")
     }
     let bins = try encode(
-      into: commands, image: image, reference: reference, frame: frame, output: output)
+      into: commands, image: image, reference: reference, frame: frame, output: output,
+      mask: mask)
     commands.commit()
     commands.waitUntilCompleted()
     if let error = commands.error { throw RenderError.commandFailed("\(error)") }

@@ -1,7 +1,8 @@
 package import AppKit
 package import Foundation
 internal import OSLog
-internal import ProjectKit
+package import ProjectKit
+package import StackKit
 internal import SwiftUI
 
 /// An AstroStack project document: an `NSDocument` over a `.astrostack` package.
@@ -100,6 +101,21 @@ package final class ProjectDocument: NSDocument {
     self.project = reopened
   }
 
+  /// Records a legacy run opened from this project: its path only, read-only (R7).
+  @discardableResult
+  package func importLegacyRun(_ source: LegacyRunSource) throws -> ProjectSource {
+    guard let project else { throw CocoaError(.fileReadUnknown) }
+    let recorded = try source.record(in: project.store)
+    // The project changed: an untitled one must offer to be saved, not be discarded silently.
+    updateChangeCount(.changeDone)
+    return recorded
+  }
+
+  /// The sources the project records; `nil` without an open package.
+  package func projectSources() throws -> [ProjectSource]? {
+    try project?.store.sources()
+  }
+
   /// Closes the package (deleting an unsaved untitled one) before closing the document.
   override package func close() {
     if let project { release(project) }
@@ -162,7 +178,8 @@ package final class ProjectDocument: NSDocument {
       contentRect: NSRect(x: 0, y: 0, width: 960, height: 640),
       styleMask: [.titled, .closable, .miniaturizable, .resizable],
       backing: .buffered, defer: false)
-    let content = NSHostingView(rootView: ProjectWindowView())
+    let model = ProjectWindowModel(store: { [weak self] in self?.project?.store })
+    let content = NSHostingView(rootView: ProjectWindowView(model: model))
     // Only the minimum size comes from SwiftUI; the window keeps its own frame.
     content.sizingOptions = [.minSize]
     window.contentView = content

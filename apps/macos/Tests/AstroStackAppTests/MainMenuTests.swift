@@ -27,6 +27,7 @@ struct MainMenuTests {
       action: "terminate:"),
     Item(
       menu: "File", title: "Open Image…", key: "O", modifiers: .command, action: "openImage:"),
+    Item(menu: "File", title: "Open Run…", key: "r", modifiers: .command, action: "openRun:"),
     Item(menu: "View", title: "Zoom to Fit", key: "0", modifiers: .command, action: "zoomToFit:"),
     Item(
       menu: "View", title: "Actual Pixels", key: "1", modifiers: .command,

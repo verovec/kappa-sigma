@@ -59,6 +59,27 @@ package actor SirilSession {
   {
     await acquire()
     defer { release() }
+    return try await perform(command, onLine: onLine)
+  }
+
+  /// Runs `commands` in order as one unit.
+  ///
+  /// No other caller's command runs in between (a script's
+  /// `cd` must hold for its own commands). Returns the joined log lines.
+  package func execScript(_ commands: [String], onLine: @Sendable (SirilLine) -> Void = { _ in })
+    async throws -> [String]
+  {
+    await acquire()
+    defer { release() }
+    var log: [String] = []
+    for command in commands { log += try await perform(command, onLine: onLine) }
+    return log
+  }
+
+  /// One command, with the queue already held.
+  private func perform(_ command: String, onLine: @Sendable (SirilLine) -> Void) async throws
+    -> [String]
+  {
     try Task.checkCancellation()
     if instance == nil { try await start() }
     guard let instance else { throw SirilError.sessionFailed(reason: "no instance") }

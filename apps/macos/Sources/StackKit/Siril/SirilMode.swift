@@ -5,6 +5,6 @@ package enum SirilMode: Equatable, Sendable {
   /// A long-lived `siril-cli -p` session (`SirilSession`).
   case pipe
 
-  /// Script mode until the 0048 golden is byte-identical in pipe mode too.
-  package static let `default` = Self.script
+  /// Pipe mode: the 0048 golden is byte-identical in both (`PreprocessLiveTests`).
+  package static let `default` = Self.pipe
 }

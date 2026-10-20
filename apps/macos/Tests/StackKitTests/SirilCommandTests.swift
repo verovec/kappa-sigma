@@ -9,7 +9,7 @@ struct SirilCommandTests {
     let verbs: Set<String> = [
       "link", "convert", "calibrate", "register", "select", "unselect", "stack", "setref",
       "seqapplyreg", "seqsubsky", "load", "save", "savepng", "savetif", "mirrorx", "subsky",
-      "rmgreen", "autostretch", "satu", "platesolve", "rgbcomp", "fmul", "calibrate_single",
+      "rmgreen", "autostretch", "satu", "platesolve", "rgbcomp", "fmul", "calibrate_single", "setfindstar",
     ]
     #expect(verbs.isSubset(of: sampledVerbs))
     #expect(sampledVerbs.subtracting(verbs) == ["requires", "setext", "set32bits"])

@@ -29,6 +29,19 @@ struct LightScriptTests {
     #expect(SirilScripts.calibrated("light", masters: CalibrationMasters()) == "light")
   }
 
+  @Test("a pair rescue pins the reference and relaxes star detection")
+  func testAlignPair() {
+    #expect(
+      SirilScripts.alignPair(seq: "pair").render().hasSuffix(
+        """
+        link pair -out=.
+        setfindstar -sigma=0.5 -roundness=0.42 -relax=on
+        setref pair 1
+        register pair
+
+        """))
+  }
+
   @Test("a lone frame is calibrated as an image; without masters it is only ingested")
   func testCalibrateSingle() {
     let script = SirilScripts.calibrateSingle(seq: "light", masters: Self.masters)

@@ -113,6 +113,14 @@ package enum SirilScripts {
     ])
   }
 
+  /// One master registered onto a pinned reference, star detection relaxed (`AlignPairScript`).
+  package static func alignPair(seq: String) -> SirilScript {
+    SirilScript([
+      .link(seq: seq), .setfindstarRelaxed, .setref(seq: seq, index: 1),
+      .register(seq: seq, twoPass: false, transformation: nil),
+    ])
+  }
+
   /// Background flattening then two-pass registration (`FlattenRegister2PassScript`).
   package static func flattenRegister2Pass(seq: String, transformation: String, degree: Int)
     -> SirilScript

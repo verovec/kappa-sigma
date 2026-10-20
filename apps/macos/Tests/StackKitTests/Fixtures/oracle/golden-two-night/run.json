@@ -1,0 +1,1065 @@
+{
+  "anchor_night": "2024-03-01",
+  "channels": [
+    {
+      "coverage_mask": "\u003cROOT\u003e/out/TESTFIELD/\u003cRUN\u003e/coverage_L.png",
+      "covered_frac": 1,
+      "dither": {
+        "direction_r": 0.760288426893196,
+        "drift_px_per_frame": 1.1804096184001363,
+        "frames": 10,
+        "note": "slow/irregular offsets (median step 1.6 px, coherence 0.76, span 112.2 px): only partial fixed-pattern decorrelation — explicit random dithering (~10 px between subs) would improve rejection",
+        "pattern": "mixed",
+        "span_px": 112.19025928805114,
+        "step_median_px": 1.581276616218651
+      },
+      "exposure_ms": 30000,
+      "filter": "L",
+      "groups": [
+        {
+          "bias": "master_BIAS_g100o10_b1.fits",
+          "bin": 1,
+          "current": true,
+          "dark": "master_DARK_30000ms_g100o10_b1_-10C.fits",
+          "exposure_ms": 30000,
+          "filter": "L",
+          "flat": "master_FLAT_B_5ms_g100o10_b1_0C_n2020-05-15.fits",
+          "flat_source": "run",
+          "frames": 2,
+          "gain": 100,
+          "offset": 10,
+          "overlap_frac": 1,
+          "photom": {
+            "applied": true,
+            "frames": 2,
+            "label": "2020-05-15 · L g100 o10 30000ms t-10C",
+            "meta_disagree": true,
+            "method": "measured",
+            "offset": -0.00036572054755111967,
+            "resid": 0.00008159881300364645,
+            "sat_ceiling": 1.0193424543104057,
+            "scale": 1.0512455410906771,
+            "session": "2020-05-15"
+          },
+          "rotation_deg": 35.000377601593215,
+          "session": "2020-05-15",
+          "session_id": 0,
+          "stacked_frames": 2,
+          "temp_bucket_c": -10
+        },
+        {
+          "bias": "master_BIAS_g100o10_b1.fits",
+          "bin": 1,
+          "current": true,
+          "dark": "master_DARK_10000ms_g100o10_b1_-10C.fits",
+          "exposure_ms": 10000,
+          "filter": "L",
+          "flat": "master_FLAT_5ms_g100o10_b1_0C_n2024-03-01.fits",
+          "flat_source": "run",
+          "frames": 3,
+          "gain": 100,
+          "offset": 10,
+          "overlap_frac": 0.9922331295542705,
+          "photom": {
+            "applied": false,
+            "frames": 3,
+            "label": "2024-03-01 · L g100 o10 10000ms t-10C",
+            "method": "measured",
+            "offset": 4.024666924564028e-8,
+            "ref": true,
+            "resid": 0.000009143396536746253,
+            "sat_ceiling": 0.9704316413150226,
+            "scale": 1.0004449495550034,
+            "session": "2024-03-01"
+          },
+          "rotation_deg": 0.0015294668911797701,
+          "session": "2024-03-01",
+          "session_id": 0,
+          "stacked_frames": 3,
+          "temp_bucket_c": -10
+        }
+      ],
+      "input_frames": 5,
+      "metrics": [
+        {
+          "background": 0.00515453,
+          "fwhm": 4.85825,
+          "index": 1,
+          "path": "\u003cROOT\u003e/in/lights_b/light_b_L_0.fits",
+          "quality": 0,
+          "rejected": false,
+          "roundness": 0.995459,
+          "shift_x": 97.4929,
+          "shift_y": -50.9521,
+          "star_count": 33,
+          "trail_detected": false,
+          "trail_score": 0.37890625,
+          "wfwhm": 5.66796
+        },
+        {
+          "background": 0.00414632,
+          "fwhm": 4.87189,
+          "index": 2,
+          "path": "\u003cROOT\u003e/in/lights_b/light_b_L_1.fits",
+          "quality": 0,
+          "rejected": false,
+          "roundness": 0.995667,
+          "shift_x": 96.9685,
+          "shift_y": -52.2953,
+          "star_count": 32,
+          "trail_detected": false,
+          "trail_score": 0.3828125,
+          "wfwhm": 5.95453
+        },
+        {
+          "background": 0.00384543,
+          "fwhm": 4.87372,
+          "index": 3,
+          "path": "\u003cROOT\u003e/in/lights/light_L_0.fits",
+          "quality": 0,
+          "rejected": false,
+          "roundness": 0.994937,
+          "shift_x": 1.49823,
+          "shift_y": -0.50571,
+          "star_count": 36,
+          "trail_detected": false,
+          "trail_score": 0.375,
+          "wfwhm": 4.87372
+        },
+        {
+          "background": 0.00374381,
+          "fwhm": 4.86465,
+          "index": 4,
+          "path": "\u003cROOT\u003e/in/lights/light_L_1.fits",
+          "quality": 0,
+          "rejected": false,
+          "roundness": 0.99862,
+          "star_count": 36,
+          "trail_detected": false,
+          "trail_score": 0.37109375,
+          "wfwhm": 4.86465
+        },
+        {
+          "background": 0.00387816,
+          "fwhm": 4.87332,
+          "index": 5,
+          "path": "\u003cROOT\u003e/in/lights/light_L_2.fits",
+          "quality": 0,
+          "rejected": false,
+          "roundness": 0.994977,
+          "shift_x": -1.50188,
+          "shift_y": 0.493788,
+          "star_count": 36,
+          "trail_detected": false,
+          "trail_score": 0.37109375,
+          "wfwhm": 4.87332
+        },
+        {
+          "background": 0.00515453,
+          "fwhm": 4.85825,
+          "index": 6,
+          "path": "",
+          "quality": 0,
+          "rejected": false,
+          "roundness": 0.995459,
+          "shift_x": 97.4929,
+          "shift_y": -50.9521,
+          "star_count": 33,
+          "trail_detected": false,
+          "trail_score": 0.37890625,
+          "wfwhm": 5.66796
+        },
+        {
+          "background": 0.00414632,
+          "fwhm": 4.87189,
+          "index": 7,
+          "path": "",
+          "quality": 0,
+          "rejected": false,
+          "roundness": 0.995667,
+          "shift_x": 96.9685,
+          "shift_y": -52.2953,
+          "star_count": 32,
+          "trail_detected": false,
+          "trail_score": 0.3828125,
+          "wfwhm": 5.95453
+        },
+        {
+          "background": 0.00384543,
+          "fwhm": 4.87372,
+          "index": 8,
+          "path": "",
+          "quality": 0,
+          "rejected": false,
+          "roundness": 0.994937,
+          "shift_x": 1.49823,
+          "shift_y": -0.50571,
+          "star_count": 36,
+          "trail_detected": false,
+          "trail_score": 0.375,
+          "wfwhm": 4.87372
+        },
+        {
+          "background": 0.00374381,
+          "fwhm": 4.86465,
+          "index": 9,
+          "path": "",
+          "quality": 0,
+          "rejected": false,
+          "roundness": 0.99862,
+          "shift_x": 4.84598e-14,
+          "shift_y": 5.06149e-14,
+          "star_count": 36,
+          "trail_detected": false,
+          "trail_score": 0.37109375,
+          "wfwhm": 4.86465
+        },
+        {
+          "background": 0.00387816,
+          "fwhm": 4.87332,
+          "index": 10,
+          "path": "",
+          "quality": 0,
+          "rejected": false,
+          "roundness": 0.994977,
+          "shift_x": -1.50188,
+          "shift_y": 0.493788,
+          "star_count": 36,
+          "trail_detected": false,
+          "trail_score": 0.37109375,
+          "wfwhm": 4.87332
+        }
+      ],
+      "noise": {
+        "background": 0.00662493659183383,
+        "sigma_before": 0.00012143634702541678,
+        "snr": 3843.5884437506857
+      },
+      "object": "TESTFIELD",
+      "output_path": "\u003cROOT\u003e/out/TESTFIELD/\u003cRUN\u003e/master_L.fits",
+      "photom": [
+        {
+          "applied": true,
+          "frames": 2,
+          "label": "2020-05-15 · L g100 o10 30000ms t-10C",
+          "meta_disagree": true,
+          "method": "measured",
+          "offset": -0.00036572054755111967,
+          "resid": 0.00008159881300364645,
+          "sat_ceiling": 1.0193424543104057,
+          "scale": 1.0512455410906771,
+          "session": "2020-05-15"
+        },
+        {
+          "applied": false,
+          "frames": 3,
+          "label": "2024-03-01 · L g100 o10 10000ms t-10C",
+          "method": "measured",
+          "offset": 4.024666924564028e-8,
+          "ref": true,
+          "resid": 0.000009143396536746253,
+          "sat_ceiling": 0.9704316413150226,
+          "scale": 1.0004449495550034,
+          "session": "2024-03-01"
+        }
+      ],
+      "seam": {
+        "noise_eq": {
+          "applied": true,
+          "depth_max": 5,
+          "depth_min": 3,
+          "mode": "mono",
+          "sigma_after": 0.00012143634702541678,
+          "sigma_before": 0.00016478978190131912,
+          "weight_max": 0.08755794167518616
+        },
+        "offsets": [
+          {
+            "applied": false,
+            "delta": 0,
+            "reason": "correction would clip the group's sky below zero",
+            "session": "2020-05-15"
+          }
+        ]
+      },
+      "selection": {
+        "bias": {
+          "bin": 1,
+          "exposure_ms": 0,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_BIAS_g100o10_b1.fits",
+          "temp_milli_c": -10000,
+          "type": "BIAS"
+        },
+        "dark": {
+          "bin": 1,
+          "exposure_ms": 30000,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_DARK_30000ms_g100o10_b1_-10C.fits",
+          "temp_milli_c": -10000,
+          "type": "DARK"
+        },
+        "flat": {
+          "bin": 1,
+          "exposure_ms": 5,
+          "filter": "B",
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_FLAT_B_5ms_g100o10_b1_0C_n2020-05-15.fits",
+          "session": "2020-05-15",
+          "temp_milli_c": -10000,
+          "type": "FLAT"
+        },
+        "notes": [
+          "no L flat — using the B flat (corrects shared dust/vignetting)",
+          "session 0: parity undetermined (plate-solve failed) — flip not applied",
+          "session 0: parity undetermined (plate-solve failed) — flip not applied",
+          "group \"2020-05-15 · L g100 o10 30000ms t-10C\": measured scale 1.05 disagrees with header exposure/gain — check GAIN header",
+          "capture offsets: slow/irregular offsets (median step 1.6 px, coherence 0.76, span 112.2 px): only partial fixed-pattern decorrelation — explicit random dithering (~10 px between subs) would improve rejection"
+        ]
+      },
+      "stacked_frames": 10,
+      "warnings": [
+        "L: per-frame background flatten failed — registering unflattened"
+      ]
+    },
+    {
+      "coverage_mask": "\u003cROOT\u003e/out/TESTFIELD/\u003cRUN\u003e/coverage_R.png",
+      "covered_frac": 1,
+      "dither": {
+        "direction_r": 0.760288426893196,
+        "drift_px_per_frame": 1.1804096184001363,
+        "frames": 10,
+        "note": "slow/irregular offsets (median step 1.6 px, coherence 0.76, span 112.2 px): only partial fixed-pattern decorrelation — explicit random dithering (~10 px between subs) would improve rejection",
+        "pattern": "mixed",
+        "span_px": 112.19025928805114,
+        "step_median_px": 1.581276616218651
+      },
+      "exposure_ms": 30000,
+      "filter": "R",
+      "groups": [
+        {
+          "bias": "master_BIAS_g100o10_b1.fits",
+          "bin": 1,
+          "current": true,
+          "dark": "master_DARK_30000ms_g100o10_b1_-10C.fits",
+          "exposure_ms": 30000,
+          "filter": "R",
+          "flat": "master_FLAT_B_5ms_g100o10_b1_0C_n2020-05-15.fits",
+          "flat_source": "run",
+          "frames": 2,
+          "gain": 100,
+          "offset": 10,
+          "overlap_frac": 1,
+          "photom": {
+            "applied": true,
+            "frames": 2,
+            "label": "2020-05-15 · R g100 o10 30000ms t-10C",
+            "meta_disagree": true,
+            "method": "measured",
+            "offset": -0.00036572054755111967,
+            "resid": 0.00008159881300364645,
+            "sat_ceiling": 1.0193424543104057,
+            "scale": 1.0512455410906771,
+            "session": "2020-05-15"
+          },
+          "rotation_deg": 35.000377601593215,
+          "session": "2020-05-15",
+          "session_id": 0,
+          "stacked_frames": 2,
+          "temp_bucket_c": -10
+        },
+        {
+          "bias": "master_BIAS_g100o10_b1.fits",
+          "bin": 1,
+          "current": true,
+          "dark": "master_DARK_10000ms_g100o10_b1_-10C.fits",
+          "exposure_ms": 10000,
+          "filter": "R",
+          "flat": "master_FLAT_5ms_g100o10_b1_0C_n2024-03-01.fits",
+          "flat_source": "run",
+          "frames": 3,
+          "gain": 100,
+          "offset": 10,
+          "overlap_frac": 0.9922331295542705,
+          "photom": {
+            "applied": false,
+            "frames": 3,
+            "label": "2024-03-01 · R g100 o10 10000ms t-10C",
+            "method": "measured",
+            "offset": 4.024666924564028e-8,
+            "ref": true,
+            "resid": 0.000009143396536746253,
+            "sat_ceiling": 0.9704316413150226,
+            "scale": 1.0004449495550034,
+            "session": "2024-03-01"
+          },
+          "rotation_deg": 0.0015294668911797701,
+          "session": "2024-03-01",
+          "session_id": 0,
+          "stacked_frames": 3,
+          "temp_bucket_c": -10
+        }
+      ],
+      "input_frames": 5,
+      "metrics": [
+        {
+          "background": 0.00515453,
+          "fwhm": 4.85825,
+          "index": 1,
+          "path": "\u003cROOT\u003e/in/lights_b/light_b_R_0.fits",
+          "quality": 0,
+          "rejected": false,
+          "roundness": 0.995459,
+          "shift_x": 97.4929,
+          "shift_y": -50.9521,
+          "star_count": 33,
+          "trail_detected": false,
+          "trail_score": 0.37890625,
+          "wfwhm": 5.66796
+        },
+        {
+          "background": 0.00414632,
+          "fwhm": 4.87189,
+          "index": 2,
+          "path": "\u003cROOT\u003e/in/lights_b/light_b_R_1.fits",
+          "quality": 0,
+          "rejected": false,
+          "roundness": 0.995667,
+          "shift_x": 96.9685,
+          "shift_y": -52.2953,
+          "star_count": 32,
+          "trail_detected": false,
+          "trail_score": 0.3828125,
+          "wfwhm": 5.95453
+        },
+        {
+          "background": 0.00384543,
+          "fwhm": 4.87372,
+          "index": 3,
+          "path": "\u003cROOT\u003e/in/lights/light_R_0.fits",
+          "quality": 0,
+          "rejected": false,
+          "roundness": 0.994937,
+          "shift_x": 1.49823,
+          "shift_y": -0.50571,
+          "star_count": 36,
+          "trail_detected": false,
+          "trail_score": 0.375,
+          "wfwhm": 4.87372
+        },
+        {
+          "background": 0.00374381,
+          "fwhm": 4.86465,
+          "index": 4,
+          "path": "\u003cROOT\u003e/in/lights/light_R_1.fits",
+          "quality": 0,
+          "rejected": false,
+          "roundness": 0.99862,
+          "star_count": 36,
+          "trail_detected": false,
+          "trail_score": 0.37109375,
+          "wfwhm": 4.86465
+        },
+        {
+          "background": 0.00387816,
+          "fwhm": 4.87332,
+          "index": 5,
+          "path": "\u003cROOT\u003e/in/lights/light_R_2.fits",
+          "quality": 0,
+          "rejected": false,
+          "roundness": 0.994977,
+          "shift_x": -1.50188,
+          "shift_y": 0.493788,
+          "star_count": 36,
+          "trail_detected": false,
+          "trail_score": 0.37109375,
+          "wfwhm": 4.87332
+        },
+        {
+          "background": 0.00515453,
+          "fwhm": 4.85825,
+          "index": 6,
+          "path": "",
+          "quality": 0,
+          "rejected": false,
+          "roundness": 0.995459,
+          "shift_x": 97.4929,
+          "shift_y": -50.9521,
+          "star_count": 33,
+          "trail_detected": false,
+          "trail_score": 0.37890625,
+          "wfwhm": 5.66796
+        },
+        {
+          "background": 0.00414632,
+          "fwhm": 4.87189,
+          "index": 7,
+          "path": "",
+          "quality": 0,
+          "rejected": false,
+          "roundness": 0.995667,
+          "shift_x": 96.9685,
+          "shift_y": -52.2953,
+          "star_count": 32,
+          "trail_detected": false,
+          "trail_score": 0.3828125,
+          "wfwhm": 5.95453
+        },
+        {
+          "background": 0.00384543,
+          "fwhm": 4.87372,
+          "index": 8,
+          "path": "",
+          "quality": 0,
+          "rejected": false,
+          "roundness": 0.994937,
+          "shift_x": 1.49823,
+          "shift_y": -0.50571,
+          "star_count": 36,
+          "trail_detected": false,
+          "trail_score": 0.375,
+          "wfwhm": 4.87372
+        },
+        {
+          "background": 0.00374381,
+          "fwhm": 4.86465,
+          "index": 9,
+          "path": "",
+          "quality": 0,
+          "rejected": false,
+          "roundness": 0.99862,
+          "shift_x": 4.84598e-14,
+          "shift_y": 5.06149e-14,
+          "star_count": 36,
+          "trail_detected": false,
+          "trail_score": 0.37109375,
+          "wfwhm": 4.86465
+        },
+        {
+          "background": 0.00387816,
+          "fwhm": 4.87332,
+          "index": 10,
+          "path": "",
+          "quality": 0,
+          "rejected": false,
+          "roundness": 0.994977,
+          "shift_x": -1.50188,
+          "shift_y": 0.493788,
+          "star_count": 36,
+          "trail_detected": false,
+          "trail_score": 0.37109375,
+          "wfwhm": 4.87332
+        }
+      ],
+      "noise": {
+        "background": 0.00662493659183383,
+        "sigma_before": 0.00012143634702541678,
+        "snr": 3843.5884437506857
+      },
+      "object": "TESTFIELD",
+      "output_path": "\u003cROOT\u003e/out/TESTFIELD/\u003cRUN\u003e/master_R.fits",
+      "photom": [
+        {
+          "applied": true,
+          "frames": 2,
+          "label": "2020-05-15 · R g100 o10 30000ms t-10C",
+          "meta_disagree": true,
+          "method": "measured",
+          "offset": -0.00036572054755111967,
+          "resid": 0.00008159881300364645,
+          "sat_ceiling": 1.0193424543104057,
+          "scale": 1.0512455410906771,
+          "session": "2020-05-15"
+        },
+        {
+          "applied": false,
+          "frames": 3,
+          "label": "2024-03-01 · R g100 o10 10000ms t-10C",
+          "method": "measured",
+          "offset": 4.024666924564028e-8,
+          "ref": true,
+          "resid": 0.000009143396536746253,
+          "sat_ceiling": 0.9704316413150226,
+          "scale": 1.0004449495550034,
+          "session": "2024-03-01"
+        }
+      ],
+      "seam": {
+        "noise_eq": {
+          "applied": true,
+          "depth_max": 5,
+          "depth_min": 3,
+          "mode": "mono",
+          "sigma_after": 0.00012143634702541678,
+          "sigma_before": 0.00016478978190131912,
+          "weight_max": 0.08755794167518616
+        },
+        "offsets": [
+          {
+            "applied": false,
+            "delta": 0,
+            "reason": "correction would clip the group's sky below zero",
+            "session": "2020-05-15"
+          }
+        ]
+      },
+      "selection": {
+        "bias": {
+          "bin": 1,
+          "exposure_ms": 0,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_BIAS_g100o10_b1.fits",
+          "temp_milli_c": -10000,
+          "type": "BIAS"
+        },
+        "dark": {
+          "bin": 1,
+          "exposure_ms": 30000,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_DARK_30000ms_g100o10_b1_-10C.fits",
+          "temp_milli_c": -10000,
+          "type": "DARK"
+        },
+        "flat": {
+          "bin": 1,
+          "exposure_ms": 5,
+          "filter": "B",
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_FLAT_B_5ms_g100o10_b1_0C_n2020-05-15.fits",
+          "session": "2020-05-15",
+          "temp_milli_c": -10000,
+          "type": "FLAT"
+        },
+        "notes": [
+          "no R flat — using the B flat (corrects shared dust/vignetting)",
+          "group \"2020-05-15 · R g100 o10 30000ms t-10C\": measured scale 1.05 disagrees with header exposure/gain — check GAIN header",
+          "capture offsets: slow/irregular offsets (median step 1.6 px, coherence 0.76, span 112.2 px): only partial fixed-pattern decorrelation — explicit random dithering (~10 px between subs) would improve rejection"
+        ]
+      },
+      "stacked_frames": 10,
+      "warnings": [
+        "R: per-frame background flatten failed — registering unflattened"
+      ]
+    },
+    {
+      "coverage_mask": "\u003cROOT\u003e/out/TESTFIELD/\u003cRUN\u003e/coverage_G.png",
+      "covered_frac": 1,
+      "exposure_ms": 10000,
+      "filter": "G",
+      "groups": [
+        {
+          "bias": "master_BIAS_g100o10_b1.fits",
+          "bin": 1,
+          "current": true,
+          "dark": "master_DARK_10000ms_g100o10_b1_-10C.fits",
+          "exposure_ms": 10000,
+          "filter": "G",
+          "flat": "master_FLAT_5ms_g100o10_b1_0C_n2024-03-01.fits",
+          "flat_source": "run",
+          "frames": 3,
+          "gain": 100,
+          "offset": 10,
+          "session": "2024-03-01",
+          "session_id": 0,
+          "stacked_frames": 3,
+          "temp_bucket_c": -10
+        }
+      ],
+      "input_frames": 3,
+      "metrics": [
+        {
+          "background": 0.00384543,
+          "fwhm": 4.87372,
+          "index": 1,
+          "path": "\u003cROOT\u003e/in/lights/light_G_0.fits",
+          "quality": 0,
+          "rejected": false,
+          "roundness": 0.994937,
+          "shift_x": 1.49823,
+          "shift_y": -0.50571,
+          "star_count": 36,
+          "trail_detected": false,
+          "trail_score": 0.375,
+          "wfwhm": 4.87372
+        },
+        {
+          "background": 0.00374381,
+          "fwhm": 4.86465,
+          "index": 2,
+          "path": "\u003cROOT\u003e/in/lights/light_G_1.fits",
+          "quality": 0,
+          "rejected": false,
+          "roundness": 0.99862,
+          "star_count": 36,
+          "trail_detected": false,
+          "trail_score": 0.37109375,
+          "wfwhm": 4.86465
+        },
+        {
+          "background": 0.00387816,
+          "fwhm": 4.87332,
+          "index": 3,
+          "path": "\u003cROOT\u003e/in/lights/light_G_2.fits",
+          "quality": 0,
+          "rejected": false,
+          "roundness": 0.994977,
+          "shift_x": -1.50188,
+          "shift_y": 0.493788,
+          "star_count": 36,
+          "trail_detected": false,
+          "trail_score": 0.37109375,
+          "wfwhm": 4.87332
+        }
+      ],
+      "noise": {
+        "background": 0.0065939456690102816,
+        "sigma_before": 0.0001697965488695712,
+        "snr": 2712.3941856467163
+      },
+      "object": "TESTFIELD",
+      "output_path": "\u003cROOT\u003e/out/TESTFIELD/\u003cRUN\u003e/master_G.fits",
+      "seam": {
+        "noise_eq": {
+          "applied": false,
+          "depth_max": 0,
+          "depth_min": 0,
+          "reason": "stack depth nearly uniform (3→3) — no visible noise step",
+          "sigma_after": 0,
+          "sigma_before": 0,
+          "weight_max": 0
+        }
+      },
+      "selection": {
+        "bias": {
+          "bin": 1,
+          "exposure_ms": 0,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_BIAS_g100o10_b1.fits",
+          "temp_milli_c": -10000,
+          "type": "BIAS"
+        },
+        "dark": {
+          "bin": 1,
+          "exposure_ms": 10000,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_DARK_10000ms_g100o10_b1_-10C.fits",
+          "temp_milli_c": -10000,
+          "type": "DARK"
+        },
+        "flat": {
+          "bin": 1,
+          "exposure_ms": 5,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_FLAT_5ms_g100o10_b1_0C_n2024-03-01.fits",
+          "session": "2024-03-01",
+          "temp_milli_c": -10000,
+          "type": "FLAT"
+        },
+        "notes": [
+          "no G flat — using the session flat (corrects shared dust/vignetting)"
+        ]
+      },
+      "stacked_frames": 3
+    },
+    {
+      "coverage_mask": "\u003cROOT\u003e/out/TESTFIELD/\u003cRUN\u003e/coverage_B.png",
+      "covered_frac": 1,
+      "exposure_ms": 10000,
+      "filter": "B",
+      "groups": [
+        {
+          "bias": "master_BIAS_g100o10_b1.fits",
+          "bin": 1,
+          "current": true,
+          "dark": "master_DARK_10000ms_g100o10_b1_-10C.fits",
+          "exposure_ms": 10000,
+          "filter": "B",
+          "flat": "master_FLAT_B_5ms_g100o10_b1_0C_n2020-05-15.fits",
+          "flat_source": "run",
+          "frames": 3,
+          "gain": 100,
+          "offset": 10,
+          "session": "2024-03-01",
+          "session_id": 0,
+          "stacked_frames": 3,
+          "temp_bucket_c": -10
+        }
+      ],
+      "input_frames": 3,
+      "metrics": [
+        {
+          "background": 0.00384543,
+          "fwhm": 4.87372,
+          "index": 1,
+          "path": "\u003cROOT\u003e/in/lights/light_B_0.fits",
+          "quality": 0,
+          "rejected": false,
+          "roundness": 0.994937,
+          "shift_x": 1.49823,
+          "shift_y": -0.50571,
+          "star_count": 36,
+          "trail_detected": false,
+          "trail_score": 0.375,
+          "wfwhm": 4.87372
+        },
+        {
+          "background": 0.00374381,
+          "fwhm": 4.86465,
+          "index": 2,
+          "path": "\u003cROOT\u003e/in/lights/light_B_1.fits",
+          "quality": 0,
+          "rejected": false,
+          "roundness": 0.99862,
+          "star_count": 36,
+          "trail_detected": false,
+          "trail_score": 0.37109375,
+          "wfwhm": 4.86465
+        },
+        {
+          "background": 0.00387816,
+          "fwhm": 4.87332,
+          "index": 3,
+          "path": "\u003cROOT\u003e/in/lights/light_B_2.fits",
+          "quality": 0,
+          "rejected": false,
+          "roundness": 0.994977,
+          "shift_x": -1.50188,
+          "shift_y": 0.493788,
+          "star_count": 36,
+          "trail_detected": false,
+          "trail_score": 0.37109375,
+          "wfwhm": 4.87332
+        }
+      ],
+      "noise": {
+        "background": 0.0065939456690102816,
+        "sigma_before": 0.0001697965488695712,
+        "snr": 2712.3941856467163
+      },
+      "object": "TESTFIELD",
+      "output_path": "\u003cROOT\u003e/out/TESTFIELD/\u003cRUN\u003e/master_B.fits",
+      "seam": {
+        "noise_eq": {
+          "applied": false,
+          "depth_max": 0,
+          "depth_min": 0,
+          "reason": "stack depth nearly uniform (3→3) — no visible noise step",
+          "sigma_after": 0,
+          "sigma_before": 0,
+          "weight_max": 0
+        }
+      },
+      "selection": {
+        "bias": {
+          "bin": 1,
+          "exposure_ms": 0,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_BIAS_g100o10_b1.fits",
+          "temp_milli_c": -10000,
+          "type": "BIAS"
+        },
+        "dark": {
+          "bin": 1,
+          "exposure_ms": 10000,
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_DARK_10000ms_g100o10_b1_-10C.fits",
+          "temp_milli_c": -10000,
+          "type": "DARK"
+        },
+        "flat": {
+          "bin": 1,
+          "exposure_ms": 5,
+          "filter": "B",
+          "frame_count": 3,
+          "gain": 100,
+          "has_temp": true,
+          "offset": 10,
+          "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_FLAT_B_5ms_g100o10_b1_0C_n2020-05-15.fits",
+          "session": "2020-05-15",
+          "temp_milli_c": -10000,
+          "type": "FLAT"
+        },
+        "notes": [
+          "no 2024-03-01 flat — using the night 2020-05-15 flat (dust may have moved between nights)"
+        ]
+      },
+      "stacked_frames": 3
+    }
+  ],
+  "combine_crop": {
+    "applied": false,
+    "frac": 1,
+    "h": 256,
+    "w": 256,
+    "x": 0,
+    "y": 0
+  },
+  "final": {
+    "channels": [
+      "L",
+      "R",
+      "G",
+      "B"
+    ],
+    "finish_quality": {
+      "background": 0.1450980392156863,
+      "bg_chroma": 0.01889196656789727,
+      "black_clip": [
+        0.008704344482891195,
+        0.009934640522875817,
+        0.008858131487889274
+      ],
+      "green_cast": -0.0039215686274509665,
+      "median": [
+        0.25098039215686274,
+        0.24705882352941178,
+        0.25098039215686274
+      ],
+      "signal_cast": 0,
+      "star_color_spread": 0,
+      "star_sat_frac": 0,
+      "star_warm_frac": 0,
+      "warm_cast": 0.013725490196078438,
+      "white_clip": [
+        0.012241445597846982,
+        0.012010765090349866,
+        0.012026143790849673
+      ]
+    },
+    "mode": "LRGB",
+    "mono_outputs": [
+      {
+        "kind": "luminance",
+        "png": "\u003cROOT\u003e/out/TESTFIELD/\u003cRUN\u003e/final_luminance.png",
+        "tif": "\u003cROOT\u003e/out/TESTFIELD/\u003cRUN\u003e/final_luminance.tif"
+      }
+    ],
+    "notes": [
+      "background-neutralization color balance",
+      "saved luminance-only mono (final_luminance)"
+    ],
+    "outputs": [
+      "\u003cROOT\u003e/out/TESTFIELD/\u003cRUN\u003e/final.png",
+      "\u003cROOT\u003e/out/TESTFIELD/\u003cRUN\u003e/final.tif",
+      "\u003cROOT\u003e/out/TESTFIELD/\u003cRUN\u003e/final_luminance.png",
+      "\u003cROOT\u003e/out/TESTFIELD/\u003cRUN\u003e/final_luminance.tif"
+    ]
+  },
+  "input_dir": "\u003cROOT\u003e/in",
+  "masters": [
+    {
+      "bin": 1,
+      "exposure_ms": 0,
+      "frame_count": 3,
+      "gain": 100,
+      "has_temp": true,
+      "offset": 10,
+      "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_BIAS_g100o10_b1.fits",
+      "temp_milli_c": -10000,
+      "type": "BIAS"
+    },
+    {
+      "bin": 1,
+      "exposure_ms": 10000,
+      "frame_count": 3,
+      "gain": 100,
+      "has_temp": true,
+      "offset": 10,
+      "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_DARK_10000ms_g100o10_b1_-10C.fits",
+      "temp_milli_c": -10000,
+      "type": "DARK"
+    },
+    {
+      "bin": 1,
+      "exposure_ms": 30000,
+      "frame_count": 3,
+      "gain": 100,
+      "has_temp": true,
+      "offset": 10,
+      "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_DARK_30000ms_g100o10_b1_-10C.fits",
+      "temp_milli_c": -10000,
+      "type": "DARK"
+    },
+    {
+      "bin": 1,
+      "exposure_ms": 5,
+      "frame_count": 3,
+      "gain": 100,
+      "has_temp": true,
+      "offset": 10,
+      "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_FLAT_5ms_g100o10_b1_0C_n2024-03-01.fits",
+      "session": "2024-03-01",
+      "temp_milli_c": -10000,
+      "type": "FLAT"
+    },
+    {
+      "bin": 1,
+      "exposure_ms": 5,
+      "filter": "B",
+      "frame_count": 3,
+      "gain": 100,
+      "has_temp": true,
+      "offset": 10,
+      "path": "\u003cROOT\u003e/work/run_\u003cRUN\u003e/masters/master_FLAT_B_5ms_g100o10_b1_0C_n2020-05-15.fits",
+      "session": "2020-05-15",
+      "temp_milli_c": -10000,
+      "type": "FLAT"
+    }
+  ],
+  "object": "TESTFIELD",
+  "options": {
+    "drop_transition": true,
+    "ha_continuum_sub": true,
+    "ha_exclude_stars": true,
+    "luminance_mono": true,
+    "mode": "deepsky",
+    "seam_noise_eq": true,
+    "seam_offset_refit": true,
+    "stack_combine": "mean",
+    "stack_engine": "auto",
+    "stack_norm": "addscale",
+    "stack_reject": "auto",
+    "stack_weight": "wfwhm"
+  },
+  "output_dir": "\u003cROOT\u003e/out/TESTFIELD/\u003cRUN\u003e",
+  "run_id": "\u003cRUN\u003e",
+  "warnings": [
+    "L: per-frame background flatten failed — registering unflattened",
+    "R: per-frame background flatten failed — registering unflattened",
+    "channel parity check skipped (no master could be plate-solved)",
+    "finish quality: blown highlights (1.22% of channel R at white) — star cores or a galaxy nucleus burning; more StretchHeadroom / a lower CoreHighlightCeil can recover them"
+  ]
+}

@@ -1,0 +1,5 @@
+requires 1.2.0
+setext fits
+set32bits
+select r_pp_light_ 1 3
+stack r_pp_light_ rej percentile 0.2 0.1 -norm=addscale -output_norm -weight=wfwhm -filter-incl -out=<ROOT>/out/TESTFIELD/<RUN>/master_R

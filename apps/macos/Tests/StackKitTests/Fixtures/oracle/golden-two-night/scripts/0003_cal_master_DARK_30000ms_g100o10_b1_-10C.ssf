@@ -1,0 +1,5 @@
+requires 1.2.0
+setext fits
+set32bits
+convert cal -out=.
+stack cal rej percentile 0.2 0.1 -nonorm -out=<ROOT>/work/run_<RUN>/masters/master_DARK_30000ms_g100o10_b1_-10C

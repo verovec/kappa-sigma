@@ -1,0 +1,5 @@
+requires 1.2.0
+setext fits
+set32bits
+select r_light_ 1 10
+stack r_light_ rej winsorized 3 3 -norm=addscale -output_norm -weight=wfwhm -filter-incl -out=<ROOT>/out/TESTFIELD/<RUN>/master_L

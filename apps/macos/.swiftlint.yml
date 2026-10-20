@@ -77,6 +77,10 @@ type_name:
 large_tuple:
   warning: 3
   error: 4
+# "master" is the astrophotography term for a combined calibration frame (master dark/flat/bias),
+# used by Siril, the legacy engine and every card; the other default terms stay flagged.
+inclusive_language:
+  override_terms: [whitelist, blacklist, slave]
 
 force_unwrapping:
   severity: error

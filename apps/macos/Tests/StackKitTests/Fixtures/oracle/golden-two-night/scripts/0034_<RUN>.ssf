@@ -1,0 +1,7 @@
+requires 1.2.0
+setext fits
+set32bits
+load combined
+subsky 1
+rmgreen 0
+save combined

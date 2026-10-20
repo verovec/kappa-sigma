@@ -1,0 +1,6 @@
+requires 1.2.0
+setext fits
+set32bits
+load master_B
+platesolve -noflip
+save _parity_probe

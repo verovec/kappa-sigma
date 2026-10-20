@@ -1,0 +1,7 @@
+requires 1.2.0
+setext fits
+set32bits
+load <ROOT>/work/run_<RUN>/05_stretched/lum_mono_lin.fits
+subsky 1
+autostretch -2.8 0.060
+save <ROOT>/work/run_<RUN>/05_stretched/lum_mono

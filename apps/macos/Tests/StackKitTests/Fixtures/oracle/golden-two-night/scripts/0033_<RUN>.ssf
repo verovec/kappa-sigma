@@ -1,0 +1,7 @@
+requires 1.2.0
+setext fits
+set32bits
+rgbcomp aligned_R aligned_G aligned_B -lum=aligned_L -out=combined
+load combined
+subsky 1
+save combined

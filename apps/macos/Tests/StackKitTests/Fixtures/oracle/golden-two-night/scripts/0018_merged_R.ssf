@@ -1,0 +1,5 @@
+requires 1.2.0
+setext fits
+set32bits
+setref light 4
+seqapplyreg light -framing=current

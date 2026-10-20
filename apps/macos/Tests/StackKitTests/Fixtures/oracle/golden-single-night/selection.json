@@ -1,0 +1,53 @@
+{
+  "channels": [
+    {
+      "filter": "L",
+      "input_frames": 3,
+      "kept": [
+        "\u003cROOT\u003e/in/lights/light_L_0.fits",
+        "\u003cROOT\u003e/in/lights/light_L_1.fits",
+        "\u003cROOT\u003e/in/lights/light_L_2.fits"
+      ],
+      "object": "TESTFIELD",
+      "rejected": [],
+      "stacked_frames": 3
+    },
+    {
+      "filter": "R",
+      "input_frames": 3,
+      "kept": [
+        "\u003cROOT\u003e/in/lights/light_R_0.fits",
+        "\u003cROOT\u003e/in/lights/light_R_1.fits",
+        "\u003cROOT\u003e/in/lights/light_R_2.fits"
+      ],
+      "object": "TESTFIELD",
+      "rejected": [],
+      "stacked_frames": 3
+    },
+    {
+      "filter": "G",
+      "input_frames": 3,
+      "kept": [
+        "\u003cROOT\u003e/in/lights/light_G_0.fits",
+        "\u003cROOT\u003e/in/lights/light_G_1.fits",
+        "\u003cROOT\u003e/in/lights/light_G_2.fits"
+      ],
+      "object": "TESTFIELD",
+      "rejected": [],
+      "stacked_frames": 3
+    },
+    {
+      "filter": "B",
+      "input_frames": 3,
+      "kept": [
+        "\u003cROOT\u003e/in/lights/light_B_0.fits",
+        "\u003cROOT\u003e/in/lights/light_B_1.fits",
+        "\u003cROOT\u003e/in/lights/light_B_2.fits"
+      ],
+      "object": "TESTFIELD",
+      "rejected": [],
+      "stacked_frames": 3
+    }
+  ],
+  "unselect": []
+}

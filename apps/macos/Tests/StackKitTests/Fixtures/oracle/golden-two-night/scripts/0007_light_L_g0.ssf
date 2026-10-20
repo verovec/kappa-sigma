@@ -1,0 +1,6 @@
+requires 1.2.0
+setext fits
+set32bits
+load pp_light_00001
+platesolve -noflip
+save _parity_probe

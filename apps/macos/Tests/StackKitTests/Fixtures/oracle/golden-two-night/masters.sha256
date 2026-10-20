@@ -1,0 +1,9 @@
+eb49e7de410325830bf96c92d28da062299a172d384b5d92ea5e57c6327f9899  <ROOT>/out/TESTFIELD/<RUN>/master_B.fits
+eb49e7de410325830bf96c92d28da062299a172d384b5d92ea5e57c6327f9899  <ROOT>/out/TESTFIELD/<RUN>/master_G.fits
+53251f3cecd1779b5d1009dc8401c59d4bdea99ed79f9282b2e6069d5a37ab60  <ROOT>/out/TESTFIELD/<RUN>/master_L.fits
+53251f3cecd1779b5d1009dc8401c59d4bdea99ed79f9282b2e6069d5a37ab60  <ROOT>/out/TESTFIELD/<RUN>/master_R.fits
+e4d7bdd1dcf415f8f4294ecb2cd5fdddf4ccd99a7f8d7fe3903269ceb763c8be  <ROOT>/work/run_<RUN>/masters/master_BIAS_g100o10_b1.fits
+8552118fccd7b2bd4ae76bd7f15c7fcaac3aaf1787a53d7332e1c1b41747cbde  <ROOT>/work/run_<RUN>/masters/master_DARK_10000ms_g100o10_b1_-10C.fits
+2cb811d0b3b8418f8091aa8fc77ca1568676cd18a97421f4bf6cc59369ac3e64  <ROOT>/work/run_<RUN>/masters/master_DARK_30000ms_g100o10_b1_-10C.fits
+0b1be5d52a8983c36e5ab2becd0cdb275e04e74ffcf16bdea93d0ad92c5586dd  <ROOT>/work/run_<RUN>/masters/master_FLAT_5ms_g100o10_b1_0C_n2024-03-01.fits
+0b1be5d52a8983c36e5ab2becd0cdb275e04e74ffcf16bdea93d0ad92c5586dd  <ROOT>/work/run_<RUN>/masters/master_FLAT_B_5ms_g100o10_b1_0C_n2020-05-15.fits

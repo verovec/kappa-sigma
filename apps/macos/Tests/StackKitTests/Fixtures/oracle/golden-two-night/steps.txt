@@ -1,0 +1,11 @@
+1/10 building master calibration frames
+0/0 
+2/10 grading + stacking TESTFIELD L (2 groups)
+3/10 grading + stacking TESTFIELD R (2 groups)
+4/10 grading + stacking TESTFIELD G
+5/10 grading + stacking TESTFIELD B
+6/10 aligning channels
+7/10 combining channels (Siril)
+0/0 mono finish (lum_mono)
+8/10 export
+8/10 final

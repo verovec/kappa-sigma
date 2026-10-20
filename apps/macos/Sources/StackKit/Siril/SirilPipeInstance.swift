@@ -39,13 +39,16 @@ final class SirilPipeInstance {
       }
       self.commands = commands
       self.lines = stream.makeAsyncIterator()
-      self.terminate = {
+      // Called by the session and by deinit, possibly at once: the closes must happen exactly
+      // once, or the second close of a descriptor number can hit one Subprocess reused meanwhile.
+      let teardown = RunOnce {
         process.cancel()
         replies.readabilityHandler = nil
         try? commands.close()
         try? replies.close()
         try? FileManager.default.removeItem(at: folder)
       }
+      self.terminate = { teardown.run() }
     } catch {
       try? FileManager.default.removeItem(at: folder)
       throw error

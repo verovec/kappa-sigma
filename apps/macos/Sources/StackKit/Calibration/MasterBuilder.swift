@@ -19,6 +19,9 @@ package struct MasterBuilder: Sendable {
   package struct Result: Equatable, Sendable {
     package var masters: [CalibrationMaster] = []
     package var warnings: [String] = []
+    /// What the light matcher chooses from: the library minus the masters a rebuild superseded,
+    /// plus every master built or reused.
+    package var pool: [CalibrationMaster] = []
   }
 
   package var runner: SirilRunner
@@ -55,6 +58,7 @@ package struct MasterBuilder: Sendable {
         }
       }
     }
+    result.pool = pool
     return result
   }
 

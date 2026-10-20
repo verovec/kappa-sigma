@@ -18,8 +18,10 @@ writes its scripts and reads its output.
 | `SirilRunner` | script mode: `siril-cli -d dir -s dir/_astrostack.ssf` via swift-subprocess (struct of closures) |
 | `SirilSession` | pipe mode: one `siril-cli -p -r in -w out` per session (actor), FIFOs opened read-write by us, restart on crash → `SirilError.restarted` |
 
-**Mode:** `SirilMode.default` is `.script` (every oracle was recorded that way) until card 0048's
-golden is byte-identical in `.pipe` too.
+**Mode:** `SirilMode.default` is `.pipe`: card 0048's golden single night is byte-identical in both
+modes (`PreprocessLiveTests`, parameterised over the two). `SirilRunner.make(mode:binary:work:)`
+builds either; `SirilRunner.pipe(_:)` replays each script as a `cd` to its folder plus its lines
+in one session. The oracles were recorded in script mode, which stays one argument away.
 
 ## Pipe protocol (Siril 1.4.4, checked)
 

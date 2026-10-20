@@ -40,6 +40,42 @@ struct ChannelStackerTests {
   static let dropped = "R0 0 0 0 0 0 0"
 
   @Test(
+    "two-pass registration notes the elected reference, then applies on its field",
+    .scratchDirectory)
+  func testStack_twoPass() async throws {
+    let fixture = try await Fixture.make()
+    let lines = [PipelineSiril.healthyLine, PipelineSiril.healthyLine, PipelineSiril.healthyLine]
+    let siril = PipelineSiril { _ in
+      (["S 'pp_light_' 1 3 3 0 2 0 1"] + lines).joined(separator: "\n")
+    }
+    let settings = PreprocessSettings(register2Pass: true)
+    let outcome = try await ChannelStacker(runner: siril.runner, settings: settings) { _, _ in nil }
+      .stack(
+        try fixture.lights, filter: "L", inventory: fixture.inventory, masters: fixture.masters,
+        work: fixture.work, out: fixture.out)
+    #expect(
+      outcome.selection.notes.last?.hasPrefix("L: two-pass registration elected frame 3/3") == true)
+    let scripts = siril.calls.map(\.script)
+    #expect(scripts.contains { $0.contains("register pp_light -2pass\n") })
+    #expect(scripts.contains { $0.contains("seqapplyreg pp_light -framing=current\n") })
+  }
+
+  @Test(
+    "frames restored for the stack minimum are a warning naming why they were rejected",
+    .scratchDirectory)
+  func testStack_restoredWarning() async throws {
+    let fixture = try await Fixture.make()
+    let siril = PipelineSiril()
+    let outcome = try await ChannelStacker(runner: siril.runner) { _, _ in (true, 0.9) }.stack(
+      try fixture.lights, filter: "L", inventory: fixture.inventory, masters: fixture.masters,
+      work: fixture.work, out: fixture.out)
+    #expect(outcome.stackedFrames == 2)
+    #expect(
+      outcome.warnings.last?.hasPrefix("L: stacking 2 survivor(s) — 2 kept despite: trail detected")
+        == true)
+  }
+
+  @Test(
     "an unregistered frame is graded out of the stack; the master loses its BAYERPAT",
     .scratchDirectory)
   func testStack_unregisteredFrame() async throws {

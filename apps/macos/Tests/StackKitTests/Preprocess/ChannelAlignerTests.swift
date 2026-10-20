@@ -124,6 +124,25 @@ struct ChannelAlignerTests {
         == true)
   }
 
+  @Test("a solve that fails reads no parity; a mirror that fails is a warning", .scratchDirectory)
+  func testParityFailures() async throws {
+    let (masters, _, _) = try Self.masters(["L", "R", "G"])
+    let siril = PipelineSiril(solve: { $0 == "master_G" ? 1 : -1 })
+    let runner = SirilRunner { script, folder, onLine in
+      let text = script.render()
+      if text.contains("mirrorx") || text.contains("load master_R\n") {
+        throw SirilError.scriptFailed(exitCode: 1, hint: "no")
+      }
+      return try await siril.runner.run(script, folder, onLine)
+    }
+    var journal = PreprocessJournal()
+    try await ParityNormalizer(runner: runner).normalize(
+      masters, ordered: ["L", "R", "G"], journal: &journal)
+    #expect(journal.warnings.count == 1)
+    #expect(journal.warnings.first?.hasPrefix("channel G: parity flip failed (") == true)
+    #expect(journal.warnings.first?.hasSuffix(") — master left mirrored") == true)
+  }
+
   @Test("a previous run's registered frame is never taken for this run's", .scratchDirectory)
   func testStaleFolder() async throws {
     let (masters, out, work) = try Self.masters(["R", "G", "B"])

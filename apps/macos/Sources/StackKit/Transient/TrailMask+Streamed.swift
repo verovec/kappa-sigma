@@ -53,6 +53,6 @@ extension TrailMask {
     }
     try checkShape(frames, pixels: size.width * size.height)
     let shape = (frames[0].count, size.width, size.height)
-    return (await context(frames, width: size.width, height: size.height, k: k), shape)
+    return (try await context(frames, width: size.width, height: size.height, k: k), shape)
   }
 }

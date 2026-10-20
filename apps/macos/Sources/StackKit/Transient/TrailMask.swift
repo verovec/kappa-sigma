@@ -31,7 +31,7 @@ package enum TrailMask {
   {
     guard frames.count >= minimumFrames, k > 0 else { return TrailMaskReport() }
     try checkShape(frames, pixels: width * height)
-    let context = await context(frames, width: width, height: height, k: k)
+    let context = try await context(frames, width: width, height: height, k: k)
     var report = TrailMaskReport(
       geostationary: context.medianSegments.count, recurring: context.recurring.count)
     for index in frames.indices {
@@ -47,12 +47,13 @@ package enum TrailMask {
 
   /// The statistics of `basis`: median and σ planes, residuals, sky noises, median and recurring
   /// streaks.
-  static func context(_ basis: [TrailMaskPlanes.Frame], width: Int, height: Int, k: Double) async
-    -> Context
+  static func context(_ basis: [TrailMaskPlanes.Frame], width: Int, height: Int, k: Double)
+    async throws -> Context
   {
     let pixels = width * height
     let (median, sigma) = await TrailMaskPlanes.medianSigma(
       basis, channels: basis[0].count, pixels: pixels)
+    try Task.checkCancellation()
     var mean = MeanResidual(pixels: pixels)
     let residuals = basis.map { frame in
       let residual = TrailMaskPlanes.residual(frame, median: median)

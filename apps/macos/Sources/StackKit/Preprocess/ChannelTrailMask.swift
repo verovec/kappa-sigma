@@ -13,10 +13,20 @@ package enum ChannelTrailMask {
     package var summary: TrailMaskSummary
     /// `streamed, N-frame basis under a B GiB memory budget`, nil in memory.
     package var mode: String?
-    package var note: String
+    /// The frames' size, for the note's share.
+    package var width: Int
+    package var height: Int
+
+    /// The channel note.
+    package var note: String {
+      ChannelTrailMask.note(summary, width: width, height: height, mode: mode)
+    }
   }
 
   /// Masks `files` with `k`; nil under five frames.
+  ///
+  /// Off the caller's actor: minutes of CPU on a large channel.
+  @concurrent
   package static func mask(_ files: [URL], k: Double, budget: Int64) async throws -> Outcome? {
     guard files.count >= TrailMask.minimumFrames, k > 0 else { return nil }
     let header = try FITSFile.read(at: files[0]).header
@@ -35,24 +45,30 @@ package enum ChannelTrailMask {
     }
     var summary = report.summary
     summary.frames = files.count
-    return Outcome(
-      summary: summary, mode: mode, note: note(summary, width: width, height: height, mode: mode))
+    return Outcome(summary: summary, mode: mode, width: width, height: height)
   }
 
   /// The whole channel resident: read, mask, rewrite the frames that changed.
   private static func inMemory(_ files: [URL], k: Double, width: Int, height: Int) async throws
     -> TrailMaskReport
   {
-    let sources = try files.map { url in
+    var sources: [(FITSFile, AstroImage)] = []
+    var frames: [[[Float]]] = []
+    for url in files {
+      try Task.checkCancellation()
       let file = try FITSFile.read(at: url)
-      return (file, try file.image())
+      let image = try file.image()
+      // The planes move out of the image so the mask mutates them in place, never a copy.
+      frames.append(image.planes)
+      image.planes = []
+      sources.append((file, image))
     }
-    var frames = sources.map(\.1.planes)
     let report = try await TrailMask.mask(&frames, width: width, height: height, k: k)
     for (index, record) in report.frames.enumerated() where record.maskedPixels > 0 {
       let (file, image) = sources[index]
       image.planes = frames[index]
       try file.write(image, to: files[index])
+      image.planes = []
     }
     return report
   }

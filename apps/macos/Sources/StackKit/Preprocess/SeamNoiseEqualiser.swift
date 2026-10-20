@@ -13,6 +13,8 @@ package enum SeamNoiseEqualiser {
     package var sigmaBefore = 0.0
     package var sigmaAfter = 0.0
     package var applied = false
+    /// Skipped because the master would not fit the memory budget.
+    package var overBudget = false
     package var reason = ""
     /// `luminance` for a colour master (chroma kept), `mono` for one plane.
     package var mode = ""
@@ -38,6 +40,7 @@ package enum SeamNoiseEqualiser {
       let image = try file.image()
       let need = Int64(image.width) * Int64(image.height) * 4 * 10
       guard need <= budget else {
+        record.overBudget = true
         record.reason = "skipped: needs ~\(need >> 20) MB, over the memory budget"
         return record
       }

@@ -1,25 +1,5 @@
 internal import Foundation
 
-/// The frames a candidate is judged against: their residuals and sky noises.
-struct Witnesses {
-  var residuals: [[Float]]
-  var skies: [Double]
-}
-
-/// A frame's own residual (taken before any pass) and its sky noise.
-struct OwnResidual {
-  var plane: [Float]
-  var sky: Double
-}
-
-/// One 64-step stretch of a segment's swath (`corridorWindow`): the unique plane indices inside
-/// the swath over t ∈ [t0, t1].
-struct CorridorWindow {
-  var t0: Double
-  var t1: Double
-  var pixels: [Int] = []
-}
-
 /// The windowed validation of a line candidate (`transient/corridor.go`, `validTrailBasis`).
 ///
 /// A real trail lights its corridor in one frame, or each stretch of a reused track in a few;

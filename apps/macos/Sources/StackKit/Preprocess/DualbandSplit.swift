@@ -45,10 +45,13 @@ package enum DualbandSplit {
   ///
   /// The lane leaves the map whatever happens: it is not a colour channel. With no broadband
   /// master left it becomes the colour channel itself, unsplit (nothing to screen the lines
-  /// onto); an unsplittable master costs only its emission layers.
-  package static func channels(_ channels: [String: String], out: URL) -> (
-    channels: [String: String], note: String?
-  ) {
+  /// onto); an unsplittable master, or one the alignment could not register (`registered`),
+  /// costs only its emission layers.
+  package static func channels(_ channels: [String: String], out: URL, registered: Bool = true)
+    -> (
+      channels: [String: String], note: String?
+    )
+  {
     guard let lane = FilterSetLanes.dualbandLane(in: channels.keys), let base = channels[lane]
     else { return (channels, nil) }
     var kept = channels.filter { $0.key != lane }
@@ -57,6 +60,14 @@ package enum DualbandSplit {
         [FilterSetLanes.baseFilter(of: lane): base],
         "the broadband lane produced no master — finishing the dual-band stack as an ordinary "
           + "colour run (no broadband base to screen the emission lines onto)"
+      )
+    }
+    // Unregistered layers would sit offset from the base, every star doubled.
+    guard registered else {
+      return (
+        kept,
+        "dual-band master not registered onto the broadband grid — emission layers skipped, "
+          + "finishing on the broadband base alone"
       )
     }
     do {

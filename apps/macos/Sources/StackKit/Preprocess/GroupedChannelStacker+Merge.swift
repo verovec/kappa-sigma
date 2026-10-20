@@ -84,7 +84,7 @@ extension GroupedChannelStacker {
       let record = SeamNoiseEqualiser.equalise(
         URL(fileURLWithPath: path), grid: grid, budget: stacker.memoryBudget)
       outcome.seamNoise = record
-      if record.reason.hasPrefix("skipped:") {
+      if record.overBudget {
         stacker.warn("\(filter): seam noise equalization \(record.reason)", into: &outcome)
       }
     }

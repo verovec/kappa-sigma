@@ -29,21 +29,24 @@ package enum ContinuumK {
     }
   }
 
-  /// The fit of `line` among `layers` (filter → FITS), or why there is none.
-  package static func measure(line: String, layers: [String: URL]) throws -> (
-    fit: Fit?, reason: String?
-  ) {
+  /// Why no scale could be fitted: shown as is.
+  package struct Refusal: Error, Equatable, CustomStringConvertible {
+    package var description: String
+  }
+
+  /// The fit of `line` among `layers` (filter → FITS); throws a `Refusal` saying why there is
+  /// none, or the read error.
+  package static func measure(line: String, layers: [String: URL]) throws -> Fit {
     guard let lineURL = layers[line], let (filters, colourPlane) = references(of: line) else {
-      return (nil, "\(line) is not an emission line with a continuum reference")
+      throw Refusal(description: "\(line) is not an emission line with a continuum reference")
     }
     let colour = layers.keys.sorted().first { Filter.isColor($0) }
     guard let reference = filters.first(where: { layers[$0] != nil }) ?? colour,
       let referenceURL = layers[reference]
     else {
-      return (
-        nil,
-        "no broadband channel (\(filters.joined(separator: "/"))) to estimate the continuum from"
-      )
+      throw Refusal(
+        description:
+          "no broadband channel (\(filters.joined(separator: "/"))) to estimate the continuum from")
     }
     let lineImage = try FITSFile.read(at: lineURL).image()
     let referenceImage = try FITSFile.read(at: referenceURL).image()
@@ -51,33 +54,28 @@ package enum ContinuumK {
     guard lineImage.width == referenceImage.width, lineImage.height == referenceImage.height,
       plane < referenceImage.planes.count
     else {
-      return (
-        nil,
-        "\(line) \(lineImage.width)×\(lineImage.height) vs \(reference) "
-          + "\(referenceImage.width)×\(referenceImage.height) — masters not co-registered"
-      )
+      throw Refusal(
+        description: "\(line) \(lineImage.width)×\(lineImage.height) vs \(reference) "
+          + "\(referenceImage.width)×\(referenceImage.height) — masters not co-registered")
     }
-    switch scale(line: lineImage.planes[0], reference: referenceImage.planes[plane]) {
-    case .success(let k): return (Fit(k: k, reference: reference), nil)
-    case .failure(let reason): return (nil, "\(line)/\(reference): \(reason.text)")
+    do {
+      return Fit(
+        k: try scale(line: lineImage.planes[0], reference: referenceImage.planes[plane]),
+        reference: reference)
+    } catch let refusal as Refusal {
+      throw Refusal(description: "\(line)/\(reference): \(refusal.description)")
     }
-  }
-
-  /// Why no scale could be fitted.
-  struct Refusal: Error {
-    var text: String
   }
 
   /// The median line/ref ratio over the continuum-bright reference pixels.
-  static func scale(line: [Float], reference: [Float]) -> Result<Double, Refusal> {
+  static func scale(line: [Float], reference: [Float]) throws -> Double {
     let sample = PhotomStats.subsample(reference, limit: 200_000)
     let low = PhotomStats.percentile(sample, selection.low)
     let high = PhotomStats.percentile(sample, selection.high)
     guard low > 1e-6, high > low else {
-      return .failure(
-        Refusal(
-          text: "reference too dark/flat to calibrate the continuum "
-            + "(P85=\(String(format: "%.2g", low)))"))
+      throw Refusal(
+        description: "reference too dark/flat to calibrate the continuum "
+          + "(P85=\(String(format: "%.2g", low)))")
     }
     let stride = reference.count / 2_000_000 + 1
     var ratios: [Float] = []
@@ -86,13 +84,13 @@ package enum ContinuumK {
       if Double(value) > low && Double(value) < high { ratios.append(line[index] / value) }
     }
     guard ratios.count >= minimumSamples else {
-      return .failure(
-        Refusal(text: "only \(ratios.count) continuum-bright pixels — cannot fit a stable scale"))
+      throw Refusal(
+        description: "only \(ratios.count) continuum-bright pixels — cannot fit a stable scale")
     }
     let k = PhotomStats.percentile(ratios, 50)
     guard k > 0, k.isFinite else {
-      return .failure(Refusal(text: "degenerate continuum scale (\(String(format: "%.3g", k)))"))
+      throw Refusal(description: "degenerate continuum scale (\(String(format: "%.3g", k)))")
     }
-    return .success(k)
+    return k
   }
 }

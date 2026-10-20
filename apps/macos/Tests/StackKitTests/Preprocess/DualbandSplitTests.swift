@@ -82,6 +82,17 @@ struct DualbandSplitTests {
     #expect(channels == ["RGB": "aligned_RGB"] && note?.contains("skipped") == true)
   }
 
+  @Test("an unregistered dual-band master is never split over the base", .scratchDirectory)
+  func testUnregistered() throws {
+    let out = try ScratchDirectory.url
+    try Self.master("master_RGB", 0.5, 0.5, 0.5, in: out)
+    try Self.master("master_RGB-dualband", 0.40, 0.20, 0.10, in: out)
+    let (channels, note) = DualbandSplit.channels(
+      ["RGB": "master_RGB", "RGB-dualband": "master_RGB-dualband"], out: out, registered: false)
+    #expect(channels == ["RGB": "master_RGB"] && note?.contains("not registered") == true)
+    #expect(!FileManager.default.fileExists(atPath: out.appendingPathComponent("syn_Ha.fits").path))
+  }
+
   @Test("no broadband master left: the lane becomes the colour channel, unsplit", .scratchDirectory)
   func testNoBroadbandBase() throws {
     let out = try ScratchDirectory.url

@@ -91,33 +91,37 @@ extension ChannelStacker {
     _ files: [URL], saturationCeilings: [Float], into outcome: inout ChannelOutcome
   ) async throws {
     guard files.count >= TrailMask.minimumFrames else { return }
-    var summary = TrailMaskSummary(frames: files.count)
-    var mode: String?
+    let size = DimensionGuard.dimensions(files[0].path)
+    var masked = ChannelTrailMask.Outcome(
+      summary: TrailMaskSummary(frames: files.count), mode: nil, width: size?.width ?? 0,
+      height: size?.height ?? 0)
+    var failure: String?
     do {
-      let saturated =
-        saturationCeilings.contains { $0 > 0 }
-        ? try SaturationRepair.repair(files, ceilings: saturationCeilings).reduce(0, +) : 0
+      if saturationCeilings.contains(where: { $0 > 0 }) {
+        masked.summary.saturatedPixels = try SaturationRepair.repair(
+          files, ceilings: saturationCeilings
+        ).reduce(0, +)
+      }
       if settings.trailMaskK > 0 {
         report("▶ transient trail mask (cross-frame) …")
-        if let masked = try await ChannelTrailMask.mask(
+        if var trails = try await ChannelTrailMask.mask(
           files, k: settings.trailMaskK, budget: memoryBudget)
         {
-          (summary, mode) = (masked.summary, masked.mode)
+          trails.summary.saturatedPixels = masked.summary.saturatedPixels
+          masked = trails
         }
       }
-      summary.saturatedPixels = saturated
     } catch is CancellationError {
       throw CancellationError()
     } catch {
-      outcome.selection.notes.append("trail mask skipped: \(Self.describe(error))")
-      return
+      // Repairs already written stay in the frames and in the record (R2).
+      failure = "trail mask failed (frames already cleaned stay cleaned): \(Self.describe(error))"
     }
-    guard summary.maskedPixels > 0 || summary.saturatedPixels > 0 else { return }
-    let size = DimensionGuard.dimensions(files[0].path)
-    outcome.trailMask = summary
-    outcome.selection.notes.append(
-      ChannelTrailMask.note(
-        summary, width: size?.width ?? 0, height: size?.height ?? 0, mode: mode))
+    if masked.summary.maskedPixels > 0 || masked.summary.saturatedPixels > 0 {
+      outcome.trailMask = masked.summary
+      outcome.selection.notes.append(masked.note)
+    }
+    if let failure { outcome.selection.notes.append(failure) }
   }
 
   /// One registered frame is the master; fewer than two survivors cannot stack; otherwise Siril

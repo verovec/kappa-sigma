@@ -16,7 +16,9 @@ struct SeamNoiseBudgetTests {
       planes: [plane])
     let record = SeamNoiseEqualiser.equalise(
       url, grid: CoverageGrid(canvasWidth: 64, canvasHeight: 64), budget: 64 * 64 * 4 * 10 - 1)
-    #expect(!record.applied && record.reason == "skipped: needs ~0 MB, over the memory budget")
+    #expect(
+      !record.applied && record.overBudget
+        && record.reason == "skipped: needs ~0 MB, over the memory budget")
     #expect(try FITSFile.read(at: url).image().planes[0] == plane)
   }
 }

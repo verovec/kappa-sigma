@@ -52,13 +52,15 @@ struct ChannelStackerTrailMaskTests {
     #expect(Frames.maxAlongDiagonal(try Frames.read(urls[5])) > 0.5)
   }
 
-  @Test("an unreadable frame skips the mask with a note; the stack goes on", .scratchDirectory)
+  @Test("an unreadable frame fails the mask with a note; the stack goes on", .scratchDirectory)
   func testSoftFail() async throws {
     var urls = try Frames.write((0..<6).map { Frames.frame($0) }, in: ScratchDirectory.url)
     urls[3] = try ScratchDirectory.url.appendingPathComponent("missing.fits")
     var outcome = Self.outcome()
     try await Self.stacker(k: 3).maskRegistered(urls, saturationCeilings: [], into: &outcome)
     #expect(outcome.trailMask == nil)
-    #expect(outcome.selection.notes.first?.hasPrefix("trail mask skipped: ") == true)
+    #expect(
+      outcome.selection.notes.first?.hasPrefix(
+        "trail mask failed (frames already cleaned stay cleaned): ") == true)
   }
 }

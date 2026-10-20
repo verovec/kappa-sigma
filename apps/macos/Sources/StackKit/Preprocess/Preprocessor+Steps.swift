@@ -67,22 +67,16 @@ extension Preprocessor {
     ).align(
       masters, folder: request.work.appendingPathComponent("04_aligned"), out: request.output,
       journal: &journal)
-    if request.settings.coverageCrop {
-      // Multi-night channels carry coverage: cut every input to the field all of them cover.
-      let grids = result.channels.reduce(into: [String: CoverageGrid]()) { grids, channel in
-        if let grid = channel.coverage, channel.error == nil { grids[channel.filter] = grid }
-      }
-      (channels, result.coverageCrop) = CoverageCrop.apply(
-        channels, grids: grids, minimumFraction: request.settings.coverageMinimumFraction,
-        out: request.output, journal: &journal)
-    }
-    if request.settings.edgeCrop {
-      (channels, result.crop) = EdgeCropper(measure: tools.edgeMeasure).apply(
-        channels, out: request.output, journal: &journal)
-    }
+    // Read before the crops rename the inputs: only an aligned dual-band master may be split.
+    let laneRegistered =
+      FilterSetLanes.dualbandLane(in: channels.keys).map {
+        channels[$0]?.hasPrefix("aligned_") == true
+      } ?? true
+    channels = crop(channels, request: request, journal: &journal, into: &result)
     var notes: [String] = []
     let continuum: [String: Double]
-    (channels, continuum) = Self.emission(channels, out: request.output, notes: &notes)
+    (channels, continuum) = Self.emission(
+      channels, out: request.output, registered: laneRegistered, notes: &notes)
     for note in notes { journal.line(note) }
     result.notes += notes
     try Task.checkCancellation()
@@ -103,6 +97,27 @@ extension Preprocessor {
           source: String(base.prefix { $0 != "_" }), continuumK: continuum[filter])
       },
       to: request.output)
+  }
+
+  /// The common-coverage crop (multi-night channels carry coverage), then the edge trim.
+  private func crop(
+    _ channels: [String: String], request: PreprocessRequest, journal: inout PreprocessJournal,
+    into result: inout PreprocessResult
+  ) -> [String: String] {
+    var channels = channels
+    if request.settings.coverageCrop {
+      let grids = result.channels.reduce(into: [String: CoverageGrid]()) { grids, channel in
+        if let grid = channel.coverage, channel.error == nil { grids[channel.filter] = grid }
+      }
+      (channels, result.coverageCrop) = CoverageCrop.apply(
+        channels, grids: grids, minimumFraction: request.settings.coverageMinimumFraction,
+        out: request.output, journal: &journal)
+    }
+    if request.settings.edgeCrop {
+      (channels, result.crop) = EdgeCropper(measure: tools.edgeMeasure).apply(
+        channels, out: request.output, journal: &journal)
+    }
+    return channels
   }
 
   /// `tools.runner` with every Siril line on the journal.

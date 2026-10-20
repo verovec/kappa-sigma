@@ -35,7 +35,7 @@ struct ContinuumKTests {
       "R": try Self.write("combine_R", [red]),
       "Ha": try Self.write("combine_Ha", [Self.line(0.5, of: red)]),
     ]
-    let fit = try #require(try ContinuumK.measure(line: "Ha", layers: layers).fit)
+    let fit = try ContinuumK.measure(line: "Ha", layers: layers)
     #expect(abs(fit.k - 0.5) <= 0.01 && fit.reference == "R")
   }
 
@@ -47,8 +47,8 @@ struct ContinuumKTests {
       "Ha": try Self.write("syn_Ha", [Self.line(0.5, of: red)]),
       "OIII": try Self.write("syn_OIII", [Self.line(0.25, of: green)]),
     ]
-    let ha = try #require(try ContinuumK.measure(line: "Ha", layers: layers).fit)
-    let oiii = try #require(try ContinuumK.measure(line: "OIII", layers: layers).fit)
+    let ha = try ContinuumK.measure(line: "Ha", layers: layers)
+    let oiii = try ContinuumK.measure(line: "OIII", layers: layers)
     #expect(abs(ha.k - 0.5) <= 0.01 && ha.reference == "RGB")
     #expect(abs(oiii.k - 0.25) <= 0.01 && oiii.reference == "RGB")
   }
@@ -60,21 +60,23 @@ struct ContinuumKTests {
       "R": try Self.write("r", [red]), "RGB": try Self.write("rgb", [red, red, red]),
       "Ha": try Self.write("ha", [Self.line(0.5, of: red)]),
     ]
-    #expect(try ContinuumK.measure(line: "Ha", layers: layers).fit?.reference == "R")
+    #expect(try ContinuumK.measure(line: "Ha", layers: layers).reference == "R")
   }
 
   @Test("no broadband layer: no fit, and the reason", .scratchDirectory)
   func testNoReference() throws {
-    let measured = try ContinuumK.measure(
-      line: "Ha", layers: ["Ha": try Self.write("ha", [Self.ramp()])])
-    #expect(measured.fit == nil && measured.reason?.contains("no broadband") == true)
+    let layers = ["Ha": try Self.write("ha", [Self.ramp()])]
+    #expect {
+      try ContinuumK.measure(line: "Ha", layers: layers)
+    } throws: { "\($0)".contains("no broadband") }
   }
 
   @Test("a flat dark reference cannot calibrate the scale", .scratchDirectory)
   func testDarkReference() throws {
     let dark = [Float](repeating: 0, count: Self.width * Self.height)
-    let measured = try ContinuumK.measure(
-      line: "Ha", layers: ["R": try Self.write("r", [dark]), "Ha": try Self.write("ha", [dark])])
-    #expect(measured.fit == nil && measured.reason?.contains("too dark") == true)
+    let layers = ["R": try Self.write("r", [dark]), "Ha": try Self.write("ha", [dark])]
+    #expect {
+      try ContinuumK.measure(line: "Ha", layers: layers)
+    } throws: { "\($0)".contains("too dark") }
   }
 }

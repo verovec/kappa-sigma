@@ -45,6 +45,8 @@ enum TrailMaskPlanes {
     median.reserveCapacity(range.count)
     sigma.reserveCapacity(range.count)
     for pixel in range {
+      // A cancelled run stops between rows; the caller checks right after the pass.
+      if pixel % 65_536 == 0 && Task.isCancelled { break }
       for index in frames.indices { column[index] = Double(frames[index][channel][pixel]) }
       let center = sortedMedian(&column)
       for index in column.indices { deviations[index] = abs(column[index] - center) }

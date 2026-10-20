@@ -20,6 +20,11 @@ package enum CatalogCompiler {
   package struct Failure: Error, CustomStringConvertible {
     /// What the gate refused.
     package var violations: [CatalogViolation]
+
+    /// A failure listing `violations`.
+    package init(violations: [CatalogViolation]) {
+      self.violations = violations
+    }
     /// One violation per line, as the build log shows them.
     package var description: String { violations.map(\.description).joined(separator: "\n") }
   }

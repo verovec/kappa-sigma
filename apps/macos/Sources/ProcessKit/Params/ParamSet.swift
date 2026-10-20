@@ -17,7 +17,7 @@ package struct ParamSet: Equatable, Sendable {
 
   /// The values, in schema order.
   package private(set) var entries: [Entry]
-  private let schema: ParamSchema?
+  private let schema: ParamSchema
 
   /// The defaults of `schema`.
   package init(schema: ParamSchema) {
@@ -25,8 +25,10 @@ package struct ParamSet: Equatable, Sendable {
     entries = schema.specs.map { Entry(id: $0.id, value: $0.defaultValue) }
   }
 
-  /// `stored` values onto `schema`'s defaults: each one validated (clamped); those naming no
-  /// parameter or refused are returned, never silently dropped.
+  /// Loads `stored` values onto the defaults of `schema`.
+  ///
+  /// Each one is validated (clamped); those naming no parameter or refused are returned, never
+  /// silently dropped.
   package static func loading(
     _ stored: [Entry], onto schema: ParamSchema
   ) -> (params: Self, rejected: [Entry]) {
@@ -52,9 +54,11 @@ package struct ParamSet: Equatable, Sendable {
 
   /// Sets `id` to `value` made valid by the schema (numbers clamped); refuses NaN/±Inf, a wrong
   /// kind, an unknown option or id, leaving the set unchanged.
-  package mutating func set(_ id: String, _ value: ParamValue) throws(ParamError) {
-    guard let index = entries.firstIndex(where: { $0.id == id }) else { throw .unknown(id: id) }
-    let valid = try schema?.spec(id)?.validated(value) ?? value
+  package mutating func set(_ id: String, _ value: ParamValue) throws {
+    guard let index = entries.firstIndex(where: { $0.id == id }), let spec = schema.spec(id) else {
+      throw ParamError.unknown(id: id)
+    }
+    let valid = try spec.validated(value)
     entries[index] = Entry(id: id, value: valid)
   }
 
@@ -76,22 +80,16 @@ package struct ParamSet: Equatable, Sendable {
     return ""
   }
 
-  /// Sets compare values only: two sets with the same values are equal whatever their schema
-  /// object (a decoded set carries none until `loading` puts it on one).
+  /// Sets compare values only.
   package static func == (lhs: Self, rhs: Self) -> Bool {
     lhs.entries == rhs.entries
   }
 }
 
 /// JSON: an ordered array of `{ "id": …, "value": … }`, so a recipe lists parameters in panel
-/// order. A decoded set has no schema; `loading(_:onto:)` validates it against one.
-extension ParamSet: Codable {
-  /// Decodes the stored entries as they are.
-  package init(from decoder: any Decoder) throws {
-    entries = try [Entry](from: decoder)
-    schema = nil
-  }
-
+/// order. There is no decoder: stored values come back as `[Entry]` through
+/// `loading(_:onto:)`, which validates them on a schema.
+extension ParamSet: Encodable {
   /// Encodes the entries in order.
   package func encode(to encoder: any Encoder) throws {
     try entries.encode(to: encoder)

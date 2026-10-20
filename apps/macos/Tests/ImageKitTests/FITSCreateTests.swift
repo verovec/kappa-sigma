@@ -13,14 +13,19 @@ struct FITSCreateTests {
         FITSBytes.card("NAXIS1", "2"), FITSBytes.card("NAXIS2", "1"),
         FITSBytes.card("BZERO", "32768"), FITSBytes.card("OBJECT", "'M31'"),
         FITSBytes.card("ROWORDER", "'TOP-DOWN'"), FITSBytes.card("CTYPE1", "'RA---TAN'"),
+        FITSBytes.card("CHECKSUM", "'aBcD1234'"), FITSBytes.card("DATASUM", "'12345'"),
+        FITSBytes.card("DATAMIN", "0"), FITSBytes.card("DATAMAX", "65535"),
       ]))
   }
 
-  @Test("planes, size and descriptive cards survive; structural cards are the new file's",
+  @Test(
+    "planes, size and descriptive cards survive; structural cards are the new file's",
     .scratchDirectory)
   func testCreateKeepsDescriptiveCards() throws {
     let url = try ScratchDirectory.url.appendingPathComponent("step-1.fits")
-    let planes: [[Float]] = [[0.25, -1, 3, 0.5, 0, 1], [1, 2, 3, 4, 5, 6], [0, 0, 0, 0, 0, 0.125]]
+    let planes: [[Float]] = [
+      [0.25, -1, 3, 0.5, 0, 1], [1, 2, 3, 4, 5, 6], [0, 0, 0, 0, 0, 0.125],
+    ]
     let header = try Self.source().header
     let image = AstroImage(
       width: 3, height: 2, planes: planes, metadata: ImageMetadata(header: header))
@@ -35,6 +40,9 @@ struct FITSCreateTests {
     #expect(reread.metadata.rowOrder == .topDown)
     #expect(file.header.cards.filter { $0.keyword == "BITPIX" }.count == 1, "no stale BITPIX 16")
     #expect(file.header.double("BZERO") == nil, "a float32 file has no scaling")
+    for stale in ["CHECKSUM", "DATASUM", "DATAMIN", "DATAMAX"] {
+      #expect(file.header.string(stale) == nil, "\(stale) describes the old data")
+    }
     #expect(file.header.cards[1].raw.hasPrefix("BITPIX  =                  -32"), "fixed format")
   }
 
@@ -49,4 +57,3 @@ struct FITSCreateTests {
     #expect(reread.planes == [[1, 2]] && reread.metadata.rowOrder == .topDown)
   }
 }
-

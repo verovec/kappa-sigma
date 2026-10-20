@@ -25,6 +25,24 @@ package struct ParamSchema: Equatable, Sendable {
     specs.contains { $0.level == .advanced }
   }
 
+  /// What makes a spec unusable: non-finite bounds, or a default the spec itself would refuse
+  /// or clamp (an untouched default must be a value `set` accepts unchanged).
+  package var problems: [String] {
+    specs.compactMap { spec -> String? in
+      switch spec.kind {
+      case .number(let value, let bounds):
+        guard bounds.lowerBound.isFinite, bounds.upperBound.isFinite else {
+          return "\(spec.id): bounds must be finite"
+        }
+        return bounds.contains(value) ? nil : "\(spec.id): default \(value) outside \(bounds)"
+      case .choice(let value, let options):
+        return options.contains(value) ? nil : "\(spec.id): default \(value) not among its options"
+      case .flag:
+        return nil
+      }
+    }
+  }
+
   /// The ids of the parameters in pixels.
   package var pixelParameters: [String] {
     specs.filter { $0.unit == .px }.map(\.id)

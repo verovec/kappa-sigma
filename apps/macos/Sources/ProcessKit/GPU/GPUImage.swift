@@ -41,7 +41,7 @@ package final class GPUImage {
     }
   }
 
-  /// `image`'s planes uploaded.
+  /// Uploads the planes of `image`.
   package convenience init(device: MTLDevice, image: AstroImage) throws {
     try self.init(device: device, width: image.width, height: image.height, planes: image.planes)
   }

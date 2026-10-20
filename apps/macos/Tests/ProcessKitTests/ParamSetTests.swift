@@ -7,9 +7,11 @@ struct ParamSetTests {
   static let schema = ParamSchema([
     ParamSpec(id: "gain", title: "Gain", unit: .none, level: .simple, number: 1, in: 0...4),
     ParamSpec(id: "radius", title: "Radius", unit: .px, level: .advanced, number: 2, in: 0...64),
-    ParamSpec(id: "opacity", title: "Opacity", unit: .opacity, level: .simple, number: 1, in: 0...1),
+    ParamSpec(
+      id: "opacity", title: "Opacity", unit: .opacity, level: .simple, number: 1, in: 0...1),
     ParamSpec(id: "linked", title: "Linked", level: .advanced, flag: false),
-    ParamSpec(id: "curve", title: "Curve", level: .simple, choice: "mtf", of: ["mtf", "ghs", "asinh"]),
+    ParamSpec(
+      id: "curve", title: "Curve", level: .simple, choice: "mtf", of: ["mtf", "ghs", "asinh"]),
   ])
 
   @Test(
@@ -54,10 +56,24 @@ struct ParamSetTests {
 
     let json = try JSONEncoder().encode(params)
     let text = try #require(String(data: json, encoding: .utf8))
-    #expect(text.range(of: "gain")?.lowerBound ?? text.endIndex < text.range(of: "curve")?.lowerBound ?? text.startIndex)
-    let decoded = try JSONDecoder().decode(ParamSet.self, from: json)
-    #expect(decoded == params)
+    #expect(
+      text.range(of: "gain")?.lowerBound ?? text.endIndex < text.range(of: "curve")?.lowerBound
+        ?? text.startIndex)
+    // Stored values come back through the schema, never as an unvalidated set.
+    let stored = try JSONDecoder().decode([ParamSet.Entry].self, from: json)
+    let (decoded, rejected) = ParamSet.loading(stored, onto: Self.schema)
+    #expect(decoded == params && rejected.isEmpty)
     #expect(decoded.ids == params.ids)
+  }
+
+  @Test("a schema with a duplicate id stops the process (a programming error)")
+  func testDuplicateIdIsAnInvariant() async {
+    await #expect(processExitsWith: .failure) {
+      _ = ParamSchema([
+        ParamSpec(id: "a", title: "A", level: .simple, flag: false),
+        ParamSpec(id: "a", title: "A", level: .simple, flag: true),
+      ])
+    }
   }
 
   @Test("loading values onto a schema clamps them and reports what it could not use")

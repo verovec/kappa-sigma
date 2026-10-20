@@ -1,28 +1,26 @@
-/// The processes the Studio offers, by id. Registration checks each schema, so a process
+/// The processes the Studio offers, by id.
+///
+/// Registration checks each schema, so a process
 /// breaking a structural rule never reaches a panel.
 package struct ProcessRegistry {
   /// The registered processes, in menu order.
   package let types: [any ImageProcess.Type]
 
   /// A registry of `types`; refuses an invalid process or a duplicate id.
-  package init(_ types: [any ImageProcess.Type]) throws(RegistryError) {
+  package init(_ types: [any ImageProcess.Type]) throws {
     var seen: Set<String> = []
     for type in types {
-      guard seen.insert(type.id).inserted else { throw .duplicate(id: type.id) }
+      guard seen.insert(type.id).inserted else { throw RegistryError.duplicate(id: type.id) }
       let problems = Self.problems(of: type)
-      guard problems.isEmpty else { throw .invalid(id: type.id, problems: problems) }
+      guard problems.isEmpty else { throw RegistryError.invalid(id: type.id, problems: problems) }
     }
     self.types = types
   }
 
-  /// The processes shipped with the app (none yet: E12 cards register theirs here, each with
-  /// its fr+en help card — `ProcessSchemaTests` gates both).
-  package static var standard: Self {
-    Self(validated: [])
-  }
-
-  private init(validated types: [any ImageProcess.Type]) {
-    self.types = types
+  /// The processes shipped with the app, validated like any registry (none yet: E12 cards
+  /// register theirs here with their fr+en help cards — `ProcessSchemaTests` gates both).
+  package static func standard() throws -> Self {
+    try Self([])
   }
 
   /// The ids, in menu order.
@@ -33,11 +31,14 @@ package struct ProcessRegistry {
     types.first { $0.id == id }
   }
 
-  /// What `type`'s declaration breaks: an empty id or title, or `.px` parameters without
-  /// `previewExactOnlyAt1to1` (pixel operators do not commute with the preview pyramid).
+  /// The rules the declaration of `type` breaks.
+  ///
+  /// An empty id or title, or `.px` parameters without `previewExactOnlyAt1to1` (pixel
+  /// operators do not commute with the preview pyramid).
   package static func problems(of type: any ImageProcess.Type) -> [String] {
     var problems: [String] = []
     if type.id.isEmpty || type.title.isEmpty { problems.append("empty id or title") }
+    problems += type.schema.problems
     let pixels = type.schema.pixelParameters
     if !pixels.isEmpty, !type.previewExactOnlyAt1to1 {
       problems.append(

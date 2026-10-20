@@ -1,7 +1,8 @@
 package import Foundation
 
-/// A process and its values, saved as JSON (design §2, R5): replayable on another image, shared
-/// between users. A newer app's file loads with warnings for what this version does not know.
+/// A process and its values, saved as JSON (design §2, R5).
+///
+/// Replayable on another image, shared between users. A newer app's file loads with warnings for what this version does not know.
 package struct Recipe: Equatable, Sendable {
   /// The recipe format this version writes and reads.
   package static let schemaVersion = 1
@@ -31,32 +32,60 @@ package struct Recipe: Equatable, Sendable {
   package func json() throws -> Data {
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-    return try encoder.encode(File(schemaVersion: Self.schemaVersion, process: processID, params: params))
+    return try encoder.encode(
+      File(schemaVersion: Self.schemaVersion, process: processID, params: params))
   }
 
-  /// Reads `data` for a process of `registry`: unknown keys and parameters are warnings; an
-  /// unknown process, a newer format or a malformed file is an error.
-  package static func load(_ data: Data, registry: ProcessRegistry) throws(RecipeError) -> Loaded {
+  /// Reads `data` for a process of `registry`.
+  ///
+  /// What this version cannot use as written is a warning (R2: the user sees every change):
+  /// unknown keys, unknown or invalid parameters, values clamped into today's bounds. An unknown
+  /// process, a newer format or a malformed file is a `RecipeError`.
+  package static func load(_ data: Data, registry: ProcessRegistry) throws -> Loaded {
     let file: File
-    let keys: [String]
+    let object: [String: Any]
     do {
       file = try JSONDecoder().decode(File.self, from: data)
-      let object = try JSONSerialization.jsonObject(with: data) as? [String: Any] ?? [:]
-      keys = object.keys.sorted()
+      object = try JSONSerialization.jsonObject(with: data) as? [String: Any] ?? [:]
     } catch {
-      throw .malformed("\(error)")
+      throw RecipeError.malformed("\(error)")
     }
-    guard file.schemaVersion <= schemaVersion else { throw .newerFormat(file.schemaVersion) }
-    guard let type = registry.type(id: file.process) else { throw .unknownProcess(file.process) }
-    var warnings = keys.filter { !File.keys.contains($0) }.map { "unknown key \($0) ignored" }
-    let (params, rejected) = ParamSet.loading(file.params, onto: type.schema)
-    warnings += rejected.map { entry in
-      type.schema.spec(entry.id) == nil
-        ? "parameter \(entry.id) ignored: not in \(file.process)"
-        : "parameter \(entry.id) ignored: invalid value"
+    guard file.schemaVersion <= schemaVersion else {
+      throw RecipeError.newerFormat(file.schemaVersion)
     }
-    let recipe = Recipe(processID: file.process, params: params)
-    return Loaded(recipe: recipe, params: params, warnings: warnings)
+    guard let type = registry.type(id: file.process) else {
+      throw RecipeError.unknownProcess(file.process)
+    }
+    var warnings = object.keys.sorted().filter { !File.keys.contains($0) }
+      .map { "unknown key \($0) ignored" }
+    let entryKeys = (object["params"] as? [[String: Any]] ?? []).map { Set($0.keys) }
+    var params = ParamSet(schema: type.schema)
+    for (index, entry) in file.params.enumerated() {
+      let extra = index < entryKeys.count ? entryKeys[index].subtracting(["id", "value"]) : []
+      warnings += extra.sorted().map { "parameter \(entry.id): unknown key \($0) ignored" }
+      warnings += apply(entry, to: &params, process: file.process)
+    }
+    return Loaded(
+      recipe: Self(processID: file.process, params: params), params: params, warnings: warnings)
+  }
+
+  /// Sets `entry` on `params`; the warning when it is ignored or clamped.
+  private static func apply(
+    _ entry: ParamSet.Entry, to params: inout ParamSet, process: String
+  ) -> [String] {
+    do {
+      try params.set(entry.id, entry.value)
+    } catch ParamError.unknown {
+      return ["parameter \(entry.id) ignored: not in \(process)"]
+    } catch {
+      return ["parameter \(entry.id) ignored: invalid value"]
+    }
+    if case .number(let stored) = entry.value, case .number(let kept)? = params[entry.id],
+      kept != stored
+    {
+      return ["parameter \(entry.id) clamped from \(stored) to \(kept)"]
+    }
+    return []
   }
 
   private init(processID: String, params: [ParamSet.Entry]) {

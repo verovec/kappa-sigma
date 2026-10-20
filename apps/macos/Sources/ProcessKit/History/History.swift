@@ -31,21 +31,29 @@ package final class History {
   package private(set) var undone: [Step] = []
   /// Named states, in creation order.
   package private(set) var snapshots: [Snapshot] = []
-  /// The image after the last applied step.
-  package private(set) var current: AstroImage
+  /// The image after the last applied step: a copy, so editing it never changes the history.
+  package var current: AstroImage { Self.copy(shown) }
 
+  private var shown: AstroImage
   private let original: AstroImage
   private let header: FITSHeader?
-  private var nextNumber = 1
+  private var nextNumber: Int
+  /// The outputs this history wrote: the only files `save` may remove.
+  private var created: Set<String> = []
 
-  /// A history of `original` writing its outputs into `directory` (created), with `header`'s
-  /// descriptive cards (WCS, object…) in every output.
+  /// A history of `original` with its outputs in `directory` (created).
+  ///
+  /// Every output keeps the descriptive cards of `header` (WCS, object…).
   package init(directory: URL, original: AstroImage, header: FITSHeader? = nil) throws {
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     self.directory = directory
-    self.original = original
+    self.original = Self.copy(original)
     self.header = header
-    current = original
+    shown = Self.copy(original)
+    // Continue after the outputs already in the folder (a reopened project): never overwrite.
+    let numbers = try FileManager.default.contentsOfDirectory(atPath: directory.path)
+      .compactMap(Self.stepNumber)
+    nextNumber = (numbers.max() ?? 0) + 1
   }
 
   /// Whether there is a step to undo.
@@ -59,23 +67,25 @@ package final class History {
     let file = "step-" + String(repeating: "0", count: max(0, 4 - digits.count)) + digits + ".fits"
     nextNumber += 1
     try FITSFile.create(result, keeping: header, at: directory.appendingPathComponent(file))
+    created.insert(file)
     steps.append(Step(processID: processID, params: params, file: file))
     undone.removeAll()
-    current = result
+    shown = Self.copy(result)
   }
 
   /// Goes back one step, reloading the previous output from disk.
   package func undo() throws {
-    guard let step = steps.popLast() else { throw HistoryError.nothingToUndo }
-    undone.append(step)
-    current = try image(file: steps.last?.file)
+    guard !steps.isEmpty else { throw HistoryError.nothingToUndo }
+    // Load first: a failed read leaves the history as it was.
+    shown = try image(file: steps.dropLast().last?.file)
+    undone.append(steps.removeLast())
   }
 
   /// Re-applies the last undone step from its output on disk.
   package func redo() throws {
-    guard let step = undone.popLast() else { throw HistoryError.nothingToRedo }
-    steps.append(step)
-    current = try image(file: step.file)
+    guard let step = undone.last else { throw HistoryError.nothingToRedo }
+    shown = try image(file: step.file)
+    steps.append(undone.removeLast())
   }
 
   /// Names the current state; a name is used once.
@@ -107,18 +117,31 @@ package final class History {
     }
   }
 
-  /// Removes the outputs nothing refers to any more (on project save).
+  /// Removes the outputs this history wrote that nothing refers to any more (on project save);
+  /// other files in the folder (an earlier session's steps, anything else) are not its to remove.
   package func save() throws {
-    let manager = FileManager.default
-    for file in try manager.contentsOfDirectory(atPath: directory.path)
-    where file.hasSuffix(".fits") && !referencedFiles.contains(file) {
-      try manager.removeItem(at: directory.appendingPathComponent(file))
+    let referenced = referencedFiles
+    for file in created.subtracting(referenced) {
+      try FileManager.default.removeItem(at: directory.appendingPathComponent(file))
+      created.remove(file)
     }
   }
 
   private func image(file: String?) throws -> AstroImage {
-    guard let file else { return original }
+    guard let file else { return Self.copy(original) }
     return try FITSFile.read(at: directory.appendingPathComponent(file)).image()
+  }
+
+  /// A new image object over the same planes (arrays copy on write).
+  private static func copy(_ image: AstroImage) -> AstroImage {
+    AstroImage(
+      width: image.width, height: image.height, planes: image.planes, metadata: image.metadata)
+  }
+
+  /// N for `step-N.fits`.
+  private static func stepNumber(_ file: String) -> Int? {
+    guard file.hasPrefix("step-"), file.hasSuffix(".fits") else { return nil }
+    return Int(file.dropFirst(5).dropLast(5))
   }
 }
 

@@ -1,7 +1,9 @@
 package import Metal
 
-/// Runs a process synchronously: one command buffer, waited on — Apply, contracts and tests.
-/// The viewer encodes previews into its own frame instead.
+/// Runs a process synchronously.
+///
+/// One command buffer, waited on: Apply, contracts and tests. The viewer encodes previews into
+/// its own frame instead.
 package struct ProcessRunner {
   private let device: MTLDevice
   private let queue: MTLCommandQueue

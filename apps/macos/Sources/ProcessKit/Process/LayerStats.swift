@@ -30,7 +30,9 @@ package struct ChannelStats: Equatable, Sendable {
   }
 }
 
-/// A layer of the stack bundle a process can need. Roles, not filters: which filters make a
+/// A layer of the stack bundle a process can need.
+///
+/// Roles, not filters: which filters make a
 /// role is StackKit's canonical filter list.
 package enum LayerRole: String, Codable, CaseIterable, Sendable {
   /// The colour (or mono) base layer.
@@ -46,10 +48,11 @@ package enum LayerRole: String, Codable, CaseIterable, Sendable {
   /// A mask.
   case mask
 
-  /// Why a process needing `requires` is unavailable with only `present`, or `nil` when it can
-  /// run. The panel shows the reason on the greyed process.
+  /// Why a process needing `requires` cannot run with only `present` (`nil`: it can).
+  ///
+  /// The panel shows the reason on the greyed process.
   package static func unavailableReason(
-    requires: [LayerRole], present: Set<LayerRole>
+    requires: [Self], present: Set<Self>
   ) -> String? {
     let missing = requires.filter { !present.contains($0) }
     guard !missing.isEmpty else { return nil }

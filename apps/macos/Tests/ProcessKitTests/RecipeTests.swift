@@ -28,10 +28,32 @@ struct RecipeTests {
     let loaded = try Recipe.load(Data(json.utf8), registry: Self.registry())
     #expect(loaded.params.number("gain") == 8, "clamped into the schema's bounds")
     #expect(loaded.params.number("shift") == 3)
-    #expect(loaded.warnings == [
-      "unknown key createdBy ignored",
-      "parameter sharpness ignored: not in dummy-gain",
-    ])
+    #expect(
+      loaded.warnings == [
+        "unknown key createdBy ignored",
+        "parameter gain clamped from 12.0 to 8.0",
+        "parameter sharpness ignored: not in dummy-gain",
+      ])
+  }
+
+  @Test("an unknown key inside a parameter entry is a warning")
+  func testUnknownEntryKey() throws {
+    let json = """
+      {"schemaVersion": 1, "process": "dummy-gain",
+       "params": [{"id": "shift", "value": 3, "unit": "arcsec"}]}
+      """
+    let loaded = try Recipe.load(Data(json.utf8), registry: Self.registry())
+    #expect(loaded.params.number("shift") == 3)
+    #expect(loaded.warnings == ["parameter shift: unknown key unit ignored"])
+  }
+
+  @Test("a value of the wrong kind is ignored with a warning; the default stays")
+  func testWrongKindIsAWarning() throws {
+    let json =
+      #"{"schemaVersion": 1, "process": "dummy-gain", "params": [{"id": "gain", "value": true}]}"#
+    let loaded = try Recipe.load(Data(json.utf8), registry: Self.registry())
+    #expect(loaded.params.number("gain") == 1)
+    #expect(loaded.warnings == ["parameter gain ignored: invalid value"])
   }
 
   @Test(
@@ -43,6 +65,8 @@ struct RecipeTests {
       "not json",
     ])
   func testRefused(json: String) {
-    #expect(throws: RecipeError.self) { try Recipe.load(Data(json.utf8), registry: Self.registry()) }
+    #expect(throws: RecipeError.self) {
+      try Recipe.load(Data(json.utf8), registry: Self.registry())
+    }
   }
 }

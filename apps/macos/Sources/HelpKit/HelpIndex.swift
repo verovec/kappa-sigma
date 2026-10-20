@@ -1,7 +1,8 @@
 package import Foundation
 
-/// The help cards on disk: `<root>/<locale>/process/<process id>.md`, in every locale the app
-/// ships. The coverage gate (`coverageProblems`) keeps every registered process documented and
+/// The help cards on disk, in every locale the app ships.
+///
+/// Cards are `<root>/<locale>/process/<process id>.md`. The coverage gate (`coverageProblems`) keeps every registered process documented and
 /// every card short; the renderer comes with card 0061.
 package struct HelpIndex: Sendable {
   /// The locales every card must exist in.
@@ -38,7 +39,9 @@ package struct HelpIndex: Sendable {
   package func coverageProblems(processIDs: [String]) -> [String] {
     processIDs.flatMap { id in
       Self.locales.flatMap { locale -> [String] in
-        guard let text = card(process: id, locale: locale) else { return ["\(id): no \(locale) card"] }
+        guard let text = card(process: id, locale: locale) else {
+          return ["\(id): no \(locale) card"]
+        }
         return Self.cardProblems(text).map { "\(id) (\(locale)): \($0)" }
       }
     }

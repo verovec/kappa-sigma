@@ -1,6 +1,8 @@
 package import Metal
 
-/// The contracts every registered process passes (design §4.6), run on a test input:
+/// The contracts every registered process passes (design §4.6).
+///
+/// They run on a test input:
 ///
 /// - **PreviewEqualsApply**: the preview render is bit-identical to the Apply render.
 /// - **NoHiddenState**: two renders with the same inputs are bit-identical.

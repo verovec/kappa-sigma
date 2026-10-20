@@ -27,7 +27,9 @@ package struct ParamSpec: Equatable, Sendable {
     id: String, title: String, unit: ParamUnit, level: ParamLevel, number: Double,
     in bounds: ClosedRange<Double>
   ) {
-    self.init(id: id, title: title, unit: unit, level: level, kind: .number(default: number, bounds: bounds))
+    self.init(
+      id: id, title: title, unit: unit, level: level, kind: .number(default: number, bounds: bounds)
+    )
   }
 
   /// An on/off parameter.
@@ -62,18 +64,20 @@ package struct ParamSpec: Equatable, Sendable {
 
   /// `value` made valid for this parameter: numbers clamped into the bounds; NaN/±Inf, a value
   /// of the wrong kind or an unknown option is refused.
-  package func validated(_ value: ParamValue) throws(ParamError) -> ParamValue {
+  package func validated(_ value: ParamValue) throws -> ParamValue {
     switch (kind, value) {
     case (.number(_, let bounds), .number(let number)):
-      guard number.isFinite else { throw .notFinite(id: id) }
+      guard number.isFinite else { throw ParamError.notFinite(id: id) }
       return .number(min(max(number, bounds.lowerBound), bounds.upperBound))
     case (.flag, .flag):
       return value
     case (.choice(_, let options), .choice(let option)):
-      guard options.contains(option) else { throw .unknownOption(id: id, option: option) }
+      guard options.contains(option) else {
+        throw ParamError.unknownOption(id: id, option: option)
+      }
       return value
     default:
-      throw .wrongKind(id: id)
+      throw ParamError.wrongKind(id: id)
     }
   }
 }

@@ -1,5 +1,5 @@
 /// How a scan records colour (`inspect.ColorModel`), decided once from the lights.
-package enum ColorModel: String, Codable, Sendable {
+package enum ColorModel: String, CaseIterable, Codable, Sendable {
   /// A mono sensor behind a filter wheel; the default without colour evidence.
   case mono
   /// One-shot colour: every light carries the three primaries.

@@ -1,0 +1,118 @@
+{
+  "colorModel.auto": {
+    "definition": "Le verdict de l’analyse : mono ou couleur, d’après les en-têtes et les pixels.",
+    "label": "Auto"
+  },
+  "colorModel.mixed": {
+    "definition": "Brutes mono et couleur mêlées : aucun empilement ne peut les traiter ensemble.",
+    "label": "Mixte"
+  },
+  "colorModel.mono": {
+    "definition": "Une caméra monochrome derrière une roue à filtres.",
+    "label": "Mono"
+  },
+  "colorModel.osc": {
+    "definition": "Une caméra couleur (Bayer) : pas de roue, le dématriçage donne le RVB.",
+    "label": "Couleur (OSC)"
+  },
+  "filter.b": {
+    "definition": "Filtre bleu large bande d’une caméra mono.",
+    "label": "Bleu"
+  },
+  "filter.g": {
+    "definition": "Filtre vert large bande d’une caméra mono (le V de Johnson compte comme vert).",
+    "label": "Vert"
+  },
+  "filter.ha": {
+    "definition": "Filtre bande étroite sur la raie à 656 nm de l’hydrogène ionisé.",
+    "label": "Hydrogène alpha"
+  },
+  "filter.l": {
+    "definition": "Filtre large bande sans couleur d’une caméra mono.",
+    "label": "Luminance"
+  },
+  "filter.oiii": {
+    "definition": "Filtre bande étroite sur la raie à 501 nm de l’oxygène deux fois ionisé.",
+    "label": "Oxygène III"
+  },
+  "filter.r": {
+    "definition": "Filtre rouge large bande d’une caméra mono.",
+    "label": "Rouge"
+  },
+  "filter.sii": {
+    "definition": "Filtre bande étroite sur la raie à 672 nm du soufre ionisé.",
+    "label": "Soufre II"
+  },
+  "filterSet.broadband": {
+    "definition": "Couleur sans filtre ou UV/IR-cut : tout le continuum, ciel clair.",
+    "label": "Large bande"
+  },
+  "filterSet.dualband": {
+    "definition": "Couleur derrière un filtre bi-bande (Hα + OIII) : ciel presque noir.",
+    "label": "Bi-bande"
+  },
+  "filterSet.unknown": {
+    "definition": "Les pixels n’ont pas dit si la nuit était en large bande ou en bi-bande.",
+    "label": "Non mesuré"
+  },
+  "frame.bias": {
+    "definition": "Poses obturées les plus courtes possible : le niveau de lecture du capteur.",
+    "label": "Offsets"
+  },
+  "frame.dark": {
+    "definition": "Poses obturées à la durée et à la température des brutes : signal thermique et pixels chauds.",
+    "label": "Darks"
+  },
+  "frame.darkflat": {
+    "definition": "Darks à la durée des flats, soustraits des flats à la place des offsets.",
+    "label": "Dark-flats"
+  },
+  "frame.flat": {
+    "definition": "Poses d’une lumière uniforme : vignetage et ombres des poussières, par filtre et par nuit.",
+    "label": "Flats"
+  },
+  "frame.light": {
+    "definition": "Poses de la cible : le signal à partir duquel l’empilement est construit.",
+    "label": "Brutes"
+  },
+  "frame.unknown": {
+    "definition": "Poses dont ni l’en-tête ni le dossier ne disent le type.",
+    "label": "Inconnues"
+  },
+  "frame.video": {
+    "definition": "Captures planétaires ou lunaires (SER, AVI) : listées, jamais empilées ici.",
+    "label": "Vidéos"
+  },
+  "layer.line": {
+    "definition": "Une couche bande étroite d’un bundle (Hα, OIII, SII), empilée à part.",
+    "label": "Raie d’émission"
+  },
+  "layer.rgb": {
+    "definition": "La couche couleur d’un bundle : le R, V, B dématricés.",
+    "label": "Couleur"
+  },
+  "stage.calibration": {
+    "definition": "Les masters avec lesquels chaque lot de brutes est calibré.",
+    "label": "Calibration"
+  },
+  "stage.data": {
+    "definition": "Les nuits, les brutes par filtre, le temps d’intégration et la couverture en calibration.",
+    "label": "Données"
+  },
+  "stage.export": {
+    "definition": "Les livrables : les images et la recette qui les a produites.",
+    "label": "Export"
+  },
+  "stage.review": {
+    "definition": "Mesures par pose : garder ou rejeter chaque pose, choisir la référence.",
+    "label": "Tri"
+  },
+  "stage.stacking": {
+    "definition": "Alignement, rejet et intégration en masters linéaires.",
+    "label": "Empilement"
+  },
+  "stage.studio": {
+    "definition": "Étirement, couleur et étoiles sur l’image empilée, prévisualisés en direct.",
+    "label": "Studio"
+  }
+}

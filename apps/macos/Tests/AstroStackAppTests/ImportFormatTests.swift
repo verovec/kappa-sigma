@@ -1,15 +1,18 @@
 import AstroStackApp
+import Foundation
 import StackKit
 import Testing
 
 /// The text the Import sheet writes for the plan's values.
 @Suite("ImportFormat — exposures, temperatures, sensors, nights, calibration cells")
 struct ImportFormatTests {
+  static let english = AstroFormat(locale: Locale(identifier: "en_US"))
+
   @Test(
     "exposures read in seconds or milliseconds",
     arguments: zip([0, 5, 1000, 2500, 300_000], ["—", "5 ms", "1 s", "2.5 s", "300 s"]))
   func testExposure(ms: Int, text: String) {
-    #expect(ImportFormat.exposure(ms) == text)
+    #expect(Self.english.exposure(ms: ms).replacing("\u{a0}", with: " ") == text)
   }
 
   @Test(
@@ -20,7 +23,7 @@ struct ImportFormatTests {
         SetKey(type: .darkFlat), SetKey(type: .flat, tempBucketC: -5), SetKey(type: .bias),
       ], ["−17 °C", "3 °C", "0 °C", "—", "—"]))
   func testTemperature(key: SetKey, text: String) {
-    #expect(ImportFormat.temperature(key) == text)
+    #expect(ImportFormat.temperature(key, in: Self.english).replacing("\u{a0}", with: " ") == text)
   }
 
   @Test("sensor settings and night headings")

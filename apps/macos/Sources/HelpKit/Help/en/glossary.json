@@ -1,0 +1,118 @@
+{
+  "colorModel.auto": {
+    "definition": "The scan’s verdict: mono or one-shot colour, from the headers and pixels.",
+    "label": "Auto"
+  },
+  "colorModel.mixed": {
+    "definition": "Mono and colour lights together: no single run can stack them.",
+    "label": "Mixed"
+  },
+  "colorModel.mono": {
+    "definition": "A monochrome camera behind a filter wheel.",
+    "label": "Mono"
+  },
+  "colorModel.osc": {
+    "definition": "A colour (Bayer) camera: no wheel, the debayer makes RGB.",
+    "label": "One-shot colour"
+  },
+  "filter.b": {
+    "definition": "Broadband blue filter of a mono camera.",
+    "label": "Blue"
+  },
+  "filter.g": {
+    "definition": "Broadband green filter of a mono camera (Johnson V reads as green).",
+    "label": "Green"
+  },
+  "filter.ha": {
+    "definition": "Narrowband filter on the 656 nm line of ionised hydrogen.",
+    "label": "Hydrogen-alpha"
+  },
+  "filter.l": {
+    "definition": "Broadband clear filter of a mono camera.",
+    "label": "Luminance"
+  },
+  "filter.oiii": {
+    "definition": "Narrowband filter on the 501 nm line of doubly ionised oxygen.",
+    "label": "Oxygen III"
+  },
+  "filter.r": {
+    "definition": "Broadband red filter of a mono camera.",
+    "label": "Red"
+  },
+  "filter.sii": {
+    "definition": "Narrowband filter on the 672 nm line of ionised sulphur.",
+    "label": "Sulphur II"
+  },
+  "filterSet.broadband": {
+    "definition": "Unfiltered or UV/IR-cut colour: full continuum, bright sky.",
+    "label": "Broadband"
+  },
+  "filterSet.dualband": {
+    "definition": "Colour through a dual narrowband clip (Hα + OIII): near-black sky.",
+    "label": "Dual-band"
+  },
+  "filterSet.unknown": {
+    "definition": "The pixels did not say whether the night was broadband or dual-band.",
+    "label": "Not measured"
+  },
+  "frame.bias": {
+    "definition": "Shortest possible dark exposures: the sensor’s read-out offset.",
+    "label": "Bias"
+  },
+  "frame.dark": {
+    "definition": "Shutter-closed exposures at the lights’ time and temperature: thermal signal and hot pixels.",
+    "label": "Darks"
+  },
+  "frame.darkflat": {
+    "definition": "Darks at the flats’ exposure, subtracted from the flats instead of the bias.",
+    "label": "Dark flats"
+  },
+  "frame.flat": {
+    "definition": "Exposures of an even light: vignetting and dust shadows, per filter and per night.",
+    "label": "Flats"
+  },
+  "frame.light": {
+    "definition": "Exposures of the target: the signal the stack is built from.",
+    "label": "Lights"
+  },
+  "frame.unknown": {
+    "definition": "Frames whose type neither the header nor the folder says.",
+    "label": "Unknown"
+  },
+  "frame.video": {
+    "definition": "Planetary or lunar captures (SER, AVI): listed, never stacked here.",
+    "label": "Videos"
+  },
+  "layer.line": {
+    "definition": "A narrowband layer of a bundle (Hα, OIII, SII), stacked on its own.",
+    "label": "Emission line"
+  },
+  "layer.rgb": {
+    "definition": "The one-shot-colour layer of a bundle: the debayered R, G and B.",
+    "label": "Colour"
+  },
+  "stage.calibration": {
+    "definition": "The masters each light set is calibrated with.",
+    "label": "Calibration"
+  },
+  "stage.data": {
+    "definition": "The nights, lights per filter, integration time and calibration coverage.",
+    "label": "Data"
+  },
+  "stage.export": {
+    "definition": "The deliverables: images and the recipe that made them.",
+    "label": "Export"
+  },
+  "stage.review": {
+    "definition": "Per-frame metrics: keep or reject each frame, pick the reference.",
+    "label": "Review"
+  },
+  "stage.stacking": {
+    "definition": "Registration, rejection and integration into the linear masters.",
+    "label": "Stacking"
+  },
+  "stage.studio": {
+    "definition": "Stretch, colour and stars on the stacked image, previewed live.",
+    "label": "Studio"
+  }
+}

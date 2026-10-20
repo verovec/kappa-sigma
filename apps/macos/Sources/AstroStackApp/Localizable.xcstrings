@@ -57,6 +57,46 @@
         }
       }
     },
+    "%lld lights": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld light"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld lights"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld brute"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld brutes"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld×%lld · %@ · built %@": {
       "localizations": {
         "en": {
@@ -229,6 +269,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choisissez un dossier de capture : il est lu, jamais modifié."
+          }
+        }
+      }
+    },
+    "Choose a layer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a layer"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez une couche"
           }
         }
       }
@@ -601,6 +657,22 @@
         }
       }
     },
+    "Layers": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Layers"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couches"
+          }
+        }
+      }
+    },
     "Lets every mismatched master through, for all light sets": {
       "localizations": {
         "en": {
@@ -885,6 +957,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Quitter AstroStack"
+          }
+        }
+      }
+    },
+    "Read-only: nothing in the run folder is ever written.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read-only: nothing in the run folder is ever written."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lecture seule : rien n’est jamais écrit dans le dossier du run."
           }
         }
       }

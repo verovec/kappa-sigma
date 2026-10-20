@@ -53,6 +53,8 @@ struct MasterInspectViewModelTests {
     /// The library file a first rebuild would overwrite.
     var existing: String?
     var previewed: [String] = []
+    /// What `inspect` throws instead of measuring, when set.
+    var inspectFailure: (any Error)?
     var stats = MasterStats(
       type: .dark, width: 10, height: 10, planes: [[Float](repeating: 0.01, count: 100)])
 
@@ -60,6 +62,7 @@ struct MasterInspectViewModelTests {
       MasterServices(
         inspect: { @MainActor path in
           self.inspected.append(path)
+          if let failure = self.inspectFailure { throw failure }
           var inspection = MasterInspection(
             path: path, master: MasterInspectViewModelTests.library[0], width: 10, height: 10,
             planes: 1, frames: 20, builtAt: .distantPast, stats: self.stats, warnings: [])

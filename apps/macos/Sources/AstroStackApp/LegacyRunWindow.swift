@@ -76,7 +76,7 @@ package final class LegacyRunWindow: NSWindowController, NSWindowDelegate {
       styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered,
       defer: false)
     window.title = model.title
-    window.contentView = NSHostingView(rootView: LegacyRunView(model: model))
+    window.contentView = NSHostingView(rootView: LegacyRunView(model: model).interfaceLocale())
     window.center()
     super.init(window: window)
     window.delegate = self

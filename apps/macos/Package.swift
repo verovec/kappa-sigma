@@ -103,8 +103,8 @@ let package = Package(
     .testTarget(
       name: "AstroStackAppTests",
       dependencies: [
-        "AstroStackApp", "ImageKit", "ProjectKit", "RenderKit", "StackKit", "StringCatalog",
-        "TestSupport",
+        "AstroStackApp", "HelpKit", "ImageKit", "ProcessKit", "ProjectKit", "RenderKit", "StackKit",
+        "StringCatalog", "TestSupport",
       ],
       swiftSettings: common),
   ]

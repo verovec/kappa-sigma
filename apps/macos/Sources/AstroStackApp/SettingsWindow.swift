@@ -18,7 +18,7 @@ package enum SettingsWindow {
   private static func make() -> NSWindow {
     let window = NSWindow(
       contentViewController: NSHostingController(
-        rootView: SettingsView(setting: LanguageSetting(), relaunch: relaunch)))
+        rootView: SettingsView(setting: LanguageSetting(), relaunch: relaunch).interfaceLocale()))
     window.title = String(localized: .app("Settings"))
     window.styleMask = [.titled, .closable]
     window.isReleasedWhenClosed = false

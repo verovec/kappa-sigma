@@ -41,12 +41,17 @@ struct LegacyRunWindowTests {
     let folder = try Self.run(in: ScratchDirectory.url)
     let model = try await LegacyRunModel.open(folder: folder)
     #expect(model.title == "M_31 · 20261018_191749")
-    #expect(model.rows.map(\.name) == ["RGB", "Ha", "OIII"])
+    let english = Locale(identifier: "en_US")
+    #expect(model.rows(locale: english).map(\.name) == ["RGB", "Ha", "OIII"])
     #expect(
-      model.rows.map(\.detail) == [
-        "rgb · rgb_base.fits · 4×3 · 76 frames", "line · syn_Ha.fits · 4×3 · 34 frames",
-        "line · syn_OIII.fits · 4×3 · 34 frames",
+      model.rows(locale: english).map(\.detail) == [
+        "Colour · rgb_base.fits · 4×3 · 76 frames",
+        "Emission line · syn_Ha.fits · 4×3 · 34 frames",
+        "Emission line · syn_OIII.fits · 4×3 · 34 frames",
       ])
+    #expect(
+      model.rows(locale: Locale(identifier: "fr_FR")).first?.detail
+        == "Couleur · rgb_base.fits · 4×3 · 76 poses")
     #expect(model.viewer == nil)
     try await model.select("Ha")
     let viewer = try #require(model.viewer)
@@ -112,7 +117,7 @@ struct LegacyRunWindowTests {
     try Data("broken".utf8).write(to: folder.appendingPathComponent("syn_Ha.fits"))
     await #expect(throws: (any Error).self) { try await model.select("Ha") }
     #expect(model.selected == "RGB" && model.viewer?.model.image.planes.count == 3)
-    #expect(model.failure?.hasPrefix("syn_Ha.fits") == true)
+    #expect(model.failure?.text("en").hasPrefix("syn_Ha.fits") == true)
     await #expect(throws: (any Error).self) { try await model.select("Ha") }
   }
 

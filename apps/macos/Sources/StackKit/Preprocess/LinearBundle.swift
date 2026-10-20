@@ -5,7 +5,7 @@
 /// sky, snr}, continuum_k?}]}`; 0043 builds the same type from a legacy run.
 package struct LinearBundle: Codable, Equatable, Sendable {
   /// What a layer is to the Studio.
-  package enum Role: String, Codable, Sendable {
+  package enum Role: String, CaseIterable, Codable, Sendable {
     case rgb, line, lum, red, green, blue
 
     /// The role of a channel's filter: L/R/G/B by name, one-shot colour `rgb`, anything else a

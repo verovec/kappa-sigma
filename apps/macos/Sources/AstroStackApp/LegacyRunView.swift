@@ -5,6 +5,7 @@ package import SwiftUI
 package struct LegacyRunView: View {
   let model: LegacyRunModel
   @State private var selection: String?
+  @Environment(\.locale) private var locale
 
   /// The sidebar starts on the layer the model already shows.
   package init(model: LegacyRunModel) {
@@ -14,13 +15,13 @@ package struct LegacyRunView: View {
 
   package var body: some View {
     NavigationSplitView {
-      List(model.rows, selection: $selection) { row in
+      List(model.rows(locale: locale), selection: $selection) { row in
         VStack(alignment: .leading) {
-          Text(row.name).font(.headline)
-          Text(row.detail).font(.caption).foregroundStyle(.secondary)
+          Text(verbatim: row.name).font(.headline)
+          Text(verbatim: row.detail).font(.caption).foregroundStyle(.secondary)
         }
       }
-      .navigationTitle("Layers")
+      .navigationTitle(Text(.app("Layers")))
       .frame(minWidth: 240)
       .task(id: selection) { await load(selection) }
       // A layer selected by the model (`-openRun` shows the base) is highlighted too.
@@ -28,8 +29,12 @@ package struct LegacyRunView: View {
     } detail: {
       VStack(spacing: 0) {
         if let failure = model.failure {
-          Label(failure, systemImage: "exclamationmark.triangle")
-            .foregroundStyle(.red).padding(8).frame(maxWidth: .infinity, alignment: .leading)
+          Label {
+            Text(failure)
+          } icon: {
+            Image(systemName: "exclamationmark.triangle")
+          }
+          .foregroundStyle(.red).padding(8).frame(maxWidth: .infinity, alignment: .leading)
         }
         if let viewer = model.viewer {
           ViewerView(
@@ -38,9 +43,15 @@ package struct LegacyRunView: View {
           )
           .id(model.selected)
         } else {
-          ContentUnavailableView(
-            "Choose a layer", systemImage: "square.3.layers.3d",
-            description: Text("Read-only: nothing in the run folder is ever written."))
+          ContentUnavailableView {
+            Label {
+              Text(.app("Choose a layer"))
+            } icon: {
+              Image(systemName: "square.3.layers.3d")
+            }
+          } description: {
+            Text(.app("Read-only: nothing in the run folder is ever written."))
+          }
         }
       }
     }

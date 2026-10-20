@@ -31,7 +31,7 @@ package final class LegacyRunModel {
   /// The shown layer, once loaded.
   package private(set) var viewer: Viewer?
   /// Why the last chosen layer could not be shown (the previous one stays).
-  package private(set) var failure: String?
+  package private(set) var failure: LocalizedStringResource?
   @ObservationIgnored private var renderer: ViewerRenderer?
 
   /// A model of the run `source` (already opened).
@@ -52,13 +52,15 @@ package final class LegacyRunModel {
   /// "M_31 · 20261018_191749".
   package var title: String { "\(source.object) · \(source.runID)" }
 
-  /// Role, file, size and frames of every layer, base first.
-  package var rows: [Row] {
-    source.layers.map { layer in
+  /// Role, file, size and frames of every layer, base first, worded in `locale`.
+  package func rows(locale: Locale) -> [Row] {
+    let format = AstroFormat(locale: locale)
+    return source.layers.map { layer in
       var parts = [
-        layer.role.rawValue, layer.file, "\(source.grid.width)×\(source.grid.height)",
+        AppGlossary.label(layer.role.termID, locale: locale), layer.file,
+        "\(source.grid.width)×\(source.grid.height)",
       ]
-      if let frames = layer.frames { parts.append("\(frames) frames") }
+      if let frames = layer.frames { parts.append(format.frames(frames)) }
       return Row(name: layer.id, detail: parts.joined(separator: " · "))
     }
   }
@@ -83,7 +85,7 @@ package final class LegacyRunModel {
     } catch is CancellationError {
       throw CancellationError()
     } catch {
-      failure = "\(layer.file): \(error)"
+      failure = .app("\(layer.file): \(UserFacingError(error).message)")
       throw error
     }
   }

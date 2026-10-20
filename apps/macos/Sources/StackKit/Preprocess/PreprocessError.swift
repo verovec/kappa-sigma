@@ -1,0 +1,28 @@
+internal import Foundation
+
+/// Why a preprocessing step failed.
+package enum PreprocessError: Error, Equatable, Sendable {
+  /// Grading left fewer frames than Siril's two-frame stack minimum.
+  case belowStackMinimum(survivors: Int, registered: Int)
+  /// The bundle's layers do not share one geometry.
+  case mixedDimensions([String])
+  /// Another run already holds this target's output folder.
+  case targetBusy(String)
+  /// No channel produced a master.
+  case noChannels([String])
+}
+
+extension PreprocessError: LocalizedError {
+  package var errorDescription: String? {
+    switch self {
+    case .belowStackMinimum(let survivors, let registered):
+      "\(survivors) of \(registered) registered frames survived grading — "
+        + "below Siril's two-frame stack minimum"
+    case .mixedDimensions(let layers):
+      "the bundle's layers have different dimensions: \(layers.joined(separator: ", "))"
+    case .targetBusy(let path): "another run is already writing \(path)"
+    case .noChannels(let errors):
+      "no channel could be stacked: \(errors.joined(separator: "; "))"
+    }
+  }
+}

@@ -49,21 +49,42 @@ package enum SirilScripts {
     return SirilScript(commands)
   }
 
-  /// Calibration then one-pass registration (`CalibrateRegisterScriptWith`, link ingest).
-  package static func calibrateRegister(seq: String, masters: CalibrationMasters) -> SirilScript {
-    var script = calibrateOnly(seq: seq, masters: masters)
-    let target = masters.arguments.isEmpty ? seq : "pp_" + seq
-    script.commands.append(.register(seq: target, twoPass: false, transformation: nil))
+  /// Calibration then registration (`CalibrateRegisterScriptWith`, or the two-pass form).
+  package static func calibrateRegister(
+    seq: String, masters: CalibrationMasters, ingest: SirilIngest = .link, twoPass: Bool = false
+  ) -> SirilScript {
+    var script = calibrateOnly(seq: seq, masters: masters, ingest: ingest)
+    let target = calibrated(seq, masters: masters)
+    script.commands.append(.register(seq: target, twoPass: twoPass, transformation: nil))
     return script
   }
 
-  /// Calibration only, for one night group (`CalibrateOnlyScriptWith`, link ingest).
-  package static func calibrateOnly(seq: String, masters: CalibrationMasters) -> SirilScript {
-    var commands: [SirilCommand] = [.link(seq: seq)]
+  /// Calibration only, for one night group (`CalibrateOnlyScriptWith`).
+  package static func calibrateOnly(
+    seq: String, masters: CalibrationMasters, ingest: SirilIngest = .link
+  ) -> SirilScript {
+    var commands: [SirilCommand] = [ingest.command(seq)]
     if !masters.arguments.isEmpty {
       commands.append(.calibrate(seq: seq, arguments: masters.arguments))
     }
     return SirilScript(commands)
+  }
+
+  /// Calibration of a one-frame set (`CalibrateSingleScriptWith`): Siril has no one-image
+  /// sequences, so the lone ingested frame is calibrated as an image.
+  package static func calibrateSingle(
+    seq: String, masters: CalibrationMasters, ingest: SirilIngest = .link
+  ) -> SirilScript {
+    var commands: [SirilCommand] = [ingest.command(seq)]
+    if !masters.arguments.isEmpty {
+      commands.append(.calibrateSingle(image: "\(seq)_00001", arguments: masters.arguments))
+    }
+    return SirilScript(commands)
+  }
+
+  /// The calibrated sequence's name (`CalibratedSeq`): `pp_<seq>` when anything calibrates it.
+  package static func calibrated(_ seq: String, masters: CalibrationMasters) -> String {
+    masters.arguments.isEmpty ? seq : "pp_" + seq
   }
 
   /// The graded stack of a registered sequence, without the rejected frames (`StackSelectedScript`).

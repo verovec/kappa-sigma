@@ -26,10 +26,7 @@ package struct CalibrationPreview: Equatable, Sendable {
   /// run uses: masters from another sensor are excluded first, under `force` too.
   package init(inventory: Inventory, masters: [CalibrationMaster], force: Bool = false) {
     channels = inventory.sets.filter { $0.key.type == .light }.map { set in
-      let pool = DimensionGuard.keepMatching(masters, lightPath: set.frames.first?.path ?? "")
-      var selection = CalibrationMatcher.match(
-        LightRef(set, in: inventory), masters: pool.masters, force: force)
-      if let note = pool.note { selection.notes.append(note) }
+      let selection = CalibrationMatcher.select(set, in: inventory, masters: masters, force: force)
       let suggestions = CalibrationRole.allCases.compactMap { role in
         selection.master(role).map {
           Suggestion(

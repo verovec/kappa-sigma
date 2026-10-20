@@ -19,6 +19,8 @@ No UI, no Metal: RenderKit uploads what ImageKit produces.
   solution (SIP shifts its corners by ~2 px, ~6″). Other projections give `nil`, never a guess.
 - `KitBundle` (card 0042): a kit's SwiftPM resource bundle from `Contents/Resources` in the app,
   `Bundle.module` otherwise.
+- `centerSample(maxCount:)`: the legacy `fits.Stats` read — a contiguous run from the middle of
+  the data unit, physical values in double, without decoding the image (inspect, card 0046).
 - `Pyramid`: 2×2 block means with vDSP (never stride sampling, so noise stays representative),
   halving until the long side is ≤ 512 px; `build` runs `@concurrent`. 22 Mpx × 3 planes: 0.04 s.
 - `ImageExport`: 16-bit TIFF/PNG via ImageIO for deliverables, top row first, values clamped.

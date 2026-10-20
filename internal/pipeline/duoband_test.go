@@ -1,0 +1,238 @@
+package pipeline
+
+import (
+	"path/filepath"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/verovec/kappa-sigma/internal/filters"
+	"github.com/verovec/kappa-sigma/internal/fits"
+	"github.com/verovec/kappa-sigma/internal/inspect"
+	"github.com/verovec/kappa-sigma/internal/mode"
+)
+
+// writeColourMaster puts a 3-plane FITS at dir/name.fits with the given per-plane constant values.
+func writeColourMaster(t *testing.T, dir, name string, r, g, b float32) string {
+	t.Helper()
+	im := fits.NewImage(4, 3, 3)
+	for i := range im.Pix[0] {
+		im.Pix[0][i], im.Pix[1][i], im.Pix[2][i] = r, g, b
+	}
+	p := filepath.Join(dir, name+".fits")
+	require.NoError(t, im.WriteFITS(p))
+	return p
+}
+
+func TestSplitDuoband(t *testing.T) {
+	tests := []struct {
+		name        string
+		r, g, b     float32
+		wantHa      float32
+		wantOIII    float32
+		explanation string
+	}{
+		{
+			name: "green carries the stronger [OIII]", r: 0.40, g: 0.20, b: 0.10,
+			wantHa: 0.40, wantOIII: 0.20,
+			explanation: "the 500.7 nm line sits between the passbands; keep whichever pixel caught more",
+		},
+		{
+			name: "blue carries the stronger [OIII]", r: 0.40, g: 0.10, b: 0.25,
+			wantHa: 0.40, wantOIII: 0.25,
+			explanation: "averaging would have halved it to 0.175 and cost SNR",
+		},
+		{
+			name: "equal green and blue", r: 0.9, g: 0.3, b: 0.3,
+			wantHa: 0.9, wantOIII: 0.3,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := t.TempDir()
+			master := writeColourMaster(t, dir, "master_RGB", tt.r, tt.g, tt.b)
+
+			haBase, oiiiBase, err := splitDuoband(master, dir)
+			require.NoError(t, err)
+			assert.Equal(t, duobandHaBase, haBase)
+			assert.Equal(t, duobandOIIIBase, oiiiBase)
+
+			ha, err := fits.ReadImage(filepath.Join(dir, haBase+".fits"))
+			require.NoError(t, err)
+			oiii, err := fits.ReadImage(filepath.Join(dir, oiiiBase+".fits"))
+			require.NoError(t, err)
+
+			require.Equal(t, 1, ha.C, "the emission channels are single-plane")
+			require.Equal(t, 1, oiii.C)
+			assert.InDelta(t, tt.wantHa, ha.Pix[0][0], 1e-6, "Hα is the red plane")
+			assert.InDelta(t, tt.wantOIII, oiii.Pix[0][0], 1e-6, tt.explanation)
+		})
+	}
+}
+
+func TestSplitDuoband_NeedsThreePlanes(t *testing.T) {
+	dir := t.TempDir()
+	im := fits.NewImage(4, 3, 1)
+	p := filepath.Join(dir, "mono.fits")
+	require.NoError(t, im.WriteFITS(p))
+
+	_, _, err := splitDuoband(p, dir)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "need 3")
+}
+
+// lightScan builds an inventory holding one one-shot-colour LIGHT set carrying the given filter-set
+// verdict. An empty verdict leaves the set unclassified — the "the pixels could not settle" case.
+func lightScan(verdict filters.FilterSet) *inspect.Inventory {
+	key := inspect.SetKey{Type: inspect.Light, Object: "M31", ExposureMs: 120_000, Gain: 100, Bin: 1, Color: true}
+	inv := &inspect.Inventory{Sets: []inspect.Set{{Key: key, Count: 40}}}
+	if verdict != "" {
+		inv.FilterSets = map[string]filters.FilterSet{key.ID(): verdict}
+	}
+	return inv
+}
+
+func TestDuobandChannels(t *testing.T) {
+	colour := func(palette string) *mode.Preset { return &mode.Preset{Color: mode.OSC, Palette: palette} }
+
+	tests := []struct {
+		name      string
+		preset    *mode.Preset
+		inv       *inspect.Inventory
+		wantSplit bool
+		why       string
+	}{
+		{"a duo-band colour run asking for foraxx is split", colour("foraxx"), lightScan(filters.FilterSetDualband), true,
+			"the Hubble-like rendition needs real Hα and [OIII]"},
+		{"hoo is split too", colour("hoo"), lightScan(filters.FilterSetDualband), true, ""},
+		{"an unclassified capture is still split", colour("hoo"), lightScan(""), true,
+			"the pixels could not settle it; silence is not evidence, so behaviour is unchanged"},
+		{"no inventory at all is still split", colour("hoo"), nil, true,
+			"callers without a scan keep the behaviour they have always had"},
+		{"a natural colour run is left alone", colour("natural"), lightScan(filters.FilterSetDualband), false,
+			"an ordinary OSC run keeps the pass-through it has always had"},
+		{"an empty palette is left alone", colour(""), nil, false, ""},
+		{"a mono run is left alone", &mode.Preset{Color: mode.Mono, Palette: "foraxx"}, nil, false,
+			"a filter wheel already supplies the real channels"},
+		{"a nil preset is left alone", nil, nil, false, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := t.TempDir()
+			writeColourMaster(t, dir, "master_RGB", 0.4, 0.2, 0.1)
+			in := map[string]string{"RGB": "master_RGB"}
+
+			out, note := duobandChannels(tt.preset, tt.inv, in, dir)
+
+			assert.Len(t, in, 1, "the caller's map is never mutated")
+			if !tt.wantSplit {
+				assert.Equal(t, in, out)
+				assert.Empty(t, note)
+				return
+			}
+			assert.Equal(t, duobandHaBase, out["Ha"], tt.why)
+			assert.Equal(t, duobandOIIIBase, out["OIII"])
+			assert.Equal(t, "master_RGB", out["RGB"], "the colour master stays available")
+			assert.Contains(t, note, "duo-band")
+		})
+	}
+}
+
+// A BROADBAND capture has no emission lines to separate. Splitting it anyway hands the palette a
+// pseudo-Hα that is red continuum and a pseudo-[OIII] that is max(green,blue) — a per-pixel maximum
+// of two independent noisy planes, which rectifies noise into positive blotches instead of
+// recovering signal. Measured on a real broadband master, that lifts the blob-scale chroma
+// structure by 15–18%.
+func TestDuobandChannels_MeasuredBroadbandIsNotSplit(t *testing.T) {
+	for _, palette := range []string{"hoo", "foraxx", "sho", "hos"} {
+		t.Run(palette, func(t *testing.T) {
+			dir := t.TempDir()
+			writeColourMaster(t, dir, "master_RGB", 0.4, 0.2, 0.1)
+			in := map[string]string{"RGB": "master_RGB"}
+
+			out, note := duobandChannels(&mode.Preset{Color: mode.OSC, Palette: palette},
+				lightScan(filters.FilterSetBroadband), in, dir)
+
+			assert.Equal(t, in, out, "no emission channels are invented from continuum")
+			assert.NotContains(t, out, "Ha")
+			assert.NotContains(t, out, "OIII")
+			assert.Contains(t, note, "BROADBAND", "the run must say why the palette was not honoured")
+			assert.NoFileExists(t, filepath.Join(dir, duobandOIIIBase+".fits"),
+				"the rectified pseudo-[OIII] is never even written")
+		})
+	}
+}
+
+// A mixed capture holds both kinds. The dual-band evidence is what matters: its lane is the one
+// being split, and filtersetlanes.go has already consumed it by the time this runs.
+func TestDuobandChannels_MixedCaptureIsStillSplit(t *testing.T) {
+	dir := t.TempDir()
+	writeColourMaster(t, dir, "master_RGB", 0.4, 0.2, 0.1)
+
+	broad := inspect.SetKey{Type: inspect.Light, Object: "NGC7000", ExposureMs: 120_000, Gain: 100, Bin: 1, Color: true}
+	dual := broad
+	dual.ExposureMs = 300_000
+	inv := &inspect.Inventory{
+		Sets: []inspect.Set{{Key: broad, Count: 30}, {Key: dual, Count: 30}},
+		FilterSets: map[string]filters.FilterSet{
+			broad.ID(): filters.FilterSetBroadband,
+			dual.ID():  filters.FilterSetDualband,
+		},
+	}
+
+	out, note := duobandChannels(&mode.Preset{Color: mode.OSC, Palette: "hoo"}, inv,
+		map[string]string{"RGB": "master_RGB"}, dir)
+
+	assert.Equal(t, duobandHaBase, out["Ha"], "a measured dual-band set is real emission data")
+	assert.Contains(t, note, "duo-band")
+}
+
+func TestResolvePalette_Duoband(t *testing.T) {
+	split := map[string]string{"RGB": "master_RGB", "Ha": duobandHaBase, "OIII": duobandOIIIBase}
+	plain := map[string]string{"RGB": "master_RGB"}
+
+	tests := []struct {
+		name     string
+		preset   *mode.Preset
+		channels map[string]string
+		wantName string
+		wantNB   bool
+	}{
+		{
+			name:   "a split duo-band run reaches foraxx",
+			preset: &mode.Preset{Color: mode.OSC, Palette: "foraxx"}, channels: split,
+			wantName: "foraxx", wantNB: true,
+		},
+		{
+			name:   "a split duo-band run reaches hoo",
+			preset: &mode.Preset{Color: mode.OSC, Palette: "hoo"}, channels: split,
+			wantName: "hoo", wantNB: true,
+		},
+		{
+			// A duo-band filter passes no [SII], so sho falls back down its own chain.
+			name:   "sho falls back to hoo, since duo-band has no [SII]",
+			preset: &mode.Preset{Color: mode.OSC, Palette: "sho"}, channels: split,
+			wantName: "hoo", wantNB: true,
+		},
+		{
+			// The regression that matters: an ordinary colour run must not change at all.
+			name:   "an unsplit colour run still passes through",
+			preset: &mode.Preset{Color: mode.OSC, Palette: "foraxx"}, channels: plain,
+			wantName: "rgb", wantNB: false,
+		},
+		{
+			name:   "a natural colour run still passes through",
+			preset: &mode.Preset{Color: mode.OSC, Palette: "natural"}, channels: split,
+			wantName: "rgb", wantNB: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pal, _ := resolvePalette(tt.preset, tt.channels)
+			assert.Equal(t, tt.wantName, pal.Name)
+			assert.Equal(t, tt.wantNB, pal.Narrowband)
+			assert.True(t, pal.Color, "every one of these renders in colour")
+		})
+	}
+}

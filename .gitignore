@@ -1,0 +1,86 @@
+# --- Go ---
+/bin/
+/dist/
+/astrostack
+/siril-mcp
+# Ad-hoc validation binaries built at the repo root (`go build -o moonvalid ./...`).
+/moonvalid
+*.exe
+*.test
+*.out
+/coverage.*
+!internal/pipeline/coverage.go
+tmp/
+.air/
+
+# --- local runtime venv (created by scripts/ia-model.sh; never committed) ---
+.venv-ia/
+# scratch
+probe_tmp/
+
+# --- Node / frontend ---
+node_modules/
+frontend/dist/
+frontend/.vite/
+*.local
+
+# --- demo recorder (tools/demo) ---
+tools/demo/dist/
+# user-supplied / licensed demo music is never committed (keep the folder + its README)
+tools/demo/assets/music/*
+!tools/demo/assets/music/README.md
+# rendered videos + recorder scratch land under output/ (already ignored), e.g. output/demo/
+
+# --- env & secrets ---
+.env
+.env.*
+!.env.example
+
+# --- runtime data (astro captures, scratch, outputs) ---
+/data/
+/work/
+/output/
+/input/
+# Anchored rules only cover the repo root: a tool run from frontend/ (or any subdir) makes its own
+# work/ there, which is how frontend/work/.config/astrostack/secret.key came to be committed.
+work/
+data/
+*.fit
+*.fits
+*.fts
+*.ser
+*.CR2
+*.cr2
+# but keep small test fixtures
+!**/testdata/**
+
+# --- editor / OS ---
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# --- Claude Code ---
+#.claude/settings.local.json
+.gitnexus
+# Machine-local calibration-library sidecars (pool signatures, flat-QC artifacts)
+/library/*.sig
+/library/*.defects.json
+/library/*_defects.png
+/library/*master*
+/library/catalogues/
+
+
+note.txt
+stacking-doc.md
+tasks-context
+cards
+# local card-workflow state (see .claude/skills/new-card) — planning lives outside git.
+# Root-anchored: the skill's templates/bootstrap copies of roadmap.md ARE committed.
+/roadmap.md
+
+# data lives in ../stacking-astro (read-only); these are symlinks
+/input
+/output
+/library
+/work

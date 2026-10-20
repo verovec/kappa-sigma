@@ -1,0 +1,104 @@
+{
+  "_readme": "Paramètres de stacking de référence, issus de l'investigation des 22-24/09/2026 (taches = SeamNoiseEq par plan, corrigé carte 0024) et du goût validé le 24/09 au matin : PAS de saturation ajoutée, fond de ciel moins noir (0.09). POST localhost:8080/api/jobs avec un de ces corps. Non commité — référence locale.",
+  "_invariants": {
+    "focal_mm_pixel_um": "TOUJOURS déclarer focal_mm:249 et pixel_um:3.76 (ASI2600MC + 249mm) — sans eux le solveur reçoit 740mm et SPCC échoue (runbook NGC7000 §2). Le solve échoue encore aujourd'hui même déclaré (à creuser, carte 0021), mais PCC prend le relais.",
+    "reuse_disabled": "true tant que des dossiers partagent des calibrations en liens durs (comptage par chemin).",
+    "register_2pass": "true dès qu'une session franchit le méridien (toutes tes cibles actuelles).",
+    "filter_set_overrides": "clé = SetKey.ID lisible via POST /api/inspect ; nécessaire pour un set dual-band que les pixels ne tranchent pas (galaxie : la signature couleur échoue, cf. mémoire dualband-osc).",
+    "previews": "les previews 100_stacked/300_combined sont AVANT finition et rendues en autostretch délié — elles montrent la structure brute, jamais le rendu final.",
+    "un_run_a_la_fois": "Le scratch pèse ~0,65 Go/pose au pic ; des cibles différentes = des verrous différents = exécution PARALLÈLE. Trois runs lancés ensemble le 24/09 ont saturé le disque (240 Go de scratch) et tué deux runs par écritures tronquées. Lancer les runs UN PAR UN, purger work/run_* après chaque succès.",
+    "taches_residuelles": "Verdict duel arbitre M45 (24/09) : le master du script officiel Siril sur les mêmes brutes corrèle r=0,94-1,00 avec le nôtre sur le fond de ciel (tuiles 8/16/32 px, canaux R/G/B) — la marbrure résiduelle est DANS les données (poussières du Taureau réelles + grain corrélé de capture). Remèdes côté capture : activer le DITHERING ASIAIR (~5 px guide, chaque pose) et plus de nuits ; côté rendu : saturation 0 + chroma_bg_smooth_px.",
+    "gout_valide": "saturation 0 partout (0.30 amplifiait la marbrure chroma) ; background_level 0.07 sur champ poussiéreux (M45), 0.09 max sur champ propre — plus le fond monte, plus la couche réelle de poussière/grain devient visible.",
+    "flats_par_session": "Auditer les flats AVANT de pooler (outil calibscan) : un flat sain a coins−centre NÉGATIF (vignettage) et un niveau ~15-25 k ADU. M45 24/09 : le lot 86° du 04/09 (40/70, 3 770 ADU, coins POSITIFS = fuite/aube) dominait le master flat → gradients par nuit. Quarantaine input/M45-flats-ecartes-86deg/, restack #63 avec les 30 bons."
+  },
+  "IC1848_dualband_hoo_oiii": {
+    "_pourquoi": "Capture 100% dual-band → palette hoo (seule voie qui splitte syn_Ha/syn_OIII sur un set unique). Le rendu est PAR NATURE quasi monochrome rouge : deux raies seulement, Hα ~4× plus fort que OIII — aucune diversité de couleur possible sans une nuit broadband en plus (voir M31 mixte). oiii_boost 1.35 = le 'teal marqué' validé sur NGC7000 v9. color_calibration false : SPCC/PCC n'ont pas de sens sur de l'émission. Rendu sans taches = moteur >= c9154ec (carte 0024).",
+    "body": {
+      "path": "input/IC1848",
+      "mode": "nebula",
+      "palette": "hoo",
+      "format": "image",
+      "target": "IC 1848",
+      "focal_mm": 249,
+      "pixel_um": 3.76,
+      "color_calibration": false,
+      "register_2pass": true,
+      "reuse_disabled": true,
+      "filter_set_overrides": {
+        "LIGHT|IC 1848|RGB|e300000|g100o50b1|i0|t-20|s:2026-09-22": "dualband"
+      },
+      "params": {
+        "oiii_boost": 1.35,
+        "saturation": 0,
+        "star_desat": 0.3,
+        "background_level": 0.09,
+        "stretch_headroom": 0.85
+      }
+    },
+    "_v9_19_10": "Run de référence v9 = #79 (19/10, output/IC_1848/20261018_221220, 111 poses/3 nuits dont 8 du 18/10, 95 retenues). Corps : ce body SANS ses params, remplacés par les params v9 DB (trail_mask_k 0, crop_frac 0.05, background_level 0.10, saturation 0.20, star_desat 0.30, denoise_chroma 0.85, chroma_smooth_px 3, chroma_bg_smooth_px 8) ; puis HDR=0 HABLACK=0.126 HASCREEN=0.85 DESAT=0.62 ORIENT=none tasks-context/tools/v9compose.sh <run_dir> IC1848_v9style_doux (pas de HDR : pas de cœur de galaxie ; désaturation douce 0.62 validée 28/09 ; orientation moteur conservée)."
+  },
+  "M31_mixte_broadband_plus_dualband": {
+    "_pourquoi": "Galaxie en 2 nuits broadband + 1 nuit dual-band → mode deepsky, palette natural : les lanes (carte 0007) stackent chaque filtre séparément, recalent le master dual-band sur la grille broadband et écranent Hα/OIII par-dessus la base couleur (oiii_screen 0.3). color_calibration true : légitime sur base broadband. Les nuits BB se classent broadband seules depuis le correctif EGAIN (#24) ; la nuit DB a besoin de l'override. sky_*_flatten : aplanit le fond APRÈS étirement — assume d'effacer aussi le cirrus réel (IFN) autour de M31, c'est un choix esthétique (validation en cours run #59).",
+    "body": {
+      "paths": [
+        "input/M31-BB",
+        "input/M31-DB"
+      ],
+      "path": "input/M31-BB",
+      "mode": "deepsky",
+      "palette": "natural",
+      "format": "image",
+      "target": "M 31",
+      "focal_mm": 249,
+      "pixel_um": 3.76,
+      "color_calibration": true,
+      "register_2pass": true,
+      "reuse_disabled": true,
+      "filter_set_overrides": {
+        "LIGHT|M 31|RGB|e300000|g100o50b1|i0|t-17|s:2026-09-22": "dualband"
+      },
+      "params": {
+        "oiii_screen": 0.3,
+        "background_level": 0.09,
+        "saturation": 0,
+        "star_desat": 0.3,
+        "stretch_headroom": 0.85,
+        "sky_lum_flatten_px": 96,
+        "sky_chroma_flatten_px": 48
+      }
+    }
+  },
+  "M45_broadband_reflexion": {
+    "_pourquoi": "Nébuleuse par réflexion pur broadband : natural + calibration photométrique. star_reduce 0 : les étoiles SONT le sujet. background_level 0.07 : LE réglage décisif — le champ M45 baigne dans les poussières du Taureau (prouvé réel par duel deux-nuits 24/09 : chroma r=0,88-0,99 aligné ciel, ~0 aligné capteur) ; à 0.09 l'étirement monte dans cette couche (taches brunes), à 0.07 elle reste sous le plancher comme dans la version propre historique. saturation 0 + chroma_bg_smooth_px 60 tempèrent ce qui affleure. sky_desat 0.85 (cartes 0025+0026, moteur >= 32c4529 — masques v2 en luminosité relative, la v1 σ-bruit ne touchait pas le voile) : neutralise la couleur du plancher et les taches de couleur sur les voiles faibles — chroma des taches −80 % mesuré, luminance intacte. Validé runs #61/#62 du 24/09.",
+    "body": {
+      "path": "input/M45",
+      "mode": "deepsky",
+      "palette": "natural",
+      "format": "image",
+      "target": "M 45",
+      "focal_mm": 249,
+      "pixel_um": 3.76,
+      "color_calibration": true,
+      "register_2pass": true,
+      "reuse_disabled": true,
+      "params": {
+        "background_level": 0.07,
+        "saturation": 0,
+        "star_desat": 0.2,
+        "stretch_headroom": 0.85,
+        "star_reduce": 0,
+        "chroma_bg_smooth_px": 60,
+        "sky_desat": 0.85
+      }
+    }
+  },
+  "_architecture_v9": {
+    "_quoi": "Le rendu préféré (NGC7000_final_v9) n'est PAS un run unique : c'est run(s) pipeline → composite astrocomp (tasks-context/tools/bin). Reproduit le 28/09 sur IC 1848 (runs 72) et M 31 (run 73).",
+    "etape_1_run": "nebula/hoo pour un set 100% dual-band (produit syn_Ha/syn_OIII + rgb_base) ; deepsky/natural mixte BB+DB pour une cible avec nuits broadband. Params v9 du run DB: trail_mask_k 0, crop 0.05, bg 0.10, sat 0.20, star_desat 0.30, denoise_chroma 0.85, chroma 3/8. Params v9 du run BB: crop 0.03, bg 0.08, star_reduce 0, roundness 0.66, color_denoise_ai false, chroma 0/0, sky_chroma_flatten 0, denoise_chroma 0.35, sat 0.50, star_desat 0.",
+    "etape_2_composite": "astrocomp -base <RUN>/rgb_base.fits -ha syn_Ha.fits -oiii syn_OIII.fits -coverage-crop -crop 0.005 -base-bg 0.085 -ha-bg 0.12 -ha-black 0.115 -ha-screen 0.95 -oiii-bg 0.12 -oiii-black 0.126 -oiii-screen 0.80 -oiii-boost 1.25 -star-radius 4 -layer-smooth 0 -sat 0.32 -sat-masked",
+    "etape_3_etoiles": "starnet2 --input X.png --output X_starless.png puis stardesat X X_starless out k r (tasks-context/tools/bin/stardesat) : la couche étoiles (X − starless) est désaturée vers sa luma (k = 0.25 validé PO 18/10 : géantes rouges rendues en « taches orange » par l'étirement v9 — -sat n'y change rien, le masque protège les hautes lumières) puis remise à r = 1.0 / 0.75 / 0.50 / 0.25 (même arithmétique que starblend). La galaxie et le Hα ne sont pas touchés.",
+    "verdicts_28_09": "calibration INNOCENTÉE (M45 avec darks/bias NGC7000: texture 7.23 vs 7.22 — identique). NGC7000 propre grâce à: 228 poses (vs 83), nuits tournées à ~180° (décorrélation naturelle du grain capteur; M45: 12° d'écart), champ d'émission qui masque la texture.",
+    "etape_1b_hdr": "hdrcomp -in rgb_base.fits -out rgb_base_dim15.fits -t1 <1+0.00084/ciel> -s <0.00118/ciel> -sigma 30 — seuils ABSOLUS (t1−ciel 0,00084, s 0,00118 — PO 19/10 : comparé à 0,00074 et 0,0004 (cœurs plus sombres), il garde 0,00118), le piédestal varie d'un run à l'autre (0,0336 le 27/09, 0,0132 le 18/10) ; outil tasks-context/tools/bin/hdrcomp. Ouverture morphologique -open-radius 16 (défaut) : retire les étoiles de la composante lisse avant le flou, sinon chaque étoile brillante prend un anneau sombre (défaut présent dans le rendu du 27/09, vu par le PO le 18/10).",
+    "choix_po_18_10": "HaPlus validé par le PO le 19/10 sur M 31 (run #78, 76 BB + 34 DB) : -ha-black 0.115 -ha-screen 0.95 (contre 0.126/0.85 en v9 d'origine ; HaStrong 0.10/1.0 testé puis écarté). Règle PO : pour plus de Hα on augmente le temps de pose dual-band, pas l'écran. Ne PAS passer par /api/jobs/{id}/rerun sur une cible BB+DB (perd les lanes dual-band)."
+  }
+}

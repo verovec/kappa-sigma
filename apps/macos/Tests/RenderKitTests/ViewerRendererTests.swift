@@ -37,6 +37,21 @@ struct ViewerRendererTests {
     #expect(seconds > 0 && seconds < 1)
   }
 
+  @Test("the frame's mask overlay reaches the display through the renderer")
+  func testMaskOverlayFrame() throws {
+    let device = try GPU.requireDevice()
+    let image = try ImageTexture(device: device, width: 2, height: 1, planes: [[0.2, 0.2]])
+    let mask = try GPU.texture([1, 0], width: 2, height: 1)
+    let renderer = try ViewerRenderer(device: device)
+    let output = try GPU.output(width: 2, height: 1)
+    var frame = ViewerFrame(transform: ViewTransform(scale: 1, origin: .zero), stf: nil)
+    frame.maskOverlay = true
+    _ = try renderer.render(
+      image: image, reference: nil, frame: frame, into: output, mask: mask.planes[0])
+    let shown = GPU.read(output)
+    #expect(abs(shown[0].x - 0.6) < 1e-6 && abs(shown[1].x - 0.2) < 1e-6)
+  }
+
   @Test("the compare frame selects the reference with its split")
   func testCompareFrame() throws {
     let device = try GPU.requireDevice()

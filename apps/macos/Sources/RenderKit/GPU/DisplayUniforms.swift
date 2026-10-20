@@ -31,6 +31,8 @@ package struct DisplayUniforms {
   package var mipLevels: Float
   /// 1: stored row 0 is the bottom of the frame (`ROWORDER = BOTTOM-UP`), shown last.
   package var flipRows: UInt32 = 0
+  /// 1: the mask bound at texture 7 tints the view red by half its value.
+  package var maskOverlay: UInt32 = 0
 
   /// 1:1 at the image origin, with `stf` per channel (`nil`: STF off).
   package init(image: ImageTexture, stf: [STFParameters]?) {

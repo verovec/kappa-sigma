@@ -39,7 +39,7 @@ let package = Package(
       exclude: ["README.md"], resources: [.copy("Shaders")], swiftSettings: common),
     .target(
       name: "ProcessKit", dependencies: ["ImageKit", "RenderKit"],
-      exclude: ["README.md"], swiftSettings: safe),
+      exclude: ["README.md"], resources: [.copy("Shaders")], swiftSettings: safe),
     .target(
       name: "ProjectKit", dependencies: ["ImageKit", .product(name: "GRDB", package: "GRDB.swift")],
       exclude: ["README.md", "SCHEMA.md"], resources: [.copy("Migrations")],

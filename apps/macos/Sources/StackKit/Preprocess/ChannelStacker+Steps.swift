@@ -42,7 +42,8 @@ extension ChannelStacker {
 
   /// Grades the registered frames and stacks the survivors (`finishStackedChannel`).
   func gradeAndStack(
-    _ light: Light, frames: [CaptureFrame], into outcome: inout ChannelOutcome, out: URL
+    _ light: Light, frames: [CaptureFrame], spans: [Range<Int>] = [], preReject: [Int: String] = [:],
+    into outcome: inout ChannelOutcome, out: URL
   ) async throws {
     let sequence: SirilSequence
     do {
@@ -53,7 +54,9 @@ extension ChannelStacker {
     }
     let size = settings.trailDownsample
     // Each probe reads a whole frame: a cancelled run stops between them.
-    let graded = try ChannelGrading.grade(sequence, frames: frames, settings: settings) { index in
+    let graded = try ChannelGrading.grade(
+      sequence, frames: frames, settings: settings, preReject: preReject, spans: spans
+    ) { index in
       try Task.checkCancellation()
       return trailProbe(light.frame(light.calibrated, index + 1), size)
     }

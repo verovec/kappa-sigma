@@ -10,8 +10,6 @@ package enum PreprocessError: Error, Equatable, Sendable {
   case targetBusy(String)
   /// No channel produced a master.
   case noChannels([String])
-  /// A filter captured over several nights: the multi-night merge is card 0066.
-  case multiNight([String])
   /// Mono and colour lights together: no single run stacks them.
   case mixedColorModel
 }
@@ -27,9 +25,6 @@ extension PreprocessError: LocalizedError {
     case .targetBusy(let path): "another run is already writing \(path)"
     case .noChannels(let errors):
       "no channel could be stacked: \(errors.joined(separator: "; "))"
-    case .multiNight(let filters):
-      "\(filters.joined(separator: ", ")) span several nights — multi-night stacking is not "
-        + "available yet; select one night"
     case .mixedColorModel: "the capture mixes mono and colour lights — stack them as separate runs"
     }
   }

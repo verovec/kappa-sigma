@@ -75,7 +75,8 @@ package struct ChannelStacker: Sendable {
     let folder: URL
     let masters: CalibrationMasters
     let ingest: SirilIngest
-    let seq = "light"
+    /// The linked sequence: `light`, or `flat_light` once a merge flattened it.
+    var seq = "light"
     /// The calibrated sequence (`pp_light` or `light`).
     var calibrated: String { SirilScripts.calibrated(seq, masters: masters) }
     /// The registered sequence.

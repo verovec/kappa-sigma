@@ -62,17 +62,21 @@ package actor Preprocessor {
   ) async throws -> PreprocessResult {
     try TargetLock.acquire(request.output)
     defer { TargetLock.release(request.output) }
-    let lights = try Self.lightSets(request.inventory)
-    let emitter = RunEmitter(steps: lights.count + 4, sink: sink)
+    let plan = try Self.plan(request.inventory)
+    let lanes = ChannelAligner.ordered(plan.channels.keys)
+    let emitter = RunEmitter(steps: lanes.count + 4, sink: sink)
     var journal = PreprocessJournal { emitter.line($0) }
     for folder in [request.output, request.work] {
       try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
     }
     var result = PreprocessResult(runID: request.runID)
     let pool = try await buildMasters(request, emitter: emitter, into: &result)
-    for set in lights {
+    let parity = ParityCache(runner: tools.runner, coordinates: request.settings.solveCoordinates)
+    for lane in lanes {
       try Task.checkCancellation()
-      let outcome = try await stackChannel(set, request: request, pool: pool, emitter: emitter)
+      let outcome = try await stackChannel(
+        lane, groups: plan.channels[lane] ?? [], plan: plan, request: request, pool: pool, parity: parity,
+        emitter: emitter)
       if let error = outcome.error {
         journal.warn("channel \(outcome.filter) failed — continuing without it: \(error)")
       }
@@ -84,16 +88,9 @@ package actor Preprocessor {
     return result
   }
 
-  /// The light sets in canonical filter order; a filter captured over several nights (or a
-  /// mono + colour mix) is refused before anything runs.
-  package static func lightSets(_ inventory: Inventory) throws -> [FrameSet] {
+  /// Which nights feed which channel; a mono + colour mix is refused before anything runs.
+  package static func plan(_ inventory: Inventory) throws -> NightPlan {
     guard inventory.colorModel != .mixed else { throw PreprocessError.mixedColorModel }
-    let lights = inventory.sets.filter { $0.key.type == .light }
-    let filters = lights.map(\.key.filter)
-    let repeated = Set(filters.filter { filter in filters.count { $0 == filter } > 1 })
-    guard repeated.isEmpty else {
-      throw PreprocessError.multiNight(ChannelAligner.ordered(repeated))
-    }
-    return lights.sorted { Filter.less($0.key.filter, $1.key.filter) }
+    return NightPlan(inventory.sets.filter { $0.key.type == .light })
   }
 }

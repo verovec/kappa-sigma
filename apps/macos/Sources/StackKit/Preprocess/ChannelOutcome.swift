@@ -16,6 +16,12 @@ package struct ChannelOutcome: Equatable, Sendable {
   package var warnings: [String] = []
   /// Why the channel failed; nil when it produced a master.
   package var error: String?
+  /// Multi-night channels: what photometric normalisation did to each night.
+  package var photometry: [PhotomGroupRecord] = []
+  /// Multi-night channels: each night's geometry and contribution.
+  package var nights: [NightRecord] = []
+  /// Multi-night channels: each kept frame's homography onto the anchor canvas (coverage).
+  package var frameHomographies: [Int: [Double]] = [:]
 
   /// A channel about to be processed.
   package init(_ set: FrameSet, filter: String, selection: CalibrationSelection) {

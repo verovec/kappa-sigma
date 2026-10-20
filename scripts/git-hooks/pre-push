@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Pre-push gate: exactly what CI runs, plus the live suite that CI cannot run.
+# Installed by `just hooks`. Skip once with `git push --no-verify` (say why in the PR body).
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+exec just check

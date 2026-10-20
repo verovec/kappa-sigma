@@ -1,0 +1,22 @@
+// swift-tools-version: 6.2
+// Fixture for ManifestParserTests: a manifest with one violation of each kind.
+// .target(name: "Commented", dependencies: ["AstroStackApp"]) must be ignored.
+import PackageDescription
+
+let package = Package(
+  name: "Fixture",
+  dependencies: [
+    .package(url: "https://example.invalid/GRDB.swift.git", from: "7.0.0")
+  ],
+  targets: [
+    .target(name: "ImageKit", dependencies: [], exclude: ["README.md"]),
+    .target(
+      name: "ProjectKit",
+      dependencies: [.product(name: "GRDB", package: "GRDB.swift"), "ImageKit"]),
+    .target(name: "HelpKit", dependencies: ["AstroStackApp"]),
+    .target(name: "Orphan", dependencies: [.target(name: "ImageKit")]),
+    .executableTarget(name: "AstroStackApp", dependencies: ["ImageKit", "ProjectKit"]),
+    .testTarget(name: "ImageKitTests", dependencies: ["ImageKit"]),
+    .testTarget(name: "ProjectKitTests", dependencies: ["ProjectKit"]),
+  ]
+)

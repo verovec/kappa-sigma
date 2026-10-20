@@ -30,35 +30,8 @@ package enum TrailDetector {
     else {
       return (false, 0)
     }
-    let diagonal = Int(Double(width).hypot(Double(height)).rounded(.up))
-    let bins = 2 * diagonal + 1
-    var votes = [Int](repeating: 0, count: angles * bins)
-    var peak = 0
-    let trig = (0..<angles).map { angle -> (Double, Double) in
-      let radians = Double.pi * Double(angle) / Double(angles)
-      return (cos(radians), sin(radians))
-    }
-    for cell in bright {
-      let (x, y) = (Double(cell % width), Double(cell / width))
-      for (angle, (cosine, sine)) in trig.enumerated() {
-        let index = angle * bins + Int((x * cosine + y * sine).rounded()) + diagonal
-        votes[index] += 1
-        peak = max(peak, votes[index])
-      }
-    }
-    let score = Double(peak) / Double(min(width, height))
-    return (score >= voteFraction && Double(peak) >= peakRatio * percentile99(votes), score)
+    let hough = HoughAccumulator(bright, width: width, height: height)
+    let score = Double(hough.peak) / Double(min(width, height))
+    return (score >= voteFraction && Double(hough.peak) >= peakRatio * hough.percentile99, score)
   }
-
-  /// The 99th-percentile vote among non-empty bins.
-  private static func percentile99(_ votes: [Int]) -> Double {
-    let positive = votes.filter { $0 > 0 }.sorted()
-    guard !positive.isEmpty else { return 0 }
-    return Double(positive[Int(0.99 * Double(positive.count - 1))])
-  }
-}
-
-extension Double {
-  /// √(self² + other²), as `math.Hypot`.
-  fileprivate func hypot(_ other: Double) -> Double { Foundation.hypot(self, other) }
 }

@@ -25,7 +25,7 @@ package struct BoundaryRules: Sendable {
       "RenderKit": ["ImageKit"],
       "ProcessKit": ["ImageKit", "RenderKit"],
       "ProjectKit": ["ImageKit", "GRDB"],
-      "StackKit": ["ImageKit", "ProjectKit"],
+      "StackKit": ["ImageKit", "ProjectKit", "Subprocess"],
       "HelpKit": [],
       "AstroStackApp": [
         "ImageKit", "RenderKit", "ProcessKit", "ProjectKit", "StackKit", "HelpKit",

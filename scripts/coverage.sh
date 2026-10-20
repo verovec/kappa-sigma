@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Line coverage for the SwiftPM package: runs the suite with instrumentation, exports lcov and a
 # per-file summary. Usage: scripts/coverage.sh apps/macos [extra swift test args]
-# CI stores the lcov as an artifact; the ratchet (never below main) lives in the workflow.
+# Ratchet: when `.coverage-floor` exists next to Package.swift, the run fails below that figure
+# (whole percent). The worker raises the floor whenever coverage grows (pick-card §7); it never
+# goes down without a `Test-change:` justification in the PR body.
 set -euo pipefail
 pkg="${1:?package dir}"; shift || true
 cd "$pkg"
@@ -17,3 +19,11 @@ xcrun llvm-cov report "$exe" -instr-profile "$prof" -ignore-filename-regex='Test
 total="$(awk '/^TOTAL/ { print $(NF-3) }' .build/coverage/summary.txt)"
 echo "$total" > .build/coverage/lines.txt
 echo "line coverage: $total"
+if [ -f .coverage-floor ]; then
+  floor="$(tr -d ' %\n' < .coverage-floor)"
+  pct="${total%\%}"
+  if awk -v p="$pct" -v f="$floor" 'BEGIN { exit !(p + 0 < f + 0) }'; then
+    echo "coverage: FAILED — $total is below the floor ${floor}% (.coverage-floor)"; exit 1
+  fi
+  echo "coverage: above the floor ${floor}%"
+fi

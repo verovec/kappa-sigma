@@ -1,5 +1,5 @@
 # Gate for the card workflow (.claude/skills/pick-card): every PR must pass `just ci` before it
-# may merge into main. Live suites (`Live…`, host Siril/GraXpert/StarNet, fixtures under
+# may merge into main; the worker merges on its own once every check is green. Live suites (`Live…`, host Siril/GraXpert/StarNet, fixtures under
 # ~/Documents/astro) self-skip on the runner; the full host suite runs locally via `just check`.
 #
 # Cost: macOS minutes bill at 10× — a private repo on GitHub Free gets ~200 macOS minutes/month —
@@ -21,6 +21,24 @@ permissions:
   contents: read
 
 jobs:
+  # Cheap Linux job (1× minutes): the suite may only grow. Deleting or editing an existing test,
+  # or lowering the test count, needs a `Test-change:` line in the PR body (scripts/test-ratchet.sh).
+  continuity:
+    name: test continuity
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: test ratchet
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE: ${{ github.event.pull_request.base.sha || 'origin/main' }}
+        run: ./scripts/test-ratchet.sh "$BASE" HEAD
+      - name: hygiene
+        run: ./scripts/hygiene.sh
+
   swift:
     name: hygiene · lint · build · test
     runs-on: macos-26

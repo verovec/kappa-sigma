@@ -13,6 +13,8 @@ package struct PreprocessResult: Equatable, Sendable {
   package var combinedPath: String?
   package var bundle: LinearBundle?
   package var warnings: [String] = []
+  /// The run's decisions that are not warnings: a dual-band split, each continuum scale.
+  package var notes: [String] = []
 
   /// An empty result for `runID`.
   package init(runID: String) {

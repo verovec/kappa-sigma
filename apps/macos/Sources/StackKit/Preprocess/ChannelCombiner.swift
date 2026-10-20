@@ -14,13 +14,18 @@ package struct ChannelCombiner: Sendable {
     self.settings = settings
   }
 
-  /// What the channels can make: L+R+G+B, R+G+B, or one colour master; nil otherwise (a mono or
-  /// narrowband-only run has no colour composite to build here).
+  /// What the channels can make: L+R+G+B, R+G+B, or one colour master (emission layers beside
+  /// it, a split capture's `syn_*`, are set aside); nil otherwise (a mono or narrowband-only run
+  /// has no colour composite to build here).
   package static func inputs(_ channels: [String: String]) -> SirilScripts.CombineInputs? {
     if let r = channels["R"], let g = channels["G"], let b = channels["B"] {
       return channels["L"].map { .lrgb(lum: $0, r: r, g: g, b: b) } ?? .rgb(r: r, g: g, b: b)
     }
-    if channels.count == 1, let (filter, base) = channels.first, Filter.isColor(filter) {
+    let colour = channels.filter { Filter.isColor($0.key) }
+    let others = channels.keys.filter { !Filter.isColor($0) }
+    if colour.count == 1, let base = colour.first?.value,
+      others.allSatisfy({ LinearBundle.Role(filter: $0) == .line })
+    {
       return .colour(base)
     }
     return nil

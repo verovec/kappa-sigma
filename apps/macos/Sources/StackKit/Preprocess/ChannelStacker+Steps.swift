@@ -1,4 +1,4 @@
-internal import Foundation
+package import Foundation
 internal import ImageKit
 
 extension ChannelStacker {
@@ -73,29 +73,50 @@ extension ChannelStacker {
     {
       warn(warning, into: &outcome)
     }
-    if !saturationCeilings.isEmpty {
-      try repairSaturation(
-        light, grades: graded.grades, ceilings: saturationCeilings, into: &outcome)
-    }
+    // The merge-order ceilings follow the registered numbering.
+    let ceilings = zip(graded.grades, saturationCeilings).filter { $0.0.fwhm > 0 }.map(\.1)
+    try await maskRegistered(
+      (0..<graded.registeredCount).map { light.frame(light.registered, $0 + 1) },
+      saturationCeilings: ceilings, into: &outcome)
     let master = out.appendingPathComponent("master_" + ChannelTag.of(outcome.filter))
     try await stackOrCopy(light, graded: graded, master: master, into: &outcome)
     finish(master, into: &outcome)
   }
 
-  /// The saturated-core repair on the registered frames (`applyTrailMask` with k = 0): the
-  /// merge-order ceilings follow the registered numbering; under five frames nothing runs.
-  func repairSaturation(
-    _ light: Light, grades: [FrameGrade], ceilings: [Float], into outcome: inout ChannelOutcome
-  ) throws {
-    let registered = zip(grades, ceilings).filter { $0.0.fwhm > 0 }.map(\.1)
-    guard registered.count >= 5 else { return }
-    let files = registered.indices.map { light.frame(light.registered, $0 + 1) }
-    let repaired = try SaturationRepair.repair(files, ceilings: registered).reduce(0, +)
-    guard repaired > 0 else { return }
+  /// The registered frames' cross-frame pass (`applyTrailMask`): saturated cores repaired first,
+  /// then the trail mask when k > 0, one note for both. Under five frames nothing runs; a
+  /// failure is noted and the frames are stacked as they are.
+  package func maskRegistered(
+    _ files: [URL], saturationCeilings: [Float], into outcome: inout ChannelOutcome
+  ) async throws {
+    guard files.count >= TrailMask.minimumFrames else { return }
+    var summary = TrailMaskSummary(frames: files.count)
+    var mode: String?
+    do {
+      let saturated =
+        saturationCeilings.contains { $0 > 0 }
+        ? try SaturationRepair.repair(files, ceilings: saturationCeilings).reduce(0, +) : 0
+      if settings.trailMaskK > 0 {
+        report("▶ transient trail mask (cross-frame) …")
+        if let masked = try await ChannelTrailMask.mask(
+          files, k: settings.trailMaskK, budget: memoryBudget)
+        {
+          (summary, mode) = (masked.summary, masked.mode)
+        }
+      }
+      summary.saturatedPixels = saturated
+    } catch is CancellationError {
+      throw CancellationError()
+    } catch {
+      outcome.selection.notes.append("trail mask skipped: \(Self.describe(error))")
+      return
+    }
+    guard summary.maskedPixels > 0 || summary.saturatedPixels > 0 else { return }
+    let size = DimensionGuard.dimensions(files[0].path)
+    outcome.trailMask = summary
     outcome.selection.notes.append(
-      "cross-frame trail mask: cleaned 0 pixels (0.00%) across \(files.count) frames — "
-        + "0 trail segment(s) in 0 frame(s), 0 candidate(s) rejected as fixed pattern, "
-        + "\(repaired) sensor-saturated core px repaired from unsaturated nights")
+      ChannelTrailMask.note(
+        summary, width: size?.width ?? 0, height: size?.height ?? 0, mode: mode))
   }
 
   /// One registered frame is the master; fewer than two survivors cannot stack; otherwise Siril

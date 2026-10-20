@@ -28,6 +28,8 @@ package struct ChannelOutcome: Equatable, Sendable {
   package var coverage: CoverageGrid?
   /// Multi-night channels: the seam noise pass on the master.
   package var seamNoise: SeamNoiseEqualiser.Record?
+  /// What the cross-frame pass cleaned (trails, saturated cores); nil when it changed nothing.
+  package var trailMask: TrailMaskSummary?
 
   /// A channel about to be processed.
   package init(_ set: FrameSet, filter: String, selection: CalibrationSelection) {

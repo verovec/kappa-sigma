@@ -40,7 +40,8 @@ struct PreprocessLiveTests {
     let root = try ScratchDirectory.url
     let request = PreprocessRequest(
       inventory: inventory, output: root.appendingPathComponent("out/TESTFIELD/\(Self.runID)"),
-      work: root.appendingPathComponent("work/run_\(Self.runID)"), runID: Self.runID)
+      work: root.appendingPathComponent("work/run_\(Self.runID)"), runID: Self.runID,
+      settings: .recorded)
     let tools = Preprocessor.Tools(
       runner: .make(mode: mode, binary: try SirilTool.locate(), work: request.work))
     let result = try await Preprocessor(tools: tools).perform(request) { _ in }

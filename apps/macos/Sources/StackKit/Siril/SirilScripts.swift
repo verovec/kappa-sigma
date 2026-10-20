@@ -113,6 +113,16 @@ package enum SirilScripts {
     ])
   }
 
+  /// The channel masters registered onto the FIRST one (`AlignMastersRefScript`): one pass, since
+  /// `-2pass` elects its own reference and would override the pin.
+  package static func alignMastersReference(seq: String) -> SirilScript {
+    SirilScript([
+      .link(seq: seq), .setref(seq: seq, index: 1),
+      .register(seq: seq, twoPass: false, transformation: nil),
+      .seqapplyreg(seq: seq, framing: "min"),
+    ])
+  }
+
   /// One master registered onto a pinned reference, star detection relaxed then reset
   /// (`AlignPairScript` + the reset a long-lived pipe session needs).
   package static func alignPair(seq: String) -> SirilScript {

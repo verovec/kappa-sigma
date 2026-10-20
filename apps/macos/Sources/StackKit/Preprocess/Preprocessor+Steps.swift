@@ -80,6 +80,11 @@ extension Preprocessor {
       (channels, result.crop) = EdgeCropper(measure: tools.edgeMeasure).apply(
         channels, out: request.output, journal: &journal)
     }
+    var notes: [String] = []
+    let continuum: [String: Double]
+    (channels, continuum) = Self.emission(channels, out: request.output, notes: &notes)
+    for note in notes { journal.line(note) }
+    result.notes += notes
     try Task.checkCancellation()
     emitter.begin("combining channels (Siril)")
     let combiner = ChannelCombiner(runner: reporting(emitter), settings: request.settings)
@@ -95,7 +100,7 @@ extension Preprocessor {
         let base = channels[filter] ?? ""
         return BundleWriter.Input(
           filter: filter, file: request.output.appendingPathComponent(base + ".fits"),
-          source: String(base.prefix { $0 != "_" }))
+          source: String(base.prefix { $0 != "_" }), continuumK: continuum[filter])
       },
       to: request.output)
   }

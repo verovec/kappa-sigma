@@ -37,6 +37,20 @@ package struct TrailMaskSummary: Codable, Equatable, Sendable {
   /// Sensor-saturated core pixels repaired from unsaturated nights (`SaturationRepair`).
   package var saturatedPixels = 0
 
+  /// A summary.
+  package init(
+    frames: Int = 0, framesWithTrails: Int = 0, segments: Int = 0, maskedPixels: Int = 0,
+    rejected: Int = 0, geostationary: Int = 0, recurring: Int = 0
+  ) {
+    self.frames = frames
+    self.framesWithTrails = framesWithTrails
+    self.segments = segments
+    self.maskedPixels = maskedPixels
+    self.rejected = rejected
+    self.geostationary = geostationary
+    self.recurring = recurring
+  }
+
   enum CodingKeys: String, CodingKey {
     case frames, segments, recurring
     case framesWithTrails = "frames_with_trails"

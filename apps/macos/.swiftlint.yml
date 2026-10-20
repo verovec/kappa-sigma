@@ -1,0 +1,144 @@
+# SwiftLint — maintainability metrics and the CLAUDE.md rules swift-format cannot express.
+# Formatting itself is swift-format's job (.swift-format); keep the two from overlapping.
+# Run: `just lint` (swiftlint --strict). Rule docs: https://realm.github.io/SwiftLint/
+included:
+  - Sources
+  - Tests
+excluded:
+  - .build
+  - "**/Generated"
+
+disabled_rules:
+  - trailing_comma          # swift-format owns trailing commas (multiElementCollectionTrailingCommas)
+  - opening_brace           # swift-format owns brace placement
+  - trailing_whitespace     # swift-format owns whitespace
+  - vertical_whitespace     # idem
+  - todo                    # TODOs are allowed; a card tracks them
+
+opt_in_rules:
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - unowned_variable_capture
+  - closure_body_length
+  - fatal_error_message
+  - prefer_self_in_static_references
+  - redundant_type_annotation
+  - sorted_imports
+  - private_outlet
+  - discouraged_optional_boolean
+  - empty_count
+  - first_where
+  - last_where
+  - contains_over_filter_is_empty
+  - contains_over_first_not_nil
+  - unused_optional_binding
+  - toggle_bool
+  - yoda_condition
+
+analyzer_rules:
+  - unused_declaration
+  - unused_import
+
+# Size budgets (swift-conventions.md): files ≤ 300, types ≤ 250, functions ≤ 50.
+file_length:
+  warning: 300
+  error: 400
+  ignore_comment_only_lines: true
+type_body_length:
+  warning: 250
+  error: 350
+function_body_length:
+  warning: 50
+  error: 80
+closure_body_length:
+  warning: 30
+  error: 60
+cyclomatic_complexity:
+  warning: 10
+  error: 15
+  ignores_case_statements: true
+function_parameter_count:
+  warning: 6
+  error: 8
+line_length:
+  warning: 100
+  error: 120
+  ignores_urls: true
+  ignores_comments: true
+nesting:
+  type_level: 2
+  function_level: 3
+identifier_name:
+  min_length: 2
+  excluded: [x, y, z, w, h, i, j, k, n, r, g, b, id, px, dx, dy, ms, up, db]
+type_name:
+  max_length: 50
+large_tuple:
+  warning: 3
+  error: 4
+
+force_unwrapping:
+  severity: error
+force_cast: error
+force_try: error
+implicitly_unwrapped_optional:
+  severity: error
+
+# House rules from CLAUDE.md / swift-conventions.md that a regex can catch.
+custom_rules:
+  no_print:
+    name: "No print"
+    regex: '^\s*(debugPrint|print)\('
+    message: "Use os.Logger with a per-module category, never print."
+    severity: error
+    included: "Sources/.*\\.swift"
+  no_dispatch_queue:
+    name: "No DispatchQueue"
+    regex: '\bDispatchQueue\b|\bDispatchGroup\b|\bDispatchSemaphore\b'
+    message: "Structured concurrency only (Task, TaskGroup, AsyncStream, actors)."
+    severity: error
+    included: "Sources/.*\\.swift"
+  no_detached_task:
+    name: "No detached Task"
+    regex: '\bTask\.detached\b'
+    message: "Stay in structured concurrency; use @concurrent or a TaskGroup."
+    severity: error
+    included: "Sources/.*\\.swift"
+  no_core_image:
+    name: "No CoreImage"
+    regex: '^\s*(internal |public |package )?import CoreImage\b|\bCIImage\b'
+    message: "Pixels are [Float32] planes on Metal r32Float; CIImage is forbidden."
+    severity: error
+    included: "Sources/.*\\.swift"
+  no_foundation_process:
+    name: "No Foundation.Process"
+    regex: '\bProcess\(\)|: Process\b'
+    message: "External tools run through swift-subprocess."
+    severity: error
+    included: "Sources/.*\\.swift"
+  no_unchecked_sendable:
+    name: "No @unchecked Sendable"
+    regex: '@unchecked\s+Sendable'
+    message: "Sendable is earned: make the type a value, an actor, or pass it with `sending`."
+    severity: error
+    included: "Sources/.*\\.swift"
+  no_testable_import:
+    name: "No @testable import"
+    regex: '^\s*@testable\s+import'
+    message: "Expose `package` API instead of @testable (see swift-conventions.md)."
+    severity: warning
+    included: "Tests/.*\\.swift"
+  no_fatal_error_on_data:
+    name: "fatalError"
+    regex: '\bfatalError\('
+    message: "Never fatalError on user data; throw a typed error. preconditionFailure for invariants only."
+    severity: warning
+    included: "Sources/.*\\.swift"
+  no_sleep_in_tests:
+    name: "No sleep in tests"
+    regex: '\bsleep\(|Task\.sleep\('
+    message: "No sleeps in tests (testing-conventions.md)."
+    severity: error
+    included: "Tests/.*\\.swift"
+
+reporter: "xcode"

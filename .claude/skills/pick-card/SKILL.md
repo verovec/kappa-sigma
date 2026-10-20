@@ -25,7 +25,8 @@ Three writes together, before any code: card frontmatter `status: claimed`; Queu
 ## 3 · Load context
 
 Read exactly what the card's Context points at, plus the conventions for the areas
-touched (`testing` + `golang` always; others per the CLAUDE.md list). Do not re-explore
+touched (`testing` + `swift` always; others per the CLAUDE.md list) and
+`docs/engineering/swift-quality-playbook.md` §10 for the card's row. Do not re-explore
 what the card already answers; do not skip what it points at.
 
 ## 4 · Implement — strict TDD, reuse first
@@ -33,10 +34,10 @@ what the card already answers; do not skip what it points at.
 - Per todo: **red** — write the test, run it, watch it fail for the right reason;
   **green** — minimal change to pass; **refactor** — with the suite green. Tick todos
   in the card file as you go.
-- Before writing any new function: gitnexus `context`/`query` (`repo:"astronomy"`) for
-  an existing one to reuse or extend. Duplicating existing logic is a review blocker.
-- All new backend code ships with tests (table-driven, colocated, per
-  `conventions/testing-conventions.md`). Never weaken or delete an existing test
+- Before writing any new function: Grep/Glob the Swift kits (gitnexus for the legacy Go,
+  `repo:"astronomy"`, to find the rule being ported) for an existing one to reuse or extend. Duplicating existing logic is a review blocker.
+- All new code ships with tests (table-driven, colocated, per
+  `conventions/testing-conventions.md`; a port is pinned by a recorded oracle). Never weaken or delete an existing test
   without justification recorded in the PR body.
 - **Sanity valve** — if the card's approach forces a weird pattern, a special-case
   cascade, or a fight with the existing architecture (`impact` will show it): STOP.
@@ -46,7 +47,7 @@ what the card already answers; do not skip what it points at.
 
 ## 5 · Verify & review
 
-- `just check` (lint + full host test suite) and `just build` must pass.
+- `just check` (hygiene + lint + build + full host suite, live tests included) must pass.
 - Run the code-review skill on the working diff (`/code-review`). Fix every finding you
   agree with; record the ones you reject and why (they go in the PR body). Re-run
   `just check` after fixes.

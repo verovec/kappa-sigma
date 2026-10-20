@@ -1,28 +1,89 @@
 # Gate for the card workflow (.claude/skills/pick-card): every PR must pass `just ci` before it
-# may merge into main. Live tests (host Siril/GraXpert/StarNet, fixtures under ~/Documents/astro)
-# self-skip on the runner; the full host suite runs locally via `just check` before the PR.
+# may merge into main. Live suites (`Live…`, host Siril/GraXpert/StarNet, fixtures under
+# ~/Documents/astro) self-skip on the runner; the full host suite runs locally via `just check`.
+#
+# Cost: macOS minutes bill at 10× — a private repo on GitHub Free gets ~200 macOS minutes/month —
+# so this runs on pull requests only (a squash-merged green PR *is* main), caches .build and
+# cancels superseded runs. Rationale and alternatives (self-hosted runner on the PO's Mac):
+# docs/engineering/swift-quality-playbook.md §9.
 name: tests
 
 on:
   pull_request:
     branches: [main]
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: tests-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   swift:
-    name: swift build · lint · test
-    runs-on: macos-15
-    timeout-minutes: 40
+    name: hygiene · lint · build · test
+    runs-on: macos-26
+    timeout-minutes: 30
+    env:
+      PKG: apps/macos
     steps:
-      - uses: actions/checkout@v4
-      - uses: extractions/setup-just@v2
-      - name: Select Xcode
-        run: sudo xcode-select -s "$(ls -d /Applications/Xcode*.app | sort -V | tail -1)/Contents/Developer" && xcodebuild -version
-      - name: swift-format
-        run: which swift-format || brew install swift-format
-      - run: just ci
+      - uses: actions/checkout@v5
+
+      - uses: extractions/setup-just@v3
+
+      - name: Select the newest Xcode 26
+        run: |
+          xc="$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)"
+          [ -n "$xc" ] || xc="$(ls -d /Applications/Xcode*.app | sort -V | tail -1)"
+          sudo xcode-select -s "$xc/Contents/Developer"
+          xcodebuild -version
+          swift --version
+
+      # Metal Toolchain is a separate Xcode 26 component; its presence on the hosted image is
+      # contested (runner-images #13080 vs #13014). Download it only when a package exists and
+      # the compiler is missing — it is what turns .metal into .metallib.
+      - name: Metal Toolchain
+        if: hashFiles('apps/macos/Package.swift') != ''
+        run: xcrun -sdk macosx metal --version || xcodebuild -downloadComponent metalToolchain
+
+      - name: SwiftLint
+        run: command -v swiftlint >/dev/null || brew install swiftlint
+
+      - name: Cache SwiftPM build
+        if: hashFiles('apps/macos/Package.swift') != ''
+        uses: actions/cache@v4
+        with:
+          path: apps/macos/.build
+          key: spm-${{ runner.os }}-${{ hashFiles('apps/macos/Package.resolved', 'apps/macos/Package.swift') }}
+          restore-keys: spm-${{ runner.os }}-
+
+      - name: just ci
+        env:
+          ATTACHMENTS_PATH: ${{ runner.temp }}/attachments
+        run: |
+          mkdir -p "$ATTACHMENTS_PATH"
+          just ci
+
+      # Diff images and other Attachment.record() outputs, kept only when something failed.
+      - name: Upload test attachments
+        if: failure() && hashFiles('apps/macos/Package.swift') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-attachments
+          path: ${{ runner.temp }}/attachments
+          if-no-files-found: ignore
+
+      - name: Coverage
+        if: hashFiles('apps/macos/Package.swift') != ''
+        run: just coverage
+
+      - name: Upload coverage
+        if: hashFiles('apps/macos/Package.swift') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: |
+            apps/macos/.build/coverage/lcov.info
+            apps/macos/.build/coverage/summary.txt
+            apps/macos/.build/coverage/lines.txt

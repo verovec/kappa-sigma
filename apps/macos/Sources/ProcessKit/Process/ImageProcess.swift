@@ -1,0 +1,107 @@
+package import Metal
+
+/// A Studio process (design §2): a parameter schema, a GPU `render` used for both the preview
+/// and Apply, and suggestions computed from the bundle statistics.
+///
+/// R2 is structural: `render` reads the image, the stats and `params`, never measures the image
+/// to change its own parameters; anything measured comes back as `suggestions`, which the user
+/// may accept. Every process passes `ProcessContracts` and ships a fr+en help card.
+package protocol ImageProcess {
+  /// Stable identifier (recipes, history, help cards): never renamed once shipped.
+  static var id: String { get }
+  /// Panel and menu title.
+  static var title: String { get }
+  /// Linear or non-linear data, for pipeline ordering (0059).
+  static var stage: ProcessStage { get }
+  /// The layers the process needs; a missing one greys it with the reason.
+  static var requires: [LayerRole] { get }
+  /// The parameters, in panel order.
+  static var schema: ParamSchema { get }
+  /// True when the preview is exact only at 1:1 — required for any `.px` parameter, since
+  /// morphology and blurs do not commute with the pyramid.
+  static var previewExactOnlyAt1to1: Bool { get }
+
+  /// The values `render` reads.
+  var params: ParamSet { get }
+
+  /// A process with `params`, its pipelines built on `device`.
+  init(params: ParamSet, device: MTLDevice) throws
+
+  /// Encodes the process of `input` into `output` (same size) in `context.commands`. `.px`
+  /// parameters are divided by `context.scale`; nothing else depends on the purpose.
+  func render(
+    _ input: GPUImage, stats: LayerStats, into output: GPUImage, context: RenderContext) throws
+
+  /// Values the user may apply, computed from `stats` only; never applied by the process.
+  func suggestions(stats: LayerStats) -> [Suggestion]
+}
+
+extension ImageProcess {
+  /// No layer requirement.
+  package static var requires: [LayerRole] { [] }
+
+  /// No suggestion.
+  package func suggestions(stats: LayerStats) -> [Suggestion] { [] }
+}
+
+/// Where a process belongs in a pipeline.
+package enum ProcessStage: String, Codable, Sendable {
+  /// On linear data (before the stretch): background, colour calibration, deconvolution…
+  case linear
+  /// On stretched data: curves, saturation, star reduction…
+  case nonlinear
+  /// Either.
+  case any
+}
+
+/// The encoding target and the scale of one render.
+package struct RenderContext {
+  /// Why the render runs: a preview frame or Apply into the history.
+  package enum Purpose: Sendable {
+    /// The live preview.
+    case preview
+    /// Apply into the history.
+    case apply
+  }
+
+  /// The command buffer to encode into.
+  package let commands: MTLCommandBuffer
+  /// Full-resolution pixels per working pixel (1 at 1:1, 2 on the half-size level…).
+  package let scale: Double
+  /// Preview or Apply: `ProcessContracts` checks it changes nothing.
+  package let purpose: Purpose
+
+  /// A context encoding into `commands` at `scale` for `purpose`.
+  package init(commands: MTLCommandBuffer, scale: Double, purpose: Purpose) {
+    self.commands = commands
+    self.scale = scale
+    self.purpose = purpose
+  }
+}
+
+/// A value a process proposes from the statistics, with its reason; the user applies it or not.
+package struct Suggestion: Equatable, Sendable {
+  /// The parameter it would set.
+  package let paramID: String
+  /// The proposed value.
+  package let value: ParamValue
+  /// Why, in a sentence the panel shows.
+  package let reason: String
+
+  /// A proposal of `value` for `paramID`, because `reason`.
+  package init(paramID: String, value: ParamValue, reason: String) {
+    self.paramID = paramID
+    self.value = value
+    self.reason = reason
+  }
+}
+
+/// A process failure, with what the user or a test can act on.
+package enum ProcessError: Error, Equatable, Sendable {
+  /// A shader did not compile or a function is missing.
+  case shader(String)
+  /// A command buffer, encoder or texture could not be made, or the GPU reported an error.
+  case commandFailed(String)
+  /// Two images of different sizes or plane counts where one size is required.
+  case sizeMismatch
+}

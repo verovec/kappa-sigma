@@ -36,12 +36,12 @@ let package = Package(
       exclude: ["README.md"], swiftSettings: common),
     .target(
       name: "RenderKit", dependencies: ["ImageKit"],
-      exclude: ["README.md"], swiftSettings: common),
+      exclude: ["README.md"], resources: [.copy("Shaders")], swiftSettings: common),
     .target(
       name: "ProcessKit", dependencies: ["ImageKit", "RenderKit"],
       exclude: ["README.md"], swiftSettings: safe),
     .target(
-      name: "ProjectKit", dependencies: [.product(name: "GRDB", package: "GRDB.swift")],
+      name: "ProjectKit", dependencies: ["ImageKit", .product(name: "GRDB", package: "GRDB.swift")],
       exclude: ["README.md", "SCHEMA.md"], resources: [.copy("Migrations")],
       swiftSettings: safe),
     .target(
@@ -54,7 +54,7 @@ let package = Package(
       ], swiftSettings: common),
     .target(
       name: "HelpKit", dependencies: [],
-      exclude: ["README.md"], swiftSettings: safe),
+      exclude: ["README.md"], resources: [.copy("Help")], swiftSettings: safe),
     .executableTarget(
       name: "AstroStackApp",
       dependencies: ["ImageKit", "RenderKit", "ProcessKit", "ProjectKit", "StackKit", "HelpKit"],
@@ -73,8 +73,9 @@ let package = Package(
       name: "RenderKitTests", dependencies: ["RenderKit", "TestSupport"],
       swiftSettings: common),
     .testTarget(
-      name: "ProcessKitTests", dependencies: ["ProcessKit", "TestSupport"],
-      swiftSettings: common),
+      name: "ProcessKitTests",
+      dependencies: ["ProcessKit", "ImageKit", "HelpKit", "TestSupport"],
+      resources: [.copy("Fixtures")], swiftSettings: common),
     .testTarget(
       name: "ProjectKitTests",
       dependencies: ["ProjectKit", "TestSupport", .product(name: "GRDB", package: "GRDB.swift")],
@@ -86,7 +87,8 @@ let package = Package(
       name: "HelpKitTests", dependencies: ["HelpKit", "TestSupport"],
       swiftSettings: common),
     .testTarget(
-      name: "AstroStackAppTests", dependencies: ["AstroStackApp", "ProjectKit", "TestSupport"],
+      name: "AstroStackAppTests",
+      dependencies: ["AstroStackApp", "ImageKit", "ProjectKit", "RenderKit", "TestSupport"],
       swiftSettings: common),
   ]
 )

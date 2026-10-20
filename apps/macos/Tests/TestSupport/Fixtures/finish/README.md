@@ -7,13 +7,18 @@ images, the crop layers and the tool sources live in `~/Documents/astro/fixtures
 (data rule R7), with `SHA256SUMS`.
 
 Sizes: the run's base is 5967×3763 (already cropped), the crop is its centre at (2471, 1497).
+Siril's `crop` counts y from the top of the displayed image: in these bottom-up files the crop
+starts at stored row 3763 − 1497 − 768 = 1498. The centre holds the galaxy core.
 astrocomp's `-coverage-crop -crop 0.005` trims every PNG stage: 5907×3725 full, 1014×760 crop.
 
 Stages: `hdr_only` (hdrcomp FITS), `screens_only` (astrocomp `-sat 0`), `haplus_full`,
 `starless`, `haplus_final` (stardesat r 1), `stars_25/50/75`. Each stage records its flags and
 inputs, and the hash and size of `full/<stage>` and `crop/<stage>`. Parity tests read them
 through `FinishOracle` and skip where the folder is absent (CI). `LiveFinishOracleTests` checks
-every hash and size.
+every hash and size. It also checks that the full-frame `haplus_final`, `starless` and
+`stars_25/50/75` reproduce the PO's run #78 deliverables (`M31_v9style_hdr_HaPlus*.png`, hashes
+pinned under `validated`) within `tolerance` (1/255, mean and max). The re-render differs only by
+16-bit rounding: max 0.22/255.
 
 ## Regenerate
 

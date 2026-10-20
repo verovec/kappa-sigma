@@ -21,7 +21,8 @@ package struct FinishManifest: Codable, Equatable, Sendable {
   package struct Crop: Codable, Equatable, Sendable {
     /// Left column.
     package let x: Int
-    /// Bottom row (Siril's origin).
+    /// Top row as displayed: Siril's `crop` counts y from the top of the shown image, so in a
+    /// bottom-up file the crop starts at stored row `fullHeight − y − height`.
     package let y: Int
     /// Width.
     package let width: Int
@@ -35,6 +36,24 @@ package struct FinishManifest: Codable, Equatable, Sendable {
       self.width = width
       self.height = height
     }
+  }
+
+  /// A validated deliverable of run #78 the full-frame render of a stage must match.
+  package struct Validated: Codable, Equatable, Sendable {
+    /// The stage (`haplus_final`, `starless`, `stars_25`…).
+    package let stage: String
+    /// The deliverable, relative to the run folder.
+    package let deliverable: String
+    /// Its SHA-256 when recorded (it is the PO's file: it must not change).
+    package let sha256: String
+  }
+
+  /// How close a render must be to its deliverable, in fractions of full scale.
+  package struct Tolerance: Codable, Equatable, Sendable {
+    /// Mean |Δ| over every sample.
+    package let meanAbs: Double
+    /// Largest |Δ|.
+    package let maxAbs: Double
   }
 
   /// One step of the chain, on the full frame and on the crop.
@@ -84,9 +103,16 @@ package struct FinishManifest: Codable, Equatable, Sendable {
   package let layers: [File]
   /// The chain's stages, in order.
   package let stages: [Stage]
+  /// The PO's deliverables the full-frame renders reproduce.
+  package let validated: [Validated]
+  /// The render ↔ deliverable tolerance.
+  package let tolerance: Tolerance
 
   /// Every image file the manifest pins (layers and stage outputs).
   package var allFiles: [File] {
     layers + stages.flatMap(\.outputs)
   }
+
+  /// The copied tool sources: hashes only (`width` and `height` are 0).
+  package var toolFiles: [File] { provenance.tools }
 }

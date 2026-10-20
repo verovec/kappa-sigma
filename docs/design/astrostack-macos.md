@@ -28,7 +28,7 @@ Exigences dérivées, numérotées pour que chaque epic s'y rattache :
 | R4 | Intensifier des couches à la main | curseurs par couche (Hα, OIII, SII, L, R, G, B), aperçu instantané, valeur = effet |
 | R5 | Automatiser le répétitif, garder la main sur l'ajustable | **profils** (objet × filtres × caméra) qui prédéfinissent un **pipeline** avec des **points d'arrêt** où l'humain reprend la main ; rejouer un pipeline sur une nouvelle nuit en un clic |
 | R6 | Le meilleur empilement possible, sur Siril et l'open source | Siril 1.4.x pour calibration/registration/empilement/SPCC ; GraXpert ; StarNet (installé par l'utilisateur) ; aucune dépendance propriétaire |
-| R7 | `input/` et `output/` intouchés | l'app lit `input/` et les anciens runs d'`output/` en lecture seule ; ses propres données vivent ailleurs |
+| R7 | captures et anciens runs intouchés | l'app lit `~/Documents/astro/captures/` et les anciens runs de `~/Documents/astro/runs/` en lecture seule ; ses propres données vivent ailleurs ; **aucune donnée dans un dépôt git** (PO 2026-10-20) |
 | R8 | Multichrome (OSC) d'abord, mono ensuite | OSC BB+DB livré avant les profils mono LRGB+Ha |
 
 ---
@@ -39,10 +39,10 @@ Exigences dérivées, numérotées pour que chaque epic s'y rattache :
 
 | dossier | taille | statut |
 |---|---|---|
-| `input/` | 73 Go | **lecture seule** : captures (M31-BB/DB, IC1848, NGC7000-BB/DB, M45, SH2-132 et leurs `-ngccal`) |
-| `output/` | 132 Go | **lecture seule** : 32 runs avec `run.json`, modes `deepsky`/`nebula` uniquement ; l'app sait les ouvrir (masters, `rgb_base`, `syn_*`, finals) |
-| `library/` | 26 Go | masters de calibration empilés (bias/darks/flats). **À conserver** : rebuildable depuis `input/` mais au prix d'heures de calcul ; non cité par le PO, à confirmer |
-| `work/` | 0,8 Go | scratch, jetable |
+| `~/Documents/astro/captures/` (ex-`input/`, déplacé le 2026-10-20) | 73 Go | **lecture seule** : captures (M31-BB/DB, IC1848, NGC7000-BB/DB, M45, SH2-132 et leurs `-ngccal`) |
+| `~/Documents/astro/runs/` (ex-`output/`) | 132 Go | **lecture seule** : 32 runs avec `run.json`, modes `deepsky`/`nebula` uniquement ; l'app sait les ouvrir (masters, `rgb_base`, `syn_*`, finals) |
+| `~/Documents/astro/library/` (ex-`library/`) | 26 Go | masters de calibration empilés (bias/darks/flats). **À conserver** : rebuildable depuis `input/` mais au prix d'heures de calcul ; non cité par le PO, à confirmer |
+| `work/` (stacking-astro) | 0,8 Go | scratch de l'ancien moteur, jetable |
 
 ### 1.2 Code (chiffres mesurés le 19/10)
 
@@ -158,21 +158,23 @@ Process / Pipeline) les accueille sans refonte ; le code historique reste dans g
 
 ### 4.1 Vue d'ensemble
 
+*Révisé le 2026-10-20 : **tout Swift**. Le moteur Go embarqué (« astrocore », JSON-RPC, helper
+signé) est abandonné ; le pré-traitement est **porté** en Swift dans le module `StackKit`.*
+
 ```
 ┌──────────────────────────── AstroStack.app (Swift 6 · SwiftUI · Metal 4) ────────────────────────────┐
 │  UI            Projet · Pré-traitement · Studio (process + aperçu GPU) · Pipelines/Profils · Aide  │
 │  ProcessKit    registre des process, schémas de paramètres, recettes, pipelines, points d'arrêt     │
 │  RenderKit     shaders Metal : STF, étirements, écrans, HDR, courbes, saturation, masques, étoiles   │
-│  ImageKit      FITS/TIFF I/O, plans float32, pyramide mip, tuiles, historique non destructif        │
-│  ProjectKit    modèle de projet (SQLite), recettes, profils, tutoriels (contenu versionné)          │
-│  CoreClient    client du moteur batch : JSON-RPC sur socket Unix, événements de progression         │
-└───────────────────────────────┬──────────────────────────────────────────────────────────────────────┘
-                                │ Contents/Helpers/astrocore  (processus enfant, un par app)
-┌───────────────────────────────▼──────────────────────────────────────────────────────────────────────┐
-│  astrocore (Go, extrait de l'existant)                                                               │
-│  inspect · calib · grade · transient · photom · stackalg/stacknative · lanes/parité · bundle          │
-│  pilotes : Siril (session persistante Python ou siril-cli) · GraXpert · StarNet                      │
+│  ImageKit      FITS/TIFF I/O, plans float32, pyramide mip, tuiles                                   │
+│  ProjectKit    modèle de projet (SQLite) : sources, stacks, images, historique, recettes, profils   │
+│  StackKit      pré-traitement : inspect · bibliothèque de calibration · pilote Siril (-p / -s) ·    │
+│                notation · lanes/parité · multi-nuits (transitoires, photom, coutures) · bundle ;     │
+│                pilotes GraXpert et StarNet                                                           │
+│  HelpKit       fiches, « pourquoi cette valeur », guide première pile (fr/en)                        │
 └──────────────────────────────────────────────────────────────────────────────────────────────────────┘
+          │ Process + FIFOs                          │ -cli                      │ CLI
+      Siril 1.4 (siril-cli)                      GraXpert                    StarNet2
 ```
 
 ### 4.2 Pourquoi Swift + Metal pour l'app (R1, R4)
@@ -185,31 +187,39 @@ glisser-déposer depuis le Finder. Swift 6 est déjà sur la machine ; **Xcode d
 Tauri/Electron (web embarqué : on retomberait sur WebGPU et un rendu moins intégré) ; Fyne/Gio en Go
 (pas au niveau pour une UI image intensive).
 
-### 4.3 Pourquoi garder un moteur Go embarqué (R6, et le risque)
+### 4.3 Pourquoi tout Swift (décision du 2026-10-19 révisée le 2026-10-20)
 
-Le pré-traitement n'a pas besoin d'interactivité ; il a besoin de **justesse**. Les 44 000 lignes
-retenues encodent deux ans de cas réels sur tes données : flats par nuit, calibration dimension-
-gardée, parité miroir d'un train optique, lanes BB/DB, masque de transitoires sur couloir
-réutilisé, normalisation photométrique sans écrêtage, classification BB/DB en électrons. Les réécrire
-en Swift coûterait des mois et réintroduirait des régressions déjà payées. Le pattern « helper
-embarqué » (binaire dans `Contents/Helpers`, lancé par l'app, protocole local) est standard sur
-macOS. Ce qui change pour ce code : plus de HTTP, plus de Postgres (SQLite), plus de jobs web ; un
-**protocole typé** (JSON-RPC 2.0 sur socket Unix, événements `progress`/`log`/`preview`), un
-processus par app, annulation par requête.
+La version du 19/10 gardait le cœur Go (≈ 44 000 lignes) comme helper embarqué, au motif qu'il
+encode deux ans de cas réels. La revue du 20/10 a renversé la décision, pour trois raisons mesurées :
 
-Variante « tout Swift » (si le PO la préfère) : même modèle, le moteur devient un module Swift ;
-coût estimé 3 à 4 fois celui de l'extraction, bénéfice : un seul langage. Recommandation : **hybride
-d'abord**, migration opportuniste process par process vers Metal/Swift quand l'interactivité le
-justifie (c'est exactement ce que fait la §3 : tout le non-linéaire est déjà natif).
+1. **Le savoir n'est pas dans le Go.** Siril fait la calibration, la registration et l'empilement ;
+   le Go génère des scripts, choisit des trames et applique des règles. Un port Swift qui émet les
+   **mêmes scripts** avec la **même sélection** produit des masters **byte-identiques**. L'oracle
+   existe : l'ancien moteur, dans `../stacking-astro`, dont on enregistre scripts, sélections,
+   checksums et rendus de référence (carte 0044) avant chaque port.
+2. **L'hybride n'était pas propre.** Deux lecteurs FITS, deux SQLite, deux implémentations de
+   statistiques, des `Codable` miroirs de structs Go, deux toolchains, deux suites de tests, un IPC
+   (progression, annulation, crash, verrou) et un helper à signer — une dette permanente pour un
+   développeur-agent seul.
+3. **Le périmètre v1 est plus petit qu'annoncé.** Hors modes abandonnés, superviseur IA, finition
+   GIMP et chemin iPhone/DNG, il reste ≈ 25 000 lignes Go utiles (inspect 8 300, calib 4 900,
+   pilotes 4 700, pipeline deep-sky 5 000, calcul pixel 8 000 dont une part devient Metal de toute
+   façon). Le port est estimé à 12–15 000 lignes Swift et 12 à 15 cartes au lieu des 6 cartes
+   d'extraction.
+
+Le seul calcul pixel qui n'est pas Siril (masque de transitoires, normalisation photométrique,
+égalisation des coutures, recadrage coverage, parité det(CD), continuum k) est porté en Swift sur
+Accelerate et pinné numériquement contre les sorties Go enregistrées (carte 0066). Le combinateur
+natif Go (`stacknative`, non défaut) n'est pas porté tant qu'aucun profil ne l'exige.
 
 ### 4.4 Pilotage de Siril (vérifié dans les sources et la doc Siril, 19/10)
 
 - **Session persistante = mode tube nommé** : `siril-cli -p` lit les commandes sur
   `siril_command.in` et écrit `ready` / `log:` / `status: starting|success|error|exit` /
   `progress: N%` sur `siril_command.out` (chemins personnalisables `-r/-w`, FIFO créés par nous).
-  `astrocore` garde **une** instance Siril vivante par session de pré-traitement, envoie les
+  `StackKit` garde **une** instance Siril vivante par session de pré-traitement, envoie les
   commandes une à une et lit la progression en flux — le parseur `progress:`/`log:`/`status:`
-  existe déjà (`internal/siril/runner.go`). Repli byte-identique : `siril-cli -s script.ssf` par
+  existe dans l'ancien moteur (`../stacking-astro/internal/siril/runner.go`) et se porte tel quel. Repli byte-identique : `siril-cli -s script.ssf` par
   étape (`internal/siril/scripts.go`).
 - Le module Python `sirilpy` **n'est pas** un canal applicatif : son socket est créé par Siril à
   chaque `pyscript`, nommé par UUID et transmis par variable d'environnement au script lancé. On
@@ -239,11 +249,11 @@ justifie (c'est exactement ce que fait la §3 : tout le non-linéaire est déjà
 ### 4.5 Données et fichiers
 
 - **Projets** : `~/AstroStack/Projects/<Objet>.astrostack/` (SQLite `project.db` + `images/` en FITS
-  float32 + `recipes/` + `history/`). Jamais dans `input/` ni `output/`.
-- **Import** : `input/<...>` référencé par chemin, jamais copié ni modifié ; les anciens runs
-  `output/<Objet>/<run>/` s'ouvrent en lecture seule comme **source de bundle** (masters,
+  float32 + `recipes/` + `history/`). Jamais dans les dossiers de captures ni de runs.
+- **Import** : `~/Documents/astro/captures/<...>` référencé par chemin, jamais copié ni modifié ; les anciens runs
+  `~/Documents/astro/runs/<Objet>/<run>/` s'ouvrent en lecture seule comme **source de bundle** (masters,
   `rgb_base.fits`, `syn_*.fits`) pour rejouer un rendu sans re-stacker.
-- **Bibliothèque de calibration** : `library/` réutilisée telle quelle (mêmes clés `g{gain}o{offset}_b{bin}`).
+- **Bibliothèque de calibration** : `~/Documents/astro/library/` réutilisée telle quelle (mêmes clés `g{gain}o{offset}_b{bin}`).
 - **Scratch** : `~/Library/Caches/AstroStack/` (budget et nettoyage visibles dans l'app — le PO a déjà
   eu ~0,65 Go/pose de scratch non nettoyé).
 
@@ -252,8 +262,8 @@ justifie (c'est exactement ce que fait la §3 : tout le non-linéaire est déjà
 Aucune bibliothèque Swift FITS mature (FITSCore v0.1, FITSKit iOS seulement) : **ImageKit écrit son
 propre lecteur/écrivain FITS** (en-têtes de 80 caractères, BITPIX −32/16/8, NAXIS3, ROWORDER,
 cartes WCS conservées — ~400 lignes, testées contre les fichiers Siril de `output/`). TIFF/PNG 16 bits
-via ImageIO. Le cœur Go garde son `internal/fits` ; un golden croisé prouve que les deux lisent le
-même fichier à l'identique.
+via ImageIO. Le lecteur Go de l'ancien moteur sert d'oracle : il émet une fois des checksums que le lecteur
+Swift doit reproduire au bit (carte 0041).
 
 ### 4.6 Pixel et aperçu
 
@@ -277,10 +287,9 @@ hors 1:1 » tant qu'on n'est pas à l'échelle native.
   `MTLDevice.makeLibrary(source:)` (compilation à l'exécution, démarrage plus lent, pas de
   profilage).
 - Projet Xcode généré depuis SwiftPM (`Package.swift` = source de vérité des modules) ; `just`
-  recettes : `just app-build`, `just app-run`, `just app-test`, `just core-build`, `just check`.
-- Le helper Go est compilé (`CGO_ENABLED=0`, arm64) dans `Contents/Helpers/astrocore`, **signé
-  individuellement** (Developer ID, hardened runtime, horodatage) puis l'app ; pas de sandbox App
-  Store (accès libre à `input/`, `output/`, `library/`, Siril, GraXpert, StarNet). Distribution :
+  recettes : `just app-build`, `just app-run`, `just test`, `just lint`, `just check`, `just ci`.
+- Une seule cible à signer (plus de helper) : l'app, Developer ID, hardened runtime, horodatage ;
+  pas de sandbox App Store (accès libre à `input/`, `output/`, `library/`, Siril, GraXpert, StarNet). Distribution :
   DMG notarisé, ou build local non signé pour le PO seul (première livraison).
 
 ## 5. Parcours utilisateur (ce que tu fais, dans l'ordre)
@@ -351,8 +360,9 @@ sauvegardes les remplacent pour toi sans les écraser.
 
 - **Parité** : chaque process natif porté depuis `astrocomp`/`hdrcomp`/`stardesat` est validé par un
   golden contre le livrable `M31_v9style_hdr_HaPlus` du run #78 (|Δ| moyen ≤ 1/255).
-- **Byte-identité du pré-traitement** : les masters produits par `astrocore` sont identiques à ceux
-  du moteur actuel sur les goldens existants (`TestProcess_SingleNightGolden`, deux nuits ancrées).
+- **Byte-identité du pré-traitement** : les masters produits par `StackKit` sont identiques à ceux
+  de l'ancien moteur sur les oracles enregistrés (golden synthétique une nuit, deux nuits ancrées,
+  M 31 BB+DB réel) — mêmes scripts Siril, même sélection de trames.
 - **Mesures affichées, pas jugées** : bruit (MADN), SNR par couche, écrêtage, FWHM, excentricité,
   avant/après par process — l'app te donne les chiffres, elle ne décide pas.
 - **Perf** : aperçu plein cadre 22 Mpx ≤ 16 ms GPU pour tout process natif ; import + pyramide d'une
@@ -372,6 +382,7 @@ sauvegardes les remplacent pour toi sans les écraser.
 | 132 Go d'anciens runs à ne pas corrompre | ouverture en lecture seule, aucune écriture dans `output/` par construction (pas de droit d'écriture demandé) |
 | Volume de travail (app + extraction + process) | découpage en epics indépendamment livrables ; première valeur visible dès E11 + E13 (ouvrir un ancien run et régler les écrans en temps réel) |
 | Un seul développeur-agent, exigence « pro » | TDD par carte, goldens de parité, revue de code, acceptation PO par cible |
+| Port Swift du pré-traitement : régression silencieuse d'une règle métier | oracles enregistrés depuis l'ancien moteur (scripts, sélections, checksums, rendus) avant tout port ; tests Go traduits table par table ; byte-identité des masters sur deux goldens + M31 BB+DB live |
 
 ---
 
@@ -380,10 +391,10 @@ sauvegardes les remplacent pour toi sans les écraser.
 | epic | titre | livre | dépend |
 |---|---|---|---|
 | **E10** | Fondations app macOS | projet SwiftPM/Xcode, fenêtre document, ImageKit (FITS float32, pyramide), RenderKit (STF, zoom/pan, région 1:1, histogramme), ouverture d'un ancien run d'`output/` en lecture seule | Xcode installé |
-| **E11** | Moteur `astrocore` | extraction du cœur Go, JSON-RPC sur socket, suppression HTTP/Postgres/web/Docker/GIMP/IA, bundle linéaire, SQLite, byte-identité des masters | — |
+| **E11** | Moteur `StackKit` (Swift) | oracles enregistrés depuis l'ancien moteur, pilote Siril, inspect, bibliothèque de calibration, pipeline deep-sky, multi-nuits et calcul pixel ; byte-identité des masters | E10 (0040, 0041, 0068) |
 | **E12** | Studio : process natifs | étirements (MTF/GHS/arcsinh), écrans d'émission, HDR, courbes, saturation/désat, combinaison des canaux, continuum-sub, masques, historique non destructif, Appliquer/Annuler ; parité v9 | E10 |
 | **E13** | Étoiles & export | StarNet, couche étoiles, recomposition, tiers, recadrage/orientation, jeu de livrables | E12 |
-| **E14** | Pré-traitement dans l'app | import depuis `input/`, classification, bibliothèque de calibration + inspection des masters, revue des trames (métriques, blink, garder/rejeter, trame de référence), réglages d'empilement simple/avancé, exécution via `astrocore`, progression, bundle | E10, E11 |
+| **E14** | Pré-traitement dans l'app | import depuis `~/Documents/astro/captures/`, classification, bibliothèque de calibration + inspection des masters, revue des trames (métriques, blink, garder/rejeter, trame de référence), réglages d'empilement simple/avancé, exécution via `StackKit`, progression, bundle | E10, E11 |
 | **E15** | Pipelines, recettes, profils | recettes, pipelines à points d'arrêt, profils livrés, rejeu, verrouillage, diff, import/export | E12, E14 |
 | **E16** | Tutoriels & fiches | premiers pas, fiches de process, « pourquoi cette valeur », fr/en, contenu versionné | E12 |
 | **E17** | Process batch avancés | extraction de fond (GraXpert/subsky, aperçu du modèle — livrée en v1), déconvolution Siril, débruitage GraXpert/Siril, SPCC/PCC, plate-solve, ondelettes, drizzle | E14 |
@@ -391,7 +402,7 @@ sauvegardes les remplacent pour toi sans les écraser.
 | **E19** | Nettoyage & livraison | suppression du legacy (web, Docker, Postgres, modes hors deep-sky), nouveau `CLAUDE.md`/README, signature/notarisation, DMG | E14, E15 |
 
 Ordre retenu après la revue du 2026-10-20 : **pré-traitement d'abord**. La file commence par
-E11 (carve, RPC, SQLite) + l'import E14, puis le viewer E10 et l'exécution E14 : l'app stacke une
+E11 (oracles, pilote Siril, inspect, calibration, pipeline) + l'import E14, puis le viewer E10 et l'exécution E14 : l'app stacke une
 nuit depuis `input/` à la 12e carte, avec revue des trames, réglages d'empilement et inspection des
 masters (R2 vaut aussi dans le pré-traitement : aucun verdict que l'utilisateur ne peut voir et
 contredire). Le Studio E12 vient ensuite sur un bundle produit par l'app elle-même ; les oracles de
@@ -403,12 +414,13 @@ Studio, elle n'est plus la première valeur de l'app.
 
 ## 11. Décisions prises par le PO (19/10)
 
-1. **Hybride** : app Swift/SwiftUI/Metal + moteur Go embarqué (`astrocore`) — §4.3.
+1. ~~Hybride Swift + moteur Go embarqué~~ → **tout Swift** (PO, 2026-10-20) : le pré-traitement est
+   porté dans `StackKit`, pinné par des oracles enregistrés depuis l'ancien moteur — §4.3.
 2. **Périmètre v1 = deep-sky, OSC puis mono** ; planétaire, solaire, panoramas, comète, mosaïque,
    vidéo sortent de l'app (code conservé dans l'historique git).
 3. **`library/` (26 Go) conservée**, au même titre qu'`input/` et `output/`.
 4. **Xcode sera installé** par le PO (prérequis d'E10 ; composant Metal Toolchain inclus).
 5. ~~Monorepo~~ → **nouveau dépôt `kappa-sigma`** (PO, 2026-10-20) : l'app et `core/` vivent dans
    `github.com/verovec/kappa-sigma` ; le moteur Go y est copié comme matière première et oracle de
-   tests, sans `frontend/`, Docker ni MCP ; `input/`, `output/`, `library/` restent dans
-   `stacking-astro` et sont liés en lecture seule. E19 ne supprime plus que le reste du moteur legacy.
+   tests, sans `frontend/`, Docker ni MCP ; les captures, runs et masters vivent dans
+   `~/Documents/astro/{captures,runs,library}`, hors de tout dépôt, lus en lecture seule. E19 ne supprime plus que le reste du moteur legacy.

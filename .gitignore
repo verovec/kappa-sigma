@@ -79,7 +79,7 @@ cards
 # Root-anchored: the skill's templates/bootstrap copies of roadmap.md ARE committed.
 /roadmap.md
 
-# data lives in ../stacking-astro (read-only); these are symlinks
+# No astro data inside the repo: captures/runs/library live in ~/Documents/astro (never tracked).
 /input
 /output
 /library

@@ -36,12 +36,9 @@ hit() { # <filename> <needle>...   append file if any needle is a substring of $
   done
 }
 
-hit golang-conventions.md   " golang " " goroutine " ".go " " go func" " go function" " go handler" " go struct" " go interface" " go module" " go package" " go mod " " go test" " go code" " go file"
 hit python-conventions.md   " python " " pytest " " pyproject " " ruff " " asyncio " ".py "
-hit vuejs-conventions.md    " vue " " vue3 " " pinia " " composition api " ".vue "
-hit tailwind-conventions.md " tailwind " " tailwindcss "
-hit docker-conventions.md   " docker " " compose " " dockerfile " " container " " containers " ".dockerignore "
 hit database-conventions.md " sql " " postgres " " postgresql " " migration " " migrations " " database " ".sql "
+hit swift-conventions.md    " swift " " swiftui " " metal " " xcode " ".swift " " swiftpm " " package.swift " " actor " " async " " xctest " " swift testing"
 hit testing-conventions.md  " test " " tests " " spec " " specs " " tdd " " pytest " " vitest " " jest "
 hit commit-conventions.md   " commit " " commits "
 hit justfile-conventions.md " justfile " " just recipe " " task runner "

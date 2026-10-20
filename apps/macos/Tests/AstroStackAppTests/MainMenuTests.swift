@@ -25,6 +25,12 @@ struct MainMenuTests {
     Item(
       menu: "AstroStack", title: "Quit AstroStack", key: "q", modifiers: .command,
       action: "terminate:"),
+    Item(
+      menu: "File", title: "Open Image…", key: "O", modifiers: .command, action: "openImage:"),
+    Item(menu: "View", title: "Zoom to Fit", key: "0", modifiers: .command, action: "zoomToFit:"),
+    Item(
+      menu: "View", title: "Actual Pixels", key: "1", modifiers: .command,
+      action: "zoomToActualSize:"),
     Item(menu: "Edit", title: "Undo", key: "z", modifiers: .command, action: "undo:"),
     Item(
       menu: "Window", title: "Minimize", key: "m", modifiers: .command,
@@ -45,7 +51,7 @@ struct MainMenuTests {
   func testMainMenu_order() {
     #expect(
       MainMenu.make().items.compactMap(\.submenu?.title) == [
-        "AstroStack", "File", "Edit", "Window",
+        "AstroStack", "File", "Edit", "View", "Window",
       ])
   }
 }

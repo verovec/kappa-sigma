@@ -1,4 +1,5 @@
 package import Foundation
+internal import ImageKit
 
 /// Reads the migrations shipped in `Migrations/` (ProjectKit resources).
 package enum MigrationCatalog {
@@ -29,17 +30,9 @@ package enum MigrationCatalog {
     return try parse(files: files)
   }
 
-  /// The packaged app keeps resource bundles in `Contents/Resources` (`scripts/app-bundle.sh`),
-  /// where SwiftPM's generated `Bundle.module` does not look (it checks the `.app` root, then
-  /// the absolute build folder): look there first, and fall back to `Bundle.module` for tests
-  /// and `swift run`.
+  /// ProjectKit's resources, in the packaged app or in tests (`KitBundle`).
   private static func resourceBundle() -> Bundle {
-    if let resources = Bundle.main.resourceURL,
-      let packaged = Bundle(url: resources.appendingPathComponent(bundleName))
-    {
-      return packaged
-    }
-    return Bundle.module
+    KitBundle.resolve(named: bundleName) { Bundle.module }
   }
 
   /// Pairs `NNNN_name.up.sql` with `NNNN_name.down.sql` (file name → SQL), sorted by version,

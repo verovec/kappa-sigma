@@ -7,10 +7,10 @@ package import AppKit
 package enum MainMenu {
   private typealias Entry = (title: String, action: Selector?, key: String)
 
-  /// The main menu bar: application, File, Edit, Window.
+  /// The main menu bar: application, File, Edit, View, Window.
   package static func make() -> NSMenu {
     let bar = NSMenu(title: "Main")
-    for menu in [application(), file(), edit(), window()] {
+    for menu in [application(), file(), edit(), view(), window()] {
       let item = NSMenuItem(title: menu.title, action: nil, keyEquivalent: "")
       item.submenu = menu
       bar.addItem(item)
@@ -45,6 +45,7 @@ package enum MainMenu {
       [
         ("New Project", #selector(NSDocumentController.newDocument(_:)), "n"),
         ("Open…", #selector(NSDocumentController.openDocument(_:)), "o"),
+        ("Open Image…", #selector(AppDelegate.openImage(_:)), "O"),
         nil,
         ("Close", #selector(NSWindow.performClose(_:)), "w"),
         ("Save", #selector(NSDocument.save(_:)), "s"),
@@ -65,6 +66,15 @@ package enum MainMenu {
         ("Copy", #selector(NSText.copy(_:)), "c"),
         ("Paste", #selector(NSText.paste(_:)), "v"),
         ("Select All", #selector(NSText.selectAll(_:)), "a"),
+      ])
+  }
+
+  private static func view() -> NSMenu {
+    submenu(
+      "View",
+      [
+        ("Zoom to Fit", Selector(("zoomToFit:")), "0"),
+        ("Actual Pixels", Selector(("zoomToActualSize:")), "1"),
       ])
   }
 

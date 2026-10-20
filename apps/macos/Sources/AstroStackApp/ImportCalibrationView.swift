@@ -27,7 +27,19 @@ struct ImportCalibrationView: View {
           + (channel.key.session.isEmpty ? "" : " · \(channel.key.session)")
       )
       .font(.headline)
-      ForEach(channel.cells) { cell in cellView(cell) }
+      ForEach(channel.cells) { cell in
+        cellView(cell)
+        if model.masters != nil && cell.master != nil {
+          DisclosureGroup("Inspect \(cell.role.rawValue)") {
+            MasterInspectView(
+              model: MasterInspectViewModel(cell: cell, channel: channel, sheet: model)
+            )
+            // A new plan is a new disclosure: its @State model must not outlive the cell.
+            .id("\(cell.suggestionID)|\(cell.master?.path ?? "")|\(cell.status)")
+          }
+          .font(.caption)
+        }
+      }
       ForEach(channel.notes, id: \.self) { note in
         Label(note, systemImage: "info.circle").font(.caption).foregroundStyle(.secondary)
       }

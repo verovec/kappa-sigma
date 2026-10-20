@@ -49,6 +49,23 @@ struct ProcessContractTests {
     }
   }
 
+  @Test("ChannelCombination passes every contract (with the bundle layers, under a mask)")
+  func testCombinationPasses() throws {
+    let device = try #require(MTLCreateSystemDefaultDevice())
+    let layers = try CombinationTests.layers(device: device, ids: ["RGB", "Ha", "OIII"])
+    let row = (0..<32).map { Float($0) / 31 }
+    let input = try GPUImage(
+      device: device, width: 4, height: 2,
+      planes: Array(repeating: Array(row.prefix(8)), count: 3))
+    let contracts = try ProcessContracts(
+      device: device, input: input, stats: LayerStats(channels: []), layers: layers)
+    for palette in [Palette.natural, .hoo, .foraxx] {
+      #expect(
+        try contracts.violations(of: ChannelCombinationProcess.self, params: palette.params())
+          .isEmpty, "\(palette)")
+    }
+  }
+
   @Test("suggestions come from the bundle stats and are only suggestions")
   func testSuggestions() throws {
     let device = try #require(MTLCreateSystemDefaultDevice())

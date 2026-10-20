@@ -25,6 +25,8 @@ package struct ViewerFrame: Equatable, Sendable {
   /// The stored rows are bottom-up: display row 0 is the last stored row. `transform` and
   /// `region` are in display coordinates.
   package var flipRows = false
+  /// Tints the view red where the process mask is (the renderer's `mask` texture).
+  package var maskOverlay = false
 
   /// A frame at `transform` with `stf`.
   package init(transform: ViewTransform, stf: [STFParameters]?) {
@@ -40,6 +42,7 @@ package struct ViewerFrame: Equatable, Sendable {
     uniforms.originY = Float(transform.origin.y)
     uniforms.clippingOverlay = clippingOverlay ? 1 : 0
     uniforms.flipRows = flipRows ? 1 : 0
+    uniforms.maskOverlay = maskOverlay ? 1 : 0
     switch compare {
     case .off:
       uniforms.compareMode = 0

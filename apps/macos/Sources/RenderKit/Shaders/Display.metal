@@ -31,6 +31,7 @@ kernel void display(texture2d<float> r [[texture(0)]], texture2d<float> g [[text
                     texture2d<float> b [[texture(2)]], texture2d<float> refR [[texture(3)]],
                     texture2d<float> refG [[texture(4)]], texture2d<float> refB [[texture(5)]],
                     texture2d<float, access::write> out [[texture(6)]],
+                    texture2d<float, access::read> mask [[texture(7)]],
                     constant DisplayUniforms &u [[buffer(0)]],
                     uint2 gid [[thread_position_in_grid]]) {
   if (gid.x >= out.get_width() || gid.y >= out.get_height()) { return; }
@@ -54,6 +55,12 @@ kernel void display(texture2d<float> r [[texture(0)]], texture2d<float> g [[text
     uint k = u.channels < 3 ? 0 : c;
     shown[c] = u.stfEnabled != 0 ? stf(v[c], u.shadows[k], u.midtone[k], u.highlights[k])
                                  : clamp(v[c], 0.0f, 1.0f);
+  }
+  if (u.maskOverlay != 0) {
+    // The mask is in stored pixels: sample it where the image was sampled.
+    float m = mask.read(uint2(min(uv * float2(mask.get_width(), mask.get_height()),
+                                  float2(mask.get_width() - 1, mask.get_height() - 1)))).r;
+    shown = shown * (1.0f - 0.5f * m) + float3(0.5f * m, 0.0f, 0.0f);
   }
   out.write(float4(shown, 1.0f), gid);
 }
@@ -80,6 +87,7 @@ kernel void shaderLayout(constant DisplayUniforms &d [[buffer(0)]],
   out[i++] = as_type<uint>(d.imageHeight);
   out[i++] = as_type<uint>(d.mipLevels);
   out[i++] = d.flipRows;
+  out[i++] = d.maskOverlay;
   out[i++] = h.channels;
   out[i++] = h.stride;
   out[i++] = h.originX;

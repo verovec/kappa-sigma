@@ -29,10 +29,11 @@ package final class ViewerRenderer {
   /// the viewer counts again only when those change.
   package func encode(
     into commands: MTLCommandBuffer, image: ImageTexture, reference: ImageTexture?,
-    frame: ViewerFrame, output: MTLTexture, histogram counting: Bool = true
+    frame: ViewerFrame, output: MTLTexture, histogram counting: Bool = true,
+    mask: MTLTexture? = nil
   ) throws -> MTLBuffer? {
     try display.encode(
-      into: commands, current: image, reference: reference, output: output,
+      into: commands, current: image, reference: reference, mask: mask, output: output,
       uniforms: frame.uniforms(for: image))
     guard counting else { return nil }
     let bins = try histogram.makeBins(channels: image.planes.count)

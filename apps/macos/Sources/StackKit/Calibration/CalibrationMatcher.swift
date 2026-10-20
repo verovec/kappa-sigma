@@ -171,9 +171,16 @@ package enum CalibrationMatcher {
     }
     if selection.bias != nil && skip.contains(suggestionID(light, role: .bias)) {
       selection.bias = nil
-      // -opt needs the bias to isolate the thermal signal.
-      selection.darkOptimize = false
       selection.notes.append("bias excluded — skipped on your request")
+      // -opt needs the bias to isolate the thermal signal: a different-exposure dark applied
+      // unscaled would be a calibration the panel never showed (the legacy engine kept it).
+      if selection.darkOptimize, let dark = selection.dark {
+        selection.dark = nil
+        selection.darkOptimize = false
+        selection.notes.append(
+          "dark skipped — the \(dark.exposureMs)ms dark cannot be scaled to \(light.exposureMs)ms "
+            + "lights without the bias")
+      }
     }
     return selection
   }

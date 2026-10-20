@@ -64,7 +64,11 @@ package struct MasterBuilder: Sendable {
     _ set: FrameSet, from pool: inout [CalibrationMaster], inventory: Inventory,
     into result: inout Result
   ) -> Bool {
-    guard let index = pool.firstIndex(where: { $0.fromLibrary && $0.satisfies(set.key) }),
+    let recipe = MasterType(set.key.type).map(recipeTag) ?? ""
+    guard
+      let index = pool.firstIndex(where: {
+        $0.fromLibrary && $0.recipe == recipe && $0.satisfies(set.key)
+      }),
       FileManager.default.fileExists(atPath: pool[index].path)
     else { return false }
     let existing = pool[index]

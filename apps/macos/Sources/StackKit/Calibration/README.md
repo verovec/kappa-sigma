@@ -16,16 +16,28 @@ built, each light set's bias/dark/flat, per-night groups).
 | `CalibrationPreview` | `suggest.go` | candidates (library ∪ masters the run would build) and per-channel suggestions |
 | `PoolSignature` | `poolsig`, `.sig` | which frames a master was stacked from: reuse only when proven |
 | `CalibrationLibrary` | `library.go` + Postgres index | indexes `~/Documents/astro/library` into `project.db` (`calibration_masters`, migration 0002); the folder is the truth |
-| `MasterBuilder` | `BuildMasters`, `BuildOrReuseMasters` | bias → dark-flat → dark → flat through Siril (0045 scripts); `.direct` into a run folder, `.atomic` (`.tmp_<run>_<name>` + rename) into the library; `.sig` written before the master appears |
+| `MasterBuilder` | `BuildMasters`, `BuildOrReuseMasters` | bias → dark-flat → dark → flat through Siril (0045 scripts); `.direct` into a run folder, `.atomic` (`.tmp_<run>_<name>` + rename) into the library; `.sig` written once the master is in place |
 
 ## Rules worth knowing
 
 - R2: every fallback is a note (`no L flat — using the session flat…`, cross-night, forced,
   borrowed from the library, cross-set refusal); nothing is applied silently.
 - A dual-band night never gets a broadband flat when both filter sets are known; `force` is the
-  only way past it, and it says so (memory `flat-matching-pitfalls`).
+  only way past it, and it says so (memory `flat-matching-pitfalls`). Library flats come back
+  set-blind (no filter-set column, as in the legacy index), so the gate cannot fire on them: only
+  this run's own flats carry their night's verdict.
 - An undated flat ranks below every dated one on a multi-night run, but is still a last resort.
 - Library masters are night-blind unless their name carries `_n<night>`.
+
+## Deliberate departures from the legacy engine (review of 0047)
+
+- Excluding the bias of a `-opt` selection drops its dark too, with a note: Go kept the
+  different-exposure dark and subtracted it unscaled, a calibration the panel never showed.
+- The preview counts a library master as reused only when the run would reuse it (default
+  recipe, `.sig` proving the same frames); Go reused on fields alone and could show a master the
+  run then rebuilt.
+- Reuse requires the same recipe tag; a master's `.sig` is written after the master is in place
+  (the old one removed first), so a failed publish can only cause a rebuild.
 
 ## Not ported (yet)
 

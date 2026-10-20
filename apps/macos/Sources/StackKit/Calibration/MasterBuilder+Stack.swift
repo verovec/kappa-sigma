@@ -114,16 +114,21 @@ extension MasterBuilder {
   /// pool record is already there.
   private static func publish(target: String, final: String, signature: String, frames: Int) throws
   {
-    try Data(PoolSignature.format(hash: signature, frameCount: frames).utf8)
-      .write(to: URL(fileURLWithPath: PoolSignature.sidecar(of: final + ".fits")), options: .atomic)
-    guard target != final else { return }
     let manager = FileManager.default
-    if manager.fileExists(atPath: final + ".fits") {
-      _ = try manager.replaceItemAt(
-        URL(fileURLWithPath: final + ".fits"), withItemAt: URL(fileURLWithPath: target + ".fits"))
-    } else {
-      try manager.moveItem(atPath: target + ".fits", toPath: final + ".fits")
+    let sidecar = PoolSignature.sidecar(of: final + ".fits")
+    // The old proof goes first and the new one last: whatever fails in between, no `.sig` ever
+    // vouches for frames the master on disk was not stacked from (a rebuild, never a wrong reuse).
+    try? manager.removeItem(atPath: sidecar)
+    if target != final {
+      if manager.fileExists(atPath: final + ".fits") {
+        _ = try manager.replaceItemAt(
+          URL(fileURLWithPath: final + ".fits"), withItemAt: URL(fileURLWithPath: target + ".fits"))
+      } else {
+        try manager.moveItem(atPath: target + ".fits", toPath: final + ".fits")
+      }
     }
+    try Data(PoolSignature.format(hash: signature, frameCount: frames).utf8)
+      .write(to: URL(fileURLWithPath: sidecar), options: .atomic)
   }
 
   /// Removes a partial output.
@@ -135,7 +140,9 @@ extension MasterBuilder {
   func recipeTag(_ type: MasterType) -> String {
     let options = recipes.options(type)
     guard options != MasterRecipes().options(type) else { return "" }
-    let digest = SHA256.hash(data: Data(String(describing: options).utf8))
+    // The clause Siril receives is the recipe's canonical text (rendered for a deep pool, where
+    // `auto` rejection resolves to its long-sequence choice).
+    let digest = SHA256.hash(data: Data(StackClause.render(options, frames: 100).utf8))
     return digest.prefix(3).map { String(format: "%02x", $0) }.joined()
   }
 

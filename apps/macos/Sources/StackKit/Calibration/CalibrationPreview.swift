@@ -49,13 +49,20 @@ package struct CalibrationPreview: Equatable, Sendable {
     var out = library
     for type in MasterType.buildOrder {
       for set in inventory.sets where set.key.type == type.frameType {
-        guard !library.contains(where: { $0.satisfies(set.key) }) else { continue }
+        guard !library.contains(where: { Self.reused($0, for: set) }) else { continue }
         var master = synthetic(set)
         master.stampFilterSet(of: set.key, in: inventory)
         out.append(master)
       }
     }
     return out
+  }
+
+  /// Whether the run would reuse `master` for `set` (`MasterBuilder.reuse`): it stands for the
+  /// set, was stacked with the default recipe, and its `.sig` proves the same frames.
+  static func reused(_ master: CalibrationMaster, for set: FrameSet) -> Bool {
+    master.recipe.isEmpty && master.satisfies(set.key)
+      && PoolSignature.proves(master: master.path, builtFrom: set.frames.map(\.path))
   }
 
   /// The master a run would build from a calibration set, described before it exists.

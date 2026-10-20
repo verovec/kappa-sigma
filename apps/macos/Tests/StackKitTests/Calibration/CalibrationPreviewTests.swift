@@ -132,13 +132,16 @@ struct CalibrationPreviewTests {
     #expect(byType[.dark]?.hasTemp == true)
     #expect(byType[.flat]?.filter == "L")
 
-    let covered = CalibrationPreview.candidates(
+    // A field-matching library master without a `.sig` proving these frames is rebuilt by the
+    // run, so the preview offers what the run will build (the proven case is
+    // `CalibrationReviewTests.testCalibrationPreview_reuseNeedsProof`; Go reused on fields alone).
+    let unproven = CalibrationPreview.candidates(
       inventory: inventory,
       library: [
         Fixtures.master(.bias, path: "/lib/master_BIAS.fits", gain: 0, offset: 10, frames: 999)
       ])
-    #expect(covered.count == 3)
-    #expect(covered.filter { $0.type == .bias }.map(\.path) == ["/lib/master_BIAS.fits"])
+    #expect(unproven.count == 4)
+    #expect(unproven.filter { $0.type == .bias }.map(\.path) == ["/lib/master_BIAS.fits", ""])
 
     let stale = CalibrationPreview.candidates(
       inventory: inventory,

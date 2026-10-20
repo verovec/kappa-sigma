@@ -153,6 +153,52 @@ struct StretchTests {
     }
   }
 
+  @Test("the Studio offers the stretch right after the channel combination")
+  func testRegistered() throws {
+    #expect(try ProcessRegistry.standard().ids.prefix(2) == ["channel-combination", "stretch"])
+  }
+
+  @Test("the stretch passes every process contract, in each mode, mono and colour")
+  func testContracts() throws {
+    let device = try #require(MTLCreateSystemDefaultDevice())
+    for count in [1, 3] {
+      let input = try GPUImage(device: device, width: Self.width, height: Self.height, planes: Self.planes(count))
+      let contracts = try ProcessContracts(
+        device: device, input: input,
+        stats: LayerStats(channels: Array(Self.stats.channels.prefix(count))))
+      for values: [String: ParamValue] in [
+        ["mode": .choice("mtf"), "headroom": .number(0.9)],
+        ["mode": .choice("ghs"), "ghsStretch": .number(3), "ghsSymmetry": .number(0.05)],
+        ["mode": .choice("asinh"), "asinhStretch": .number(100)],
+      ] {
+        var params = ParamSet(schema: StretchProcess.schema)
+        for (id, value) in values { try params.set(id, value) }
+        #expect(
+          try contracts.violations(of: StretchProcess.self, params: params).isEmpty,
+          "\(values) ×\(count)")
+      }
+    }
+  }
+
+  @Test("suggestions: Siril's autostretch, the deep-sky headroom, GHS on the background")
+  func testSuggestions() throws {
+    let device = try #require(MTLCreateSystemDefaultDevice())
+    let process = try StretchProcess(params: ParamSet(schema: StretchProcess.schema), device: device)
+    let suggestions = process.suggestions(stats: Self.stats)
+    #expect(
+      suggestions.map(\.paramID) == [
+        "shadowsClip", "targetBackground", "linked", "headroom", "ghsSymmetry",
+      ])
+    // The mean of the channel medians, as linked mode averages them.
+    guard case .number(let symmetry) = suggestions.first(where: { $0.paramID == "ghsSymmetry" })?.value
+    else {
+      Issue.record("no GHS symmetry suggestion")
+      return
+    }
+    #expect(abs(symmetry - 0.04) <= 1e-12)
+    #expect(process.params == ParamSet(schema: StretchProcess.schema), "suggestions change nothing")
+  }
+
   @Test("GHS refuses protection points on the wrong side of the symmetry point")
   func testGHSOrdering() throws {
     #expect(throws: ProcessError.self) {

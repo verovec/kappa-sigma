@@ -61,6 +61,35 @@ package struct StretchProcess: ImageProcess {
     pipeline = try ProcessLibrary.pipeline(device: device, file: "Stretch.metal", function: "stretch")
   }
 
+  /// Siril's autostretch (−2.8σ, background 0.25, linked), the deep-sky preset's 0.90 headroom,
+  /// and the GHS symmetry point on the mean of the bundle medians; none is applied by itself.
+  package func suggestions(stats: LayerStats) -> [Suggestion] {
+    var suggestions = [
+      Suggestion(
+        paramID: "shadowsClip", value: .number(-2.8),
+        reason: "autostretch like Siril: shadows 2.8σ below the background"),
+      Suggestion(
+        paramID: "targetBackground", value: .number(0.25),
+        reason: "autostretch like Siril: background at 0.25"),
+      Suggestion(
+        paramID: "linked", value: .flag(true),
+        reason: "autostretch like Siril: one curve for every channel keeps the colour balance"),
+      Suggestion(
+        paramID: "headroom", value: .number(0.9),
+        reason: "the deep-sky preset caps linear cores at 0.90 so star colours survive the stretch"
+      ),
+    ]
+    if !stats.channels.isEmpty {
+      let median = stats.channels.map(\.median).reduce(0, +) / Double(stats.channels.count)
+      suggestions.append(
+        Suggestion(
+          paramID: "ghsSymmetry", value: .number(min(max(median, 0), 1)),
+          reason: "GHS symmetry point on the background median: the stretch opens the faint signal"
+        ))
+    }
+    return suggestions
+  }
+
   package func render(
     _ input: GPUImage, stats: LayerStats, into output: GPUImage, context: RenderContext
   ) throws {

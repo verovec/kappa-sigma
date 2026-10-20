@@ -1,6 +1,22 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "Black point": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Black point"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Point noir"
+          }
+        }
+      }
+    },
     "Blue": {
       "localizations": {
         "en": {
@@ -161,6 +177,38 @@
         }
       }
     },
+    "Highlight headroom": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Highlight headroom"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marge des hautes lumières"
+          }
+        }
+      }
+    },
+    "Highlight protection": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Highlight protection"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Protection des hautes lumières"
+          }
+        }
+      }
+    },
     "L black": {
       "localizations": {
         "en": {
@@ -225,6 +273,38 @@
         }
       }
     },
+    "Linked channels": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Linked channels"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canaux liés"
+          }
+        }
+      }
+    },
+    "Local intensity b": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local intensity b"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intensité locale b"
+          }
+        }
+      }
+    },
     "Luminance": {
       "localizations": {
         "en": {
@@ -237,6 +317,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Luminance"
+          }
+        }
+      }
+    },
+    "Mode": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mode"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mode"
           }
         }
       }
@@ -317,6 +413,118 @@
           "stringUnit": {
             "state": "translated",
             "value": "SHO"
+          }
+        }
+      }
+    },
+    "Shadow protection": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shadow protection"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Protection des ombres"
+          }
+        }
+      }
+    },
+    "Shadows clip": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shadows clip"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Écrêtage des ombres"
+          }
+        }
+      }
+    },
+    "Stretch": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stretch"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Étirement"
+          }
+        }
+      }
+    },
+    "Stretch factor ln(D+1)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stretch factor ln(D+1)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Facteur d’étirement ln(D+1)"
+          }
+        }
+      }
+    },
+    "Stretch factor β": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stretch factor β"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Facteur d’étirement β"
+          }
+        }
+      }
+    },
+    "Symmetry point": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Symmetry point"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Point de symétrie"
+          }
+        }
+      }
+    },
+    "Target background": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Target background"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fond cible"
           }
         }
       }

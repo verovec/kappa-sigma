@@ -162,7 +162,8 @@ package final class ProjectDocument: NSDocument {
       contentRect: NSRect(x: 0, y: 0, width: 960, height: 640),
       styleMask: [.titled, .closable, .miniaturizable, .resizable],
       backing: .buffered, defer: false)
-    let content = NSHostingView(rootView: ProjectWindowView())
+    let model = ProjectWindowModel(store: { [weak self] in self?.project?.store })
+    let content = NSHostingView(rootView: ProjectWindowView(model: model))
     // Only the minimum size comes from SwiftUI; the window keeps its own frame.
     content.sizingOptions = [.minSize]
     window.contentView = content

@@ -47,6 +47,16 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
     SettingsWindow.show()
   }
 
+  /// Help › Keyboard Shortcuts: every command of the catalog and its shortcut.
+  @objc package func showShortcuts(_ sender: Any?) {
+    UtilityWindow.show("shortcuts", title: .app("Keyboard Shortcuts")) { ShortcutsSheet() }
+  }
+
+  /// Help › Glossary: the terms the app uses, with their definitions.
+  @objc package func showGlossary(_ sender: Any?) {
+    UtilityWindow.show("glossary", title: .app("Glossary")) { GlossaryView() }
+  }
+
   /// Window › Component Gallery (debug builds): the design system's components.
   @objc package func showComponentGallery(_ sender: Any?) {
     ComponentGalleryWindow.show()

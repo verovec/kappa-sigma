@@ -833,6 +833,22 @@
         }
       }
     },
+    "First-Stack Guide": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "First-Stack Guide"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guide du premier empilement"
+          }
+        }
+      }
+    },
     "Force these masters even when they do not match": {
       "localizations": {
         "en": {
@@ -877,6 +893,54 @@
           "stringUnit": {
             "state": "translated",
             "value": "Poses"
+          }
+        }
+      }
+    },
+    "General": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "General"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Général"
+          }
+        }
+      }
+    },
+    "Glossary": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Glossary"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Glossaire"
+          }
+        }
+      }
+    },
+    "Help": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Help"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aide"
           }
         }
       }
@@ -1021,6 +1085,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Conservé dans le dossier de l’empilement"
+          }
+        }
+      }
+    },
+    "Keyboard Shortcuts": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keyboard Shortcuts"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Raccourcis clavier"
           }
         }
       }
@@ -1809,6 +1889,38 @@
         }
       }
     },
+    "Search shortcuts": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search shortcuts"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rechercher un raccourci"
+          }
+        }
+      }
+    },
+    "Search the glossary": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search the glossary"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rechercher dans le glossaire"
+          }
+        }
+      }
+    },
     "Select All": {
       "localizations": {
         "en": {
@@ -1901,6 +2013,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tout afficher"
+          }
+        }
+      }
+    },
+    "Show the reference while held": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show the reference while held"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher la référence tant que la touche est enfoncée"
           }
         }
       }

@@ -10,8 +10,6 @@ package import SwiftUI
 package struct WelcomeView: View {
   private let model: WelcomeModel
   private let actions: Actions
-  @State private var target = ""
-  @State private var error: UserFacingError?
 
   /// What the buttons do: the window opens documents, tests record the calls.
   package struct Actions {
@@ -54,7 +52,7 @@ package struct WelcomeView: View {
     .frame(minWidth: 520, alignment: .topLeading)
     .background(DesignColor.surface.color)
     .sheet(isPresented: Binding(get: { model.isNaming }, set: { model.isNaming = $0 })) {
-      newProjectSheet
+      NewProjectSheet(model: model, actions: actions)
     }
   }
 
@@ -77,40 +75,6 @@ package struct WelcomeView: View {
         .contentShape(Rectangle())
       }
       .buttonStyle(.plain)
-    }
-  }
-
-  private var newProjectSheet: some View {
-    VStack(alignment: .leading, spacing: DesignMetrics.spacingM) {
-      Text(.app("New Project…")).font(.headline)
-      TextField(text: $target) { Text(.app("Target")) }
-      Text(.app("Name it after the target: M 31, NGC 7000, IC 1848…"))
-        .font(.caption).foregroundStyle(DesignColor.textSecondary.color)
-      if let error { StatusBadge(.error, error.message) }
-      HStack {
-        Spacer()
-        Button(.app("Cancel"), role: .cancel) { model.isNaming = false }.keyboardShortcut(
-          .cancelAction)
-        Button(.app("Create")) { create() }.keyboardShortcut(.defaultAction)
-          .disabled(NewProject.fileName(target).isEmpty)
-      }
-    }
-    .padding(DesignMetrics.spacingL)
-    .frame(width: 380)
-    .onAppear {
-      target = ""
-      error = nil
-    }
-  }
-
-  private func create() {
-    do {
-      let url = try actions.create(target)
-      model.isNaming = false
-      error = nil
-      actions.open(url)
-    } catch {
-      self.error = UserFacingError(error)
     }
   }
 

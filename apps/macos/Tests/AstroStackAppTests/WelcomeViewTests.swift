@@ -143,4 +143,67 @@ struct WelcomeViewTests {
     #expect(!WelcomeWindow.model.isNaming)
     #expect(!WelcomeWindow.isVisible)
   }
+
+  @Test(
+    "the naming sheet lays out with and without an error, in each language",
+    arguments: ["en", "fr"])
+  func testNamingSheetLaysOut(_ language: String) {
+    let model = WelcomeModel(recentURLs: { [] }, tools: Self.mixedTools)
+    for error in [nil, UserFacingError.projectName] {
+      let sheet = NewProjectSheet(
+        model: model, actions: Self.noActions, target: "M 31", error: error)
+      let host = LocalisedScreensTests.host(sheet, language)
+      host.layoutSubtreeIfNeeded()
+      #expect(host.fittingSize.width >= 380)
+    }
+  }
+
+  @Test("Create makes the project, lowers the sheet and opens it")
+  func testSubmitCreatesAndOpens() {
+    let model = WelcomeModel(recentURLs: { [] }, tools: Self.mixedTools)
+    model.isNaming = true
+    var opened: [URL] = []
+    let made = URL(fileURLWithPath: "/Projects/M 31.astrostack")
+    let actions = WelcomeView.Actions(
+      open: { opened.append($0) }, choose: {}, create: { _ in made })
+
+    #expect(NewProjectSheet.submit("M 31", model: model, actions: actions) == nil)
+    #expect(opened == [made])
+    #expect(!model.isNaming)
+  }
+
+  @Test("a refused name keeps the sheet up with the reason, and opens nothing")
+  func testSubmitRefusal() {
+    let model = WelcomeModel(recentURLs: { [] }, tools: Self.mixedTools)
+    model.isNaming = true
+    var opened: [URL] = []
+    let actions = WelcomeView.Actions(
+      open: { opened.append($0) }, choose: {}, create: { _ in throw UserFacingError.projectName })
+
+    #expect(NewProjectSheet.submit("   ", model: model, actions: actions) == .projectName)
+    #expect(opened.isEmpty)
+    #expect(model.isNaming)
+  }
+
+  @Test("a project open in a document is counted by that document, by its resolved path")
+  func testOpenProjectsCountsOpenDocuments() throws {
+    let document = try ProjectDocument(type: ProjectPackage.typeIdentifier)
+    let url = try #require(document.packageURL)
+    NSDocumentController.shared.addDocument(document)
+    defer { document.close() }
+
+    let open = WelcomeWindow.openProjects()
+
+    #expect(open[WelcomeModel.key(url)] == .some(document.projectSummary()))
+  }
+
+  @Test("a recent project that cannot be opened is reported, not swallowed", .scratchDirectory)
+  func testOpenFailureIsReported() async throws {
+    let url = try ScratchDirectory.url.appendingPathComponent("Gone.astrostack")
+    var failures: [any Error] = []
+
+    await WelcomeWindow.open(url) { failures.append($0) }
+
+    #expect(failures.count == 1)
+  }
 }

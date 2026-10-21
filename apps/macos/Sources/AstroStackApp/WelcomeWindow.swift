@@ -1,6 +1,6 @@
 package import AppKit
 internal import OSLog
-internal import ProjectKit
+package import ProjectKit
 package import StackKit
 internal import SwiftUI
 
@@ -48,7 +48,8 @@ package enum WelcomeWindow {
 
   private static func make() -> NSWindow {
     let actions = WelcomeView.Actions(
-      open: open, choose: choose, create: { try NewProject.create(target: $0) })
+      open: { url in Task { await open(url) } }, choose: choose,
+      create: { try NewProject.create(target: $0) })
     let window = NSWindow(
       contentViewController: NSHostingController(
         rootView: WelcomeView(model: model, actions: actions).interfaceLocale()))
@@ -60,7 +61,7 @@ package enum WelcomeWindow {
   }
 
   /// The counts of every project open in a document, keyed like `WelcomeModel` looks them up.
-  private static func openProjects() -> [String: ProjectSummary?] {
+  package static func openProjects() -> [String: ProjectSummary?] {
     var open: [String: ProjectSummary?] = [:]
     for case let document as ProjectDocument in NSDocumentController.shared.documents {
       guard let url = document.packageURL else { continue }
@@ -71,20 +72,22 @@ package enum WelcomeWindow {
 
   /// Open…: the projects picked in the Open panel, opened like a recent one.
   private static func choose() {
-    for url in NSDocumentController.shared.urlsFromRunningOpenPanel() ?? [] { open(url) }
+    let urls = NSDocumentController.shared.urlsFromRunningOpenPanel() ?? []
+    Task { for url in urls { await open(url) } }
   }
 
-  /// Opens the project at `url` and dismisses this window; a failure is shown, not swallowed.
-  private static func open(_ url: URL) {
-    Task {
-      do {
-        _ = try await NSDocumentController.shared.openDocument(withContentsOf: url, display: true)
-        // An already open project only comes forward: its window was made long ago.
-        dismiss()
-      } catch {
-        logger.error("cannot open \(url.path, privacy: .public): \(error, privacy: .public)")
-        NSAlert(error: error).runModal()
-      }
+  /// Opens the project at `url` and dismisses this window; a failure goes to `report`, never
+  /// swallowed.
+  package static func open(
+    _ url: URL, report: (any Error) -> Void = { NSAlert(error: $0).runModal() }
+  ) async {
+    do {
+      _ = try await NSDocumentController.shared.openDocument(withContentsOf: url, display: true)
+      // An already open project only comes forward: its window was made long ago.
+      dismiss()
+    } catch {
+      logger.error("cannot open \(url.path, privacy: .public): \(error, privacy: .public)")
+      report(error)
     }
   }
 

@@ -108,6 +108,8 @@ package enum MainMenu {
         (.app("Minimize", locale: locale), #selector(NSWindow.performMiniaturize(_:)), "m"),
         (.app("Zoom", locale: locale), #selector(NSWindow.performZoom(_:)), ""),
         nil,
+        (.app("Welcome Window", locale: locale), #selector(AppDelegate.showWelcome(_:)), ""),
+        nil,
         (
           .app("Bring All to Front", locale: locale),
           #selector(NSApplication.arrangeInFront(_:)), ""

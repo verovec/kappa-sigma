@@ -23,7 +23,8 @@ struct NewProjectTests {
     try package.close()
   }
 
-  @Test("a second project of the same target is suffixed; the first is left as it was",
+  @Test(
+    "a second project of the same target is suffixed; the first is left as it was",
     .scratchDirectory)
   func testCollisionIsSuffixed() throws {
     let folder = try ScratchDirectory.url
@@ -39,7 +40,8 @@ struct NewProjectTests {
     #expect(try Data(contentsOf: marker) == Data("kept".utf8))
   }
 
-  @Test("a name with nothing left once cleaned is refused", .scratchDirectory,
+  @Test(
+    "a name with nothing left once cleaned is refused", .scratchDirectory,
     arguments: ["", "   ", "...", "/"])
   func testEmptyNameIsRefused(_ target: String) throws {
     let folder = try ScratchDirectory.url

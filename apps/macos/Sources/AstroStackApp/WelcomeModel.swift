@@ -28,6 +28,12 @@ package final class WelcomeModel {
     /// Its status at the last check.
     package let status: ToolStatus
 
+    /// `tool` found as `status`.
+    package init(tool: HostTool, status: ToolStatus) {
+      self.tool = tool
+      self.status = status
+    }
+
     /// The tool.
     package var id: HostTool { tool }
   }

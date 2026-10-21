@@ -11,6 +11,7 @@ package enum SettingsWindow {
   package static func show() -> NSWindow {
     let window = window ?? make()
     Self.window = window
+    Task { await WelcomeWindow.model.recheckTools() }
     window.makeKeyAndOrderFront(nil)
     return window
   }
@@ -18,7 +19,10 @@ package enum SettingsWindow {
   private static func make() -> NSWindow {
     let window = NSWindow(
       contentViewController: NSHostingController(
-        rootView: SettingsView(setting: LanguageSetting(), relaunch: relaunch).interfaceLocale()))
+        rootView: SettingsView(
+          setting: LanguageSetting(), relaunch: relaunch,
+          tools: (WelcomeWindow.model, WelcomeWindow.hostTools)
+        ).interfaceLocale()))
     window.title = String(localized: .app("Settings"))
     window.styleMask = [.titled, .closable]
     window.isReleasedWhenClosed = false

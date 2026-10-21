@@ -1,11 +1,18 @@
 package import AppKit
 
-/// Opens an untitled project when the app starts without a document, as document apps do;
+/// Shows the welcome window when the app starts without a document (or is reopened from the Dock
+/// with no window): a project is named after its target there, never « Untitled ».
 /// `NSDocumentController` does the rest.
 package final class AppDelegate: NSObject, NSApplicationDelegate {
-  /// Yes: a launch without a file opens an untitled project.
+  /// Yes, unless `-openImage` names a FITS: AppKit then asks `applicationOpenUntitledFile`.
   package func applicationShouldOpenUntitledFile(_ sender: NSApplication) -> Bool {
     Self.launchImage == nil
+  }
+
+  /// Shows the welcome window instead of creating an untitled project.
+  package func applicationOpenUntitledFile(_ sender: NSApplication) -> Bool {
+    WelcomeWindow.show()
+    return true
   }
 
   /// `-openImage <path>` opens that FITS in the viewer at launch; `-openRun <folder>` opens a
@@ -42,7 +49,12 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
     ImageViewerWindow.choose()
   }
 
-  /// AstroStack › Settings…: the interface language.
+  /// Window › Welcome Window: recent projects, a new project, the host tools.
+  @objc package func showWelcome(_ sender: Any?) {
+    WelcomeWindow.show()
+  }
+
+  /// AstroStack › Settings…: the interface language and the host tools.
   @objc package func showSettings(_ sender: Any?) {
     SettingsWindow.show()
   }

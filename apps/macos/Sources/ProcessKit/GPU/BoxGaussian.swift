@@ -1,16 +1,15 @@
 package import Metal
 
-/// A Gaussian blur as three box passes along x then y.
+/// The legacy `imgops.GaussianBlur`: three `BoxBlur` passes of Kovesi's widths for σ.
 ///
-/// Kovesi's box widths, edges clamped: the legacy `imgops.GaussianBlur`, on `Mask.metal`'s
-/// running-sum box pass (Kahan-compensated, one thread per line): the cost does not grow with σ.
+/// `boxesForGauss(σ, 3)`, rounding half away from zero, a radius below 1 skipped (hdrcomp's own
+/// widths differ: `HDRProcess` keeps them).
 package struct BoxGaussian {
-  private let pipeline: MTLComputePipelineState
+  private let blur: BoxBlur
 
-  /// The blur's pipeline on `device`.
+  /// The blur on `device`.
   package init(device: MTLDevice) throws {
-    pipeline = try ProcessLibrary.pipeline(
-      device: device, file: "Mask.metal", function: "boxBlurRunning")
+    blur = try BoxBlur(device: device)
   }
 
   /// The radii of the three boxes approximating a Gaussian of `sigma` pixels (`boxesForGauss`;
@@ -26,45 +25,11 @@ package struct BoxGaussian {
       .filter { $0 >= 1 }
   }
 
-  /// Encodes `source` blurred by `sigma` pixels into `target`, using `scratch` (all one plane,
-  /// one size; `source` is left untouched).
+  /// Encodes `source` blurred by `sigma` pixels into `target` (one plane each, one size; a σ
+  /// with no radius ≥ 1 copies).
   package func encode(
-    _ source: MTLTexture, into target: MTLTexture, scratch: MTLTexture, sigma: Double,
-    commands: MTLCommandBuffer
+    _ source: MTLTexture, into target: MTLTexture, sigma: Double, commands: MTLCommandBuffer
   ) throws {
-    let radii = Self.radii(sigma: sigma)
-    guard !radii.isEmpty else {
-      guard let blit = commands.makeBlitCommandEncoder() else {
-        throw ProcessError.commandFailed("blur copy")
-      }
-      blit.copy(from: source, to: target)
-      return blit.endEncoding()
-    }
-    var input = source
-    for radius in radii {
-      try pass(input, into: scratch, radius: radius, axis: 0, commands: commands)
-      try pass(scratch, into: target, radius: radius, axis: 1, commands: commands)
-      input = target
-    }
-  }
-
-  private func pass(
-    _ source: MTLTexture, into target: MTLTexture, radius: Int, axis: Int32,
-    commands: MTLCommandBuffer
-  ) throws {
-    guard let encoder = commands.makeComputeCommandEncoder() else {
-      throw ProcessError.commandFailed("blur encoder")
-    }
-    var radiusAxis = SIMD2(Int32(radius), axis)
-    encoder.setComputePipelineState(pipeline)
-    encoder.setTexture(source, index: 0)
-    encoder.setTexture(target, index: 1)
-    unsafe encoder.setBytes(&radiusAxis, length: MemoryLayout<SIMD2<Int32>>.stride, index: 0)
-    // One thread per row (x pass) or column (y pass).
-    let lines = axis == 0 ? target.height : target.width
-    encoder.dispatchThreads(
-      MTLSize(width: lines, height: 1, depth: 1),
-      threadsPerThreadgroup: MTLSize(width: min(64, lines), height: 1, depth: 1))
-    encoder.endEncoding()
+    try blur.encode(source, into: target, radii: Self.radii(sigma: sigma), commands: commands)
   }
 }

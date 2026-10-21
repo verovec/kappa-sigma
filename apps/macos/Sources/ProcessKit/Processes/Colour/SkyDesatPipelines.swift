@@ -23,15 +23,13 @@ struct SkyDesatPipelines {
     _ input: GPUImage, into output: GPUImage, uniforms: SkyDesatUniforms,
     commands: MTLCommandBuffer
   ) throws {
-    let plane = { try Self.intermediate(like: input, device: commands.device) }
-    let (meanPlane, scratch, detail, coarse, weight) = (
-      try plane(), try plane(), try plane(), try plane(), try plane()
-    )
+    let plane = { try ScratchTexture.make(like: input.planes[0], device: commands.device) }
+    let (meanPlane, detail, coarse, weight) = (try plane(), try plane(), try plane(), try plane())
     try run(mean, input.planes + [meanPlane], over: output, commands: commands)
     try gaussian.encode(
-      meanPlane, into: detail, scratch: scratch, sigma: uniforms.starSigma, commands: commands)
+      meanPlane, into: detail, sigma: uniforms.starSigma, commands: commands)
     try gaussian.encode(
-      meanPlane, into: coarse, scratch: scratch, sigma: uniforms.coarseSigma, commands: commands)
+      meanPlane, into: coarse, sigma: uniforms.coarseSigma, commands: commands)
     try run(
       starWeight, [detail, coarse, weight], values: uniforms.star, over: output, commands: commands)
     var fields: [MTLTexture] = []
@@ -41,26 +39,12 @@ struct SkyDesatPipelines {
       let field = try plane()
       try run(residual, [channel, meanPlane, weight, masked], over: output, commands: commands)
       try gaussian.encode(
-        masked, into: field, scratch: scratch, sigma: uniforms.coarseSigma, commands: commands)
+        masked, into: field, sigma: uniforms.coarseSigma, commands: commands)
       fields.append(field)
     }
     try run(
       desat, input.planes + output.planes + [meanPlane, coarse, weight] + fields,
       values: uniforms.final, over: output, commands: commands)
-  }
-
-  /// A GPU-only plane the size of `image`.
-  ///
-  /// `.private`: no CPU copy, never read back.
-  private static func intermediate(like image: GPUImage, device: MTLDevice) throws -> MTLTexture {
-    let descriptor = MTLTextureDescriptor.texture2DDescriptor(
-      pixelFormat: .r32Float, width: image.width, height: image.height, mipmapped: false)
-    descriptor.usage = [.shaderRead, .shaderWrite]
-    descriptor.storageMode = .private
-    guard let texture = device.makeTexture(descriptor: descriptor) else {
-      throw ProcessError.commandFailed("sky desat plane")
-    }
-    return texture
   }
 
   private func run(

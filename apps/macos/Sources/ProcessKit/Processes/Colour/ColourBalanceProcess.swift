@@ -82,13 +82,13 @@ package struct ColourBalanceProcess: ImageProcess {
     }
     // Only the region comes back from the GPU, never the whole frame.
     let box = MTLRegionMake2D(region.x, region.y, region.width, region.height)
+    let pixels = region.width * region.height
     return image.planes.map { plane in
-      let values = unsafe [Float](unsafeUninitializedCapacity: region.width * region.height) {
-        buffer, count in
+      let values = unsafe [Float](unsafeUninitializedCapacity: pixels) { buffer, count in
         guard let base = buffer.baseAddress else { return }
         unsafe plane.getBytes(
           base, bytesPerRow: region.width * MemoryLayout<Float>.stride, from: box, mipmapLevel: 0)
-        count = region.width * region.height
+        count = pixels
       }
       return AutoSTF.medianAndMADN(values).median
     }

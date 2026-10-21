@@ -18,8 +18,7 @@ non-destructive history, recipes and the registry (design §2, §4.1).
 - `GPUImage` (r32Float planes, read/write, shared), `ProcessRunner` (synchronous run),
   `ProcessLibrary` (pipelines with RenderKit's fast-math-off compile options).
 - `ProcessContracts`: **PreviewEqualsApply**, **NoHiddenState**, **PxUnitsScale** (a `.px` value
-  `v` at scale 2 = `v / 2` at scale 1, the process's other `.px` values halved in the reference
-  too), bit-exact.
+  `v` at scale 2 = `v / 2` at scale 1, every other `.px` value halved with it), bit-exact.
 - `History` (one folder per image): steps (process, params, output FITS via `FITSFile.create`,
   numbered after what the folder already holds), undo/redo reloading from disk (atomic), named
   `snapshots` that survive undo (the viewer's compare reference), `save()` removes only the
@@ -50,34 +49,45 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   Every coefficient is computed on the CPU (`StretchUniforms`) from the panel values and the
   stats; "autostretch like Siril" and the deep-sky 0.90 headroom are suggestions, not defaults
   hidden in the shader. No panel yet: the Studio renders the schema generically (0075/0076).
+- **HDRProcess** (card 0052, id `hdr`, stage linear, off by default): the port of the v9
+  runbook's hdrcomp. Luminance (mean of the planes) → grey opening (`GreyMorphology`, radius
+  `openRadius` px) so stars never enter the smooth part → three box passes (`BoxBlur`, Kovesi's
+  widths for σ `sigma` px, hdrcomp's own approximation) → above t1 = bundle sky + `kneeAboveSky`
+  the smooth part becomes t1 + s·asinh((smooth − t1)/s), the detail is put back, one ratio L′/L
+  scales every plane. The sky is the mean of the bundle's plane medians and the thresholds are
+  absolute above it (PO 2026-10-19: 0.00084 / 0.00118, σ 30, radius 16), never multiples of a
+  measured sky. Pinned against hdrcomp's recorded `crop/hdr_only.fits` (max |Δ| 6e-8).
+- Shared GPU helpers: `GreyMorphology` (erode/dilate/open, separable, window clipped to the
+  image), `BoxBlur` (edge-clamped x+y passes, one per radius) and `ScratchTexture` (private
+  r32Float intermediates) — encode into the caller's command buffer; reuse them, never a second
+  min/max or blur kernel. `BoxBlur` runs Kahan running sums (cost independent of the radius);
+  `BoxGaussian` (card 0053) is the legacy `imgops.GaussianBlur` widths for σ on top of it.
+- `ProcessRegistry`: refuses duplicates and invalid schemas (`.px` without
+  `previewExactOnlyAt1to1`, a default outside its bounds or options, infinite bounds);
+  `standard()` is validated like any registry and lists the shipped processes (today:
+  `channel-combination`, `stretch`, `hdr`, `colour-balance`, `sky-desat`, `curves`, `saturation`;
+  pipeline order is E15's — `stage` documents it).
 - **Colour processes** (card 0053), `Processes/Colour/`, kernels in `Colour.metal` (they share the
   HSL helpers; a runtime-compiled source has no `#include`) and `SkyDesat.metal`; every default is
   the identity, bit for bit:
-  - `colour-balance` (linear): `(in + offset) · gain` per channel, `linked` = the green gain for
-    all. A sky region is measured by `regionMedians` (RenderKit's robust median) and only fills
+  - `colour-balance` (linear): `(in + offset) · gain` per channel; untouched values copy. A sky
+    region is measured by `regionMedians` (RenderKit's robust median) and only fills
     suggestions: `neutraliseSuggestions` (offsets equalising its medians, level kept) and
     `greySuggestions` (gains after the offsets, green fixed). The region picker is the viewer's
-    `PixelRegion`, wired by the Studio panel.
+    `PixelRegion`, wired by the Studio panel; a grey gain outside the bounds is not offered.
   - `sky-desat` (linear): the legacy `chromasmooth.go` `sky_desat` passes, brightness-relative
     masks (fractions of the sky level) — stage 1 pulls the chroma toward its star-masked coarse
     field, stage 2 greys the floor, keep-cool gates stage 1 on warm deviations, saturated cores are
     guarded; the pixel mean is preserved. Sky level and chroma σ come from the bundle `LayerStats`
     (refused without them); every band and radius is a parameter. Linear, not after the stretch:
-    the bands were tuned on linear data (+0.05 % of sky for the M45 veil).
+    the bands were tuned on linear data (+0.05 % of sky for the M45 veil). Blurs: `BoxGaussian`.
   - `curves` (non-linear): RGB, R, G, B, luminance (lift by f(Y) − Y, Rec. 709), saturation (HSL
     S) as `points` parameters; `MonotoneSpline` (Fritsch–Carlson, no overshoot) sampled into a
     1024 × 6 LUT texture built at init. RenderKit's `CurveEditor` edits them (`CurveEditorPoints`,
     the app converts to `CurvePoint` and passes `{ MonotoneSpline(points).callAsFunction }`).
   - `saturation` (non-linear): astrocomp's `-sat -sat-masked` (HSL S through the
     `saturationMaskLUT` band on the HSL lightness), the compose star-core desaturation
-    (`starDesatMaskLUT`) and the `desat` tool's luma blend `k`; the PO's values are suggestions.
-- `BoxGaussian`: `imgops.GaussianBlur` on the GPU (three Kovesi boxes over `Mask.metal`'s
-  edge-clamped box pass), encoded into a render's command buffer — reuse it for any blur.
-- `ProcessRegistry`: refuses duplicates and invalid schemas (`.px` without
-  `previewExactOnlyAt1to1`, a default outside its bounds or options, infinite bounds);
-  `standard()` is validated like any registry and lists the shipped processes (today:
-  `channel-combination`, `stretch`, `colour-balance`, `sky-desat`, `curves`, `saturation`; the
-  menu order, pipeline order comes from `stage`).
+    (`starDesatMaskLUT` on the luminance) and the `desat` tool's luma blend `k`; the PO's values are suggestions.
 
 ## Strings (card 0073)
 

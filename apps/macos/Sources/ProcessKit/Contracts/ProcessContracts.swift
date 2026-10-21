@@ -91,9 +91,8 @@ package struct ProcessContracts {
     return nil
   }
 
-  /// `id` at its upper bound `v`, scale 2, against `v / 2` at scale 1 — every other `.px`
-  /// parameter halved in the reference too, as a process with several pixel sizes is drawn at
-  /// half scale with all of them halved.
+  /// `id` at its upper bound `v`, scale 2, against `v / 2` at scale 1, every other `.px` value
+  /// halved with it.
   private func pixelScaleViolation(
     of type: any ImageProcess.Type, params: ParamSet, id: String
   ) throws -> String? {
@@ -105,22 +104,24 @@ package struct ProcessContracts {
     }
     var atFull = params
     try atFull.set(id, .number(full))
-    var atHalf = params
-    for other in type.schema.pixelParameters where other != id {
-      let halved = params.number(other) / 2
-      // Clamping the halved value would compare two different settings: say so instead.
-      guard case .number(_, let otherBounds)? = type.schema.spec(other)?.kind,
-        otherBounds.contains(halved)
-      else {
-        return "\(id): \(other) = \(params.number(other)) cannot be halved within its bounds"
+    // Every other pixel parameter is halved too: at scale 2 the process divides all of them. A
+    // half below its bound would be clamped, and the reference would compare the wrong values.
+    var atHalf = atFull
+    for other in type.schema.pixelParameters {
+      let value = atFull.number(other) / 2
+      if case .number(_, let otherBounds)? = type.schema.spec(other)?.kind,
+        value < otherBounds.lowerBound
+      {
+        return "\(other) = \(value * 2): v / 2 is below its bounds \(otherBounds)"
       }
-      try atHalf.set(other, .number(halved))
+      try atHalf.set(other, .number(value))
     }
-    try atHalf.set(id, .number(half))
     let scaled = try render(type.init(params: atFull, device: device), scale: 2)
     let reference = try render(type.init(params: atHalf, device: device), scale: 1)
+    let halved = type.schema.pixelParameters.map { "\($0) = \(atHalf.number($0))" }
     return Self.identical(scaled, reference)
-      ? nil : "\(id) = \(full) at scale 2 ≠ \(id) = \(half) at scale 1"
+      ? nil
+      : "\(id) = \(full) at scale 2 ≠ \(halved.joined(separator: ", ")) at scale 1"
   }
 
   private func render(

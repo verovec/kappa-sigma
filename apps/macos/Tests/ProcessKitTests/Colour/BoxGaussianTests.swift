@@ -26,11 +26,10 @@ struct BoxGaussianTests {
     }
     let source = try GPUImage(device: device, width: width, height: height, planes: [plane])
     let target = try GPUImage(device: device, width: width, height: height, channels: 1)
-    let scratch = try GPUImage(device: device, width: width, height: height, channels: 1)
     let queue = try #require(device.makeCommandQueue())
     let commands = try #require(queue.makeCommandBuffer())
     try BoxGaussian(device: device).encode(
-      source.planes[0], into: target.planes[0], scratch: scratch.planes[0], sigma: sigma,
+      source.planes[0], into: target.planes[0], sigma: sigma,
       commands: commands)
     commands.commit()
     commands.waitUntilCompleted()

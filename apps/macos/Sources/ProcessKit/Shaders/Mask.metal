@@ -82,3 +82,41 @@ kernel void maskBlend(texture2d<float, access::read> input [[texture(0)]],
   float b = processed.read(gid).r;
   out.write(float4(m == 1.0f ? b : (m == 0.0f ? a : m * b + (1.0f - m) * a)), gid);
 }
+
+// One pixel of line `line` at position `k` (edge-clamped) along x (horizontal) or y.
+static float boxSample(texture2d<float, access::read> src, bool horizontal, uint line, int k,
+                       int length) {
+  uint at = uint(clamp(k, 0, length - 1));
+  return src.read(horizontal ? uint2(at, line) : uint2(line, at)).r;
+}
+
+// Kahan-compensated sum += value.
+static void kahanAdd(thread float &sum, thread float &carry, float value) {
+  float y = value - carry;
+  float t = sum + y;
+  carry = (t - sum) - y;
+  sum = t;
+}
+
+// A box blur of radius `radius` along x (axis 0) or y, edge-clamped, as a running sum: one thread
+// per row (or column), so the cost does not grow with the radius (BoxGaussian.swift).
+kernel void boxBlurRunning(texture2d<float, access::read> src [[texture(0)]],
+                           texture2d<float, access::write> dst [[texture(1)]],
+                           constant int2 &radiusAxis [[buffer(0)]],
+                           uint line [[thread_position_in_grid]]) {
+  bool horizontal = radiusAxis.y == 0;
+  int length = int(horizontal ? src.get_width() : src.get_height());
+  uint lines = horizontal ? src.get_height() : src.get_width();
+  if (line >= lines) { return; }
+  int radius = radiusAxis.x;
+  float count = float(2 * radius + 1);
+  float sum = 0.0f, carry = 0.0f;
+  for (int k = -radius; k <= radius; ++k) {
+    kahanAdd(sum, carry, boxSample(src, horizontal, line, k, length));
+  }
+  for (int i = 0; i < length; ++i) {
+    dst.write(float4(sum / count), horizontal ? uint2(uint(i), line) : uint2(line, uint(i)));
+    kahanAdd(sum, carry, boxSample(src, horizontal, line, i + radius + 1, length));
+    kahanAdd(sum, carry, -boxSample(src, horizontal, line, i - radius, length));
+  }
+}

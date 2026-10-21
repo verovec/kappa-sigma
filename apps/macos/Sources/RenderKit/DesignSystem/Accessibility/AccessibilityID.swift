@@ -108,6 +108,11 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
   /// The glossary window's search field.
   package static let glossarySearch = Self("glossary", "search")
 
+  /// A first-stack guide button (`back`, `next`, `close`; card 0061).
+  package static func guide(_ name: String) -> Self {
+    Self("guide", name)
+  }
+
   /// An id for a test fixture only (`fr.astrostack.test.<name>`).
   package static func fixture(_ name: String) -> Self {
     Self("test", name)

@@ -105,6 +105,11 @@ package final class ProjectDocument: NSDocument {
     self.project = reopened
   }
 
+  /// Help › First-Stack Guide: opens this project's guide (card 0061), the only way it opens.
+  @objc package func showGuide(_ sender: Any?) {
+    windowModel?.openGuide()
+  }
+
   /// Records a legacy run opened from this project: its path only, read-only (R7).
   @discardableResult
   package func importLegacyRun(_ source: LegacyRunSource) throws -> ProjectSource {

@@ -15,11 +15,14 @@ package enum AccessibilityAudit {
     package let id: String
     /// Its label in the view's language (empty: VoiceOver would read nothing useful).
     package let label: String
+    /// The first-stack guide points at it (`guideTarget`).
+    package let highlighted: Bool
 
     /// The entry of a control identified by `id` and labelled `label`.
-    package init(id: String, label: String) {
+    package init(id: String, label: String, highlighted: Bool = false) {
       self.id = id
       self.label = label
+      self.highlighted = highlighted
     }
   }
 
@@ -47,6 +50,22 @@ package enum AccessibilityAudit {
     }
     return problems
   }
+}
+
+extension EnvironmentValues {
+  /// The control the first-stack guide points at, `nil` when the guide is closed.
+  ///
+  /// The `.accessible` control of this identifier draws a ring (card 0061). The CLT toolchain
+  /// has no SwiftUI macro plugin (`@Entry`): the key is spelled out.
+  package var guideTarget: AccessibilityID? {
+    get { self[GuideTargetKey.self] }
+    set { self[GuideTargetKey.self] = newValue }
+  }
+}
+
+/// The key of `guideTarget`.
+private struct GuideTargetKey: EnvironmentKey {
+  static let defaultValue: AccessibilityID? = nil
 }
 
 extension View {

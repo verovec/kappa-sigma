@@ -10,6 +10,8 @@ package nonisolated enum AppGlossary {
   package static let glossary = Glossary(bundle: helpBundle)
   /// The preprocessing knobs' words (`knobs.json`, card 0070): `knob.<id>` and its choices.
   package static let knobs = Glossary(bundle: helpBundle, file: "knobs.json")
+  /// HelpKit's process cards and first-stack guide (card 0061).
+  package static let help = HelpIndex(bundle: helpBundle)
 
   private static let helpBundle = KitBundle.resolve(named: "AstroStack_HelpKit.bundle") {
     HelpKitResources.module

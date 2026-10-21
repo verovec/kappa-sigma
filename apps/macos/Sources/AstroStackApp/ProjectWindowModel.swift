@@ -41,6 +41,8 @@ package final class ProjectWindowModel {
   /// This session's imports, in order: the next run applies all their overrides.
   var imports: [ImportRequest] = []
   @ObservationIgnored private var masterServices: MasterServices?
+  /// The first-stack guide's step on screen, `nil` while closed: only `openGuide` opens it.
+  package internal(set) var guideStep: Int?
   /// The project is the untitled temporary package: a run needs it saved first (read on refresh).
   package private(set) var needsSave = false
 

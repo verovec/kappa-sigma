@@ -88,8 +88,9 @@ nonisolated package enum CommandCatalog {
       // ⌘/, not ⌘?: macOS keeps ⌘? for the Help menu's search field.
       "help.shortcuts", "Keyboard Shortcuts", menu: .help, action: "showShortcuts:", key: "/"),
     AppCommand("help.glossary", "Glossary", menu: .help, action: "showGlossary:"),
-    // The first-stack guide arrives with card 0061: shown, disabled, until then.
-    AppCommand("help.guide", "First-Stack Guide", menu: .help, action: nil, separatorBefore: true),
+    // A project window's guide (card 0061): greyed without a project window to answer it.
+    AppCommand(
+      "help.guide", "First-Stack Guide", menu: .help, action: "showGuide:", separatorBefore: true),
   ]
 
   /// Commands that live in a view, not a menu: keys held over the image.

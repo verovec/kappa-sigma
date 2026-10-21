@@ -125,13 +125,13 @@ struct MainMenuTests {
     }
   }
 
-  @Test("Help holds the shortcuts and the glossary; the guide is shown disabled until 0061")
+  @Test("Help holds the shortcuts, the glossary and the first-stack guide")
   func testHelpMenu() throws {
     let help = try #require(MainMenu.helpMenu(in: MainMenu.make(locale: Self.french)))
     #expect(help.title == "Aide")
     let titles = help.items.filter { !$0.isSeparatorItem }.map(\.title)
     #expect(titles == ["Raccourcis clavier", "Glossaire", "Guide du premier empilement"])
-    #expect(help.items.last?.action == nil, "no action: AppKit greys it")
+    #expect(help.items.last?.action.map(NSStringFromSelector) == "showGuide:")
     #expect(help.items.first?.action.map(NSStringFromSelector) == "showShortcuts:")
   }
 

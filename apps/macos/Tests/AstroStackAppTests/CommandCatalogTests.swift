@@ -42,7 +42,7 @@ struct CommandCatalogTests {
   @Test("menu commands have an action; a held key is a viewer gesture, never a menu item")
   func testMenuAndHeldCommands() {
     for command in CommandCatalog.commands {
-      if command.menu != nil && command.id != "help.guide" {
+      if command.menu != nil {
         #expect(command.action != nil, "\(command.id)")
       }
       if command.shortcut?.held == true { #expect(command.menu == nil, "\(command.id)") }

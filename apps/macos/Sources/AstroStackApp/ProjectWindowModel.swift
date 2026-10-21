@@ -29,9 +29,6 @@ package final class ProjectWindowModel {
   package private(set) var coverage: CoverageMatrix?
   /// A Rescan is running.
   package internal(set) var isScanning = false
-  /// The request `scan` was planned for, the user's import choices included: a Rescan of the
-  /// same sources keeps them (the request itself is not persisted before 0057).
-  var scanRequest: ImportRequest?
   var scanTask: Task<Void, Never>?
   /// The preprocessing run the Stacking stage shows: the one running, or the last one.
   package internal(set) var run: RunViewModel?
@@ -117,8 +114,9 @@ package final class ProjectWindowModel {
         try store.addSource(kind: .night, path: path)
       }
       imports.append(request)
-      let nights = try store.sources().filter { $0.kind == .night }.map(\.path)
-      adoptScan(of: importing, for: request, sources: nights)
+      // The sources first: whether the sheet's plan is the project's scan depends on them.
+      refresh()
+      adoptScan(of: importing, for: request)
       closeImport()
       refresh()
     } catch {
@@ -137,8 +135,7 @@ package final class ProjectWindowModel {
       let summary = try store?.summary() ?? ProjectSummary()
       let running = run?.isRunning == true ? 1 : 0
       statuses = JourneyState.derive(
-        from: ProjectFacts(
-          summary: summary, calibrationGaps: coverage?.gaps ?? nil, stacksRunning: running))
+        from: ProjectFacts(summary: summary, coverage: coverage, stacksRunning: running))
       error = nil
     } catch {
       self.error = UserFacingError(error)

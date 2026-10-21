@@ -31,8 +31,10 @@ nonisolated package struct ProjectFacts: Equatable, Sendable {
     self.framesReviewed = framesReviewed
   }
 
-  /// The facts of `summary` with the gaps of the last scan's `coverage` (0078).
-  package init(summary: ProjectSummary, coverage: CoverageMatrix?) {
-    self.init(summary: summary, calibrationGaps: coverage?.gaps ?? nil)
+  /// The facts of `summary` with the gaps of the last scan's `coverage` (0078; `nil` before a
+  /// scan or for a scan without lights) and the stacks running.
+  package init(summary: ProjectSummary, coverage: CoverageMatrix?, stacksRunning: Int = 0) {
+    self.init(
+      summary: summary, calibrationGaps: coverage?.gaps ?? nil, stacksRunning: stacksRunning)
   }
 }

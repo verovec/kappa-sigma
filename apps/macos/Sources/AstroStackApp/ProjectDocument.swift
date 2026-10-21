@@ -121,6 +121,7 @@ package final class ProjectDocument: NSDocument {
   /// Closes the package (deleting an unsaved untitled one) before closing the document.
   override package func close() {
     windowModel?.cancelRun()
+    windowModel?.cancelScan()
     if let project { release(project) }
     project = nil
     super.close()

@@ -177,6 +177,13 @@ package enum SirilScripts {
     return SirilScript(commands)
   }
 
+  /// One image's background extraction (card 0072): load, the `subsky` of the engine, save.
+  package static func backgroundExtraction(load: String, out: String, subsky: SirilCommand)
+    -> SirilScript
+  {
+    SirilScript([.load(load), subsky, .save(out)])
+  }
+
   /// The Siril finish: linked autostretch, saturation, saves (`FinishScript`).
   package static func finish(
     load: String, out: String, linked: Bool, saturation: Double, formats: [SirilCommand.SaveFormat]

@@ -40,9 +40,12 @@ struct AccessibilityAuditTests {
   func testEveryInteractiveElementHasLabelAndIdentifier(language: String) {
     let entries = Self.entries(ComponentGallery(), language: language)
     #expect(AccessibilityAudit.problems(entries) == [])
-    // 2 parameter rows × 3, 3 install cards × 2, 2 curve editors × 2.
-    #expect(entries.count == 16, "\(entries.map(\.id))")
+    // 2 parameter rows × 3, 3 install cards × 2, 2 curve editors × 2, the stretch controls'
+    // 3 visible rows × 3 (the raw rows sit in a closed disclosure) and the histogram canvas.
+    #expect(entries.count == 26, "\(entries.map(\.id))")
     #expect(entries.contains { $0.id == "fr.astrostack.parameter.haBlend.slider" })
+    #expect(entries.contains { $0.id == "fr.astrostack.parameter.gallery.shadowsSigma.slider" })
+    #expect(entries.contains { $0.id == "fr.astrostack.histogram.gallery.canvas" })
   }
 
   @Test("the workspace: the journey stages and the stage pane's controls", .scratchDirectory)
@@ -110,7 +113,8 @@ struct AccessibilityAuditTests {
 
   /// Sources whose interactive controls must all go through `.accessible`.
   nonisolated static let audited = [
-    "RenderKit/DesignSystem/Components", "AstroStackApp/JourneySidebarRow.swift",
+    "RenderKit/DesignSystem/Components", "RenderKit/Viewer/STFControls.swift",
+    "AstroStackApp/JourneySidebarRow.swift",
     "AstroStackApp/DataStagePane.swift", "AstroStackApp/StackingStagePane.swift",
     "AstroStackApp/CalibrationStagePane.swift",
     "AstroStackApp/KnobPanel.swift", "AstroStackApp/KnobRow.swift",

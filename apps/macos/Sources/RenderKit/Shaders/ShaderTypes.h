@@ -26,12 +26,16 @@ struct DisplayUniforms {
 };
 
 struct HistogramUniforms {
+  float shadows[4];       // STF c0 per channel, used when stfEnabled (the float arrays lead so
+  float midtone[4];       // the Swift SIMD4 mirrors sit at 16-byte offsets on both sides)
+  float highlights[4];
   unsigned int channels;
   unsigned int stride;    // sample every `stride` pixels in x and y (2 → quarter resolution)
   unsigned int originX;   // region: first sampled column and row (0, 0 for the whole image)
   unsigned int originY;
   unsigned int width;     // region size in pixels
   unsigned int height;
+  unsigned int stfEnabled; // 1: bins of the displayed values (after the STF), 0: linear values
 };
 
 #endif

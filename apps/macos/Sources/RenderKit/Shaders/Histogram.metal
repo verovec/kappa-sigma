@@ -1,8 +1,10 @@
-// Histogram: 256 bins per channel of the linear values clamped to [0, 1], sampled every `stride`
-// pixels (quarter resolution at stride 2). Atomics are fine here: counts are exact integers and
+// Histogram: 256 bins per channel of the values clamped to [0, 1], sampled every `stride`
+// pixels (quarter resolution at stride 2) — the linear values, or the displayed ones through the
+// STF (STF.h) when `stfEnabled` (card 0085). Atomics are fine here: counts are exact integers and
 // this kernel is not oracle-pinned to a summation order.
 #include <metal_stdlib>
 #include "ShaderTypes.h"
+#include "STF.h"
 using namespace metal;
 
 kernel void histogram(texture2d<float, access::read> r [[texture(0)]],
@@ -21,7 +23,9 @@ kernel void histogram(texture2d<float, access::read> r [[texture(0)]],
   }
   for (uint c = 0; c < u.channels; ++c) {
     if (!isfinite(values[c])) { continue; }  // NaN/Inf blanks are not data
-    uint bin = uint(clamp(values[c], 0.0f, 1.0f) * 255.0f + 0.5f);
+    float value = u.stfEnabled != 0 ? stf(values[c], u.shadows[c], u.midtone[c], u.highlights[c])
+                                    : values[c];
+    uint bin = uint(clamp(value, 0.0f, 1.0f) * 255.0f + 0.5f);
     atomic_fetch_add_explicit(&bins[c * 256 + min(bin, 255u)], 1u, memory_order_relaxed);
   }
 }

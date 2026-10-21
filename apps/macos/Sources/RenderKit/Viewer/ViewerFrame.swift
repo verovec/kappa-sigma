@@ -22,6 +22,8 @@ package struct ViewerFrame: Equatable, Sendable {
   package var region: PixelRegion?
   /// Histogram sampling step: 2 counts a quarter of the pixels.
   package var histogramStride = 2
+  /// Which values the histogram counts: the linear data, or what the stretch displays.
+  package var histogramDomain = HistogramDomain.linear
   /// The stored rows are bottom-up: display row 0 is the last stored row. `transform` and
   /// `region` are in display coordinates.
   package var flipRows = false
@@ -57,6 +59,24 @@ package struct ViewerFrame: Equatable, Sendable {
       uniforms.splitX = Float(column)
     }
     return uniforms
+  }
+
+  /// What the histogram depends on: the viewer counts again only when this changes.
+  package struct HistogramInput: Equatable, Sendable {
+    /// The window counted (display rows).
+    package let region: PixelRegion?
+    /// The sampling step.
+    package let stride: Int
+    /// The stretch binned through, in the display domain only.
+    package let stf: [STFParameters]?
+  }
+
+  /// The stretch the histogram bins through: the frame's in the display domain, none otherwise.
+  package var histogramSTF: [STFParameters]? { histogramDomain == .display ? stf : nil }
+
+  /// The histogram's inputs.
+  package var histogramInput: HistogramInput {
+    HistogramInput(region: region, stride: histogramStride, stf: histogramSTF)
   }
 
   /// `region` in stored rows, for the histogram.

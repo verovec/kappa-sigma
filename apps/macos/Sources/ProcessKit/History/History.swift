@@ -73,6 +73,13 @@ package final class History {
     shown = Self.copy(result)
   }
 
+  /// Whether `other` started from the same image (size and pixels): a locked pipeline step
+  /// may reuse its output only then (`PipelineReuse`).
+  package func hasSameOriginal(as other: History) -> Bool {
+    original.width == other.original.width && original.height == other.original.height
+      && original.planes == other.original.planes
+  }
+
   /// The output of applied step `index` (0 = the first), read back from disk.
   package func output(ofStep index: Int) throws -> AstroImage {
     guard steps.indices.contains(index) else { throw HistoryError.noStep(index) }

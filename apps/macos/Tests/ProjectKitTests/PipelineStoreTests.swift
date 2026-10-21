@@ -26,6 +26,19 @@ struct PipelineStoreTests {
     #expect(try reopened.store.pipelineNames() == ["IC 1848 doux"])
   }
 
+  @Test("a name is trimmed alike for save, read and delete", .scratchDirectory)
+  func testNameTrimmedAlike() throws {
+    let package = try ProjectStoreTests.newPackage()
+    defer { try? package.close() }
+    try package.store.savePipeline(named: "M31 v9 \n", json: Data("{}".utf8))
+    #expect(try package.store.pipeline(named: " M31 v9") == Data("{}".utf8))
+    try package.store.deletePipeline(named: "M31 v9\t")
+    #expect(try package.store.pipelineNames() == [])
+    #expect(throws: ProjectStoreError.emptyName) {
+      try package.store.savePipeline(named: "\n", json: Data("{}".utf8))
+    }
+  }
+
   @Test("an empty name or a body that is not text is refused, never stored", .scratchDirectory)
   func testEmptyNameRefused() throws {
     let package = try ProjectStoreTests.newPackage()

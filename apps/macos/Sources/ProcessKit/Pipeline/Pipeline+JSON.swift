@@ -33,11 +33,14 @@ extension Pipeline {
       withJSONObject: object, options: [.prettyPrinted, .sortedKeys])
   }
 
-  /// Reads `data` for the processes of `registry`.
+  /// Reads `data` for the processes of `registry` and the batch tools of `batch` (their
+  /// parameter schemas by id).
   ///
   /// Unknown keys, parameters and clamped values are warnings (R2: the user sees each change);
   /// a newer format, a malformed file, an unknown process or mode is a `PipelineFileError`.
-  package static func load(_ data: Data, registry: ProcessRegistry) throws -> Loaded {
+  package static func load(
+    _ data: Data, registry: ProcessRegistry, batch: [String: ParamSchema] = [:]
+  ) throws -> Loaded {
     guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
       let version = object["schemaVersion"] as? Int, let name = object["name"] as? String,
       let steps = object["steps"] as? [[String: Any]]
@@ -47,31 +50,58 @@ extension Pipeline {
       .map { "unknown key \($0) ignored" }
     var loaded: [PipelineStep] = []
     for (index, step) in steps.enumerated() {
-      let (pipelineStep, stepWarnings) = try loadStep(step, registry: registry)
+      let (pipelineStep, stepWarnings): (PipelineStep, [String])
+      do {
+        (pipelineStep, stepWarnings) = try loadStep(step, registry: registry, batch: batch)
+      } catch {
+        throw PipelineFileError.step(index + 1, "\(error)")
+      }
       loaded.append(pipelineStep)
       warnings += stepWarnings.map { "step \(index + 1): \($0)" }
     }
     return Loaded(pipeline: Pipeline(name: name, steps: loaded), warnings: warnings)
   }
 
-  private static func loadStep(_ step: [String: Any], registry: ProcessRegistry) throws
-    -> (PipelineStep, [String])
-  {
-    guard let recipeObject = step["recipe"],
+  private static func loadStep(
+    _ step: [String: Any], registry: ProcessRegistry, batch: [String: ParamSchema]
+  ) throws -> (PipelineStep, [String]) {
+    guard let recipeObject = step["recipe"] as? [String: Any],
       let modeName = step["mode"] as? String, let mode = PipelineStep.Mode(rawValue: modeName),
-      let locked = step["locked"] as? Bool
+      let lockedValue = step["locked"] as? NSNumber,
+      CFGetTypeID(lockedValue) == CFBooleanGetTypeID()
     else { throw PipelineFileError.malformed("a step needs a recipe, an auto|stop mode, locked") }
-    let recipe = try Recipe.load(
-      JSONSerialization.data(withJSONObject: recipeObject), registry: registry)
-    let warnings =
-      step.keys.sorted().filter { !stepKeys.contains($0) }.map { "unknown key \($0) ignored" }
-      + recipe.warnings
+    let warnings = step.keys.sorted().filter { !stepKeys.contains($0) }
+      .map { "unknown key \($0) ignored" }
+    let (recipe, recipeWarnings) = try loadRecipe(recipeObject, registry: registry, batch: batch)
     return (
-      PipelineStep(
-        recipe: Recipe(processID: recipe.recipe.processID, params: recipe.params), mode: mode,
-        locked: locked),
-      warnings
+      PipelineStep(recipe: recipe, mode: mode, locked: lockedValue.boolValue),
+      warnings + recipeWarnings
     )
+  }
+
+  /// A step's recipe and its warnings.
+  ///
+  /// A registered process goes through `Recipe.load`; a batch tool's values are validated on its
+  /// schema. The values kept are the clamped ones the warnings describe.
+  private static func loadRecipe(
+    _ object: [String: Any], registry: ProcessRegistry, batch: [String: ParamSchema]
+  ) throws -> (Recipe, [String]) {
+    let data = try JSONSerialization.data(withJSONObject: object)
+    if let id = object["process"] as? String, registry.type(id: id) == nil,
+      let schema = batch[id]
+    {
+      let entries = try JSONDecoder().decode(BatchRecipe.self, from: data).params
+      let loaded = ParamSet.loading(entries, onto: schema)
+      let warnings = loaded.rejected.map { "parameter \($0.id) ignored: invalid value" }
+      return (Recipe(processID: id, params: loaded.params), warnings)
+    }
+    let recipe = try Recipe.load(data, registry: registry)
+    return (Recipe(processID: recipe.recipe.processID, params: recipe.params), recipe.warnings)
+  }
+
+  /// The values of a batch tool's recipe.
+  private struct BatchRecipe: Decodable {
+    let params: [ParamSet.Entry]
   }
 }
 
@@ -81,4 +111,6 @@ package enum PipelineFileError: Error, Equatable, Sendable {
   case malformed(String)
   /// Written by a newer format version.
   case newerFormat(Int)
+  /// Step `n` (from 1) could not be read: why.
+  case step(Int, String)
 }

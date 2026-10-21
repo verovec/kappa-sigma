@@ -32,6 +32,45 @@ struct PipelineJSONTests {
     #expect(warned.pipeline.steps.first?.recipe.params.first?.value == .number(8))
   }
 
+  @Test("a batch tool's step loads with its schema; a step error names its step")
+  func testBatchStepAndStepErrors() throws {
+    let registry = try ProcessRegistry([DummyGain.self])
+    let starnet = ParamSchema([
+      ParamSpec(
+        id: "stride", title: "Stride", unit: .none, level: .advanced, number: 256, in: 64...512)
+    ])
+    var params = ParamSet(schema: starnet)
+    try params.set("stride", .number(128))
+    let pipeline = Pipeline(
+      name: "M31",
+      steps: [
+        try PipelineDiffTests.step(2),
+        PipelineStep(recipe: Recipe(processID: "starnet", params: params)),
+      ])
+    let loaded = try Pipeline.load(pipeline.json(), registry: registry, batch: ["starnet": starnet])
+    #expect(loaded.pipeline == pipeline)
+    #expect(throws: PipelineFileError.self) {
+      try Pipeline.load(pipeline.json(), registry: registry)
+    }
+    do {
+      _ = try Pipeline.load(
+        Data(Self.oneStep(process: "nope", mode: "auto").utf8), registry: registry)
+      Issue.record("an unknown process loaded")
+    } catch PipelineFileError.step(let number, _) {
+      #expect(number == 1)
+    }
+  }
+
+  @Test("locked must be a JSON boolean, not 1 or 0")
+  func testLockedIsBoolean() throws {
+    let registry = try ProcessRegistry([DummyGain.self])
+    let json = Self.oneStep(process: "dummy-gain", mode: "auto")
+      .replacingOccurrences(of: #""locked": false"#, with: #""locked": 1"#)
+    #expect(throws: PipelineFileError.self) {
+      try Pipeline.load(Data(json.utf8), registry: registry)
+    }
+  }
+
   /// A pipeline file of one step running `process` in `mode`.
   static func oneStep(process: String, mode: String) -> String {
     #"{"schemaVersion": 1, "name": "M31", "steps": [{"recipe": {"schemaVersion": 1, "process": ""#

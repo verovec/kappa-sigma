@@ -46,6 +46,18 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
     Self("curve", key, part.rawValue)
   }
 
+  /// A histogram's `part` (`canvas`) for the plot `key` (card 0085).
+  package static func histogram(_ key: String, _ part: Part) -> Self {
+    Self("histogram", key, part.rawValue)
+  }
+
+  // MARK: - Viewer
+
+  /// The viewer panel's control `name` (`resetAuto`, `histogramDomain`; card 0085).
+  package static func viewer(_ name: String) -> Self {
+    Self("viewer", name)
+  }
+
   // MARK: - Workspace
 
   /// The journey sidebar row of a stage (`JourneyStage.rawValue`).

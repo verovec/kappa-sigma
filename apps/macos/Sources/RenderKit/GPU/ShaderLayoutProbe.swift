@@ -17,12 +17,9 @@ package enum ShaderLayoutProbe {
   /// Runs the probe on `device` with the library `ShaderLibrary.load` returns.
   package static func run(device: MTLDevice) throws -> Readout {
     var display = sampleDisplay()
-    var histogram = HistogramUniforms(
-      channels: 101, stride: 102, originX: 103, originY: 104, width: 105, height: 106)
+    var histogram = sampleHistogram()
     let expected =
-      words(display) + [
-        histogram.channels, histogram.stride, histogram.originX, histogram.originY, histogram.width,
-        histogram.height,
+      words(display) + words(histogram) + [
         UInt32(MemoryLayout<DisplayUniforms>.size), UInt32(MemoryLayout<HistogramUniforms>.size),
       ]
     let library = try ShaderLibrary.load(device: device)
@@ -66,6 +63,28 @@ package enum ShaderLayoutProbe {
     uniforms.maskOverlay = 25
     uniforms.canvasGrey = 26
     return uniforms
+  }
+
+  /// Distinct values in every field.
+  private static func sampleHistogram() -> HistogramUniforms {
+    var uniforms = HistogramUniforms(
+      channels: 101, stride: 102, area: PixelRegion(x: 103, y: 104, width: 105, height: 106),
+      stf: nil)
+    uniforms.shadows = SIMD4(31, 32, 33, 34)
+    uniforms.midtone = SIMD4(35, 36, 37, 38)
+    uniforms.highlights = SIMD4(39, 40, 41, 42)
+    uniforms.stfEnabled = 107
+    return uniforms
+  }
+
+  /// The fields' bits in declaration order.
+  private static func words(_ uniforms: HistogramUniforms) -> [UInt32] {
+    let lanes = [uniforms.shadows, uniforms.midtone, uniforms.highlights]
+      .flatMap { [$0.x, $0.y, $0.z, $0.w] }
+    return lanes.map(\.bitPattern) + [
+      uniforms.channels, uniforms.stride, uniforms.originX, uniforms.originY, uniforms.width,
+      uniforms.height, uniforms.stfEnabled,
+    ]
   }
 
   /// The fields' bits in declaration order.

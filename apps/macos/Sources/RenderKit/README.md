@@ -36,6 +36,39 @@ processes run (design §4.1, §4.6).
 - Frame budget (`LiveViewerPerfTests`, live-only): 22 Mpx RGB, 3024×1964 view, STF + histogram:
   **1.5 ms** mean GPU time on the M5 Pro (budget 16 ms).
 
+## Display stretch controls (card 0085)
+
+The viewer's stretch stays display-only (R2) but reads and edits precisely:
+
+- **`STFMapping`** (`STF/`): a channel's median and MADN; shadows in σ (`shadows(sigma:)` /
+  `sigma(ofShadows:)`), the target background behind the midtone (`midtone(targetBackground:
+  shadows:)` / `targetBackground(ofMidtone:shadows:)`, Siril's meaning: MTF(m, median − c0)) and
+  `parameters(sigma:targetBackground:)`. `AutoSTF.compute` goes through it (−2.8 σ / 0.25), so
+  the controls read an autostretch back as those numbers and reproduce it bit for bit
+  (`STFMappingTests`). `ViewerModel` measures the statistics once (`statistics`, or the
+  caller's, measured off the main actor by the app's `LoadedImage`) and `mapping(for:)` follows
+  the linked toggle.
+- **`STFChannelControls`** (`Viewer/`): one channel's rows as `ParameterValue`s — shadows σ
+  (−5…5), target background (0.01…0.6), highlights (0.5…1), raw c0 / m / c1 — each editing one
+  parameter only, defaulting to the autostretch (reset lands on it exactly). `STFControls` draws
+  them with `ParameterRow`s; ids `fr.astrostack.parameter.stf.<k|r|g|b>.<row>.<part>`.
+- **Steps** (`ParameterStep`, `ParameterRow(…, step:)`): with a step the slider takes focus and
+  moves one step per arrow, a tenth with ⇧ or ⌥; an ⌥-drag runs at a tenth of the pointer's travel
+  (re-anchored where ⌥ toggles, so the value never jumps). Without a step the row is the plain
+  slider it was. Each row's « why » states its steps.
+- **Display-domain histogram**: `ViewerFrame.histogramDomain` (`linear` | `display`); in the
+  display domain the `histogram` kernel bins `stf(x)` through `STF.h` (the functions
+  `Display.metal` uses too) with the frame's stretch in `HistogramUniforms`, and the viewer counts
+  again when `ViewerFrame.histogramInput` (region, stride, stretch) changes.
+- **`HistogramHandles`** (`Components/`): the plot with the three handles per channel
+  (`STFParameters.handlePositions(in:)`: c0 / c0 + m·(c1 − c0) / c1, or 0 / ½ / 1 displayed),
+  draggable: the press takes the nearest within `reach`, `onDrag` reports the position, and
+  `STFParameters.dragging(_:to:in:)` turns it into a stretch — the value shown at the drop
+  position becomes the black point, the midtone or the white point (`linearValue(atPosition:in:)`
+  inverts the MTF with 1 − m). `ViewerModel.dragHandle` switches Auto → Manual seeded with the
+  auto values and moves that one parameter, every event mapping from the stretch at press time
+  (`onDragEnded` → `endHandleDrag`); `resetToAuto` goes back. 0089 reuses the component.
+
 ## Strings (card 0073)
 
 `Localizable.xcstrings` holds the viewer chrome in en/fr, compiled by `CatalogPlugin` into

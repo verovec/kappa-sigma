@@ -71,6 +71,8 @@ Rules: `Sources/StringCatalog/README.md`.
   `AccessibilityAuditTests` read the reported entries of the hosted gallery and workspace, and
   count raw `Button`/`Slider`/`TextField`/`Toggle`/`Picker`/`Link` against `.accessible` in each
   component's source. A List's rows report from the List (table cells do not propagate).
+  The environment's `guideTarget` (card 0061) rings the `.accessible` control of that id — the
+  first-stack guide points at real controls this way — and the entry reports `highlighted`.
 - **Gallery.** `ComponentGallery` shows every component in every state; the app opens it from
   Window › Component Gallery in debug builds, and `ComponentGalleryTests` attaches its PNGs in
   light/dark × fr/en.

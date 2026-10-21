@@ -31,9 +31,10 @@ doctor:
 hooks:
     @ln -sf "$(pwd)/scripts/git-hooks/pre-push" "$(git rev-parse --git-path hooks)/pre-push" && echo "pre-push hook installed"
 
-# Build the Swift packages and assemble apps/macos/.build/AstroStack.app (debug, ad-hoc signed).
-app-build:
-    @./scripts/app-bundle.sh {{pkg}} {{swiftflags}}
+# Build the Swift packages and assemble apps/macos/.build/AstroStack.app (ad-hoc signed). Extra
+# args go to `swift build`: debug by default, `just app-build -c release` for real runs.
+app-build *args:
+    @./scripts/app-bundle.sh {{pkg}} {{swiftflags}} {{args}}
 
 # Build, then open the app (and the given `.astrostack` projects); returns when the app quits.
 app-run *projects: app-build

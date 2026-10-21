@@ -19,9 +19,10 @@ struct DataIntegrationView: View {
         columns
         Divider()
         ForEach(summary.rows) { row in gridRow(row) }
-        if summary.rows.count > summary.totals.count {
+        let spanning = summary.totals.filter { $0.rows > 1 }
+        if !spanning.isEmpty {
           Divider()
-          ForEach(summary.totals) { total in totalRow(total) }
+          ForEach(spanning) { total in totalRow(total) }
         }
       }
     }

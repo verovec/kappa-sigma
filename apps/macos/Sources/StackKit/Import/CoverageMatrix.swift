@@ -25,8 +25,11 @@ package struct CoverageMatrix: Equatable, Sendable {
 
   /// Nights in order (undated last), then filters in canonical order, clip filter, set id.
   package var rows: [Row]
-  /// Light sets with a role nothing covers that the user did not ask to skip.
-  package var gaps: Int { rows.filter(\.hasGap).count }
+  /// Light sets with a role nothing covers that the user did not ask to skip; `nil` when the
+  /// scan holds no light set, so nothing can be said to be calibrated.
+  package var gaps: Int? { rows.isEmpty ? nil : rows.filter(\.hasGap).count }
+  /// Distinct targets: a heading names its target only when there are several.
+  package var targets: Int { Set(rows.map(\.channel.key.object)).count }
 
   /// The coverage `plan` describes.
   package init(plan: ImportPlan) {
@@ -34,9 +37,10 @@ package struct CoverageMatrix: Equatable, Sendable {
       plan.inventory.sets.map { ($0.key, $0) }, uniquingKeysWith: { first, _ in first })
     rows = plan.calibration.map { channel in
       let set = sets[channel.key]
+      // The clip filter the matcher used: the set's verdict, else its night's (`LightRef`).
       return Row(
         channel: channel, night: set.map(ImportPlan.night(of:)) ?? channel.key.session,
-        filterSet: set?.filterSet ?? .unknown)
+        filterSet: set.map { LightRef($0, in: plan.inventory).filterSet } ?? .unknown)
     }
     .sorted(by: Self.precedes)
   }

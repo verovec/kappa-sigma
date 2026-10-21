@@ -33,6 +33,6 @@ nonisolated package struct ProjectFacts: Equatable, Sendable {
 
   /// The facts of `summary` with the gaps of the last scan's `coverage` (0078).
   package init(summary: ProjectSummary, coverage: CoverageMatrix?) {
-    self.init(summary: summary, calibrationGaps: coverage?.gaps)
+    self.init(summary: summary, calibrationGaps: coverage?.gaps ?? nil)
   }
 }

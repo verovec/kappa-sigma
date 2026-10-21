@@ -12,7 +12,7 @@ extension ProjectWindowModel {
   /// scan's defaults, which the pane then shows as is.
   package func rescan() {
     cancelScan()
-    let paths = sources.map(\.path)
+    let paths = nightPaths
     guard !paths.isEmpty else { return }
     guard let store = store() else {
       error = .projectClosed
@@ -27,15 +27,21 @@ extension ProjectWindowModel {
       do {
         let plan = try await planning(request)
         guard !Task.isCancelled else { return }
-        scanRequest = request
-        scan = plan
+        // A night recorded while it ran is not in this plan: show nothing rather than a part.
+        if Self.samePaths(request.paths, nightPaths) {
+          scanRequest = request
+          scan = plan
+        } else {
+          dropScan()
+        }
         isScanning = false
         scanTask = nil
         refresh()
       } catch {
         guard !Task.isCancelled, !(error is CancellationError) else { return }
-        isScanning = false
-        scanTask = nil
+        // The folders no longer read as scanned: the last scan stops describing them.
+        dropScan()
+        refresh()
         self.error = UserFacingError(error)
       }
     }
@@ -74,6 +80,9 @@ extension ProjectWindowModel {
     scanRequest = nil
     scan = nil
   }
+
+  /// The capture nights among the sources: a legacy run (0043) is a source, never a capture.
+  var nightPaths: [String] { sources.filter { $0.kind == .night }.map(\.path) }
 
   /// The same folders, compared as the store records them (standardized file paths).
   static func samePaths(_ lhs: [String], _ rhs: [String]) -> Bool {

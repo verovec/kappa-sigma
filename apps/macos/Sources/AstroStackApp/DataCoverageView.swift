@@ -64,6 +64,8 @@ struct DataCoverageView: View {
         ImportFormat.filter(row.channel.filter, filterSet: row.filterSet, locale: locale),
         format.exposure(ms: row.channel.key.exposureMs),
       ] + (row.night.isEmpty ? [] : [row.night])
-    return parts.joined(separator: " · ")
+    let object = row.channel.key.object
+    let target = coverage.targets > 1 && !object.isEmpty ? [object] : []
+    return (target + parts).joined(separator: " · ")
   }
 }

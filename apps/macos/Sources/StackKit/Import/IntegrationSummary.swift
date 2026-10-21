@@ -38,8 +38,8 @@ package struct IntegrationSummary: Equatable, Sendable {
     package var frames: Int
     /// Integration over every night.
     package var integrationMs: Int
-    /// Dated nights with lights of this filter.
-    package var nights: Int
+    /// The rows it sums: a total over one row only repeats it.
+    package var rows: Int
     /// Target, filter and clip filter.
     package var id: String { "\(object)|\(filter)|\(filterSet.rawValue)" }
   }
@@ -88,18 +88,17 @@ package struct IntegrationSummary: Equatable, Sendable {
   private static func totals(of rows: [Row]) -> [Total] {
     var totals: [Total] = []
     for row in rows {
-      let dated = row.night.isEmpty ? 0 : 1
       if let last = totals.last, last.object == row.object, last.filter == row.filter,
         last.filterSet == row.filterSet
       {
         totals[totals.count - 1].frames += row.frames
         totals[totals.count - 1].integrationMs += row.integrationMs
-        totals[totals.count - 1].nights += dated
+        totals[totals.count - 1].rows += 1
       } else {
         totals.append(
           Total(
             object: row.object, filter: row.filter, filterSet: row.filterSet, frames: row.frames,
-            integrationMs: row.integrationMs, nights: dated))
+            integrationMs: row.integrationMs, rows: 1))
       }
     }
     return totals

@@ -97,7 +97,8 @@ package final class ProjectWindowModel {
       for path in request.paths {
         try store.addSource(kind: .night, path: path)
       }
-      adoptScan(of: importing, for: request, sources: try store.sources().map(\.path))
+      let nights = try store.sources().filter { $0.kind == .night }.map(\.path)
+      adoptScan(of: importing, for: request, sources: nights)
       closeImport()
       refresh()
     } catch {

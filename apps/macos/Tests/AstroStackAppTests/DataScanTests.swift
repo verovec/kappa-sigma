@@ -172,6 +172,64 @@ struct DataScanTests {
     #expect(window.isScanning == false)
   }
 
+  @Test(
+    "a legacy run is a source, never a capture: rescans and adoption skip it", .scratchDirectory)
+  func testLegacyRunIsNotScanned() async throws {
+    let project = try ProjectWindowModelTests.package()
+    defer { try? project.close() }
+    try project.store.addSource(kind: .legacyRun, path: "/runs/M_31/20261018_191749")
+    let recorder = Recorder()
+    let window = Self.window(project, recorder: recorder)
+    window.startImport()
+    let sheet = try #require(window.importing)
+    sheet.choose(folder: URL(fileURLWithPath: "/c/M31-DB"))
+    await sheet.settled()
+    window.add(sheet.request)
+    #expect(window.scan != nil, "the sheet covers every capture night")
+    window.rescan()
+    await window.scanSettled()
+    #expect(recorder.requests.last?.paths == ["/c/M31-DB"])
+  }
+
+  @Test("a scan of no light set says nothing about calibration", .scratchDirectory)
+  func testEmptyScanIsNotCalibrated() async throws {
+    let project = try ProjectWindowModelTests.package()
+    defer { try? project.close() }
+    let window = ProjectWindowModel(
+      store: { project.store }, planning: { _ in ImportPlanningStub.empty })
+    window.add(ImportRequest(paths: ["/c/flats-only"]))
+    window.rescan()
+    await window.scanSettled()
+    #expect(window.coverage?.rows.isEmpty == true)
+    #expect(window.statuses[.calibration] == .ready)
+  }
+
+  @Test("a failed rescan drops the scan it could not reproduce", .scratchDirectory)
+  func testFailedRescanDropsScan() async throws {
+    struct Unmounted: Error {}
+    let project = try ProjectWindowModelTests.package()
+    defer { try? project.close() }
+    let fails = Mutex(false)
+    let window = ProjectWindowModel(
+      store: { project.store },
+      planning: { _ in
+        { request in
+          if fails.withLock({ $0 }) { throw Unmounted() }
+          return Self.gapPlan(request)
+        }
+      })
+    window.add(ImportRequest(paths: ["/c/M31-DB"]))
+    window.rescan()
+    await window.scanSettled()
+    #expect(window.statuses[.calibration] == .attention(1))
+    fails.withLock { $0 = true }
+    window.rescan()
+    await window.scanSettled()
+    #expect(window.scan == nil)
+    #expect(window.statuses[.calibration] == .ready)
+    #expect(window.error != nil)
+  }
+
   @Test("cancelling stops the scan and keeps the previous result", .scratchDirectory)
   func testCancelKeepsPrevious() async throws {
     let project = try ProjectWindowModelTests.package()

@@ -50,7 +50,11 @@ what the card already answers; do not skip what it points at.
 - `just check` (hygiene + lint + build + full host suite, live tests included) must pass.
 - Run the code-review skill on the working diff (`/code-review`). Fix every finding you
   agree with; record the ones you reject and why (they go in the PR body). Re-run
-  `just check` after fixes.
+  `just check` after fixes. Once the PR is open and its head holds every fix, record the
+  pass: **`just review-pass <n> "<findings fixed / rejected and why>"`** — it posts
+  `code-review: passed <head sha>` on the PR, and `just merge` refuses without it. The
+  marker is bound to the head: any later push (a CI fix, a rebase) needs a fresh
+  `/code-review` of the new diff and a new `just review-pass`.
 
 ## 6 · Ship
 
@@ -64,8 +68,9 @@ what the card already answers; do not skip what it points at.
   `hygiene · lint · build · test` (macOS: `just ci`, live suites self-skip).
 - **The worker merges; the PO is not in the loop** (PO decision 2026-10-20), and the
   only way to do it is **`just merge <n>`** (`scripts/merge-pr.sh`): it waits for the
-  checks, refuses unless every CI job exists and is green on the PR's current head,
-  then squash-merges and deletes the branch. Never call `gh pr merge` directly, never
+  checks, refuses unless every CI job exists and is green on the PR's current head
+  **and** a `just review-pass` marker names that head, then squash-merges and deletes the
+  branch (works from a worktree). Never call `gh pr merge` directly, never
   `--auto` (no branch protection here). A refusal → fix on the branch and push; after
   **two** red rounds on the same card, stop, set `blocked` with the failing check in
   the Journal, and report. Never weaken a test to get green, never skip the

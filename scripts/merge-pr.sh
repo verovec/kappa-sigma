@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# The only way a PR lands on main: refuses unless every CI check exists and reports success.
+# The only way a PR lands on main: refuses unless every CI check exists and reports success AND
+# a /code-review pass is recorded on the current head (`just review-pass`).
 # GitHub cannot enforce this here (private repo, no branch protection), so the tool does.
 # Usage: scripts/merge-pr.sh <pr-number>   (called by `just merge <n>`)
 set -euo pipefail
@@ -41,5 +42,16 @@ if [ -n "$run_sha" ] && [ "$run_sha" != "$head_sha" ]; then
   echo "merge-pr: REFUSED — checks ran on $run_sha but the PR head is $head_sha"; exit 1
 fi
 
-gh pr merge "$pr" --squash --delete-branch
+# The code review must have passed on this exact head: a push after the review needs a new pass.
+if ! gh pr view "$pr" --json comments --jq '.comments[].body' \
+  | grep -qx "code-review: passed ${head_sha}"; then
+  echo "merge-pr: REFUSED — no code review recorded on ${head_sha:0:7}: run /code-review, then"
+  echo "          just review-pass $pr \"<summary>\""
+  exit 1
+fi
+echo "merge-pr: ✓ code review on ${head_sha:0:7}"
+
+# --repo keeps gh off the local checkout: from a worktree it cannot switch to main afterwards.
+repo="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
+gh pr merge "$pr" --repo "$repo" --squash --delete-branch
 echo "merge-pr: PR #$pr merged into main"

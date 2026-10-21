@@ -87,14 +87,16 @@ struct StarNetRunnerTests {
     .scratchDirectory)
   func testStarlessRoundTrip() async throws {
     let binary = try Self.install(Self.flagsScript, named: "starnet")
-    let image = AstroImage(
-      width: 2, height: 1, planes: [[0, 1], [0.5, 0.25], [1, 0]],
-      metadata: ImageMetadata(rowOrder: .topDown))
+    let planes: [[Float]] = [[0, 1], [0.5, 0.25], [1, 0]]
+    let scratch = try ScratchDirectory.url.appendingPathComponent("scratch")
+    // `starless(of:)` takes its image (`sending`): the test keeps only the Sendable planes.
     let starless = try await StarNetRunner.live(binary: binary).starless(
-      of: image, in: try ScratchDirectory.url.appendingPathComponent("scratch")
+      of: AstroImage(
+        width: 2, height: 1, planes: planes, metadata: ImageMetadata(rowOrder: .topDown)),
+      in: scratch
     ) { _ in }
     // The TIFF holds 16-bit samples: one level is the round trip's whole error.
-    let worst = zip(starless.planes.joined(), image.planes.joined()).map { abs($0 - $1) }.max()
+    let worst = zip(starless.planes.joined(), planes.joined()).map { abs($0 - $1) }.max()
     #expect(starless.width == 2 && (worst ?? 1) <= Float(0.5 / 65535))
   }
 

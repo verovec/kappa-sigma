@@ -1,12 +1,18 @@
 package import Foundation
 
-/// Where an export may not write: the captures and the legacy runs are read-only (rule R7).
+/// Where an export may not write: everything the app reads from `~/Documents/astro` is
+/// read-only (rule R7) — captures, legacy runs, the calibration library and the test fixtures.
 package enum ExportGuard {
   /// The read-only folders under the user's home.
-  static let readOnly = ["Documents/astro/captures", "Documents/astro/runs"]
+  static let readOnly = [
+    "Documents/astro/captures", "Documents/astro/runs", "Documents/astro/library",
+    "Documents/astro/fixtures",
+  ]
 
-  /// Why `folder` may not receive an export, or `nil`: links are resolved first, so a path that
-  /// reaches a read-only folder through a symlink is refused too.
+  /// Why `folder` may not receive an export, or `nil`.
+  ///
+  /// Links are resolved first and names compared without case (APFS is case-insensitive), so
+  /// `~/Documents/Astro/Captures` or a link into the runs is refused too.
   package static func refusal(for folder: URL, home: URL) -> String? {
     let target = resolved(folder)
     for relative in readOnly {
@@ -19,8 +25,9 @@ package enum ExportGuard {
     return nil
   }
 
-  /// The path components of `url` with every link resolved: Foundation resolves links only in a
-  /// path that exists, so the nearest existing ancestor is resolved and the rest appended.
+  /// The lowercased path components of `url` with every link resolved: Foundation resolves links
+  /// only in a path that exists, so the nearest existing ancestor is resolved and the rest
+  /// appended.
   static func resolved(_ url: URL) -> [String] {
     var existing = url.standardizedFileURL
     var rest: [String] = []
@@ -29,6 +36,6 @@ package enum ExportGuard {
       rest.insert(existing.lastPathComponent, at: 0)
       existing.deleteLastPathComponent()
     }
-    return existing.resolvingSymlinksInPath().pathComponents + rest
+    return (existing.resolvingSymlinksInPath().pathComponents + rest).map { $0.lowercased() }
   }
 }

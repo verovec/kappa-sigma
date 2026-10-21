@@ -1,3 +1,4 @@
+internal import Accelerate
 internal import CoreGraphics
 package import Foundation
 internal import ImageIO
@@ -37,8 +38,19 @@ package enum ImageImport {
       return true
     }
     guard drawn else { throw ImportError.unreadable(path: url.path) }
+    let count = width * height
     let planes = (0..<(gray ? 1 : 3)).map { channel in
-      (0..<(width * height)).map { Float(samples[$0 * stride + channel]) / 65535 }
+      [Float](unsafeUninitializedCapacity: count) { plane, initialized in
+        guard let target = plane.baseAddress else { return }
+        samples.withUnsafeBufferPointer { source in
+          guard let base = source.baseAddress else { return }
+          // The strided channel to float, then to [0, 1]: ImageExport's vDSP_vfixru16 reversed.
+          vDSP_vfltu16(base + channel, vDSP_Stride(stride), target, 1, vDSP_Length(count))
+        }
+        var scale: Float = 65535
+        vDSP_vsdiv(target, 1, &scale, target, 1, vDSP_Length(count))
+        initialized = count
+      }
     }
     return AstroImage(
       width: width, height: height, planes: planes,

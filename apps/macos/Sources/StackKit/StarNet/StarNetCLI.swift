@@ -33,12 +33,29 @@ package enum StarNetCLI: Equatable, Sendable {
     return .flags
   }
 
-  /// Asks the StarNet at `binary` which generation it is (`--machine-info`).
-  package static func detect(binary: String) async -> Self {
+  /// Asks the StarNet at `binary` which generation it is (`--machine-info`); a probe that does
+  /// not answer within `timeout` (an old build reading the flag as an input file) is stopped and
+  /// counts as the positional generation.
+  package static func detect(binary: String, timeout: Duration = .seconds(10)) async -> Self {
+    await withTaskGroup(of: Self?.self) { group in
+      group.addTask { await probe(binary) }
+      group.addTask {
+        try? await Task.sleep(for: timeout)
+        return nil
+      }
+      let first = await group.next() ?? nil
+      group.cancelAll()
+      return first ?? .positional
+    }
+  }
+
+  private static func probe(_ binary: String) async -> Self {
+    var options = PlatformOptions()
+    options.teardownSequence = [.gracefulShutDown(allowedDurationToNextStep: .seconds(1))]
     guard
       let result = try? await Subprocess.run(
-        .path(FilePath(binary)), arguments: ["--machine-info"], input: .none,
-        output: .string(limit: 1 << 16), error: .discarded)
+        .path(FilePath(binary)), arguments: ["--machine-info"], platformOptions: options,
+        input: .none, output: .string(limit: 1 << 16), error: .discarded)
     else { return .positional }
     let clean = if case .exited(0) = result.terminationStatus { true } else { false }
     return generation(machineInfo: result.standardOutput, exitedCleanly: clean)

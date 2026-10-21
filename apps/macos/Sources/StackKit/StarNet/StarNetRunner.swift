@@ -47,17 +47,25 @@ package struct StarNetRunner: Sendable {
     })
   }
 
-  /// The starless version of `image`: written as a 16-bit TIFF into `scratch`, run, read back.
+  /// The starless version of `image`.
+  ///
+  /// Written as a 16-bit TIFF into `scratch`, run, read back with the row order and metadata of
+  /// `image`, so the two pair pixel for pixel. Off the caller's actor: encoding and decoding a full-size TIFF is CPU-bound.
+  @concurrent
   package func starless(
-    of image: AstroImage, in scratch: URL, onProgress: @escaping @Sendable (Double) -> Void
-  ) async throws -> AstroImage {
+    of image: sending AstroImage, in scratch: URL,
+    onProgress: @escaping @Sendable (Double) -> Void
+  ) async throws -> sending AstroImage {
     try FileManager.default.createDirectory(at: scratch, withIntermediateDirectories: true)
     let input = scratch.appendingPathComponent("starnet-input.tif")
     let output = scratch.appendingPathComponent("starnet-starless.tif")
     try? FileManager.default.removeItem(at: output)
     try ImageExport.write(image, to: input, format: .tiff16)
     _ = try await run(input, output, onProgress)
-    return try ImageImport.read(at: output)
+    let starless = try ImageImport.read(at: output).inRowOrder(image.metadata.rowOrder)
+    return AstroImage(
+      width: starless.width, height: starless.height, planes: starless.planes,
+      metadata: image.metadata)
   }
 
   private static func execute(

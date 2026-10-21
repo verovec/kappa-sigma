@@ -34,7 +34,8 @@ struct LiveStarNetChainTests {
     let progress = Mutex<[Double]>([])
     let runner = try await StarNetRunner.located(by: HostTools.live())
     let starless = try await runner.starless(
-      of: original, in: scratch.appendingPathComponent("starnet")
+      of: ImageImport.read(at: root.appendingPathComponent(paths[0])),
+      in: scratch.appendingPathComponent("starnet")
     ) { percent in progress.withLock { $0.append(percent) } }
     let seen = progress.withLock { $0 }
     #expect(seen.count >= 2 && seen == seen.sorted() && seen.last == 100)

@@ -79,6 +79,9 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
   /// The Empilement stage's « Cancel ».
   package static let stackingCancel = stageControl("stacking", "cancel")
 
+  /// The Import sheet's profile picker (card 0060).
+  package static let importProfile = Self("import", "profile")
+
   /// The shortcuts sheet's search field.
   package static let shortcutsSearch = Self("shortcuts", "search")
 

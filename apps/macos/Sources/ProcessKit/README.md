@@ -105,6 +105,17 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   `Pipeline.json()` / `Pipeline.load` are versioned, each step's recipe read by `Recipe.load` so
   unknown keys and clamps warn as for a recipe. Saved by name in the project with ProjectKit's
   `savePipeline(named:json:)`. No UI yet: the Studio has no process-application panel.
+- **Profiles** (card 0060, `Profile/`, resources `Profiles/*.json`): `Profile` = key (object
+  type × camera × filter compositions) + preprocessing (mode, 0070 knob wire keys) + steps (a
+  process, the values the profile sets, a fr/en « why » for each) → `pipeline`. Five builtins from
+  the PO's validated recipes (M 31 HaPlus, IC 1848 « doux », M 45, mono LRGB+Hα, mono SHO/HOO — the
+  mono values are starting points E18 refines). `Profile.load` is strict: an unknown process or
+  parameter, a value outside its bounds, a value without both « why » refuse the file — a profile
+  is never clamped. `ProfileLibrary` = builtins (read-only resources) + user copies (the project's
+  `user_profiles`, through closures): a copy shadows its builtin, `builtin(id:)` still offers it.
+  `ProfileProposal.propose` narrows by camera and filters, proposes the only match or the one a
+  target was validated on (`examples`), else lists candidates without picking; reasons are values
+  the app words. Knob values are checked against 0070's `KnobSchema` when it lands.
 - `ProcessRegistry`: refuses duplicates and invalid schemas (`.px` without
   `previewExactOnlyAt1to1`, a default outside its bounds or options, infinite bounds);
   `standard()` is validated like any registry and lists the shipped processes (today:

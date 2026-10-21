@@ -1,5 +1,6 @@
 package import Foundation
 internal import Observation
+package import ProcessKit
 package import StackKit
 
 /// The state of the Import sheet: the request the controls edit and the plan StackKit returns.
@@ -31,6 +32,10 @@ package final class ImportViewModel {
 
   /// What a master's disclosure can do (inspect, rebuild, preview); `nil` hides it.
   package let masters: MasterServices?
+  /// The profiles the proposal picks from (card 0060): the shipped ones unless given.
+  package let profiles: [Profile]
+  /// The user's answer to the proposal.
+  package internal(set) var profileChoice = ProfileChoice.proposed
 
   private let planning: ProgressPlanning
   private var scan: Task<Void, Never>?
@@ -42,9 +47,13 @@ package final class ImportViewModel {
 
   /// A model planning through `planning`, which reports its progress, with the master `masters`
   /// services if any.
-  package init(planning: @escaping ProgressPlanning, masters: MasterServices? = nil) {
+  package init(
+    planning: @escaping ProgressPlanning, masters: MasterServices? = nil,
+    profiles: [Profile]? = nil
+  ) {
     self.planning = planning
     self.masters = masters
+    self.profiles = profiles ?? Self.shippedProfiles
   }
 
   /// A model planning through `planning`, which reports no progress.

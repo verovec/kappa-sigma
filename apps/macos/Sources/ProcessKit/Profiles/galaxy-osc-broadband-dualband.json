@@ -1,0 +1,134 @@
+{
+  "camera": "osc",
+  "examples": [
+    "M 31",
+    "Andromeda",
+    "NGC 224"
+  ],
+  "filters": [
+    "broadband+dualband"
+  ],
+  "id": "galaxy-osc-broadband-dualband",
+  "object": "galaxy",
+  "preprocessing": {
+    "knobs": {
+      "trail_mask_k": 0
+    },
+    "mode": "deepsky",
+    "why": {
+      "trail_mask_k": {
+        "en": "The validated v9 dual-band runs stack without the cross-frame trail mask.",
+        "fr": "Les runs bi-bande v9 validés s'empilent sans masque de traînées inter-poses."
+      }
+    }
+  },
+  "schemaVersion": 1,
+  "steps": [
+    {
+      "locked": false,
+      "mode": "auto",
+      "process": "channel-combination",
+      "values": {},
+      "why": {}
+    },
+    {
+      "locked": false,
+      "mode": "auto",
+      "process": "hdr",
+      "values": {
+        "enabled": true
+      },
+      "why": {
+        "enabled": {
+          "en": "The galaxy core saturates after the stretch: the PO's absolute thresholds (0.00084, 0.00118 above the sky) compress it.",
+          "fr": "Le cœur de la galaxie sature après l'étirement : les seuils absolus du PO (0,00084, 0,00118 au-dessus du ciel) le compriment."
+        }
+      }
+    },
+    {
+      "locked": false,
+      "mode": "auto",
+      "process": "stretch",
+      "values": {
+        "shadowsClip": -2.5,
+        "targetBackground": 0.085
+      },
+      "why": {
+        "shadowsClip": {
+          "en": "astrocomp places the shadows 2.5σ below the background.",
+          "fr": "astrocomp place les ombres 2,5σ sous le fond."
+        },
+        "targetBackground": {
+          "en": "The v9 composite's base background (astrocomp -base-bg 0.085): a dark sky under the screens.",
+          "fr": "Le fond de base du composite v9 (astrocomp -base-bg 0,085) : un ciel sombre sous les écrans."
+        }
+      }
+    },
+    {
+      "locked": false,
+      "mode": "stop",
+      "process": "emission-screens",
+      "values": {
+        "haBlack": 0.115,
+        "haOpacity": 0.95,
+        "oiiiBlack": 0.126,
+        "oiiiBoost": 1.25,
+        "oiiiOpacity": 0.8
+      },
+      "why": {
+        "haBlack": {
+          "en": "HaPlus, chosen by the PO on 19/10 on M 31: Hα black point 0.115.",
+          "fr": "HaPlus, choisi par le PO le 19/10 sur M 31 : point noir Hα 0,115."
+        },
+        "haOpacity": {
+          "en": "HaPlus: Hα screen 0.95. More Hα comes from more dual-band exposure, not a stronger screen.",
+          "fr": "HaPlus : écran Hα 0,95. Plus de Hα vient de plus de poses bi-bande, pas d'un écran plus fort."
+        },
+        "oiiiBlack": {
+          "en": "The v9 OIII black point, 0.126.",
+          "fr": "Le point noir OIII v9, 0,126."
+        },
+        "oiiiBoost": {
+          "en": "The v9 teal boost, 1.25.",
+          "fr": "Le renfort sarcelle v9, 1,25."
+        },
+        "oiiiOpacity": {
+          "en": "The v9 OIII screen, 0.80.",
+          "fr": "L'écran OIII v9, 0,80."
+        }
+      }
+    },
+    {
+      "locked": false,
+      "mode": "auto",
+      "process": "saturation",
+      "values": {
+        "amount": 0.32
+      },
+      "why": {
+        "amount": {
+          "en": "The validated M 31 finish: +32 % saturation through the luminosity band (sky and star cores protected).",
+          "fr": "La finition M 31 validée : +32 % de saturation dans la bande de luminosité (ciel et cœurs d'étoiles protégés)."
+        }
+      }
+    },
+    {
+      "locked": false,
+      "mode": "auto",
+      "process": "star-recomposition",
+      "values": {
+        "chroma": 0.25
+      },
+      "why": {
+        "chroma": {
+          "en": "Star colour 0.25: red giants otherwise render as orange blobs (validated 18/10).",
+          "fr": "Couleur des étoiles 0,25 : sinon les géantes rouges deviennent des taches orange (validé le 18/10)."
+        }
+      }
+    }
+  ],
+  "title": {
+    "en": "Galaxy · OSC · broadband + dual-band",
+    "fr": "Galaxie · OSC · large bande + bi-bande"
+  }
+}

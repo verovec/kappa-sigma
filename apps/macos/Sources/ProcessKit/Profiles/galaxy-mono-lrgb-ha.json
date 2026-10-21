@@ -1,0 +1,77 @@
+{
+  "camera": "mono",
+  "examples": [],
+  "filters": [
+    "lrgb",
+    "lrgb+ha"
+  ],
+  "id": "galaxy-mono-lrgb-ha",
+  "object": "galaxy",
+  "preprocessing": {
+    "knobs": {},
+    "mode": "deepsky",
+    "why": {}
+  },
+  "schemaVersion": 1,
+  "steps": [
+    {
+      "locked": false,
+      "mode": "auto",
+      "process": "channel-combination",
+      "values": {
+        "bSource": "B",
+        "gSource": "G",
+        "lSource": "L",
+        "rSource": "R"
+      },
+      "why": {
+        "bSource": {
+          "en": "Mono: blue from the B filter.",
+          "fr": "Mono : le bleu vient du filtre B."
+        },
+        "gSource": {
+          "en": "Mono: green from the G filter.",
+          "fr": "Mono : le vert vient du filtre G."
+        },
+        "lSource": {
+          "en": "The L layer carries the detail as luminance (weights refined by E18 on the PO's mono data).",
+          "fr": "La couche L porte le détail en luminance (poids affinés par E18 sur les données mono du PO)."
+        },
+        "rSource": {
+          "en": "Mono: red from the R filter.",
+          "fr": "Mono : le rouge vient du filtre R."
+        }
+      }
+    },
+    {
+      "locked": false,
+      "mode": "auto",
+      "process": "stretch",
+      "values": {},
+      "why": {}
+    },
+    {
+      "locked": false,
+      "mode": "stop",
+      "process": "emission-screens",
+      "values": {
+        "haContinuum": true,
+        "oiiiEnabled": false
+      },
+      "why": {
+        "haContinuum": {
+          "en": "Hα minus its red continuum, screened over the galaxy (k from the bundle).",
+          "fr": "Hα moins son continuum rouge, en écran sur la galaxie (k issu du bundle)."
+        },
+        "oiiiEnabled": {
+          "en": "LRGB + Hα: no OIII layer.",
+          "fr": "LRGB + Hα : pas de couche OIII."
+        }
+      }
+    }
+  ],
+  "title": {
+    "en": "Galaxy · mono · LRGB + Hα",
+    "fr": "Galaxie · mono · LRGB + Hα"
+  }
+}

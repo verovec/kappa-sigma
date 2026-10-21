@@ -113,6 +113,10 @@ package final class ProjectWindowModel {
       for path in request.paths {
         try store.addSource(kind: .night, path: path)
       }
+      // The profile the user kept (or none, as an empty value): recorded, applied by nothing.
+      if let importing {
+        try store.setSetting(ProfileChoice.settingKey, to: importing.selectedProfile?.id ?? "")
+      }
       imports.append(request)
       // The sources first: whether the sheet's plan is the project's scan depends on them.
       refresh()

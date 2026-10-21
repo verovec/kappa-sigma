@@ -1,0 +1,67 @@
+{
+  "camera": "osc",
+  "examples": [
+    "M 45",
+    "Pleiades",
+    "NGC 1333"
+  ],
+  "filters": [
+    "broadband"
+  ],
+  "id": "cluster-osc-broadband",
+  "object": "cluster",
+  "preprocessing": {
+    "knobs": {},
+    "mode": "deepsky",
+    "why": {}
+  },
+  "schemaVersion": 1,
+  "steps": [
+    {
+      "locked": false,
+      "mode": "auto",
+      "process": "channel-combination",
+      "values": {},
+      "why": {}
+    },
+    {
+      "locked": false,
+      "mode": "auto",
+      "process": "sky-desat",
+      "values": {
+        "strength": 0.85
+      },
+      "why": {
+        "strength": {
+          "en": "M 45 bathes in the Taurus dust: 0.85 removes the brown sky mottle (−80 % chroma measured) and keeps the luminance.",
+          "fr": "M 45 baigne dans les poussières du Taureau : 0,85 retire la marbrure brune du ciel (−80 % de chroma mesuré) et garde la luminance."
+        }
+      }
+    },
+    {
+      "locked": false,
+      "mode": "auto",
+      "process": "stretch",
+      "values": {},
+      "why": {}
+    },
+    {
+      "locked": false,
+      "mode": "auto",
+      "process": "saturation",
+      "values": {
+        "starDesat": 0.2
+      },
+      "why": {
+        "starDesat": {
+          "en": "The stars are the subject: a light star-core desaturation (0.2), no saturation boost, no screen.",
+          "fr": "Les étoiles sont le sujet : une légère désaturation des cœurs (0,2), pas de renfort de saturation, pas d'écran."
+        }
+      }
+    }
+  ],
+  "title": {
+    "en": "Cluster / reflection · OSC · broadband",
+    "fr": "Amas / réflexion · OSC · large bande"
+  }
+}

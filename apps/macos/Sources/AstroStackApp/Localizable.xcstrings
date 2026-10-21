@@ -337,6 +337,38 @@
         }
       }
     },
+    "Broadband and dual-band nights": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Broadband and dual-band nights"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nuits large bande et bi-bande"
+          }
+        }
+      }
+    },
+    "Broadband nights": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Broadband nights"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nuits large bande"
+          }
+        }
+      }
+    },
     "Calibration coverage": {
       "localizations": {
         "en": {
@@ -669,6 +701,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Retirer toutes les poses de ce lot de l’empilement"
+          }
+        }
+      }
+    },
+    "Dual-band nights only": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dual-band nights only"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nuits bi-bande seulement"
           }
         }
       }
@@ -1137,6 +1185,38 @@
         }
       }
     },
+    "L, R, G, B and Hα filters": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L, R, G, B and Hα filters"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filtres L, R, V, B et Hα"
+          }
+        }
+      }
+    },
+    "L, R, G, B filters": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L, R, G, B filters"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filtres L, R, V, B"
+          }
+        }
+      }
+    },
     "Language": {
       "localizations": {
         "en": {
@@ -1329,6 +1409,38 @@
         }
       }
     },
+    "Mono camera": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mono camera"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Caméra mono"
+          }
+        }
+      }
+    },
+    "Narrowband filters": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Narrowband filters"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filtres bande étroite"
+          }
+        }
+      }
+    },
     "Nebula": {
       "localizations": {
         "en": {
@@ -1473,6 +1585,38 @@
         }
       }
     },
+    "No profile": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No profile"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun profil"
+          }
+        }
+      }
+    },
+    "No profile is proposed: pick one, or none.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No profile is proposed: pick one, or none."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun profil n’est proposé : choisissez-en un, ou aucun."
+          }
+        }
+      }
+    },
     "Not scanned in this window": {
       "localizations": {
         "en": {
@@ -1501,6 +1645,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Objet"
+          }
+        }
+      }
+    },
+    "One-shot colour camera": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One-shot colour camera"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Caméra couleur (OSC)"
           }
         }
       }
@@ -1677,6 +1837,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aperçu"
+          }
+        }
+      }
+    },
+    "Profile": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profile"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profil"
+          }
+        }
+      }
+    },
+    "Proposed: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proposed: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proposé : %@"
           }
         }
       }
@@ -2561,6 +2753,22 @@
         }
       }
     },
+    "The only profile for these captures": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The only profile for these captures"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le seul profil pour ces captures"
+          }
+        }
+      }
+    },
     "The program at the Siril path is not Siril (it answered: %@).": {
       "localizations": {
         "en": {
@@ -2733,6 +2941,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Forcer les correspondances"
+          }
+        }
+      }
+    },
+    "Validated on %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Validated on %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Validé sur %@"
           }
         }
       }

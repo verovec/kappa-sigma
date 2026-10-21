@@ -91,7 +91,8 @@ package struct ProcessContracts {
     return nil
   }
 
-  /// `id` at its upper bound `v`, scale 2, against `v / 2` at scale 1.
+  /// `id` at its upper bound `v`, scale 2, against `v / 2` at scale 1, every other `.px` value
+  /// halved with it.
   private func pixelScaleViolation(
     of type: any ImageProcess.Type, params: ParamSet, id: String
   ) throws -> String? {
@@ -103,8 +104,11 @@ package struct ProcessContracts {
     }
     var atFull = params
     try atFull.set(id, .number(full))
-    var atHalf = params
-    try atHalf.set(id, .number(half))
+    // Every other pixel parameter is halved too: at scale 2 the process divides all of them.
+    var atHalf = atFull
+    for other in type.schema.pixelParameters {
+      try atHalf.set(other, .number(atFull.number(other) / 2))
+    }
     let scaled = try render(type.init(params: atFull, device: device), scale: 2)
     let reference = try render(type.init(params: atHalf, device: device), scale: 1)
     return Self.identical(scaled, reference)

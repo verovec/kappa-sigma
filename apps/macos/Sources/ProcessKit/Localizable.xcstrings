@@ -1,6 +1,38 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "Band full": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Band full"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bande pleine"
+          }
+        }
+      }
+    },
+    "Band start": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Band start"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Début de bande"
+          }
+        }
+      }
+    },
     "Black point": {
       "localizations": {
         "en": {
@@ -33,6 +65,22 @@
         }
       }
     },
+    "Blue background offset": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blue background offset"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Décalage du fond bleu"
+          }
+        }
+      }
+    },
     "Blue black": {
       "localizations": {
         "en": {
@@ -45,6 +93,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Noir du bleu"
+          }
+        }
+      }
+    },
+    "Blue gain": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blue gain"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gain du bleu"
           }
         }
       }
@@ -65,6 +129,54 @@
         }
       }
     },
+    "Boost left at white": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Boost left at white"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renfort restant au blanc"
+          }
+        }
+      }
+    },
+    "Bright signal band end": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bright signal band end"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fin de la bande signal brillant"
+          }
+        }
+      }
+    },
+    "Bright signal band start": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bright signal band start"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Début de la bande signal brillant"
+          }
+        }
+      }
+    },
     "Channel combination": {
       "localizations": {
         "en": {
@@ -77,6 +189,102 @@
           "stringUnit": {
             "state": "translated",
             "value": "Combinaison de canaux"
+          }
+        }
+      }
+    },
+    "Coarse scale": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coarse scale"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échelle large"
+          }
+        }
+      }
+    },
+    "Colour balance": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Colour balance"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Balance des couleurs"
+          }
+        }
+      }
+    },
+    "Colour kept": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Colour kept"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couleur conservée"
+          }
+        }
+      }
+    },
+    "Compress the core": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compress the core"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compresser le cœur"
+          }
+        }
+      }
+    },
+    "Curves": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Curves"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Courbes"
+          }
+        }
+      }
+    },
+    "Emission screens": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emission screens"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Écrans d’émission"
           }
         }
       }
@@ -129,6 +337,22 @@
         }
       }
     },
+    "Green background offset": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Green background offset"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Décalage du fond vert"
+          }
+        }
+      }
+    },
     "Green black": {
       "localizations": {
         "en": {
@@ -145,6 +369,22 @@
         }
       }
     },
+    "Green gain": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Green gain"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gain du vert"
+          }
+        }
+      }
+    },
     "Green weight": {
       "localizations": {
         "en": {
@@ -157,6 +397,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Poids du vert"
+          }
+        }
+      }
+    },
+    "HDR core compression": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HDR core compression"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compression HDR du cœur"
           }
         }
       }
@@ -225,6 +481,198 @@
         }
       }
     },
+    "Highlight roll-off": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Highlight roll-off"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Atténuation des hautes lumières"
+          }
+        }
+      }
+    },
+    "Hα background": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hα background"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fond Hα"
+          }
+        }
+      }
+    },
+    "Hα black point": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hα black point"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Point noir Hα"
+          }
+        }
+      }
+    },
+    "Hα boost": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hα boost"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renfort Hα"
+          }
+        }
+      }
+    },
+    "Hα continuum scale k": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hα continuum scale k"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échelle du continuum k Hα"
+          }
+        }
+      }
+    },
+    "Hα continuum subtraction": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hα continuum subtraction"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Soustraction du continuum Hα"
+          }
+        }
+      }
+    },
+    "Hα opacity": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hα opacity"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opacité Hα"
+          }
+        }
+      }
+    },
+    "Hα screen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hα screen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Écran Hα"
+          }
+        }
+      }
+    },
+    "Hα tint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hα tint"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teinte Hα"
+          }
+        }
+      }
+    },
+    "IC 1848 \"doux\": colour kept at 0.62": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IC 1848 \"doux\": colour kept at 0.62"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IC 1848 « doux » : couleur conservée à 0,62"
+          }
+        }
+      }
+    },
+    "Keep cool hues": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep cool hues"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Garder les teintes froides"
+          }
+        }
+      }
+    },
+    "Knee above the sky": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Knee above the sky"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seuil au-dessus du fond"
+          }
+        }
+      }
+    },
     "L black": {
       "localizations": {
         "en": {
@@ -285,6 +733,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "LRGB"
+          }
+        }
+      }
+    },
+    "Layer smoothing": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Layer smoothing"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lissage des couches"
+          }
+        }
+      }
+    },
+    "Link layers": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Link layers"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lier les couches"
           }
         }
       }
@@ -353,6 +833,22 @@
         }
       }
     },
+    "Narrowband blend": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Narrowband blend"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mélange bande étroite"
+          }
+        }
+      }
+    },
     "Natural": {
       "localizations": {
         "en": {
@@ -365,6 +861,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Naturelle"
+          }
+        }
+      }
+    },
+    "Protect sky and highlights": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Protect sky and highlights"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Protéger ciel et hautes lumières"
+          }
+        }
+      }
+    },
+    "RGB": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RGB"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RVB"
           }
         }
       }
@@ -385,6 +913,22 @@
         }
       }
     },
+    "Red background offset": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Red background offset"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Décalage du fond rouge"
+          }
+        }
+      }
+    },
     "Red black": {
       "localizations": {
         "en": {
@@ -397,6 +941,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Noir du rouge"
+          }
+        }
+      }
+    },
+    "Red gain": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Red gain"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gain du rouge"
           }
         }
       }
@@ -433,6 +993,38 @@
         }
       }
     },
+    "Saturation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saturation"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saturation"
+          }
+        }
+      }
+    },
+    "Saturation boost": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saturation boost"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renfort de saturation"
+          }
+        }
+      }
+    },
     "Shadow protection": {
       "localizations": {
         "en": {
@@ -461,6 +1053,246 @@
           "stringUnit": {
             "state": "translated",
             "value": "Écrêtage des ombres"
+          }
+        }
+      }
+    },
+    "Sky desaturation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sky desaturation"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Désaturation du ciel"
+          }
+        }
+      }
+    },
+    "Sky floor band end": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sky floor band end"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fin de la bande fond de ciel"
+          }
+        }
+      }
+    },
+    "Sky floor band start": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sky floor band start"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Début de la bande fond de ciel"
+          }
+        }
+      }
+    },
+    "Smooth scale σ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Smooth scale σ"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échelle lisse σ"
+          }
+        }
+      }
+    },
+    "Softness": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Softness"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Douceur"
+          }
+        }
+      }
+    },
+    "Star band end": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Star band end"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fin de la bande étoiles"
+          }
+        }
+      }
+    },
+    "Star band start": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Star band start"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Début de la bande étoiles"
+          }
+        }
+      }
+    },
+    "Star detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Star detail"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Détail des étoiles"
+          }
+        }
+      }
+    },
+    "Star removal radius": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Star removal radius"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rayon d’effacement des étoiles"
+          }
+        }
+      }
+    },
+    "Star-core desaturation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Star-core desaturation"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Désaturation des cœurs d’étoiles"
+          }
+        }
+      }
+    },
+    "Star-core full": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Star-core full"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cœurs d’étoiles pleins"
+          }
+        }
+      }
+    },
+    "Star-core guard": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Star-core guard"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Garde des cœurs d’étoiles"
+          }
+        }
+      }
+    },
+    "Star-core level": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Star-core level"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Niveau des cœurs d’étoiles"
+          }
+        }
+      }
+    },
+    "Star-core start": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Star-core start"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Début des cœurs d’étoiles"
+          }
+        }
+      }
+    },
+    "Strength": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Strength"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Force"
           }
         }
       }
@@ -545,6 +1377,278 @@
         }
       }
     },
+    "[OIII] background": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[OIII] background"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fond [OIII]"
+          }
+        }
+      }
+    },
+    "[OIII] black point": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[OIII] black point"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Point noir [OIII]"
+          }
+        }
+      }
+    },
+    "[OIII] boost": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[OIII] boost"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renfort [OIII]"
+          }
+        }
+      }
+    },
+    "[OIII] continuum scale k": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[OIII] continuum scale k"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échelle du continuum k [OIII]"
+          }
+        }
+      }
+    },
+    "[OIII] continuum subtraction": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[OIII] continuum subtraction"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Soustraction du continuum [OIII]"
+          }
+        }
+      }
+    },
+    "[OIII] opacity": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[OIII] opacity"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opacité [OIII]"
+          }
+        }
+      }
+    },
+    "[OIII] screen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[OIII] screen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Écran [OIII]"
+          }
+        }
+      }
+    },
+    "[OIII] tint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[OIII] tint"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teinte [OIII]"
+          }
+        }
+      }
+    },
+    "[SII] background": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[SII] background"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fond [SII]"
+          }
+        }
+      }
+    },
+    "[SII] black point": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[SII] black point"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Point noir [SII]"
+          }
+        }
+      }
+    },
+    "[SII] boost": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[SII] boost"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renfort [SII]"
+          }
+        }
+      }
+    },
+    "[SII] continuum scale k": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[SII] continuum scale k"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échelle du continuum k [SII]"
+          }
+        }
+      }
+    },
+    "[SII] continuum subtraction": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[SII] continuum subtraction"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Soustraction du continuum [SII]"
+          }
+        }
+      }
+    },
+    "[SII] opacity": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[SII] opacity"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opacité [SII]"
+          }
+        }
+      }
+    },
+    "[SII] screen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[SII] screen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Écran [SII]"
+          }
+        }
+      }
+    },
+    "[SII] tint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[SII] tint"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teinte [SII]"
+          }
+        }
+      }
+    },
+    "a black point 3σ above zero hides the stretched sky noise": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "a black point 3σ above zero hides the stretched sky noise"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "un point noir à 3σ au-dessus de zéro masque le bruit du ciel étiré"
+          }
+        }
+      }
+    },
     "autostretch like Siril: background at 0.25": {
       "localizations": {
         "en": {
@@ -589,6 +1693,86 @@
           "stringUnit": {
             "state": "translated",
             "value": "autostretch comme Siril : ombres 2,8σ sous le fond"
+          }
+        }
+      }
+    },
+    "makes the sky region grey: green kept, red and blue scaled to it": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "makes the sky region grey: green kept, red and blue scaled to it"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "grise la zone de ciel : le vert est gardé, le rouge et le bleu s’y alignent"
+          }
+        }
+      }
+    },
+    "neutralises the sky region: its three medians become equal": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "neutralises the sky region: its three medians become equal"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "neutralise la zone de ciel : ses trois médianes deviennent égales"
+          }
+        }
+      }
+    },
+    "the PO's M31 finish: a 0.32 boost": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the PO's M31 finish: a 0.32 boost"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "la finition M31 validée : renfort de 0,32"
+          }
+        }
+      }
+    },
+    "the boost skips the sky's chroma noise and tames star cores": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the boost skips the sky's chroma noise and tames star cores"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "le renfort épargne le bruit chromatique du ciel et modère les cœurs d’étoiles"
+          }
+        }
+      }
+    },
+    "the continuum scale fitted on the stack": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the continuum scale fitted on the stack"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "l’échelle du continuum mesurée à l’empilement"
           }
         }
       }

@@ -25,6 +25,7 @@ package struct ProcessRunner {
   package func run(
     _ process: any ImageProcess, input: GPUImage, stats: LayerStats, scale: Double = 1,
     purpose: RenderContext.Purpose = .apply, layers: [String: GPUImage] = [:],
+    layerStats: [String: LayerStats] = [:],
     mask: GPUImage? = nil
   ) throws -> GPUImage {
     let channels = type(of: process).outputChannels(input: input.planes.count)
@@ -35,7 +36,8 @@ package struct ProcessRunner {
     }
     try process.render(
       input, stats: stats, into: processed,
-      context: RenderContext(commands: commands, scale: scale, purpose: purpose, layers: layers))
+      context: RenderContext(
+        commands: commands, scale: scale, purpose: purpose, layers: layers, layerStats: layerStats))
     var output = processed
     if let mask {
       output = try processed.sameSize(device: device)

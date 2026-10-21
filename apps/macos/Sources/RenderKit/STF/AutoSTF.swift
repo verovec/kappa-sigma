@@ -34,7 +34,7 @@ package enum AutoSTF {
 
   /// Upper median and normalised MAD of a plane's finite values (NaN/Inf blanks left out; a
   /// 64 Ki-sample stride above that size).
-  static func medianAndMADN(_ plane: [Float]) -> (median: Double, madn: Double) {
+  package static func medianAndMADN(_ plane: [Float]) -> (median: Double, madn: Double) {
     let stride = max(1, plane.count / 65_536)
     let sample = Swift.stride(from: 0, to: plane.count, by: stride)
       .map { Double(plane[$0]) }.filter(\.isFinite)

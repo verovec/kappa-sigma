@@ -65,6 +65,22 @@
         }
       }
     },
+    "Click to add a point, drag to move it, double-click to remove it": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Click to add a point, drag to move it, double-click to remove it"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cliquez pour ajouter un point, faites-le glisser pour le déplacer, double-cliquez pour le retirer"
+          }
+        }
+      }
+    },
     "Clipping overlay": {
       "localizations": {
         "en": {
@@ -77,6 +93,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Surbrillance de l’écrêtage"
+          }
+        }
+      }
+    },
+    "Curves": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Curves"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Courbes"
           }
         }
       }
@@ -381,6 +413,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Canaux liés"
+          }
+        }
+      }
+    },
+    "Luminance": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Luminance"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Luminance"
           }
         }
       }
@@ -701,6 +749,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Prêt"
+          }
+        }
+      }
+    },
+    "Red": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Red"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rouge"
           }
         }
       }

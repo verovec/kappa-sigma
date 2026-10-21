@@ -32,19 +32,22 @@ package struct ProcessContracts {
   private let input: GPUImage
   private let stats: LayerStats
   private let layers: [String: GPUImage]
+  private let layerStats: [String: LayerStats]
   /// 1 on the left half, 0 on the right: every process also runs under it.
   private let halfMask: GPUImage
 
   /// Contracts run on `input` (non-uniform, so any change shows) with `stats` and the bundle
-  /// `layers` a process reads.
+  /// `layers` a process reads, with their bundle statistics `layerStats`.
   package init(
-    device: MTLDevice, input: GPUImage, stats: LayerStats, layers: [String: GPUImage] = [:]
+    device: MTLDevice, input: GPUImage, stats: LayerStats, layers: [String: GPUImage] = [:],
+    layerStats: [String: LayerStats] = [:]
   ) throws {
     self.device = device
     runner = try ProcessRunner(device: device)
     self.input = input
     self.stats = stats
     self.layers = layers
+    self.layerStats = layerStats
     let row = (0..<input.width).map { Float($0 < input.width / 2 ? 1 : 0) }
     halfMask = try GPUImage(
       device: device, width: input.width, height: input.height,
@@ -91,7 +94,8 @@ package struct ProcessContracts {
     return nil
   }
 
-  /// `id` at its upper bound `v`, scale 2, against `v / 2` at scale 1.
+  /// `id` at its upper bound `v`, scale 2, against `v / 2` at scale 1, every other `.px` value
+  /// halved with it.
   private func pixelScaleViolation(
     of type: any ImageProcess.Type, params: ParamSet, id: String
   ) throws -> String? {
@@ -103,12 +107,24 @@ package struct ProcessContracts {
     }
     var atFull = params
     try atFull.set(id, .number(full))
-    var atHalf = params
-    try atHalf.set(id, .number(half))
+    // Every other pixel parameter is halved too: at scale 2 the process divides all of them. A
+    // half below its bound would be clamped, and the reference would compare the wrong values.
+    var atHalf = atFull
+    for other in type.schema.pixelParameters {
+      let value = atFull.number(other) / 2
+      if case .number(_, let otherBounds)? = type.schema.spec(other)?.kind,
+        value < otherBounds.lowerBound
+      {
+        return "\(other) = \(value * 2): v / 2 is below its bounds \(otherBounds)"
+      }
+      try atHalf.set(other, .number(value))
+    }
     let scaled = try render(type.init(params: atFull, device: device), scale: 2)
     let reference = try render(type.init(params: atHalf, device: device), scale: 1)
+    let halved = type.schema.pixelParameters.map { "\($0) = \(atHalf.number($0))" }
     return Self.identical(scaled, reference)
-      ? nil : "\(id) = \(full) at scale 2 ≠ \(id) = \(half) at scale 1"
+      ? nil
+      : "\(id) = \(full) at scale 2 ≠ \(halved.joined(separator: ", ")) at scale 1"
   }
 
   private func render(
@@ -117,6 +133,7 @@ package struct ProcessContracts {
   ) throws -> [[Float]] {
     try runner.run(
       process, input: input, stats: stats, scale: scale, purpose: purpose, layers: layers,
+      layerStats: layerStats,
       mask: mask
     ).read()
   }

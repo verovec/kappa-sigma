@@ -37,7 +37,8 @@ package struct Pipeline: Equatable, Sendable {
       if type.stage == .linear, stretched {
         problems.append("step \(index + 1) (\(id)): a linear process after a non-linear one")
       }
-      stretched = stretched || type.stage == .nonlinear
+      // The stretch takes linear data (stage `.linear`) and leaves it non-linear.
+      stretched = stretched || type.stage == .nonlinear || id == StretchProcess.id
     }
     return problems
   }
@@ -74,6 +75,9 @@ package enum PipelineError: Error, Equatable, Sendable {
   case unknownProcess(String)
   /// `resume` was asked for a step the pipeline does not have.
   case noStep(Int)
+  /// `resume` at `step`, but the history does not stand at that breakpoint (it holds
+  /// `steps` steps, or the step is not a breakpoint): Continue would apply it to the wrong image.
+  case notAtBreakpoint(step: Int, steps: Int)
   /// The step's values `ids` are refused by its process (unknown, wrong kind, not finite): the
   /// run stops rather than apply defaults the user never saw.
   case invalidValues(step: Int, ids: [String])

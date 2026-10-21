@@ -49,6 +49,11 @@ struct PipelineDiffTests {
     #expect(
       Pipeline(name: "M31", steps: [step("saturation"), step("colour-balance")])
         .problems(registry: registry, present: [.color]).count == 1)
+    let afterStretch = try ProcessRegistry([StretchProcess.self, ColourBalanceProcess.self])
+    #expect(
+      Pipeline(name: "M31", steps: [step("stretch"), step("colour-balance")])
+        .problems(registry: afterStretch, present: [.color])
+        == ["step 2 (colour-balance): a linear process after a non-linear one"])
   }
 
   @Test("mode, lock, process, added and removed steps are each one entry")

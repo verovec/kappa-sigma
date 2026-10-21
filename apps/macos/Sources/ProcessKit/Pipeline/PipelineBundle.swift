@@ -12,6 +12,19 @@ package struct PipelineBundle {
   /// Their statistics by id.
   package var layerStats: [String: LayerStats]
 
+  /// Whether `other` is the same input: statistics, and layers of the same ids, size, metadata
+  /// and pixels.
+  package func isSameInput(as other: Self) -> Bool {
+    guard stats == other.stats, layerStats == other.layerStats,
+      Set(layers.keys) == Set(other.layers.keys)
+    else { return false }
+    return layers.allSatisfy { id, layer in
+      guard let twin = other.layers[id] else { return false }
+      return layer.width == twin.width && layer.height == twin.height
+        && layer.metadata == twin.metadata && layer.planes == twin.planes
+    }
+  }
+
   /// A bundle of `stats`, `layers` and `layerStats`.
   package init(
     stats: LayerStats, layers: [String: AstroImage] = [:], layerStats: [String: LayerStats] = [:]

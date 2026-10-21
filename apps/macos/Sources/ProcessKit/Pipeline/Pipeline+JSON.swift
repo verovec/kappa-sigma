@@ -42,9 +42,12 @@ extension Pipeline {
     _ data: Data, registry: ProcessRegistry, batch: [String: ParamSchema] = [:]
   ) throws -> Loaded {
     guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-      let version = object["schemaVersion"] as? Int, let name = object["name"] as? String,
+      let versionNumber = object["schemaVersion"] as? NSNumber,
+      CFGetTypeID(versionNumber) != CFBooleanGetTypeID(), versionNumber.intValue >= 1,
+      let name = object["name"] as? String,
       let steps = object["steps"] as? [[String: Any]]
     else { throw PipelineFileError.malformed("not a pipeline file") }
+    let version = versionNumber.intValue
     guard version <= schemaVersion else { throw PipelineFileError.newerFormat(version) }
     var warnings = object.keys.sorted().filter { !keys.contains($0) }
       .map { "unknown key \($0) ignored" }
@@ -79,29 +82,16 @@ extension Pipeline {
     )
   }
 
-  /// A step's recipe and its warnings.
+  /// A step's recipe and its warnings, read like a recipe file.
   ///
-  /// A registered process goes through `Recipe.load`; a batch tool's values are validated on its
-  /// schema. The values kept are the clamped ones the warnings describe.
+  /// A registered process on its schema, a batch tool on the schema `batch` gives; the values
+  /// kept are the clamped ones the warnings describe.
   private static func loadRecipe(
     _ object: [String: Any], registry: ProcessRegistry, batch: [String: ParamSchema]
   ) throws -> (Recipe, [String]) {
     let data = try JSONSerialization.data(withJSONObject: object)
-    if let id = object["process"] as? String, registry.type(id: id) == nil,
-      let schema = batch[id]
-    {
-      let entries = try JSONDecoder().decode(BatchRecipe.self, from: data).params
-      let loaded = ParamSet.loading(entries, onto: schema)
-      let warnings = loaded.rejected.map { "parameter \($0.id) ignored: invalid value" }
-      return (Recipe(processID: id, params: loaded.params), warnings)
-    }
-    let recipe = try Recipe.load(data, registry: registry)
+    let recipe = try Recipe.load(data) { registry.type(id: $0)?.schema ?? batch[$0] }
     return (Recipe(processID: recipe.recipe.processID, params: recipe.params), recipe.warnings)
-  }
-
-  /// The values of a batch tool's recipe.
-  private struct BatchRecipe: Decodable {
-    let params: [ParamSet.Entry]
   }
 }
 

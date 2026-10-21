@@ -49,6 +49,14 @@ struct PipelineJSONTests {
       ])
     let loaded = try Pipeline.load(pipeline.json(), registry: registry, batch: ["starnet": starnet])
     #expect(loaded.pipeline == pipeline)
+    let written = String(bytes: try pipeline.json(), encoding: .utf8) ?? ""
+    let clamped = written.replacingOccurrences(of: "128", with: "1024")
+    let warnings = try Pipeline.load(
+      Data(clamped.utf8), registry: registry, batch: ["starnet": starnet]
+    ).warnings
+    #expect(
+      warnings == ["step 2: parameter stride clamped from 1024.0 to 512.0"],
+      "\(warnings) in \(clamped)")
     #expect(throws: PipelineFileError.self) {
       try Pipeline.load(pipeline.json(), registry: registry)
     }
@@ -58,6 +66,17 @@ struct PipelineJSONTests {
       Issue.record("an unknown process loaded")
     } catch PipelineFileError.step(let number, _) {
       #expect(number == 1)
+    }
+  }
+
+  @Test("the version is a positive integer: a boolean or a negative one is refused")
+  func testVersionIsAPositiveInteger() throws {
+    let registry = try ProcessRegistry([DummyGain.self])
+    for version in ["true", "0", "-3"] {
+      let json = #"{"schemaVersion": "# + version + #", "name": "M31", "steps": []}"#
+      #expect(throws: PipelineFileError.self) {
+        try Pipeline.load(Data(json.utf8), registry: registry)
+      }
     }
   }
 

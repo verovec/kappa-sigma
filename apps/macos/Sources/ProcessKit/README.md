@@ -95,10 +95,12 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   layer or a linear step after a non-linear one (shown, never reordered). `PipelineRunner` applies
   steps through a `History`: `run` halts *before* a `stop` step (`.stopped(at:)`, the Studio shows
   that process with its recipe), `resume(at:params:)` is « Continue » with the edited values,
-  `replay(on:in:stats:previous:)` starts a new history on another bundle, and a locked step takes
-  the same step's output from `previous` (same process) instead of re-running. Batch processes
+  `replay(on:in:bundle:previous:)` starts a new history on another bundle, and a locked step takes
+  the same step's output from `previous` (a `PipelineRun`: history + bundle) only when the input is
+  the same (original image, bundle, every earlier step) — else it re-runs (`PipelineReuse`). Batch processes
   (host tools) are `BatchProcess` closures injected by id — ProcessKit never imports StackKit —
-  and report progress as `.progress` events. Stats are given (the bundle's, R2).
+  and report progress live as `.progress` events. The first step gets the bundle's stats, each
+  later one the stats of the image it receives (`LayerStats.measured`); layers reach every step.
   `PipelineDiff.entries` lists param / mode / lock / process / added / removed differences;
   `Pipeline.json()` / `Pipeline.load` are versioned, each step's recipe read by `Recipe.load` so
   unknown keys and clamps warn as for a recipe. Saved by name in the project with ProjectKit's

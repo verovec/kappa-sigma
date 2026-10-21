@@ -2,6 +2,7 @@ import Foundation
 import ImageKit
 import Metal
 import ProcessKit
+import RenderKit
 import Synchronization
 import TestSupport
 import Testing
@@ -20,7 +21,7 @@ struct PipelineRunnerTests {
   }
 
   static func registry() throws -> ProcessRegistry {
-    try ProcessRegistry([DummyGain.self, ChannelCombinationProcess.self])
+    try ProcessRegistry([DummyGain.self, ChannelCombinationProcess.self, StretchProcess.self])
   }
 
   /// A gain step: out = in · gain (the fixture's shift moves pixels, not values).
@@ -107,7 +108,8 @@ struct PipelineRunnerTests {
     replayed.steps[1] = try Self.gain(4, locked: true)
     let log = EventLog()
     let second = try await runner.replay(
-      replayed, on: Self.image(0.1), in: try Self.folder("b"), bundle: Self.bundle, previous: first,
+      replayed, on: Self.image(0.1), in: try Self.folder("b"), bundle: Self.bundle,
+      previous: PipelineRun(history: first, bundle: Self.bundle),
       onEvent: log.sink)
     #expect(log.events == [.applied(0), .reused(1), .applied(2)])
     #expect(try second.history.output(ofStep: 1).planes == first.output(ofStep: 1).planes)
@@ -126,7 +128,8 @@ struct PipelineRunnerTests {
 
     let otherBundle = EventLog()
     _ = try await runner.replay(
-      recorded, on: Self.image(0.2), in: try Self.folder("b"), bundle: Self.bundle, previous: first,
+      recorded, on: Self.image(0.2), in: try Self.folder("b"), bundle: Self.bundle,
+      previous: PipelineRun(history: first, bundle: Self.bundle),
       onEvent: otherBundle.sink)
     #expect(otherBundle.events == [.applied(0), .applied(1)])
 
@@ -134,7 +137,8 @@ struct PipelineRunnerTests {
     changed.steps[0] = try Self.gain(4)
     let changedStep = EventLog()
     _ = try await runner.replay(
-      changed, on: Self.image(0.1), in: try Self.folder("c"), bundle: Self.bundle, previous: first,
+      changed, on: Self.image(0.1), in: try Self.folder("c"), bundle: Self.bundle,
+      previous: PipelineRun(history: first, bundle: Self.bundle),
       onEvent: changedStep.sink)
     #expect(changedStep.events == [.applied(0), .applied(1)])
   }
@@ -151,11 +155,13 @@ struct PipelineRunnerTests {
       name: "M31",
       steps: [try Self.gain(2), try Self.gain(3, .stop), try Self.gain(9, locked: true)])
     let replay = try await runner.replay(
-      staged, on: Self.image(0.1), in: try Self.folder("b"), bundle: Self.bundle, previous: first)
+      staged, on: Self.image(0.1), in: try Self.folder("b"), bundle: Self.bundle,
+      previous: PipelineRun(history: first, bundle: Self.bundle))
     #expect(replay.outcome == .stopped(at: 1))
     let log = EventLog()
     _ = try await runner.resume(
-      staged, at: 1, on: replay.history, bundle: Self.bundle, previous: first, onEvent: log.sink)
+      staged, at: 1, on: replay.history, bundle: Self.bundle,
+      previous: PipelineRun(history: first, bundle: Self.bundle), onEvent: log.sink)
     #expect(log.events == [.applied(1), .reused(2)])
     #expect(try replay.history.output(ofStep: 2).planes == first.output(ofStep: 2).planes)
   }

@@ -23,39 +23,63 @@ package struct InventoryBuilder: Sendable {
 
   /// Scans `paths` (folders) with the user's overrides.
   ///
-  /// One folder is its own root; several merge under their common parent.
-  package func scan(paths: [String], overrides: InspectOverrides = InspectOverrides()) throws
-    -> Inventory
-  {
+  /// One folder is its own root; several merge under their common parent. `progress` hears
+  /// `listing` while the folders are walked, the FITS total, the count read every
+  /// `ScanProgress.readingStep` files and on the last, then `classifying` once a folder's headers
+  /// are read (its pixel fallbacks, then the union steps); it observes, the inventory does not
+  /// depend on it.
+  package func scan(
+    paths: [String], overrides: InspectOverrides = InspectOverrides(),
+    progress: @Sendable (ScanProgress) -> Void = { _ in }
+  ) throws -> Inventory {
     guard !paths.isEmpty else { throw InspectError.noFolders }
     let roots = paths.map(Self.clean)
     var merged = Inventory(root: roots.count == 1 ? roots[0] : Self.commonParent(roots), frames: [])
-    for root in roots {
+    progress(.listing)
+    let walks = try roots.map { root in
       try Task.checkCancellation()
-      let folder = try scanFrames(root: root, overrides: overrides)
+      return (root: root, files: try InspectWalk.files(under: root, skippingOutput: true))
+    }
+    var count = (done: 0, total: walks.reduce(0) { $0 + $1.files.filter(Self.isFITS).count })
+    progress(.reading(done: 0, total: count.total))
+    for walk in walks {
+      try Task.checkCancellation()
+      let folder = try scanFrames(
+        root: walk.root, files: walk.files, overrides: overrides, count: &count, progress: progress)
       merged.frames += folder.frames
       merged.warnings += folder.warnings
       if merged.channelDetection == nil { merged.channelDetection = folder.channelDetection }
     }
+    try Task.checkCancellation()
     try finalize(&merged, overrides: overrides)
     return merged
   }
 
+  static func isFITS(_ path: String) -> Bool {
+    fitsExtensions.contains((path as NSString).pathExtension.lowercased())
+  }
+
   /// One folder: read, then the per-folder fallbacks, in the legacy order.
-  private func scanFrames(root: String, overrides: InspectOverrides) throws -> Inventory {
+  private func scanFrames(
+    root: String, files: [String], overrides: InspectOverrides,
+    count: inout (done: Int, total: Int), progress: @Sendable (ScanProgress) -> Void
+  ) throws -> Inventory {
     var inventory = Inventory(root: root, frames: [])
-    let files = try InspectWalk.files(under: root, skippingOutput: true)
-    for path in files {
+    for path in files where Self.isFITS(path) {
       try Task.checkCancellation()
-      let ext = (path as NSString).pathExtension.lowercased()
-      guard Self.fitsExtensions.contains(ext) else { continue }
       do {
         inventory.frames.append(
           try CaptureFrame(reading: URL(fileURLWithPath: path), timeZone: timeZone))
       } catch {
         inventory.warnings.append("skip \(InspectWalk.relative(path, to: root)): \(error)")
       }
+      count.done += 1
+      if count.done % ScanProgress.readingStep == 0 || count.done == count.total {
+        progress(.reading(done: count.done, total: count.total))
+      }
     }
+    try Task.checkCancellation()
+    progress(.classifying)
     // info.txt first, so signal detection only runs on what the manifest could not name; physical
     // wheel slots before detection, so a known filter never goes to the guess-prone detector.
     CaptureManifest.apply(files: files, to: &inventory)
@@ -73,6 +97,7 @@ package struct InventoryBuilder: Sendable {
   /// The steps that must run once over every folder (`finalizeInventory`).
   private func finalize(_ inventory: inout Inventory, overrides: InspectOverrides) throws {
     inventory.clearSpuriousBayer(pixels: pixels)
+    try Task.checkCancellation()
     inventory.colorModel = inventory.lightColorModel
     // An explicit choice answers the mixed folder: resolved before anything is keyed on it.
     if inventory.colorModel == .mixed && overrides.colorModel == .auto {
@@ -96,6 +121,8 @@ package struct InventoryBuilder: Sendable {
     // Last among the grouping steps: verdicts are stored against a set's final id.
     try Task.checkCancellation()
     FilterSetClassifier.annotate(&inventory, overrides: overrides.filterSets, pixels: pixels)
+    // annotate stops measuring once cancelled: its partial verdicts must never be returned.
+    try Task.checkCancellation()
     inventory.sessions = SessionInfo.summary(inventory.frames)
     if Night.spansSeveral(inventory.frames) { inventory.warnUndatedSplit() }
     inventory.addCompletenessWarnings()

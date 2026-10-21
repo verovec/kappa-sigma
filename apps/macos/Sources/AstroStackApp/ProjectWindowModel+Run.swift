@@ -54,7 +54,8 @@ extension ProjectWindowModel {
     let runID = Self.unusedRunID(runs.nextRunID, in: folder)
     let output = folder.appendingPathComponent("stacks/\(runID)", isDirectory: true)
     let work = runs.scratch.appendingPathComponent("run_\(runID)", isDirectory: true)
-    let planning = services(store).planning
+    // The run re-plans the import silently: its own progress is the run's journal.
+    let planning = ImportViewModel.silent(services(store).planning)
     let start = runs.run
     let model = RunViewModel(runID: runID, output: output)
     run = model

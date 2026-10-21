@@ -22,7 +22,7 @@ extension ProjectWindowModel {
       self.error = UserFacingError(error)
       return
     }
-    let planning = services(store).planning
+    let planning = ImportViewModel.silent(services(store).planning)
     isScanning = true
     scanTask = Task {
       do {

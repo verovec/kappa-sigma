@@ -36,7 +36,8 @@ package enum CFAProbe {
   package static func verdict(_ frames: [CaptureFrame], pixels: PixelReader) -> CFAVerdict {
     var verdict = CFAVerdict.unknown
     for frame in FilterSetClassifier.sample(frames, count: sampleFrames) {
-      guard let image = try? pixels.planes(frame.path) else { return .unknown }
+      // A cancelled scan stops reading frames; its caller throws before using the verdict.
+      guard !Task.isCancelled, let image = try? pixels.planes(frame.path) else { return .unknown }
       let current = Self.verdict(image)
       if current == .unknown || (verdict != .unknown && current != verdict) { return .unknown }
       verdict = current

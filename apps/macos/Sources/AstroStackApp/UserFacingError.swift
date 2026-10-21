@@ -11,6 +11,8 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
   case legacyRun(LegacyRunError)
   /// The document was closed under an open sheet.
   case projectClosed
+  /// macOS (or the folder's permissions) refuses the app a folder it only reads: what to allow.
+  case documentsAccess(path: String)
   /// A run needs a saved project: its stack is written inside the package.
   case projectUnsaved
   /// The run's stream ended without its result, and nobody cancelled it.
@@ -46,6 +48,8 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     case .preprocess(let error): Self.message(error)
     case .legacyRun(let error): Self.message(error)
     case .projectClosed: .app("This project is not open any more; reopen it and import again.")
+    case .documentsAccess(let path):
+      .app("Allow AstroStack to read \(path) in System Settings › Privacy › Files and Folders.")
     case .projectUnsaved: .app("Save the project first: its stacks are written inside it.")
     case .runIncomplete:
       .app("The run stopped without writing its bundle; its journal shows the last step.")

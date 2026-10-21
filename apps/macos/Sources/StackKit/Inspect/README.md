@@ -15,6 +15,12 @@ completeness warnings run once over the union (calibration in one folder satisfi
 another). `timeZone` decides each frame's observing night (local noon bucket); the oracles were
 recorded in `Europe/Paris`.
 
+`scan(paths:overrides:progress:)` reports `ScanProgress` (card 0083): the FITS total once every
+folder is walked, the count read every 32 files and on the last, then `classifying` before the
+union steps. Observation only: the inventory is the same with or without it (pinned by
+`InventoryBuilderTests.testScanReportsProgress`). `ImportPlanner.plan` forwards it; the app adds
+`.library` while the calibration library is indexed.
+
 ## How a frame is decided (precedence, same as Go)
 
 1. **Header** (`CaptureFrame+Header`): IMAGETYP, FILTER (via `Filter`), EXPTIME/EXPOSURE/EXPOINUS,

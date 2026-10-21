@@ -16,9 +16,15 @@ bad=$(printf '%s\n' "$files" | grep -E '(^|/)(go\.mod|go\.sum|Dockerfile|docker-
   | grep -vE '^(docs|tasks-context|conventions)/' || true)
 [ -z "$bad" ] || report "non-Swift code or container files tracked:"$'\n'"$bad"
 
-# 2. Nothing pixel-shaped — fixtures in the repo are text only.
-bad=$(printf '%s\n' "$files" | grep -iE '\.(fits?|fts|xisf|tiff?|png|jpe?g|cr[23]|nef|arw|dng|raw|seq)$' || true)
+# 2. Nothing pixel-shaped: fixtures in the repo are text only. The one exception is the README's
+#    artwork in docs/assets/ (card 0082): web images only, each at most 600 KB. Data never goes there.
+pixels='\.(fits?|fts|xisf|tiff?|png|jpe?g|webp|cr[23]|nef|arw|dng|raw|seq)$'
+bad=$(printf '%s\n' "$files" | grep -iE "$pixels" | grep -vE '^docs/assets/[^/]+\.(png|jpe?g|webp)$' || true)
 [ -z "$bad" ] || report "pixel-shaped files tracked (R7):"$'\n'"$bad"
+art=$(printf '%s\n' "$files" | grep -E '^docs/assets/' || true)
+bad=$( [ -z "$art" ] || printf '%s\n' "$art" | tr '\n' '\0' | xargs -0 wc -c \
+  | awk '$2 != "total" && $1 > 600000 { print $2 " (" $1 " bytes)" }' || true)
+[ -z "$bad" ] || report "README artwork over 600 KB:"$'\n'"$bad"
 
 # 3. No data symlinks or data folders recreated inside the repo.
 for d in input output library captures runs work; do
@@ -52,6 +58,10 @@ bad=$( [ -z "$views" ] || printf '%s\n' "$views" | tr '\n' '\0' | xargs -0 grep 
   'Color\.(red|orange|yellow|green|blue|gray|black)\b|(foregroundStyle|tint|fill|stroke|background)\(\.(red|orange|yellow|green|blue|gray|black)\b|NSColor\.system(Red|Orange|Yellow|Green|Blue)\b' \
   || true)
 [ -z "$bad" ] || report "literal colours in views (use DesignColor tokens):"$'\n'"$bad"
+
+# 8. Every relative link in the README and docs/ resolves (card 0082).
+bad=$(./scripts/check-links.sh || true)
+[ -z "$bad" ] || report "broken relative links:"$'\n'"$bad"
 
 if [ "$fail" -ne 0 ]; then echo "hygiene: FAILED"; exit 1; fi
 echo "hygiene: ok"

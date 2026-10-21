@@ -1,74 +1,136 @@
-# Kappa-Sigma
+<p align="center">
+  <img src="docs/assets/logo.svg" width="120" height="120" alt="Kappa-Sigma logo">
+</p>
 
-Native macOS app for deep-sky astrophotography: stack your captures with Siril, then finish them in a
-PixInsight-like Studio with real-time Metal previews — every setting visible, explained and yours.
+<h1 align="center">Kappa-Sigma</h1>
 
-The previous web engine (Go) lives in the sibling repo `stacking-astro` and is only read as a
-reference while its rules are ported to Swift. Design: [`docs/design/astrostack-macos.md`](docs/design/astrostack-macos.md).
+<p align="center">
+  <strong>Deep-sky astrophotography on the Mac, from the raw night to the finished image.</strong><br>
+  Stack your captures with Siril, then finish them in a Studio with real-time Metal previews:
+  every setting visible, explained and yours.
+</p>
 
-## AstroStack 2 (work in progress)
+<p align="center">
+  <a href="#quick-start">Quick start</a> &middot;
+  <a href="#how-it-works">How it works</a> &middot;
+  <a href="#status">Status</a> &middot;
+  <a href="#tech-stack">Tech stack</a> &middot;
+  <a href="#documentation">Documentation</a>
+</p>
 
-**State on 2026-10-20 (card 0040):** the app skeleton exists, nothing astronomical runs yet.
+<p align="center">
+  <img alt="macOS 26" src="https://img.shields.io/badge/macOS-26-black?logo=apple">
+  <img alt="Swift 6.2" src="https://img.shields.io/badge/Swift-6.2-F05138?logo=swift&amp;logoColor=white">
+  <img alt="Metal" src="https://img.shields.io/badge/GPU-Metal-8A8A8A">
+  <img alt="MIT licence" src="https://img.shields.io/badge/licence-MIT-blue">
+</p>
 
-- `just app-run` builds `AstroStack.app` and opens a project window; a project is a `.astrostack`
-  package holding `project.db`, created by File › New Project / Save, reopened by File › Open.
-- The window is empty: import, preprocessing (Siril) and the Studio arrive with the next roadmap
-  cards (epics E10–E19), preprocessing first.
-- Modules exist as empty seams with a README each (`apps/macos/Sources/*/README.md`); their
-  boundaries are pinned by a test per module.
-- Builds with the Command Line Tools alone (Swift 6.2+); Xcode is only needed later for the Metal
-  Toolchain, Instruments and signing.
+<p align="center">
+  <img src="docs/assets/ngc7000.jpg" width="900" alt="The North America Nebula, NGC 7000, in Hα and OIII over RGB">
+  <br>
+  <sub>NGC 7000, the North America Nebula: Hα and OIII over RGB, captured and stacked by the author
+  with the pipeline Kappa-Sigma replaces.</sub>
+</p>
 
-## Quickstart
+---
 
-```sh
-just setup      # swiftlint + pre-push hook, then a host check (`just doctor`)
-just app-run    # build apps/macos/.build/AstroStack.app and open it
-just check      # hygiene + lint + build + full suite — the pre-push gate
+A night of deep-sky imaging leaves hundreds of raw frames, darks, flats and offsets. Turning them
+into an image means calibrating, rejecting the bad frames, aligning, stacking, then stretching and
+colouring a signal that is almost all noise. Existing tools either hide their decisions or bury
+them in hundreds of panels.
+
+**Kappa-Sigma** is a native macOS app that walks one target through that journey, from the capture
+folder to the deliverable. Siril does the pixel math, so a stack is reproducible to the byte. Every
+verdict the app reaches (a rejected frame, a chosen master, a reference frame) is shown and can be
+overruled, and no process quietly changes its own settings: the value you see is the value applied.
+
+The name comes from kappa-sigma clipping, the outlier rejection at the heart of every image stack.
+
+## Quick start
+
+**Prerequisites:** a Mac on macOS 26 with the Command Line Tools (Swift 6.2 or later) and
+[`just`](https://github.com/casey/just). Siril 1.4 is needed to stack; GraXpert and StarNet2 are
+optional. Xcode is not required.
+
+```bash
+git clone https://github.com/verovec/kappa-sigma.git && cd kappa-sigma
+just setup      # install swiftlint and the pre-push hook, then check the host
+just app-run    # build AstroStack.app and open it
 ```
 
-## Prerequisites (macOS 26 host)
+File › New Project opens a project window; **Import Captures…** reads a capture folder (it is never
+written) and shows how each night will be calibrated. `just doctor` tells you which host tools are
+found.
 
-- Command Line Tools with Swift 6.2+ (or Xcode 26), `just`, `swiftlint` (`just setup` installs it;
-  `swift format` ships with the toolchain)
-- Later cards: Siril 1.4.x (`/Applications/Siril.app`), GraXpert, StarNet2 (your own install — never
-  bundled); Xcode 26 with the Metal Toolchain for precompiled shaders and profiling
-- Your data in `~/Documents/astro/{captures,runs,library}` — read-only for the app, never in a repo
+## How it works
 
-## Architecture
+A project is a `.astrostack` package (a SQLite database plus its images). Its window follows the
+order an astrophotographer works in:
 
-Swift 6 only. Modules (SwiftPM, `apps/macos/Package.swift`): `ImageKit` (FITS, planes, pyramid),
-`RenderKit` (Metal viewer and shaders), `ProcessKit` (processes, history, recipes), `ProjectKit`
-(the `.astrostack` package and its SQLite database), `StackKit` (preprocessing: inspect,
-calibration library, Siril driver, grading, stacking), `HelpKit`, and the `AstroStackApp`
-executable (AppKit document lifecycle, SwiftUI content). Siril, GraXpert and StarNet are host tools
-driven by `StackKit`. Details: `docs/design/`.
+```
+  Données       capture nights, lights per filter, calibration coverage
+     |
+  Calibration   the masters each light set uses, their statistics, the gaps
+     |
+  Tri           per-frame metrics, blink, keep or reject, reference frame
+     |
+  Empilement    the stacking settings and the Siril run, with its journal
+     |
+  Studio        stretch, emission lines, HDR, colour, star layer, previewed live on the GPU
+     |
+  Export        the deliverables
+```
 
-## Usage
+Every stage shows its state (to do, ready, needs a look, done) and you move between them freely:
+nothing jumps ahead on its own. Captures, masters and earlier results stay where they are, read
+only; the app writes only inside its projects.
 
-| Recipe | What it does |
-|---|---|
-| `just app-build` / `just app-run [project.astrostack]` | Assemble `apps/macos/.build/AstroStack.app` (ad-hoc signed) / build and open it |
-| `just doctor` | Host readiness: toolchain, Metal Toolchain, swiftlint, Siril/GraXpert/StarNet, data folders |
-| `just test` / `just test-unit` / `just test-live` | Whole suite / everything but the `Live…` suites / only the live suites (host tools + fixtures) |
-| `just lint` / `just fmt` | `swift format lint --strict` + `swiftlint --strict` / format in place |
-| `just coverage` | Line coverage (lcov + summary) under `apps/macos/.build/coverage` |
-| `just hygiene` | Repo gate: Swift only, no pixels, no data symlinks, no large blobs |
-| `just check` / `just ci` | The pre-push gate / exactly what CI runs |
+## Status
 
-## Development
+Kappa-Sigma is in active development. What works today:
 
-`just check` before every PR (the pre-push hook from `just hooks` runs it); CI runs `just ci` on a
-`macos-26` runner for pull requests only, because macOS minutes bill at 10×. Live tests (Siril,
-GraXpert, StarNet, images under `~/Documents/astro/fixtures`) self-skip on CI and run on the
-developer's Mac. Conventions in `conventions/`; the reasoning behind every gate and the decisions
-taken for the Swift port (concurrency model, Metal 3, GRDB, swift-subprocess, oracles) in
-`docs/engineering/swift-quality-playbook.md`.
+- Projects: create, save, reopen; the journey sidebar with each stage's state.
+- Import: classification of a capture folder by night, filter and frame type; the calibration plan
+  against your master library, with every verdict overridable; master inspection and rebuild.
+- Viewer: FITS images on the GPU with zoom, pan, auto or manual display stretch, histogram, pixel
+  readout with RA/Dec, clipping overlay and before/after compare.
+- Engine: single-night and multi-night preprocessing ported from the legacy pipeline and pinned by
+  recorded oracles; the stretch process (MTF, GHS, arcsinh); channel combination and masks.
+- Interface in English and French.
 
-## Name
+Next: running a stack from the app, frame review, the remaining Studio processes and export.
 
-Kappa-sigma clipping is the outlier rejection at the heart of every image stack.
+## Tech stack
+
+| Layer | Tech | Location |
+|-------|------|----------|
+| Interface | SwiftUI and AppKit (document-based app) | `apps/macos/Sources/AstroStackApp` |
+| Real-time previews | Metal 3 kernels, each checked against a CPU oracle | `RenderKit`, `ProcessKit` |
+| Image math | Accelerate (vDSP, vImage), planar float32 | `ImageKit`, `StackKit` |
+| Preprocessing | Siril 1.4 driven over named pipes | `StackKit` |
+| Project storage | SQLite through GRDB, versioned SQL migrations | `ProjectKit` |
+| Tests | Swift Testing, recorded oracles, live suites on real captures | `apps/macos/Tests` |
+
+Swift 6 only: no server, no helper binary, no second language. Details in
+[Architecture](docs/architecture.md).
+
+## Documentation
+
+| Topic | Where |
+|-------|-------|
+| Modules, host tools, where your data lives | [`docs/architecture.md`](docs/architecture.md) |
+| Toolchain, recipes, tests, CI, conventions | [`docs/development.md`](docs/development.md) |
+| Product and architecture design | [`docs/design/astrostack-macos.md`](docs/design/astrostack-macos.md) |
+| Quality gates and the decisions of the Swift port | [`docs/engineering/swift-quality-playbook.md`](docs/engineering/swift-quality-playbook.md) |
+| Everything else | [`docs/`](docs/README.md) |
+
+## Contributing
+
+Issues and pull requests are welcome. Run `just check` before pushing: it is the same gate as CI
+(hygiene, lint, app build, full test suite). The house conventions are in
+[`conventions/`](conventions/), and [`docs/development.md`](docs/development.md) explains how tests,
+oracles and the live suites work.
 
 ## License
 
-MIT — see `LICENSE`.
+[MIT](LICENSE) © 2026 Clément Verove

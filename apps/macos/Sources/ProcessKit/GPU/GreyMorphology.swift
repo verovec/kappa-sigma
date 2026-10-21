@@ -38,8 +38,8 @@ package struct GreyMorphology {
     try encode([false, true], input, into: output, radius: radius, commands: commands)
   }
 
-  /// One x pass and one y pass per operation in `dilations`, ping-ponging through two scratch
-  /// textures; the last pass writes `output`.
+  /// One x pass and one y pass per operation in `dilations`, ping-ponging through at most two
+  /// scratch textures (one for a single operation); the last pass writes `output`.
   private func encode(
     _ dilations: [Bool], _ input: MTLTexture, into output: MTLTexture, radius: Int,
     commands: MTLCommandBuffer
@@ -48,8 +48,10 @@ package struct GreyMorphology {
     guard input.width == output.width, input.height == output.height else {
       throw ProcessError.sizeMismatch
     }
-    let scratch = try (0..<2).map { _ in try ScratchTexture.make(like: input, device: device) }
     let passes = dilations.flatMap { dilation in [(0, dilation), (1, dilation)] }
+    let scratch = try (0..<min(2, passes.count - 1)).map { _ in
+      try ScratchTexture.make(like: input, device: device)
+    }
     var source = input
     for (index, pass) in passes.enumerated() {
       let target = index == passes.count - 1 ? output : scratch[index % 2]

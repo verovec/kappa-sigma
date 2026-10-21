@@ -48,10 +48,27 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   Every coefficient is computed on the CPU (`StretchUniforms`) from the panel values and the
   stats; "autostretch like Siril" and the deep-sky 0.90 headroom are suggestions, not defaults
   hidden in the shader. No panel yet: the Studio renders the schema generically (0075/0076).
+- **EmissionScreensProcess** (card 0051, id `emission-screens`): astrocomp's HOO-over-broadband
+  chain on a stretched RGB base. Per line (`EmissionLine`: Hα, [OIII], [SII]; params
+  `<ha|oiii|sii><Enabled|Continuum|ContinuumK|Background|Black|Opacity|Tint|Boost>`) on its own
+  linear bundle layer: continuum `max(line − k·ref, 0)` (k = the panel value; the bundle's
+  `continuum_k` is a suggestion, the reference plane is the bundle's `continuum_ref`), the
+  astrocomp MTF (`LineStretch`: x₀ normalised by 1 − c, NOT the Siril form of `stretch`), black
+  point, tanh boost (knee 0.60, ceiling 0.98), grey opening (`starRadius` px), 3-box smoothing
+  (`smooth` px), then `base + α·line·tint·(1 − base)` in line order (α = opacity · `nbBlend`).
+  After a continuum subtraction the stretch stats are derived (median − k·ref median, MADNs in
+  quadrature), never measured. The black point reads in σ of the stretched bundle noise
+  (`blackInSigma`); suggestions: k, black = 3σ. Global `linkLayers` = astrocomp `-link-layers`.
+- GPU building blocks: `GreyMorphology` (erode/dilate/opening, separable, window clipped to the
+  image, bit-exact vs van Herk), `BoxBlur` (one edge-clamped x+y pass per radius),
+  `ScratchTexture` (private intermediates), `LayerPlane` (`R` / `RGB.r` tokens → texture + stats).
+- `RenderContext.layerStats` (and `ProcessRunner.run(layerStats:)`, `ProcessContracts(layerStats:)`)
+  hand a process the bundle statistics of every layer it reads; `LayerStats.continuumK/
+  continuumReference` carry a line layer's fit; `suggestions(stats:layers:)` may read them.
 - `ProcessRegistry`: refuses duplicates and invalid schemas (`.px` without
   `previewExactOnlyAt1to1`, a default outside its bounds or options, infinite bounds);
   `standard()` is validated like any registry and lists the shipped processes (today:
-  `channel-combination`, `stretch`).
+  `channel-combination`, `stretch`, `emission-screens`).
 
 ## Strings (card 0073)
 

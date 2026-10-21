@@ -81,6 +81,22 @@
         }
       }
     },
+    "Emission screens": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emission screens"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Écrans d’émission"
+          }
+        }
+      }
+    },
     "Foraxx": {
       "localizations": {
         "en": {
@@ -225,6 +241,134 @@
         }
       }
     },
+    "Hα background": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hα background"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fond Hα"
+          }
+        }
+      }
+    },
+    "Hα black point": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hα black point"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Point noir Hα"
+          }
+        }
+      }
+    },
+    "Hα boost": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hα boost"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renfort Hα"
+          }
+        }
+      }
+    },
+    "Hα continuum scale k": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hα continuum scale k"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échelle du continuum k Hα"
+          }
+        }
+      }
+    },
+    "Hα continuum subtraction": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hα continuum subtraction"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Soustraction du continuum Hα"
+          }
+        }
+      }
+    },
+    "Hα opacity": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hα opacity"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opacité Hα"
+          }
+        }
+      }
+    },
+    "Hα screen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hα screen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Écran Hα"
+          }
+        }
+      }
+    },
+    "Hα tint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hα tint"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teinte Hα"
+          }
+        }
+      }
+    },
     "L black": {
       "localizations": {
         "en": {
@@ -289,6 +433,38 @@
         }
       }
     },
+    "Layer smoothing": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Layer smoothing"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lissage des couches"
+          }
+        }
+      }
+    },
+    "Link layers": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Link layers"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lier les couches"
+          }
+        }
+      }
+    },
     "Linked channels": {
       "localizations": {
         "en": {
@@ -349,6 +525,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mode"
+          }
+        }
+      }
+    },
+    "Narrowband blend": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Narrowband blend"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mélange bande étroite"
           }
         }
       }
@@ -465,6 +657,22 @@
         }
       }
     },
+    "Star removal radius": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Star removal radius"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rayon de retrait des étoiles"
+          }
+        }
+      }
+    },
     "Stretch": {
       "localizations": {
         "en": {
@@ -545,6 +753,278 @@
         }
       }
     },
+    "[OIII] background": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[OIII] background"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fond [OIII]"
+          }
+        }
+      }
+    },
+    "[OIII] black point": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[OIII] black point"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Point noir [OIII]"
+          }
+        }
+      }
+    },
+    "[OIII] boost": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[OIII] boost"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renfort [OIII]"
+          }
+        }
+      }
+    },
+    "[OIII] continuum scale k": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[OIII] continuum scale k"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échelle du continuum k [OIII]"
+          }
+        }
+      }
+    },
+    "[OIII] continuum subtraction": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[OIII] continuum subtraction"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Soustraction du continuum [OIII]"
+          }
+        }
+      }
+    },
+    "[OIII] opacity": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[OIII] opacity"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opacité [OIII]"
+          }
+        }
+      }
+    },
+    "[OIII] screen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[OIII] screen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Écran [OIII]"
+          }
+        }
+      }
+    },
+    "[OIII] tint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[OIII] tint"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teinte [OIII]"
+          }
+        }
+      }
+    },
+    "[SII] background": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[SII] background"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fond [SII]"
+          }
+        }
+      }
+    },
+    "[SII] black point": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[SII] black point"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Point noir [SII]"
+          }
+        }
+      }
+    },
+    "[SII] boost": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[SII] boost"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renfort [SII]"
+          }
+        }
+      }
+    },
+    "[SII] continuum scale k": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[SII] continuum scale k"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échelle du continuum k [SII]"
+          }
+        }
+      }
+    },
+    "[SII] continuum subtraction": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[SII] continuum subtraction"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Soustraction du continuum [SII]"
+          }
+        }
+      }
+    },
+    "[SII] opacity": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[SII] opacity"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opacité [SII]"
+          }
+        }
+      }
+    },
+    "[SII] screen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[SII] screen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Écran [SII]"
+          }
+        }
+      }
+    },
+    "[SII] tint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[SII] tint"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teinte [SII]"
+          }
+        }
+      }
+    },
+    "a black point 3σ above zero hides the stretched sky noise": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "a black point 3σ above zero hides the stretched sky noise"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "un point noir à 3σ au-dessus de zéro masque le bruit du ciel étiré"
+          }
+        }
+      }
+    },
     "autostretch like Siril: background at 0.25": {
       "localizations": {
         "en": {
@@ -589,6 +1069,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "autostretch comme Siril : ombres 2,8σ sous le fond"
+          }
+        }
+      }
+    },
+    "the continuum scale fitted on the stack": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the continuum scale fitted on the stack"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "l’échelle du continuum mesurée à l’empilement"
           }
         }
       }

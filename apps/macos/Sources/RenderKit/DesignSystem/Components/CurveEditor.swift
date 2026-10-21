@@ -3,27 +3,28 @@ package import SwiftUI
 /// A curve's control-point editor.
 ///
 /// Click to add a point, drag to move it, double-click to remove it. The drawn curve comes from
-/// `sample` (the app passes the process's own spline), so what the editor shows is what the
+/// `curve` (the app passes the process's own spline), so what the editor shows is what the
 /// process applies.
 package struct CurveEditor: View {
   private let label: LocalizedStringResource
   @Binding private var points: CurveEditorPoints
-  private let sample: ([SIMD2<Double>], Double) -> Double
+  private let curve: ([SIMD2<Double>]) -> (Double) -> Double
   private let tint: DesignColor
   @State private var dragged: Int?
   /// Reach of a click around a point, in curve units.
   private static let reach = 0.04
 
-  /// An editor of `points`, drawing the curve `sample(points, x)` in `tint` (the channel's plot
-  /// colour).
+  /// An editor of `points`, drawing `curve(points)` (built once per change, sampled per column)
+  /// in `tint`, the channel's plot colour.
   package init(
     _ label: LocalizedStringResource, points: Binding<CurveEditorPoints>,
-    tint: DesignColor = .plotLuminance, sample: @escaping ([SIMD2<Double>], Double) -> Double
+    tint: DesignColor = .plotLuminance,
+    curve: @escaping ([SIMD2<Double>]) -> (Double) -> Double
   ) {
     self.label = label
     _points = points
     self.tint = tint
-    self.sample = sample
+    self.curve = curve
   }
 
   package var body: some View {
@@ -84,10 +85,11 @@ package struct CurveEditor: View {
 
   private func curvePath(_ size: CGSize) -> Path {
     var path = Path()
+    let sample = curve(points.points)
     let steps = max(2, Int(size.width))
     for step in 0...steps {
       let x = Double(step) / Double(steps)
-      let point = Self.view(SIMD2(x, min(max(sample(points.points, x), 0), 1)), size)
+      let point = Self.view(SIMD2(x, min(max(sample(x), 0), 1)), size)
       if step == 0 { path.move(to: point) } else { path.addLine(to: point) }
     }
     return path

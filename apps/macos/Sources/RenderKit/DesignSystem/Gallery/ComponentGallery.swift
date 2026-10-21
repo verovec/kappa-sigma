@@ -129,7 +129,7 @@ package struct ComponentGallery: View {
         ForEach(curves.indices, id: \.self) { index in
           CurveEditor(
             index == 0 ? .renderKit("Luminance") : .renderKit("Red"), points: $curves[index],
-            tint: index == 0 ? .plotLuminance : .plotRed, sample: Self.polyline
+            tint: index == 0 ? .plotLuminance : .plotRed, curve: Self.polyline
           )
           .frame(width: 200)
         }
@@ -138,12 +138,14 @@ package struct ComponentGallery: View {
   }
 
   /// Straight segments between the points: the gallery has no process spline to draw.
-  nonisolated static func polyline(_ points: [SIMD2<Double>], _ x: Double) -> Double {
-    guard let upper = points.firstIndex(where: { $0.x >= x }), upper > 0 else {
-      return points.first?.y ?? x
+  nonisolated static func polyline(_ points: [SIMD2<Double>]) -> (Double) -> Double {
+    { x in
+      guard let upper = points.firstIndex(where: { $0.x >= x }), upper > 0 else {
+        return points.first?.y ?? x
+      }
+      let (left, right) = (points[upper - 1], points[upper])
+      return left.y + (right.y - left.y) * (x - left.x) / max(right.x - left.x, 1e-9)
     }
-    let (left, right) = (points[upper - 1], points[upper])
-    return left.y + (right.y - left.y) * (x - left.x) / max(right.x - left.x, 1e-9)
   }
 
   private var tools: some View {

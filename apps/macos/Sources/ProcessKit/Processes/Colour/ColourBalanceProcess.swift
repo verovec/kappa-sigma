@@ -7,7 +7,9 @@ package import RenderKit
 /// Card 0053 (review of 2026-10-20): when SPCC/PCC fails (the 20 mm field) or is invalid
 /// (dual-band), this is the user's manual route. R2: a sky region the user draws is measured
 /// (`regionMedians`) and only fills suggestions — offsets that equalise its medians, or gains
-/// that make it grey; the panel shows and applies the offsets and gains, nothing else.
+/// that make it grey; the panel shows and applies the offsets and gains, nothing else. Linking
+/// the gains is a panel behaviour (one slider moves the three values it shows), never a hidden
+/// override in `render`.
 package struct ColourBalanceProcess: ImageProcess {
   package static let id = "colour-balance"
   package static let title = "Colour balance"
@@ -25,9 +27,7 @@ package struct ColourBalanceProcess: ImageProcess {
         ParamSpec(
           id: "gain" + $0, title: $0 + " gain", unit: .none, level: .simple, number: 1,
           in: 0.1...10)
-      } + [
-        ParamSpec(id: "linked", title: "One gain for every channel", level: .simple, flag: false)
-      ])
+      })
 
   package let params: ParamSet
   private let pipeline: MTLComputePipelineState
@@ -90,14 +90,14 @@ package struct ColourBalanceProcess: ImageProcess {
     _ input: GPUImage, stats: LayerStats, into output: GPUImage, context: RenderContext
   ) throws {
     try ColourKernel.checkSizes(input, output)
-    // A balance between channels has no meaning on one plane: the mono image goes through.
-    guard input.planes.count == 3 else {
+    let offsets = Self.channels.map { params.number("offset" + $0) }
+    let gains = Self.channels.map { params.number("gain" + $0) }
+    // A balance between channels has no meaning on one plane, and untouched values change no
+    // bit (not even −0.0): both go through as they are.
+    guard input.planes.count == 3, offsets != [0, 0, 0] || gains != [1, 1, 1] else {
       return try ColourKernel.copy(input, into: output, commands: context.commands)
     }
-    let gains = Self.channels.map {
-      params.number("gain" + (params.flag("linked") ? "Green" : $0))
-    }
-    let values = (Self.channels.map { params.number("offset" + $0) } + gains).map { Float($0) }
+    let values = (offsets + gains).map { Float($0) }
     try ColourKernel.encode(
       pipeline, input, into: output, values: values, commands: context.commands)
   }

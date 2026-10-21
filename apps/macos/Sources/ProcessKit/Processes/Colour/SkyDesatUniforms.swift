@@ -27,6 +27,12 @@ struct SkyDesatUniforms {
         "the sky desaturation needs a positive sky level (bundle median)")
     }
     sigmaC = used.map(\.madn).reduce(0, +) / 3 * (2.0 / 3).squareRoot()
+    // The legacy pass skipped degenerate statistics ("never guess"): a zero σ makes the hue gate
+    // a hard sign test.
+    guard !params.flag("keepCool") || sigmaC > 0 else {
+      throw ProcessError.invalidParameter(
+        "keep cool hues needs the bundle noise (MADN) of R, G and B: it is 0")
+    }
     let bands = try ["star", "nebula", "floor"].map { id in
       let (low, high) = (params.number(id + "Low"), params.number(id + "High"))
       guard low < high else {

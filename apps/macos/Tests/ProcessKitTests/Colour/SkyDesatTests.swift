@@ -129,5 +129,14 @@ struct SkyDesatTests {
     #expect(throws: ProcessError.self) {
       try Self.run(["strength": .number(1), "nebulaLow": .number(0.2), "nebulaHigh": .number(0.1)])
     }
+    let noiseless = LayerStats(
+      channels: Array(
+        repeating: ChannelStats(median: Double(Self.sky), madn: 0, minimum: 0, maximum: 1),
+        count: 3))
+    #expect(throws: ProcessError.self) {
+      try ColourFixtures.run(
+        SkyDesatProcess.self, ["strength": .number(1), "keepCool": .flag(true)],
+        planes: Self.field(), width: Self.width, stats: noiseless)
+    }
   }
 }

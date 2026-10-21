@@ -1,5 +1,5 @@
 /// The control points a `CurveEditor` edits, both coordinates in [0, 1]: sorted by x, a minimum
-/// gap apart, the two ends at x = 0 and x = 1, between 2 and `maxCount` points.
+/// gap apart, between 2 and `maxCount` points; the two ends keep their x.
 ///
 /// RenderKit never imports ProcessKit: the app converts these to the process's `points`
 /// parameter, which validates them again.
@@ -12,11 +12,24 @@ package struct CurveEditorPoints: Equatable, Sendable {
   package static let minimumGap = 0.01
   private static let identity = [SIMD2<Double>(0, 0), SIMD2(1, 1)]
 
-  /// An editor over `points` (the identity by default).
+  /// An editor over `points` (the identity by default), made to hold the invariants: clamped,
+  /// sorted, a point closer than `minimumGap` to the one before dropped (the last one kept),
+  /// inner points beyond `maxCount` dropped.
   package init(points: [SIMD2<Double>]? = nil, maxCount: Int) {
     self.maxCount = max(2, maxCount)
-    let given = (points ?? Self.identity).map(Self.clamped).sorted { $0.x < $1.x }
-    self.points = given.count >= 2 ? given : Self.identity
+    let sorted = (points ?? Self.identity).map(Self.clamped).sorted { $0.x < $1.x }
+    var kept: [SIMD2<Double>] = []
+    for point in sorted {
+      if let previous = kept.last, point.x - previous.x < Self.minimumGap {
+        if point == sorted.last, kept.count > 1 { kept[kept.count - 1] = point }
+        continue
+      }
+      kept.append(point)
+    }
+    if kept.count > self.maxCount {
+      kept = Array(kept.prefix(self.maxCount - 1)) + [kept[kept.count - 1]]
+    }
+    self.points = kept.count >= 2 ? kept : Self.identity
   }
 
   /// The straight line from (0, 0) to (1, 1): the curve changes nothing.
@@ -42,7 +55,8 @@ package struct CurveEditorPoints: Equatable, Sendable {
     } else {
       let low = points[index - 1].x + Self.minimumGap
       let high = points[index + 1].x - Self.minimumGap
-      point.x = min(max(point.x, low), high)
+      // Neighbours closer than two gaps leave no room: the point keeps its x.
+      point.x = low <= high ? min(max(point.x, low), high) : points[index].x
     }
     points[index] = point
   }

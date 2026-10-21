@@ -67,15 +67,17 @@ package struct SaturationProcess: ImageProcess {
     ]
   }
 
-  /// The kernel's `p[]` (see Colour.metal); a band whose edges cross is refused.
+  /// The kernel's `p[]` (see Colour.metal); a band whose edges cross is refused when it is
+  /// read (its boost or desaturation above 0).
   func uniforms() throws -> [Float] {
     let band = ["bandLow", "bandHigh", "rolloffStart"].map { params.number($0) }
-    guard band[0] < band[1], band[1] <= band[2] else {
+    let boosted = params.number("amount") > 0 && params.flag("masked")
+    guard !boosted || (band[0] < band[1] && band[1] <= band[2]) else {
       throw ProcessError.invalidParameter(
         "the saturation band needs start < full ≤ highlight roll-off")
     }
     let (starLow, starHigh) = (params.number("starDesatLow"), params.number("starDesatHigh"))
-    guard starLow < starHigh else {
+    guard params.number("starDesat") == 0 || starLow < starHigh else {
       throw ProcessError.invalidParameter("the star-core band needs start < full")
     }
     return [
@@ -89,11 +91,11 @@ package struct SaturationProcess: ImageProcess {
     _ input: GPUImage, stats: LayerStats, into output: GPUImage, context: RenderContext
   ) throws {
     try ColourKernel.checkSizes(input, output)
-    let values = try uniforms()
     // Saturation has no meaning on one plane: the mono image goes through untouched.
     guard input.planes.count == 3 else {
       return try ColourKernel.copy(input, into: output, commands: context.commands)
     }
+    let values = try uniforms()
     try ColourKernel.encode(
       pipeline, input, into: output, values: values, commands: context.commands)
   }

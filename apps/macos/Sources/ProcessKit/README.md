@@ -67,7 +67,7 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   - `curves` (non-linear): RGB, R, G, B, luminance (lift by f(Y) − Y, Rec. 709), saturation (HSL
     S) as `points` parameters; `MonotoneSpline` (Fritsch–Carlson, no overshoot) sampled into a
     1024 × 6 LUT texture built at init. RenderKit's `CurveEditor` edits them (`CurveEditorPoints`,
-    the app converts to `CurvePoint` and draws with `MonotoneSpline`).
+    the app converts to `CurvePoint` and passes `{ MonotoneSpline(points).callAsFunction }`).
   - `saturation` (non-linear): astrocomp's `-sat -sat-masked` (HSL S through the
     `saturationMaskLUT` band on the HSL lightness), the compose star-core desaturation
     (`starDesatMaskLUT`) and the `desat` tool's luma blend `k`; the PO's values are suggestions.

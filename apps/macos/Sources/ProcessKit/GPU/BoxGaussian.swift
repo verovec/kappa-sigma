@@ -2,15 +2,15 @@ package import Metal
 
 /// A Gaussian blur as three box passes along x then y.
 ///
-/// Kovesi's box widths, edges clamped: the legacy `imgops.GaussianBlur`, on `Mask.metal`'s box
-/// pass.
+/// Kovesi's box widths, edges clamped: the legacy `imgops.GaussianBlur`, on `Mask.metal`'s
+/// running-sum box pass (Kahan-compensated, one thread per line): the cost does not grow with σ.
 package struct BoxGaussian {
   private let pipeline: MTLComputePipelineState
 
   /// The blur's pipeline on `device`.
   package init(device: MTLDevice) throws {
     pipeline = try ProcessLibrary.pipeline(
-      device: device, file: "Mask.metal", function: "maskBoxBlur")
+      device: device, file: "Mask.metal", function: "boxBlurRunning")
   }
 
   /// The radii of the three boxes approximating a Gaussian of `sigma` pixels (`boxesForGauss`;
@@ -60,9 +60,11 @@ package struct BoxGaussian {
     encoder.setTexture(source, index: 0)
     encoder.setTexture(target, index: 1)
     unsafe encoder.setBytes(&radiusAxis, length: MemoryLayout<SIMD2<Int32>>.stride, index: 0)
+    // One thread per row (x pass) or column (y pass).
+    let lines = axis == 0 ? target.height : target.width
     encoder.dispatchThreads(
-      MTLSize(width: target.width, height: target.height, depth: 1),
-      threadsPerThreadgroup: MTLSize(width: 16, height: 16, depth: 1))
+      MTLSize(width: lines, height: 1, depth: 1),
+      threadsPerThreadgroup: MTLSize(width: min(64, lines), height: 1, depth: 1))
     encoder.endEncoding()
   }
 }

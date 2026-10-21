@@ -94,6 +94,18 @@ struct SaturationTests {
     }
   }
 
+  @Test("a crossed band that nothing reads (boost 0, or a mono image) is no error")
+  func testUnreadBandAccepted() throws {
+    let field = ColourFixtures.field()
+    let crossed: [String: ParamValue] = ["bandLow": .number(0.5), "bandHigh": .number(0.4)]
+    #expect(try ColourFixtures.run(SaturationProcess.self, crossed, planes: field) == field)
+    let mono = [field[0]]
+    #expect(
+      try ColourFixtures.run(
+        SaturationProcess.self, crossed.merging(["amount": .number(0.3)]) { $1 }, planes: mono)
+        == mono)
+  }
+
   @Test("a mono image passes through untouched")
   func testMonoIsIdentity() throws {
     let plane = [ColourFixtures.field()[0]]

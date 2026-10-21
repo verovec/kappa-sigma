@@ -53,6 +53,31 @@ struct CurveEditorTests {
     #expect(editor.isIdentity)
   }
 
+  @Test(
+    "loaded points are made valid: sorted, a gap apart, at most maxCount, ends kept",
+    arguments: zip(
+      [
+        [SIMD2(1, 1), SIMD2(0, 0)], [SIMD2(0, 0), SIMD2(0.4, 0.4), SIMD2(0.405, 0.5), SIMD2(1, 1)],
+        (0...6).map { SIMD2(Double($0) / 6, 0.5) }, [SIMD2(0.5, 0.5)],
+      ],
+      [[0, 1], [0, 0.4, 1], [0, 1.0 / 6, 2.0 / 6, 1], [0, 1]] as [[Double]]))
+  func testInitNormalises(points: [SIMD2<Double>], xs: [Double]) {
+    let editor = CurveEditorPoints(points: points, maxCount: 4)
+    #expect(editor.points.map(\.x) == xs)
+  }
+
+  @Test("a point squeezed between close neighbours keeps its x when dragged")
+  func testSqueezedPointStays() {
+    var editor = CurveEditorPoints(
+      points: [SIMD2(0, 0), SIMD2(0.5, 0.5), SIMD2(0.51, 0.6), SIMD2(0.52, 0.7), SIMD2(1, 1)],
+      maxCount: 5)
+    editor.move(2, to: SIMD2(0.9, 0.2))
+    let xs = editor.points.map(\.x)
+    #expect(xs == xs.sorted() && Set(xs).count == 5, "\(xs)")
+    #expect(abs(xs[2] - 0.51) < 1e-9)
+    #expect(editor.points[2].y == 0.2)
+  }
+
   @Test("the nearest point within reach is found, nothing beyond it")
   func testNearest() {
     var editor = Self.identity

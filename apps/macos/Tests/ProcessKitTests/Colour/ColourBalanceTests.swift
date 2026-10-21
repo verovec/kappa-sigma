@@ -64,27 +64,28 @@ struct ColourBalanceTests {
   }
 
   @Test(
-    "gains scale each channel exactly; linked applies the green gain to all three",
-    arguments: zip([[1.0, 1.0, 1.0], [1.2, 0.9, 1.5], [0.5, 2.0, 1.0]], [false, false, true]))
-  func testGains(gains: [Double], linked: Bool) throws {
+    "gains scale each channel exactly, and the gains shown are the gains applied",
+    arguments: [[1.0, 1.0, 1.0], [1.2, 0.9, 1.5], [0.5, 2.0, 1.0]])
+  func testGains(gains: [Double]) throws {
     let field = Self.sky(pedestals: [0.1, 0.1, 0.1])
     let out = try ColourFixtures.run(
       ColourBalanceProcess.self,
       [
         "gainRed": .number(gains[0]), "gainGreen": .number(gains[1]), "gainBlue": .number(gains[2]),
-        "linked": .flag(linked),
       ], planes: field)
     for plane in 0..<3 {
-      let gain = Float(linked ? gains[1] : gains[plane])
+      let gain = Float(gains[plane])
       let expected: [Float] = field[plane].map { ($0 + 0) * gain }
       #expect(out[plane] == expected)
     }
   }
 
-  @Test("gains 1 and no offset are the identity, bit for bit; a mono image passes through")
+  @Test("gains 1 and no offset are the identity, bit for bit (−0.0 kept); mono passes through")
   func testIdentity() throws {
-    let field = Self.sky(pedestals: [0.1, 0.05, 0.2])
-    #expect(try ColourFixtures.run(ColourBalanceProcess.self, [:], planes: field) == field)
+    var field = Self.sky(pedestals: [0.1, 0.05, 0.2])
+    field[0][0] = -0.0
+    let out = try ColourFixtures.run(ColourBalanceProcess.self, [:], planes: field)
+    #expect(out.map { $0.map(\.bitPattern) } == field.map { $0.map(\.bitPattern) })
     let mono = [field[0]]
     #expect(
       try ColourFixtures.run(ColourBalanceProcess.self, ["gainRed": .number(2)], planes: mono)

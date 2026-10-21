@@ -23,10 +23,7 @@ struct SkyDesatPipelines {
     _ input: GPUImage, into output: GPUImage, uniforms: SkyDesatUniforms,
     commands: MTLCommandBuffer
   ) throws {
-    let plane = {
-      try GPUImage(device: commands.device, width: input.width, height: input.height, channels: 1)
-        .planes[0]
-    }
+    let plane = { try Self.intermediate(like: input, device: commands.device) }
     let (meanPlane, scratch, detail, coarse, weight) = (
       try plane(), try plane(), try plane(), try plane(), try plane()
     )
@@ -38,8 +35,10 @@ struct SkyDesatPipelines {
     try run(
       starWeight, [detail, coarse, weight], values: uniforms.star, over: output, commands: commands)
     var fields: [MTLTexture] = []
+    // The star-detail plane is free once the weight is drawn: it holds each channel's residual.
+    let masked = detail
     for channel in input.planes {
-      let (masked, field) = (try plane(), try plane())
+      let field = try plane()
       try run(residual, [channel, meanPlane, weight, masked], over: output, commands: commands)
       try gaussian.encode(
         masked, into: field, scratch: scratch, sigma: uniforms.coarseSigma, commands: commands)
@@ -48,6 +47,20 @@ struct SkyDesatPipelines {
     try run(
       desat, input.planes + output.planes + [meanPlane, coarse, weight] + fields,
       values: uniforms.final, over: output, commands: commands)
+  }
+
+  /// A GPU-only plane the size of `image`.
+  ///
+  /// `.private`: no CPU copy, never read back.
+  private static func intermediate(like image: GPUImage, device: MTLDevice) throws -> MTLTexture {
+    let descriptor = MTLTextureDescriptor.texture2DDescriptor(
+      pixelFormat: .r32Float, width: image.width, height: image.height, mipmapped: false)
+    descriptor.usage = [.shaderRead, .shaderWrite]
+    descriptor.storageMode = .private
+    guard let texture = device.makeTexture(descriptor: descriptor) else {
+      throw ProcessError.commandFailed("sky desat plane")
+    }
+    return texture
   }
 
   private func run(

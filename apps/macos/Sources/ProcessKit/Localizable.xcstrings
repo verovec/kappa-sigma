@@ -625,22 +625,6 @@
         }
       }
     },
-    "One gain for every channel": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "One gain for every channel"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Un seul gain pour tous les canaux"
-          }
-        }
-      }
-    },
     "Protect sky and highlights": {
       "localizations": {
         "en": {

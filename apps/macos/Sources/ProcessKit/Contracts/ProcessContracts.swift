@@ -107,7 +107,14 @@ package struct ProcessContracts {
     try atFull.set(id, .number(full))
     var atHalf = params
     for other in type.schema.pixelParameters where other != id {
-      try atHalf.set(other, .number(params.number(other) / 2))
+      let halved = params.number(other) / 2
+      // Clamping the halved value would compare two different settings: say so instead.
+      guard case .number(_, let otherBounds)? = type.schema.spec(other)?.kind,
+        otherBounds.contains(halved)
+      else {
+        return "\(id): \(other) = \(params.number(other)) cannot be halved within its bounds"
+      }
+      try atHalf.set(other, .number(halved))
     }
     try atHalf.set(id, .number(half))
     let scaled = try render(type.init(params: atFull, device: device), scale: 2)

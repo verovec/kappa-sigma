@@ -20,7 +20,15 @@ package struct ComponentGallery: View {
     .found(URL(fileURLWithPath: "/Applications/Siril.app/Contents/MacOS/siril")),
   ]
 
+  /// An untouched curve, then an S curve.
+  package static let curves = [
+    CurveEditorPoints(maxCount: 16),
+    CurveEditorPoints(
+      points: [SIMD2(0, 0), SIMD2(0.3, 0.2), SIMD2(0.7, 0.85), SIMD2(1, 1)], maxCount: 16),
+  ]
+
   @State private var parameters = Self.parameters
+  @State private var curves = Self.curves
   @State private var installs = Self.installStates.map { InstallCardModel(state: $0) { nil } }
   @Environment(\.locale) private var locale
 
@@ -33,6 +41,7 @@ package struct ComponentGallery: View {
       measurements
       statuses
       parameterRows
+      curveEditors
       tools
       empty
     }
@@ -110,6 +119,32 @@ package struct ComponentGallery: View {
           format: { LocaleNumber.decimal($0, locale: locale, maxFractionDigits: 3) },
           parse: { Double($0.replacing(locale.decimalSeparator ?? ".", with: ".")) })
       }
+    }
+  }
+
+  private var curveEditors: some View {
+    VStack(alignment: .leading, spacing: DesignMetrics.spacingM) {
+      SectionHeader(.renderKit("Curves"))
+      HStack(alignment: .top, spacing: DesignMetrics.spacingL) {
+        ForEach(curves.indices, id: \.self) { index in
+          CurveEditor(
+            index == 0 ? .renderKit("Luminance") : .renderKit("Red"), points: $curves[index],
+            tint: index == 0 ? .plotLuminance : .plotRed, curve: Self.polyline
+          )
+          .frame(width: 200)
+        }
+      }
+    }
+  }
+
+  /// Straight segments between the points: the gallery has no process spline to draw.
+  nonisolated static func polyline(_ points: [SIMD2<Double>]) -> (Double) -> Double {
+    { x in
+      guard let upper = points.firstIndex(where: { $0.x >= x }), upper > 0 else {
+        return points.first?.y ?? x
+      }
+      let (left, right) = (points[upper - 1], points[upper])
+      return left.y + (right.y - left.y) * (x - left.x) / max(right.x - left.x, 1e-9)
     }
   }
 

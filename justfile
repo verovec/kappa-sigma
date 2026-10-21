@@ -31,10 +31,14 @@ doctor:
 hooks:
     @ln -sf "$(pwd)/scripts/git-hooks/pre-push" "$(git rev-parse --git-path hooks)/pre-push" && echo "pre-push hook installed"
 
-# Build the Swift packages and assemble apps/macos/.build/AstroStack.app (ad-hoc signed). Extra
-# args go to `swift build`: debug by default, `just app-build -c release` for real runs.
+# Build apps/macos/.build/AstroStack.app (ad-hoc signed); args go to swift build (-c release).
 app-build *args:
     @./scripts/app-bundle.sh {{pkg}} {{swiftflags}} {{args}}
+
+# Build the optimized bundle (replacing the debug one), then open it: for real runs.
+app-run-release *projects:
+    @./scripts/app-bundle.sh {{pkg}} {{swiftflags}} -c release
+    open -W -n -a "{{justfile_directory()}}/{{app}}" {{projects}}
 
 # Build, then open the app (and the given `.astrostack` projects); returns when the app quits.
 app-run *projects: app-build

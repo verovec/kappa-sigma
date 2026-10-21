@@ -61,6 +61,15 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
   /// The Données stage's « Import Captures… ».
   package static let importCaptures = stageControl("data", "import")
 
+  /// The Empilement stage's preset picker.
+  package static let stackingPreset = stageControl("stacking", "preset")
+
+  /// The Empilement stage's « Run ».
+  package static let stackingRun = stageControl("stacking", "run")
+
+  /// The Empilement stage's « Cancel ».
+  package static let stackingCancel = stageControl("stacking", "cancel")
+
   /// The shortcuts sheet's search field.
   package static let shortcutsSearch = Self("shortcuts", "search")
 

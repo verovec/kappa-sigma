@@ -38,7 +38,7 @@ package enum AccessibilityAudit {
     var seen: Set<String> = []
     for entry in entries {
       if entry.id.isEmpty { problems.append("a control without identifier (« \(entry.label) »)") }
-      if entry.label.trimmingCharacters(in: .whitespaces).isEmpty {
+      if entry.label.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
         problems.append("\(entry.id): no label")
       }
       if !entry.id.isEmpty, !seen.insert(entry.id).inserted {

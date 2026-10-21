@@ -97,7 +97,7 @@ struct MainMenuTests {
     let bar = MainMenu.make(locale: Self.french)
     for (kind, item) in zip(CommandMenu.allCases, bar.items) {
       let items = item.submenu?.items.filter { !$0.isSeparatorItem } ?? []
-      let commands = CommandCatalog.commands(in: kind)
+      let commands = CommandCatalog.commands(in: kind).filter(\.isBuilt)
       #expect(
         items.compactMap { $0.identifier?.rawValue }
           == commands.map { "fr.astrostack.command." + $0.id }, "\(kind)")

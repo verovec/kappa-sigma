@@ -41,12 +41,12 @@ struct ShortcutsSheetTests {
   @Test("the glossary lists every term once, sorted, and its search reads definitions too")
   func testGlossarySearch() {
     let french = Locale(identifier: "fr")
-    let all = GlossaryView.terms(matching: "", locale: french)
+    let all = GlossaryView.terms(matching: "", locale: french).map(\.term)
     #expect(all.count == Set(AppGlossary.termIDs).count)
     #expect(
       all.map(\.label) == all.map(\.label).sorted { $0.localizedCompare($1) == .orderedAscending })
     #expect(
-      GlossaryView.terms(matching: "donnees", locale: french).contains { $0.label == "Données" })
+      GlossaryView.terms(matching: "donnees", locale: french).contains { $0.id == "stage.data" })
     #expect(GlossaryView.terms(matching: "zzzz", locale: french).isEmpty)
   }
 

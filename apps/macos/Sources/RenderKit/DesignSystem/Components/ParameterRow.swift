@@ -20,8 +20,8 @@ package struct ParameterRow: View {
   /// `key` (the parameter's stable id) identifies its controls (`AccessibilityID.parameter`).
   package init(
     _ label: LocalizedStringResource, parameter: Binding<ParameterValue>,
-    why: LocalizedStringResource? = nil, format: @escaping (Double) -> String,
-    parse: @escaping (String) -> Double?, key: String
+    why: LocalizedStringResource? = nil, key: String, format: @escaping (Double) -> String,
+    parse: @escaping (String) -> Double?
   ) {
     self.key = key
     self.label = label

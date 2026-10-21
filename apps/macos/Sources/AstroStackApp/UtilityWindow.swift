@@ -7,25 +7,27 @@ package import SwiftUI
 package enum UtilityWindow {
   private static var windows: [String: NSWindow] = [:]
 
-  /// Shows the window `id`, titled `title`, its content made by `content` the first time.
+  /// Shows the window `id`, titled `title`, its content made by `content` the first time;
+  /// `resizable` false for a fixed-size panel (Settings).
   @discardableResult
   package static func show<Content: View>(
-    _ id: String, title: LocalizedStringResource, content: () -> Content
+    _ id: String, title: LocalizedStringResource, resizable: Bool = true,
+    content: () -> Content
   ) -> NSWindow {
-    let window = windows[id] ?? make(title: title, content: content())
+    let window = windows[id] ?? make(title: title, resizable: resizable, content: content())
     windows[id] = window
     window.makeKeyAndOrderFront(nil)
     return window
   }
 
-  private static func make<Content: View>(title: LocalizedStringResource, content: Content)
-    -> NSWindow
-  {
+  private static func make<Content: View>(
+    title: LocalizedStringResource, resizable: Bool, content: Content
+  ) -> NSWindow {
     let window = NSWindow(
       contentViewController: NSHostingController(
         rootView: content.background(DesignColor.surface.color).interfaceLocale()))
     window.title = String(localized: title)
-    window.styleMask = [.titled, .closable, .resizable]
+    window.styleMask = resizable ? [.titled, .closable, .resizable] : [.titled, .closable]
     window.isReleasedWhenClosed = false
     return window
   }

@@ -65,6 +65,22 @@ struct AccessibilityAuditTests {
     #expect(rows.first?.label == "Données")
   }
 
+  @Test("the workspace: the Stacking stage's preset and Run", .scratchDirectory)
+  func testStackingStage() throws {
+    let project = try ProjectPackage.create(
+      at: ScratchDirectory.url.appendingPathComponent("M31.astrostack"))
+    defer { try? project.close() }
+    let model = ProjectWindowModel(
+      store: { project.store }, planning: { _ in ImportPlanningStub.empty })
+    model.select(.stacking)
+    let entries = Self.entries(ProjectWindowView(model: model))
+    #expect(AccessibilityAudit.problems(entries) == [])
+    #expect(
+      Set(entries.map(\.id)).isSuperset(of: [
+        "fr.astrostack.stage.stacking.preset", "fr.astrostack.stage.stacking.run",
+      ]))
+  }
+
   @Test("the audit fails a control without label, without identifier, or with a repeated one")
   func testAuditCatchesMissingLabel() {
     let entries = Self.entries(
@@ -95,7 +111,8 @@ struct AccessibilityAuditTests {
   /// Sources whose interactive controls must all go through `.accessible`.
   nonisolated static let audited = [
     "RenderKit/DesignSystem/Components", "AstroStackApp/JourneySidebarRow.swift",
-    "AstroStackApp/DataStagePane.swift", "AstroStackApp/ShortcutsSheet.swift",
+    "AstroStackApp/DataStagePane.swift", "AstroStackApp/StackingStagePane.swift",
+    "AstroStackApp/ShortcutsSheet.swift",
     "AstroStackApp/GlossaryView.swift",
   ]
 
@@ -116,7 +133,10 @@ struct AccessibilityAuditTests {
     }
     #expect(files.count >= 12)
     for file in files {
-      let source = try String(contentsOf: file, encoding: .utf8)
+      // Comments are not code: a `.accessible(` or a `Button(` in a doc line counts for nothing.
+      let source = try String(contentsOf: file, encoding: .utf8).split(separator: "\n")
+        .filter { !$0.trimmingCharacters(in: .whitespaces).hasPrefix("//") }
+        .joined(separator: "\n")
       let controls = Self.count(
         #"\b(Button|Slider|TextField|Toggle|Picker|Link|Stepper)\s*[({]"#, in: source)
       // The sidebar's rows are its controls: one `.accessible` per row covers the List.

@@ -85,7 +85,8 @@ nonisolated package enum CommandCatalog {
 
   private static let help: [AppCommand] = [
     AppCommand(
-      "help.shortcuts", "Keyboard Shortcuts", menu: .help, action: "showShortcuts:", key: "?"),
+      // ⌘/, not ⌘?: macOS keeps ⌘? for the Help menu's search field.
+      "help.shortcuts", "Keyboard Shortcuts", menu: .help, action: "showShortcuts:", key: "/"),
     AppCommand("help.glossary", "Glossary", menu: .help, action: "showGlossary:"),
     // The first-stack guide arrives with card 0061: shown, disabled, until then.
     AppCommand("help.guide", "First-Stack Guide", menu: .help, action: nil, separatorBefore: true),

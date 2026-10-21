@@ -4,25 +4,12 @@ internal import SwiftUI
 
 /// AstroStack › Settings… (⌘,): one window, reused.
 package enum SettingsWindow {
-  private static var window: NSWindow?
-
   /// Shows the Settings window, creating it the first time.
   @discardableResult
   package static func show() -> NSWindow {
-    let window = window ?? make()
-    Self.window = window
-    window.makeKeyAndOrderFront(nil)
-    return window
-  }
-
-  private static func make() -> NSWindow {
-    let window = NSWindow(
-      contentViewController: NSHostingController(
-        rootView: SettingsView(setting: LanguageSetting(), relaunch: relaunch).interfaceLocale()))
-    window.title = String(localized: .app("Settings"))
-    window.styleMask = [.titled, .closable]
-    window.isReleasedWhenClosed = false
-    return window
+    UtilityWindow.show("settings", title: .app("Settings"), resizable: false) {
+      SettingsView(setting: LanguageSetting(), relaunch: relaunch)
+    }
   }
 
   /// Opens a new instance of the app, then quits this one (the language is read at launch).

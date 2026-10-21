@@ -48,6 +48,21 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   Every coefficient is computed on the CPU (`StretchUniforms`) from the panel values and the
   stats; "autostretch like Siril" and the deep-sky 0.90 headroom are suggestions, not defaults
   hidden in the shader. No panel yet: the Studio renders the schema generically (0075/0076).
+- **EmissionScreensProcess** (card 0051, id `emission-screens`): astrocomp's HOO-over-broadband
+  chain on a stretched RGB base. Per line (`EmissionLine`: Hα, [OIII], [SII]; params
+  `<ha|oiii|sii><Enabled|Continuum|ContinuumK|Background|Black|Opacity|Tint|Boost>`) on its own
+  linear bundle layer: continuum `max(line − k·ref, 0)` (k = the panel value; the bundle's
+  `continuum_k` is a suggestion, the reference plane is the bundle's `continuum_ref`), the
+  astrocomp MTF (`LineStretch`: x₀ normalised by 1 − c, NOT the Siril form of `stretch`), black
+  point, tanh boost (knee 0.60, ceiling 0.98), grey opening (`starRadius` px), 3-box smoothing
+  (`smooth` px), then `base + α·line·tint·(1 − base)` in line order (α = opacity · `nbBlend`).
+  After a continuum subtraction the stretch stats are derived (median − k·ref median, MADNs in
+  quadrature), never measured. The black point reads in σ of the stretched bundle noise
+  (`blackInSigma`); suggestions: k, black = 3σ. Global `linkLayers` = astrocomp `-link-layers`.
+- `LayerPlane` (`R` / `RGB.r` tokens → texture + per-plane stats). `RenderContext.layerStats`
+  (and `ProcessRunner.run(layerStats:)`, `ProcessContracts(layerStats:)`) hand a process the
+  bundle statistics of every layer it reads; `LayerStats.continuumK/continuumReference` carry a
+  line layer's fit; `suggestions(stats:layers:)` may read them.
 - **HDRProcess** (card 0052, id `hdr`, stage linear, off by default): the port of the v9
   runbook's hdrcomp. Luminance (mean of the planes) → grey opening (`GreyMorphology`, radius
   `openRadius` px) so stars never enter the smooth part → three box passes (`BoxBlur`, Kovesi's
@@ -57,13 +72,14 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   absolute above it (PO 2026-10-19: 0.00084 / 0.00118, σ 30, radius 16), never multiples of a
   measured sky. Pinned against hdrcomp's recorded `crop/hdr_only.fits` (max |Δ| 6e-8).
 - Shared GPU helpers: `GreyMorphology` (erode/dilate/open, separable, window clipped to the
-  image), `BoxBlur` (edge-clamped x+y passes, one per radius) and `ScratchTexture` (private
+  image, bit-exact vs a van Herk oracle), `BoxBlur` (edge-clamped x+y passes, one per radius;
+  also `MaskBuilder.feather`) and `ScratchTexture` (private
   r32Float intermediates) — encode into the caller's command buffer; reuse them, never a second
   min/max or blur kernel.
 - `ProcessRegistry`: refuses duplicates and invalid schemas (`.px` without
   `previewExactOnlyAt1to1`, a default outside its bounds or options, infinite bounds);
   `standard()` is validated like any registry and lists the shipped processes (today:
-  `channel-combination`, `stretch`, `hdr`; pipeline order is E15's — `stage` documents it).
+  `channel-combination`, `stretch`, `hdr`, `emission-screens`; pipeline order is E15's — `stage` documents it).
 
 ## Strings (card 0073)
 

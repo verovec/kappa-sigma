@@ -61,7 +61,7 @@ the mask off: their tests run `PreprocessSettings.recorded` (k = 0).
 ```
 {version: 1, run_id, color_model: mono|osc, grid: {width, height},
  layers: [{id: <filter>, role: lum|red|green|blue|rgb|line, file: trim_L.fits,
-           source: trim|aligned|master|syn, stats: {bg, madn, sky, snr}, continuum_k?}]}
+           source: trim|aligned|master|syn, stats: {bg, madn, sky, snr}, continuum_k?, continuum_ref?}]}
 ```
 
 Layers are the combine inputs (trim > aligned > master), in canonical filter order, and
@@ -73,7 +73,7 @@ the planes averaged:
 - `sky` is the median of the pixels ≤ `bg + 3·madn`;
 - `snr` is `bg / madn`.
 
-`continuum_k` is a line layer's continuum scale (`ContinuumK`, card 0081); `source` is `syn` for
+`continuum_k` is a line layer's continuum scale (`ContinuumK`, card 0081) and `continuum_ref` the plane it was fitted against (`R`, `RGB.r`…, card 0051: what the Studio subtracts); `source` is `syn` for
 a layer separated from a colour master. 0043 builds the same type from a
 legacy run.
 

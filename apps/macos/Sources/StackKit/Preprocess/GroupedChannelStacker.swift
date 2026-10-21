@@ -31,12 +31,21 @@ package struct GroupedChannelStacker: Sendable {
     var nights: [FrameSet] = []
   }
 
+  /// The masters of one night, minus the roles the user unchecked, forced if asked.
+  private func select(
+    _ group: FrameSet, inventory: Inventory, masters: [CalibrationMaster]
+  ) -> CalibrationSelection {
+    CalibrationMatcher.select(
+      group, in: inventory, masters: masters, excluded: settings.calibrationExcluded,
+      force: settings.forceCalibration)
+  }
+
   /// Stacks `groups` (one per night, in plan order) as channel `filter`.
   package func stack(
     _ groups: [FrameSet], filter: String, inventory: Inventory, masters: [CalibrationMaster],
     work: URL, out: URL
   ) async throws -> ChannelOutcome {
-    let representative = CalibrationMatcher.select(groups[0], in: inventory, masters: masters)
+    let representative = select(groups[0], inventory: inventory, masters: masters)
     var outcome = ChannelOutcome(groups[0], filter: filter, selection: representative)
     outcome.inputFrames = 0
     // The per-night calibrated copies are bulky: they go even when the run fails or is cancelled.
@@ -49,7 +58,7 @@ package struct GroupedChannelStacker: Sendable {
       for (group, folder) in zip(groups, folders) {
         try await calibrate(
           group, filter: filter,
-          selection: CalibrationMatcher.select(group, in: inventory, masters: masters),
+          selection: select(group, inventory: inventory, masters: masters),
           folder: folder, into: &merge, outcome: &outcome)
       }
       try await stack(merge, filter: filter, work: work, out: out, into: &outcome)

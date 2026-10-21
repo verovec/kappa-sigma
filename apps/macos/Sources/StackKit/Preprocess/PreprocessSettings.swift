@@ -41,6 +41,12 @@ package struct PreprocessSettings: Equatable, Sendable {
   /// Where the parity probes' `platesolve` looks (`"RA,DEC"`): stacked masters lose their
   /// pointing cards, so without it they rarely solve and the parity check is skipped (it says so).
   package var solveCoordinates: String?
+  /// The calibration suggestions the user unchecked on the Import sheet (`calib_exclude`, by
+  /// `CalibrationMatcher.suggestionID`): those roles are not applied, as the plan showed.
+  package var calibrationExcluded: [String] = []
+  /// Apply the masters even where camera, temperature or filter set disagree
+  /// (`force_calibration_frames`), as the plan showed.
+  package var forceCalibration = false
 
   /// The deepsky preset, with optional overrides.
   package init(dropWheelTransition: Bool = true, register2Pass: Bool = false) {

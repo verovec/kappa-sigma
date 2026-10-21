@@ -46,7 +46,9 @@ package struct ChannelStacker: Sendable {
     _ set: FrameSet, filter: String, inventory: Inventory, masters: [CalibrationMaster],
     work: URL, out: URL
   ) async throws -> ChannelOutcome {
-    let selection = CalibrationMatcher.select(set, in: inventory, masters: masters)
+    let selection = CalibrationMatcher.select(
+      set, in: inventory, masters: masters, excluded: settings.calibrationExcluded,
+      force: settings.forceCalibration)
     var outcome = ChannelOutcome(set, filter: filter, selection: selection)
     let folder = work.appendingPathComponent("light_" + ChannelTag.sanitize(filter))
     // Siril's `link` takes every FITS in the folder: a previous run's frames must not be there,

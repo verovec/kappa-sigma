@@ -179,8 +179,8 @@ package final class ProjectDocument: NSDocument {
   /// One window per project, centred; the window controller cascades further ones.
   override package func makeWindowControllers() {
     let window = NSWindow(
-      contentRect: NSRect(x: 0, y: 0, width: 960, height: 640),
-      styleMask: [.titled, .closable, .miniaturizable, .resizable],
+      contentRect: SplitWindow.contentRect(panes: NSSize(width: 960, height: 640)),
+      styleMask: SplitWindow.styleMask,
       backing: .buffered, defer: false)
     let model = ProjectWindowModel(
       store: { [weak self] in self?.project?.store }, folder: { [weak self] in self?.project?.url },

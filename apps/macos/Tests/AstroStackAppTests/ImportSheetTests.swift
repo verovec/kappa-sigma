@@ -108,7 +108,7 @@ struct ImportSheetTests {
     "UserFacingError", "ProjectFacts", "StageStatus", "JourneyState", "JourneySidebar",
     "StagePane", "DataStagePane", "DataIntegrationView", "DataCoverageView", "StackingStagePane",
     "StudioStagePane", "RunPanel", "RunOutcomeView", "RunSummary", "RunViewModel", "LayerList",
-    "LayerDetail", "JournalView", "PreviewThumbnail",
+    "LayerDetail", "JournalView", "PreviewThumbnail", "KnobPanel", "KnobRow", "KnobPanelViewModel",
   ]
 
   @Test("the project window and import sheet carry no English literal outside the catalog")

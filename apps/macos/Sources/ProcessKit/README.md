@@ -115,7 +115,7 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   `user_profiles`, through closures): a copy shadows its builtin, `builtin(id:)` still offers it.
   `ProfileProposal.propose` narrows by camera and filters, proposes the only match or the one a
   target was validated on (`examples`), else lists candidates without picking; reasons are values
-  the app words. Knob values are checked against 0070's `KnobSchema` when it lands.
+  the app words. Knob ids and values are 0070 `KnobSchema` knobs (`ProfileKnobTests`).
 - `ProcessRegistry`: refuses duplicates and invalid schemas (`.px` without
   `previewExactOnlyAt1to1`, a default outside its bounds or options, infinite bounds);
   `standard()` is validated like any registry and lists the shipped processes (today:

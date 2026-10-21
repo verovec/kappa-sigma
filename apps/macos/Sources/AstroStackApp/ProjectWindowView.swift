@@ -20,7 +20,7 @@ package struct ProjectWindowView: View {
     } detail: {
       VStack(spacing: 0) {
         StagePane.pane(for: model.selection, model: model)
-          .frame(maxWidth: .infinity, maxHeight: .infinity)
+          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         if let error = model.error {
           StatusBadge(.error, error.message)
             .padding(DesignMetrics.spacingS)

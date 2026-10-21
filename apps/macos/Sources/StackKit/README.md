@@ -62,6 +62,22 @@ cp -R ~/Documents/astro/fixtures/oracle/golden-*/record \
 
 Re-recording is a contract change: the PR that commits new fixtures says why (`Test-change:`).
 
+## Knobs (card 0070)
+
+- `KnobSchema.knobs` is every `PreprocessSettings` value a user may move, once:
+  - its wire id (the legacy `params_patch.go` key when there was one);
+  - its kind (number with bounds and integer flag, flag, or choice ids);
+  - its level (simple or advanced).
+- `KnobSchema.apply(_:to:)` puts a `KnobPatch` on the preset. An unknown id or a refused value
+  throws before anything is applied. `patch(from:mode:)` returns only what differs from the
+  preset, so a patch of defaults is a no-op and untouched runs stay byte-identical.
+- `Tests/StackKitTests/Fixtures/knobs/legacy-deepsky-knobs.json` accounts for every legacy
+  deepsky key: preprocessing, finishing (ProcessKit), or not ported (with the reason).
+- **To add a knob:** expose the value in `PreprocessSettings`, add it to `KnobSchema+Knobs.swift`
+  under its area, list it in the fixture (`preprocess` or `swiftOnly`), and give it its words in
+  HelpKit's `Help/<locale>/knobs.json` (`knob.<id>`, plus `knob.<id>.<option>` for a choice).
+  `KnobSchemaTests` and `KnobPanelViewModelTests` fail on any one missing.
+
 ## How to extend
 
 - A port loads its case with `OracleCase.load` and compares: bytes for scripts and Siril masters,

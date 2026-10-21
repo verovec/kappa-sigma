@@ -2289,6 +2289,22 @@
         }
       }
     },
+    "Saved profiles not offered: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved profiles not offered: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profils enregistrés non proposés : %@"
+          }
+        }
+      }
+    },
     "Scan verdict: %@": {
       "localizations": {
         "en": {

@@ -21,6 +21,7 @@ package struct ImportProfileView: View {
       VStack(alignment: .leading, spacing: DesignMetrics.spacingS) {
         proposalLine
         picker
+        if !model.rejectedProfiles.isEmpty { rejected }
         if let profile = model.selectedProfile { values(of: profile) }
       }
       .frame(maxWidth: .infinity, alignment: .leading)
@@ -43,6 +44,16 @@ package struct ImportProfileView: View {
     }
   }
 
+  /// The user copies left out, by id; why on hover.
+  private var rejected: some View {
+    let ids = model.rejectedProfiles.keys.sorted()
+    let reasons = ids.map { "\($0): \(model.rejectedProfiles[$0] ?? "")" }
+    return StatusBadge(
+      .attention, .app("Saved profiles not offered: \(ids.joined(separator: ", "))")
+    )
+    .help(Text(verbatim: reasons.joined(separator: "\n")))
+  }
+
   private var picker: some View {
     Picker(
       selection: Binding(
@@ -61,10 +72,11 @@ package struct ImportProfileView: View {
 
   /// Each value the profile sets, its « why » as the tooltip.
   private func values(of profile: Profile) -> some View {
-    VStack(alignment: .leading, spacing: DesignMetrics.spacingXXS) {
+    let registry = try? ProcessRegistry.standard()
+    return VStack(alignment: .leading, spacing: DesignMetrics.spacingXXS) {
       ForEach(Array(profile.steps.enumerated()), id: \.offset) { _, step in
         ForEach(step.values.keys.sorted(), id: \.self) { id in
-          Text(verbatim: Self.line(step, id, locale: locale))
+          Text(verbatim: Self.line(step, id, registry: registry, locale: locale))
             .font(.caption.monospacedDigit())
             .help(Text(verbatim: step.why[id]?.text(language: language) ?? ""))
         }
@@ -75,8 +87,10 @@ package struct ImportProfileView: View {
   private var language: String { AppLocale.language(of: locale) }
 
   /// « Process · Parameter = value », titles from ProcessKit's catalog in `locale`.
-  nonisolated static func line(_ step: Profile.Step, _ id: String, locale: Locale) -> String {
-    let type = (try? ProcessRegistry.standard())?.type(id: step.recipe.processID)
+  nonisolated static func line(
+    _ step: Profile.Step, _ id: String, registry: ProcessRegistry?, locale: Locale
+  ) -> String {
+    let type = registry?.type(id: step.recipe.processID)
     let process = type.map { title($0.title, locale) } ?? step.recipe.processID
     let parameter = type?.schema.spec(id).map { title($0.title, locale) } ?? id
     return "\(process) · \(parameter) = \(text(step.values[id], locale))"

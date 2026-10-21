@@ -21,13 +21,18 @@ struct ProfileLibraryTests {
     #expect(
       try Profile.load(copy.json(), registry: registry).steps[2].values["oiiiOpacity"]
         == .number(0.6))
-    let stored = ["emission-osc-dualband": try copy.json(), "broken": Data("{}".utf8)]
+    let stored = [
+      "emission-osc-dualband": try copy.json(), "broken": Data("{}".utf8),
+      "galaxy-osc-broadband-dualband": try copy.json(),
+    ]
     let library = try ProfileLibrary(
       registry: registry, user: { stored }, save: { _, _ in },
       acceptsKnob: { id, _ in id != "trail_mask_k" })
     #expect(library.profiles.count == 5)
     #expect(
-      Set(library.rejected.keys) == ["broken", "emission-osc-dualband"], "a knob refused too")
+      Set(library.rejected.keys) == [
+        "broken", "emission-osc-dualband", "galaxy-osc-broadband-dualband",
+      ], "a knob refused too, and a copy saved under another profile's id")
   }
 
   @Test("saving over a builtin creates a user copy; the builtin's bytes are unchanged")

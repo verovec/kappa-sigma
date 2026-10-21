@@ -40,6 +40,8 @@ struct ProfileInputsTests {
       )
     }
     inventory.sets = keyed.map { FrameSet(key: $0.0, frames: [], indices: [], filterSet: $0.1) }
+    let colours = Set(sets.map(\.color))
+    inventory.colorModel = colours.count > 1 ? .mixed : (colours.first == true ? .osc : .mono)
     inventory.filterSets = Dictionary(
       keyed.filter { $0.1.isKnown }.map { ($0.0.id, $0.1) }, uniquingKeysWith: { $1 })
     return inventory
@@ -60,6 +62,13 @@ struct ProfileInputsTests {
         expected: .init(object: "IC 1848", camera: .osc, filters: .dualband)),
       Case(
         name: "OSC, verdict unknown", sets: [LightSet("M 45", Filter.color, true, .unknown)],
+        expected: .init(object: "M 45", camera: .osc, filters: nil)),
+      Case(
+        name: "OSC, one set unclassified",
+        sets: [
+          LightSet("M 45", Filter.color, true, .broadband),
+          LightSet("M 45", Filter.color, true, .unknown),
+        ],
         expected: .init(object: "M 45", camera: .osc, filters: nil)),
       Case(
         name: "mono LRGB",

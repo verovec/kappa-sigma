@@ -14,22 +14,27 @@ package struct ProfileLibrary {
   private let builtins: [Profile]
   private let save: (String, Data) throws -> Void
 
-  /// The library over the builtins and the user's saved profiles (`user`: JSON by id).
+  /// The library over the builtins (read from the resources unless given) and the user's saved
+  /// profiles (`user`: JSON by id).
   ///
   /// Saves go through `save`; `acceptsKnob` checks a copy's preprocessing knobs (StackKit's
   /// `KnobSchema`, which ProcessKit cannot import). A copy that does not load or check is left out
   /// and listed in `rejected`: one bad file never hides the other profiles.
   package init(
-    registry: ProcessRegistry, user: () throws -> [String: Data],
+    registry: ProcessRegistry, builtins: [Profile]? = nil, user: () throws -> [String: Data],
     save: @escaping (String, Data) throws -> Void,
     acceptsKnob: (String, ParamValue) -> Bool = { _, _ in true }
   ) throws {
-    let builtins = try Self.builtins(registry: registry)
+    let builtins = try builtins ?? Self.builtins(registry: registry)
     var copies: [Profile] = []
     var rejected: [String: String] = [:]
     for (id, data) in try user() {
       do {
         var profile = try Profile.load(data, registry: registry)
+        // A copy is saved under its profile's id: another id (or none) is not that profile's copy.
+        guard !profile.id.isEmpty, profile.id == id else {
+          throw ProfileError.malformed("saved as \(id) but its id is \(profile.id)")
+        }
         if let knob = profile.preprocessing.knobs.first(where: { !acceptsKnob($0.key, $0.value) }) {
           throw ProfileError.unknownParameter("preprocessing", knob.key)
         }

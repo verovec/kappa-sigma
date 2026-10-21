@@ -34,6 +34,8 @@ package final class ImportViewModel {
   package let masters: MasterServices?
   /// The profiles the proposal picks from (card 0060): the shipped ones unless given.
   package let profiles: [Profile]
+  /// The user's profile copies that could not be used, by id, with why (shown in the sheet).
+  package let rejectedProfiles: [String: String]
   /// The user's answer to the proposal.
   package internal(set) var profileChoice = ProfileChoice.proposed
 
@@ -49,11 +51,12 @@ package final class ImportViewModel {
   /// services if any.
   package init(
     planning: @escaping ProgressPlanning, masters: MasterServices? = nil,
-    profiles: [Profile]? = nil
+    profiles: [Profile]? = nil, rejectedProfiles: [String: String] = [:]
   ) {
     self.planning = planning
     self.masters = masters
     self.profiles = profiles ?? Self.shippedProfiles
+    self.rejectedProfiles = rejectedProfiles
   }
 
   /// A model planning through `planning`, which reports no progress.

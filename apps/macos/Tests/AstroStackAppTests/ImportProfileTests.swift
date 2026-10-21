@@ -77,6 +77,23 @@ struct ImportProfileTests {
     #expect(importing.planIsCurrent == false)
   }
 
+  @Test("an explicit pick is recorded whatever the plan; another request's sources get nothing")
+  func testWhatAddRecords() async throws {
+    let model = ImportViewModel(planning: Self.m31)
+    model.choose(folder: URL(fileURLWithPath: "/c/M31"))
+    // No scan finished: the proposal is not recorded, an explicit pick is.
+    #expect(model.profileToRecord(for: model.request) == nil)
+    model.chooseProfile(.profile("cluster-osc-broadband"))
+    #expect(model.profileToRecord(for: model.request) == KeptProfile(id: "cluster-osc-broadband"))
+    model.chooseProfile(.none)
+    #expect(model.profileToRecord(for: model.request) == KeptProfile(id: nil))
+    #expect(model.profileToRecord(for: ImportRequest(paths: ["/c/IC1848"])) == nil)
+    await model.settled()
+    model.chooseProfile(.proposed)
+    #expect(
+      model.profileToRecord(for: model.request) == KeptProfile(id: "galaxy-osc-broadband-dualband"))
+  }
+
   @Test("a new folder resets the profile choice to the proposal")
   func testFolderResetsChoice() async throws {
     let model = await Self.model()
@@ -96,9 +113,10 @@ struct ImportProfileTests {
     try copy.set("lumaDesat", to: .number(0.5), inStep: 3)
     try project.store.saveUserProfile(id: copy.id, json: copy.json())
     try project.store.saveUserProfile(id: "broken", json: Data("{}".utf8))
-    let profiles = ImportViewModel.profiles(store: project.store)
-    #expect(profiles.count == 5, "the copy shadows its builtin; the broken copy is left out")
-    #expect(profiles.first { $0.id == copy.id }?.isUserCopy == true)
+    let loaded = ImportViewModel.profiles(store: project.store)
+    #expect(loaded.profiles.count == 5, "the copy shadows its builtin; the broken copy is left out")
+    #expect(loaded.profiles.first { $0.id == copy.id }?.isUserCopy == true)
+    #expect(loaded.rejected.keys.sorted() == ["broken"], "and the broken one is listed")
   }
 
   @Test("each reason and each profile reads in French and English")

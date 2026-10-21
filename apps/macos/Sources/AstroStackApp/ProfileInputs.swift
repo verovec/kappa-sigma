@@ -4,34 +4,41 @@ package import StackKit
 extension ProfileProposal.Inputs {
   /// What the light sets of `inventory` say (card 0060).
   ///
-  /// The camera (every set colour → OSC, none → mono, both → unknown), the filter composition
-  /// (OSC: the clip-filter verdicts; mono: the filters), the target (when every set names the same
-  /// one). Nothing is guessed from pixels.
+  /// The camera is StackKit's colour model of the lights (mixed → unknown); OSC filters come from
+  /// the clip-filter verdicts (both → the lanes `FilterSetLanes` splits, one only when every light
+  /// set has that verdict), mono filters from the sets' filters (the scan already applied the
+  /// filter map); the target when every set names the same one. Nothing is guessed from pixels.
   package nonisolated init(inventory: Inventory) {
     let lights = inventory.sets.filter { $0.key.type == .light }
     let objects = Set(lights.map(\.key.object).filter { !$0.isEmpty })
     let camera: Profile.Camera? =
-      if lights.isEmpty { nil } else if lights.allSatisfy(\.key.color) {
-        .osc
-      } else if lights.allSatisfy({ !$0.key.color }) { .mono } else { nil }
+      if lights.isEmpty { nil } else {
+        switch inventory.colorModel {
+        case .osc: .osc
+        case .mono: .mono
+        case .mixed: nil
+        }
+      }
     let filters: Profile.Filters? =
       switch camera {
-      case .osc:
-        Self.oscFilters(lights.compactMap { inventory.filterSets[$0.key.id] }, sets: lights.count)
+      case .osc: Self.oscFilters(inventory, lights: lights)
       case .mono: Self.monoFilters(Set(lights.compactMap { Filter(rawValue: $0.key.filter) }))
       case nil: nil
       }
     self.init(object: objects.count == 1 ? objects.first : nil, camera: camera, filters: filters)
   }
 
-  /// Both verdicts → lanes; one verdict only when every light set has one.
-  private nonisolated static func oscFilters(_ verdicts: [FilterSet], sets: Int) -> Profile.Filters?
+  /// Both verdicts → lanes (StackKit's split); one verdict only when every light set has it.
+  private nonisolated static func oscFilters(_ inventory: Inventory, lights: [FrameSet])
+    -> Profile.Filters?
   {
-    let (broadband, dualband) = (verdicts.contains(.broadband), verdicts.contains(.dualband))
-    if broadband && dualband { return .broadbandDualband }
-    guard verdicts.count == sets else { return nil }
-    if dualband { return .dualband }
-    return broadband ? .broadband : nil
+    if FilterSetLanes.splits(inventory) { return .broadbandDualband }
+    let verdicts = Set(lights.map { inventory.filterSets[$0.key.id] ?? .unknown })
+    switch verdicts {
+    case [.dualband]: return .dualband
+    case [.broadband]: return .broadband
+    default: return nil
+    }
   }
 
   private nonisolated static func monoFilters(_ filters: Set<Filter>) -> Profile.Filters? {

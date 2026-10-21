@@ -124,6 +124,9 @@ struct WelcomeViewTests {
     #expect(ToolStrip.usable(missing, card: .found(url)) == .found(path: url.path, version: nil))
     #expect(ToolStrip.usable(missing, card: .missing) == nil)
     #expect(ToolStrip.usable(missing, card: nil) == nil)
+    let found = WelcomeModel.ToolRow(tool: .siril, status: .found(path: "/s", version: "1.4.4"))
+    #expect(ToolStrip.usable(found, card: .missing) == nil)
+    #expect(ToolStrip.usable(found, card: .checking) == found.status)
   }
 
   @Test("a too old Siril says so with the sentence the app shows for Siril errors")

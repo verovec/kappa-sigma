@@ -24,6 +24,7 @@ package enum NewProject {
   /// dashes, no leading dot (a hidden package would vanish from the Finder).
   static func fileName(_ target: String) -> String {
     var name = target.components(separatedBy: .controlCharacters).joined(separator: " ")
+      .trimmingCharacters(in: .whitespaces)
     let suffix = ".\(ProjectPackage.fileExtension)"
     if name.lowercased().hasSuffix(suffix) { name.removeLast(suffix.count) }
     let cleaned = name.replacingOccurrences(of: "/", with: "-")

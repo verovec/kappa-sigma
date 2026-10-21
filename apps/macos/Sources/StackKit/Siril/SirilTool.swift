@@ -36,9 +36,12 @@ package enum SirilTool {
   /// Checks `binary` exists and is Siril ≥ 1.4 (`--version`); returns the version.
   package static func verify(_ binary: String) async throws -> String {
     try requireExecutable(binary)
+    var options = PlatformOptions()
+    // A cancelled probe (the host-tool timeout) stops siril-cli: SIGTERM, then SIGKILL.
+    options.teardownSequence = [.gracefulShutDown(allowedDurationToNextStep: .seconds(1))]
     let result = try await Subprocess.run(
-      .path(FilePath(binary)), arguments: ["--version"], output: .string(limit: 64 * 1024),
-      error: .combinedWithOutput)
+      .path(FilePath(binary)), arguments: ["--version"], platformOptions: options,
+      output: .string(limit: 64 * 1024), error: .combinedWithOutput)
     return try SirilVersion.parse(result.standardOutput)
   }
 }

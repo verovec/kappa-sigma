@@ -12,7 +12,7 @@ struct NewProjectTests {
     .scratchDirectory,
     arguments: zip(
       [
-        "M 31", "  NGC 7000 ", "IC 1848/Soul", "Sh2:155", ".hidden", "M 33.astrostack",
+        "M 31", "  NGC 7000 ", "IC 1848/Soul", "Sh2:155", ".hidden", "M 33.astrostack ",
         "M 31\nNGC 224",
       ],
       ["M 31", "NGC 7000", "IC 1848-Soul", "Sh2-155", "hidden", "M 33", "M 31 NGC 224"]))

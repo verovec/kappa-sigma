@@ -43,13 +43,17 @@ package struct ToolStrip: View {
     }
   }
 
-  /// The tool as usable: found at the last check, or since by its card's own « Re-check ».
+  /// The tool as usable, by its card's latest verdict (its own « Re-check » or the strip's),
+  /// else by the last check while the card re-checks or has none.
   nonisolated package static func usable(_ row: WelcomeModel.ToolRow, card: InstallCardModel.State?)
     -> ToolStatus?
   {
-    if row.status.isUsable { return row.status }
-    if case .found(let url)? = card { return .found(path: url.path, version: nil) }
-    return nil
+    switch card {
+    case .found(let url)?:
+      return row.status.isUsable ? row.status : .found(path: url.path, version: nil)
+    case .missing?, .outdated?: return nil
+    case .checking?, nil: return row.status.isUsable ? row.status : nil
+    }
   }
 
   /// The badge words of a usable tool: its version when it reports one, and its path.

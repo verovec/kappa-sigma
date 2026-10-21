@@ -67,18 +67,21 @@ final class SirilPipeInstance {
     try commands.write(contentsOf: Data((command + "\n").utf8))
   }
 
-  /// Runs Siril until it exits or the task is cancelled (SIGTERM, then SIGKILL after 2 s).
+  /// Runs Siril until it exits or the task is cancelled, which stops Siril and its children
+  /// (`SirilTool.platformOptions`).
   private static func launch(
     _ binary: String, input: String, output: String, in workDirectory: URL,
     onExit: @escaping @Sendable () -> Void
   ) -> Task<Void, Never> {
-    var options = PlatformOptions()
-    options.teardownSequence = [.gracefulShutDown(allowedDurationToNextStep: .seconds(2))]
     let arguments = Arguments(["-p", "-r", input, "-w", output, "-d", workDirectory.path])
     return Task {
+      var group: pid_t?
       _ = try? await Subprocess.run(
-        .path(FilePath(binary)), arguments: arguments, platformOptions: options,
-        output: .discarded, error: .discarded)
+        .path(FilePath(binary)), arguments: arguments, platformOptions: SirilTool.platformOptions,
+        input: .none, output: .discarded, error: .discarded
+      ) { execution in group = execution.processIdentifier.value }
+      // Closing the FIFOs can make Siril exit before the teardown signals its group.
+      if let group { SirilTool.killLeftovers(ofGroup: group) }
       onExit()
     }
   }

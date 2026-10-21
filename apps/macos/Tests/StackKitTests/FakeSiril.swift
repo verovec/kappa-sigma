@@ -1,7 +1,8 @@
 import Foundation
 
 /// A stand-in `siril-cli` written as a shell script, speaking both modes the driver uses:
-/// `-s script` (prints each line as `log:`; a line containing `fail` exits 1) and
+/// `-s script` (prints each line as `log:`; a line containing `fail` exits 1, one containing
+/// `slow` stalls) and
 /// `-p -r in -w out` (pipe mode: `ready`, then per command `status: starting`, progress, log,
 /// `status: success`; `fail…` answers `status: error`; `boom…` dies mid-command).
 enum FakeSiril {
@@ -23,6 +24,7 @@ enum FakeSiril {
       while IFS= read -r line; do
         echo "log: $line"
         case "$line" in *fail*) echo "log: Error in line 4: '$line'."; status=1 ;; esac
+        case "$line" in *slow*) sleep 30 ;; esac
       done < "$file"
       echo "progress: Script execution finished, 100%"
       exit $status
@@ -62,6 +64,9 @@ enum FakeSiril {
     case old
     /// Never says `ready` in pipe mode.
     case silent
+    /// Starts a background child on launch, as Siril starts its Python checks, and writes its
+    /// pid to `helper.pid` beside the fake.
+    case spawnsHelper
   }
 
   /// Writes the fake into `folder` and returns its path.
@@ -72,6 +77,9 @@ enum FakeSiril {
     case .normal: break
     case .old: text = text.replacingOccurrences(of: "siril 1.4.4", with: "siril 1.2.6")
     case .silent: text = text.replacingOccurrences(of: "echo \"ready\" >&4", with: "sleep 30")
+    case .spawnsHelper:
+      let helper = #"sleep 60 >/dev/null 2>&1 & echo $! > "$(dirname "$0")/helper.pid""#
+      text = text.replacingOccurrences(of: "mode=\"\"; ", with: helper + "\nmode=\"\"; ")
     }
     try Data(text.utf8).write(to: url)
     try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: url.path)

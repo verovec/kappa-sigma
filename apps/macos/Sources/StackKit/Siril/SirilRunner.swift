@@ -40,13 +40,16 @@ package struct SirilRunner: Sendable {
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     let file = directory.appendingPathComponent("_astrostack.ssf")
     try Data(limits.apply(to: script.render()).utf8).write(to: file)
-    var options = PlatformOptions()
-    // Cancelling the task stops Siril: SIGTERM, then SIGKILL two seconds later.
-    options.teardownSequence = [.gracefulShutDown(allowedDurationToNextStep: .seconds(2))]
+    // Cancelling the task stops Siril and its children (SirilTool.platformOptions); whatever
+    // outlives a Siril that exits on its own is killed here.
+    var group: pid_t?
+    defer { if let group { SirilTool.killLeftovers(ofGroup: group) } }
     let result = try await Subprocess.run(
       .path(FilePath(binary)), arguments: ["-d", directory.path, "-s", file.path],
-      platformOptions: options, input: .none, output: .sequence, error: .combinedWithOutput
+      platformOptions: SirilTool.platformOptions, input: .none, output: .sequence,
+      error: .combinedWithOutput
     ) { execution in
+      group = execution.processIdentifier.value
       // Lines end at `\n` only, with no length cap: the legacy bufio.Scanner's rule (a bare `\r`
       // or U+2028 stays inside its line).
       let splitter = LineSplitter()

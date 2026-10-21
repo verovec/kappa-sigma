@@ -52,3 +52,20 @@ struct PipelineStoreTests {
     #expect(try package.store.pipelineNames() == [])
   }
 }
+
+/// `user_profiles` (card 0060): the user's profile copies, by profile id.
+@Suite("ProjectStore: user profile copies")
+struct UserProfileStoreTests {
+  @Test("a copy is saved by id, listed, overwritten, deleted", .scratchDirectory)
+  func testUserProfiles() throws {
+    let package = try ProjectStoreTests.newPackage()
+    defer { try? package.close() }
+    #expect(try package.store.userProfiles().isEmpty)
+    try package.store.saveUserProfile(id: "emission-osc-dualband", json: Data(#"{"a":1}"#.utf8))
+    try package.store.saveUserProfile(id: "emission-osc-dualband", json: Data(#"{"a":2}"#.utf8))
+    #expect(try package.store.userProfiles() == ["emission-osc-dualband": Data(#"{"a":2}"#.utf8)])
+    #expect(try package.store.pipelineNames() == [], "profiles and pipelines are apart")
+    try package.store.deleteUserProfile(id: "emission-osc-dualband")
+    #expect(try package.store.userProfiles().isEmpty)
+  }
+}

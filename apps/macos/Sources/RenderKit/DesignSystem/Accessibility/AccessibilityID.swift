@@ -99,6 +99,9 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
   /// The Stacking panel's Reset All (card 0070).
   package static let stackingResetKnobs = stageControl("stacking", "resetKnobs")
 
+  /// The Import sheet's profile picker (card 0060).
+  package static let importProfile = Self("import", "profile")
+
   /// The shortcuts sheet's search field.
   package static let shortcutsSearch = Self("shortcuts", "search")
 

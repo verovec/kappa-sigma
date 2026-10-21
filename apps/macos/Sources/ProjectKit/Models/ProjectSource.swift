@@ -16,6 +16,8 @@ package struct ProjectSource: Equatable, Sendable {
   package let path: String
   /// Always true today: the app never writes into a source.
   package let readOnly: Bool
+  /// The profile kept when it was imported (card 0060), `nil` when none.
+  package let profileID: String?
   /// Creation time, Unix milliseconds.
   package let createdAt: Int64
   /// Last update time, Unix milliseconds.

@@ -1,0 +1,86 @@
+{
+  "camera": "osc",
+  "examples": [
+    "IC 1848",
+    "NGC 7000",
+    "IC 1805"
+  ],
+  "filters": [
+    "dualband"
+  ],
+  "id": "emission-osc-dualband",
+  "object": "emission-nebula",
+  "preprocessing": {
+    "knobs": {
+      "trail_mask_k": 0
+    },
+    "mode": "nebula",
+    "why": {
+      "trail_mask_k": {
+        "en": "The validated v9 dual-band runs stack without the cross-frame trail mask.",
+        "fr": "Les runs bi-bande v9 validés s'empilent sans masque de traînées inter-poses."
+      }
+    }
+  },
+  "schemaVersion": 1,
+  "steps": [
+    {
+      "locked": false,
+      "mode": "auto",
+      "process": "channel-combination",
+      "values": {},
+      "why": {}
+    },
+    {
+      "locked": false,
+      "mode": "auto",
+      "process": "stretch",
+      "values": {
+        "linked": false
+      },
+      "why": {
+        "linked": {
+          "en": "Two emission lines only: an unlinked stretch keeps the faint OIII visible (no colour calibration on dual-band).",
+          "fr": "Deux raies seulement : un étirement délié garde l'OIII faible visible (pas de calibration couleur en bi-bande)."
+        }
+      }
+    },
+    {
+      "locked": false,
+      "mode": "stop",
+      "process": "emission-screens",
+      "values": {
+        "haBlack": 0.126,
+        "oiiiBoost": 1.35
+      },
+      "why": {
+        "haBlack": {
+          "en": "The IC 1848 « doux » composite: Hα black point 0.126.",
+          "fr": "Le composite IC 1848 « doux » : point noir Hα 0,126."
+        },
+        "oiiiBoost": {
+          "en": "The marked teal validated on NGC 7000 v9: OIII boost 1.35.",
+          "fr": "Le sarcelle marqué validé sur NGC 7000 v9 : renfort OIII 1,35."
+        }
+      }
+    },
+    {
+      "locked": false,
+      "mode": "auto",
+      "process": "saturation",
+      "values": {
+        "lumaDesat": 0.62
+      },
+      "why": {
+        "lumaDesat": {
+          "en": "IC 1848 « doux »: 62 % of the colour kept (validated 28/09); no HDR, there is no galaxy core.",
+          "fr": "IC 1848 « doux » : 62 % de la couleur conservée (validé le 28/09) ; pas de HDR, il n'y a pas de cœur de galaxie."
+        }
+      }
+    }
+  ],
+  "title": {
+    "en": "Emission nebula · OSC · dual-band only",
+    "fr": "Nébuleuse en émission · OSC · bi-bande seul"
+  }
+}

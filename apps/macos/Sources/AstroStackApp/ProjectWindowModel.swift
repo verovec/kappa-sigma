@@ -131,7 +131,10 @@ package final class ProjectWindowModel {
     closeImport()
     importError = nil
     let services = services(store())
-    importing = ImportViewModel(planning: services.planning, masters: services.masters)
+    let profiles = ImportViewModel.profiles(store: store())
+    importing = ImportViewModel(
+      planning: services.planning, masters: services.masters, profiles: profiles.profiles,
+      rejectedProfiles: profiles.rejected)
   }
 
   /// Closes the Import sheet and stops its scan, which would otherwise run on for minutes.
@@ -155,6 +158,12 @@ package final class ProjectWindowModel {
       for path in request.paths {
         try store.addSource(kind: .night, path: path)
         recorded += 1
+      }
+      // The profile kept for these sources, recorded with them; applied by nothing here.
+      if let importing, let kept = importing.profileToRecord(for: request) {
+        for path in request.paths {
+          try store.setProfile(kept.id, kind: .night, path: path)
+        }
       }
       imports.append(request)
       edited()

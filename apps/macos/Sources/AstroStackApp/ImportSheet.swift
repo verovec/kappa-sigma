@@ -68,6 +68,7 @@ package struct ImportSheet: View {
       ScrollView {
         VStack(alignment: .leading, spacing: 12) {
           ImportInventoryView(model: model, plan: plan)
+          ImportProfileView(model: model)
           ImportOverridesView(model: model)
           ImportCalibrationView(model: model, plan: plan)
           warnings(plan.warnings)

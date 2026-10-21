@@ -1,0 +1,59 @@
+{
+  "camera": "mono",
+  "examples": [],
+  "filters": [
+    "narrowband"
+  ],
+  "id": "nebula-mono-narrowband",
+  "object": "nebula",
+  "preprocessing": {
+    "knobs": {},
+    "mode": "nebula",
+    "why": {}
+  },
+  "schemaVersion": 1,
+  "steps": [
+    {
+      "locked": false,
+      "mode": "auto",
+      "process": "channel-combination",
+      "values": {
+        "bSource": "OIII",
+        "gSource": "Ha",
+        "rSource": "SII"
+      },
+      "why": {
+        "bSource": {
+          "en": "SHO palette: OIII as blue.",
+          "fr": "Palette SHO : OIII en bleu."
+        },
+        "gSource": {
+          "en": "SHO palette: Hα as green.",
+          "fr": "Palette SHO : Hα en vert."
+        },
+        "rSource": {
+          "en": "SHO palette: SII as red (switch to HOO in the panel).",
+          "fr": "Palette SHO : SII en rouge (HOO au choix dans le panneau)."
+        }
+      }
+    },
+    {
+      "locked": false,
+      "mode": "auto",
+      "process": "stretch",
+      "values": {
+        "linked": false
+      },
+      "why": {
+        "linked": {
+          "en": "Three lines of very different strength: each channel stretched on its own.",
+          "fr": "Trois raies de forces très différentes : chaque canal étiré séparément."
+        }
+      }
+    }
+  ],
+  "title": {
+    "en": "Nebula · mono · SHO / HOO",
+    "fr": "Nébuleuse · mono · SHO / HOO"
+  }
+}

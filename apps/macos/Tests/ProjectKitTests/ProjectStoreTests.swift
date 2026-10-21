@@ -26,8 +26,9 @@ struct ProjectStoreTests {
 
     #expect(try store.tableNames() == (Self.applicationTables + ["schema_migrations"]).sorted())
     let applied = try store.appliedMigrations()
-    #expect(applied.map(\.version) == [1, 2, 3])
-    #expect(applied.map(\.name) == ["init", "calibration_masters", "project_settings"])
+    #expect(applied.map(\.version) == [1, 2, 3, 4])
+    #expect(
+      applied.map(\.name) == ["init", "calibration_masters", "project_settings", "source_profile"])
 
     try store.migrate(to: 0)
     #expect(try store.tableNames() == ["schema_migrations"])
@@ -219,7 +220,7 @@ struct ProjectStoreTests {
     try package.close()
 
     let reopened = try ProjectPackage.open(at: package.url)
-    #expect(try reopened.store.appliedMigrations().map(\.version) == [1, 2, 3])
+    #expect(try reopened.store.appliedMigrations().map(\.version) == [1, 2, 3, 4])
     #expect(try reopened.store.sources().count == 1)
     try reopened.close()
     let items = try FileManager.default.contentsOfDirectory(atPath: package.url.path)

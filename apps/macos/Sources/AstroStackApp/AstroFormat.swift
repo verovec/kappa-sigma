@@ -81,6 +81,11 @@ package nonisolated struct AstroFormat: Sendable {
     String(localized: .app("\(count) lights", locale: locale))
   }
 
+  /// A scan's count: `1 234 / 3 480 fichiers lus` / `1,234 / 3,480 files read`.
+  package func filesRead(_ done: Int, of total: Int) -> String {
+    String(localized: .app("\(integer(done)) / \(integer(total)) files read", locale: locale))
+  }
+
   /// `1 pose`, `36 poses` / `1 frame`, `36 frames`.
   package func frames(_ count: Int) -> String {
     var resource = Self.frameCount(count)

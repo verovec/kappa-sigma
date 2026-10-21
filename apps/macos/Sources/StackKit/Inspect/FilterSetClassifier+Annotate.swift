@@ -11,7 +11,8 @@ extension FilterSetClassifier {
   ) {
     var verdicts: [String: FilterSet] = [:]
     if inventory.colorModel == .osc, let floor = biasFloor(inventory.sets, pixels: pixels) {
-      for set in inventory.sets where set.key.type == .light {
+      // Each verdict reads full frames: a cancelled scan stops measuring (the caller throws).
+      for set in inventory.sets where set.key.type == .light && !Task.isCancelled {
         let verdict = classify(set, floor: floor, pixels: pixels)
         if verdict.isKnown { verdicts[set.key.id] = verdict }
       }
@@ -24,7 +25,9 @@ extension FilterSetClassifier {
   /// The median of the sampled frames' skies, above the floor, at the set's EGAIN: one frame
   /// ruined by a cloud must not move a night's verdict.
   private static func classify(_ set: FrameSet, floor: Double, pixels: PixelReader) -> FilterSet {
-    let skies = sample(set.frames, count: sampleFrames).compactMap { sky(of: $0, pixels: pixels) }
+    let skies = sample(set.frames, count: sampleFrames).compactMap { frame in
+      Task.isCancelled ? nil : sky(of: frame, pixels: pixels)
+    }
     guard !skies.isEmpty else { return .unknown }
     let above = ChannelSky(
       r: median(skies.map(\.r)) - floor, g: median(skies.map(\.g)) - floor,
@@ -40,7 +43,7 @@ extension FilterSetClassifier {
     for type in [FrameType.bias, .dark] {
       let levels = sets.filter { $0.key.type == type }
         .flatMap { sample($0.frames, count: sampleFrames) }
-        .compactMap { sky(of: $0, pixels: pixels)?.amplitude }
+        .compactMap { Task.isCancelled ? nil : sky(of: $0, pixels: pixels)?.amplitude }
       if !levels.isEmpty { return median(levels) }
     }
     return nil

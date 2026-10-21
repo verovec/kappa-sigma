@@ -66,6 +66,31 @@ package struct LegacyRunSource: Sendable {
     grid = try Self.checkGrid(layers, in: layerFolder)
   }
 
+  /// Opens a stack this app ran into a project (`stacks/<run_id>/`, card 0057): its
+  /// `bundle.json` is the whole record, so there is no `run.json` and no frame count.
+  ///
+  /// `object` names the target (the project's). Throws `LegacyRunError.noBundle` without a
+  /// bundle, the decoder's or file system's own error for an unreadable one, `mixedDimensions`
+  /// when its layers disagree.
+  package init(stack folder: URL, object: String) throws {
+    let file = folder.appendingPathComponent(BundleWriter.fileName)
+    guard FileManager.default.fileExists(atPath: file.path) else {
+      throw LegacyRunError.noBundle(folder.path)
+    }
+    let bundle = try BundleWriter.read(from: folder)
+    self.folder = folder
+    runID = bundle.runID
+    self.object = object
+    colorModel = bundle.colorModel
+    self.bundle = bundle
+    layerFolder = folder
+    layers = bundle.layers.map {
+      Layer(id: $0.id, role: $0.role, file: $0.file, source: $0.source, frames: nil)
+    }
+    guard !layers.isEmpty else { throw LegacyRunError.noLayers(folder.path) }
+    grid = try Self.checkGrid(layers, in: folder)
+  }
+
   /// Records the run in the project: its path only, read-only (no layer is copied).
   @discardableResult
   package func record(in store: ProjectStore) throws -> ProjectSource {

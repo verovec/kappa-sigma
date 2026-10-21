@@ -40,6 +40,39 @@ struct ProjectStoreTests {
     #expect(try store.tableNames() == (Self.applicationTables + ["schema_migrations"]).sorted())
   }
 
+  @Test("stacks lists every stack oldest first, each with its sources", .scratchDirectory)
+  func testStacksListed() throws {
+    let package = try Self.newPackage()
+    defer { try? package.close() }
+    let store = package.store
+    #expect(try store.stacks().isEmpty)
+    #expect(try store.latestStack() == nil)
+    let night = try store.addSource(kind: .night, path: "/captures/M31-DB")
+    let other = try store.addSource(kind: .night, path: "/captures/M31-BB")
+    let first = try store.addStack(
+      bundlePath: "stacks/A", sourceIDs: [other.id, night.id], paramsJSON: "{}")
+    let second = try store.addStack(bundlePath: "stacks/B", sourceIDs: [], paramsJSON: "{}")
+
+    #expect(try store.stacks() == [first, second])
+    #expect(try store.latestStack() == second)
+    #expect(try store.stacks().first?.sourceIDs == [night.id, other.id])
+  }
+
+  @Test("a stack and its images are recorded together, or not at all", .scratchDirectory)
+  func testStackWithImagesIsOneTransaction() throws {
+    let package = try Self.newPackage()
+    defer { try? package.close() }
+    let store = package.store
+    let stack = try store.addStack(
+      bundlePath: "stacks/A", sourceIDs: [], paramsJSON: "{}", imageRoles: ["Ha", "OIII", "RGB"])
+    #expect(try store.images(stackID: stack.id).map(\.role) == ["Ha", "OIII", "RGB"])
+
+    #expect(throws: (any Error).self) {
+      try store.addStack(bundlePath: "stacks/B", sourceIDs: [9_999], paramsJSON: "{}")
+    }
+    #expect(try store.stacks() == [stack], "an unknown source rolls the whole stack back")
+  }
+
   struct RoundTrip: Sendable, CustomTestStringConvertible {
     let role: String
     let sourceKind: ProjectSource.Kind

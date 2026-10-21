@@ -32,6 +32,15 @@ GRDB 7), and later `images/`, `recipes/`, `history/` (design §4.5). No UI, no A
 - `summary()` returns `ProjectSummary` (sources, stacks, images, history steps) in one read; the
   app derives the journey's stage states from it (`JourneyState`).
 
+## Stacks (card 0057)
+
+- A finished run of the Stacking stage is `addStack(bundlePath: "stacks/<run_id>", …)`: the
+  path is relative to the package, `params_json` is the `ImportRequest` it ran (legacy wire keys),
+  and the sources are the nights it read. Each bundle layer is one `images` row (role = layer id:
+  `RGB`, `Ha`, `OIII`…), which is what makes the Studio stage ready.
+- `stacks()` lists them oldest first. The Studio shows the last one, and the next run reuses its
+  `params_json` overrides when the session has no newer import.
+
 ## Why `NSDocument` over the package, not SwiftUI `FileDocument`
 
 `FileDocument`/`ReferenceFileDocument` save through `FileWrapper`: every save writes a new package

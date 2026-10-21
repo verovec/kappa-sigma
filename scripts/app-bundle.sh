@@ -14,6 +14,8 @@ rm -rf "$app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cp "$bin/AstroStackApp" "$app/Contents/MacOS/AstroStack"
 cp App/Info.plist "$app/Contents/Info.plist"
+# Localised Info.plist strings (the Documents-access prompt in French).
+cp -R App/*.lproj "$app/Contents/Resources/"
 # SwiftPM resource bundles: kit resources (shaders, migrations, compiled string catalogs) and
 # dependencies' privacy manifests; test bundles left over from `swift test` stay out.
 find "$bin" -maxdepth 1 -name '*.bundle' ! -name '*Tests.bundle' -exec cp -R {} "$app/Contents/Resources/" \;

@@ -196,3 +196,25 @@ struct ShaderLibraryTests {
     #expect(Set(runtime.functionNames) == Set(precompiled.functionNames))
   }
 }
+
+/// The area around the image is the canvas token's grey, never black nor tinted.
+@Suite("DisplayPipeline: the canvas around the image", .enabled(if: GPU.available))
+struct DisplayCanvasTests {
+  @Test(
+    "view pixels outside the image show the canvas grey of each appearance, R = G = B",
+    arguments: DesignAppearance.allCases)
+  func testCanvasOutsideImage(_ appearance: DesignAppearance) throws {
+    let image = try GPU.texture([0.5, 0.5], width: 2, height: 1)
+    var frame = ViewerFrame(transform: ViewTransform(scale: 1, origin: SIMD2(-2, 0)), stf: nil)
+    frame.canvasGrey = DesignColor.canvasGrey(in: appearance)
+    let device = try GPU.requireDevice()
+    let pipeline = try DisplayPipeline(device: device, library: ShaderLibrary.load(device: device))
+    let output = try GPU.output(width: 4, height: 1)
+    try pipeline.render(
+      current: image, reference: nil, into: output, uniforms: frame.uniforms(for: image))
+    let pixels = GPU.read(output)
+    let grey = DesignColor.canvasGrey(in: appearance)
+    #expect(pixels[0] == SIMD4(grey, grey, grey, 1) && pixels[1] == pixels[0])
+    #expect(pixels[2] == SIMD4(0.5, 0.5, 0.5, 1), "the image itself is untouched")
+  }
+}

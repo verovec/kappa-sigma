@@ -1,3 +1,4 @@
+internal import RenderKit
 internal import StackKit
 internal import SwiftUI
 
@@ -64,7 +65,8 @@ struct ImportCalibrationView: View {
         Text(verbatim: "\(role(cell)): ")
         Text(ImportFormat.status(cell.status))
       }
-      .foregroundStyle(cell.status == .missing ? Color.orange : Color.primary)
+      .foregroundStyle(
+        (cell.status == .missing ? DesignColor.statusAttention : DesignColor.textPrimary).color)
     }
     .disabled(cell.status == .missing)
   }

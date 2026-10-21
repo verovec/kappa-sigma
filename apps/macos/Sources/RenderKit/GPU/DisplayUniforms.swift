@@ -33,6 +33,8 @@ package struct DisplayUniforms {
   package var flipRows: UInt32 = 0
   /// 1: the mask bound at texture 7 tints the view red by half its value.
   package var maskOverlay: UInt32 = 0
+  /// Grey level of view pixels outside the image (`DesignColor.canvasGrey`).
+  package var canvasGrey: Float = 0
 
   /// 1:1 at the image origin, with `stf` per channel (`nil`: STF off).
   package init(image: ImageTexture, stf: [STFParameters]?) {

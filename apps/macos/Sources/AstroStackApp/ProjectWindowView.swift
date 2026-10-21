@@ -1,3 +1,4 @@
+internal import RenderKit
 package import SwiftUI
 
 /// The content of a project window: its sources, and the Import sheet.
@@ -36,7 +37,7 @@ package struct ProjectWindowView: View {
         .padding(8)
       }
       if let error = model.error {
-        Text(error.message).foregroundStyle(.red).padding(8)
+        StatusBadge(.error, error.message).padding(8)
       }
     }
     .frame(minWidth: 640, minHeight: 400)

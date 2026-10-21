@@ -29,12 +29,8 @@ package struct LegacyRunView: View {
     } detail: {
       VStack(spacing: 0) {
         if let failure = model.failure {
-          Label {
-            Text(failure)
-          } icon: {
-            Image(systemName: "exclamationmark.triangle")
-          }
-          .foregroundStyle(.red).padding(8).frame(maxWidth: .infinity, alignment: .leading)
+          StatusBadge(.error, failure)
+            .padding(8).frame(maxWidth: .infinity, alignment: .leading)
         }
         if let viewer = model.viewer {
           ViewerView(

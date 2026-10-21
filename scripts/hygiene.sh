@@ -46,5 +46,12 @@ bad=$( [ -z "$views" ] || printf '%s\n' "$views" | tr '\n' '\0' | xargs -0 grep 
   || true)
 [ -z "$bad" ] || report "enum raw values shown as labels (use AppGlossary or the catalog):"$'\n'"$bad"
 
+# 7. No ad-hoc status colours in views (card 0075): colours come from RenderKit's DesignColor
+#    tokens, which keep contrast in light and dark and a neutral image surround.
+bad=$( [ -z "$views" ] || printf '%s\n' "$views" | tr '\n' '\0' | xargs -0 grep -nHE \
+  'Color\.(red|orange|yellow|green|blue|gray|black)\b|(foregroundStyle|tint|fill|stroke|background)\(\.(red|orange|yellow|green|blue|gray|black)\b|NSColor\.system(Red|Orange|Yellow|Green|Blue)\b' \
+  || true)
+[ -z "$bad" ] || report "literal colours in views (use DesignColor tokens):"$'\n'"$bad"
+
 if [ "$fail" -ne 0 ]; then echo "hygiene: FAILED"; exit 1; fi
 echo "hygiene: ok"

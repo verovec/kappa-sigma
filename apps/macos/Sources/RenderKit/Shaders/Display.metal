@@ -37,7 +37,7 @@ kernel void display(texture2d<float> r [[texture(0)]], texture2d<float> g [[text
   if (gid.x >= out.get_width() || gid.y >= out.get_height()) { return; }
   float2 image = float2(u.originX, u.originY) + (float2(gid) + 0.5f) * u.scale;
   if (image.x < 0.0f || image.y < 0.0f || image.x >= u.imageWidth || image.y >= u.imageHeight) {
-    out.write(float4(0.0f, 0.0f, 0.0f, 1.0f), gid);
+    out.write(float4(float3(u.canvasGrey), 1.0f), gid);
     return;
   }
   if (u.flipRows != 0) { image.y = u.imageHeight - image.y; }
@@ -88,6 +88,7 @@ kernel void shaderLayout(constant DisplayUniforms &d [[buffer(0)]],
   out[i++] = as_type<uint>(d.mipLevels);
   out[i++] = d.flipRows;
   out[i++] = d.maskOverlay;
+  out[i++] = as_type<uint>(d.canvasGrey);
   out[i++] = h.channels;
   out[i++] = h.stride;
   out[i++] = h.originX;

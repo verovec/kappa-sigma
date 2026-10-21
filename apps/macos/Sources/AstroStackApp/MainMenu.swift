@@ -102,7 +102,7 @@ package enum MainMenu {
   }
 
   private static func window(_ locale: Locale?) -> NSMenu {
-    submenu(
+    let menu = submenu(
       String(localized: .app("Window", locale: locale)),
       [
         (.app("Minimize", locale: locale), #selector(NSWindow.performMiniaturize(_:)), "m"),
@@ -113,6 +113,14 @@ package enum MainMenu {
           #selector(NSApplication.arrangeInFront(_:)), ""
         ),
       ])
+    #if DEBUG
+      menu.addItem(.separator())
+      menu.addItem(
+        NSMenuItem(
+          title: String(localized: .app("Component Gallery", locale: locale)),
+          action: #selector(AppDelegate.showComponentGallery(_:)), keyEquivalent: ""))
+    #endif
+    return menu
   }
 
   /// A menu of `entries`, where `nil` is a separator.

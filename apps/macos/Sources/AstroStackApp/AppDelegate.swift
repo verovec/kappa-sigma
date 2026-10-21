@@ -47,6 +47,11 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
     SettingsWindow.show()
   }
 
+  /// Window › Component Gallery (debug builds): the design system's components.
+  @objc package func showComponentGallery(_ sender: Any?) {
+    ComponentGalleryWindow.show()
+  }
+
   private static var launchImage: String? { UserDefaults.standard.string(forKey: "openImage") }
 
   /// AppKit does not close documents on quit; closing them checkpoints each `project.db` and

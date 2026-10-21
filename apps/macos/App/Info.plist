@@ -35,6 +35,8 @@
   <true/>
   <key>NSPrincipalClass</key>
   <string>NSApplication</string>
+  <key>NSDocumentsFolderUsageDescription</key>
+  <string>AstroStack reads your captures, earlier runs and calibration masters in Documents/astro, read-only: it never writes there.</string>
   <key>CFBundleDocumentTypes</key>
   <array>
     <dict>

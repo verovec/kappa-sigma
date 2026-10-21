@@ -27,7 +27,8 @@ package struct ImportSheet: View {
   package var body: some View {
     VStack(alignment: .leading, spacing: 12) {
       header
-      if let error = model.error {
+      // A scan in flight answers the last error: its badge would read as the new scan's failure.
+      if let error = model.error, !model.isScanning {
         StatusBadge(.error, error.message)
       }
       content
@@ -41,10 +42,29 @@ package struct ImportSheet: View {
     .fileDialogDefaultDirectory(ImportPlanning.capturesFolder)
   }
 
-  /// The plan once scanned, the overrides after a failed scan, or the empty state.
+  /// What the body of the sheet shows.
+  package enum Content: Equatable {
+    /// The scanned plan (a rescan runs over it, its progress in the header).
+    case plan(ImportPlan)
+    /// The overrides after a failed scan: the one that made it fail must stay reachable.
+    case failed
+    /// The first scan of a folder, with its progress.
+    case scanning
+    /// Nothing chosen yet.
+    case empty
+  }
+
+  /// The body `model` calls for: never « No capture » while a scan runs.
+  package static func content(of model: ImportViewModel) -> Content {
+    if let plan = model.plan { return .plan(plan) }
+    if model.isScanning { return .scanning }
+    return model.error != nil ? .failed : .empty
+  }
+
   @ViewBuilder
   private var content: some View {
-    if let plan = model.plan {
+    switch Self.content(of: model) {
+    case .plan(let plan):
       ScrollView {
         VStack(alignment: .leading, spacing: 12) {
           ImportInventoryView(model: model, plan: plan)
@@ -53,11 +73,12 @@ package struct ImportSheet: View {
           warnings(plan.warnings)
         }
       }
-    } else if model.error != nil {
-      // The override that made the scan fail must stay reachable to undo it.
+    case .failed:
       ImportOverridesView(model: model)
       Spacer()
-    } else {
+    case .scanning:
+      ImportScanProgressView(progress: model.progress) { model.cancelScan() }
+    case .empty:
       EmptyState(
         .app("No capture"), message: .app("Choose a capture folder; it is read, never written."),
         systemImage: "folder")
@@ -75,7 +96,10 @@ package struct ImportSheet: View {
       }
       .font(.title3).lineLimit(1).truncationMode(.middle)
       Spacer()
-      if model.isScanning { ProgressView().controlSize(.small) }
+      // Only a scan reports progress: a calibration-only rematch shows nothing to cancel.
+      if model.plan != nil, model.progress != nil {
+        ImportScanProgressView(progress: model.progress, compact: true) { model.cancelScan() }
+      }
       Button(.app("Choose Folder…")) { picking = true }
     }
   }

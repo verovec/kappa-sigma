@@ -79,4 +79,20 @@ struct ContinuumKTests {
       try ContinuumK.measure(line: "Ha", layers: layers)
     } throws: { "\($0)".contains("too dark") }
   }
+
+  @Test(
+    "the fit names the plane it subtracts: a mono filter, or the colour base's red/green",
+    .scratchDirectory)
+  func testPlaneToken() throws {
+    let (red, green) = (Self.ramp(), Self.ramp(0.8))
+    let colour = [
+      "RGB": try Self.write("rgb", [red, green, Self.ramp(0.6)]),
+      "Ha": try Self.write("syn_Ha", [Self.line(0.5, of: red)]),
+      "OIII": try Self.write("syn_OIII", [Self.line(0.25, of: green)]),
+    ]
+    #expect(try ContinuumK.measure(line: "Ha", layers: colour).plane == "RGB.r")
+    #expect(try ContinuumK.measure(line: "OIII", layers: colour).plane == "RGB.g")
+    let mono = ["R": try Self.write("r", [red]), "Ha": try Self.write("ha", [red])]
+    #expect(try ContinuumK.measure(line: "Ha", layers: mono).plane == "R")
+  }
 }

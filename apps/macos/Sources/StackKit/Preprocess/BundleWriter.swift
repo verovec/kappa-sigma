@@ -11,13 +11,19 @@ package struct BundleWriter: Sendable {
     package var source: String
     /// A line layer's continuum scale (`ContinuumK`), when fitted.
     package var continuumK: Double?
+    /// The plane that scale was fitted against (`ContinuumK.Fit.plane`).
+    package var continuumReference: String?
 
     /// A layer input.
-    package init(filter: String, file: URL, source: String, continuumK: Double? = nil) {
+    package init(
+      filter: String, file: URL, source: String, continuumK: Double? = nil,
+      continuumReference: String? = nil
+    ) {
       self.filter = filter
       self.file = file
       self.source = source
       self.continuumK = continuumK
+      self.continuumReference = continuumReference
     }
   }
 
@@ -60,7 +66,8 @@ package struct BundleWriter: Sendable {
       LinearBundle.Layer(
         id: input.filter, role: LinearBundle.Role(filter: input.filter),
         file: input.file.lastPathComponent, source: input.source,
-        stats: LayerStats.measure(try file.image().planes), continuumK: input.continuumK)
+        stats: LayerStats.measure(try file.image().planes), continuumK: input.continuumK,
+        continuumReference: input.continuumReference)
     }
     return LinearBundle(runID: runID, colorModel: colorModel, grid: grid, layers: measured)
   }

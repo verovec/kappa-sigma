@@ -74,8 +74,8 @@ extension Preprocessor {
       } ?? true
     channels = crop(channels, request: request, journal: &journal, into: &result)
     var notes: [String] = []
-    let continuum: [String: Double]
-    (channels, continuum) = Self.emission(
+    let continuum: [String: ContinuumK.Fit]
+    (channels, continuum) = Self.emissionFits(
       channels, out: request.output, registered: laneRegistered, notes: &notes)
     for note in notes { journal.line(note) }
     result.notes += notes
@@ -95,7 +95,7 @@ extension Preprocessor {
         return BundleWriter.Input(
           filter: filter, file: request.output.appendingPathComponent(base + ".fits"),
           source: LayerPrecedence.stage(of: base) ?? String(base.prefix { $0 != "_" }),
-          continuumK: continuum[filter])
+          continuumK: continuum[filter]?.k, continuumReference: continuum[filter]?.plane)
       },
       to: request.output)
   }

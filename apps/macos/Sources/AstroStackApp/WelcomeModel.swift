@@ -54,6 +54,8 @@ package final class WelcomeModel {
   private let openProjects: @MainActor () -> [String: ProjectSummary?]
   private let hostTools: HostTools
   private var isChecking = false
+  /// The latest `reload()`: an older one finishing late does not overwrite it.
+  private var generation = 0
 
   /// A model listing `recentURLs` (the document controller's) and checking `tools`;
   /// `openProjects` gives the counts of the projects open in a document, by `key(_:)`.
@@ -68,6 +70,8 @@ package final class WelcomeModel {
 
   /// Reads the recent projects again; packages are read off the main actor, side by side.
   package func reload() async {
+    generation += 1
+    let current = generation
     let open = openProjects()
     let urls = recentURLs().filter { FileManager.default.fileExists(atPath: $0.path) }
     let read = await withTaskGroup(of: (URL, ProjectSummary?).self) { group in
@@ -78,6 +82,7 @@ package final class WelcomeModel {
       for await (url, summary) in group { read[url] = summary }
       return read
     }
+    guard current == generation else { return }
     recent = urls.map { url in
       let summary = open[Self.key(url)] ?? read[url] ?? nil
       return RecentProject(

@@ -23,7 +23,8 @@ package enum WelcomeWindow {
     let window = window ?? make()
     Self.window = window
     Task { await model.reload() }
-    Task { await model.recheckTools() }
+    // Tools are probed once; afterwards only « Re-check » runs siril-cli again.
+    if model.tools.isEmpty { Task { await model.recheckTools() } }
     window.makeKeyAndOrderFront(nil)
     return window
   }
@@ -38,6 +39,7 @@ package enum WelcomeWindow {
 
   /// Closes the window if it is up: a project window just opened.
   package static func dismiss() {
+    model.isNaming = false
     window?.close()
   }
 

@@ -11,7 +11,7 @@ package enum SettingsWindow {
   package static func show() -> NSWindow {
     let window = window ?? make()
     Self.window = window
-    Task { await WelcomeWindow.model.recheckTools() }
+    if WelcomeWindow.model.tools.isEmpty { Task { await WelcomeWindow.model.recheckTools() } }
     window.makeKeyAndOrderFront(nil)
     return window
   }

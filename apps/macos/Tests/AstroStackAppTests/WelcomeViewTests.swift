@@ -133,4 +133,14 @@ struct WelcomeViewTests {
       ToolStrip.reason(row).text("fr")
         == UserFacingError.siril(.tooOld(version: "1.2.6")).message.text("fr"))
   }
+
+  @Test("a project window closing the welcome window also drops its naming sheet")
+  func testDismissDropsNamingSheet() {
+    WelcomeWindow.showNewProject()
+
+    WelcomeWindow.dismiss()
+
+    #expect(!WelcomeWindow.model.isNaming)
+    #expect(!WelcomeWindow.isVisible)
+  }
 }

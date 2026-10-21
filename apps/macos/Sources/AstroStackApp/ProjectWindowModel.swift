@@ -38,6 +38,8 @@ package final class ProjectWindowModel {
   package let knobs: KnobPanelViewModel
   /// This session's imports, in order: the next run applies all their overrides.
   var imports: [ImportRequest] = []
+  /// The project is the untitled temporary package: a run needs it saved first (read on refresh).
+  package private(set) var needsSave = false
 
   let store: () -> ProjectStore?
   let folder: () -> URL?
@@ -45,6 +47,10 @@ package final class ProjectWindowModel {
   let runs: RunServices
   /// The package is saved (not the untitled temporary one a Save moves).
   let isSaved: () -> Bool
+  /// Tells the document the project changed, so an untitled one asks to be saved on close.
+  let edited: () -> Void
+  /// Asks the document to save (the Save panel for an untitled project).
+  let saveDocument: () -> Void
 
   /// A window over the document's current store and package folder (both change when the package
   /// moves); each sheet and run gets fresh `services`, and runs go through `runs`.
@@ -53,13 +59,17 @@ package final class ProjectWindowModel {
     folder: @escaping () -> URL? = { nil },
     services: @escaping (ProjectStore?) -> ImportServices = { ImportPlanning.services(store: $0) },
     runs: RunServices = .live,
-    isSaved: @escaping () -> Bool = { true }
+    isSaved: @escaping () -> Bool = { true },
+    edited: @escaping () -> Void = {},
+    save: @escaping () -> Void = {}
   ) {
     self.store = store
     self.folder = folder
     self.services = services
     self.runs = runs
     self.isSaved = isSaved
+    self.edited = edited
+    self.saveDocument = save
     // The panel starts where the latest stack left it; an unreadable record is reported.
     let latest = Result { try store()?.latestStack().map(StackRecord.init(stack:)) }
     let record = (try? latest.get()) ?? nil
@@ -87,6 +97,16 @@ package final class ProjectWindowModel {
     }
   }
 
+  /// Saves the project: the Save panel names an untitled one, then Run is offered.
+  package func save() {
+    saveDocument()
+  }
+
+  /// Opens the library master at `path` in the viewer; nothing without master services.
+  package func previewMaster(_ path: String) {
+    services(store()).masters?.preview(path)
+  }
+
   /// A window whose sheets plan with `planning` and have no master services.
   package convenience init(
     store: @escaping () -> ProjectStore?,
@@ -96,9 +116,11 @@ package final class ProjectWindowModel {
     self.init(store: store, folder: folder, services: { ImportServices(planning: planning($0)) })
   }
 
-  /// Opens the Import sheet on a fresh request.
+  /// Opens the Import sheet on a fresh request, without the window's last error.
   package func startImport() {
     closeImport()
+    // The sheet shows `error` as Add's own: one left by Run or the Studio is not.
+    error = nil
     let services = services(store())
     importing = ImportViewModel(planning: services.planning, masters: services.masters)
   }
@@ -123,6 +145,7 @@ package final class ProjectWindowModel {
         try store.addSource(kind: .night, path: path)
       }
       imports.append(request)
+      edited()
       // The sources first: whether the sheet's plan is the project's scan depends on them.
       refresh()
       adoptScan(of: importing, for: request)
@@ -130,6 +153,7 @@ package final class ProjectWindowModel {
       refresh()
     } catch {
       // Some folders may be recorded: the last scan no longer describes the project.
+      edited()
       dropScan()
       refresh()
       self.error = UserFacingError(error)
@@ -140,6 +164,7 @@ package final class ProjectWindowModel {
   package func refresh() {
     do {
       let store = store()
+      needsSave = !isSaved()
       sources = try store?.sources() ?? []
       let summary = try store?.summary() ?? ProjectSummary()
       let running = run?.isRunning == true ? 1 : 0

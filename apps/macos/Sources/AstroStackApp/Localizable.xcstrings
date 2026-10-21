@@ -1073,6 +1073,22 @@
         }
       }
     },
+    "Import a capture night to stack: a legacy run is shown, never stacked again.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import a capture night to stack: a legacy run is shown, never stacked again."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importez une nuit de capture pour empiler : un ancien run s’affiche, il n’est jamais réempilé."
+          }
+        }
+      }
+    },
     "Import captures first": {
       "localizations": {
         "en": {
@@ -2065,6 +2081,22 @@
         }
       }
     },
+    "Save the project first: its masters and stacks are written inside it.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save the project first: its masters and stacks are written inside it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrez d’abord le projet : ses masters et ses empilements sont écrits à l’intérieur."
+          }
+        }
+      }
+    },
     "Save the project first: its stacks are written inside it.": {
       "localizations": {
         "en": {
@@ -2093,6 +2125,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Enregistrez vos projets avant de relancer."
+          }
+        }
+      }
+    },
+    "Save…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrer…"
           }
         }
       }
@@ -2593,22 +2641,6 @@
         }
       }
     },
-    "The masters each light set uses, their statistics and the gaps will appear here.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The masters each light set uses, their statistics and the gaps will appear here."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les masters utilisés par chaque série de brutes, leurs statistiques et les manques apparaîtront ici."
-          }
-        }
-      }
-    },
     "The matcher's choice, as is.": {
       "localizations": {
         "en": {
@@ -2785,6 +2817,22 @@
         }
       }
     },
+    "To uncheck, force or rebuild a master, use Import Captures… on that night.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To uncheck, force or rebuild a master, use Import Captures… on that night."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour décocher, forcer ou reconstruire un master, passez par Importer des captures… sur cette nuit."
+          }
+        }
+      }
+    },
     "Type": {
       "localizations": {
         "en": {
@@ -2861,6 +2909,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Avertissements"
+          }
+        }
+      }
+    },
+    "What the next run applies to each light set.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What the next run applies to each light set."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce que le prochain empilement applique à chaque série de lights."
           }
         }
       }

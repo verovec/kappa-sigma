@@ -75,6 +75,8 @@ package final class ProjectDocument: NSDocument {
     let moved = try ProjectPackage.open(at: url)
     release(project)
     self.project = moved
+    // An untitled project just got its name: the window offers Run now.
+    windowModel?.refresh()
   }
 
   /// Follows a move of the package in the Finder as soon as AppKit reports it.
@@ -109,8 +111,14 @@ package final class ProjectDocument: NSDocument {
     guard let project else { throw CocoaError(.fileReadUnknown) }
     let recorded = try source.record(in: project.store)
     // The project changed: an untitled one must offer to be saved, not be discarded silently.
-    updateChangeCount(.changeDone)
+    markEditedIfUntitled()
     return recorded
+  }
+
+  /// An untitled project that changed must offer to be saved on close, not be deleted silently;
+  /// a titled one is already written in place (`project.db`), nothing is pending.
+  private func markEditedIfUntitled() {
+    if isTemporary { updateChangeCount(.changeDone) }
   }
 
   /// The sources the project records; `nil` without an open package.
@@ -184,7 +192,9 @@ package final class ProjectDocument: NSDocument {
       backing: .buffered, defer: false)
     let model = ProjectWindowModel(
       store: { [weak self] in self?.project?.store }, folder: { [weak self] in self?.project?.url },
-      isSaved: { [weak self] in self?.isTemporary == false })
+      isSaved: { [weak self] in self?.isTemporary == false },
+      edited: { [weak self] in self?.markEditedIfUntitled() },
+      save: { [weak self] in self?.save(nil) })
     windowModel = model
     let content = NSHostingView(rootView: ProjectWindowView(model: model).interfaceLocale())
     // Only the minimum size comes from SwiftUI; the window keeps its own frame.

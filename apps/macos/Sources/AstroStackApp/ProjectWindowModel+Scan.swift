@@ -38,11 +38,12 @@ extension ProjectWindowModel {
         scanTask = nil
         refresh()
       } catch {
-        guard !Task.isCancelled, !(error is CancellationError) else { return }
-        // The folders no longer read as scanned: the last scan stops describing them.
+        guard !Task.isCancelled else { return }
+        // The folders no longer read as scanned: the last scan stops describing them. A
+        // cancellation from inside the planner (not ours) ends the scan without an error.
         dropScan()
         refresh()
-        self.error = UserFacingError(error)
+        if !(error is CancellationError) { self.error = UserFacingError(error) }
       }
     }
   }

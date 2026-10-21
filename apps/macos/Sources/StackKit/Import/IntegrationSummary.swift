@@ -61,9 +61,11 @@ package struct IntegrationSummary: Equatable, Sendable {
   package static func make(inventory: Inventory) -> Self {
     var rows: [String: Row] = [:]
     for set in inventory.sets where set.key.type == .light {
+      // The clip filter the run stacks it under: the set's verdict, else its night's.
+      let filterSet = LightRef(set, in: inventory).filterSet
       for frame in set.frames {
         let empty = Row(
-          object: set.key.object, filter: set.key.filter, filterSet: set.filterSet,
+          object: set.key.object, filter: set.key.filter, filterSet: filterSet,
           night: frame.session)
         var row = rows[empty.id] ?? empty
         row.add(frame)

@@ -41,7 +41,8 @@ struct DataStagePane: View {
       if model.isScanning {
         ProgressView().controlSize(.small)
         Button(.app("Cancel")) { model.cancelScan() }
-      } else {
+      } else if !model.nightPaths.isEmpty {
+        // A legacy run alone is a source, never a capture: nothing to rescan.
         Button(.app("Rescan")) { model.rescan() }
       }
       Button(.app("Import Captures…")) { model.startImport() }
@@ -58,7 +59,7 @@ struct DataStagePane: View {
         Label(warning, systemImage: "exclamationmark.triangle")
           .foregroundStyle(DesignColor.statusAttention.color)
       }
-    } else if !model.isScanning {
+    } else if !model.isScanning && !model.nightPaths.isEmpty {
       EmptyState(
         .app("Not scanned in this window"),
         message: .app(

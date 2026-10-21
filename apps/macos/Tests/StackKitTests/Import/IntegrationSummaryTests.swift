@@ -166,6 +166,18 @@ struct IntegrationSummaryTests {
     #expect(summary.targets == 2)
   }
 
+  @Test("an undecided colour set takes its night's clip filter, as the run's lanes do")
+  func testUndecidedSetTakesNightClipFilter() {
+    let measured = Self.lights(
+      "RGB", night: "2026-09-22", count: 4, exposureS: 300, filterSet: .dualband, color: true)
+    let undecided = Self.lights("RGB", night: "2026-09-22", count: 2, exposureS: 120, color: true)
+    var inventory = Self.inventory([measured, undecided])
+    inventory.filterSets = [measured.key.id: .dualband]
+    let summary = IntegrationSummary.make(inventory: inventory)
+    #expect(summary.rows.map(\.filterSet) == [.dualband])
+    #expect(summary.rows.first?.frames == 6)
+  }
+
   @Test("a set's night is its first dated frame's, not an undated first frame's")
   func testNightSkipsUndatedFrame() {
     var set = Self.lights("L", night: "2026-09-22", count: 3, exposureS: 60)

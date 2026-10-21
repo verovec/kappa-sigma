@@ -56,8 +56,15 @@ struct DataCoverageView: View {
     }
   }
 
-  /// « RGB · dual-band · 300 s · 2026-09-22 ».
+  /// « RGB · dual-band · 300 s · 2026-09-22 », with the sensor settings (« g100 o50 b1 ») when
+  /// another light set would read the same.
   private func heading(_ row: CoverageMatrix.Row) -> String {
+    let base = baseHeading(row)
+    let twins = coverage.rows.filter { baseHeading($0) == base }.count
+    return twins > 1 ? base + " · " + ImportFormat.sensor(row.channel.key) : base
+  }
+
+  private func baseHeading(_ row: CoverageMatrix.Row) -> String {
     let format = AstroFormat(locale: locale)
     let parts =
       [

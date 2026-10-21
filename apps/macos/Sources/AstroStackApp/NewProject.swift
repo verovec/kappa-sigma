@@ -20,10 +20,13 @@ package enum NewProject {
     return url
   }
 
-  /// `target` as a file name: trimmed, path separators turned into dashes, no leading dot (a
-  /// hidden package would vanish from the Finder).
+  /// `target` as a file name: one line, no typed `.astrostack`, path separators turned into
+  /// dashes, no leading dot (a hidden package would vanish from the Finder).
   static func fileName(_ target: String) -> String {
-    let cleaned = target.replacingOccurrences(of: "/", with: "-")
+    var name = target.components(separatedBy: .controlCharacters).joined(separator: " ")
+    let suffix = ".\(ProjectPackage.fileExtension)"
+    if name.lowercased().hasSuffix(suffix) { name.removeLast(suffix.count) }
+    let cleaned = name.replacingOccurrences(of: "/", with: "-")
       .replacingOccurrences(of: ":", with: "-")
       .trimmingCharacters(in: .whitespacesAndNewlines)
     let visible = cleaned.drop { $0 == "." || $0 == "-" }

@@ -11,8 +11,11 @@ struct NewProjectTests {
     "the package is named after the target, cleaned for the file system",
     .scratchDirectory,
     arguments: zip(
-      ["M 31", "  NGC 7000 ", "IC 1848/Soul", "Sh2:155", ".hidden"],
-      ["M 31", "NGC 7000", "IC 1848-Soul", "Sh2-155", "hidden"]))
+      [
+        "M 31", "  NGC 7000 ", "IC 1848/Soul", "Sh2:155", ".hidden", "M 33.astrostack",
+        "M 31\nNGC 224",
+      ],
+      ["M 31", "NGC 7000", "IC 1848-Soul", "Sh2-155", "hidden", "M 33", "M 31 NGC 224"]))
   func testCreatesTargetPackage(_ target: String, _ expected: String) throws {
     let folder = try ScratchDirectory.url.appendingPathComponent("Projects")
 

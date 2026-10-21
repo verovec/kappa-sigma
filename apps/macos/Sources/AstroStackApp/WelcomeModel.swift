@@ -66,18 +66,23 @@ package final class WelcomeModel {
     self.hostTools = tools
   }
 
-  /// Reads the recent projects again; packages are read off the main actor.
+  /// Reads the recent projects again; packages are read off the main actor, side by side.
   package func reload() async {
     let open = openProjects()
-    var rows: [RecentProject] = []
-    for url in recentURLs() where FileManager.default.fileExists(atPath: url.path) {
-      let key = Self.key(url)
-      let summary = open.keys.contains(key) ? open[key] ?? nil : await Self.readSummary(url)
-      rows.append(
-        RecentProject(
-          url: url, target: url.deletingPathExtension().lastPathComponent, summary: summary))
+    let urls = recentURLs().filter { FileManager.default.fileExists(atPath: $0.path) }
+    let read = await withTaskGroup(of: (URL, ProjectSummary?).self) { group in
+      for url in urls where !open.keys.contains(Self.key(url)) {
+        group.addTask { (url, await Self.readSummary(url)) }
+      }
+      var read: [URL: ProjectSummary?] = [:]
+      for await (url, summary) in group { read[url] = summary }
+      return read
     }
-    recent = rows
+    recent = urls.map { url in
+      let summary = open[Self.key(url)] ?? read[url] ?? nil
+      return RecentProject(
+        url: url, target: url.deletingPathExtension().lastPathComponent, summary: summary)
+    }
   }
 
   /// Probes every host tool at once; a check already running is not doubled.

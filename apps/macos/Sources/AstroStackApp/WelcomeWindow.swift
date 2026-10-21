@@ -72,11 +72,13 @@ package enum WelcomeWindow {
     for url in NSDocumentController.shared.urlsFromRunningOpenPanel() ?? [] { open(url) }
   }
 
-  /// Opens the project at `url` (its window dismisses this one); a failure is shown, not swallowed.
+  /// Opens the project at `url` and dismisses this window; a failure is shown, not swallowed.
   private static func open(_ url: URL) {
     Task {
       do {
         _ = try await NSDocumentController.shared.openDocument(withContentsOf: url, display: true)
+        // An already open project only comes forward: its window was made long ago.
+        dismiss()
       } catch {
         logger.error("cannot open \(url.path, privacy: .public): \(error, privacy: .public)")
         NSAlert(error: error).runModal()

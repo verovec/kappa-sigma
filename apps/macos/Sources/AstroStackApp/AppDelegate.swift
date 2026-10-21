@@ -7,14 +7,12 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
   /// Set once AppKit first asked: `-openImage` only holds the welcome window back at launch,
   /// whenever AppKit asks then (restoration may defer it past `applicationDidFinishLaunching`).
   private var askedOnce = false
-  /// Set one run-loop turn after launch, past AppKit's launch-time ask (when it makes one).
-  private var launched = false
 
   /// Yes, unless the app is launching with `-openImage`: AppKit then asks
   /// `applicationOpenUntitledFile` (at launch, and from the Dock with no window open).
   package func applicationShouldOpenUntitledFile(_ sender: NSApplication) -> Bool {
     defer { askedOnce = true }
-    return askedOnce || launched || Self.launchImage == nil
+    return askedOnce || Self.launchImage == nil
   }
 
   /// Shows the welcome window instead of creating an untitled project.
@@ -26,7 +24,6 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
   /// `-openImage <path>` opens that FITS in the viewer at launch; `-openRun <folder>` opens a
   /// legacy run into the open project, or an untitled one so the run is still recorded.
   package func applicationDidFinishLaunching(_ notification: Notification) {
-    Task { launched = true }
     Task { await Self.openLaunchArguments(UserDefaults.standard) }
   }
 

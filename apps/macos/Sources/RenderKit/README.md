@@ -59,14 +59,24 @@ Rules: `Sources/StringCatalog/README.md`.
   `StatusBadge`, `ParameterRow` over a `ParameterValue` (slider + field in the user's notation,
   reset, « Default » badge on the exact default, « why » on hover), `InstallCard` over an
   `InstallCardModel` (re-check asks the `locate` closure; never a fallback, R2), `EmptyState`,
-  `SectionHeader`. Values arrive **formatted**: RenderKit never imports the app, so the caller
-  passes `AstroFormat` strings or `format`/`parse` closures.
+  `SectionHeader`, `CurveEditor` over `CurveEditorPoints` (card 0053). Values arrive
+  **formatted**: RenderKit never imports the app, so the caller passes `AstroFormat` strings or
+  `format`/`parse` closures.
+- **Accessibility** (`Accessibility/`, card 0079): every interactive control goes through
+  `.accessible(_ id: AccessibilityID?, label:)` (or `verbatim:` for a glossary term), which sets its
+  VoiceOver label and identifier and reports both to `AccessibilityAudit.Key`. Identifiers come
+  from the one `AccessibilityID` namespace (`fr.astrostack.parameter.<key>.slider`, `.journey.<stage>`…),
+  built from stable keys the caller passes (`ParameterRow(…, key:)`, `CurveEditor(…, key:)`), never
+  from a title. SwiftUI builds no accessibility tree without an assistive client, so the app's
+  `AccessibilityAuditTests` read the reported entries of the hosted gallery and workspace, and
+  count raw `Button`/`Slider`/`TextField`/`Toggle`/`Picker`/`Link` against `.accessible` in each
+  component's source. A List's rows report from the List (table cells do not propagate).
 - **Gallery.** `ComponentGallery` shows every component in every state; the app opens it from
   Window › Component Gallery in debug builds, and `ComponentGalleryTests` attaches its PNGs in
   light/dark × fr/en.
 - Rules: views use `DesignColor.<token>.color`, never `Color.red/.orange/.yellow/.green/.blue`
-  (`scripts/hygiene.sh` rule 7); a new component goes in `Components/`, gets a gallery entry and
-  catalog words (`DesignSystemCatalogTests`); a new token gets its light and dark value and, if
+  (`scripts/hygiene.sh` rule 7); a new component goes in `Components/`, gets a gallery entry,
+  catalog words (`DesignSystemCatalogTests`) and `.accessible` on each of its controls; a new token gets its light and dark value and, if
   text sits on it, joins the contrast test.
 
 ## Coordinates

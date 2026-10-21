@@ -18,6 +18,7 @@ struct DataStagePane: View {
         Text(.app("Import a capture night to see how it will be calibrated and stacked."))
       } actions: {
         Button(.app("Import Captures…")) { model.startImport() }
+          .accessible(.importCaptures, label: .app("Import Captures…"))
       }
     } else {
       ScrollView {
@@ -41,11 +42,14 @@ struct DataStagePane: View {
       if model.isScanning {
         ProgressView().controlSize(.small)
         Button(.app("Cancel")) { model.cancelScan() }
+          .accessible(.dataCancelScan, label: .app("Cancel"))
       } else if !model.nightPaths.isEmpty {
         // A legacy run alone is a source, never a capture: nothing to rescan.
         Button(.app("Rescan")) { model.rescan() }
+          .accessible(.dataRescan, label: .app("Rescan"))
       }
       Button(.app("Import Captures…")) { model.startImport() }
+        .accessible(.importCaptures, label: .app("Import Captures…"))
     }
   }
 

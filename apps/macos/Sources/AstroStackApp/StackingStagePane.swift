@@ -14,19 +14,7 @@ struct StackingStagePane: View {
           .app("Stacking"),
           detail: .app("Masters, stacks and the bundle are written inside the project."))
         Spacer()
-        Picker(.app("Preset"), selection: $mode) {
-          Text(.app("Deep sky")).tag(PreprocessRequest.Mode.deepsky)
-          Text(.app("Nebula")).tag(PreprocessRequest.Mode.nebula)
-        }
-        .fixedSize()
-        .disabled(model.run?.isRunning == true)
-        if model.run?.isRunning == true {
-          Button(.app("Cancel"), role: .cancel) { model.cancelRun() }
-        } else {
-          Button(.app("Run")) { model.startRun(mode: mode) }
-            .keyboardShortcut(.defaultAction)
-            .disabled(!model.canRun)
-        }
+        controls
       }
       .padding(DesignMetrics.spacingM)
       if let run = model.run {
@@ -38,6 +26,26 @@ struct StackingStagePane: View {
             "Run calibrates, grades and stacks the nights, each step with its journal."),
           systemImage: "square.3.layers.3d")
       }
+    }
+  }
+
+  /// The preset, then Run — or Cancel while a run goes.
+  @ViewBuilder private var controls: some View {
+    Picker(.app("Preset"), selection: $mode) {
+      Text(.app("Deep sky")).tag(PreprocessRequest.Mode.deepsky)
+      Text(.app("Nebula")).tag(PreprocessRequest.Mode.nebula)
+    }
+    .fixedSize()
+    .disabled(model.run?.isRunning == true)
+    .accessible(.stackingPreset, label: .app("Preset"))
+    if model.run?.isRunning == true {
+      Button(.app("Cancel"), role: .cancel) { model.cancelRun() }
+        .accessible(.stackingCancel, label: .app("Cancel"))
+    } else {
+      Button(.app("Run")) { model.startRun(mode: mode) }
+        .keyboardShortcut(.defaultAction)
+        .disabled(!model.canRun)
+        .accessible(.stackingRun, label: .app("Run"))
     }
   }
 }

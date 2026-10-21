@@ -17,6 +17,7 @@ struct DataCoverageView: View {
         SectionHeader(.app("Calibration coverage"), detail: .app("The matcher's choice, as is."))
         Spacer()
         Button(.app("Open Calibration")) { openCalibration() }
+          .accessible(.dataOpenCalibration, label: .app("Open Calibration"))
       }
       Grid(alignment: .leading, horizontalSpacing: DesignMetrics.spacingL, verticalSpacing: 6) {
         columns

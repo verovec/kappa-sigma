@@ -56,6 +56,21 @@ struct ProjectStoreTests {
     #expect(try store.stacks().first?.sourceIDs == [night.id, other.id])
   }
 
+  @Test("a stack and its images are recorded together, or not at all", .scratchDirectory)
+  func testStackWithImagesIsOneTransaction() throws {
+    let package = try Self.newPackage()
+    defer { try? package.close() }
+    let store = package.store
+    let stack = try store.addStack(
+      bundlePath: "stacks/A", sourceIDs: [], paramsJSON: "{}", imageRoles: ["Ha", "OIII", "RGB"])
+    #expect(try store.images(stackID: stack.id).map(\.role) == ["Ha", "OIII", "RGB"])
+
+    #expect(throws: (any Error).self) {
+      try store.addStack(bundlePath: "stacks/B", sourceIDs: [9_999], paramsJSON: "{}")
+    }
+    #expect(try store.stacks() == [stack], "an unknown source rolls the whole stack back")
+  }
+
   struct RoundTrip: Sendable, CustomTestStringConvertible {
     let role: String
     let sourceKind: ProjectSource.Kind

@@ -25,7 +25,7 @@ struct StackingStagePane: View {
         } else {
           Button(.app("Run")) { model.startRun(mode: mode) }
             .keyboardShortcut(.defaultAction)
-            .disabled(model.sources.isEmpty)
+            .disabled(!model.canRun)
         }
       }
       .padding(DesignMetrics.spacingM)

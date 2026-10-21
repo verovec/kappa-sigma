@@ -1,11 +1,10 @@
-internal import AppKit
 internal import RenderKit
 internal import SwiftUI
 
 /// One run as it goes: where it stands, its steps, the stage previews and the journal; once it
 /// stops, what it decided or what it left behind.
 struct RunPanel: View {
-  @Bindable var run: RunViewModel
+  var run: RunViewModel
 
   var body: some View {
     HStack(spacing: 0) {
@@ -24,7 +23,7 @@ struct RunPanel: View {
       }
       .frame(minWidth: 320)
       Divider()
-      journal.frame(minWidth: 280)
+      JournalView(run: run).frame(minWidth: 280)
     }
   }
 
@@ -75,34 +74,9 @@ struct RunPanel: View {
   private var previews: some View {
     ScrollView(.horizontal) {
       HStack(spacing: DesignMetrics.spacingS) {
-        ForEach(run.previews) { thumbnail in
-          VStack(spacing: DesignMetrics.spacingXS) {
-            if let image = NSImage(contentsOf: thumbnail.url) {
-              Image(nsImage: image).resizable().scaledToFit().frame(height: 96)
-            } else {
-              Image(systemName: "photo").frame(width: 96, height: 96)
-            }
-            Text(verbatim: thumbnail.stage).font(.caption)
-          }
-        }
+        ForEach(run.previews) { PreviewThumbnail(thumbnail: $0) }
       }
     }
     .frame(height: 124)
-  }
-
-  private var journal: some View {
-    VStack(alignment: .leading, spacing: 0) {
-      TextField(.app("Filter the journal"), text: $run.journalFilter)
-        .textFieldStyle(.roundedBorder)
-        .padding(DesignMetrics.spacingS)
-      List(run.shownJournal) { line in
-        Text(verbatim: line.text)
-          .font(.system(.caption, design: .monospaced))
-          .foregroundStyle(
-            line.isWarning ? DesignColor.statusAttention.color : DesignColor.textPrimary.color
-          )
-          .textSelection(.enabled)
-      }
-    }
   }
 }

@@ -39,11 +39,12 @@ extension ProjectStore {
       updatedAt: row["updated_at"])
   }
 
-  /// Records a stack and the sources it was built from.
+  /// Records a stack, the sources it was built from and one image per `imageRoles`, in one
+  /// transaction: a failure leaves no half-recorded stack.
   @discardableResult
-  package func addStack(bundlePath: String, sourceIDs: [Int64], paramsJSON: String) throws
-    -> ProjectStack
-  {
+  package func addStack(
+    bundlePath: String, sourceIDs: [Int64], paramsJSON: String, imageRoles: [String] = []
+  ) throws -> ProjectStack {
     let stamp = now()
     return try pool.write { db in
       try db.execute(
@@ -60,6 +61,11 @@ extension ProjectStore {
             VALUES (?, ?, ?, ?)
             """,
           arguments: [id, source, stamp, stamp])
+      }
+      for role in imageRoles {
+        try db.execute(
+          sql: "INSERT INTO images (stack_id, role, created_at, updated_at) VALUES (?, ?, ?, ?)",
+          arguments: [id, role, stamp, stamp])
       }
       return ProjectStack(
         id: id, bundlePath: bundlePath, sourceIDs: Set(sourceIDs).sorted(),

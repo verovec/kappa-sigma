@@ -3,7 +3,6 @@ import Foundation
 import ImageKit
 import ProjectKit
 import StackKit
-import Synchronization
 import TestSupport
 import Testing
 
@@ -64,14 +63,16 @@ struct ProjectTests {
     let window: ProjectWindowModel
     let planned: Recorded<ImportRequest>
     let ran: Recorded<PreprocessRequest>
+    let edits: Recorded<Bool>
     let work: URL
   }
 
-  static func fixture(run: RunServices.Run? = nil) throws -> Fixture {
+  static func fixture(run: RunServices.Run? = nil, saved: Bool = true) throws -> Fixture {
     let scratch = try ScratchDirectory.url
     let project = try ProjectPackage.create(at: scratch.appendingPathComponent("M31.astrostack"))
     let planned = Recorded<ImportRequest>()
     let ran = Recorded<PreprocessRequest>()
+    let edits = Recorded<Bool>()
     let work = scratch.appendingPathComponent("work")
     let services = RunServices(
       run: run ?? fakeRun(ran), now: { Self.start }, scratch: work, timeZone: .gmt)
@@ -83,8 +84,9 @@ struct ProjectTests {
           return try await ImportPlanningStub.empty(request)
         })
       },
-      runs: services)
-    return Fixture(project: project, window: window, planned: planned, ran: ran, work: work)
+      runs: services, isSaved: { saved }, onEdit: { edits.append(true) })
+    return Fixture(
+      project: project, window: window, planned: planned, ran: ran, edits: edits, work: work)
   }
 
   @Test(
@@ -121,6 +123,55 @@ struct ProjectTests {
     #expect(window.studio?.title == "M31 · \(Self.runID)")
     #expect(window.statuses[.stacking] == .done)
     #expect(window.statuses[.studio] == .ready)
+  }
+
+  @Test(
+    "every import's overrides and calibration choices reach the run; the document is edited",
+    .scratchDirectory)
+  func testImportsMergedIntoTheRun() async throws {
+    let fixture = try Self.fixture()
+    defer { try? fixture.project.close() }
+    var first = ImportRequest(paths: ["/c/M31-DB"])
+    first.filterSets = ["night-2026-09-22": .dualband]
+    first.calibExclude = ["dark|RGB|g100o50b1|e300000|t-17"]
+    first.forceCalibration = true
+    fixture.window.add(first)
+    fixture.window.add(ImportRequest(paths: ["/c/M31-BB"]))
+
+    fixture.window.startRun()
+    await fixture.window.run?.settled()
+
+    let planned = try #require(fixture.planned.all.first)
+    #expect(planned.paths == ["/c/M31-DB", "/c/M31-BB"])
+    #expect(planned.filterSets == first.filterSets, "the second import keeps the dual-band night")
+    let ran = try #require(fixture.ran.all.first)
+    #expect(ran.settings.calibrationExcluded == first.calibExclude)
+    #expect(ran.settings.forceCalibration)
+    #expect(fixture.edits.all == [true], "a recorded stack marks the document edited")
+  }
+
+  @Test("an untitled project asks to be saved before a run", .scratchDirectory)
+  func testUnsavedProjectRefused() throws {
+    let fixture = try Self.fixture(saved: false)
+    defer { try? fixture.project.close() }
+    fixture.window.add(ImportRequest(paths: ["/c/M31-DB"]))
+    fixture.window.startRun()
+
+    #expect(fixture.window.run == nil)
+    #expect(fixture.window.error == .projectUnsaved)
+    #expect(fixture.ran.all.isEmpty)
+  }
+
+  @Test("a project with only a legacy run offers no Run", .scratchDirectory)
+  func testLegacyRunOnlyCannotRun() throws {
+    let fixture = try Self.fixture()
+    defer { try? fixture.project.close() }
+    try fixture.project.store.addSource(kind: .legacyRun, path: "/runs/M_31/20261018_191749")
+    fixture.window.refresh()
+
+    #expect(!fixture.window.canRun)
+    fixture.window.startRun()
+    #expect(fixture.window.run == nil)
   }
 
   @Test("a reopened project shows its latest stack in the Studio", .scratchDirectory)

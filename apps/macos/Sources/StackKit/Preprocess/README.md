@@ -23,6 +23,14 @@ Siril commands. Finished masters stay, and the bundle, written last, never appea
 on the same output folder throws `targetBusy` (`TargetLock`). Mono + colour mixes
 (`mixedColorModel`) are refused before anything runs.
 
+The app consumes the stream in `RunViewModel` (card 0057, Stacking stage). Each step becomes a row
+(pending → running → done, failed or cancelled), the last percentage of the current step is a bar,
+previews form a strip that replaces by stage, and every non-empty `line` goes into a filterable
+journal. Its `RunServices.live` runs `Preprocessor` over `SirilRunner.make(mode: .default…)` into
+the project's `stacks/<run_id>/`, with `work/` in a temporary `run_<id>` folder that is removed
+when the run ends. `Progress` and `Preview` have package inits, so app tests can replay a
+recorded stream.
+
 Layout, as the legacy engine had it: `work/` holds `masters/`, `light_<lane>/` (removed once
 stacked), `04_aligned/` and `pair_<lane>/`. `output/` holds `master_<tag>.fits`,
 `aligned_<tag>.fits`, `trim_<tag>.fits`, a split capture's `syn_Ha.fits` / `syn_OIII.fits`,

@@ -103,6 +103,32 @@ struct UserFacingErrorTests {
     ),
   ]
 
+  nonisolated static let runCases: [Case] = [
+    Case(
+      error: LegacyRunError.notARun("/runs/M_31/x"), names: "/runs/M_31/x",
+      english: "/runs/M_31/x is not a run folder: it has no run.json."),
+    Case(
+      error: LegacyRunError.noBundle("/p/stacks/R"), names: "/p/stacks/R",
+      english: "The stack /p/stacks/R has no bundle.json: run it again."),
+    Case(
+      error: LegacyRunError.noLayers("/runs/M_31/x"), names: "/runs/M_31/x",
+      english: "/runs/M_31/x holds no layer to show."),
+    Case(
+      error: LegacyRunError.mixedDimensions(["RGB 4×3", "Ha 2×2"]), names: "Ha 2×2",
+      english: "The stacked layers have different sizes: RGB 4×3, Ha 2×2."),
+    Case(
+      error: UserFacingError.projectUnsaved, names: "",
+      english: "Save the project first: its stacks are written inside it."),
+    Case(
+      error: UserFacingError.runIncomplete, names: "",
+      english: "The run stopped without writing its bundle; its journal shows the last step."),
+  ]
+
+  @Test("every run and stack error has an English and a French sentence", arguments: runCases)
+  func testEveryRunErrorHasASentence(_ row: Case) {
+    testEverySirilAndImportErrorHasASentence(row)
+  }
+
   @Test(
     "every preprocessing error has an English and a French sentence", arguments: preprocessCases)
   func testEveryPreprocessErrorHasASentence(_ row: Case) {

@@ -1,6 +1,22 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%@ holds no layer to show.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ holds no layer to show."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ ne contient aucune couche à afficher."
+          }
+        }
+      }
+    },
     "%@ is not a calibration master: its name says nothing.": {
       "localizations": {
         "en": {
@@ -13,6 +29,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ n’est pas un master de calibration : son nom ne dit rien."
+          }
+        }
+      }
+    },
+    "%@ is not a run folder: it has no run.json.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is not a run folder: it has no run.json."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ n’est pas un dossier de run : il n’a pas de run.json."
           }
         }
       }
@@ -1617,6 +1649,22 @@
         }
       }
     },
+    "Save the project first: its stacks are written inside it.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save the project first: its stacks are written inside it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrez d’abord le projet : ses empilements sont écrits à l’intérieur."
+          }
+        }
+      }
+    },
     "Save your projects before relaunching.": {
       "localizations": {
         "en": {
@@ -2077,6 +2125,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le programme désigné pour Siril n’est pas Siril (réponse : %@)."
+          }
+        }
+      }
+    },
+    "The run stopped without writing its bundle; its journal shows the last step.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The run stopped without writing its bundle; its journal shows the last step."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’empilement s’est arrêté sans écrire son bundle ; son journal montre la dernière étape."
+          }
+        }
+      }
+    },
+    "The stack %@ has no bundle.json: run it again.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The stack %@ has no bundle.json: run it again."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’empilement %@ n’a pas de bundle.json : relancez-le."
           }
         }
       }

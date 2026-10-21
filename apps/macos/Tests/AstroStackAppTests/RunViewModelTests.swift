@@ -148,6 +148,16 @@ struct RunViewModelTests {
     #expect(outcome.all == [Self.finished])
   }
 
+  @Test("a stream that ends without its result is a failure, never shown as cancelled")
+  func testIncompleteStreamFails() async {
+    let model = RunViewModel(runID: "R", output: Self.output)
+    model.start({ Self.stream(Array(Self.recorded.prefix(3))) })
+    await model.settled()
+
+    #expect(model.phase == .failed(.runIncomplete))
+    #expect(Self.states(model) == "✓✗···")
+  }
+
   @Test("Cancel cancels the run's task and lists the artifacts the run kept", .scratchDirectory)
   func testCancelKeepsArtifacts() async throws {
     let output = try ScratchDirectory.url.appendingPathComponent("stacks/R")

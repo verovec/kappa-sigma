@@ -126,24 +126,34 @@ package final class RunViewModel {
   // MARK: - Running
 
   /// Runs the stream `events` returns, reducing each event; `completion` gets the result, or the
-  /// error (`CancellationError` after Cancel).
+  /// error (`CancellationError` after Cancel), and `settled()` waits for it too.
+  ///
+  /// A result always wins: a Cancel landing after `.finished` keeps the finished run. A stream
+  /// that ends without its result, uncancelled, is a failure (`runIncomplete`), never shown as
+  /// cancelled.
   package func start(
     _ events:
       @escaping @Sendable () async throws -> AsyncThrowingStream<PreprocessEvent, any Error>,
-    completion: @escaping (Result<PreprocessResult, any Error>) -> Void = { _ in }
+    completion: @escaping (Result<PreprocessResult, any Error>) async -> Void = { _ in }
   ) {
     task = Task {
       let outcome: Result<PreprocessResult, any Error>
       do {
         for try await event in try await events() { reduce(event) }
-        try Task.checkCancellation()
-        guard let result else { throw CancellationError() }  // the stream ended early
+        guard let result else {
+          try Task.checkCancellation()
+          throw UserFacingError.runIncomplete
+        }
         outcome = .success(result)
       } catch {
-        outcome = .failure(error)
-        stop(Task.isCancelled || error is CancellationError ? nil : error)
+        if let result {
+          outcome = .success(result)
+        } else {
+          outcome = .failure(error)
+          stop(Task.isCancelled || error is CancellationError ? nil : error)
+        }
       }
-      completion(outcome)
+      await completion(outcome)
     }
   }
 

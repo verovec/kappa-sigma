@@ -8,8 +8,13 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
   case inspect(InspectError)
   case calibration(CalibrationError)
   case preprocess(PreprocessError)
+  case legacyRun(LegacyRunError)
   /// The document was closed under an open sheet.
   case projectClosed
+  /// A run needs a saved project: its stack is written inside the package.
+  case projectUnsaved
+  /// The run's stream ended without its result, and nobody cancelled it.
+  case runIncomplete
   /// An error without a sentence of its own (SQLite, FITS, the file system): its description,
   /// which names the file or value it is about.
   case other(String)
@@ -22,6 +27,7 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     case let error as InspectError: self = .inspect(error)
     case let error as CalibrationError: self = .calibration(error)
     case let error as PreprocessError: self = .preprocess(error)
+    case let error as LegacyRunError: self = .legacyRun(error)
     case let error as LocalizedError where error.errorDescription != nil:
       self = .other(error.errorDescription ?? "")
     // A system error has a sentence of its own; a Swift error without one would read
@@ -38,7 +44,11 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     case .inspect(let error): Self.message(error)
     case .calibration(let error): Self.message(error)
     case .preprocess(let error): Self.message(error)
+    case .legacyRun(let error): Self.message(error)
     case .projectClosed: .app("This project is not open any more; reopen it and import again.")
+    case .projectUnsaved: .app("Save the project first: its stacks are written inside it.")
+    case .runIncomplete:
+      .app("The run stopped without writing its bundle; its journal shows the last step.")
     case .other(let description): .app("\(description)")
     }
   }
@@ -103,6 +113,16 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
       .app("No channel could be stacked: \(errors.joined(separator: "; "))")
     case .mixedColorModel:
       .app("Mono and colour lights are mixed: exclude one kind on the Import sheet, then rerun.")
+    }
+  }
+
+  private static func message(_ error: LegacyRunError) -> LocalizedStringResource {
+    switch error {
+    case .notARun(let path): .app("\(path) is not a run folder: it has no run.json.")
+    case .noBundle(let path): .app("The stack \(path) has no bundle.json: run it again.")
+    case .noLayers(let path): .app("\(path) holds no layer to show.")
+    case .mixedDimensions(let layers):
+      .app("The stacked layers have different sizes: \(layers.joined(separator: ", ")).")
     }
   }
 }

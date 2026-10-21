@@ -19,13 +19,17 @@ package final class ProjectWindowModel {
   package internal(set) var run: RunViewModel?
   /// The stack the Studio shows: the latest one, read-only.
   package internal(set) var studio: LegacyRunModel?
-  /// The overrides of the last import this session; the next run applies them.
-  var lastImport: ImportRequest?
+  /// This session's imports, in order: the next run applies all their overrides.
+  var imports: [ImportRequest] = []
 
   let store: () -> ProjectStore?
   let folder: () -> URL?
   let services: (ProjectStore?) -> ImportServices
   let runs: RunServices
+  /// The package is saved (not the untitled temporary one a Save moves).
+  let isSaved: () -> Bool
+  /// Tells the document the project changed outside an undoable edit (a stack was recorded).
+  let onEdit: () -> Void
 
   /// A window over the document's current store and package folder (both change when the package
   /// moves); each sheet and run gets fresh `services`, and runs go through `runs`.
@@ -33,12 +37,16 @@ package final class ProjectWindowModel {
     store: @escaping () -> ProjectStore?,
     folder: @escaping () -> URL? = { nil },
     services: @escaping (ProjectStore?) -> ImportServices = { ImportPlanning.services(store: $0) },
-    runs: RunServices = .live
+    runs: RunServices = .live,
+    isSaved: @escaping () -> Bool = { true },
+    onEdit: @escaping () -> Void = {}
   ) {
     self.store = store
     self.folder = folder
     self.services = services
     self.runs = runs
+    self.isSaved = isSaved
+    self.onEdit = onEdit
     refresh()
     do {
       let saved = try store()?.setting(JourneyStage.settingKey)
@@ -94,7 +102,7 @@ package final class ProjectWindowModel {
       for path in request.paths {
         try store.addSource(kind: .night, path: path)
       }
-      lastImport = request
+      imports.append(request)
       closeImport()
       refresh()
     } catch {

@@ -27,7 +27,6 @@ struct StackingStagePane: View {
           systemImage: "square.3.layers.3d")
       }
     }
-    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
   }
 
   /// The preset, then Run — or Cancel while a run goes.

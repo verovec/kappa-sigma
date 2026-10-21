@@ -48,7 +48,9 @@ struct LiveImportScanProgressTests {
     model.cancelScan()
     #expect(!model.isScanning && model.progress == nil && model.request.paths.isEmpty)
     await model.settled()
-    #expect(ContinuousClock.now - start < .seconds(5), "the scan stops at the next frame read")
+    // At most one full-frame read after the cancel: ~1 s alone, ~6 s under `just check`'s
+    // parallel suites. Before card 0083 the colour verdicts read on for 47 s.
+    #expect(ContinuousClock.now - start < .seconds(15), "the scan stops at the next frame read")
     tell.finish()
   }
 

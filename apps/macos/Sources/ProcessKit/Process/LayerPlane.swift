@@ -38,9 +38,14 @@ package struct LayerPlane: Equatable, Sendable {
     return image.planes[plane]
   }
 
-  /// The plane's bundle statistics, if the bundle has them.
+  /// The plane's bundle statistics, if the bundle has them per plane.
+  ///
+  /// A colour plane (`RGB.r`) needs one entry per plane: a single entry averaged over the planes
+  /// is not the red plane's, so it gives none rather than the average.
   package func stats(in layerStats: [String: LayerStats]) -> ChannelStats? {
-    guard let channels = layerStats[layer]?.channels, plane < channels.count else { return nil }
+    guard let channels = layerStats[layer]?.channels, plane < channels.count,
+      token == layer || channels.count >= 3
+    else { return nil }
     return channels[plane]
   }
 }

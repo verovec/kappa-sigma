@@ -60,13 +60,14 @@ package struct EmissionScreensProcess: ImageProcess {
     var lines: [MTLTexture?] = []
     var values: [Float] = []
     for line in EmissionLine.allCases {
-      guard let stretch = stretches[line] else {
+      let alpha = params.number(line.id("Opacity")) * params.number("nbBlend")
+      // An invisible line is not prepared: its screen would add exactly nothing.
+      guard let stretch = stretches[line], alpha > 0 else {
         lines.append(nil)
         values += [0, 0, 0, 0]
         continue
       }
       lines.append(try prepared(line, stretch: stretch, size: input, context: context))
-      let alpha = params.number(line.id("Opacity")) * params.number("nbBlend")
       let tint = ScreenTint(rawValue: params.choice(line.id("Tint")))?.rgb ?? [0, 0, 0]
       values += ([alpha] + tint).map(Float.init)
     }
@@ -86,8 +87,9 @@ package struct EmissionScreensProcess: ImageProcess {
     encoder.endEncoding()
   }
 
-  /// `line`'s layer prepared for the screen: continuum, stretch, black point, boost, then the
-  /// opening and smoothing at the working scale.
+  /// The layer of `line`, ready to screen.
+  ///
+  /// Continuum, stretch, black point, boost, then the opening and smoothing at the working scale.
   private func prepared(
     _ line: EmissionLine, stretch: LineStretch, size: GPUImage, context: RenderContext
   ) throws -> MTLTexture {

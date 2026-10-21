@@ -24,6 +24,11 @@ struct LayerPlaneTests {
     let stats = ["RGB": LayerStats(channels: channels)]
     #expect(LayerPlane("RGB.g").stats(in: stats)?.median == 1)
     #expect(LayerPlane("R").stats(in: stats) == nil)
+    let averaged = [
+      "RGB": LayerStats(channels: [channels[1]]), "R": LayerStats(channels: [channels[2]]),
+    ]
+    #expect(LayerPlane("RGB.r").stats(in: averaged) == nil, "an average is not the red plane")
+    #expect(LayerPlane("R").stats(in: averaged)?.median == 2)
   }
 
   @Test(

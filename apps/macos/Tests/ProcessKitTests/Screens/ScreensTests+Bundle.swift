@@ -79,8 +79,9 @@ extension ScreensTests {
       ])
     ]
     // The noise through the curve: a central difference of the stretch at the median.
-    let (c, m) = ScreensOracle.mtfParams(median: median, madn: madn, target: 0.12, clip: -2.5)
-    let curve = { (v: Double) in ScreensOracle.mtf((v - c) / (1 - c), m) }
+    let (shadows, midtone) = ScreensOracle.mtfParams(
+      median: median, madn: madn, target: 0.12, clip: -2.5)
+    let curve = { (value: Double) in ScreensOracle.mtf((value - shadows) / (1 - shadows), midtone) }
     let step = madn * 1e-3
     let slope = (curve(median + step) - curve(median - step)) / (2 * step)
     let sigma = try process.blackInSigma(.hydrogenAlpha, layerStats: stats)

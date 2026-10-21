@@ -7,29 +7,34 @@ extension EmissionScreensProcess {
     "a black point 3σ above zero hides the stretched sky noise",
   ]
 
-  /// The stretch of every enabled line, from the bundle statistics; with `linkLayers`, every line
-  /// takes the first one's (astrocomp `-link-layers`: the true amplitude ratio).
+  /// The stretch of every enabled line, from the bundle statistics.
   package func lineStretches(layerStats: [String: LayerStats]) throws -> [EmissionLine:
     LineStretch]
   {
     var stretches: [EmissionLine: LineStretch] = [:]
-    for line in enabledLines {
-      if params.flag("linkLayers"), let first = enabledLines.first, let linked = stretches[first] {
-        stretches[line] = linked
-        continue
-      }
-      let (median, madn) = try linearStats(line, layerStats: layerStats)
-      stretches[line] = try LineStretch(
-        median: median, madn: madn, clip: params.number("shadowsClip"),
-        target: params.number(line.id("Background")), name: line.name)
-    }
+    for line in enabledLines { stretches[line] = try lineStretch(line, layerStats: layerStats) }
     return stretches
+  }
+
+  /// The stretch of `line`; with `linkLayers`, the first enabled line's curve (astrocomp
+  /// `-link-layers`: the true amplitude ratio) over this line's own background.
+  package func lineStretch(_ line: EmissionLine, layerStats: [String: LayerStats]) throws
+    -> LineStretch
+  {
+    let (median, madn) = try linearStats(line, layerStats: layerStats)
+    if params.flag("linkLayers"), let first = enabledLines.first, first != line {
+      return try lineStretch(first, layerStats: layerStats).linked(median: median, madn: madn)
+    }
+    return try LineStretch(
+      median: median, madn: madn, clip: params.number("shadowsClip"),
+      target: params.number(line.id("Background")), name: line.name)
   }
 
   /// The background median and MADN the stretch of `line` starts from: the bundle's, or, after a
   /// continuum subtraction, median − k · reference median and the two noises in quadrature.
   ///
-  /// Derived, never measured on the subtracted layer (R2); the panel shows both.
+  /// Derived, never measured on the subtracted layer (R2); the panel shows both. A k that takes
+  /// the background to 0 or below is refused: the clamped layer would have no sky to stretch.
   package func linearStats(
     _ line: EmissionLine, layerStats: [String: LayerStats]
   ) throws -> (median: Double, madn: Double) {
@@ -44,13 +49,18 @@ extension EmissionScreensProcess {
         "\(line.name): the bundle has no statistics for the continuum reference \(token)")
     }
     let k = params.number(line.id("ContinuumK"))
+    let median = stats.median - k * reference.median
+    guard median > 0 else {
+      throw ProcessError.invalidParameter(
+        "\(line.name): k = \(k) subtracts the whole background (\(stats.median) − k × "
+          + "\(reference.median) ≤ 0): lower k")
+    }
     return (
-      stats.median - k * reference.median,
-      (stats.madn * stats.madn + k * k * reference.madn * reference.madn).squareRoot()
+      median, (stats.madn * stats.madn + k * k * reference.madn * reference.madn).squareRoot()
     )
   }
 
-  /// The plane the bundle fitted `line`'s continuum scale against.
+  /// The plane the bundle fitted the continuum scale of `line` against.
   func continuumReference(_ line: EmissionLine, layerStats: [String: LayerStats]) throws
     -> String
   {
@@ -61,32 +71,45 @@ extension EmissionScreensProcess {
     return token
   }
 
-  /// `line`'s black point in σ of its stretched background noise, from the bundle statistics
-  /// (`LineStretch.stretchedNoise`): what the panel shows next to the value.
+  /// The black point of `line` in σ of its stretched background noise.
+  ///
+  /// From the bundle statistics (`LineStretch.stretchedNoise`): what the panel shows next to the
+  /// value.
   package func blackInSigma(_ line: EmissionLine, layerStats: [String: LayerStats]) throws
     -> Double
   {
-    guard let stretch = try lineStretches(layerStats: layerStats)[line] else {
+    guard enabledLines.contains(line) else {
       throw ProcessError.invalidParameter("\(line.name) screen is off")
     }
-    return params.number(line.id("Black")) / stretch.stretchedNoise
+    let noise = try lineStretch(line, layerStats: layerStats).stretchedNoise
+    guard noise > 0 else {
+      throw ProcessError.invalidParameter(
+        "\(line.name): the background is below the linked shadows, so it has no noise to count σ in"
+      )
+    }
+    return params.number(line.id("Black")) / noise
   }
 
-  /// Per enabled line with bundle statistics: the fitted continuum scale, and a black point at
-  /// 3σ of the stretched noise. None is applied by the process.
+  /// The fitted continuum scale and a 3σ black point of every enabled line.
+  ///
+  /// From the bundle statistics, each line on its own (one line's refusal costs only its own
+  /// suggestions); none is applied by the process.
   package func suggestions(stats: LayerStats, layers: [String: LayerStats]) -> [Suggestion] {
     let reasons = Self.suggestionReasons
     var suggestions: [Suggestion] = []
-    let stretches = (try? lineStretches(layerStats: layers)) ?? [:]
     for line in enabledLines {
-      if let k = layers[line.layerID]?.continuumK {
+      // A scale without the plane it was fitted on cannot be applied: no suggestion.
+      if let k = layers[line.layerID]?.continuumK, layers[line.layerID]?.continuumReference != nil,
+        case .number(_, let bounds)? = Self.schema.spec(line.id("ContinuumK"))?.kind
+      {
+        let value = min(max(k, bounds.lowerBound), bounds.upperBound)
         suggestions.append(
-          Suggestion(paramID: line.id("ContinuumK"), value: .number(k), reason: reasons[0]))
+          Suggestion(paramID: line.id("ContinuumK"), value: .number(value), reason: reasons[0]))
       }
-      if let stretch = stretches[line] {
-        let black = min(3 * stretch.stretchedNoise, 0.9)
+      if let noise = try? lineStretch(line, layerStats: layers).stretchedNoise, noise > 0 {
         suggestions.append(
-          Suggestion(paramID: line.id("Black"), value: .number(black), reason: reasons[1]))
+          Suggestion(
+            paramID: line.id("Black"), value: .number(min(3 * noise, 0.9)), reason: reasons[1]))
       }
     }
     return suggestions

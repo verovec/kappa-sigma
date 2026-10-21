@@ -78,6 +78,11 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
 
   /// The Empilement stage's « Cancel ».
   package static let stackingCancel = stageControl("stacking", "cancel")
+  /// A flag or choice knob of the Stacking panel, by its glossary term id (card 0070).
+  package static func stackingKnob(_ termID: String) -> Self { stageControl("stacking", termID) }
+
+  /// The Stacking panel's Reset All (card 0070).
+  package static let stackingResetKnobs = stageControl("stacking", "resetKnobs")
 
   /// The shortcuts sheet's search field.
   package static let shortcutsSearch = Self("shortcuts", "search")

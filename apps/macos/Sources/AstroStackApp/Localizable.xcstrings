@@ -113,6 +113,22 @@
         }
       }
     },
+    "%lld changed from the preset": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld changed from the preset"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld modifiés par rapport au préréglage"
+          }
+        }
+      }
+    },
     "%lld frames": {
       "localizations": {
         "en": {
@@ -289,6 +305,22 @@
         }
       }
     },
+    "Advanced": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Advanced"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avancé"
+          }
+        }
+      }
+    },
     "Allow AstroStack to read %@ in System Settings › Privacy › Files and Folders.": {
       "localizations": {
         "en": {
@@ -317,6 +349,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Un autre empilement écrit déjà dans %@ : attendez-le ou annulez-le."
+          }
+        }
+      }
+    },
+    "Back to the preset": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back to the preset"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revenir au préréglage"
           }
         }
       }
@@ -1473,6 +1521,22 @@
         }
       }
     },
+    "Not applied, no longer valid settings: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not applied, no longer valid settings: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non appliqués, réglages plus valides : %@"
+          }
+        }
+      }
+    },
     "Not scanned in this window": {
       "localizations": {
         "en": {
@@ -1885,6 +1949,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Relire parcourt les dossiers pour leur intégration et leur calibration (~90 s par nuit)."
+          }
+        }
+      }
+    },
+    "Reset All": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset All"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tout réinitialiser"
           }
         }
       }
@@ -2557,6 +2637,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "La nouvelle langue s’applique au prochain lancement d’AstroStack."
+          }
+        }
+      }
+    },
+    "The preset, untouched.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The preset, untouched."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le préréglage, intact."
           }
         }
       }

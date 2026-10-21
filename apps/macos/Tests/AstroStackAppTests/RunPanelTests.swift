@@ -118,6 +118,8 @@ struct RunPanelTests {
     host.appearance = NSAppearance(named: .aqua)
     host.layoutSubtreeIfNeeded()
     #expect(host.fittingSize.width >= 640 && host.fittingSize.height >= 400)
+    host.sizingOptions = [.minSize]  // as ProjectDocument's window: the window sets the size
+    host.layoutSubtreeIfNeeded()
     if variant.language == "en" { try Self.attach(host, "run-\(variant.phase).png") }
 
     if variant.phase == .running {
@@ -146,6 +148,8 @@ struct RunPanelTests {
     host.appearance = NSAppearance(named: .aqua)
     host.layoutSubtreeIfNeeded()
     #expect(host.fittingSize.width >= 640)
+    host.sizingOptions = [.minSize]  // as ProjectDocument's window: the window sets the size
+    host.layoutSubtreeIfNeeded()
     if language == "en" { try Self.attach(host, "studio-stack.png") }
   }
 

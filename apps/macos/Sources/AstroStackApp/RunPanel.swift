@@ -7,7 +7,8 @@ struct RunPanel: View {
   var run: RunViewModel
 
   var body: some View {
-    HStack(spacing: 0) {
+    // The journal goes under the steps: beside the knob panel there is no room for three columns.
+    VStack(spacing: 0) {
       ScrollView {
         VStack(alignment: .leading, spacing: DesignMetrics.spacingM) {
           Self.badge(for: run.phase)
@@ -23,7 +24,7 @@ struct RunPanel: View {
       }
       .frame(minWidth: 320)
       Divider()
-      JournalView(run: run).frame(minWidth: 280)
+      JournalView(run: run).frame(minHeight: 180, idealHeight: 240)
     }
   }
 

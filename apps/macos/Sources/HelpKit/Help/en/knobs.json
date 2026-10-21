@@ -1,0 +1,222 @@
+{
+  "knob.background_degree": {
+    "definition": "Polynomial degree of Siril’s sky model at combine time; 2 for faint nebulae.",
+    "label": "Background model degree"
+  },
+  "knob.background_sigma": {
+    "definition": "Rejects a frame whose background exceeds the night’s median by this many sigmas.",
+    "label": "Bright sky (σ)"
+  },
+  "knob.core_saturation_repair": {
+    "definition": "Rebuilds sensor-saturated cores from the unsaturated nights before stacking.",
+    "label": "Repair saturated cores"
+  },
+  "knob.coverage_crop": {
+    "definition": "Cuts every channel to the field all of them cover.",
+    "label": "Crop to the common field"
+  },
+  "knob.coverage_min_frac": {
+    "definition": "Fraction of the frames a region needs to count as covered.",
+    "label": "Coverage threshold"
+  },
+  "knob.drop_wheel_transition": {
+    "definition": "Drops a filter run’s first frame when the wheel was still moving.",
+    "label": "Drop the filter-change frame"
+  },
+  "knob.edge_crop": {
+    "definition": "Trims the uneven stacking border off the channels before combining them.",
+    "label": "Crop the ragged edge"
+  },
+  "knob.flatten_background": {
+    "definition": "Removes each frame’s own gradient before a multi-night registration.",
+    "label": "Flatten each frame’s sky"
+  },
+  "knob.fwhm_sigma": {
+    "definition": "Rejects a frame whose FWHM exceeds the night’s median by this many sigmas.",
+    "label": "Soft frame (σ)"
+  },
+  "knob.photometric_normalisation": {
+    "definition": "Maps every night onto the anchor night’s photometric scale before merging.",
+    "label": "Match the nights’ brightness"
+  },
+  "knob.register_2pass": {
+    "definition": "Siril elects the best reference frame instead of the first one.",
+    "label": "Two-pass registration"
+  },
+  "knob.reject_trails": {
+    "definition": "Rejects a frame where the probe sees a satellite or plane trail.",
+    "label": "Reject trailed frames"
+  },
+  "knob.roundness_floor": {
+    "definition": "A frame whose stars are less round than this is always rejected (trailed guiding).",
+    "label": "Roundness floor"
+  },
+  "knob.roundness_sigma": {
+    "definition": "Also rejects a frame whose roundness falls this many sigmas below the median.",
+    "label": "Elongated vs session (σ)"
+  },
+  "knob.scnr": {
+    "definition": "Siril rmgreen type: 0 average neutral, 1 maximum neutral, 2 maximum mask, 3 additive mask.",
+    "label": "Green removal type"
+  },
+  "knob.seam_noise_eq": {
+    "definition": "Evens out the noise depth where the night coverage changes.",
+    "label": "Even the seam noise"
+  },
+  "knob.seam_offset_refit": {
+    "definition": "Refits each night’s sky offset on its overlap with the anchor night.",
+    "label": "Refit the night seams"
+  },
+  "knob.stack_combine": {
+    "definition": "How the kept pixels are combined: the mean rejects, the others do not.",
+    "label": "Combination"
+  },
+  "knob.stack_combine.max": {
+    "definition": "Keeps the brightest value of each pixel (star trails).",
+    "label": "Maximum"
+  },
+  "knob.stack_combine.mean": {
+    "definition": "Average after rejection: the best signal to noise.",
+    "label": "Mean"
+  },
+  "knob.stack_combine.median": {
+    "definition": "Median of each pixel: robust, but noisier than the mean.",
+    "label": "Median"
+  },
+  "knob.stack_combine.min": {
+    "definition": "Keeps the darkest value of each pixel.",
+    "label": "Minimum"
+  },
+  "knob.stack_combine.sum": {
+    "definition": "Adds the frames without normalisation.",
+    "label": "Sum"
+  },
+  "knob.stack_fast_norm": {
+    "definition": "Estimates the normalisation faster, slightly less precisely.",
+    "label": "Fast normalisation"
+  },
+  "knob.stack_feather": {
+    "definition": "Softens the stack’s edges over this many pixels; 0 keeps them hard.",
+    "label": "Feathering"
+  },
+  "knob.stack_norm": {
+    "definition": "How frames are matched to the reference before combining; additive and scaling by default.",
+    "label": "Normalisation"
+  },
+  "knob.stack_norm.add": {
+    "definition": "Matches the sky level only.",
+    "label": "Additive"
+  },
+  "knob.stack_norm.addscale": {
+    "definition": "Matches the sky level and the spread.",
+    "label": "Additive with scaling"
+  },
+  "knob.stack_norm.auto": {
+    "definition": "Siril’s default: matches the sky level and the spread.",
+    "label": "Additive + scaling"
+  },
+  "knob.stack_norm.mul": {
+    "definition": "Matches the scale only; the choice for flats.",
+    "label": "Multiplicative"
+  },
+  "knob.stack_norm.mulscale": {
+    "definition": "Matches the scale and the spread.",
+    "label": "Multiplicative with scaling"
+  },
+  "knob.stack_norm.none": {
+    "definition": "Frames are combined as they are.",
+    "label": "None"
+  },
+  "knob.stack_output_norm": {
+    "definition": "Scales the stacked master to the 0–1 range.",
+    "label": "Normalise the output"
+  },
+  "knob.stack_reject": {
+    "definition": "How outlier pixels (satellites, cosmic rays) are rejected while stacking; auto picks by frame count.",
+    "label": "Pixel rejection"
+  },
+  "knob.stack_reject.auto": {
+    "definition": "Percentile up to 7 frames, generalized ESD from 50, winsorized sigma in between.",
+    "label": "Auto"
+  },
+  "knob.stack_reject.generalized": {
+    "definition": "Statistical outlier test; the most accurate from about 50 frames.",
+    "label": "Generalized ESD"
+  },
+  "knob.stack_reject.linear": {
+    "definition": "Fits a line per pixel across frames; good with gradients that change.",
+    "label": "Linear fit clipping"
+  },
+  "knob.stack_reject.mad": {
+    "definition": "Sigma clipping on the median absolute deviation.",
+    "label": "MAD clipping"
+  },
+  "knob.stack_reject.median": {
+    "definition": "Sigma clipping that replaces rejected pixels with the median.",
+    "label": "Median sigma clipping"
+  },
+  "knob.stack_reject.none": {
+    "definition": "Every pixel is averaged, outliers included.",
+    "label": "None"
+  },
+  "knob.stack_reject.percentile": {
+    "definition": "Rejects pixels far from the median by a fraction; suited to very few frames.",
+    "label": "Percentile clipping"
+  },
+  "knob.stack_reject.sigma": {
+    "definition": "Rejects pixels beyond the sigmas from the mean, iteratively.",
+    "label": "Sigma clipping"
+  },
+  "knob.stack_reject.winsorized": {
+    "definition": "Sigma clipping on winsorized statistics: robust from about 8 to 50 frames.",
+    "label": "Winsorized sigma clipping"
+  },
+  "knob.stack_reject_high": {
+    "definition": "High parameter of the rejection (sigma or fraction); 0 takes the algorithm’s default.",
+    "label": "High rejection"
+  },
+  "knob.stack_reject_low": {
+    "definition": "Low parameter of the rejection (sigma or fraction); 0 takes the algorithm’s default.",
+    "label": "Low rejection"
+  },
+  "knob.stack_rejection_maps": {
+    "definition": "Also writes images of the pixels rejected low and high.",
+    "label": "Rejection maps"
+  },
+  "knob.stack_weight": {
+    "definition": "How each frame counts in the stack: sharper frames weigh more with wFWHM.",
+    "label": "Frame weighting"
+  },
+  "knob.stack_weight.nbstack": {
+    "definition": "Weights by how many frames each input already stacks.",
+    "label": "Stacked count"
+  },
+  "knob.stack_weight.nbstars": {
+    "definition": "Weights by the number of stars detected.",
+    "label": "Star count"
+  },
+  "knob.stack_weight.noise": {
+    "definition": "Weights by the inverse of each frame’s noise.",
+    "label": "Noise"
+  },
+  "knob.stack_weight.none": {
+    "definition": "Every kept frame counts the same.",
+    "label": "Equal"
+  },
+  "knob.stack_weight.wfwhm": {
+    "definition": "Weights by star sharpness and count; the legacy default.",
+    "label": "Sharpness (wFWHM)"
+  },
+  "knob.star_count_frac": {
+    "definition": "Rejects a frame with fewer stars than this fraction of the median: likely clouds.",
+    "label": "Clouds (star fraction)"
+  },
+  "knob.trail_downsample": {
+    "definition": "Pixel size of the image the trail probe looks at.",
+    "label": "Trail probe size"
+  },
+  "knob.trail_mask_k": {
+    "definition": "Masks satellites and cosmic rays above this many sigmas across frames; 0 turns it off.",
+    "label": "Trail mask (σ)"
+  }
+}

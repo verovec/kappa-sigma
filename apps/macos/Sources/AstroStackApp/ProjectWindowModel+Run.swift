@@ -10,7 +10,7 @@ extension ProjectWindowModel {
   func runRequest() throws -> ImportRequest? {
     let nights = sources.filter { $0.kind == .night }.map(\.path)
     guard !nights.isEmpty else { return nil }
-    let base = try latestStackRequest() ?? ImportRequest(paths: nights)
+    let base = try latestStackRecord()?.request ?? ImportRequest(paths: nights)
     var request = imports.reduce(base) { $0.merging($1) }
     request.paths = nights
     return request
@@ -31,7 +31,10 @@ extension ProjectWindowModel {
   /// image per bundle layer and the Studio opens it; a cancelled or failed one registers nothing
   /// and keeps its artifacts. One run at a time, in a saved project only (an untitled package
   /// moves on Save and is deleted on Close).
-  package func startRun(mode: PreprocessRequest.Mode = .deepsky) {
+  ///
+  /// The settings are the panel's edits (`knobs.patch`) on the preset of `mode`, the panel's own
+  /// preset unless a mode is given for this run; the panel is left as it is.
+  package func startRun(mode: PreprocessRequest.Mode? = nil) {
     guard canRun else { return }
     guard let store = store(), let folder = folder() else {
       error = .projectClosed
@@ -41,10 +44,13 @@ extension ProjectWindowModel {
       error = .projectUnsaved
       return
     }
-    let request: ImportRequest
+    let record: StackRecord
+    let settings: PreprocessSettings
     do {
-      guard let planned = try runRequest() else { return }
-      request = planned
+      guard let request = try runRequest() else { return }
+      let mode = mode ?? knobs.mode
+      record = StackRecord(request: request, mode: mode, knobs: knobs.patch(for: mode))
+      settings = try Self.runSettings(record)
     } catch {
       self.error = UserFacingError(error)
       return
@@ -62,23 +68,30 @@ extension ProjectWindowModel {
     refresh()
     model.start(
       {
-        let plan = try await planning(request)
-        var preprocess = PreprocessRequest(
-          inventory: plan.inventory, output: output, work: work, runID: runID, mode: mode,
-          library: plan.library)
-        preprocess.settings.calibrationExcluded = request.calibExclude
-        preprocess.settings.forceCalibration = request.forceCalibration
-        return start(preprocess)
+        let plan = try await planning(record.request)
+        return start(
+          PreprocessRequest(
+            inventory: plan.inventory, output: output, work: work, runID: runID,
+            mode: record.mode, settings: settings, library: plan.library))
       },
       completion: { [weak self] outcome in
         await Self.remove(work)
         guard let self else { return }
         if case .success = outcome {
-          await register(request: request, runID: runID)
+          await register(record, runID: runID)
         } else {
           refresh()
         }
       })
+  }
+
+  /// The settings a run of `record` applies: its knobs on its preset, with the calibration
+  /// choices of its import, as the panel and the Import sheet showed them.
+  static func runSettings(_ record: StackRecord) throws -> PreprocessSettings {
+    var settings = try KnobSchema.apply(record.knobs, to: .preset(record.mode))
+    settings.calibrationExcluded = record.request.calibExclude
+    settings.forceCalibration = record.request.forceCalibration
+    return settings
   }
 
   /// Cancels the running run; its finished masters stay in its folder.
@@ -118,7 +131,7 @@ extension ProjectWindowModel {
   /// The stack is opened first: a bundle the Studio cannot open is reported, not recorded.
   /// The package is read where it is now: a project renamed in the Finder after the run's last
   /// write still records its stack.
-  private func register(request: ImportRequest, runID: String) async {
+  private func register(_ record: StackRecord, runID: String) async {
     do {
       guard let store = store(), let folder = folder() else {
         throw UserFacingError.projectClosed
@@ -127,11 +140,12 @@ extension ProjectWindowModel {
         folder.appendingPathComponent("stacks/\(runID)"), object: targetName)
       let encoder = JSONEncoder()
       encoder.outputFormatting = [.sortedKeys]
-      let params = String(bytes: try encoder.encode(request), encoding: .utf8) ?? "{}"
-      let read = sources.filter { request.paths.contains($0.path) }.map(\.id)
+      let params = String(bytes: try encoder.encode(record), encoding: .utf8) ?? "{}"
+      let read = sources.filter { record.request.paths.contains($0.path) }.map(\.id)
       try store.addStack(
         bundlePath: "stacks/\(runID)", sourceIDs: read, paramsJSON: params,
         imageRoles: source.layers.map(\.id))
+      knobs.clearIgnored()
       studio = LegacyRunModel(source: source)
       refresh()
       select(.studio)
@@ -141,12 +155,11 @@ extension ProjectWindowModel {
     }
   }
 
-  /// The request stored with the latest stack, or `nil` without one.
+  /// The record of the latest stack, or `nil` without one.
   ///
   /// One that no longer decodes is an error the user sees, never a run without its overrides (R2).
-  private func latestStackRequest() throws -> ImportRequest? {
-    guard let stack = try store()?.latestStack() else { return nil }
-    return try JSONDecoder().decode(ImportRequest.self, from: Data(stack.paramsJSON.utf8))
+  func latestStackRecord() throws -> StackRecord? {
+    try store()?.latestStack().map(StackRecord.init(stack:))
   }
 
   /// `runID`, or `runID_2`, `_3`… when a stack folder of that name exists (two runs in one

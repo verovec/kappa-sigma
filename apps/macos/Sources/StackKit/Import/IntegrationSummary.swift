@@ -98,7 +98,8 @@ extension IntegrationSummary.Row {
     }
     guard frame.hasTemp else { return }
     let celsius = Double(frame.tempMilliC) / 1000
-    temperatureC = temperatureC.map { min($0.lowerBound, celsius)...max($0.upperBound, celsius) }
+    temperatureC =
+      temperatureC.map { min($0.lowerBound, celsius)...max($0.upperBound, celsius) }
       ?? celsius...celsius
   }
 }

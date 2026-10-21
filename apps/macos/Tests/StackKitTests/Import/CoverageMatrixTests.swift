@@ -34,12 +34,14 @@ struct CoverageMatrixTests {
       plan: Self.plan(lights: [CalibrationFixtures.set(Self.light)], library: Self.library))
     #expect(
       covered.rows.first?.cells.map(\.status) == [
-        .library(path: "/lib/dark300.fits", frames: 5), .library(path: "/lib/flatL.fits", frames: 20),
+        .library(path: "/lib/dark300.fits", frames: 5),
+        .library(path: "/lib/flatL.fits", frames: 20),
         .library(path: "/lib/bias.fits", frames: 8),
       ])
     #expect(covered.gaps == 0)
 
-    let flats = CalibrationFixtures.set(CalibrationFixtures.calibrationKey(.flat, filter: "L"), count: 12)
+    let flats = CalibrationFixtures.set(
+      CalibrationFixtures.calibrationKey(.flat, filter: "L"), count: 12)
     let built = CoverageMatrix(
       plan: Self.plan(
         lights: [CalibrationFixtures.set(Self.light)], extra: [flats],

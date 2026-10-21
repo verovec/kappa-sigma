@@ -145,7 +145,9 @@ struct IntegrationSummaryTests {
     #expect(summary.nights == example.nights)
     // Totals per filter add their rows up, in the rows' order.
     for total in summary.totals {
-      let rows = summary.rows.filter { $0.filter == total.filter && $0.filterSet == total.filterSet }
+      let rows = summary.rows.filter {
+        $0.filter == total.filter && $0.filterSet == total.filterSet
+      }
       #expect(total.frames == rows.map(\.frames).reduce(0, +))
       #expect(total.integrationMs == rows.map(\.integrationMs).reduce(0, +))
     }
@@ -161,7 +163,9 @@ struct IntegrationSummaryTests {
     #expect(summary.rows.map(\.temperatureC) == [-10.0 ... -9.5, nil])
   }
 
-  @Test("the committed two-night case: its lights by night, totals equal to the scan", .scratchDirectory)
+  @Test(
+    "the committed two-night case: its lights by night, totals equal to the scan", .scratchDirectory
+  )
   func testCommittedTwoNightFixture() throws {
     let (input, _, planner) = try ImportPlanTests.fixture("golden-two-night")
     let plan = try planner.plan(ImportRequest(paths: [input.path]), library: [])

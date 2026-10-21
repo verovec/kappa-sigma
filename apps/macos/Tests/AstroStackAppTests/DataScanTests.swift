@@ -64,7 +64,9 @@ struct DataScanTests {
     #expect(window.statuses[.calibration] == .unavailable(.needsSources))
   }
 
-  @Test("a rescan scans the recorded sources and its gaps reach the Calibration stage", .scratchDirectory)
+  @Test(
+    "a rescan scans the recorded sources and its gaps reach the Calibration stage",
+    .scratchDirectory)
   func testRescanFeedsCoverage() async throws {
     let project = try ProjectWindowModelTests.package()
     defer { try? project.close() }
@@ -107,7 +109,10 @@ struct DataScanTests {
       store: { project.store },
       planning: { _ in
         { _ in
-          try await Task.sleep(for: .seconds(60))
+          // A scan that only ends when cancelled: the stream never yields.
+          let (stream, continuation) = AsyncStream<Void>.makeStream()
+          for await _ in stream {}
+          continuation.finish()
           throw CancellationError()
         }
       })

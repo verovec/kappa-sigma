@@ -24,8 +24,10 @@ struct IntegrationSummaryTests {
       }
       return frame
     }
+    // A clip filter is only ever measured on one-shot-colour lights.
     let key = SetKey(
-      type: .light, filter: filter, exposureMs: exposureS * 1000, session: night, color: color)
+      type: .light, filter: filter, exposureMs: exposureS * 1000, session: night,
+      color: color || filterSet.isKnown)
     return FrameSet(key: key, frames: frames, indices: Array(frames.indices), filterSet: filterSet)
   }
 
@@ -41,9 +43,11 @@ struct IntegrationSummaryTests {
       key: SetKey(type: .dark, exposureMs: 300_000), frames: frames, indices: Array(frames.indices))
   }
 
+  /// The scan of `sets`, with each set's measured clip filter recorded as the scan records it.
   static func inventory(_ sets: [FrameSet]) -> Inventory {
     var inventory = Inventory(root: "/c", frames: sets.flatMap(\.frames))
     inventory.sets = sets
+    for set in sets where set.filterSet.isKnown { inventory.filterSets[set.key.id] = set.filterSet }
     return inventory
   }
 
@@ -166,16 +170,22 @@ struct IntegrationSummaryTests {
     #expect(summary.targets == 2)
   }
 
-  @Test("an undecided colour set takes its night's clip filter, as the run's lanes do")
-  func testUndecidedSetTakesNightClipFilter() {
-    let measured = Self.lights(
-      "RGB", night: "2026-09-22", count: 4, exposureS: 300, filterSet: .dualband, color: true)
+  @Test("an undecided colour set is counted in the lane the run stacks it in")
+  func testUndecidedSetFollowsTheLanes() {
+    let dual = Self.lights(
+      "RGB", night: "2026-09-22", count: 4, exposureS: 300, filterSet: .dualband)
     let undecided = Self.lights("RGB", night: "2026-09-22", count: 2, exposureS: 120, color: true)
-    var inventory = Self.inventory([measured, undecided])
-    inventory.filterSets = [measured.key.id: .dualband]
-    let summary = IntegrationSummary.make(inventory: inventory)
-    #expect(summary.rows.map(\.filterSet) == [.dualband])
-    #expect(summary.rows.first?.frames == 6)
+    // One verdict only: no split, one lane, named by that verdict.
+    let one = IntegrationSummary.make(inventory: Self.inventory([dual, undecided]))
+    #expect(one.rows.map(\.filterSet) == [.dualband])
+    #expect(one.rows.first?.frames == 6)
+
+    // Both verdicts: two lanes; the undecided set joins its night's (dual-band) lane.
+    let broad = Self.lights(
+      "RGB", night: "2026-09-21", count: 3, exposureS: 180, filterSet: .broadband)
+    let two = IntegrationSummary.make(inventory: Self.inventory([dual, undecided, broad]))
+    #expect(two.rows.map(\.filterSet) == [.broadband, .dualband])
+    #expect(two.rows.map(\.frames) == [3, 6])
   }
 
   @Test("a set's night is its first dated frame's, not an undated first frame's")

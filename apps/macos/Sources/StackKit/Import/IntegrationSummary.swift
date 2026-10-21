@@ -60,9 +60,9 @@ package struct IntegrationSummary: Equatable, Sendable {
   /// The lights of `inventory`, by target, filter and night; every other frame type is left out.
   package static func make(inventory: Inventory) -> Self {
     var rows: [String: Row] = [:]
+    let lanes = Lanes(inventory)
     for set in inventory.sets where set.key.type == .light {
-      // The clip filter the run stacks it under: the set's verdict, else its night's.
-      let filterSet = LightRef(set, in: inventory).filterSet
+      let filterSet = lanes.filterSet(of: set)
       for frame in set.frames {
         let empty = Row(
           object: set.key.object, filter: set.key.filter, filterSet: filterSet,
@@ -104,6 +104,33 @@ package struct IntegrationSummary: Equatable, Sendable {
       }
     }
     return totals
+  }
+}
+
+extension IntegrationSummary {
+  /// The clip filter a colour set is counted under: its lane (`FilterSetLanes`), so the table
+  /// never splits lights the run stacks together.
+  fileprivate struct Lanes {
+    let inventory: Inventory
+    let split: Bool
+    /// The scan's one verdict when it holds a single kind; `unknown` otherwise.
+    let common: FilterSet
+
+    init(_ inventory: Inventory) {
+      self.inventory = inventory
+      split = FilterSetLanes.splits(inventory)
+      let verdicts = Set(
+        inventory.sets.filter { $0.key.type == .light }.compactMap {
+          inventory.filterSets[$0.key.id]
+        })
+      common = verdicts.count == 1 ? verdicts.first ?? .unknown : .unknown
+    }
+
+    func filterSet(of set: FrameSet) -> FilterSet {
+      guard set.key.color else { return .unknown }
+      guard split else { return common }
+      return LightRef(set, in: inventory).filterSet == .dualband ? .dualband : .broadband
+    }
   }
 }
 

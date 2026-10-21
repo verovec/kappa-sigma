@@ -43,6 +43,12 @@ package nonisolated enum ImportFormat {
     }
   }
 
+  /// The library file a calibration cell applies; `nil` for a master the run builds from the
+  /// capture, an excluded one, or a gap.
+  package static func libraryPath(_ status: ImportPlan.Status) -> String? {
+    if case .library(let path, _) = status, !path.isEmpty { path } else { nil }
+  }
+
   /// What a calibration cell will do.
   package static func status(_ status: ImportPlan.Status) -> LocalizedStringResource {
     switch status {

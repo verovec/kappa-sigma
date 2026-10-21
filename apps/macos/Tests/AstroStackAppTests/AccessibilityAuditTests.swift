@@ -112,6 +112,7 @@ struct AccessibilityAuditTests {
   nonisolated static let audited = [
     "RenderKit/DesignSystem/Components", "AstroStackApp/JourneySidebarRow.swift",
     "AstroStackApp/DataStagePane.swift", "AstroStackApp/StackingStagePane.swift",
+    "AstroStackApp/CalibrationStagePane.swift",
     "AstroStackApp/KnobPanel.swift", "AstroStackApp/KnobRow.swift",
     "AstroStackApp/ShortcutsSheet.swift",
     "AstroStackApp/GlossaryView.swift",

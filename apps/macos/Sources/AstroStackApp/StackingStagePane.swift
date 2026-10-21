@@ -19,6 +19,7 @@ struct StackingStagePane: View {
         controls
       }
       .padding(DesignMetrics.spacingM)
+      blocker
       HStack(spacing: 0) {
         // The values a run applies stay in view, frozen while it runs (R2).
         KnobPanel(model: model.knobs).frame(width: 300).disabled(running)
@@ -34,6 +35,33 @@ struct StackingStagePane: View {
         }
       }
     }
+  }
+
+  /// Why Run is greyed, with the one action that ungreys it; nothing while a run goes.
+  @ViewBuilder private var blocker: some View {
+    if !running && model.nightPaths.isEmpty && !model.sources.isEmpty {
+      notice(.app("Import a capture night to stack: a legacy run is shown, never stacked again."))
+    } else if !running && model.nightPaths.isEmpty {
+      notice(.app("Import a capture night to stack."))
+    } else if !running && model.needsSave {
+      HStack(alignment: .firstTextBaseline) {
+        notice(.app("Save the project first: its masters and stacks are written inside it."))
+        Button(.app("Save…")) { model.save() }
+          .accessible(.stackingSave, label: .app("Save…"))
+      }
+      .padding(.trailing, DesignMetrics.spacingM)
+    }
+  }
+
+  private func notice(_ text: LocalizedStringResource) -> some View {
+    Label {
+      Text(text)
+    } icon: {
+      Image(systemName: "info.circle")
+    }
+    .foregroundStyle(DesignColor.statusAttention.color)
+    .padding([.horizontal, .bottom], DesignMetrics.spacingM)
+    .frame(maxWidth: .infinity, alignment: .leading)
   }
 
   /// The preset, then Run — or Cancel while a run goes.
@@ -52,7 +80,7 @@ struct StackingStagePane: View {
     } else {
       Button(.app("Run")) { model.startRun() }
         .keyboardShortcut(.defaultAction)
-        .disabled(!model.canRun)
+        .disabled(!model.canRun || model.needsSave)
         .accessible(.stackingRun, label: .app("Run"))
     }
   }

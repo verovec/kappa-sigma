@@ -70,6 +70,21 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
   /// The Données stage's « Open Calibration » above the coverage (0078).
   package static let dataOpenCalibration = stageControl("data", "openCalibration")
 
+  /// The Calibration stage's « Rescan ».
+  package static let calibrationRescan = stageControl("calibration", "rescan")
+
+  /// The Calibration stage's « Cancel » of a Rescan in flight.
+  package static let calibrationCancelScan = stageControl("calibration", "cancelScan")
+
+  /// The Calibration stage's « Preview » of the master a cell applies, by its `calib_exclude`
+  /// token.
+  package static func calibrationPreview(_ suggestionID: String) -> Self {
+    stageControl("calibration", "preview." + suggestionID)
+  }
+
+  /// The Empilement stage's « Save… » of an untitled project.
+  package static let stackingSave = stageControl("stacking", "save")
+
   /// The Empilement stage's preset picker.
   package static let stackingPreset = stageControl("stacking", "preset")
 

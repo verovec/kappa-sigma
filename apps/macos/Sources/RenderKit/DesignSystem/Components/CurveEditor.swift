@@ -10,6 +10,7 @@ package struct CurveEditor: View {
   @Binding private var points: CurveEditorPoints
   private let curve: ([SIMD2<Double>]) -> (Double) -> Double
   private let tint: DesignColor
+  private let key: String
   @State private var dragged: Int?
   /// Reach of a click around a point, in curve units.
   private static let reach = 0.04
@@ -18,9 +19,10 @@ package struct CurveEditor: View {
   /// in `tint`, the channel's plot colour.
   package init(
     _ label: LocalizedStringResource, points: Binding<CurveEditorPoints>,
-    tint: DesignColor = .plotLuminance,
+    tint: DesignColor = .plotLuminance, key: String,
     curve: @escaping ([SIMD2<Double>]) -> (Double) -> Double
   ) {
+    self.key = key
     self.label = label
     _points = points
     self.tint = tint
@@ -40,14 +42,14 @@ package struct CurveEditor: View {
         .buttonStyle(.borderless)
         .disabled(points.isIdentity)
         .help(Text(.renderKit("Reset to default")))
-        .accessibilityLabel(Text(.renderKit("Reset to default")))
+        .accessible(.curve(key, .reset), label: .renderKit("Reset to default"))
       }
       GeometryReader { geometry in
         canvas(size: geometry.size)
       }
       .aspectRatio(1, contentMode: .fit)
       .accessibilityElement()
-      .accessibilityLabel(Text(label))
+      .accessible(.curve(key, .canvas), label: label)
       .accessibilityHint(
         Text(.renderKit("Click to add a point, drag to move it, double-click to remove it")))
     }

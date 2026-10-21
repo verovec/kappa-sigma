@@ -78,11 +78,23 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   r32Float intermediates) — encode into the caller's command buffer; reuse them, never a second
   min/max or blur kernel. `BoxBlur` runs Kahan running sums (cost independent of the radius);
   `BoxGaussian` (card 0053) is the legacy `imgops.GaussianBlur` widths for σ on top of it.
+- **StarRecompositionProcess** (card 0055, id `star-recomposition`): stardesat's recomposition —
+  star layer `max(original − starless, 0)`, chroma scaled by `chroma` around the Rec. 709 luma,
+  put back at `presence`, `additive` (stardesat) or `screen` (PixInsight), clamped. The starless
+  is the bundle layer `starless` (StarNet's output, `StackKit/StarNet`); defaults chroma 1 /
+  presence 1 (identity where original ≥ starless), the PO's 0.25 is a suggestion. Pinned against
+  stardesat's recorded `haplus_final` and `stars_25/50/75`.
+- **DeliverableExport** + `ExportSettings` (card 0055): the legacy set `final`, `final-starless`,
+  `final-{75,50,25}-stars` (the star tiers rendered by `StarRecompositionProcess`), PNG16 /
+  TIFF16 (`ImageExport`) / FITS32 (`FITSFile.create`), crop fraction per edge (astrocomp
+  rounding), hflip/vflip, `{name}` template (one file name containing `{name}`); everything is
+  checked before a file is written. `ExportGuard` refuses a folder under
+  `~/Documents/astro/{captures,runs,library,fixtures}` (links resolved, case ignored, R7).
 - `ProcessRegistry`: refuses duplicates and invalid schemas (`.px` without
   `previewExactOnlyAt1to1`, a default outside its bounds or options, infinite bounds);
   `standard()` is validated like any registry and lists the shipped processes (today:
   `channel-combination`, `stretch`, `hdr`, `emission-screens`, `colour-balance`, `sky-desat`,
-  `curves`, `saturation`; pipeline order is E15's — `stage` documents it).
+  `curves`, `saturation`, `star-recomposition`; pipeline order is E15's — `stage` documents it).
 - **Colour processes** (card 0053), `Processes/Colour/`, kernels in `Colour.metal` (they share the
   HSL helpers; a runtime-compiled source has no `#include`) and `SkyDesat.metal`; every default is
   the identity, bit for bit:

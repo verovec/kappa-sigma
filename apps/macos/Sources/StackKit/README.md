@@ -8,6 +8,13 @@ inspect (0046, `Inspect/README.md`: folders → classified frames → sets) and 
 `Calibration/README.md`: masters, library index, matching). Card 0048 (pipeline) ports against
 the same oracles.
 
+**StarNet** (card 0055, `StarNet/`): `StarNetRunner.located(by: HostTools)` → `.missing` (no
+binary) or `.cannotRun` (`ExecutableCheck`: an x86_64 build without Rosetta) as
+`StarNetError`, never a fallback; `starless(of:in:onProgress:)` writes a 16-bit TIFF, runs it,
+reads the TIFF back (`ImageImport`). `StarNetCLI` probes `--machine-info` for the StarNet2 flag
+CLI (`-i/-o`) vs StarNet++ positional; `StarNetProgress` reads every `N.N%` in the unbroken
+`Working: 8.3%Working: 16.7%…` stream. No starless cache yet (legacy `starlessTIFF` reuse).
+
 ## Oracle cases
 
 A case is one run of the legacy engine recorded by `../stacking-astro/cmd/oraclerec`, with the

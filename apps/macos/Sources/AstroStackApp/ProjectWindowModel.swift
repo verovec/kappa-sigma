@@ -1,9 +1,10 @@
+package import Foundation
 internal import Observation
 package import ProjectKit
 package import StackKit
 
 /// The state of a project window: the journey stage shown and every stage's status, the
-/// sources, and the Import sheet when one is open.
+/// sources, the Import sheet when one is open, the preprocessing run and the stack in the Studio.
 @Observable
 package final class ProjectWindowModel {
   /// The stage the user chose, restored per project; only `select` changes it.
@@ -32,18 +33,34 @@ package final class ProjectWindowModel {
   /// same sources keeps them (the request itself is not persisted before 0057).
   var scanRequest: ImportRequest?
   var scanTask: Task<Void, Never>?
+  /// The preprocessing run the Stacking stage shows: the one running, or the last one.
+  package internal(set) var run: RunViewModel?
+  /// The stack the Studio shows: the latest one, read-only.
+  package internal(set) var studio: LegacyRunModel?
+  /// This session's imports, in order: the next run applies all their overrides.
+  var imports: [ImportRequest] = []
 
   let store: () -> ProjectStore?
+  let folder: () -> URL?
   let services: (ProjectStore?) -> ImportServices
+  let runs: RunServices
+  /// The package is saved (not the untitled temporary one a Save moves).
+  let isSaved: () -> Bool
 
-  /// A window over the document's current store (it changes when the package moves); each sheet
-  /// gets fresh `services`.
+  /// A window over the document's current store and package folder (both change when the package
+  /// moves); each sheet and run gets fresh `services`, and runs go through `runs`.
   package init(
     store: @escaping () -> ProjectStore?,
-    services: @escaping (ProjectStore?) -> ImportServices = { ImportPlanning.services(store: $0) }
+    folder: @escaping () -> URL? = { nil },
+    services: @escaping (ProjectStore?) -> ImportServices = { ImportPlanning.services(store: $0) },
+    runs: RunServices = .live,
+    isSaved: @escaping () -> Bool = { true }
   ) {
     self.store = store
+    self.folder = folder
     self.services = services
+    self.runs = runs
+    self.isSaved = isSaved
     refresh()
     do {
       let saved = try store()?.setting(JourneyStage.settingKey)
@@ -67,9 +84,10 @@ package final class ProjectWindowModel {
   /// A window whose sheets plan with `planning` and have no master services.
   package convenience init(
     store: @escaping () -> ProjectStore?,
+    folder: @escaping () -> URL? = { nil },
     planning: @escaping (ProjectStore?) -> ImportViewModel.Planning
   ) {
-    self.init(store: store, services: { ImportServices(planning: planning($0)) })
+    self.init(store: store, folder: folder, services: { ImportServices(planning: planning($0)) })
   }
 
   /// Opens the Import sheet on a fresh request.
@@ -85,7 +103,8 @@ package final class ProjectWindowModel {
     importing = nil
   }
 
-  /// Records the imported folders as read-only sources of the project and closes the sheet.
+  /// Records the imported folders as read-only sources of the project and closes the sheet; the
+  /// next run applies the request's overrides.
   ///
   /// Recording is idempotent per folder: after a failure part-way, Add again records the rest.
   package func add(_ request: ImportRequest) {
@@ -97,6 +116,7 @@ package final class ProjectWindowModel {
       for path in request.paths {
         try store.addSource(kind: .night, path: path)
       }
+      imports.append(request)
       let nights = try store.sources().filter { $0.kind == .night }.map(\.path)
       adoptScan(of: importing, for: request, sources: nights)
       closeImport()
@@ -115,7 +135,10 @@ package final class ProjectWindowModel {
       let store = store()
       sources = try store?.sources() ?? []
       let summary = try store?.summary() ?? ProjectSummary()
-      statuses = JourneyState.derive(from: ProjectFacts(summary: summary, coverage: coverage))
+      let running = run?.isRunning == true ? 1 : 0
+      statuses = JourneyState.derive(
+        from: ProjectFacts(
+          summary: summary, calibrationGaps: coverage?.gaps ?? nil, stacksRunning: running))
       error = nil
     } catch {
       self.error = UserFacingError(error)

@@ -14,6 +14,11 @@ whose reference is run #78, `M_31/20261018_191749`.
     `LayerPrecedence` (`trim_ > combine_ > aligned_ > master_ > syn_`, shared with the 0048
     writer). A dual-band channel (`RGB-dualband`) is represented by its `syn_Ha`/`syn_OIII`
     lines, and those lines count its frames.
+- `LegacyRunSource(stack:object:)` opens a stack this app ran into a project
+  (`stacks/<run_id>/`, card 0057). Its `bundle.json` is the whole record: there is no `run.json`,
+  so the target name comes from the project and frames are `nil`. Without a bundle it throws
+  `LegacyRunError.noBundle`. The Studio stage shows the latest stack through it, with the same
+  layer list and viewer as File › Open Run….
 - Every layer must share one grid (headers only). Otherwise `LegacyRunError.mixedDimensions`
   lists each layer and its size.
 - `LinearBundle.build(fromLegacyRun:)` is the bundle with stats measured by

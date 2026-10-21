@@ -69,7 +69,14 @@ struct KnobRow: View {
       get: {
         ParameterValue(default: row.defaultValue.number, range: bounds, value: row.value.number)
       },
-      set: { model.set(row.id, to: .number(integer ? $0.value.rounded() : $0.value)) })
+      set: { parameter in
+        // The row's own reset lands exactly on the default: clear the edit, never pin it.
+        if parameter.isDefault {
+          model.reset(row.id)
+        } else {
+          model.set(row.id, to: .number(integer ? parameter.value.rounded() : parameter.value))
+        }
+      })
   }
 
   private var flag: Binding<Bool> {

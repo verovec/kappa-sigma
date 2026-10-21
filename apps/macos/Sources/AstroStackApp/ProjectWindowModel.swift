@@ -45,10 +45,14 @@ package final class ProjectWindowModel {
     self.services = services
     self.runs = runs
     self.isSaved = isSaved
-    // The panel starts where the latest stack left it; an unreadable record is reported on Run.
-    let latest = try? store()?.latestStack().map(StackRecord.init(stack:))
-    knobs = KnobPanelViewModel(mode: latest?.mode ?? .deepsky, patch: latest?.knobs ?? KnobPatch())
+    // The panel starts where the latest stack left it; an unreadable record is reported.
+    let latest = Result { try store()?.latestStack().map(StackRecord.init(stack:)) }
+    let record = (try? latest.get()) ?? nil
+    knobs = KnobPanelViewModel(
+      mode: record?.mode ?? .deepsky, patch: record?.knobs ?? KnobPatch(),
+      ignored: record?.ignoredEntries ?? [])
     refresh()
+    if case .failure(let failure) = latest { error = UserFacingError(failure) }
     do {
       let saved = try store()?.setting(JourneyStage.settingKey)
       selection = saved.flatMap(JourneyStage.init(rawValue:)) ?? .data

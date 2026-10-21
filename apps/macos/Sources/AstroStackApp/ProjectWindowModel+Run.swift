@@ -48,7 +48,8 @@ extension ProjectWindowModel {
     let settings: PreprocessSettings
     do {
       guard let request = try runRequest() else { return }
-      record = StackRecord(request: request, mode: mode ?? knobs.mode, knobs: knobs.patch)
+      let mode = mode ?? knobs.mode
+      record = StackRecord(request: request, mode: mode, knobs: knobs.patch(for: mode))
       settings = try Self.runSettings(record)
     } catch {
       self.error = UserFacingError(error)
@@ -141,6 +142,7 @@ extension ProjectWindowModel {
       try store.addStack(
         bundlePath: "stacks/\(runID)", sourceIDs: read, paramsJSON: params,
         imageRoles: source.layers.map(\.id))
+      knobs.clearIgnored()
       studio = LegacyRunModel(source: source)
       refresh()
       select(.studio)

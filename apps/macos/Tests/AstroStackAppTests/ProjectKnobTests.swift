@@ -50,4 +50,12 @@ struct ProjectKnobTests {
       String(bytes: try encoder.encode(record), encoding: .utf8)
         == #"{"mode":"deepsky","path":"\/c\/M31-DB"}"#)
   }
+
+  @Test("a recorded preset this build does not know reads as deepsky and is shown")
+  func testUnknownModeShown() throws {
+    let record = try JSONDecoder().decode(
+      StackRecord.self, from: Data(#"{"path": "/c/M31-DB", "mode": "galaxy"}"#.utf8))
+    #expect(record.mode == .deepsky && record.unknownMode == "galaxy")
+    #expect(record.ignoredEntries == ["mode=galaxy"])
+  }
 }

@@ -69,19 +69,9 @@ extension KnobSchema {
 }
 
 extension StackOptions.Rejection {
-  /// The knob id: Siril's token (`StackClause`), plus `auto` and `none`.
+  /// The knob id: Siril's token (`StackClause.algorithm`), plus `auto` and `none`.
   var knobID: String {
-    switch self {
-    case .auto: "auto"
-    case .none: "none"
-    case .percentile: "percentile"
-    case .sigma: "sigma"
-    case .medianSigma: "median"
-    case .winsorized: "winsorized"
-    case .linearFit: "linear"
-    case .gesd: "generalized"
-    case .mad: "mad"
-    }
+    StackClause.algorithm(self)?.token ?? (self == .auto ? "auto" : "none")
   }
 
   init?(knobID: String) {

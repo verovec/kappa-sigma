@@ -14,6 +14,8 @@ package struct StackRecord: Equatable, Sendable {
   package var mode: PreprocessRequest.Mode
   /// The knobs moved from that preset.
   package var knobs: KnobPatch
+  /// A recorded preset this build does not know: read as deepsky, and shown.
+  package var unknownMode: String?
 
   /// A record of `request` run with the preset of `mode` and `knobs`.
   package init(
@@ -26,6 +28,11 @@ package struct StackRecord: Equatable, Sendable {
 }
 
 extension StackRecord {
+  /// What the record carries that this build cannot apply, as the panel lists it (`mode=galaxy`).
+  package var ignoredEntries: [String] {
+    unknownMode.map { ["mode=\($0)"] } ?? []
+  }
+
   /// The record `stack` holds in its `params_json`.
   package init(stack: ProjectStack) throws {
     self = try JSONDecoder().decode(Self.self, from: Data(stack.paramsJSON.utf8))
@@ -40,7 +47,9 @@ extension StackRecord: Codable {
   package init(from decoder: any Decoder) throws {
     request = try ImportRequest(from: decoder)
     let record = try decoder.container(keyedBy: Key.self)
-    mode = try record.decodeIfPresent(PreprocessRequest.Mode.self, forKey: .mode) ?? .deepsky
+    let recorded = try record.decodeIfPresent(String.self, forKey: .mode)
+    mode = recorded.flatMap(PreprocessRequest.Mode.init(rawValue:)) ?? .deepsky
+    unknownMode = mode.rawValue == recorded || recorded == nil ? nil : recorded
     knobs = try record.decodeIfPresent(KnobPatch.self, forKey: .knobs) ?? KnobPatch()
   }
 

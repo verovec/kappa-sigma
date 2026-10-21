@@ -12,12 +12,13 @@ struct KnobPanelViewModelTests {
   @Test("simple knobs show by default, advanced ones behind the disclosure; nothing is hidden")
   func testSimpleAdvancedSplit() {
     let panel = KnobPanelViewModel(mode: .deepsky)
-    let simple = KnobSchema.knobs.filter { $0.level == .simple }.map(\.id)
-    #expect(panel.visibleRows.map(\.id) == simple)
-
-    panel.showsAdvanced = true
-    #expect(panel.visibleRows.map(\.id) == KnobSchema.knobs.map(\.id), "every knob, R2")
-    #expect(panel.visibleRows.allSatisfy { $0.isDefault })
+    #expect(!panel.showsAdvanced, "the advanced knobs start behind the disclosure")
+    #expect(panel.simpleRows.map(\.id) == KnobSchema.knobs.filter { $0.level == .simple }.map(\.id))
+    #expect(
+      Set(panel.simpleRows.map(\.id) + panel.advancedRows.map(\.id))
+        == Set(KnobSchema.knobs.map(\.id)),
+      "every knob, R2")
+    #expect(panel.rows.allSatisfy { $0.isDefault })
   }
 
   struct Change: Sendable, CustomTestStringConvertible {
@@ -85,6 +86,8 @@ struct KnobPanelViewModelTests {
     #expect(panel.ignored == ["no_such_knob", "stack_feather"])
     #expect(panel.patch == KnobPatch(values: ["fwhm_sigma": .number(3.5)]))
     #expect(panel.changedCount == 1)
+    panel.resetAll()
+    #expect(panel.ignored.isEmpty && panel.patch.values.isEmpty)
   }
 
   @Test("edits serialise to the exact legacy wire keys a run records")
@@ -110,5 +113,16 @@ struct KnobPanelViewModelTests {
     #expect(
       AppGlossary.label("knob.fwhm_sigma", locale: Locale(identifier: "fr"), in: AppGlossary.knobs)
         == "Pose floue (σ)")
+  }
+
+  @Test("a run of another preset gets the edits measured against that preset")
+  func testPatchForAnotherPreset() {
+    let panel = KnobPanelViewModel(mode: .deepsky)
+    panel.set("background_degree", to: .number(1))
+    panel.set("fwhm_sigma", to: .number(4))
+    #expect(panel.patch == KnobPatch(values: ["fwhm_sigma": .number(4)]))
+    #expect(
+      panel.patch(for: .nebula)
+        == KnobPatch(values: ["background_degree": .number(1), "fwhm_sigma": .number(4)]))
   }
 }

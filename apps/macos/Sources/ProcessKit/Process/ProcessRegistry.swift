@@ -23,7 +23,8 @@ package struct ProcessRegistry {
   package static func standard() throws -> Self {
     try Self([
       ChannelCombinationProcess.self, StretchProcess.self, HDRProcess.self,
-      ColourBalanceProcess.self, SkyDesatProcess.self, CurvesProcess.self, SaturationProcess.self,
+      EmissionScreensProcess.self, ColourBalanceProcess.self, SkyDesatProcess.self,
+      CurvesProcess.self, SaturationProcess.self,
     ])
   }
 

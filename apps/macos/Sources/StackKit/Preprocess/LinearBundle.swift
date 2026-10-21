@@ -51,10 +51,13 @@ package struct LinearBundle: Codable, Equatable, Sendable {
     package var stats: Stats
     /// The continuum scale of a line layer (multi-night Hα continuum subtraction, 0066).
     package var continuumK: Double?
+    /// The plane `continuumK` was fitted against (`R`, `RGB.r`…): what the Studio subtracts.
+    package var continuumReference: String?
 
     enum CodingKeys: String, CodingKey {
       case id, role, file, source, stats
       case continuumK = "continuum_k"
+      case continuumReference = "continuum_ref"
     }
   }
 

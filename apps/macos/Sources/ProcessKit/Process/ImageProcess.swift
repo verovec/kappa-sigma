@@ -35,6 +35,10 @@ package protocol ImageProcess {
   /// Values the user may apply, computed from `stats` only; never applied by the process.
   func suggestions(stats: LayerStats) -> [Suggestion]
 
+  /// Values the user may apply, computed from `stats` and the bundle statistics of the layers
+  /// the process reads (`RenderContext.layerStats`); `suggestions(stats:)` by default.
+  func suggestions(stats: LayerStats, layers: [String: LayerStats]) -> [Suggestion]
+
   /// Every `Suggestion.reason` the process can give: English keys of its catalog (gated in fr).
   static var suggestionReasons: [String] { get }
 
@@ -48,6 +52,11 @@ extension ImageProcess {
 
   /// No suggestion.
   package func suggestions(stats: LayerStats) -> [Suggestion] { [] }
+
+  /// The suggestions of the input's statistics alone.
+  package func suggestions(stats: LayerStats, layers: [String: LayerStats]) -> [Suggestion] {
+    suggestions(stats: stats)
+  }
 
   /// No suggestion reason.
   package static var suggestionReasons: [String] { [] }
@@ -85,15 +94,21 @@ package struct RenderContext {
   /// The bundle's layers by id (`RGB`, `R`, `G`, `B`, `L`, `Ha`, `OIII`, `SII`…), at the same
   /// size as the input: what a process reads besides its input (combination, screens).
   package let layers: [String: GPUImage]
+  /// The bundle statistics of `layers`, by the same ids (R2: what a process reads instead of
+  /// measuring a layer).
+  package let layerStats: [String: LayerStats]
 
-  /// A context encoding into `commands` at `scale` for `purpose`, with the bundle `layers`.
+  /// A context encoding into `commands` at `scale` for `purpose`, with the bundle `layers` and
+  /// their `layerStats`.
   package init(
-    commands: MTLCommandBuffer, scale: Double, purpose: Purpose, layers: [String: GPUImage] = [:]
+    commands: MTLCommandBuffer, scale: Double, purpose: Purpose, layers: [String: GPUImage] = [:],
+    layerStats: [String: LayerStats] = [:]
   ) {
     self.commands = commands
     self.scale = scale
     self.purpose = purpose
     self.layers = layers
+    self.layerStats = layerStats
   }
 }
 

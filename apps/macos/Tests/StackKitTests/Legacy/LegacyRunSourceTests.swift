@@ -162,6 +162,35 @@ struct LegacyRunSourceTests {
     #expect(try LinearBundle.build(fromLegacyRun: source) == written)
   }
 
+  @Test(
+    "a stack this app ran (bundle.json, no run.json) opens under the project's target name",
+    .scratchDirectory)
+  func testOpensAppStack() throws {
+    let run = try LegacyRunFixture.make(
+      in: ScratchDirectory.url, files: ["rgb_base", "syn_Ha"], color: "osc")
+    try FileManager.default.removeItem(at: run.appendingPathComponent("run.json"))
+    let written = try BundleWriter().write(
+      runID: "20261021_210000", colorModel: .osc,
+      layers: ["rgb_base", "syn_Ha"].map {
+        BundleWriter.Input(
+          filter: $0 == "rgb_base" ? "RGB" : "Ha", file: run.appendingPathComponent($0 + ".fits"),
+          source: $0 == "rgb_base" ? "rgb_base" : "syn")
+      },
+      to: run)
+
+    let source = try LegacyRunSource(stack: run, object: "M31")
+    #expect(source.runID == "20261021_210000" && source.object == "M31")
+    #expect(source.colorModel == .osc && source.bundle == written)
+    #expect(source.layers.map(\.id) == ["RGB", "Ha"])
+    #expect(source.layers.allSatisfy { $0.frames == nil })
+    #expect(source.grid.width == 4 && source.grid.height == 3)
+
+    try FileManager.default.removeItem(at: run.appendingPathComponent(BundleWriter.fileName))
+    #expect(throws: LegacyRunError.noBundle(run.path)) {
+      try LegacyRunSource(stack: run, object: "M31")
+    }
+  }
+
   @Test("a bundle in linear/ resolves its layer files there", .scratchDirectory)
   func testBundleInLinearFolder() throws {
     let run = try LegacyRunFixture.make(in: ScratchDirectory.url, files: [], color: "mono")

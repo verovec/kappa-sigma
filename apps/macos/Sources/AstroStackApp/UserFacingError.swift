@@ -7,6 +7,7 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
   case siril(SirilError)
   case inspect(InspectError)
   case calibration(CalibrationError)
+  case preprocess(PreprocessError)
   /// The document was closed under an open sheet.
   case projectClosed
   /// An error without a sentence of its own (SQLite, FITS, the file system): its description,
@@ -20,6 +21,7 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     case let error as SirilError: self = .siril(error)
     case let error as InspectError: self = .inspect(error)
     case let error as CalibrationError: self = .calibration(error)
+    case let error as PreprocessError: self = .preprocess(error)
     case let error as LocalizedError where error.errorDescription != nil:
       self = .other(error.errorDescription ?? "")
     // A system error has a sentence of its own; a Swift error without one would read
@@ -35,6 +37,7 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     case .siril(let error): Self.message(error)
     case .inspect(let error): Self.message(error)
     case .calibration(let error): Self.message(error)
+    case .preprocess(let error): Self.message(error)
     case .projectClosed: .app("This project is not open any more; reopen it and import again.")
     case .other(let description): .app("\(description)")
     }
@@ -85,6 +88,21 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     case .unreadableMaster(let path): .app("The master \(path) cannot be measured.")
     case .masterFailed(let name, let reason):
       .app("Siril could not build the master \(name): \(reason)")
+    }
+  }
+
+  private static func message(_ error: PreprocessError) -> LocalizedStringResource {
+    switch error {
+    case .belowStackMinimum(let survivors, let registered):
+      .app("Only \(survivors) of \(registered) frames survived grading: Siril needs two to stack.")
+    case .mixedDimensions(let layers):
+      .app("The stacked layers have different sizes: \(layers.joined(separator: ", ")).")
+    case .targetBusy(let path):
+      .app("Another run is already writing \(path): wait for it or cancel it.")
+    case .noChannels(let errors):
+      .app("No channel could be stacked: \(errors.joined(separator: "; "))")
+    case .mixedColorModel:
+      .app("Mono and colour lights are mixed: exclude one kind on the Import sheet, then rerun.")
     }
   }
 }

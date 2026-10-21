@@ -17,6 +17,54 @@
         }
       }
     },
+    "%@ trail mask: %lld trails on %lld of %lld frames": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ trail mask: %lld trails on %lld of %lld frames"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, masque de traînées : %lld traînées sur %lld des %lld poses"
+          }
+        }
+      }
+    },
+    "%@: %lld of %lld frames stacked": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@: %lld of %lld frames stacked"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ : %lld poses empilées sur %lld"
+          }
+        }
+      }
+    },
+    "%@: not stacked — %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@: not stacked — %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ : non empilé — %@"
+          }
+        }
+      }
+    },
     "%lld frames": {
       "localizations": {
         "en": {
@@ -193,6 +241,22 @@
         }
       }
     },
+    "Another run is already writing %@: wait for it or cancel it.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Another run is already writing %@: wait for it or cancel it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un autre empilement écrit déjà dans %@ : attendez-le ou annulez-le."
+          }
+        }
+      }
+    },
     "Bring All to Front": {
       "localizations": {
         "en": {
@@ -257,6 +321,22 @@
         }
       }
     },
+    "Cancelled": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancelled"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annulé"
+          }
+        }
+      }
+    },
     "Capture nights": {
       "localizations": {
         "en": {
@@ -269,6 +349,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nuits de capture"
+          }
+        }
+      }
+    },
+    "Channels": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Channels"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canaux"
           }
         }
       }
@@ -413,6 +509,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Couper"
+          }
+        }
+      }
+    },
+    "Decisions": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decisions"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Décisions"
+          }
+        }
+      }
+    },
+    "Deep sky": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deep sky"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ciel profond"
           }
         }
       }
@@ -609,6 +737,22 @@
         }
       }
     },
+    "Filter the journal": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filter the journal"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filtrer le journal"
+          }
+        }
+      }
+    },
     "Force these masters even when they do not match": {
       "localizations": {
         "en": {
@@ -769,6 +913,22 @@
         }
       }
     },
+    "Kept in the stack folder": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kept in the stack folder"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conservé dans le dossier de l’empilement"
+          }
+        }
+      }
+    },
     "Language": {
       "localizations": {
         "en": {
@@ -781,6 +941,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Langue"
+          }
+        }
+      }
+    },
+    "Last journal lines": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last journal lines"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dernières lignes du journal"
           }
         }
       }
@@ -833,6 +1009,22 @@
         }
       }
     },
+    "Masters, stacks and the bundle are written inside the project.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masters, stacks and the bundle are written inside the project."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les masters, les empilements et le bundle sont écrits dans le projet."
+          }
+        }
+      }
+    },
     "Measured from the pixels": {
       "localizations": {
         "en": {
@@ -861,6 +1053,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Placer dans le Dock"
+          }
+        }
+      }
+    },
+    "Mono and colour lights are mixed: exclude one kind on the Import sheet, then rerun.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mono and colour lights are mixed: exclude one kind on the Import sheet, then rerun."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brutes mono et couleur mélangées : excluez-en un type dans la feuille d’import, puis relancez."
+          }
+        }
+      }
+    },
+    "Nebula": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nebula"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nébuleuse"
           }
         }
       }
@@ -913,6 +1137,22 @@
         }
       }
     },
+    "No channel could be stacked: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No channel could be stacked: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun canal n’a pu être empilé : %@"
+          }
+        }
+      }
+    },
     "No folder chosen": {
       "localizations": {
         "en": {
@@ -957,6 +1197,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Objet"
+          }
+        }
+      }
+    },
+    "Only %lld of %lld frames survived grading: Siril needs two to stack.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only %lld of %lld frames survived grading: Siril needs two to stack."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seules %lld des %lld poses ont passé le tri : Siril en empile deux au minimum."
           }
         }
       }
@@ -1069,6 +1325,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Les mesures par brute, le blink et le choix garder ou rejeter apparaîtront ici."
+          }
+        }
+      }
+    },
+    "Preset": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preset"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Préréglage"
           }
         }
       }
@@ -1261,6 +1533,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rétablir"
+          }
+        }
+      }
+    },
+    "Run": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Run"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lancer"
+          }
+        }
+      }
+    },
+    "Run calibrates, grades and stacks the nights, each step with its journal.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Run calibrates, grades and stacks the nights, each step with its journal."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lancer calibre, trie et empile les nuits, chaque étape avec son journal."
           }
         }
       }
@@ -1569,6 +1873,22 @@
         }
       }
     },
+    "Stacked": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stacked"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Empilé"
+          }
+        }
+      }
+    },
     "Stacking": {
       "localizations": {
         "en": {
@@ -1581,6 +1901,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Empilement"
+          }
+        }
+      }
+    },
+    "Step %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Step %lld"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Étape %lld"
           }
         }
       }
@@ -1761,18 +2097,18 @@
         }
       }
     },
-    "The stacking settings and the run, with its progress and journal, will appear here.": {
+    "The stacked layers have different sizes: %@.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The stacking settings and the run, with its progress and journal, will appear here."
+            "value": "The stacked layers have different sizes: %@."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les réglages d’empilement et le lancement, avec sa progression et son journal, apparaîtront ici."
+            "value": "Les couches empilées n’ont pas la même taille : %@."
           }
         }
       }

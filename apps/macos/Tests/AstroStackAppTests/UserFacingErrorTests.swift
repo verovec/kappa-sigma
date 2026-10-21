@@ -82,6 +82,33 @@ struct UserFacingErrorTests {
     #expect(!french.contains("Error"), "never the raw enum")
   }
 
+  nonisolated static let preprocessCases: [Case] = [
+    Case(
+      error: PreprocessError.belowStackMinimum(survivors: 1, registered: 34), names: "34",
+      english: "Only 1 of 34 frames survived grading: Siril needs two to stack."),
+    Case(
+      error: PreprocessError.mixedDimensions(["RGB 6000×4000", "Ha 3000×2000"]),
+      names: "Ha 3000×2000",
+      english: "The stacked layers have different sizes: RGB 6000×4000, Ha 3000×2000."),
+    Case(
+      error: PreprocessError.targetBusy("/p/stacks/R"), names: "/p/stacks/R",
+      english: "Another run is already writing /p/stacks/R: wait for it or cancel it."),
+    Case(
+      error: PreprocessError.noChannels(["RGB: no frame survived"]),
+      names: "RGB: no frame survived",
+      english: "No channel could be stacked: RGB: no frame survived"),
+    Case(
+      error: PreprocessError.mixedColorModel, names: "",
+      english: "Mono and colour lights are mixed: exclude one kind on the Import sheet, then rerun."
+    ),
+  ]
+
+  @Test(
+    "every preprocessing error has an English and a French sentence", arguments: preprocessCases)
+  func testEveryPreprocessErrorHasASentence(_ row: Case) {
+    testEverySirilAndImportErrorHasASentence(row)
+  }
+
   /// A Swift error with no sentence of its own, carrying the path the user must act on.
   struct BrokenFrame: Error { let path: String }
 

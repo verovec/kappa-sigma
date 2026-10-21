@@ -13,6 +13,8 @@ internal import SwiftUI
 package final class ProjectDocument: NSDocument {
   private var project: ProjectPackage?
   private var isTemporary = false
+  /// The window's model, so closing the project stops a run that writes into it.
+  private var windowModel: ProjectWindowModel?
 
   /// The folder of the package the document currently edits.
   package var packageURL: URL? { project?.url }
@@ -118,6 +120,7 @@ package final class ProjectDocument: NSDocument {
 
   /// Closes the package (deleting an unsaved untitled one) before closing the document.
   override package func close() {
+    windowModel?.cancelRun()
     if let project { release(project) }
     project = nil
     super.close()
@@ -178,7 +181,9 @@ package final class ProjectDocument: NSDocument {
       contentRect: NSRect(x: 0, y: 0, width: 960, height: 640),
       styleMask: [.titled, .closable, .miniaturizable, .resizable],
       backing: .buffered, defer: false)
-    let model = ProjectWindowModel(store: { [weak self] in self?.project?.store })
+    let model = ProjectWindowModel(
+      store: { [weak self] in self?.project?.store }, folder: { [weak self] in self?.project?.url })
+    windowModel = model
     let content = NSHostingView(rootView: ProjectWindowView(model: model).interfaceLocale())
     // Only the minimum size comes from SwiftUI; the window keeps its own frame.
     content.sizingOptions = [.minSize]

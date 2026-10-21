@@ -70,15 +70,26 @@ extension ProjectStore {
   /// The stack `id`, or `nil`.
   package func stack(id: Int64) throws -> ProjectStack? {
     try pool.read { db in
-      guard
-        let row = try Row.fetchOne(db, sql: "SELECT * FROM stacks WHERE id = ?", arguments: [id])
-      else { return nil }
-      let sources = try Int64.fetchAll(
-        db, sql: "SELECT source_id FROM stack_sources WHERE stack_id = ? ORDER BY source_id",
-        arguments: [id])
-      return ProjectStack(
-        id: row["id"], bundlePath: row["bundle_path"], sourceIDs: sources,
-        paramsJSON: row["params_json"], createdAt: row["created_at"], updatedAt: row["updated_at"])
+      try Row.fetchOne(db, sql: "SELECT * FROM stacks WHERE id = ?", arguments: [id])
+        .map { try Self.stack($0, in: db) }
     }
+  }
+
+  /// Every stack, oldest first.
+  package func stacks() throws -> [ProjectStack] {
+    try pool.read { db in
+      try Row.fetchAll(db, sql: "SELECT * FROM stacks ORDER BY id")
+        .map { try Self.stack($0, in: db) }
+    }
+  }
+
+  private static func stack(_ row: Row, in db: Database) throws -> ProjectStack {
+    let id: Int64 = row["id"]
+    let sources = try Int64.fetchAll(
+      db, sql: "SELECT source_id FROM stack_sources WHERE stack_id = ? ORDER BY source_id",
+      arguments: [id])
+    return ProjectStack(
+      id: id, bundlePath: row["bundle_path"], sourceIDs: sources,
+      paramsJSON: row["params_json"], createdAt: row["created_at"], updatedAt: row["updated_at"])
   }
 }

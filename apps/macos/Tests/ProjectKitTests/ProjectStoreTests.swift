@@ -40,6 +40,22 @@ struct ProjectStoreTests {
     #expect(try store.tableNames() == (Self.applicationTables + ["schema_migrations"]).sorted())
   }
 
+  @Test("stacks lists every stack oldest first, each with its sources", .scratchDirectory)
+  func testStacksListed() throws {
+    let package = try Self.newPackage()
+    defer { try? package.close() }
+    let store = package.store
+    #expect(try store.stacks().isEmpty)
+    let night = try store.addSource(kind: .night, path: "/captures/M31-DB")
+    let other = try store.addSource(kind: .night, path: "/captures/M31-BB")
+    let first = try store.addStack(
+      bundlePath: "stacks/A", sourceIDs: [other.id, night.id], paramsJSON: "{}")
+    let second = try store.addStack(bundlePath: "stacks/B", sourceIDs: [], paramsJSON: "{}")
+
+    #expect(try store.stacks() == [first, second])
+    #expect(try store.stacks().first?.sourceIDs == [night.id, other.id])
+  }
+
   struct RoundTrip: Sendable, CustomTestStringConvertible {
     let role: String
     let sourceKind: ProjectSource.Kind

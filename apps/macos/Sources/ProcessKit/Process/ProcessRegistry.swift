@@ -24,7 +24,7 @@ package struct ProcessRegistry {
     try Self([
       ChannelCombinationProcess.self, StretchProcess.self, HDRProcess.self,
       EmissionScreensProcess.self, ColourBalanceProcess.self, SkyDesatProcess.self,
-      CurvesProcess.self, SaturationProcess.self,
+      CurvesProcess.self, SaturationProcess.self, StarRecompositionProcess.self,
     ])
   }
 

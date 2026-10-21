@@ -93,8 +93,11 @@ struct ScreensLiveTests {
     ).read()
 
     let rendered = try ScratchDirectory.url.appendingPathComponent("screens.png")
-    try FinishImages.writePNG16(
-      planes: ours, width: size.0, height: size.1, bottomUp: true, to: rendered)
+    // Planes in FITS file order (bottom-up): ImageExport flips them to the PNG's top-down rows.
+    try ImageExport.write(
+      AstroImage(
+        width: size.0, height: size.1, planes: ours, metadata: ImageMetadata(rowOrder: .bottomUp)),
+      to: rendered, format: .png16)
     let delta = try FinishImages.difference(
       rendered, root.appendingPathComponent("crop/screens_only.png"))
     let report = "mean |Δ| \(delta.meanAbs * 255)/255, max \(delta.maxAbs * 255)/255"

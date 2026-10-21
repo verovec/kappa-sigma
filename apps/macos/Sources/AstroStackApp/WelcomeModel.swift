@@ -6,9 +6,9 @@ package import StackKit
 
 /// What the welcome window shows: the recent projects and the host tools' status.
 ///
-/// It reads and reports only: opening, creating and installing are the window's buttons. A
-/// project open in a document is never opened a second time: its counts come from that document,
-/// since a second pool on its `project.db` would checkpoint and delete the WAL under it.
+/// It reads and reports only: opening, creating and installing are the window's buttons. A recent
+/// project is read through a read-only connection (never migrated nor checkpointed); one open in
+/// a document is counted by that document.
 @Observable
 package final class WelcomeModel {
   /// A recent project as listed: its target and, when it could be read, its counts.
@@ -96,14 +96,14 @@ package final class WelcomeModel {
     tools = HostTool.allCases.compactMap { tool in
       found[tool].map { ToolRow(tool: tool, status: $0) }
     }
-    cards = Dictionary(
-      uniqueKeysWithValues: tools.map { row in
-        (
-          row.tool,
-          InstallCardModel(
-            state: Self.cardState(row.status), locate: Self.locator(row.tool, hostTools))
-        )
-      })
+    for row in tools {
+      if let card = cards[row.tool] {
+        card.show(Self.cardState(row.status))
+      } else {
+        cards[row.tool] = InstallCardModel(
+          state: Self.cardState(row.status), check: Self.check(row.tool, hostTools))
+      }
+    }
   }
 
   /// The install card state of `status`.
@@ -115,21 +115,17 @@ package final class WelcomeModel {
     }
   }
 
-  /// An install card's re-check: the tool's path once it is usable.
-  nonisolated package static func locator(_ tool: HostTool, _ hostTools: HostTools)
-    -> @Sendable @concurrent () async -> URL?
+  /// An install card's re-check: the tool probed again, as the card shows it.
+  nonisolated package static func check(_ tool: HostTool, _ hostTools: HostTools)
+    -> @Sendable @concurrent () async -> InstallCardModel.State
   {
-    { @concurrent in
-      let status = await hostTools.locate(tool)
-      return status.isUsable ? URL(fileURLWithPath: status.path) : nil
-    }
+    { @concurrent in cardState(await hostTools.locate(tool)) }
   }
 
-  /// The counts of the package at `url` (not open in any document), or `nil` when unreadable.
+  /// The counts of the package at `url`, read-only (never migrated nor checkpointed), or `nil`
+  /// when unreadable.
   @concurrent
   private nonisolated static func readSummary(_ url: URL) async -> ProjectSummary? {
-    guard let package = try? ProjectPackage.open(at: url) else { return nil }
-    defer { try? package.close() }
-    return try? package.store.summary()
+    try? ProjectPackage.readSummary(at: url)
   }
 }

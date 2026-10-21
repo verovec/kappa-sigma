@@ -54,7 +54,8 @@ package struct ToolStrip: View {
   /// Why the tool is needed, or why the installed one cannot be used.
   nonisolated package static func reason(_ row: WelcomeModel.ToolRow) -> LocalizedStringResource {
     if case .tooOld(_, let version) = row.status {
-      return .app("Version \(version) is too old: AstroStack needs 1.4 or later.")
+      return .app(
+        "Version \(version) is too old: AstroStack needs \(SirilVersion.floorLabel) or later.")
     }
     return switch row.tool {
     case .siril: .app("Calibrates, registers and stacks the captures.")

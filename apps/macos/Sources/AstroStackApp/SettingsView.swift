@@ -39,11 +39,7 @@ package struct SettingsView: View {
         Button(.app("Relaunch"), action: relaunch).disabled(choice == launched)
       }
       if let tools {
-        Section {
-          ToolStrip(model: tools)
-        } header: {
-          Text(.app("Tools"))
-        }
+        Section { ToolStrip(model: tools) }
       }
     }
     .formStyle(.grouped)

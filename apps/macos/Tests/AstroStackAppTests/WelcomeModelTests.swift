@@ -86,11 +86,23 @@ struct WelcomeModelTests {
     #expect(model.cards[.starnet]?.state == .outdated(version: "1.0"))
   }
 
-  @Test("an install card's re-check reports the tool's path only once it is usable")
-  func testLocator() async {
+  @Test("an install card's re-check reports what the tool is now, an old one staying outdated")
+  func testCheck() async {
     let tools = WelcomeViewTests.mixedTools
-    #expect(await WelcomeModel.locator(.siril, tools)()?.path == "/Applications/Siril.app")
-    #expect(await WelcomeModel.locator(.graxpert, tools)() == nil)
-    #expect(await WelcomeModel.locator(.starnet, tools)() == nil)
+    let siril = URL(fileURLWithPath: "/Applications/Siril.app")
+    #expect(await WelcomeModel.check(.siril, tools)() == .found(siril))
+    #expect(await WelcomeModel.check(.graxpert, tools)() == .missing)
+    #expect(await WelcomeModel.check(.starnet, tools)() == .outdated(version: "1.0"))
+  }
+
+  @Test("a second check updates the cards in place: a window showing one keeps it")
+  func testCardsKeptAcrossChecks() async {
+    let model = WelcomeModel(recentURLs: { [] }, tools: WelcomeViewTests.mixedTools)
+    await model.recheckTools()
+    let card = model.cards[.graxpert]
+
+    await model.recheckTools()
+
+    #expect(model.cards[.graxpert] === card)
   }
 }

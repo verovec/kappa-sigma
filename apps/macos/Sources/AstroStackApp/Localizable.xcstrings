@@ -2097,22 +2097,6 @@
         }
       }
     },
-    "Tools": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tools"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Outils"
-          }
-        }
-      }
-    },
     "Type": {
       "localizations": {
         "en": {
@@ -2161,18 +2145,18 @@
         }
       }
     },
-    "Version %@ is too old: AstroStack needs 1.4 or later.": {
+    "Version %@ is too old: AstroStack needs %@ or later.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Version %@ is too old: AstroStack needs 1.4 or later."
+            "value": "Version %@ is too old: AstroStack needs %@ or later."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La version %@ est trop ancienne : AstroStack demande la 1.4 ou plus récente."
+            "value": "La version %@ est trop ancienne : AstroStack demande la %@ ou plus récente."
           }
         }
       }

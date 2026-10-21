@@ -23,7 +23,7 @@ package enum SirilTool {
   package static func path(
     environment: [String: String] = ProcessInfo.processInfo.environment
   ) -> String {
-    environment["SIRIL_BIN"].flatMap { $0.isEmpty ? nil : $0 } ?? defaultPath
+    HostTools.override(environment, "SIRIL_BIN") ?? defaultPath
   }
 
   /// Throws `notInstalled` unless `path` is an executable file.

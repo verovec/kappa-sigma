@@ -104,4 +104,15 @@ struct WelcomeViewTests {
     #expect(WelcomeWindow.isVisible)
     #expect(WelcomeWindow.model.isNaming)
   }
+
+  @Test("a project window, however it was opened, dismisses the welcome window")
+  func testProjectWindowDismissesWelcome() throws {
+    WelcomeWindow.show()
+    let document = try ProjectDocument(type: ProjectPackage.typeIdentifier)
+    defer { document.close() }
+
+    document.makeWindowControllers()
+
+    #expect(!WelcomeWindow.isVisible)
+  }
 }

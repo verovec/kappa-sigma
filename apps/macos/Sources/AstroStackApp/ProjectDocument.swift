@@ -190,6 +190,8 @@ package final class ProjectDocument: NSDocument {
     window.contentView = content
     window.center()
     addWindowController(NSWindowController(window: window))
+    // A project is open, however it was opened (welcome, ⌘O, Open Recent, Finder, -openRun).
+    WelcomeWindow.dismiss()
     Self.logger.info("project window opened: \(window.title, privacy: .public)")
   }
 

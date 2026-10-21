@@ -83,7 +83,8 @@ package struct HostTools: Sendable {
     exists(path) ? .found(path: path, version: nil) : .missing(path: path)
   }
 
-  private static func override(_ environment: [String: String], _ key: String) -> String? {
+  /// `environment[key]`, an empty value counting as unset (shared with `SirilTool.path`).
+  static func override(_ environment: [String: String], _ key: String) -> String? {
     environment[key].flatMap { $0.isEmpty ? nil : $0 }
   }
 }

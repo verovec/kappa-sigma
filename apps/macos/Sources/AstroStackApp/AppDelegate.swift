@@ -4,13 +4,15 @@ package import AppKit
 /// with no window): a project is named after its target there, never « Untitled ».
 /// `NSDocumentController` does the rest.
 package final class AppDelegate: NSObject, NSApplicationDelegate {
-  /// Set once launched: `-openImage` only holds the welcome window back at launch.
-  private var hasLaunched = false
+  /// Set once AppKit first asked: `-openImage` only holds the welcome window back at launch,
+  /// whenever AppKit asks then (restoration may defer it past `applicationDidFinishLaunching`).
+  private var askedOnce = false
 
   /// Yes, unless the app is launching with `-openImage`: AppKit then asks
   /// `applicationOpenUntitledFile` (at launch, and from the Dock with no window open).
   package func applicationShouldOpenUntitledFile(_ sender: NSApplication) -> Bool {
-    hasLaunched || Self.launchImage == nil
+    defer { askedOnce = true }
+    return askedOnce || Self.launchImage == nil
   }
 
   /// Shows the welcome window instead of creating an untitled project.
@@ -22,7 +24,6 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
   /// `-openImage <path>` opens that FITS in the viewer at launch; `-openRun <folder>` opens a
   /// legacy run into the open project, or an untitled one so the run is still recorded.
   package func applicationDidFinishLaunching(_ notification: Notification) {
-    hasLaunched = true
     Task { await Self.openLaunchArguments(UserDefaults.standard) }
   }
 
@@ -35,6 +36,7 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
       await ImageViewerWindow.show(URL(fileURLWithPath: path), report: report).value
     }
     if let path = defaults.string(forKey: "openRun") {
+      // A developer flag: with no project open, an untitled one records the run.
       let project =
         LegacyRunWindow.projectDocument()
         ?? (try? NSDocumentController.shared.openUntitledDocumentAndDisplay(true))

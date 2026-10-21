@@ -38,6 +38,11 @@ package enum WelcomeWindow {
     return window
   }
 
+  /// Closes the window if it is up: a project window just opened.
+  package static func dismiss() {
+    window?.close()
+  }
+
   /// Whether the window is on screen.
   package static var isVisible: Bool { window?.isVisible ?? false }
 
@@ -69,12 +74,11 @@ package enum WelcomeWindow {
     for url in NSDocumentController.shared.urlsFromRunningOpenPanel() ?? [] { open(url) }
   }
 
-  /// Opens the project at `url` and closes the welcome window; a failure is shown, not swallowed.
+  /// Opens the project at `url` (its window dismisses this one); a failure is shown, not swallowed.
   private static func open(_ url: URL) {
     Task {
       do {
         _ = try await NSDocumentController.shared.openDocument(withContentsOf: url, display: true)
-        window?.close()
       } catch {
         logger.error("cannot open \(url.path, privacy: .public): \(error, privacy: .public)")
         NSAlert(error: error).runModal()

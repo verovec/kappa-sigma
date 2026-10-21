@@ -97,6 +97,10 @@ package struct WelcomeView: View {
     }
     .padding(DesignMetrics.spacingL)
     .frame(width: 380)
+    .onAppear {
+      target = ""
+      error = nil
+    }
   }
 
   private func create() {

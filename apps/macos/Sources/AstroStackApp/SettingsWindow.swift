@@ -9,7 +9,7 @@ package enum SettingsWindow {
   package static func show() -> NSWindow {
     // The tools are probed once; afterwards only « Re-check » runs siril-cli again.
     if WelcomeWindow.model.tools.isEmpty { Task { await WelcomeWindow.model.recheckTools() } }
-    UtilityWindow.show("settings", title: .app("Settings"), resizable: false) {
+    return UtilityWindow.show("settings", title: .app("Settings"), resizable: false) {
       SettingsView(setting: LanguageSetting(), relaunch: relaunch, tools: WelcomeWindow.model)
     }
   }

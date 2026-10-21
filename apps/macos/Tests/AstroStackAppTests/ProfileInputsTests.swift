@@ -79,6 +79,12 @@ struct ProfileInputsTests {
         sets: ["L", "R", "G", "B", "Ha"].map { LightSet("M 31", $0, false, .unknown) },
         expected: .init(object: "M 31", camera: .mono, filters: .lrgbHa)),
       Case(
+        name: "mono, filters by their aliases",
+        sets: ["Lum", "Red", "Green", "Blue", "Halpha"].map {
+          LightSet("M 31", $0, false, .unknown)
+        },
+        expected: .init(object: "M 31", camera: .mono, filters: .lrgbHa)),
+      Case(
         name: "mono SHO",
         sets: ["Ha", "OIII", "SII"].map { LightSet("NGC 7000", $0, false, .unknown) },
         expected: .init(object: "NGC 7000", camera: .mono, filters: .narrowband)),

@@ -22,7 +22,7 @@ extension ProfileProposal.Inputs {
     let filters: Profile.Filters? =
       switch camera {
       case .osc: Self.oscFilters(inventory, lights: lights)
-      case .mono: Self.monoFilters(Set(lights.compactMap { Filter(rawValue: $0.key.filter) }))
+      case .mono: Self.monoFilters(Set(lights.compactMap { Filter.token($0.key.filter) }))
       case nil: nil
       }
     self.init(object: objects.count == 1 ? objects.first : nil, camera: camera, filters: filters)

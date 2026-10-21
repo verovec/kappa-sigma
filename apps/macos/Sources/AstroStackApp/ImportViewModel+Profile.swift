@@ -84,7 +84,10 @@ extension ImportViewModel {
   package func profileToRecord(for request: ImportRequest) -> KeptProfile? {
     guard request == self.request else { return nil }
     switch profileChoice {
-    case .proposed: return planIsCurrent ? KeptProfile(id: selectedProfile?.id) : nil
+    // Nothing proposed is not « none »: it records nothing, keeping what a source already has.
+    case .proposed:
+      guard planIsCurrent, let proposed = proposal?.proposed else { return nil }
+      return KeptProfile(id: proposed.id)
     case .profile(let id): return KeptProfile(id: id)
     case .none: return KeptProfile(id: nil)
     }

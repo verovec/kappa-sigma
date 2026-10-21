@@ -94,6 +94,20 @@ struct ImportProfileTests {
       model.profileToRecord(for: model.request) == KeptProfile(id: "galaxy-osc-broadband-dualband"))
   }
 
+  @Test("nothing proposed records nothing: a source keeps the profile it had")
+  func testNothingProposedRecordsNothing() async throws {
+    let model = ImportViewModel(planning: { request in
+      ImportPlan(
+        inventory: ProfileInputsTests.inventory([
+          ProfileInputsTests.LightSet("Sh2-129", Filter.color, true, .unknown)
+        ]), library: [], request: request)
+    })
+    model.choose(folder: URL(fileURLWithPath: "/c/Sh2-129"))
+    await model.settled()
+    #expect(model.proposal?.proposed == nil)
+    #expect(model.profileToRecord(for: model.request) == nil)
+  }
+
   @Test("a new folder resets the profile choice to the proposal")
   func testFolderResetsChoice() async throws {
     let model = await Self.model()

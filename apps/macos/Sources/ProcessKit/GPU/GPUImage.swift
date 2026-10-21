@@ -32,12 +32,9 @@ package final class GPUImage {
     guard planes.allSatisfy({ $0.count == width * height }) else { throw ProcessError.sizeMismatch }
     try self.init(device: device, width: width, height: height, channels: planes.count)
     for (texture, plane) in zip(self.planes, planes) {
-      unsafe plane.withUnsafeBytes { bytes in
-        guard let base = bytes.baseAddress else { return }
-        unsafe texture.replace(
-          region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: base,
-          bytesPerRow: width * MemoryLayout<Float>.stride)
-      }
+      unsafe texture.replace(
+        region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: plane,
+        bytesPerRow: width * MemoryLayout<Float>.stride)
     }
   }
 

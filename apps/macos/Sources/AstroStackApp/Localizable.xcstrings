@@ -609,6 +609,22 @@
         }
       }
     },
+    "Choose a profile": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a profile"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisir un profil"
+          }
+        }
+      }
+    },
     "Close": {
       "localizations": {
         "en": {

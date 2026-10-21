@@ -83,6 +83,10 @@ extension Profile {
   private static func notes(_ object: [String: Any], for ids: [String], context: String) throws
     -> [String: Text]
   {
+    // A why for a value the profile does not set is a typo in an id: refused, never dropped.
+    if let stray = object.keys.sorted().first(where: { !ids.contains($0) }) {
+      throw ProfileError.malformed("why for \(context).\(stray), which the profile does not set")
+    }
     var notes: [String: Text] = [:]
     for id in ids {
       guard let note = text(object[id]), !note.english.isEmpty, !note.french.isEmpty else {

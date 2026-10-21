@@ -57,9 +57,14 @@ package struct ImportProfileView: View {
   private var picker: some View {
     Picker(
       selection: Binding(
-        get: { model.selectedProfile?.id ?? "" },
-        set: { model.chooseProfile($0.isEmpty ? .none : .profile($0)) })
+        get: { Self.tag(for: model) },
+        set: { model.chooseProfile(Self.choice(for: $0)) })
     ) {
+      // « Choose a profile »: the proposal stands, but there is none (or its plan is not current),
+      // so Add records nothing — never shown as « No profile », which records none.
+      if Self.tag(for: model) == Self.undecided {
+        Text(.app("Choose a profile")).tag(Self.undecided)
+      }
       Text(.app("No profile")).tag("")
       ForEach(model.profiles, id: \.id) { profile in
         Text(verbatim: profile.title.text(language: language)).tag(profile.id)
@@ -68,6 +73,27 @@ package struct ImportProfileView: View {
       Text(.app("Profile"))
     }
     .accessible(.importProfile, label: .app("Profile"))
+  }
+
+  /// The picker's tag of the undecided state.
+  package static let undecided = "?"
+
+  /// The picker's tag for the choice of `model`: what Add would record.
+  package static func tag(for model: ImportViewModel) -> String {
+    switch model.profileChoice {
+    case .none: ""
+    case .profile(let id): id
+    case .proposed: model.selectedProfile?.id ?? undecided
+    }
+  }
+
+  /// The choice a picker `tag` stands for.
+  package nonisolated static func choice(for tag: String) -> ProfileChoice {
+    switch tag {
+    case "": .none
+    case undecided: .proposed
+    default: .profile(tag)
+    }
   }
 
   /// Each value the profile sets, its « why » as the tooltip.

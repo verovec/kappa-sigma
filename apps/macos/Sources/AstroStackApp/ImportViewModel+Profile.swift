@@ -71,7 +71,8 @@ extension ImportViewModel {
   /// The profile the user keeps: the proposal until they pick another, or none.
   package var selectedProfile: Profile? {
     switch profileChoice {
-    case .proposed: proposal?.proposed
+    // A proposal counts only on the plan of the request as it stands.
+    case .proposed: planIsCurrent ? proposal?.proposed : nil
     case .profile(let id): profiles.first { $0.id == id }
     case .none: nil
     }

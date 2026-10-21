@@ -85,6 +85,13 @@ struct ProfileLibraryTests {
       ("unknown process", step { $0["process"] = "nope" }),
       ("value out of bounds", step { $0["values"] = ["enabled": 3] }),
       ("missing why", step { $0["why"] = [:] }),
+      (
+        "a why for a value not set",
+        step {
+          $0["why"] = ["strength": ["en": "x", "fr": "y"], "strenght": ["en": "x", "fr": "y"]]
+        }
+      ),
+      ("a version beyond Int", { $0["schemaVersion"] = 1e300 }),
       ("locked as a number", step { $0["locked"] = 1 }),
       ("version as a boolean", { $0["schemaVersion"] = true }),
     ]

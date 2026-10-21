@@ -106,6 +106,11 @@ struct ImportProfileTests {
     await model.settled()
     #expect(model.proposal?.proposed == nil)
     #expect(model.profileToRecord(for: model.request) == nil)
+    #expect(ImportProfileView.tag(for: model) == ImportProfileView.undecided, "never shown as none")
+    model.chooseProfile(ImportProfileView.choice(for: ""))
+    #expect(
+      model.profileToRecord(for: model.request) == KeptProfile(id: nil),
+      "« No profile » records none")
   }
 
   @Test("a new folder resets the profile choice to the proposal")

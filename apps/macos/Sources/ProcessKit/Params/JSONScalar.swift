@@ -14,11 +14,12 @@ enum JSONScalar {
   }
   // swiftlint:enable discouraged_optional_boolean
 
-  /// `value` when it is a JSON integer (not a boolean, no fraction).
+  /// `value` when it is a JSON integer: not a boolean, no fraction, within the range of `Int`.
   static func int(_ value: Any?) -> Int? {
-    guard let number = value as? NSNumber, CFGetTypeID(number) != CFBooleanGetTypeID(),
-      number.doubleValue == number.doubleValue.rounded()
-    else { return nil }
-    return number.intValue
+    guard let number = value as? NSNumber, CFGetTypeID(number) != CFBooleanGetTypeID() else {
+      return nil
+    }
+    // Exactly an Int: no fraction, inside Int's range (1e300 is refused, never wrapped).
+    return Int(exactly: number.doubleValue)
   }
 }

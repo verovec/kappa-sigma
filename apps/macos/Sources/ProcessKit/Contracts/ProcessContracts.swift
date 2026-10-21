@@ -32,19 +32,22 @@ package struct ProcessContracts {
   private let input: GPUImage
   private let stats: LayerStats
   private let layers: [String: GPUImage]
+  private let layerStats: [String: LayerStats]
   /// 1 on the left half, 0 on the right: every process also runs under it.
   private let halfMask: GPUImage
 
   /// Contracts run on `input` (non-uniform, so any change shows) with `stats` and the bundle
-  /// `layers` a process reads.
+  /// `layers` a process reads, with their bundle statistics `layerStats`.
   package init(
-    device: MTLDevice, input: GPUImage, stats: LayerStats, layers: [String: GPUImage] = [:]
+    device: MTLDevice, input: GPUImage, stats: LayerStats, layers: [String: GPUImage] = [:],
+    layerStats: [String: LayerStats] = [:]
   ) throws {
     self.device = device
     runner = try ProcessRunner(device: device)
     self.input = input
     self.stats = stats
     self.layers = layers
+    self.layerStats = layerStats
     let row = (0..<input.width).map { Float($0 < input.width / 2 ? 1 : 0) }
     halfMask = try GPUImage(
       device: device, width: input.width, height: input.height,
@@ -121,6 +124,7 @@ package struct ProcessContracts {
   ) throws -> [[Float]] {
     try runner.run(
       process, input: input, stats: stats, scale: scale, purpose: purpose, layers: layers,
+      layerStats: layerStats,
       mask: mask
     ).read()
   }

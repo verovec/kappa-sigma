@@ -321,6 +321,22 @@
         }
       }
     },
+    "Component Gallery": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Component Gallery"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Galerie de composants"
+          }
+        }
+      }
+    },
     "Copy": {
       "localizations": {
         "en": {

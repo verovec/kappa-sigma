@@ -1,3 +1,4 @@
+internal import RenderKit
 package import StackKit
 package import SwiftUI
 internal import UniformTypeIdentifiers
@@ -27,12 +28,7 @@ package struct ImportSheet: View {
     VStack(alignment: .leading, spacing: 12) {
       header
       if let error = model.error {
-        Label {
-          Text(error.message)
-        } icon: {
-          Image(systemName: "exclamationmark.triangle")
-        }
-        .foregroundStyle(.red)
+        StatusBadge(.error, error.message)
       }
       content
       footer
@@ -62,15 +58,9 @@ package struct ImportSheet: View {
       ImportOverridesView(model: model)
       Spacer()
     } else {
-      ContentUnavailableView {
-        Label {
-          Text(.app("No capture"))
-        } icon: {
-          Image(systemName: "folder")
-        }
-      } description: {
-        Text(.app("Choose a capture folder; it is read, never written."))
-      }
+      EmptyState(
+        .app("No capture"), message: .app("Choose a capture folder; it is read, never written."),
+        systemImage: "folder")
     }
   }
 
@@ -96,7 +86,7 @@ package struct ImportSheet: View {
     if !warnings.isEmpty {
       GroupBox {
         VStack(alignment: .leading, spacing: 4) {
-          ForEach(warnings, id: \.self) { Label($0, systemImage: "exclamationmark.triangle") }
+          ForEach(warnings, id: \.self) { StatusBadge(.attention, verbatim: $0) }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
       } label: {
@@ -111,7 +101,7 @@ package struct ImportSheet: View {
         .font(.caption).foregroundStyle(.secondary)
       Spacer()
       if let addError {
-        Text(addError.message).foregroundStyle(.red).lineLimit(2)
+        StatusBadge(.error, addError.message).lineLimit(2)
       }
       Button(.app("Cancel"), role: .cancel, action: onCancel).keyboardShortcut(.cancelAction)
       Button(.app("Add to Project")) { onAdd(model.request) }

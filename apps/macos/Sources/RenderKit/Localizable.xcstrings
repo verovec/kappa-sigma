@@ -17,6 +17,22 @@
         }
       }
     },
+    "Checking…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checking…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérification…"
+          }
+        }
+      }
+    },
     "Clear region": {
       "localizations": {
         "en": {
@@ -81,6 +97,22 @@
         }
       }
     },
+    "Default": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Par défaut"
+          }
+        }
+      }
+    },
     "Display stretch": {
       "localizations": {
         "en": {
@@ -97,6 +129,38 @@
         }
       }
     },
+    "Empty state": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Empty state"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "État vide"
+          }
+        }
+      }
+    },
+    "Failed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échec"
+          }
+        }
+      }
+    },
     "Fit": {
       "localizations": {
         "en": {
@@ -109,6 +173,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ajuster"
+          }
+        }
+      }
+    },
+    "GraXpert models and removes the sky background.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GraXpert models and removes the sky background."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GraXpert modélise et retire le fond de ciel."
           }
         }
       }
@@ -177,6 +257,118 @@
         }
       }
     },
+    "Host tools": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Host tools"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Outils hôtes"
+          }
+        }
+      }
+    },
+    "How much of the Hα layer is added to the red channel.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How much of the Hα layer is added to the red channel."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Part de la couche Hα ajoutée au canal rouge."
+          }
+        }
+      }
+    },
+    "Hα blend": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hα blend"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mélange Hα"
+          }
+        }
+      }
+    },
+    "Hα ceiling": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hα ceiling"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plafond Hα"
+          }
+        }
+      }
+    },
+    "Installed: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installed: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installé : %@"
+          }
+        }
+      }
+    },
+    "Install…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installer…"
+          }
+        }
+      }
+    },
+    "Light and dark values resolve with the window's appearance.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Light and dark values resolve with the window’s appearance."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les valeurs claires et sombres suivent l’apparence de la fenêtre."
+          }
+        }
+      }
+    },
     "Linked channels": {
       "localizations": {
         "en": {
@@ -205,6 +397,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Manuel"
+          }
+        }
+      }
+    },
+    "Measurements": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Measurements"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mesures"
           }
         }
       }
@@ -257,6 +465,86 @@
         }
       }
     },
+    "Needs a look": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needs a look"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À vérifier"
+          }
+        }
+      }
+    },
+    "No image": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No image"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune image"
+          }
+        }
+      }
+    },
+    "Noise": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noise"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bruit"
+          }
+        }
+      }
+    },
+    "Not available": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not available"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indisponible"
+          }
+        }
+      }
+    },
+    "Not installed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not installed"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non installé"
+          }
+        }
+      }
+    },
     "Off": {
       "localizations": {
         "en": {
@@ -289,6 +577,22 @@
         }
       }
     },
+    "Open an image to inspect it.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open an image to inspect it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrez une image pour l’inspecter."
+          }
+        }
+      }
+    },
     "Pan": {
       "localizations": {
         "en": {
@@ -301,6 +605,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Déplacer"
+          }
+        }
+      }
+    },
+    "Parameters": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Parameters"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paramètres"
           }
         }
       }
@@ -337,6 +657,22 @@
         }
       }
     },
+    "Re-check": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Re-check"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifier à nouveau"
+          }
+        }
+      }
+    },
     "Readout": {
       "localizations": {
         "en": {
@@ -349,6 +685,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mesure"
+          }
+        }
+      }
+    },
+    "Ready": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ready"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prêt"
           }
         }
       }
@@ -369,6 +721,22 @@
         }
       }
     },
+    "Reset to default": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset to default"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revenir à la valeur par défaut"
+          }
+        }
+      }
+    },
     "Shadows": {
       "localizations": {
         "en": {
@@ -385,6 +753,38 @@
         }
       }
     },
+    "Siril calibrates, registers and stacks the frames.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril calibrates, registers and stacks the frames."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril calibre, aligne et empile les brutes."
+          }
+        }
+      }
+    },
+    "Sky background": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sky background"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fond de ciel"
+          }
+        }
+      }
+    },
     "Split": {
       "localizations": {
         "en": {
@@ -397,6 +797,70 @@
           "stringUnit": {
             "state": "translated",
             "value": "Comparer"
+          }
+        }
+      }
+    },
+    "Star size (FWHM)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Star size (FWHM)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Taille des étoiles (FWHM)"
+          }
+        }
+      }
+    },
+    "StarNet separates the stars from the nebula for the star layer.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "StarNet separates the stars from the nebula for the star layer."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "StarNet sépare les étoiles de la nébuleuse pour la couche d’étoiles."
+          }
+        }
+      }
+    },
+    "Statuses": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Statuses"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "États"
+          }
+        }
+      }
+    },
+    "Tokens": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tokens"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jetons"
           }
         }
       }
@@ -429,6 +893,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Affichage"
+          }
+        }
+      }
+    },
+    "Why this value?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Why this value?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pourquoi cette valeur ?"
           }
         }
       }

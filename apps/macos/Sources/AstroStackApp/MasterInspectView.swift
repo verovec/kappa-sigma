@@ -1,3 +1,4 @@
+internal import RenderKit
 internal import StackKit
 package import SwiftUI
 
@@ -17,9 +18,9 @@ package struct MasterInspectView: View {
       if let inspection = model.inspection { stats(inspection) }
       // StackKit's warnings and rebuild notes, as it words them.
       ForEach(model.warnings, id: \.kind) { warning in
-        Label(warning.message, systemImage: "exclamationmark.triangle").foregroundStyle(.orange)
+        StatusBadge(.attention, verbatim: warning.message)
       }
-      if let error = model.error { Text(error.message).foregroundStyle(.red) }
+      if let error = model.error { StatusBadge(.error, error.message) }
       alternatives
       actions
       if let pending = model.pendingReplace {
@@ -73,7 +74,8 @@ package struct MasterInspectView: View {
         let name = MasterFormat.name(alternative.master.path)
         Text(.app("\(name) — \(MasterFormat.verdict(alternative.verdict))"))
           .font(.caption)
-          .foregroundStyle(alternative.verdict == .matches ? Color.primary : Color.secondary)
+          .foregroundStyle(
+            (alternative.verdict == .matches ? DesignColor.textPrimary : .textSecondary).color)
       }
     }
   }

@@ -80,6 +80,12 @@ package final class ViewerMTKView: MTKView, MTKViewDelegate {
 
   // MARK: - Drawing
 
+  /// The canvas grey follows the appearance: draw again when it changes.
+  override package func viewDidChangeEffectiveAppearance() {
+    super.viewDidChangeEffectiveAppearance()
+    needsDisplay = true
+  }
+
   package func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
     model.viewSize = SIMD2(Double(size.width), Double(size.height))
     if !fitted, size.width > 0, size.height > 0 {
@@ -92,7 +98,8 @@ package final class ViewerMTKView: MTKView, MTKViewDelegate {
     guard let drawable = currentDrawable, let commands = renderer.queue.makeCommandBuffer() else {
       return
     }
-    let frame = model.frame
+    var frame = model.frame
+    frame.canvasGrey = DesignColor.canvasGrey(in: DesignAppearance(effectiveAppearance))
     // The histogram depends on the image and the region only: count again when they change.
     let counting = countedRegion != .some(frame.region)
     let interval = Self.signposter.beginInterval("frame", id: Self.signposter.makeSignpostID())

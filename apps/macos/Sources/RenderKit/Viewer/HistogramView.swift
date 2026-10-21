@@ -13,7 +13,8 @@ package struct HistogramView: View {
     Canvas { context, size in
       let peak = log1p(Double(bins.joined().max() ?? 0))
       guard peak > 0 else { return }
-      let colours: [Color] = bins.count < 3 ? [.gray] : [.red, .green, .blue]
+      let colours: [DesignColor] =
+        bins.count < 3 ? [.plotLuminance] : [.plotRed, .plotGreen, .plotBlue]
       for (channel, counts) in bins.enumerated() {
         var path = Path()
         path.move(to: CGPoint(x: 0, y: size.height))
@@ -22,9 +23,10 @@ package struct HistogramView: View {
           path.addLine(to: CGPoint(x: x, y: size.height * (1 - log1p(Double(count)) / peak)))
         }
         path.addLine(to: CGPoint(x: size.width, y: size.height))
-        context.fill(path, with: .color(colours[min(channel, colours.count - 1)].opacity(0.45)))
+        context.fill(
+          path, with: .color(colours[min(channel, colours.count - 1)].color.opacity(0.45)))
       }
     }
-    .background(Color.black.opacity(0.85))
+    .background(DesignColor.plotBackground.color)
   }
 }

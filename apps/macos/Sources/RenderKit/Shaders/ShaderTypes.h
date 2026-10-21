@@ -22,6 +22,7 @@ struct DisplayUniforms {
   float mipLevels;
   unsigned int flipRows;  // 1: stored row 0 is the bottom (ROWORDER BOTTOM-UP), shown last
   unsigned int maskOverlay; // 1: the mask (texture 7) tints the view red by half its value
+  float canvasGrey;       // grey level of view pixels outside the image (R = G = B)
 };
 
 struct HistogramUniforms {

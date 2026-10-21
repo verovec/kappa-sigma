@@ -27,6 +27,9 @@ package struct ViewerFrame: Equatable, Sendable {
   package var flipRows = false
   /// Tints the view red where the process mask is (the renderer's `mask` texture).
   package var maskOverlay = false
+  /// Grey level around the image; `ViewerMTKView` sets the canvas token of its appearance, other
+  /// renders keep black.
+  package var canvasGrey: Float = 0
 
   /// A frame at `transform` with `stf`.
   package init(transform: ViewTransform, stf: [STFParameters]?) {
@@ -43,6 +46,7 @@ package struct ViewerFrame: Equatable, Sendable {
     uniforms.clippingOverlay = clippingOverlay ? 1 : 0
     uniforms.flipRows = flipRows ? 1 : 0
     uniforms.maskOverlay = maskOverlay ? 1 : 0
+    uniforms.canvasGrey = canvasGrey
     switch compare {
     case .off:
       uniforms.compareMode = 0

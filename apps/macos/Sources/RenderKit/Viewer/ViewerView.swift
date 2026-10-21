@@ -68,7 +68,7 @@ private struct RegionOutline: View {
         y: (Double(region.y) - transform.origin.y) / factor,
         width: Double(region.width) / factor, height: Double(region.height) / factor)
       Path { $0.addRect(rect) }
-        .stroke(Color.yellow, style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+        .stroke(DesignColor.regionOutline.color, style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
     }
   }
 }

@@ -44,6 +44,31 @@ processes run (design §4.1, §4.6).
 never `rawValue.capitalized`) and formats its numbers in the view's `\.locale` (card 0074).
 Rules: `Sources/StringCatalog/README.md`.
 
+## Design system (card 0075)
+
+`DesignSystem/` holds what every panel shares, so no screen picks its own colours:
+
+- **Tokens.** `DesignColor` (surface, canvas, text levels, status ok/attention/error/unavailable,
+  region outline, plot colours): a light and a dark sRGB value each, resolved by AppKit with the
+  view's appearance (`NSColor(name:dynamicProvider:)` — no asset catalog, CLT has no `actool`).
+  Text and status colours keep ≥ 4.5:1 on `surface` in both appearances; `canvas` (around the
+  image, also the display kernel's `canvasGrey` uniform) is R = G = B and never the accent
+  (`DesignTokensTests`). `DesignStatus` pairs each status with an SF Symbol: never colour alone.
+  `DesignMetrics`: spacing, radii, `valueFont` (monospaced digits).
+- **Components** (`Components/`): `MetricValue` (label, formatted value, unit, delta, status),
+  `StatusBadge`, `ParameterRow` over a `ParameterValue` (slider + field in the user's notation,
+  reset, « Default » badge on the exact default, « why » on hover), `InstallCard` over an
+  `InstallCardModel` (re-check asks the `locate` closure; never a fallback, R2), `EmptyState`,
+  `SectionHeader`. Values arrive **formatted**: RenderKit never imports the app, so the caller
+  passes `AstroFormat` strings or `format`/`parse` closures.
+- **Gallery.** `ComponentGallery` shows every component in every state; the app opens it from
+  Window › Component Gallery in debug builds, and `ComponentGalleryTests` attaches its PNGs in
+  light/dark × fr/en.
+- Rules: views use `DesignColor.<token>.color`, never `Color.red/.orange/.yellow/.green/.blue`
+  (`scripts/hygiene.sh` rule 7); a new component goes in `Components/`, gets a gallery entry and
+  catalog words (`DesignSystemCatalogTests`); a new token gets its light and dark value and, if
+  text sits on it, joins the contrast test.
+
 ## Coordinates
 
 View coordinates are drawable pixels (points × backing scale), top-left origin. `ViewTransform`

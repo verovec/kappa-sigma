@@ -17,6 +17,12 @@ package struct ImageMetadata: Equatable, Sendable {
   /// The TAN plate solution, when the header has one.
   package var wcs: WCS?
 
+  /// The metadata of an image without a FITS header (a PNG or TIFF): rows in `rowOrder`, nothing
+  /// else known.
+  package init(rowOrder: RowOrder) {
+    self.rowOrder = rowOrder
+  }
+
   /// Metadata read from `header`.
   package init(header: FITSHeader) {
     filter = header.string("FILTER")

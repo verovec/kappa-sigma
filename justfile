@@ -32,8 +32,9 @@ hooks:
     @ln -sf "$(pwd)/scripts/git-hooks/pre-push" "$(git rev-parse --git-path hooks)/pre-push" && echo "pre-push hook installed"
 
 # Build apps/macos/.build/AstroStack.app (ad-hoc signed); args go to swift build (-c release).
+[positional-arguments]
 app-build *args:
-    @./scripts/app-bundle.sh {{pkg}} {{swiftflags}} {{args}}
+    @./scripts/app-bundle.sh {{pkg}} {{swiftflags}} "$@"
 
 # Build the optimized bundle (replacing the debug one), then open it: for real runs.
 [positional-arguments]
@@ -41,8 +42,9 @@ app-run-release *projects: (app-build "-c" "release")
     open -W -n -a "{{justfile_directory()}}/{{app}}" "$@"
 
 # Build, then open the app (and the given `.astrostack` projects); returns when the app quits.
+[positional-arguments]
 app-run *projects: app-build
-    open -W -n -a "{{justfile_directory()}}/{{app}}" {{projects}}
+    open -W -n -a "{{justfile_directory()}}/{{app}}" "$@"
 
 # Run the whole Swift suite (live suites self-skip without host tools/fixtures). Args pass through.
 # ATTACHMENTS_PATH (set by CI) collects Attachment.record() outputs such as diff images.

@@ -55,7 +55,7 @@ struct KnobPanelViewModelTests {
     #expect(panel.patch.values.isEmpty)
   }
 
-  @Test("the nebula preset moves the defaults; an edit equal to the new default is dropped")
+  @Test("the nebula preset moves the defaults; an edit it matches is no change there, not lost")
   func testModeChangesDefaults() throws {
     let panel = KnobPanelViewModel(mode: .deepsky)
     panel.set("background_degree", to: .number(2))
@@ -67,6 +67,24 @@ struct KnobPanelViewModelTests {
     #expect(degree.isDefault && degree.value == .number(2))
     let expected = try KnobSchema.apply(panel.patch, to: .preset(.nebula))
     #expect(panel.settings == expected)
+
+    panel.mode = .deepsky
+    #expect(
+      panel.patch
+        == KnobPatch(values: ["background_degree": .number(2), "fwhm_sigma": .number(4)]),
+      "switching back keeps the edit the nebula preset matched")
+  }
+
+  @Test("a recorded patch the schema refuses is reported, its valid edits kept")
+  func testRecordedPatchValidated() {
+    let panel = KnobPanelViewModel(
+      mode: .deepsky,
+      patch: KnobPatch(values: [
+        "fwhm_sigma": .number(3.5), "no_such_knob": .flag(true), "stack_feather": .number(9_999),
+      ]))
+    #expect(panel.ignored == ["no_such_knob", "stack_feather"])
+    #expect(panel.patch == KnobPatch(values: ["fwhm_sigma": .number(3.5)]))
+    #expect(panel.changedCount == 1)
   }
 
   @Test("edits serialise to the exact legacy wire keys a run records")

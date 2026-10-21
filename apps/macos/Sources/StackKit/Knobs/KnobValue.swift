@@ -1,7 +1,10 @@
 /// One knob's value: a number, an on/off flag or one of a list's ids — as it travels in a patch.
 package enum KnobValue: Equatable, Hashable, Sendable {
+  /// A number knob's value.
   case number(Double)
+  /// A flag's state.
   case flag(Bool)
+  /// A choice's option id.
   case choice(String)
 }
 
@@ -29,6 +32,7 @@ extension KnobValue: Codable {
 }
 
 extension KnobValue: CustomStringConvertible {
+  /// The value as an error names it: `3.5`, `true`, `sigma`.
   package var description: String {
     switch self {
     case .number(let number): "\(number)"

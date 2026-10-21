@@ -2,6 +2,7 @@
 ///
 /// What the Stacking panel writes and what a stack records; an empty patch is the preset itself.
 package struct KnobPatch: Equatable, Sendable {
+  /// The value of each moved knob, by wire id.
   package var values: [String: KnobValue]
 
   /// A patch setting `values`.

@@ -13,13 +13,17 @@ package struct Knob: Sendable, Identifiable {
   package enum Kind: Equatable, Sendable {
     /// A number in `bounds`; `integer` refuses a fraction.
     case number(bounds: ClosedRange<Double>, integer: Bool)
+    /// On or off.
     case flag
     /// One of `options` (ids, not words: the app words them).
     case choice(options: [String])
   }
 
+  /// The wire id, stable once shipped.
   package let id: String
+  /// Where the panel shows it.
   package let level: Level
+  /// Number, flag or choice, with its bounds or options.
   package let kind: Kind
   private let read: @Sendable (PreprocessSettings) -> KnobValue
   private let write: @Sendable (inout PreprocessSettings, KnobValue) -> Void

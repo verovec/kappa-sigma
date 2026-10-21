@@ -17,12 +17,12 @@ package enum KnobSchema {
 
   /// `settings` with `patch` applied; an unknown id or a refused value throws and nothing is
   /// applied.
-  package static func apply(_ patch: KnobPatch, to settings: PreprocessSettings)
-    throws(KnobError) -> PreprocessSettings
+  package static func apply(_ patch: KnobPatch, to settings: PreprocessSettings) throws
+    -> PreprocessSettings
   {
     var applied = settings
     for (id, value) in patch.values.sorted(by: { $0.key < $1.key }) {
-      guard let knob = knob(id) else { throw .unknown(id) }
+      guard let knob = knob(id) else { throw KnobError.unknown(id) }
       try knob.apply(value, to: &applied)
     }
     return applied

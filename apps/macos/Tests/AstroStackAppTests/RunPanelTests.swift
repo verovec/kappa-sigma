@@ -116,9 +116,10 @@ struct RunPanelTests {
       ProjectWindowView(model: window).environment(\.locale, Locale(identifier: variant.language))
         .background(Color(nsColor: .windowBackgroundColor)))
     host.appearance = NSAppearance(named: .aqua)
+    host.layoutSubtreeIfNeeded()
+    #expect(host.fittingSize.width >= 640 && host.fittingSize.height >= 400)
     host.sizingOptions = [.minSize]  // as ProjectDocument's window: the window sets the size
     host.layoutSubtreeIfNeeded()
-    #expect(host.frame.width >= 640 && host.frame.height >= 400)
     if variant.language == "en" { try Self.attach(host, "run-\(variant.phase).png") }
 
     if variant.phase == .running {
@@ -145,9 +146,10 @@ struct RunPanelTests {
       ProjectWindowView(model: fixture.window).environment(\.locale, Locale(identifier: language))
         .background(Color(nsColor: .windowBackgroundColor)))
     host.appearance = NSAppearance(named: .aqua)
+    host.layoutSubtreeIfNeeded()
+    #expect(host.fittingSize.width >= 640)
     host.sizingOptions = [.minSize]  // as ProjectDocument's window: the window sets the size
     host.layoutSubtreeIfNeeded()
-    #expect(host.frame.width >= 640)
     if language == "en" { try Self.attach(host, "studio-stack.png") }
   }
 

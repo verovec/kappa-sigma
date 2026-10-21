@@ -1,3 +1,5 @@
+internal import Foundation
+package import ProjectKit
 package import StackKit
 
 /// What a stack's `params_json` holds: the import it planned (legacy `RunRequest` keys), the
@@ -6,8 +8,11 @@ package import StackKit
 /// One flat JSON object: the request's own keys, then `mode` and `knobs` (left out when no knob
 /// moved). A record written before 0070 reads as the deepsky preset, untouched.
 package struct StackRecord: Equatable, Sendable {
+  /// The import the run planned, with its overrides.
   package var request: ImportRequest
+  /// The preset the run started from.
   package var mode: PreprocessRequest.Mode
+  /// The knobs moved from that preset.
   package var knobs: KnobPatch
 
   /// A record of `request` run with the preset of `mode` and `knobs`.
@@ -17,6 +22,13 @@ package struct StackRecord: Equatable, Sendable {
     self.request = request
     self.mode = mode
     self.knobs = knobs
+  }
+}
+
+extension StackRecord {
+  /// The record `stack` holds in its `params_json`.
+  package init(stack: ProjectStack) throws {
+    self = try JSONDecoder().decode(Self.self, from: Data(stack.paramsJSON.utf8))
   }
 }
 

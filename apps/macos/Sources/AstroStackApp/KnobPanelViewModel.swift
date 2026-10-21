@@ -10,8 +10,11 @@ package import StackKit
 package final class KnobPanelViewModel {
   /// One knob as the panel shows it.
   package struct Row: Identifiable, Equatable, Sendable {
+    /// The knob's wire id.
     package let id: String
+    /// Where the panel shows it.
     package let level: Knob.Level
+    /// Number, flag or choice, with its bounds or options.
     package let kind: Knob.Kind
     /// The value the run applies.
     package let value: KnobValue
@@ -22,21 +25,38 @@ package final class KnobPanelViewModel {
     package var termID: String { Knob.termID(id) }
   }
 
-  /// The preset the defaults come from; switching keeps the edits that still differ.
-  package var mode: PreprocessRequest.Mode {
-    // The user's edits only, onto the new preset: one now equal to its default is no edit.
-    didSet { patch = KnobSchema.patch(from: settings, mode: mode) }
-  }
-  /// What the user changed from the preset.
-  package private(set) var patch: KnobPatch
+  /// The preset the defaults come from.
+  ///
+  /// Switching keeps every edit: one equal to the new preset's value is simply no change there,
+  /// and is back when the preset is switched back.
+  package var mode: PreprocessRequest.Mode
   /// The advanced knobs are shown.
   package var showsAdvanced = false
+  /// Recorded edits the schema no longer accepts (a renamed knob, narrower bounds): dropped and
+  /// shown, never applied silently (R2).
+  package let ignored: [String]
+  /// The user's values by knob id, each accepted by the schema when it was set.
+  private var edits: [String: KnobValue]
 
-  /// A panel over the preset of `mode` with `patch` already applied (a stack's recorded one).
+  /// A panel over the preset of `mode` with `patch` already applied (a stack's recorded one); an
+  /// entry the schema refuses lands in `ignored`.
   package init(mode: PreprocessRequest.Mode, patch: KnobPatch = KnobPatch()) {
     self.mode = mode
-    self.patch = patch
+    var accepted: [String: KnobValue] = [:]
+    var refused: [String] = []
+    for (id, value) in patch.values {
+      if KnobSchema.knob(id)?.accepts(value) == true {
+        accepted[id] = value
+      } else {
+        refused.append(id)
+      }
+    }
+    edits = accepted
+    ignored = refused.sorted()
   }
+
+  /// What differs from the preset of `mode`: the patch the run applies and records.
+  package var patch: KnobPatch { KnobSchema.patch(from: settings, mode: mode) }
 
   /// Every knob, in schema order.
   package var rows: [Row] {
@@ -57,28 +77,27 @@ package final class KnobPanelViewModel {
   /// Knobs moved from the preset.
   package var changedCount: Int { patch.values.count }
 
-  /// The settings the run applies: the preset with the edits.
-  package var settings: PreprocessSettings { settings(of: mode) }
+  /// The settings the run applies: the preset of `mode` with the edits.
+  package var settings: PreprocessSettings {
+    // Every edit was accepted by the schema on entry, so applying it cannot fail.
+    (try? KnobSchema.apply(KnobPatch(values: edits), to: .preset(mode))) ?? .preset(mode)
+  }
 
   /// Sets knob `id` to `value`; a value the schema refuses is ignored (the field shows the
   /// accepted value back).
   package func set(_ id: String, to value: KnobValue) {
-    guard let knob = KnobSchema.knob(id), knob.accepts(value) else { return }
-    var values = patch.values
-    values[id] = value
-    if let applied = try? KnobSchema.apply(KnobPatch(values: values), to: .preset(mode)) {
-      patch = KnobSchema.patch(from: applied, mode: mode)
-    }
+    guard KnobSchema.knob(id)?.accepts(value) == true else { return }
+    edits[id] = value
   }
 
   /// Knob `id` back to the preset.
   package func reset(_ id: String) {
-    patch.values[id] = nil
+    edits[id] = nil
   }
 
   /// Every knob back to the preset.
   package func resetAll() {
-    patch = KnobPatch()
+    edits = [:]
   }
 
   /// The glossary terms the panel words: every knob and every choice of it.
@@ -87,10 +106,5 @@ package final class KnobPanelViewModel {
       guard case .choice(let options) = knob.kind else { return [Knob.termID(knob.id)] }
       return [Knob.termID(knob.id)] + options.map { Knob.termID(knob.id, option: $0) }
     }
-  }
-
-  private func settings(of mode: PreprocessRequest.Mode) -> PreprocessSettings {
-    // The patch only ever holds values the schema accepted.
-    (try? KnobSchema.apply(patch, to: .preset(mode))) ?? .preset(mode)
   }
 }

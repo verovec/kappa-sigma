@@ -46,9 +46,7 @@ package final class ProjectWindowModel {
     self.runs = runs
     self.isSaved = isSaved
     // The panel starts where the latest stack left it; an unreadable record is reported on Run.
-    let latest = try? store()?.latestStack().flatMap {
-      try JSONDecoder().decode(StackRecord.self, from: Data($0.paramsJSON.utf8))
-    }
+    let latest = try? store()?.latestStack().map(StackRecord.init(stack:))
     knobs = KnobPanelViewModel(mode: latest?.mode ?? .deepsky, patch: latest?.knobs ?? KnobPatch())
     refresh()
     do {

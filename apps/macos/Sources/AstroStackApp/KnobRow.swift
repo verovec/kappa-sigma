@@ -12,9 +12,10 @@ struct KnobRow: View {
   var body: some View {
     let term = AppGlossary.term(row.termID, locale: locale, in: AppGlossary.knobs)
     switch row.kind {
-    case .number(let bounds, _):
+    case .number(let bounds, let integer):
       ParameterRow(
-        .app("\(term.label)"), parameter: number(bounds), why: .app("\(term.definition)"),
+        .app("\(term.label)"), parameter: number(bounds, integer: integer),
+        why: .app("\(term.definition)"),
         format: { AstroFormat(locale: locale).parameter($0) },
         parse: { AstroFormat(locale: locale).parameter(parsing: $0) })
     case .flag:
@@ -56,12 +57,13 @@ struct KnobRow: View {
     }
   }
 
-  private func number(_ bounds: ClosedRange<Double>) -> Binding<ParameterValue> {
+  /// A whole-number knob rounds what the slider sends: the schema refuses a fraction.
+  private func number(_ bounds: ClosedRange<Double>, integer: Bool) -> Binding<ParameterValue> {
     Binding(
       get: {
         ParameterValue(default: row.defaultValue.number, range: bounds, value: row.value.number)
       },
-      set: { model.set(row.id, to: .number($0.value)) })
+      set: { model.set(row.id, to: .number(integer ? $0.value.rounded() : $0.value)) })
   }
 
   private var flag: Binding<Bool> {

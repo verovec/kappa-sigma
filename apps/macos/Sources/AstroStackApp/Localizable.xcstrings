@@ -1265,6 +1265,22 @@
         }
       }
     },
+    "Not applied, no longer valid settings: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not applied, no longer valid settings: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non appliqués, réglages plus valides : %@"
+          }
+        }
+      }
+    },
     "Object": {
       "localizations": {
         "en": {

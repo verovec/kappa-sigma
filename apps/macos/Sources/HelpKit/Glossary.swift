@@ -26,6 +26,8 @@ package struct Glossary: Sendable {
   package static let maxDefinitionWords = 24
 
   private let terms: [String: [String: Term]]
+  /// The file the terms come from, named by the gate.
+  private let file: String
 
   /// The glossaries `<root>/<locale>/<file>`, one per `HelpIndex.locales`; a missing or malformed
   /// locale is an empty glossary that the gate reports.
@@ -40,6 +42,7 @@ package struct Glossary: Sendable {
       terms[locale] = data.flatMap { try? JSONDecoder().decode([String: Term].self, from: $0) }
     }
     self.terms = terms
+    self.file = file
   }
 
   /// HelpKit's glossary `file` in `bundle` (the packaged app passes its resolved resource bundle).
@@ -60,7 +63,7 @@ package struct Glossary: Sendable {
   /// label, or a definition longer than a line.
   package func problems(ids: [String]) -> [String] {
     HelpIndex.locales.flatMap { locale -> [String] in
-      guard let entries = terms[locale] else { return ["\(locale): no readable glossary"] }
+      guard let entries = terms[locale] else { return ["\(locale): no readable \(file)"] }
       return ids.flatMap { id -> [String] in
         guard let term = entries[id] else { return ["\(id): no \(locale) term"] }
         return Self.problems(of: term).map { "\(id) (\(locale)): \($0)" }

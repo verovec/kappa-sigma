@@ -7,7 +7,8 @@ struct KnobPanel: View {
   @Bindable var model: KnobPanelViewModel
 
   var body: some View {
-    ScrollView {
+    let rows = model.visibleRows
+    return ScrollView {
       VStack(alignment: .leading, spacing: DesignMetrics.spacingM) {
         HStack(alignment: .firstTextBaseline) {
           SectionHeader(
@@ -19,10 +20,16 @@ struct KnobPanel: View {
           Button(.app("Reset All")) { model.resetAll() }
             .disabled(model.changedCount == 0)
         }
-        ForEach(model.rows.filter { $0.level == .simple }) { KnobRow(row: $0, model: model) }
+        if !model.ignored.isEmpty {
+          StatusBadge(
+            .attention,
+            .app(
+              "Not applied, no longer valid settings: \(model.ignored.joined(separator: ", "))"))
+        }
+        ForEach(rows.filter { $0.level == .simple }) { KnobRow(row: $0, model: model) }
         DisclosureGroup(isExpanded: $model.showsAdvanced) {
           VStack(alignment: .leading, spacing: DesignMetrics.spacingM) {
-            ForEach(model.rows.filter { $0.level == .advanced }) { KnobRow(row: $0, model: model) }
+            ForEach(rows.filter { $0.level == .advanced }) { KnobRow(row: $0, model: model) }
           }
           .padding(.top, DesignMetrics.spacingS)
         } label: {

@@ -32,11 +32,10 @@ extension ProjectWindowModel {
   /// and keeps its artifacts. One run at a time, in a saved project only (an untitled package
   /// moves on Save and is deleted on Close).
   ///
-  /// The settings are the panel's (`knobs`): the preset of its mode with the user's edits; `mode`
-  /// switches the panel's preset first.
+  /// The settings are the panel's edits (`knobs.patch`) on the preset of `mode`, the panel's own
+  /// preset unless a mode is given for this run; the panel is left as it is.
   package func startRun(mode: PreprocessRequest.Mode? = nil) {
     guard canRun else { return }
-    if let mode { knobs.mode = mode }
     guard let store = store(), let folder = folder() else {
       error = .projectClosed
       return
@@ -45,10 +44,12 @@ extension ProjectWindowModel {
       error = .projectUnsaved
       return
     }
-    let request: ImportRequest
+    let record: StackRecord
+    let settings: PreprocessSettings
     do {
-      guard let planned = try runRequest() else { return }
-      request = planned
+      guard let request = try runRequest() else { return }
+      record = StackRecord(request: request, mode: mode ?? knobs.mode, knobs: knobs.patch)
+      settings = try Self.runSettings(record)
     } catch {
       self.error = UserFacingError(error)
       return
@@ -58,17 +59,12 @@ extension ProjectWindowModel {
     let work = runs.scratch.appendingPathComponent("run_\(runID)", isDirectory: true)
     let planning = services(store).planning
     let start = runs.run
-    let record = StackRecord(request: request, mode: knobs.mode, knobs: knobs.patch)
-    var applied = knobs.settings
-    applied.calibrationExcluded = request.calibExclude
-    applied.forceCalibration = request.forceCalibration
-    let settings = applied
     let model = RunViewModel(runID: runID, output: output)
     run = model
     refresh()
     model.start(
       {
-        let plan = try await planning(request)
+        let plan = try await planning(record.request)
         return start(
           PreprocessRequest(
             inventory: plan.inventory, output: output, work: work, runID: runID,
@@ -83,6 +79,15 @@ extension ProjectWindowModel {
           refresh()
         }
       })
+  }
+
+  /// The settings a run of `record` applies: its knobs on its preset, with the calibration
+  /// choices of its import, as the panel and the Import sheet showed them.
+  static func runSettings(_ record: StackRecord) throws -> PreprocessSettings {
+    var settings = try KnobSchema.apply(record.knobs, to: .preset(record.mode))
+    settings.calibrationExcluded = record.request.calibExclude
+    settings.forceCalibration = record.request.forceCalibration
+    return settings
   }
 
   /// Cancels the running run; its finished masters stay in its folder.
@@ -149,8 +154,7 @@ extension ProjectWindowModel {
   ///
   /// One that no longer decodes is an error the user sees, never a run without its overrides (R2).
   func latestStackRecord() throws -> StackRecord? {
-    guard let stack = try store()?.latestStack() else { return nil }
-    return try JSONDecoder().decode(StackRecord.self, from: Data(stack.paramsJSON.utf8))
+    try store()?.latestStack().map(StackRecord.init(stack:))
   }
 
   /// `runID`, or `runID_2`, `_3`… when a stack folder of that name exists (two runs in one

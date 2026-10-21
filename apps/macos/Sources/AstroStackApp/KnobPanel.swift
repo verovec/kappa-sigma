@@ -19,6 +19,7 @@ struct KnobPanel: View {
           Spacer()
           Button(.app("Reset All")) { model.resetAll() }
             .disabled(model.changedCount == 0)
+            .accessible(.stackingResetKnobs, label: .app("Reset All"))
         }
         if !model.ignored.isEmpty {
           StatusBadge(

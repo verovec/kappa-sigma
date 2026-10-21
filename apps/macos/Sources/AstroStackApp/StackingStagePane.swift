@@ -11,7 +11,14 @@ struct StackingStagePane: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
-      header.padding(DesignMetrics.spacingM)
+      HStack(alignment: .firstTextBaseline, spacing: DesignMetrics.spacingM) {
+        SectionHeader(
+          .app("Stacking"),
+          detail: .app("Masters, stacks and the bundle are written inside the project."))
+        Spacer()
+        controls
+      }
+      .padding(DesignMetrics.spacingM)
       HStack(spacing: 0) {
         // The values a run applies stay in view, frozen while it runs (R2).
         KnobPanel(model: model.knobs).frame(width: 300).disabled(running)
@@ -29,26 +36,24 @@ struct StackingStagePane: View {
     }
   }
 
-  private var header: some View {
+  /// The preset, then Run — or Cancel while a run goes.
+  @ViewBuilder private var controls: some View {
     @Bindable var knobs = model.knobs
-    return HStack(alignment: .firstTextBaseline, spacing: DesignMetrics.spacingM) {
-      SectionHeader(
-        .app("Stacking"),
-        detail: .app("Masters, stacks and the bundle are written inside the project."))
-      Spacer()
-      Picker(.app("Preset"), selection: $knobs.mode) {
-        Text(.app("Deep sky")).tag(PreprocessRequest.Mode.deepsky)
-        Text(.app("Nebula")).tag(PreprocessRequest.Mode.nebula)
-      }
-      .fixedSize()
-      .disabled(running)
-      if running {
-        Button(.app("Cancel"), role: .cancel) { model.cancelRun() }
-      } else {
-        Button(.app("Run")) { model.startRun() }
-          .keyboardShortcut(.defaultAction)
-          .disabled(!model.canRun)
-      }
+    Picker(.app("Preset"), selection: $knobs.mode) {
+      Text(.app("Deep sky")).tag(PreprocessRequest.Mode.deepsky)
+      Text(.app("Nebula")).tag(PreprocessRequest.Mode.nebula)
+    }
+    .fixedSize()
+    .disabled(running)
+    .accessible(.stackingPreset, label: .app("Preset"))
+    if running {
+      Button(.app("Cancel"), role: .cancel) { model.cancelRun() }
+        .accessible(.stackingCancel, label: .app("Cancel"))
+    } else {
+      Button(.app("Run")) { model.startRun() }
+        .keyboardShortcut(.defaultAction)
+        .disabled(!model.canRun)
+        .accessible(.stackingRun, label: .app("Run"))
     }
   }
 }

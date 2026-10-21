@@ -116,6 +116,7 @@ package struct ComponentGallery: View {
           index == 0 ? .renderKit("Hα blend") : .renderKit("Hα ceiling"),
           parameter: $parameters[index],
           why: .renderKit("How much of the Hα layer is added to the red channel."),
+          key: index == 0 ? "haBlend" : "haCeiling",
           format: { LocaleNumber.decimal($0, locale: locale, maxFractionDigits: 3) },
           parse: { Double($0.replacing(locale.decimalSeparator ?? ".", with: ".")) })
       }
@@ -129,7 +130,8 @@ package struct ComponentGallery: View {
         ForEach(curves.indices, id: \.self) { index in
           CurveEditor(
             index == 0 ? .renderKit("Luminance") : .renderKit("Red"), points: $curves[index],
-            tint: index == 0 ? .plotLuminance : .plotRed, curve: Self.polyline
+            tint: index == 0 ? .plotLuminance : .plotRed, key: index == 0 ? "luminance" : "red",
+            curve: Self.polyline
           )
           .frame(width: 200)
         }

@@ -15,12 +15,13 @@ struct KnobRow: View {
     case .number(let bounds, let integer):
       ParameterRow(
         .app("\(term.label)"), parameter: number(bounds, integer: integer),
-        why: .app("\(term.definition)"),
+        why: .app("\(term.definition)"), key: row.id,
         format: { AstroFormat(locale: locale).parameter($0) },
         parse: { AstroFormat(locale: locale).parameter(parsing: $0) })
     case .flag:
       HStack {
         Toggle(isOn: flag) { Text(verbatim: term.label) }
+          .accessible(control, verbatim: term.label)
         Spacer()
         reset
       }
@@ -38,6 +39,7 @@ struct KnobRow: View {
         } label: {
           Text(verbatim: term.label)
         }
+        .accessible(control, verbatim: term.label)
         reset
       }
       .help(term.definition)
@@ -54,8 +56,12 @@ struct KnobRow: View {
       }
       .buttonStyle(.borderless)
       .help(Text(.app("Back to the preset")))
+      .accessible(.parameter(row.id, .reset), label: .app("Back to the preset"))
     }
   }
+
+  /// The identifier of a flag or choice knob: its term id under the stacking stage.
+  private var control: AccessibilityID { .stackingKnob(row.termID) }
 
   /// A whole-number knob rounds what the slider sends: the schema refuses a fraction.
   private func number(_ bounds: ClosedRange<Double>, integer: Bool) -> Binding<ParameterValue> {

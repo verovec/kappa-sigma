@@ -72,19 +72,31 @@ struct TrailMaskStreamedTests {
   static let gib = Int64(1) << 30
   static let monoFrame = Int64(6248) * 4176 * 4
 
+  /// One `plan` case; a struct, not a 5-tuple, so the `@Test` arguments type-check in time.
+  struct BasisCase: Sendable, CustomTestStringConvertible {
+    let frames: Int
+    let frameBytes: Int64
+    let budget: Int64
+    let streamed: Bool
+    let basis: Int
+
+    var testDescription: String { "\(frames) frames, budget \(budget >> 30) GiB" }
+  }
+
   @Test(
     "the in-memory pass while 3·n·frame fits, else a basis in [16, 48] and ≤ n",
     arguments: [
-      (20, monoFrame, 40 * gib, false, 0),
-      (99, monoFrame * 3, 15 * gib, true, 19),
-      (99, monoFrame, 15 * gib, true, 48),
-      (99, monoFrame * 3, 2 * gib, true, 16),
-      (12, monoFrame * 3, 1 * gib, true, 12),
-      (99, 0, 1 * gib, false, 0),
+      BasisCase(frames: 20, frameBytes: monoFrame, budget: 40 * gib, streamed: false, basis: 0),
+      BasisCase(frames: 99, frameBytes: monoFrame * 3, budget: 15 * gib, streamed: true, basis: 19),
+      BasisCase(frames: 99, frameBytes: monoFrame, budget: 15 * gib, streamed: true, basis: 48),
+      BasisCase(frames: 99, frameBytes: monoFrame * 3, budget: 2 * gib, streamed: true, basis: 16),
+      BasisCase(frames: 12, frameBytes: monoFrame * 3, budget: 1 * gib, streamed: true, basis: 12),
+      BasisCase(frames: 99, frameBytes: 0, budget: 1 * gib, streamed: false, basis: 0),
     ])
-  func testBasisPlan(frames: Int, frameBytes: Int64, budget: Int64, streamed: Bool, basis: Int) {
-    let plan = TrailMaskBudget.plan(frames: frames, frameBytes: frameBytes, budget: budget)
-    #expect(plan.streamed == streamed && plan.basis == basis)
+  func testBasisPlan(_ testCase: BasisCase) {
+    let plan = TrailMaskBudget.plan(
+      frames: testCase.frames, frameBytes: testCase.frameBytes, budget: testCase.budget)
+    #expect(plan.streamed == testCase.streamed && plan.basis == testCase.basis)
   }
 
   @Test(

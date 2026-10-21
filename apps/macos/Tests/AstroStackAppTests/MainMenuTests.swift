@@ -1,5 +1,6 @@
 import AppKit
 import AstroStackApp
+import RenderKit
 import Testing
 
 @MainActor
@@ -104,6 +105,23 @@ struct MainMenuTests {
         #expect(menuItem.keyEquivalent == command.keyEquivalent, "\(command.id)")
         #expect(menuItem.action.map(NSStringFromSelector) == command.action, "\(command.id)")
       }
+    }
+  }
+
+  /// The classes that can answer a menu action through the responder chain.
+  static let responders: [AnyClass] = [
+    NSApplication.self, AppDelegate.self, NSDocumentController.self, ProjectDocument.self,
+    NSWindow.self, NSTextView.self, ViewerMTKView.self,
+  ]
+
+  @Test("every catalog action is implemented by a class of the responder chain (no typo ships)")
+  func testEveryActionHasAResponder() {
+    for command in CommandCatalog.commands {
+      guard let action = command.action else { continue }
+      let selector = NSSelectorFromString(action)
+      #expect(
+        Self.responders.contains { $0.instancesRespond(to: selector) },
+        "\(command.id): nothing answers \(action)")
     }
   }
 

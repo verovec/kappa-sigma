@@ -12,7 +12,7 @@ package struct ParameterRow: View {
   private let why: LocalizedStringResource?
   private let format: (Double) -> String
   private let parse: (String) -> Double?
-  private let key: String?
+  private let key: String
   @State private var text = ""
   @FocusState private var editing: Bool
 
@@ -21,7 +21,7 @@ package struct ParameterRow: View {
   package init(
     _ label: LocalizedStringResource, parameter: Binding<ParameterValue>,
     why: LocalizedStringResource? = nil, format: @escaping (Double) -> String,
-    parse: @escaping (String) -> Double?, key: String? = nil
+    parse: @escaping (String) -> Double?, key: String
   ) {
     self.key = key
     self.label = label
@@ -77,7 +77,7 @@ package struct ParameterRow: View {
       .buttonStyle(.borderless)
       .disabled(parameter.isDefault)
       .help(Text(.renderKit("Reset to default")))
-      .accessible(key.map { .parameter($0, .reset) }, label: .renderKit("Reset to default"))
+      .accessible(.parameter(key, .reset), label: .renderKit("Reset to default"))
     }
   }
 
@@ -91,10 +91,10 @@ package struct ParameterRow: View {
         Text(label)
       }
       .labelsHidden()
-      .accessible(key.map { .parameter($0, .slider) }, label: label)
+      .accessible(.parameter(key, .slider), label: label)
       TextField(text: $text) { Text(label) }
         .labelsHidden()
-        .accessible(key.map { .parameter($0, .field) }, label: label)
+        .accessible(.parameter(key, .field), label: label)
         .font(DesignMetrics.valueFont)
         .multilineTextAlignment(.trailing)
         .frame(width: 84)

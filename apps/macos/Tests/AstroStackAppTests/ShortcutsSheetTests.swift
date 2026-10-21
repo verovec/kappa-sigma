@@ -13,7 +13,7 @@ struct ShortcutsSheetTests {
     let locale = Locale(identifier: language)
     let groups = ShortcutsSheet.groups(matching: "", locale: locale)
     let listed = groups.flatMap(\.rows).map(\.id)
-    #expect(listed.sorted() == CommandCatalog.commands.map(\.id).sorted())
+    #expect(listed.sorted() == CommandCatalog.commands.filter(\.isBuilt).map(\.id).sorted())
     #expect(Set(listed).count == listed.count)
     #expect(groups.first?.stage == nil, "app-wide commands first")
     let stages = groups.compactMap(\.stage)

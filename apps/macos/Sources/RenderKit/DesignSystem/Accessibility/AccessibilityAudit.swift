@@ -62,35 +62,3 @@ extension View {
     modifier(AccessibleControl(id: id, label: .verbatim(label)))
   }
 }
-
-private struct AccessibleControl: ViewModifier {
-  enum Label {
-    case resource(LocalizedStringResource)
-    case verbatim(String)
-  }
-
-  let id: AccessibilityID?
-  let label: Label
-  @Environment(\.locale) private var locale
-
-  func body(content: Content) -> some View {
-    let text = resolved
-    return
-      content
-      .accessibilityLabel(Text(verbatim: text))
-      .accessibilityIdentifier(id?.rawValue ?? "")
-      .preference(
-        key: AccessibilityAudit.Key.self,
-        value: [AccessibilityAudit.Entry(id: id?.rawValue ?? "", label: text)])
-  }
-
-  private var resolved: String {
-    switch label {
-    case .verbatim(let text):
-      return text
-    case .resource(var resource):
-      resource.locale = locale
-      return String(localized: resource)
-    }
-  }
-}

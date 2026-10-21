@@ -1,4 +1,3 @@
-package import AppKit
 package import Foundation
 package import HelpKit
 internal import RenderKit
@@ -40,29 +39,5 @@ package struct GlossaryView: View {
     }
     .padding(DesignMetrics.spacingL)
     .frame(minWidth: 420, minHeight: 480)
-  }
-}
-
-/// Help › Glossary: one window, reused.
-package enum GlossaryWindow {
-  private static var window: NSWindow?
-
-  /// Shows the window, creating it the first time.
-  @discardableResult
-  package static func show() -> NSWindow {
-    let window = window ?? make()
-    Self.window = window
-    window.makeKeyAndOrderFront(nil)
-    return window
-  }
-
-  private static func make() -> NSWindow {
-    let window = NSWindow(
-      contentViewController: NSHostingController(
-        rootView: GlossaryView().background(DesignColor.surface.color).interfaceLocale()))
-    window.title = String(localized: .app("Glossary"))
-    window.styleMask = [.titled, .closable, .resizable]
-    window.isReleasedWhenClosed = false
-    return window
   }
 }

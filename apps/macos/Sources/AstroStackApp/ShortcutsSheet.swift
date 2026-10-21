@@ -1,4 +1,3 @@
-package import AppKit
 package import Foundation
 internal import RenderKit
 package import SwiftUI
@@ -37,7 +36,7 @@ package struct ShortcutsSheet: View {
   package nonisolated static func groups(matching query: String, locale: Locale) -> [Group] {
     let stages: [JourneyStage?] = [nil] + JourneyStage.allCases.map(Optional.some)
     return stages.compactMap { stage -> Group? in
-      let rows = CommandCatalog.commands.filter { $0.stage == stage }.map { command in
+      let rows = CommandCatalog.commands.filter { $0.isBuilt && $0.stage == stage }.map { command in
         Row(
           id: command.id, title: String(localized: command.title(locale: locale)),
           shortcut: command.shortcut?.symbols ?? "")
@@ -82,29 +81,5 @@ package struct ShortcutsSheet: View {
     }
     .padding(DesignMetrics.spacingL)
     .frame(minWidth: 420, minHeight: 480)
-  }
-}
-
-/// Help › Keyboard Shortcuts: one window, reused.
-package enum ShortcutsWindow {
-  private static var window: NSWindow?
-
-  /// Shows the window, creating it the first time.
-  @discardableResult
-  package static func show() -> NSWindow {
-    let window = window ?? make()
-    Self.window = window
-    window.makeKeyAndOrderFront(nil)
-    return window
-  }
-
-  private static func make() -> NSWindow {
-    let window = NSWindow(
-      contentViewController: NSHostingController(
-        rootView: ShortcutsSheet().background(DesignColor.surface.color).interfaceLocale()))
-    window.title = String(localized: .app("Keyboard Shortcuts"))
-    window.styleMask = [.titled, .closable, .resizable]
-    window.isReleasedWhenClosed = false
-    return window
   }
 }

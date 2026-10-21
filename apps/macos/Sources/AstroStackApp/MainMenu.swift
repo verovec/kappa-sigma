@@ -46,7 +46,7 @@ package enum MainMenu {
   private static func submenu(_ kind: CommandMenu, locale: Locale?) -> NSMenu {
     let menu = NSMenu(title: kind.title(locale: locale))
     menu.autoenablesItems = true
-    for command in CommandCatalog.commands(in: kind) where isBuilt(command) {
+    for command in CommandCatalog.commands(in: kind) where command.isBuilt {
       if command.separatorBefore, !menu.items.isEmpty { menu.addItem(.separator()) }
       menu.addItem(item(command, locale: locale))
     }
@@ -64,14 +64,5 @@ package enum MainMenu {
       item.keyEquivalentModifierMask = NSEvent.ModifierFlags(rawValue: command.keyModifiers)
     }
     return item
-  }
-
-  /// Debug-only commands exist in debug builds only.
-  private static func isBuilt(_ command: AppCommand) -> Bool {
-    #if DEBUG
-      true
-    #else
-      !command.debugOnly
-    #endif
   }
 }

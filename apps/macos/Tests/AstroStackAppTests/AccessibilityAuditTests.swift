@@ -53,13 +53,16 @@ struct AccessibilityAuditTests {
     let model = ProjectWindowModel(
       store: { project.store }, planning: { _ in ImportPlanningStub.empty })
     model.select(.data)
-    let entries = Self.entries(ProjectWindowView(model: model))
-    #expect(AccessibilityAudit.problems(entries) == [])
-    let ids = Set(entries.map(\.id))
-    #expect(
-      ids.isSuperset(of: JourneyStage.allCases.map { "fr.astrostack.journey.\($0.rawValue)" }))
-    #expect(ids.contains("fr.astrostack.stage.data.import"))
-    #expect(entries.first { $0.id == "fr.astrostack.journey.data" }?.label == "Données")
+    let window = Self.entries(ProjectWindowView(model: model))
+    #expect(window.map(\.id) == ["fr.astrostack.stage.data.import"])
+    // The sidebar's rows are table cells whose preferences stay in the List: each real row is
+    // hosted on its own.
+    let rows = JourneyStage.allCases.flatMap { stage in
+      Self.entries(JourneySidebarRow(stage: stage, status: .toDo))
+    }
+    #expect(AccessibilityAudit.problems(window + rows) == [])
+    #expect(rows.map(\.id) == JourneyStage.allCases.map { "fr.astrostack.journey.\($0.rawValue)" })
+    #expect(rows.first?.label == "Données")
   }
 
   @Test("the audit fails a control without label, without identifier, or with a repeated one")
@@ -79,9 +82,19 @@ struct AccessibilityAuditTests {
       ])
   }
 
+  @Test("a control inside an announced container keeps its own entry")
+  func testNestedEntriesKept() {
+    let entries = Self.entries(
+      HStack {
+        Button("A") {}.accessible(.fixture("inner"), verbatim: "Intérieur")
+      }
+      .accessible(.fixture("outer"), verbatim: "Extérieur"))
+    #expect(Set(entries.map(\.id)) == ["fr.astrostack.test.inner", "fr.astrostack.test.outer"])
+  }
+
   /// Sources whose interactive controls must all go through `.accessible`.
   nonisolated static let audited = [
-    "RenderKit/DesignSystem/Components", "AstroStackApp/JourneySidebar.swift",
+    "RenderKit/DesignSystem/Components", "AstroStackApp/JourneySidebarRow.swift",
     "AstroStackApp/DataStagePane.swift", "AstroStackApp/ShortcutsSheet.swift",
     "AstroStackApp/GlossaryView.swift",
   ]

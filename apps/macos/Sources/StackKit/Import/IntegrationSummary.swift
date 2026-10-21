@@ -1,8 +1,8 @@
 /// What a capture holds, for the Données stage (0078): the lights per target, filter and night,
 /// with the exposures, integration and temperature range of each, and totals.
 ///
-/// Read off the scan only: nothing is estimated. A colour night's clip filter (broadband,
-/// dual-band) keeps its lights apart, since they stack in different lanes (0081).
+/// Read off the scan only: nothing is estimated. Colour lights are counted per lane, as the run
+/// stacks them (0081): the dual-band lane apart only when the run splits.
 package struct IntegrationSummary: Equatable, Sendable {
   /// The lights of one target and filter on one night.
   package struct Row: Equatable, Sendable, Identifiable {
@@ -10,7 +10,7 @@ package struct IntegrationSummary: Equatable, Sendable {
     package var object: String
     /// The filter name (`L`, `Ha`, `RGB` for one-shot colour…).
     package var filter: String
-    /// The clip filter of a colour night; `unknown` for mono or undecided.
+    /// `dualband` for the run's dual-band lane; `unknown` for the plain lane and for mono.
     package var filterSet: FilterSet
     /// The night key (`YYYY-MM-DD`); `""` for undated frames.
     package var night: String
@@ -108,28 +108,22 @@ package struct IntegrationSummary: Equatable, Sendable {
 }
 
 extension IntegrationSummary {
-  /// The clip filter a colour set is counted under: its lane (`FilterSetLanes`), so the table
-  /// never splits lights the run stacks together.
+  /// The lane a light set stacks in (`FilterSetLanes`), as the row's clip filter.
+  ///
+  /// `dualband` for the run's dual-band lane, `unknown` for the plain one: the table never
+  /// splits lights the run stacks together, nor names a clip filter the run does not stack under.
   fileprivate struct Lanes {
     let inventory: Inventory
     let split: Bool
-    /// The scan's one verdict when it holds a single kind; `unknown` otherwise.
-    let common: FilterSet
 
     init(_ inventory: Inventory) {
       self.inventory = inventory
       split = FilterSetLanes.splits(inventory)
-      let verdicts = Set(
-        inventory.sets.filter { $0.key.type == .light }.compactMap {
-          inventory.filterSets[$0.key.id]
-        })
-      common = verdicts.count == 1 ? verdicts.first ?? .unknown : .unknown
     }
 
     func filterSet(of set: FrameSet) -> FilterSet {
-      guard set.key.color else { return .unknown }
-      guard split else { return common }
-      return LightRef(set, in: inventory).filterSet == .dualband ? .dualband : .broadband
+      let lane = FilterSetLanes.lane(for: set, in: inventory, split: split)
+      return FilterSetLanes.baseFilter(of: lane) == lane ? .unknown : .dualband
     }
   }
 }

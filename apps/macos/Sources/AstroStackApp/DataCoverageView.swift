@@ -62,7 +62,9 @@ struct DataCoverageView: View {
     let base = baseHeading(row)
     guard coverage.rows.filter({ baseHeading($0) == base }).count > 1 else { return base }
     let key = row.channel.key
-    let temperature = ImportFormat.temperature(key, in: AstroFormat(locale: locale))
+    // A cluster of frames without CCD-TEMP sits at bucket 0: never show it as « 0 °C ».
+    let temperature =
+      row.temperatureRecorded ? ImportFormat.temperature(key, in: AstroFormat(locale: locale)) : "—"
     return [base, ImportFormat.sensor(key), temperature].joined(separator: " · ")
   }
 

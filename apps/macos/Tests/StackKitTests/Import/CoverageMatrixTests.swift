@@ -91,5 +91,6 @@ struct CoverageMatrixTests {
     }
     let matrix = CoverageMatrix(plan: Self.plan(lights: [set], library: Self.library))
     #expect(matrix.rows.map(\.night) == ["2026-09-22"])
+    #expect(matrix.rows.first?.temperatureRecorded == false, "no frame carries CCD-TEMP")
   }
 }

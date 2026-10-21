@@ -12,6 +12,9 @@ package struct CoverageMatrix: Equatable, Sendable {
     package var night: String
     /// The clip filter of a colour light set; `unknown` otherwise.
     package var filterSet: FilterSet
+    /// Whether any frame recorded a sensor temperature: without one, the key's temperature
+    /// cluster (0 °C) was never measured and must not be shown.
+    package var temperatureRecorded = false
     /// Dark, flat and bias, in that order.
     package var cells: [ImportPlan.Cell] { channel.cells }
     /// The matcher's explanation of every fallback and gap, verbatim.
@@ -40,7 +43,8 @@ package struct CoverageMatrix: Equatable, Sendable {
       // The clip filter the matcher used: the set's verdict, else its night's (`LightRef`).
       return Row(
         channel: channel, night: set.map(ImportPlan.night(of:)) ?? channel.key.session,
-        filterSet: set.map { LightRef($0, in: plan.inventory).filterSet } ?? .unknown)
+        filterSet: set.map { LightRef($0, in: plan.inventory).filterSet } ?? .unknown,
+        temperatureRecorded: set?.frames.contains(where: \.hasTemp) ?? false)
     }
     .sorted(by: Self.precedes)
   }

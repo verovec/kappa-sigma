@@ -101,7 +101,7 @@ struct IntegrationSummaryTests {
           darks(count: 20),
         ]
       },
-      rows: [Expected("RGB", .dualband, "2026-09-22", 36, [300], 10_800)],
+      rows: [Expected("RGB", .unknown, "2026-09-22", 36, [300], 10_800)],
       frames: 36, integrationS: 10_800, nights: 1),
     Case(
       name: "two nights, broadband and dual-band apart",
@@ -113,8 +113,8 @@ struct IntegrationSummaryTests {
         ]
       },
       rows: [
-        Expected("RGB", .broadband, "2026-10-17", 40, [180], 7_200),
-        Expected("RGB", .broadband, "2026-10-18", 37, [180], 6_660),
+        Expected("RGB", .unknown, "2026-10-17", 40, [180], 7_200),
+        Expected("RGB", .unknown, "2026-10-18", 37, [180], 6_660),
         Expected("RGB", .dualband, "2026-10-18", 33, [300], 9_900),
       ],
       frames: 110, integrationS: 23_760, nights: 2),
@@ -175,16 +175,16 @@ struct IntegrationSummaryTests {
     let dual = Self.lights(
       "RGB", night: "2026-09-22", count: 4, exposureS: 300, filterSet: .dualband)
     let undecided = Self.lights("RGB", night: "2026-09-22", count: 2, exposureS: 120, color: true)
-    // One verdict only: no split, one lane, named by that verdict.
+    // One verdict only: no split, one plain lane (« RGB »), as the run names it.
     let one = IntegrationSummary.make(inventory: Self.inventory([dual, undecided]))
-    #expect(one.rows.map(\.filterSet) == [.dualband])
+    #expect(one.rows.map(\.filterSet) == [.unknown])
     #expect(one.rows.first?.frames == 6)
 
     // Both verdicts: two lanes; the undecided set joins its night's (dual-band) lane.
     let broad = Self.lights(
       "RGB", night: "2026-09-21", count: 3, exposureS: 180, filterSet: .broadband)
     let two = IntegrationSummary.make(inventory: Self.inventory([dual, undecided, broad]))
-    #expect(two.rows.map(\.filterSet) == [.broadband, .dualband])
+    #expect(two.rows.map(\.filterSet) == [.unknown, .dualband])
     #expect(two.rows.map(\.frames) == [3, 6])
   }
 

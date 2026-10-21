@@ -54,14 +54,14 @@ package struct ProfileProposal: Equatable, Sendable {
     var reasons: [Reason] = [.camera(camera)]
     if let filters = inputs.filters { reasons.append(.filters(filters)) }
     let target = inputs.object.map(Self.normalised)
-    // The profile whose validated targets include this one, among all profiles.
-    let owner = profiles.first { profile in
+    // The profiles whose validated targets include this one, among all profiles.
+    let owners = profiles.filter { profile in
       profile.examples.contains { Self.normalised($0) == target }
-    }
+    }.map(\.id)
     if candidates.count == 1, inputs.filters != nil {
       // The only match for these captures, unless the target is another profile's (M 31 shot in
       // broadband only is not a cluster): then nothing is proposed.
-      guard owner == nil || owner?.id == candidates[0].id else {
+      guard owners.isEmpty || owners.contains(candidates[0].id) else {
         return Self(proposed: nil, reasons: [], candidates: candidates)
       }
       return Self(proposed: candidates[0], reasons: reasons + [.onlyMatch], candidates: candidates)

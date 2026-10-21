@@ -42,6 +42,24 @@ struct ProfileTests {
     }
   }
 
+  @Test("a target listed by several profiles still proposes the one that fits the captures")
+  func testSharedTarget() throws {
+    let builtins = try ProfileLibrary.builtins(registry: Self.registry())
+    // Both OSC galaxy and cluster profiles name « M 31 » here: the broadband capture fits the
+    // cluster profile only, which lists the target too, so it is proposed.
+    let shared = try builtins.map { profile -> Profile in
+      guard profile.id == "cluster-osc-broadband" else { return profile }
+      var object = try #require(
+        try JSONSerialization.jsonObject(with: profile.json()) as? [String: Any])
+      object["examples"] = ["M 31", "M 45"]
+      return try Profile.load(
+        JSONSerialization.data(withJSONObject: object), registry: Self.registry())
+    }
+    let proposal = ProfileProposal.propose(
+      .init(object: "M 31", camera: .osc, filters: .broadband), among: shared)
+    #expect(proposal.proposed?.id == "cluster-osc-broadband")
+  }
+
   @Test("the galaxy profile carries the PO's HaPlus values")
   func testGalaxyValues() throws {
     let galaxy = try #require(

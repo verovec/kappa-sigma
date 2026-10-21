@@ -153,6 +153,27 @@ struct IntegrationSummaryTests {
     }
   }
 
+  @Test("two targets of one night stay apart, rows and totals")
+  func testTargetsApart() {
+    var m33 = Self.lights("L", night: "2026-10-01", count: 3, exposureS: 60)
+    m33.key.object = "M33"
+    var m31 = Self.lights("L", night: "2026-10-01", count: 5, exposureS: 60)
+    m31.key.object = "M31"
+    let summary = IntegrationSummary.make(inventory: Self.inventory([m33, m31]))
+    #expect(summary.rows.map(\.object) == ["M31", "M33"])
+    #expect(summary.rows.map(\.frames) == [5, 3])
+    #expect(summary.totals.map(\.object) == ["M31", "M33"])
+    #expect(summary.targets == 2)
+  }
+
+  @Test("a set's night is its first dated frame's, not an undated first frame's")
+  func testNightSkipsUndatedFrame() {
+    var set = Self.lights("L", night: "2026-09-22", count: 3, exposureS: 60)
+    set.key.session = ""
+    set.frames[0].session = ""
+    #expect(ImportPlan.night(of: set) == "2026-09-22")
+  }
+
   @Test("the temperature range of a row comes from its frames; none when no frame has one")
   func testTemperatureRange() {
     let summary = IntegrationSummary.make(

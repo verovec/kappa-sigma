@@ -1,3 +1,4 @@
+internal import Foundation
 internal import StackKit
 
 /// The Données stage's scan (0078): Rescan on demand over the recorded sources, through the same
@@ -5,8 +6,10 @@ internal import StackKit
 extension ProjectWindowModel {
   /// Scans the recorded sources again, cancelling a scan in flight; nothing without sources.
   ///
-  /// The last scan's import choices (filter map, exclusions, clip filters, unchecked masters)
-  /// are kept while the sources are the same, so a Rescan never silently changes the verdict.
+  /// The adopted sheet's import choices (filter map, exclusions, clip filters, unchecked masters)
+  /// are kept while the sources are the ones it covered. Choices of an earlier sheet are not
+  /// merged: until 0057 persists the request, a project grown over two imports rescans with the
+  /// scan's defaults, which the pane then shows as is.
   package func rescan() {
     cancelScan()
     let paths = sources.map(\.path)
@@ -16,7 +19,8 @@ extension ProjectWindowModel {
       return
     }
     let request =
-      scanRequest.flatMap { Set($0.paths) == Set(paths) ? $0 : nil } ?? ImportRequest(paths: paths)
+      scanRequest.flatMap { Self.samePaths($0.paths, paths) ? $0 : nil }
+      ?? ImportRequest(paths: paths)
     let planning = services(store).planning
     isScanning = true
     scanTask = Task {
@@ -26,10 +30,12 @@ extension ProjectWindowModel {
         scanRequest = request
         scan = plan
         isScanning = false
+        scanTask = nil
         refresh()
       } catch {
         guard !Task.isCancelled, !(error is CancellationError) else { return }
         isScanning = false
+        scanTask = nil
         self.error = UserFacingError(error)
       }
     }
@@ -51,15 +57,29 @@ extension ProjectWindowModel {
   /// `request`, nothing in flight) and covers every recorded source; otherwise the previous scan
   /// no longer describes the project and is dropped until the user rescans.
   func adoptScan(of sheet: ImportViewModel?, for request: ImportRequest, sources: [String]) {
-    cancelScan()
     if let sheet, let plan = sheet.plan, !sheet.isScanning, sheet.request == request,
-      Set(request.paths) == Set(sources)
+      Self.samePaths(request.paths, sources)
     {
+      cancelScan()
       scanRequest = request
       scan = plan
     } else {
-      scanRequest = nil
-      scan = nil
+      dropScan()
     }
+  }
+
+  /// The project changed in a way the last scan does not describe.
+  func dropScan() {
+    cancelScan()
+    scanRequest = nil
+    scan = nil
+  }
+
+  /// The same folders, compared as the store records them (standardized file paths).
+  static func samePaths(_ lhs: [String], _ rhs: [String]) -> Bool {
+    let standard = { (paths: [String]) in
+      Set(paths.map { URL(fileURLWithPath: $0).standardizedFileURL.path })
+    }
+    return standard(lhs) == standard(rhs)
   }
 }

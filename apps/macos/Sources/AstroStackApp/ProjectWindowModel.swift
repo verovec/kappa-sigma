@@ -101,6 +101,8 @@ package final class ProjectWindowModel {
       closeImport()
       refresh()
     } catch {
+      // Some folders may be recorded: the last scan no longer describes the project.
+      dropScan()
       refresh()
       self.error = UserFacingError(error)
     }

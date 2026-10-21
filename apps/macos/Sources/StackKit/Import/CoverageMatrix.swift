@@ -18,8 +18,9 @@ package struct CoverageMatrix: Equatable, Sendable {
     package var notes: [String] { channel.notes }
     /// A role nothing covers that the user did not ask to skip.
     package var hasGap: Bool { channel.hasGap }
-    /// The light set's id.
-    package var id: String { channel.id }
+    /// The light set's id; a colour set apart from a mono one of the same key (`SetKey.id`
+    /// leaves `color` out).
+    package var id: String { channel.id + (channel.key.color ? "|osc" : "") }
   }
 
   /// Nights in order (undated last), then filters in canonical order, clip filter, set id.

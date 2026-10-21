@@ -120,6 +120,22 @@ struct DataScanTests {
     #expect(window.statuses[.calibration] == .ready)
   }
 
+  @Test(
+    "a folder chosen through a non-standard path is still the source the store records",
+    .scratchDirectory)
+  func testAdoptsAcrossPathSpelling() async throws {
+    let project = try ProjectWindowModelTests.package()
+    defer { try? project.close() }
+    let window = Self.window(project)
+    window.startImport()
+    let sheet = try #require(window.importing)
+    sheet.choose(folder: URL(fileURLWithPath: "/c/nights/../M31-DB"))
+    await sheet.settled()
+    window.add(sheet.request)
+    #expect(window.sources.map(\.path) == ["/c/M31-DB"])
+    #expect(window.scan != nil)
+  }
+
   @Test("a rescan of the same sources keeps the user's import choices", .scratchDirectory)
   func testRescanKeepsImportChoices() async throws {
     let project = try ProjectWindowModelTests.package()

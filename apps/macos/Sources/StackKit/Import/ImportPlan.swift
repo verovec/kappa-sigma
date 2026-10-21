@@ -137,9 +137,10 @@ package struct ImportPlan: Equatable, Sendable {
     return sorted.map { Night(session: $0, sets: rows[$0] ?? []) }
   }
 
-  /// The night of a set: its key's, else its frames' (a one-night scan keeps no night in its
-  /// keys, so all its frames share one); `""` when undated.
+  /// The night of a set: its key's, else its dated frames' (a one-night scan keeps no night in
+  /// its keys, so they share one); `""` when no frame is dated.
   package static func night(of set: FrameSet) -> String {
-    set.key.session.isEmpty ? set.frames.first?.session ?? "" : set.key.session
+    set.key.session.isEmpty
+      ? set.frames.first { !$0.session.isEmpty }?.session ?? "" : set.key.session
   }
 }

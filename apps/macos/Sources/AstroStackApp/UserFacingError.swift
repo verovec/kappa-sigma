@@ -9,6 +9,8 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
   case calibration(CalibrationError)
   /// The document was closed under an open sheet.
   case projectClosed
+  /// A new project's name has nothing left once cleaned for the file system.
+  case projectName
   /// An error without a sentence of its own (SQLite, FITS, the file system): its description,
   /// which names the file or value it is about.
   case other(String)
@@ -36,6 +38,7 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     case .inspect(let error): Self.message(error)
     case .calibration(let error): Self.message(error)
     case .projectClosed: .app("This project is not open any more; reopen it and import again.")
+    case .projectName: .app("Name the project after its target, for example M 31.")
     case .other(let description): .app("\(description)")
     }
   }

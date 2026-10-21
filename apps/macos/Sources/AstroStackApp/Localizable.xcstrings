@@ -865,6 +865,22 @@
         }
       }
     },
+    "Name the project after its target, for example M 31.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name the project after its target, for example M 31."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nommez le projet d’après sa cible, par exemple M 31."
+          }
+        }
+      }
+    },
     "New Project": {
       "localizations": {
         "en": {

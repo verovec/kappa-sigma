@@ -15,6 +15,21 @@ package final class ProjectWindowModel {
   /// The open Import sheet's model, `nil` when no sheet is shown.
   package private(set) var importing: ImportViewModel?
   package internal(set) var error: UserFacingError?
+  /// The last scan of the sources in this window: the sheet's plan on Add, or a Rescan the user
+  /// asked for; `nil` until then (an M31 scan takes ~90 s, never run on open).
+  package internal(set) var scan: ImportPlan? {
+    didSet {
+      integration = scan.map { IntegrationSummary.make(inventory: $0.inventory) }
+      coverage = scan.map(CoverageMatrix.init(plan:))
+    }
+  }
+  /// The lights per filter × night of `scan`, computed once per scan.
+  package private(set) var integration: IntegrationSummary?
+  /// The calibration coverage of `scan`, the matcher's verdict as is.
+  package private(set) var coverage: CoverageMatrix?
+  /// A Rescan is running.
+  package internal(set) var isScanning = false
+  var scanTask: Task<Void, Never>?
   /// The preprocessing run the Stacking stage shows: the one running, or the last one.
   package internal(set) var run: RunViewModel?
   /// The stack the Studio shows: the latest one, read-only.
@@ -108,9 +123,14 @@ package final class ProjectWindowModel {
         try store.addSource(kind: .night, path: path)
       }
       imports.append(request)
+      // The sources first: whether the sheet's plan is the project's scan depends on them.
+      refresh()
+      adoptScan(of: importing, for: request)
       closeImport()
       refresh()
     } catch {
+      // Some folders may be recorded: the last scan no longer describes the project.
+      dropScan()
       refresh()
       self.error = UserFacingError(error)
     }
@@ -123,7 +143,8 @@ package final class ProjectWindowModel {
       sources = try store?.sources() ?? []
       let summary = try store?.summary() ?? ProjectSummary()
       let running = run?.isRunning == true ? 1 : 0
-      statuses = JourneyState.derive(from: ProjectFacts(summary: summary, stacksRunning: running))
+      statuses = JourneyState.derive(
+        from: ProjectFacts(summary: summary, coverage: coverage, stacksRunning: running))
       error = nil
     } catch {
       self.error = UserFacingError(error)

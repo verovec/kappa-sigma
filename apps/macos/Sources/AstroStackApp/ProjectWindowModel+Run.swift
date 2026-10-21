@@ -55,6 +55,8 @@ extension ProjectWindowModel {
       self.error = UserFacingError(error)
       return
     }
+    // The run plans the same folders again: a Rescan still reading them only competes for disk.
+    cancelScan()
     let runID = Self.unusedRunID(runs.nextRunID, in: folder)
     let output = folder.appendingPathComponent("stacks/\(runID)", isDirectory: true)
     let work = runs.scratch.appendingPathComponent("run_\(runID)", isDirectory: true)

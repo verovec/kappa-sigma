@@ -385,6 +385,22 @@
         }
       }
     },
+    "Calibration coverage": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calibration coverage"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couverture de la calibration"
+          }
+        }
+      }
+    },
     "Calibration masters": {
       "localizations": {
         "en": {
@@ -1121,6 +1137,22 @@
         }
       }
     },
+    "Integration": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integration"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intégration"
+          }
+        }
+      }
+    },
     "Kept in the stack folder": {
       "localizations": {
         "en": {
@@ -1229,6 +1261,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bibliothèque : %@"
+          }
+        }
+      }
+    },
+    "Light set": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Light set"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Série de brutes"
+          }
+        }
+      }
+    },
+    "Lights": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lights"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brutes"
           }
         }
       }
@@ -1345,6 +1409,22 @@
         }
       }
     },
+    "Night": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Night"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nuit"
+          }
+        }
+      }
+    },
     "Night of %@": {
       "localizations": {
         "en": {
@@ -1357,6 +1437,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nuit du %@"
+          }
+        }
+      }
+    },
+    "Nights": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nights"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nuits"
           }
         }
       }
@@ -1441,6 +1537,22 @@
         }
       }
     },
+    "Not scanned in this window": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not scanned in this window"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas encore lu dans cette fenêtre"
+          }
+        }
+      }
+    },
     "Object": {
       "localizations": {
         "en": {
@@ -1469,6 +1581,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Seules %lld des %lld poses ont passé le tri : Siril en empile deux au minimum."
+          }
+        }
+      }
+    },
+    "Open Calibration": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Calibration"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir la calibration"
           }
         }
       }
@@ -1789,6 +1917,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Remplacer"
+          }
+        }
+      }
+    },
+    "Rescan": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rescan"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Relire"
+          }
+        }
+      }
+    },
+    "Rescan reads the folders for their integration and calibration (~90 s a night).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rescan reads the folders for their integration and calibration (~90 s a night)."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Relire parcourt les dossiers pour leur intégration et leur calibration (~90 s par nuit)."
           }
         }
       }
@@ -2449,6 +2609,22 @@
         }
       }
     },
+    "The matcher's choice, as is.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The matcher's choice, as is."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le choix de l’appariement, tel quel."
+          }
+        }
+      }
+    },
     "The new language applies when AstroStack relaunches.": {
       "localizations": {
         "en": {
@@ -3061,6 +3237,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "remplace %@ dans la bibliothèque"
+          }
+        }
+      }
+    },
+    "total": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "total"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "total"
+          }
+        }
+      }
+    },
+    "undated": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "undated"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "non datée"
           }
         }
       }

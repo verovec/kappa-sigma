@@ -28,10 +28,12 @@ package struct CurveEditorPoints: Equatable, Sendable {
   /// The straight line from (0, 0) to (1, 1): the curve changes nothing.
   package var isIdentity: Bool { points == Self.identity }
 
-  /// Inserts `point` in x order, unless the curve is full or a point is within `minimumGap`.
+  /// Inserts `point` in x order between the two ends, unless the curve is full or a point is within
+  /// `minimumGap` (a point beyond an end would silently become the new end).
   package mutating func add(_ point: SIMD2<Double>) {
     let point = Self.clamped(point)
-    guard points.count < maxCount,
+    guard points.count < maxCount, let first = points.first, let last = points.last,
+      point.x > first.x, point.x < last.x,
       points.allSatisfy({ abs($0.x - point.x) >= Self.minimumGap })
     else { return }
     let index = points.firstIndex { $0.x > point.x } ?? points.count

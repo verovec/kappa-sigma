@@ -66,6 +66,14 @@ struct CurveEditorTests {
     #expect(editor.points.map(\.x) == xs)
   }
 
+  @Test("a click beyond an end adds nothing: the ends stay the ends")
+  func testAddOutsideEnds() {
+    var editor = CurveEditorPoints(points: [SIMD2(0.2, 0), SIMD2(0.9, 1)], maxCount: 4)
+    editor.add(SIMD2(0.05, 0.5))
+    editor.add(SIMD2(0.95, 0.5))
+    #expect(editor.points.map(\.x) == [0.2, 0.9])
+  }
+
   @Test("a point squeezed between close neighbours keeps its x when dragged")
   func testSqueezedPointStays() {
     var editor = CurveEditorPoints(

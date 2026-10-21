@@ -34,11 +34,10 @@ extension ParamValue: Codable {
     } else if let number = try? container.decode(Double.self) {
       self = .number(number)
     } else if let pairs = try? container.decode([[Double]].self) {
-      guard pairs.allSatisfy({ $0.count == 2 }) else {
-        throw DecodingError.dataCorruptedError(
-          in: container, debugDescription: "a curve point is an [x, y] pair")
-      }
-      self = .points(pairs.map { CurvePoint($0[0], $0[1]) })
+      // A point that is not an [x, y] pair empties the curve: validation refuses it as one
+      // parameter, never the whole recipe.
+      self = .points(
+        pairs.allSatisfy { $0.count == 2 } ? pairs.map { CurvePoint($0[0], $0[1]) } : [])
     } else {
       self = .choice(try container.decode(String.self))
     }

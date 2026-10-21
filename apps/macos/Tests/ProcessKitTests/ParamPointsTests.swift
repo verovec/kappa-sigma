@@ -74,6 +74,18 @@ struct ParamPointsTests {
     #expect(loaded.warnings == ["parameter rgb: curve points clamped into [0, 1] or reordered"])
   }
 
+  @Test("a curve point that is not an [x, y] pair skips that parameter, not the recipe")
+  func testMalformedPointIsOneWarning() throws {
+    let json = """
+      {"schemaVersion": 1, "process": "curves",
+       "params": [{"id": "luminance", "value": [[0, 0], [0.5], [1, 1]]},
+                  {"id": "red", "value": [[0, 0], [0.5, 0.7], [1, 1]]}]}
+      """
+    let loaded = try Recipe.load(Data(json.utf8), registry: ProcessRegistry.standard())
+    #expect(loaded.warnings == ["parameter luminance ignored: invalid value"])
+    #expect(loaded.params.points("red").count == 3)
+  }
+
   @Test("a schema whose default points would be changed by validation is invalid")
   func testInvalidDefault() {
     let bad = ParamSchema([

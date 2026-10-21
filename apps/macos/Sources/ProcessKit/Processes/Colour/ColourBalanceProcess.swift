@@ -44,10 +44,14 @@ package struct ColourBalanceProcess: ImageProcess {
   ]
 
   /// Offsets bringing each channel's median of the region to the mean of the three (the
-  /// background level is kept).
+  /// background level is kept); empty when one would leave the parameter's bounds (applying it
+  /// would clamp it: shown ≠ applied).
   package static func neutraliseSuggestions(regionMedians: [Double]) -> [Suggestion] {
     guard regionMedians.count == 3 else { return [] }
     let mean = regionMedians.reduce(0, +) / 3
+    guard case .number(_, let bounds)? = schema.spec("offsetRed")?.kind,
+      regionMedians.allSatisfy({ bounds.contains(mean - $0) })
+    else { return [] }
     return zip(channels, regionMedians).map {
       Suggestion(
         paramID: "offset" + $0, value: .number(mean - $1), reason: suggestionReasons[0])

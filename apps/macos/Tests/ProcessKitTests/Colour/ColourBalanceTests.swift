@@ -92,9 +92,12 @@ struct ColourBalanceTests {
         == mono)
   }
 
-  @Test("a grey gain the parameter cannot hold is not offered (it would be clamped)")
+  @Test("a grey gain or an offset the parameter cannot hold is not offered (it would be clamped)")
   func testGreyOutOfBounds() {
     let params = ParamSet(schema: ColourBalanceProcess.schema)
+    #expect(ColourBalanceProcess.neutraliseSuggestions(regionMedians: [0.02, 0.05, 1.6]).isEmpty)
+    #expect(
+      ColourBalanceProcess.neutraliseSuggestions(regionMedians: [0.02, 0.05, 0.6]).count == 3)
     #expect(
       ColourBalanceProcess.greySuggestions(regionMedians: [0.05, 0.05, 0.004], params: params)
         .isEmpty)

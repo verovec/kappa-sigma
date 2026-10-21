@@ -37,13 +37,16 @@ extension ProjectStore {
 
   /// The project's counts, read in one snapshot.
   package func summary() throws -> ProjectSummary {
-    try pool.read { db in
-      func count(_ table: String) throws -> Int {
-        try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM \(table)") ?? 0
-      }
-      return ProjectSummary(
-        sources: try count("sources"), stacks: try count("stacks"), images: try count("images"),
-        historySteps: try count("history_steps"))
+    try pool.read(Self.summary(in:))
+  }
+
+  /// The counts as `db` holds them; shared by an open store and a read-only peek.
+  static func summary(in db: Database) throws -> ProjectSummary {
+    func count(_ table: String) throws -> Int {
+      try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM \(table)") ?? 0
     }
+    return ProjectSummary(
+      sources: try count("sources"), stacks: try count("stacks"), images: try count("images"),
+      historySteps: try count("history_steps"))
   }
 }

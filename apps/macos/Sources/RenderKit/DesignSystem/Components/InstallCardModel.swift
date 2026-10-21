@@ -16,17 +16,26 @@ package final class InstallCardModel {
     case checking
     /// Found at this executable.
     case found(URL)
+    /// Installed, but this version is older than the one the app needs.
+    case outdated(version: String)
   }
 
   /// The tool's state as the card shows it.
   package private(set) var state: State
-  private let locate: @Sendable @concurrent () async -> URL?
+  private let check: @Sendable @concurrent () async -> State
 
   /// A card in `state` that re-checks with `locate` (the host-tool client's lookup), which runs
   /// off the main actor: it probes paths and runs `--version`.
-  package init(state: State = .missing, locate: @escaping @Sendable @concurrent () async -> URL?) {
+  package convenience init(
+    state: State = .missing, locate: @escaping @Sendable @concurrent () async -> URL?
+  ) {
+    self.init(state: state) { @concurrent in await locate().map(State.found) ?? .missing }
+  }
+
+  /// A card in `state` whose re-check reports a full state (an outdated install stays outdated).
+  package init(state: State, check: @escaping @Sendable @concurrent () async -> State) {
     self.state = state
-    self.locate = locate
+    self.check = check
   }
 
   /// Asks the locator once and shows its answer; a re-check while one runs does nothing, so an
@@ -34,6 +43,13 @@ package final class InstallCardModel {
   package func recheck() async {
     guard state != .checking else { return }
     state = .checking
-    state = await locate().map(State.found) ?? .missing
+    state = await check()
+  }
+
+  /// Shows a verdict found elsewhere (the window's « Re-check tools »), unless a re-check of
+  /// this card is running: its own answer lands last.
+  package func show(_ verdict: State) {
+    guard state != .checking else { return }
+    state = verdict
   }
 }

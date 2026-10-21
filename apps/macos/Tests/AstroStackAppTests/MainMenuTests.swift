@@ -19,8 +19,8 @@ struct MainMenuTests {
 
   nonisolated static let items: [Item] = [
     Item(
-      menu: "File", title: "New Project", french: ("Fichier", "Nouveau projet"), key: "n",
-      modifiers: .command, action: "newDocument:"),
+      menu: "File", title: "New Project…", french: ("Fichier", "Nouveau projet…"), key: "n",
+      modifiers: .command, action: "newProject:"),
     Item(
       menu: "File", title: "Open…", french: ("Fichier", "Ouvrir…"), key: "o", modifiers: .command,
       action: "openDocument:"),

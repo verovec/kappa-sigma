@@ -39,6 +39,10 @@ package struct ParamSchema: Equatable, Sendable {
         return options.contains(value) ? nil : "\(spec.id): default \(value) not among its options"
       case .flag:
         return nil
+      case .points(let value, let maxCount):
+        let valid = try? ParamSpec.validated(value, maxCount: maxCount, id: spec.id)
+        return valid == value
+          ? nil : "\(spec.id): default points are not sorted, unique and in [0, 1]"
       }
     }
   }

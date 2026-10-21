@@ -6,9 +6,25 @@ package enum ParamValue: Equatable, Sendable {
   case flag(Bool)
   /// One of the parameter's options.
   case choice(String)
+  /// Control points of a curve, sorted by x (already validated when they come from a `ParamSet`).
+  case points([CurvePoint])
 }
 
-/// JSON: a number, a boolean or a string — the kind is the JSON type.
+/// A control point of a curve, both coordinates in [0, 1].
+package struct CurvePoint: Equatable, Sendable {
+  /// Input value.
+  package let x: Double
+  /// Output value.
+  package let y: Double
+
+  /// The point (`x`, `y`).
+  package init(_ x: Double, _ y: Double) {
+    self.x = x
+    self.y = y
+  }
+}
+
+/// JSON: a number, a boolean, a string or an array of `[x, y]` pairs — the kind is the JSON type.
 extension ParamValue: Codable {
   /// Decodes from the JSON type.
   package init(from decoder: any Decoder) throws {
@@ -17,6 +33,12 @@ extension ParamValue: Codable {
       self = .flag(flag)
     } else if let number = try? container.decode(Double.self) {
       self = .number(number)
+    } else if let pairs = try? container.decode([[Double]].self) {
+      guard pairs.allSatisfy({ $0.count == 2 }) else {
+        throw DecodingError.dataCorruptedError(
+          in: container, debugDescription: "a curve point is an [x, y] pair")
+      }
+      self = .points(pairs.map { CurvePoint($0[0], $0[1]) })
     } else {
       self = .choice(try container.decode(String.self))
     }
@@ -29,6 +51,7 @@ extension ParamValue: Codable {
     case .number(let number): try container.encode(number)
     case .flag(let flag): try container.encode(flag)
     case .choice(let option): try container.encode(option)
+    case .points(let points): try container.encode(points.map { [$0.x, $0.y] })
     }
   }
 }

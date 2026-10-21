@@ -9,12 +9,10 @@ package import SwiftUI
 /// in its place (R2).
 package struct ToolStrip: View {
   private let model: WelcomeModel
-  private let hostTools: HostTools
 
-  /// The strip over the model's last check, each install card re-checking through `hostTools`.
-  package init(model: WelcomeModel, hostTools: HostTools) {
+  /// The strip over the model's last check and its install cards.
+  package init(model: WelcomeModel) {
     self.model = model
-    self.hostTools = hostTools
   }
 
   package var body: some View {
@@ -36,10 +34,10 @@ package struct ToolStrip: View {
             Text(verbatim: row.tool.productName).font(.headline)
             StatusBadge(.ok, Self.found(row.status)).lineLimit(1).truncationMode(.middle)
           }
-        } else {
+        } else if let card = model.cards[row.tool] {
           InstallCard(
             tool: row.tool.productName, reason: Self.reason(row), installURL: row.tool.installURL,
-            model: InstallCardModel(locate: Self.locator(row.tool, hostTools)))
+            model: card)
         }
       }
     }
@@ -62,16 +60,6 @@ package struct ToolStrip: View {
     case .siril: .app("Calibrates, registers and stacks the captures.")
     case .graxpert: .app("Extracts the background and denoises.")
     case .starnet: .app("Separates the stars from the nebula.")
-    }
-  }
-
-  /// The install card's re-check: the tool's path once it is usable.
-  nonisolated package static func locator(_ tool: HostTool, _ hostTools: HostTools)
-    -> @Sendable @concurrent () async -> URL?
-  {
-    { @concurrent in
-      let status = await hostTools.locate(tool)
-      return status.isUsable ? URL(fileURLWithPath: status.path) : nil
     }
   }
 }

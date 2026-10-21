@@ -865,6 +865,22 @@
         }
       }
     },
+    "Too old: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Too old: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trop ancienne : %@"
+          }
+        }
+      }
+    },
     "Tool": {
       "localizations": {
         "en": {

@@ -65,7 +65,7 @@ package enum MainMenu {
     let menu = submenu(
       String(localized: .app("File", locale: locale)),
       [
-        (.app("New Project", locale: locale), #selector(NSDocumentController.newDocument(_:)), "n"),
+        (.app("New Project…", locale: locale), #selector(AppDelegate.newProject(_:)), "n"),
         (.app("Open…", locale: locale), #selector(NSDocumentController.openDocument(_:)), "o"),
         (.app("Open Image…", locale: locale), #selector(AppDelegate.openImage(_:)), "O"),
         (.app("Open Run…", locale: locale), #selector(AppDelegate.openRun(_:)), "r"),

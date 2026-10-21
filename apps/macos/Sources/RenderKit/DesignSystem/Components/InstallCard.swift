@@ -21,7 +21,11 @@ package struct InstallCard: View {
 
   /// The badge's kind for `state`.
   nonisolated package static func status(of state: InstallCardModel.State) -> DesignStatus {
-    if case .found = state { .ok } else { .unavailable }
+    switch state {
+    case .found: .ok
+    case .outdated: .attention
+    case .missing, .checking: .unavailable
+    }
   }
 
   /// The badge's words for `state`.
@@ -32,6 +36,7 @@ package struct InstallCard: View {
     case .missing: .renderKit("Not installed", locale: locale)
     case .checking: .renderKit("Checking…", locale: locale)
     case .found(let url): .renderKit("Installed: \(url.path)", locale: locale)
+    case .outdated(let version): .renderKit("Too old: \(version)", locale: locale)
     }
   }
 

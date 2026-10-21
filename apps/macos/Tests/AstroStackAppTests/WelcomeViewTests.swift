@@ -30,9 +30,9 @@ struct WelcomeViewTests {
     for urls in [[], [project]] {
       let model = WelcomeModel(recentURLs: { urls }, tools: Self.mixedTools)
       let host = LocalisedScreensTests.host(
-        WelcomeView(model: model, hostTools: Self.mixedTools, actions: Self.noActions), language)
+        WelcomeView(model: model, actions: Self.noActions), language)
       host.layoutSubtreeIfNeeded()
-      model.reload()
+      await model.reload()
       await model.recheckTools()
       host.layoutSubtreeIfNeeded()
       #expect(host.fittingSize.width >= 520)
@@ -63,13 +63,6 @@ struct WelcomeViewTests {
     #expect(Set(reasons).count == HostTool.allCases.count)
   }
 
-  @Test("an install card's re-check reports the tool's path only once it is usable")
-  func testLocator() async {
-    #expect(await ToolStrip.locator(.siril, Self.mixedTools)()?.path == "/Applications/Siril.app")
-    #expect(await ToolStrip.locator(.graxpert, Self.mixedTools)() == nil)
-    #expect(await ToolStrip.locator(.starnet, Self.mixedTools)() == nil)
-  }
-
   @Test("each tool links to where the user installs it; nothing is downloaded for them")
   func testInstallURLs() {
     #expect(HostTool.allCases.allSatisfy { $0.installURL.scheme == "https" })
@@ -84,7 +77,7 @@ struct WelcomeViewTests {
     await model.recheckTools()
     let view = SettingsView(
       setting: LanguageSetting(defaults: defaults, domain: name), relaunch: {},
-      tools: (model, Self.mixedTools))
+      tools: model)
     let host = LocalisedScreensTests.host(view, language)
     host.layoutSubtreeIfNeeded()
     #expect(host.fittingSize.width >= 460)
@@ -98,5 +91,17 @@ struct WelcomeViewTests {
     #expect(WelcomeWindow.show() === window)
     #expect(WelcomeWindow.isVisible)
     #expect(window.title == String(localized: .app("Welcome to AstroStack")))
+  }
+
+  @Test("File › New Project… opens the welcome window with its naming sheet up")
+  func testNewProjectRaisesNamingSheet() {
+    WelcomeWindow.model.isNaming = false
+    AppDelegate().newProject(nil)
+    defer {
+      WelcomeWindow.model.isNaming = false
+      WelcomeWindow.show().close()
+    }
+    #expect(WelcomeWindow.isVisible)
+    #expect(WelcomeWindow.model.isNaming)
   }
 }

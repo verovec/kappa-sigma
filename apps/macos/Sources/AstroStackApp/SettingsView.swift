@@ -1,4 +1,3 @@
-package import StackKit
 package import SwiftUI
 
 /// The Settings window's content: the interface language, applied on relaunch, and the host
@@ -6,7 +5,7 @@ package import SwiftUI
 package struct SettingsView: View {
   private let setting: LanguageSetting
   private let relaunch: () -> Void
-  private let tools: (model: WelcomeModel, hostTools: HostTools)?
+  private let tools: WelcomeModel?
   /// The choice the app was launched with: Relaunch is offered once the choice differs.
   private let launched: LanguageSetting.Choice
   @State private var choice: LanguageSetting.Choice
@@ -14,7 +13,7 @@ package struct SettingsView: View {
   /// Settings over `setting`; `relaunch` restarts the app; `tools` fills the Tools section.
   package init(
     setting: LanguageSetting, relaunch: @escaping () -> Void,
-    tools: (model: WelcomeModel, hostTools: HostTools)? = nil
+    tools: WelcomeModel? = nil
   ) {
     self.setting = setting
     self.relaunch = relaunch
@@ -41,7 +40,7 @@ package struct SettingsView: View {
       }
       if let tools {
         Section {
-          ToolStrip(model: tools.model, hostTools: tools.hostTools)
+          ToolStrip(model: tools)
         } header: {
           Text(.app("Tools"))
         }

@@ -21,7 +21,7 @@ package enum SettingsWindow {
       contentViewController: NSHostingController(
         rootView: SettingsView(
           setting: LanguageSetting(), relaunch: relaunch,
-          tools: (WelcomeWindow.model, WelcomeWindow.hostTools)
+          tools: WelcomeWindow.model
         ).interfaceLocale()))
     window.title = String(localized: .app("Settings"))
     window.styleMask = [.titled, .closable]

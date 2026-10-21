@@ -86,4 +86,17 @@ struct InstallCardTests {
     let missing = String(localized: InstallCard.label(of: .missing, locale: locale))
     #expect(missing == (language == "fr" ? "Non installé" : "Not installed"))
   }
+
+  @Test(
+    "a too old install is flagged, not called missing, in each language", arguments: ["en", "fr"])
+  func testOutdatedStatus(_ language: String) {
+    #expect(InstallCard.status(of: .outdated(version: "1.2.6")) == .attention)
+    let words = String(
+      localized: InstallCard.label(
+        of: .outdated(version: "1.2.6"), locale: Locale(identifier: language)))
+    #expect(words.contains("1.2.6"))
+    #expect(
+      words
+        != String(localized: InstallCard.label(of: .missing, locale: Locale(identifier: language))))
+  }
 }

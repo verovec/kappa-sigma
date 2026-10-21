@@ -16,6 +16,8 @@ package final class InstallCardModel {
     case checking
     /// Found at this executable.
     case found(URL)
+    /// Installed, but this version is older than the one the app needs.
+    case outdated(version: String)
   }
 
   /// The tool's state as the card shows it.

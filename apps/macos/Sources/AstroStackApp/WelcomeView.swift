@@ -1,7 +1,6 @@
 package import Foundation
 package import ProjectKit
 internal import RenderKit
-package import StackKit
 package import SwiftUI
 
 /// The welcome window's content, shown at launch instead of an untitled project.
@@ -10,9 +9,7 @@ package import SwiftUI
 /// modal (R3).
 package struct WelcomeView: View {
   private let model: WelcomeModel
-  private let hostTools: HostTools
   private let actions: Actions
-  @State private var naming = false
   @State private var target = ""
   @State private var error: UserFacingError?
 
@@ -37,9 +34,8 @@ package struct WelcomeView: View {
   }
 
   /// The welcome content over `model`, acting through `actions`.
-  package init(model: WelcomeModel, hostTools: HostTools, actions: Actions) {
+  package init(model: WelcomeModel, actions: Actions) {
     self.model = model
-    self.hostTools = hostTools
     self.actions = actions
   }
 
@@ -47,16 +43,19 @@ package struct WelcomeView: View {
     VStack(alignment: .leading, spacing: DesignMetrics.spacingL) {
       Text(.app("Welcome to AstroStack")).font(.largeTitle)
       HStack(spacing: DesignMetrics.spacingM) {
-        Button(.app("New Project…")) { naming = true }.keyboardShortcut("n")
-        Button(.app("Open…"), action: actions.choose).keyboardShortcut("o")
+        // ⌘N and ⌘O stay the menu's: File › New Project raises this same sheet.
+        Button(.app("New Project…")) { model.isNaming = true }
+        Button(.app("Open…"), action: actions.choose)
       }
       recentList
-      ToolStrip(model: model, hostTools: hostTools)
+      ToolStrip(model: model)
     }
     .padding(DesignMetrics.spacingXL)
     .frame(minWidth: 520, alignment: .topLeading)
     .background(DesignColor.surface.color)
-    .sheet(isPresented: $naming) { newProjectSheet }
+    .sheet(isPresented: Binding(get: { model.isNaming }, set: { model.isNaming = $0 })) {
+      newProjectSheet
+    }
   }
 
   @ViewBuilder
@@ -90,7 +89,8 @@ package struct WelcomeView: View {
       if let error { StatusBadge(.error, error.message) }
       HStack {
         Spacer()
-        Button(.app("Cancel"), role: .cancel) { naming = false }.keyboardShortcut(.cancelAction)
+        Button(.app("Cancel"), role: .cancel) { model.isNaming = false }.keyboardShortcut(
+          .cancelAction)
         Button(.app("Create")) { create() }.keyboardShortcut(.defaultAction)
           .disabled(NewProject.fileName(target).isEmpty)
       }
@@ -102,7 +102,7 @@ package struct WelcomeView: View {
   private func create() {
     do {
       let url = try actions.create(target)
-      naming = false
+      model.isNaming = false
       error = nil
       actions.open(url)
     } catch {

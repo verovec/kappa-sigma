@@ -15,6 +15,9 @@ package enum ContinuumK {
   package struct Fit: Equatable, Sendable {
     package var k: Double
     package var reference: String
+    /// The plane subtracted, as the Studio names it: the mono filter (`R`), or the colour base's
+    /// red or green plane (`RGB.r`, `RGB.g`).
+    package var plane: String
   }
 
   static let selection = (low: 85.0, high: 99.9)
@@ -61,7 +64,8 @@ package enum ContinuumK {
     do {
       return Fit(
         k: try scale(line: lineImage.planes[0], reference: referenceImage.planes[plane]),
-        reference: reference)
+        reference: reference,
+        plane: filters.contains(reference) ? reference : reference + [".r", ".g", ".b"][plane])
     } catch let refusal as Refusal {
       throw Refusal(description: "\(line)/\(reference): \(refusal.description)")
     }

@@ -80,6 +80,12 @@ package struct ParamSet: Equatable, Sendable {
     return ""
   }
 
+  /// The control points of `id` (empty when it is not a curve).
+  package func points(_ id: String) -> [CurvePoint] {
+    if case .points(let value) = self[id] { return value }
+    return []
+  }
+
   /// Sets compare values only.
   package static func == (lhs: Self, rhs: Self) -> Bool {
     lhs.entries == rhs.entries

@@ -9,6 +9,8 @@ package struct ParamSpec: Equatable, Sendable {
     case flag(default: Bool)
     /// One of `options`.
     case choice(default: String, options: [String])
+    /// Between 2 and `maxCount` control points of a curve.
+    case points(default: [CurvePoint], maxCount: Int)
   }
 
   /// Stable identifier, used by recipes and history (never renamed once shipped).
@@ -44,6 +46,15 @@ package struct ParamSpec: Equatable, Sendable {
       kind: .choice(default: choice, options: options))
   }
 
+  /// A curve of 2 to `maxCount` control points.
+  package init(
+    id: String, title: String, level: ParamLevel, points: [CurvePoint], maxCount: Int
+  ) {
+    self.init(
+      id: id, title: title, unit: .none, level: level,
+      kind: .points(default: points, maxCount: maxCount))
+  }
+
   /// A parameter of any kind.
   package init(id: String, title: String, unit: ParamUnit, level: ParamLevel, kind: Kind) {
     self.id = id
@@ -59,6 +70,7 @@ package struct ParamSpec: Equatable, Sendable {
     case .number(let value, _): .number(value)
     case .flag(let value): .flag(value)
     case .choice(let value, _): .choice(value)
+    case .points(let value, _): .points(value)
     }
   }
 
@@ -76,9 +88,30 @@ package struct ParamSpec: Equatable, Sendable {
         throw ParamError.unknownOption(id: id, option: option)
       }
       return value
+    case (.points(_, let maxCount), .points(let points)):
+      return .points(try Self.validated(points, maxCount: maxCount, id: id))
     default:
       throw ParamError.wrongKind(id: id)
     }
+  }
+}
+
+extension ParamSpec {
+  /// `points` clamped into [0, 1] and sorted by x; refuses fewer than 2 or more than `maxCount`
+  /// points, a non-finite coordinate or two points at the same x (a curve has one output per input).
+  static func validated(_ points: [CurvePoint], maxCount: Int, id: String) throws -> [CurvePoint] {
+    guard (2...max(2, maxCount)).contains(points.count) else {
+      throw ParamError.invalidPoints(id: id)
+    }
+    guard points.allSatisfy({ $0.x.isFinite && $0.y.isFinite }) else {
+      throw ParamError.notFinite(id: id)
+    }
+    let unit = { (value: Double) in min(max(value, 0), 1) }
+    let sorted = points.map { CurvePoint(unit($0.x), unit($0.y)) }.sorted { $0.x < $1.x }
+    guard zip(sorted, sorted.dropFirst()).allSatisfy({ $0.x < $1.x }) else {
+      throw ParamError.invalidPoints(id: id)
+    }
+    return sorted
   }
 }
 
@@ -112,4 +145,6 @@ package enum ParamError: Error, Equatable, Sendable {
   case wrongKind(id: String)
   /// A choice outside the parameter's options.
   case unknownOption(id: String, option: String)
+  /// Too few or too many curve points, or two at the same x.
+  case invalidPoints(id: String)
 }

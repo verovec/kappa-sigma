@@ -6,7 +6,7 @@ package struct MaskBuilder {
   private let queue: MTLCommandQueue
   private let rangePipeline: MTLComputePipelineState
   private let starsPipeline: MTLComputePipelineState
-  private let blurPipeline: MTLComputePipelineState
+  private let blur: BoxBlur
 
   /// A builder on `device`.
   package init(device: MTLDevice) throws {
@@ -18,7 +18,7 @@ package struct MaskBuilder {
     let library = try ProcessLibrary.library(device: device, file: "Mask.metal")
     rangePipeline = try ProcessLibrary.pipeline(library: library, function: "maskLuminosityRange")
     starsPipeline = try ProcessLibrary.pipeline(library: library, function: "maskStars")
-    blurPipeline = try ProcessLibrary.pipeline(library: library, function: "maskBoxBlur")
+    blur = try BoxBlur(device: device)
   }
 
   /// `mask` of `image` at `scale` (full-resolution pixels per working pixel): one plane in [0, 1].
@@ -49,24 +49,14 @@ package struct MaskBuilder {
   package func feather(_ mask: GPUImage, radiusPx: Double, scale: Double) throws -> GPUImage {
     let radius = Self.workingRadius(radiusPx, scale: scale)
     guard radius > 0 else { return mask }
-    let across = try GPUImage(device: device, width: mask.width, height: mask.height, channels: 1)
-    let both = try GPUImage(device: device, width: mask.width, height: mask.height, channels: 1)
+    let feathered = try GPUImage(
+      device: device, width: mask.width, height: mask.height, channels: 1)
     guard let commands = queue.makeCommandBuffer() else {
       throw ProcessError.commandFailed("feather")
     }
-    for (axis, source, target) in [(Int32(0), mask, across), (1, across, both)] {
-      guard let encoder = commands.makeComputeCommandEncoder() else {
-        throw ProcessError.commandFailed("feather encoder")
-      }
-      var radiusAxis = SIMD2(Int32(radius), axis)
-      encoder.setComputePipelineState(blurPipeline)
-      encoder.setTexture(source.planes[0], index: 0)
-      encoder.setTexture(target.planes[0], index: 1)
-      unsafe encoder.setBytes(&radiusAxis, length: MemoryLayout<SIMD2<Int32>>.stride, index: 0)
-      Self.dispatch(encoder, over: target)
-    }
+    try blur.encode(mask.planes[0], into: feathered.planes[0], radii: [radius], commands: commands)
     try Self.finish(commands)
-    return both
+    return feathered
   }
 
   /// A pixel radius at the working scale: rounded, and at least 1 when `radiusPx` is not 0, so a

@@ -74,4 +74,25 @@ struct EmissionLayersTests {
     #expect(bundle.layers.map(\.continuumK) == [nil, 0.5])
     #expect(try BundleWriter.read(from: out).layers[1].continuumK == 0.5)
   }
+
+  @Test("the fits keep each scale's reference plane, and the bundle records it", .scratchDirectory)
+  func testBundleReference() throws {
+    let out = try ScratchDirectory.url
+    _ = try Self.write("trim_RGB", [Self.ramp(1), Self.ramp(0.8), Self.ramp(0.6)])
+    _ = try Self.write("trim_RGB-dualband", [Self.ramp(0.5), Self.ramp(0.2), Self.ramp(0.1)])
+    var notes: [String] = []
+    let (_, fits) = Preprocessor.emissionFits(
+      ["RGB": "trim_RGB", "RGB-dualband": "trim_RGB-dualband"], out: out, notes: &notes)
+    #expect(fits.mapValues(\.plane) == ["Ha": "RGB.r", "OIII": "RGB.g"])
+    let bundle = try BundleWriter().write(
+      runID: "R", colorModel: .osc,
+      layers: [
+        .init(filter: "RGB", file: out.appendingPathComponent("trim_RGB.fits"), source: "trim"),
+        .init(
+          filter: "Ha", file: out.appendingPathComponent("syn_Ha.fits"), source: "syn",
+          continuumK: 0.5, continuumReference: "RGB.r"),
+      ], to: out)
+    #expect(bundle.layers.map(\.continuumReference) == [nil, "RGB.r"])
+    #expect(try BundleWriter.read(from: out).layers[1].continuumReference == "RGB.r")
+  }
 }

@@ -131,14 +131,8 @@ package struct ChannelCombinationProcess: ImageProcess {
     _ source: String, _ context: RenderContext, size: (width: Int, height: Int)
   ) throws -> SlotPlanes {
     let textures = try Self.layers(of: source).map { id -> MTLTexture in
-      guard let layer = context.layers[id] else { throw ProcessError.missingLayer(id) }
-      // A layer of another size would be read at the wrong pixels: never silently.
-      guard layer.width == size.width, layer.height == size.height else {
-        throw ProcessError.sizeMismatch
-      }
-      let plane = ["RGB.r": 0, "RGB.g": 1, "RGB.b": 2][source] ?? 0
-      guard plane < layer.planes.count else { throw ProcessError.missingLayer(source) }
-      return layer.planes[plane]
+      try LayerPlane(id == "RGB" ? source : id).texture(
+        in: context.layers, width: size.width, height: size.height)
     }
     return SlotPlanes(first: textures.first, second: textures.count > 1 ? textures[1] : nil)
   }

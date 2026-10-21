@@ -115,4 +115,22 @@ struct WelcomeViewTests {
 
     #expect(!WelcomeWindow.isVisible)
   }
+
+  @Test("a tool its card has since found reads as usable; one still missing does not")
+  func testUsableAfterCardRecheck() {
+    let missing = WelcomeModel.ToolRow(tool: .graxpert, status: .missing(path: "/g"))
+    let url = URL(fileURLWithPath: "/Applications/GraXpert.app")
+
+    #expect(ToolStrip.usable(missing, card: .found(url)) == .found(path: url.path, version: nil))
+    #expect(ToolStrip.usable(missing, card: .missing) == nil)
+    #expect(ToolStrip.usable(missing, card: nil) == nil)
+  }
+
+  @Test("a too old Siril says so with the sentence the app shows for Siril errors")
+  func testTooOldReusesSirilSentence() {
+    let row = WelcomeModel.ToolRow(tool: .siril, status: .tooOld(path: "/s", version: "1.2.6"))
+    #expect(
+      ToolStrip.reason(row).text("fr")
+        == UserFacingError.siril(.tooOld(version: "1.2.6")).message.text("fr"))
+  }
 }

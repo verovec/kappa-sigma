@@ -22,10 +22,8 @@ package enum WelcomeWindow {
   package static func show() -> NSWindow {
     let window = window ?? make()
     Self.window = window
-    Task {
-      await model.reload()
-      await model.recheckTools()
-    }
+    Task { await model.reload() }
+    Task { await model.recheckTools() }
     window.makeKeyAndOrderFront(nil)
     return window
   }
@@ -60,11 +58,11 @@ package enum WelcomeWindow {
   }
 
   /// The counts of every project open in a document, keyed like `WelcomeModel` looks them up.
-  private static func openProjects() -> [URL: ProjectSummary?] {
-    var open: [URL: ProjectSummary?] = [:]
+  private static func openProjects() -> [String: ProjectSummary?] {
+    var open: [String: ProjectSummary?] = [:]
     for case let document as ProjectDocument in NSDocumentController.shared.documents {
       guard let url = document.packageURL else { continue }
-      open[url.standardizedFileURL] = document.projectSummary()
+      open[WelcomeModel.key(url)] = document.projectSummary()
     }
     return open
   }

@@ -69,7 +69,7 @@ struct WelcomeModelTests {
 
     let model = WelcomeModel(
       recentURLs: { [open] }, tools: Self.noTools,
-      openProjects: { [open.standardizedFileURL: counted] })
+      openProjects: { [WelcomeModel.key(open.appendingPathComponent("")): counted] })
     await model.reload()
 
     #expect(model.recent.first?.summary == counted)
@@ -104,5 +104,14 @@ struct WelcomeModelTests {
     await model.recheckTools()
 
     #expect(model.cards[.graxpert] === card)
+  }
+
+  @Test("an open project is found whatever the spelling of its path", .scratchDirectory)
+  func testKeyResolvesSpelling() throws {
+    let url = try ScratchDirectory.url.appendingPathComponent("M 31.astrostack")
+    try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+
+    #expect(WelcomeModel.key(url) == WelcomeModel.key(url.appendingPathComponent("")))
+    #expect(WelcomeModel.key(url) == WelcomeModel.key(url.resolvingSymlinksInPath()))
   }
 }

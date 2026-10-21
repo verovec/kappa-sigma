@@ -51,15 +51,15 @@ package final class WelcomeModel {
   package var isNaming = false
 
   private let recentURLs: @MainActor () -> [URL]
-  private let openProjects: @MainActor () -> [URL: ProjectSummary?]
+  private let openProjects: @MainActor () -> [String: ProjectSummary?]
   private let hostTools: HostTools
   private var isChecking = false
 
   /// A model listing `recentURLs` (the document controller's) and checking `tools`;
-  /// `openProjects` gives the counts of the projects open in a document, by standardized URL.
+  /// `openProjects` gives the counts of the projects open in a document, by `key(_:)`.
   package init(
     recentURLs: @escaping @MainActor () -> [URL], tools: HostTools,
-    openProjects: @escaping @MainActor () -> [URL: ProjectSummary?] = { [:] }
+    openProjects: @escaping @MainActor () -> [String: ProjectSummary?] = { [:] }
   ) {
     self.recentURLs = recentURLs
     self.openProjects = openProjects
@@ -71,7 +71,7 @@ package final class WelcomeModel {
     let open = openProjects()
     var rows: [RecentProject] = []
     for url in recentURLs() where FileManager.default.fileExists(atPath: url.path) {
-      let key = url.standardizedFileURL
+      let key = Self.key(url)
       let summary = open.keys.contains(key) ? open[key] ?? nil : await Self.readSummary(url)
       rows.append(
         RecentProject(
@@ -104,6 +104,12 @@ package final class WelcomeModel {
           state: Self.cardState(row.status), check: Self.check(row.tool, hostTools))
       }
     }
+  }
+
+  /// The key an open project is looked up by: its path with symlinks resolved and no trailing
+  /// slash, so `/var/…` and `/private/var/…/M 31.astrostack/` name the same package.
+  nonisolated package static func key(_ url: URL) -> String {
+    url.resolvingSymlinksInPath().standardizedFileURL.path
   }
 
   /// The install card state of `status`.

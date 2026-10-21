@@ -49,4 +49,14 @@ struct ProjectPackageSummaryTests {
       try ProjectPackage.readSummary(at: url)
     }
   }
+
+  @Test("a package without its project.db says so, as opening it would", .scratchDirectory)
+  func testMissingDatabase() throws {
+    let url = try ScratchDirectory.url.appendingPathComponent("Empty.astrostack")
+    try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+
+    #expect(throws: ProjectPackageError.missingDatabase(path: url.path)) {
+      try ProjectPackage.readSummary(at: url)
+    }
+  }
 }

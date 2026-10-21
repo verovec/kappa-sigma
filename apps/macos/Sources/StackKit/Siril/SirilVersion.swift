@@ -5,8 +5,6 @@ internal import Foundation
 package enum SirilVersion {
   /// The lowest supported version.
   package static let floor = (major: 1, minor: 4)
-  /// The lowest supported version as shown to the user: « 1.4 ».
-  package static var floorLabel: String { "\(floor.major).\(floor.minor)" }
 
   /// The version (`1.4.4`), or an error saying what is wrong with the installation.
   package static func parse(_ output: String) throws -> String {

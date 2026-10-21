@@ -1,5 +1,5 @@
 package import Foundation
-internal import RenderKit
+package import RenderKit
 package import StackKit
 package import SwiftUI
 
@@ -29,10 +29,10 @@ package struct ToolStrip: View {
         }
       }
       ForEach(model.tools) { row in
-        if row.status.isUsable {
+        if let found = Self.usable(row, card: model.cards[row.tool]?.state) {
           HStack(spacing: DesignMetrics.spacingS) {
             Text(verbatim: row.tool.productName).font(.headline)
-            StatusBadge(.ok, Self.found(row.status)).lineLimit(1).truncationMode(.middle)
+            StatusBadge(.ok, Self.found(found)).lineLimit(1).truncationMode(.middle)
           }
         } else if let card = model.cards[row.tool] {
           InstallCard(
@@ -41,6 +41,15 @@ package struct ToolStrip: View {
         }
       }
     }
+  }
+
+  /// The tool as usable: found at the last check, or since by its card's own « Re-check ».
+  nonisolated package static func usable(_ row: WelcomeModel.ToolRow, card: InstallCardModel.State?)
+    -> ToolStatus?
+  {
+    if row.status.isUsable { return row.status }
+    if case .found(let url)? = card { return .found(path: url.path, version: nil) }
+    return nil
   }
 
   /// The badge words of a usable tool: its version when it reports one, and its path.
@@ -54,8 +63,8 @@ package struct ToolStrip: View {
   /// Why the tool is needed, or why the installed one cannot be used.
   nonisolated package static func reason(_ row: WelcomeModel.ToolRow) -> LocalizedStringResource {
     if case .tooOld(_, let version) = row.status {
-      return .app(
-        "Version \(version) is too old: AstroStack needs \(SirilVersion.floorLabel) or later.")
+      // The sentence the app already shows for a too old Siril, the only tool with a floor.
+      return UserFacingError.siril(.tooOld(version: version)).message
     }
     return switch row.tool {
     case .siril: .app("Calibrates, registers and stacks the captures.")

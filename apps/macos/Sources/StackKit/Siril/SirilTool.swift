@@ -14,9 +14,16 @@ package enum SirilTool {
   package static func locate(
     environment: [String: String] = ProcessInfo.processInfo.environment
   ) throws -> String {
-    let path = environment["SIRIL_BIN"].flatMap { $0.isEmpty ? nil : $0 } ?? defaultPath
+    let path = path(environment: environment)
     try requireExecutable(path)
     return path
+  }
+
+  /// Where Siril is looked for: `SIRIL_BIN` when set, else the standard install.
+  package static func path(
+    environment: [String: String] = ProcessInfo.processInfo.environment
+  ) -> String {
+    environment["SIRIL_BIN"].flatMap { $0.isEmpty ? nil : $0 } ?? defaultPath
   }
 
   /// Throws `notInstalled` unless `path` is an executable file.

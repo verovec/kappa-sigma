@@ -48,7 +48,7 @@ package struct GreyMorphology {
     guard input.width == output.width, input.height == output.height else {
       throw ProcessError.sizeMismatch
     }
-    let scratch = try (0..<2).map { _ in try texture(like: input) }
+    let scratch = try (0..<2).map { _ in try ScratchTexture.make(like: input, device: device) }
     let passes = dilations.flatMap { dilation in [(0, dilation), (1, dilation)] }
     var source = input
     for (index, pass) in passes.enumerated() {
@@ -67,16 +67,5 @@ package struct GreyMorphology {
       encoder.endEncoding()
       source = target
     }
-  }
-
-  private func texture(like input: MTLTexture) throws -> MTLTexture {
-    let descriptor = MTLTextureDescriptor.texture2DDescriptor(
-      pixelFormat: .r32Float, width: input.width, height: input.height, mipmapped: false)
-    descriptor.usage = [.shaderRead, .shaderWrite]
-    descriptor.storageMode = .private
-    guard let texture = device.makeTexture(descriptor: descriptor) else {
-      throw ProcessError.commandFailed("morphology texture \(input.width)×\(input.height)")
-    }
-    return texture
   }
 }

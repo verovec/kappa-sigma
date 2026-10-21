@@ -27,7 +27,8 @@ package struct ImportSheet: View {
   package var body: some View {
     VStack(alignment: .leading, spacing: 12) {
       header
-      if let error = model.error {
+      // A scan in flight answers the last error: its badge would read as the new scan's failure.
+      if let error = model.error, !model.isScanning {
         StatusBadge(.error, error.message)
       }
       content
@@ -44,7 +45,7 @@ package struct ImportSheet: View {
   /// What the body of the sheet shows.
   package enum Content: Equatable {
     /// The scanned plan (a rescan runs over it, its progress in the header).
-    case plan
+    case plan(ImportPlan)
     /// The overrides after a failed scan: the one that made it fail must stay reachable.
     case failed
     /// The first scan of a folder, with its progress.
@@ -55,7 +56,7 @@ package struct ImportSheet: View {
 
   /// The body `model` calls for: never « No capture » while a scan runs.
   package static func content(of model: ImportViewModel) -> Content {
-    if model.plan != nil { return .plan }
+    if let plan = model.plan { return .plan(plan) }
     if model.isScanning { return .scanning }
     return model.error != nil ? .failed : .empty
   }
@@ -63,15 +64,13 @@ package struct ImportSheet: View {
   @ViewBuilder
   private var content: some View {
     switch Self.content(of: model) {
-    case .plan:
-      if let plan = model.plan {
-        ScrollView {
-          VStack(alignment: .leading, spacing: 12) {
-            ImportInventoryView(model: model, plan: plan)
-            ImportOverridesView(model: model)
-            ImportCalibrationView(model: model, plan: plan)
-            warnings(plan.warnings)
-          }
+    case .plan(let plan):
+      ScrollView {
+        VStack(alignment: .leading, spacing: 12) {
+          ImportInventoryView(model: model, plan: plan)
+          ImportOverridesView(model: model)
+          ImportCalibrationView(model: model, plan: plan)
+          warnings(plan.warnings)
         }
       }
     case .failed:
@@ -97,7 +96,8 @@ package struct ImportSheet: View {
       }
       .font(.title3).lineLimit(1).truncationMode(.middle)
       Spacer()
-      if model.isScanning && model.plan != nil {
+      // Only a scan reports progress: a calibration-only rematch shows nothing to cancel.
+      if model.plan != nil, model.progress != nil {
         ImportScanProgressView(progress: model.progress, compact: true) { model.cancelScan() }
       }
       Button(.app("Choose Folder…")) { picking = true }

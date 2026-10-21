@@ -37,14 +37,21 @@ package actor LibraryIndex {
       return true
     } catch let error as CocoaError where error.code == .fileReadNoSuchFile {
       return false
-    } catch let error as CocoaError where error.code == .fileReadNoPermission {
-      throw UserFacingError.documentsAccess(path: folder.path)
-    } catch let error as CocoaError {
-      let posix = (error.userInfo[NSUnderlyingErrorKey] as? NSError)?.code
-      if posix == Int(EPERM) || posix == Int(EACCES) {
-        throw UserFacingError.documentsAccess(path: folder.path)
-      }
-      throw error
+    } catch {
+      throw refusal(error, path: folder.path)
+    }
+  }
+
+  /// What listing the library at `path` failing with `error` tells the user.
+  ///
+  /// A privacy refusal (EPERM: macOS has not granted Documents) says where to allow it; plain
+  /// permissions (EACCES) are the library's own « cannot be read »; anything else as it came.
+  package nonisolated static func refusal(_ error: any Error, path: String) -> any Error {
+    let underlying = (error as NSError).userInfo[NSUnderlyingErrorKey] as? NSError
+    switch underlying.map({ Int32($0.code) }) {
+    case EPERM: return UserFacingError.documentsAccess(path: path)
+    case EACCES: return CalibrationError.unreadableLibrary(path)
+    default: return error
     }
   }
 

@@ -13,6 +13,6 @@ package nonisolated struct ImportServices: Sendable {
 
   /// Services whose planning reports no progress.
   package init(planning: @escaping ImportViewModel.Planning, masters: MasterServices? = nil) {
-    self.init(planning: { request, _ in try await planning(request) }, masters: masters)
+    self.init(planning: ImportViewModel.reporting(planning), masters: masters)
   }
 }

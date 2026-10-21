@@ -28,7 +28,7 @@ extension InventoryBuilderTests {
       seen.withLock { $0.append(progress) }
     }
     let events = seen.withLock { $0 }
-    #expect(events.last == .classifying)
+    #expect(events.first == .listing && events.last == .classifying)
     let reading = events.compactMap { event -> (done: Int, total: Int)? in
       if case .reading(let done, let total) = event { (done, total) } else { nil }
     }

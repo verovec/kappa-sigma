@@ -34,8 +34,11 @@ package final class ImportViewModel {
 
   private let planning: ProgressPlanning
   private var scan: Task<Void, Never>?
-  /// The request the shown plan's scan was made for.
+  /// The request the shown plan's scan was made for, and the sets excluded then.
   private var scanned: ImportRequest?
+  private var scannedExcludedRows: [ImportPlan.SetRow] = []
+  /// A Rescan asked for and not finished yet.
+  private var rescanPending = false
 
   /// A model planning through `planning`, which reports its progress, with the master `masters`
   /// services if any.
@@ -46,7 +49,17 @@ package final class ImportViewModel {
 
   /// A model planning through `planning`, which reports no progress.
   package convenience init(planning: @escaping Planning, masters: MasterServices? = nil) {
-    self.init(planning: { request, _ in try await planning(request) }, masters: masters)
+    self.init(planning: Self.reporting(planning), masters: masters)
+  }
+
+  /// `planning` as a `ProgressPlanning` that reports nothing.
+  package nonisolated static func reporting(_ planning: @escaping Planning) -> ProgressPlanning {
+    { request, _ in try await planning(request) }
+  }
+
+  /// `planning` with its progress ignored.
+  package nonisolated static func silent(_ planning: @escaping ProgressPlanning) -> Planning {
+    { request in try await planning(request) { _ in } }
   }
 
   /// The light filters as captured, in canonical order: the rows of the filter map.
@@ -122,18 +135,21 @@ package final class ImportViewModel {
 
   // MARK: - Scanning
 
-  /// Scans the current request again (the folder may have changed on disk).
+  /// Scans the current request again (the folder may have changed on disk); a calibration change
+  /// made before it ends rescans too, never only rematches the old scan.
   package func rescan() {
-    refresh(force: true)
+    rescanPending = true
+    refresh()
   }
 
   /// Plans the current request, cancelling a scan still running for an older one; a change of
   /// calibration choices only rematches the last scan.
-  private func refresh(force: Bool = false) {
+  private func refresh() {
     scan?.cancel()
     guard !request.paths.isEmpty else { return }
     let request = request
-    let rescans = force || (scanned.map { ImportPlanner.needsScan(from: $0, to: request) } ?? true)
+    let rescans =
+      rescanPending || (scanned.map { ImportPlanner.needsScan(from: $0, to: request) } ?? true)
     let last = rescans ? nil : plan
     isScanning = true
     progress = nil
@@ -148,6 +164,8 @@ package final class ImportViewModel {
         guard !Task.isCancelled else { return }
         self.plan = plan
         scanned = request
+        scannedExcludedRows = excludedRows
+        rescanPending = false
         error = nil
       } catch is CancellationError {
         return
@@ -169,6 +187,7 @@ package final class ImportViewModel {
     let (steps, continuation) = AsyncStream.makeStream(
       of: ScanProgress.self, bufferingPolicy: .bufferingNewest(1))
     async let watched: Void = watch(steps)
+    // Finished before the watcher is awaited; the defer covers a planning that throws.
     defer { continuation.finish() }
     let plan = try await planning(request) { continuation.yield($0) }
     continuation.finish()
@@ -189,11 +208,18 @@ package final class ImportViewModel {
   }
 
   /// Stops the scan in flight and goes back to what the sheet showed before it: the last plan
-  /// and its request, or nothing.
+  /// with its request and excluded sets, the failed request with its overrides, or nothing.
   package func cancelScan() {
     cancel()
-    request = scanned ?? ImportRequest(paths: [])
-    if scanned == nil { plan = nil }
+    rescanPending = false
+    if let scanned {
+      request = scanned
+      excludedRows = scannedExcludedRows
+    } else if error == nil {
+      request = ImportRequest(paths: [])
+      excludedRows = []
+      plan = nil
+    }
   }
 
   /// Waits for the scan in flight, if any.

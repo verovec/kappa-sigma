@@ -23,9 +23,11 @@ package struct InventoryBuilder: Sendable {
 
   /// Scans `paths` (folders) with the user's overrides.
   ///
-  /// One folder is its own root; several merge under their common parent. `progress` hears the
-  /// FITS total once every folder is walked, the count read every `ScanProgress.readingStep`
-  /// files and on the last, then `classifying`; it observes, the inventory does not depend on it.
+  /// One folder is its own root; several merge under their common parent. `progress` hears
+  /// `listing` while the folders are walked, the FITS total, the count read every
+  /// `ScanProgress.readingStep` files and on the last, then `classifying` once a folder's headers
+  /// are read (its pixel fallbacks, then the union steps); it observes, the inventory does not
+  /// depend on it.
   package func scan(
     paths: [String], overrides: InspectOverrides = InspectOverrides(),
     progress: @Sendable (ScanProgress) -> Void = { _ in }
@@ -33,8 +35,10 @@ package struct InventoryBuilder: Sendable {
     guard !paths.isEmpty else { throw InspectError.noFolders }
     let roots = paths.map(Self.clean)
     var merged = Inventory(root: roots.count == 1 ? roots[0] : Self.commonParent(roots), frames: [])
-    let walks = try roots.map {
-      (root: $0, files: try InspectWalk.files(under: $0, skippingOutput: true))
+    progress(.listing)
+    let walks = try roots.map { root in
+      try Task.checkCancellation()
+      return (root: root, files: try InspectWalk.files(under: root, skippingOutput: true))
     }
     var count = (done: 0, total: walks.reduce(0) { $0 + $1.files.filter(Self.isFITS).count })
     progress(.reading(done: 0, total: count.total))
@@ -47,7 +51,6 @@ package struct InventoryBuilder: Sendable {
       if merged.channelDetection == nil { merged.channelDetection = folder.channelDetection }
     }
     try Task.checkCancellation()
-    progress(.classifying)
     try finalize(&merged, overrides: overrides)
     return merged
   }
@@ -75,6 +78,8 @@ package struct InventoryBuilder: Sendable {
         progress(.reading(done: count.done, total: count.total))
       }
     }
+    try Task.checkCancellation()
+    progress(.classifying)
     // info.txt first, so signal detection only runs on what the manifest could not name; physical
     // wheel slots before detection, so a known filter never goes to the guess-prone detector.
     CaptureManifest.apply(files: files, to: &inventory)

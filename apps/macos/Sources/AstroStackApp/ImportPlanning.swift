@@ -19,8 +19,7 @@ package enum ImportPlanning {
   package nonisolated static func live(
     store: ProjectStore?, library: URL = libraryFolder, timeZone: TimeZone = .current
   ) -> ImportViewModel.Planning {
-    let planning = services(store: store, library: library, timeZone: timeZone).planning
-    return { request in try await planning(request) { _ in } }
+    ImportViewModel.silent(services(store: store, library: library, timeZone: timeZone).planning)
   }
 
   /// Plans `request` against the library `index` holds; without a library every master is one

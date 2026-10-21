@@ -56,6 +56,7 @@ package struct ImportScanProgressView: View {
     switch progress {
     case nil: .app("Scanning…")
     case .library: .app("Indexing the calibration library…")
+    case .listing: .app("Listing the capture folders…")
     case .reading: .app("Reading the FITS headers…")
     case .classifying: .app("Sorting the frames into sets…")
     }

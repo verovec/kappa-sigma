@@ -1,6 +1,7 @@
 import AstroStackApp
 import Foundation
 import ProjectKit
+import StackKit
 import TestSupport
 import Testing
 
@@ -25,7 +26,8 @@ struct LibraryIndexTests {
     #expect(masters.count == 1)
   }
 
-  @Test("a library the app may not read throws the access error naming it", .scratchDirectory)
+  @Test(
+    "a library its permissions refuse throws « cannot be read », never empty", .scratchDirectory)
   func testUnreadableLibraryThrows() async throws {
     let project = try Self.project()
     defer { try? project.close() }
@@ -35,13 +37,27 @@ struct LibraryIndexTests {
     defer {
       try? FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: library.path)
     }
-    await #expect(throws: UserFacingError.documentsAccess(path: library.path)) {
+    await #expect(throws: CalibrationError.unreadableLibrary(library.path)) {
       try await LibraryIndex(store: project.store, folder: library).masters()
     }
-    let sentence = UserFacingError.documentsAccess(path: library.path).message
+  }
+
+  @Test("a privacy refusal (EPERM) says where to allow it; EACCES is the library's own error")
+  func testRefusalKinds() {
+    func listing(_ posix: Int32) -> NSError {
+      NSError(
+        domain: NSCocoaErrorDomain, code: CocoaError.fileReadNoPermission.rawValue,
+        userInfo: [NSUnderlyingErrorKey: NSError(domain: NSPOSIXErrorDomain, code: Int(posix))])
+    }
+    let path = "/Users/me/Documents/astro/library"
     #expect(
-      sentence.text("en").contains(library.path)
-        && sentence.text("en").contains("Files and Folders"))
+      LibraryIndex.refusal(listing(EPERM), path: path) as? UserFacingError
+        == .documentsAccess(path: path))
+    #expect(
+      LibraryIndex.refusal(listing(EACCES), path: path) as? CalibrationError
+        == .unreadableLibrary(path))
+    let sentence = UserFacingError.documentsAccess(path: path).message
+    #expect(sentence.text("en").contains(path) && sentence.text("en").contains("Files and Folders"))
     #expect(sentence.text("fr").contains("Fichiers et dossiers"))
   }
 }

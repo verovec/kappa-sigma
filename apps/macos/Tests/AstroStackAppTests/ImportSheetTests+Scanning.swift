@@ -6,6 +6,10 @@ import SwiftUI
 import Testing
 
 extension ImportSheetTests {
+  static func showsPlan(_ model: ImportViewModel) -> Bool {
+    if case .plan = ImportSheet.content(of: model) { true } else { false }
+  }
+
   @Test(
     "a first scan shows its progress, never « No capture »; a rescan keeps the plan in view",
     arguments: [("en", NSAppearance.Name.aqua), ("fr", .darkAqua)])
@@ -26,13 +30,13 @@ extension ImportSheetTests {
     #expect(host.fittingSize.width >= 820)
     first.release()
     await model.settled()
-    #expect(ImportSheet.content(of: model) == .plan)
+    #expect(Self.showsPlan(model))
 
     model.rescan()
     host.layoutSubtreeIfNeeded()
-    #expect(ImportSheet.content(of: model) == .plan && model.isScanning, "the plan stays")
+    #expect(Self.showsPlan(model) && model.isScanning, "the plan stays")
     model.cancelScan()
-    #expect(ImportSheet.content(of: model) == .plan && !model.isScanning)
+    #expect(Self.showsPlan(model) && !model.isScanning)
   }
 
   @Test(

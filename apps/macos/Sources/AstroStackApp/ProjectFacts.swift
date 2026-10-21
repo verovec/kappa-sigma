@@ -1,4 +1,5 @@
 package import ProjectKit
+package import StackKit
 
 /// What a project holds, as the journey reads it: the store's counts plus what later cards learn
 /// outside the database.
@@ -8,7 +9,8 @@ package import ProjectKit
 nonisolated package struct ProjectFacts: Equatable, Sendable {
   /// Sources, stacks, images, history steps (`ProjectStore.summary`).
   package var summary: ProjectSummary
-  /// Roles without a master in the calibration plan; `nil` before a plan is computed.
+  /// Light sets with a calibration role nothing covers (`CoverageMatrix.gaps`); `nil` before a
+  /// scan.
   package var calibrationGaps: Int?
   /// Stacks being run now.
   package var stacksRunning: Int
@@ -27,5 +29,10 @@ nonisolated package struct ProjectFacts: Equatable, Sendable {
     self.stacksRunning = stacksRunning
     self.deliverables = deliverables
     self.framesReviewed = framesReviewed
+  }
+
+  /// The facts of `summary` with the gaps of the last scan's `coverage` (0078).
+  package init(summary: ProjectSummary, coverage: CoverageMatrix?) {
+    self.init(summary: summary, calibrationGaps: coverage?.gaps)
   }
 }

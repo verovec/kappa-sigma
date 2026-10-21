@@ -13,10 +13,16 @@ package final class ProjectWindowModel {
   package private(set) var sources: [ProjectSource] = []
   /// The open Import sheet's model, `nil` when no sheet is shown.
   package private(set) var importing: ImportViewModel?
-  package private(set) var error: UserFacingError?
+  package internal(set) var error: UserFacingError?
+  /// The last scan of the sources in this window: the sheet's plan on Add, or a Rescan the user
+  /// asked for; `nil` until then (an M31 scan takes ~90 s, never run on open).
+  package internal(set) var scan: ImportPlan?
+  /// A Rescan is running.
+  package internal(set) var isScanning = false
+  var scanTask: Task<Void, Never>?
 
-  private let store: () -> ProjectStore?
-  private let services: (ProjectStore?) -> ImportServices
+  let store: () -> ProjectStore?
+  let services: (ProjectStore?) -> ImportServices
 
   /// A window over the document's current store (it changes when the package moves); each sheet
   /// gets fresh `services`.
@@ -79,6 +85,11 @@ package final class ProjectWindowModel {
       for path in request.paths {
         try store.addSource(kind: .night, path: path)
       }
+      // The sheet's plan is this import's scan: the Données stage shows it without rescanning.
+      if let plan = importing?.plan, importing?.request == request {
+        cancelScan()
+        scan = plan
+      }
       closeImport()
       refresh()
     } catch {
@@ -93,7 +104,7 @@ package final class ProjectWindowModel {
       let store = store()
       sources = try store?.sources() ?? []
       let summary = try store?.summary() ?? ProjectSummary()
-      statuses = JourneyState.derive(from: ProjectFacts(summary: summary))
+      statuses = JourneyState.derive(from: ProjectFacts(summary: summary, coverage: coverage))
       error = nil
     } catch {
       self.error = UserFacingError(error)

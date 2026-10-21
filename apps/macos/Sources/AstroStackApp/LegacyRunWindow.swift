@@ -72,7 +72,7 @@ package final class LegacyRunWindow: NSWindowController, NSWindowDelegate {
   private init(model: LegacyRunModel) {
     self.model = model
     let window = NSWindow(
-      contentRect: NSRect(x: 0, y: 0, width: 1400, height: 912),
+      contentRect: SplitWindow.contentRect(panes: NSSize(width: 1400, height: 860)),
       styleMask: SplitWindow.styleMask, backing: .buffered,
       defer: false)
     window.title = model.title

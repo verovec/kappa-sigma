@@ -34,7 +34,7 @@ package struct HostTools: Sendable {
     }
 
     /// The file system and `siril-cli --version`.
-    package static let system = Probe(
+    package static let system = Self(
       isExecutable: { FileManager.default.isExecutableFile(atPath: $0) },
       isDirectory: { path in
         var isFolder: ObjCBool = false
@@ -53,8 +53,8 @@ package struct HostTools: Sendable {
   /// `STARNET_BIN`), else its standard install path.
   package static func live(
     environment: [String: String] = ProcessInfo.processInfo.environment, probe: Probe = .system
-  ) -> HostTools {
-    HostTools { tool in
+  ) -> Self {
+    Self { tool in
       switch tool {
       case .siril:
         await siril(at: SirilTool.path(environment: environment), probe: probe)

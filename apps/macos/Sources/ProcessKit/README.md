@@ -17,7 +17,7 @@ non-destructive history, recipes and the registry (design §2, §4.1).
 - `GPUImage` (r32Float planes, read/write, shared), `ProcessRunner` (synchronous run),
   `ProcessLibrary` (pipelines with RenderKit's fast-math-off compile options).
 - `ProcessContracts`: **PreviewEqualsApply**, **NoHiddenState**, **PxUnitsScale** (a `.px` value
-  `v` at scale 2 = `v / 2` at scale 1), bit-exact.
+  `v` at scale 2 = `v / 2` at scale 1, every other `.px` value halved with it), bit-exact.
 - `History` (one folder per image): steps (process, params, output FITS via `FITSFile.create`,
   numbered after what the folder already holds), undo/redo reloading from disk (atomic), named
   `snapshots` that survive undo (the viewer's compare reference), `save()` removes only the
@@ -48,10 +48,22 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   Every coefficient is computed on the CPU (`StretchUniforms`) from the panel values and the
   stats; "autostretch like Siril" and the deep-sky 0.90 headroom are suggestions, not defaults
   hidden in the shader. No panel yet: the Studio renders the schema generically (0075/0076).
+- **HDRProcess** (card 0052, id `hdr`, stage linear, off by default): the port of the v9
+  runbook's hdrcomp. Luminance (mean of the planes) → grey opening (`GreyMorphology`, radius
+  `openRadius` px) so stars never enter the smooth part → three box passes (`BoxBlur`, Kovesi's
+  widths for σ `sigma` px, hdrcomp's own approximation) → above t1 = bundle sky + `kneeAboveSky`
+  the smooth part becomes t1 + s·asinh((smooth − t1)/s), the detail is put back, one ratio L′/L
+  scales every plane. The sky is the mean of the bundle's plane medians and the thresholds are
+  absolute above it (PO 2026-10-19: 0.00084 / 0.00118, σ 30, radius 16), never multiples of a
+  measured sky. Pinned against hdrcomp's recorded `crop/hdr_only.fits` (max |Δ| 6e-8).
+- Shared GPU helpers: `GreyMorphology` (erode/dilate/open, separable, window clipped to the
+  image), `BoxBlur` (edge-clamped x+y passes, one per radius) and `ScratchTexture` (private
+  r32Float intermediates) — encode into the caller's command buffer; reuse them, never a second
+  min/max or blur kernel.
 - `ProcessRegistry`: refuses duplicates and invalid schemas (`.px` without
   `previewExactOnlyAt1to1`, a default outside its bounds or options, infinite bounds);
   `standard()` is validated like any registry and lists the shipped processes (today:
-  `channel-combination`, `stretch`).
+  `channel-combination`, `stretch`, `hdr`; pipeline order is E15's — `stage` documents it).
 
 ## Strings (card 0073)
 

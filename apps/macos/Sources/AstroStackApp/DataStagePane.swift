@@ -17,6 +17,7 @@ struct DataStagePane: View {
         Text(.app("Import a capture night to see how it will be calibrated and stacked."))
       } actions: {
         Button(.app("Import Captures…")) { model.startImport() }
+          .accessible(.importCaptures, label: .app("Import Captures…"))
       }
     } else {
       VStack(alignment: .leading, spacing: 0) {
@@ -24,6 +25,7 @@ struct DataStagePane: View {
           SectionHeader(.app("Capture nights"), detail: .app("Read, never written."))
           Spacer()
           Button(.app("Import Captures…")) { model.startImport() }
+            .accessible(.importCaptures, label: .app("Import Captures…"))
         }
         .padding(DesignMetrics.spacingM)
         List(model.sources, id: \.id) { source in

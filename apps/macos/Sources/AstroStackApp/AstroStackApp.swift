@@ -15,6 +15,7 @@ enum AstroStackApp {
     let menu = MainMenu.make()
     app.mainMenu = menu
     app.windowsMenu = MainMenu.windowsMenu(in: menu)
+    app.helpMenu = MainMenu.helpMenu(in: menu)
     app.setActivationPolicy(.regular)
     withExtendedLifetime(delegate) { app.run() }
   }

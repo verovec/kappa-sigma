@@ -1,3 +1,4 @@
+internal import Foundation
 internal import RenderKit
 internal import SwiftUI
 
@@ -17,6 +18,21 @@ struct JourneySidebar: View {
       }
     }
     .listStyle(.sidebar)
+    // List rows are table cells: their audit entries do not leave the List, so the List reports
+    // them, from the same `accessibility(of:)` each row applies.
+    .transformPreference(AccessibilityAudit.Key.self) { entries in
+      entries += JourneyStage.allCases.map { stage in
+        let (id, label) = Self.accessibility(of: stage, locale: locale)
+        return AccessibilityAudit.Entry(id: id.rawValue, label: label)
+      }
+    }
+  }
+
+  /// The identifier and label of the row of `stage`: its glossary term in `locale`.
+  nonisolated static func accessibility(of stage: JourneyStage, locale: Locale)
+    -> (AccessibilityID, String)
+  {
+    (.journeyStage(stage.rawValue), AppGlossary.label(stage.termID, locale: locale))
   }
 
   private func row(_ stage: JourneyStage, status: StageStatus) -> some View {
@@ -27,6 +43,10 @@ struct JourneySidebar: View {
     }
     .help(Text(StagePane.words(for: status)))
     .accessibilityElement(children: .combine)
+    .accessible(
+      Self.accessibility(of: stage, locale: locale).0,
+      verbatim: Self.accessibility(of: stage, locale: locale).1
+    )
     .accessibilityValue(Text(StagePane.words(for: status)))
   }
 

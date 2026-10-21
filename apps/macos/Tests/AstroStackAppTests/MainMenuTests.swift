@@ -83,12 +83,38 @@ struct MainMenuTests {
   func testMainMenu_order() {
     #expect(
       MainMenu.make(locale: Self.english).items.compactMap(\.submenu?.title) == [
-        "AstroStack", "File", "Edit", "View", "Window",
+        "AstroStack", "File", "Edit", "View", "Window", "Help",
       ])
     #expect(
       MainMenu.make(locale: Self.french).items.compactMap(\.submenu?.title) == [
-        "AstroStack", "Fichier", "Édition", "Présentation", "Fenêtre",
+        "AstroStack", "Fichier", "Édition", "Présentation", "Fenêtre", "Aide",
       ])
+  }
+
+  @Test("every menu item is a catalog command, in catalog order, with its declared shortcut")
+  func testMenusGeneratedFromCatalog() {
+    let bar = MainMenu.make(locale: Self.french)
+    for (kind, item) in zip(CommandMenu.allCases, bar.items) {
+      let items = item.submenu?.items.filter { !$0.isSeparatorItem } ?? []
+      let commands = CommandCatalog.commands(in: kind)
+      #expect(
+        items.compactMap { $0.identifier?.rawValue }
+          == commands.map { "fr.astrostack.command." + $0.id }, "\(kind)")
+      for (menuItem, command) in zip(items, commands) {
+        #expect(menuItem.keyEquivalent == command.keyEquivalent, "\(command.id)")
+        #expect(menuItem.action.map(NSStringFromSelector) == command.action, "\(command.id)")
+      }
+    }
+  }
+
+  @Test("Help holds the shortcuts and the glossary; the guide is shown disabled until 0061")
+  func testHelpMenu() throws {
+    let help = try #require(MainMenu.helpMenu(in: MainMenu.make(locale: Self.french)))
+    #expect(help.title == "Aide")
+    let titles = help.items.filter { !$0.isSeparatorItem }.map(\.title)
+    #expect(titles == ["Raccourcis clavier", "Glossaire", "Guide du premier empilement"])
+    #expect(help.items.last?.action == nil, "no action: AppKit greys it")
+    #expect(help.items.first?.action.map(NSStringFromSelector) == "showShortcuts:")
   }
 
   @Test("the Window menu is found by identity, whatever its title")

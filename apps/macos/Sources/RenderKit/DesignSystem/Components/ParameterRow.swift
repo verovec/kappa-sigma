@@ -12,15 +12,18 @@ package struct ParameterRow: View {
   private let why: LocalizedStringResource?
   private let format: (Double) -> String
   private let parse: (String) -> Double?
+  private let key: String?
   @State private var text = ""
   @FocusState private var editing: Bool
 
-  /// A row editing `parameter`; `why` explains the default (shown on hover of the « ? »).
+  /// A row editing `parameter`; `why` explains the default (shown on hover of the « ? »);
+  /// `key` (the parameter's stable id) identifies its controls (`AccessibilityID.parameter`).
   package init(
     _ label: LocalizedStringResource, parameter: Binding<ParameterValue>,
     why: LocalizedStringResource? = nil, format: @escaping (Double) -> String,
-    parse: @escaping (String) -> Double?
+    parse: @escaping (String) -> Double?, key: String? = nil
   ) {
+    self.key = key
     self.label = label
     _parameter = parameter
     self.why = why
@@ -74,7 +77,7 @@ package struct ParameterRow: View {
       .buttonStyle(.borderless)
       .disabled(parameter.isDefault)
       .help(Text(.renderKit("Reset to default")))
-      .accessibilityLabel(Text(.renderKit("Reset to default")))
+      .accessible(key.map { .parameter($0, .reset) }, label: .renderKit("Reset to default"))
     }
   }
 
@@ -88,8 +91,10 @@ package struct ParameterRow: View {
         Text(label)
       }
       .labelsHidden()
+      .accessible(key.map { .parameter($0, .slider) }, label: label)
       TextField(text: $text) { Text(label) }
         .labelsHidden()
+        .accessible(key.map { .parameter($0, .field) }, label: label)
         .font(DesignMetrics.valueFont)
         .multilineTextAlignment(.trailing)
         .frame(width: 84)

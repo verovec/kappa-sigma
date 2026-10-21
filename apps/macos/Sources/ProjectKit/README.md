@@ -59,3 +59,11 @@ lives in a temporary package until its first save moves it; quitting deletes an 
 - Anything stored next to `project.db` (images, recipes) must survive `copy(to:)`: it copies every
   item of the folder except the database files, which go through SQLite's online backup.
 - Allowed dependencies: `ImageKit`, `GRDB` (`Tests/TestSupport/BoundaryRules.swift`).
+
+## Pipelines (card 0059)
+
+`savePipeline(named:json:)` / `pipeline(named:)` / `pipelineNames()` / `deletePipeline(named:)`
+store ProcessKit's pipeline JSON in `pipelines.body_json` by unique name (an overwrite keeps the
+row and `created_at`; an empty name is `ProjectStoreError.emptyName`). ProjectKit never decodes it:
+`Pipeline.load` validates it against the registry when it is used.
+

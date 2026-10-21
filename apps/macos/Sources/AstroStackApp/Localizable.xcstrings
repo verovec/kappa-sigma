@@ -97,6 +97,22 @@
         }
       }
     },
+    "%lld to check": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld to check"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld à vérifier"
+          }
+        }
+      }
+    },
     "%lld×%lld · %@ · built %@": {
       "localizations": {
         "en": {
@@ -193,6 +209,22 @@
         }
       }
     },
+    "Calibration masters": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calibration masters"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masters de calibration"
+          }
+        }
+      }
+    },
     "Calibration plan": {
       "localizations": {
         "en": {
@@ -221,6 +253,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Annuler"
+          }
+        }
+      }
+    },
+    "Capture nights": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Capture nights"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nuits de capture"
           }
         }
       }
@@ -369,6 +417,22 @@
         }
       }
     },
+    "Done": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terminé"
+          }
+        }
+      }
+    },
     "Drop every frame of this set from the stack": {
       "localizations": {
         "en": {
@@ -445,6 +509,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Exclu : %@ %@ · %@"
+          }
+        }
+      }
+    },
+    "Export": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export"
           }
         }
       }
@@ -545,6 +625,22 @@
         }
       }
     },
+    "Frame review": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frame review"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tri des brutes"
+          }
+        }
+      }
+    },
     "Frames": {
       "localizations": {
         "en": {
@@ -621,6 +717,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Importez une nuit de capture pour voir comment elle sera calibrée et empilée."
+          }
+        }
+      }
+    },
+    "Import captures first": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import captures first"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importez d’abord des captures"
           }
         }
       }
@@ -945,6 +1057,22 @@
         }
       }
     },
+    "Per-frame metrics, blink and keep or reject will appear here.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Per-frame metrics, blink and keep or reject will appear here."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les mesures par brute, le blink et le choix garder ou rejeter apparaîtront ici."
+          }
+        }
+      }
+    },
     "Preview": {
       "localizations": {
         "en": {
@@ -977,6 +1105,22 @@
         }
       }
     },
+    "Read, never written.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read, never written."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lues, jamais modifiées."
+          }
+        }
+      }
+    },
     "Read-only: nothing in the run folder is ever written.": {
       "localizations": {
         "en": {
@@ -989,6 +1133,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lecture seule : rien n’est jamais écrit dans le dossier du run."
+          }
+        }
+      }
+    },
+    "Ready": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ready"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prêt"
           }
         }
       }
@@ -1101,6 +1261,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rétablir"
+          }
+        }
+      }
+    },
+    "Running": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Running"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En cours"
           }
         }
       }
@@ -1377,6 +1553,54 @@
         }
       }
     },
+    "Stack a night first": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stack a night first"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Empilez d’abord une nuit"
+          }
+        }
+      }
+    },
+    "Stacking": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stacking"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Empilement"
+          }
+        }
+      }
+    },
+    "Studio": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Studio"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Studio"
+          }
+        }
+      }
+    },
     "System": {
       "localizations": {
         "en": {
@@ -1425,6 +1649,22 @@
         }
       }
     },
+    "The deliverables written from the finished image will appear here.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The deliverables written from the finished image will appear here."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les livrables écrits depuis l’image finie apparaîtront ici."
+          }
+        }
+      }
+    },
     "The folder %@ cannot be read: check that it exists and AstroStack can open it.": {
       "localizations": {
         "en": {
@@ -1453,6 +1693,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le master %@ ne peut pas être mesuré."
+          }
+        }
+      }
+    },
+    "The masters each light set uses, their statistics and the gaps will appear here.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The masters each light set uses, their statistics and the gaps will appear here."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les masters utilisés par chaque série de brutes, leurs statistiques et les manques apparaîtront ici."
           }
         }
       }
@@ -1489,6 +1745,38 @@
         }
       }
     },
+    "The stacked image and its finishing processes will appear here.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The stacked image and its finishing processes will appear here."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’image empilée et ses traitements de finition apparaîtront ici."
+          }
+        }
+      }
+    },
+    "The stacking settings and the run, with its progress and journal, will appear here.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The stacking settings and the run, with its progress and journal, will appear here."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les réglages d’empilement et le lancement, avec sa progression et son journal, apparaîtront ici."
+          }
+        }
+      }
+    },
     "This filter may come from the filter map: exclude the set before mapping it": {
       "localizations": {
         "en": {
@@ -1517,6 +1805,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ce projet n’est plus ouvert ; rouvrez-le et importez à nouveau."
+          }
+        }
+      }
+    },
+    "To do": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To do"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À faire"
           }
         }
       }

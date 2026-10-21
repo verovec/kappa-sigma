@@ -96,9 +96,14 @@ deadcode:
 bench *args:
     cd {{pkg}} && swift package --disable-sandbox benchmark {{args}}
 
-# Merge a PR into main — the only sanctioned way: refuses unless every CI check is green.
+# Merge a PR into main — the only sanctioned way: refuses unless every CI check is green and a
+# code review is recorded on the PR's head.
 merge pr:
-    @./scripts/merge-pr.sh {{pr}}
+    @./scripts/merge-pr.sh {{quote(pr)}}
+
+# Record that /code-review passed on the PR's current head (required by `just merge`).
+review-pass pr summary:
+    @./scripts/review-pass.sh {{quote(pr)}} {{quote(summary)}}
 
 # The pre-push gate: hygiene + lint + build + full suite including live tests.
 check: hygiene lint app-build test

@@ -40,7 +40,7 @@ package struct StarNetRunner: Sendable {
   /// A runner over the StarNet at `binary`, its command-line generation probed once per run.
   package static func live(binary: String) -> Self {
     Self(run: { input, output, onProgress in
-      let cli = await StarNetCLI.detect(binary: binary)
+      let cli = try await StarNetCLI.detect(binary: binary)
       return try await execute(
         binary, arguments: cli.arguments(input: input, output: output), output: output,
         onProgress: onProgress)

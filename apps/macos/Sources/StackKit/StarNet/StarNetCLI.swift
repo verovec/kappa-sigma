@@ -33,11 +33,15 @@ package enum StarNetCLI: Equatable, Sendable {
     return .flags
   }
 
-  /// Asks the StarNet at `binary` which generation it is (`--machine-info`); a probe that does
-  /// not answer within `timeout` (an old build reading the flag as an input file) is stopped and
-  /// counts as the positional generation.
-  package static func detect(binary: String, timeout: Duration = .seconds(10)) async -> Self {
-    await withTaskGroup(of: Self?.self) { group in
+  /// Asks the StarNet at `binary` which generation it is (`--machine-info`).
+  ///
+  /// A probe that fails is the positional generation (legacy rule). One that does not answer
+  /// within `timeout` is stopped and throws `StarNetError.probeTimedOut`: guessing would run a
+  /// flag-only StarNet2 with positional arguments.
+  package static func detect(binary: String, timeout: Duration = .seconds(60)) async throws
+    -> Self
+  {
+    let answer = await withTaskGroup(of: Self?.self) { group in
       group.addTask { await probe(binary) }
       group.addTask {
         try? await Task.sleep(for: timeout)
@@ -45,8 +49,10 @@ package enum StarNetCLI: Equatable, Sendable {
       }
       let first = await group.next() ?? nil
       group.cancelAll()
-      return first ?? .positional
+      return first
     }
+    guard let answer else { throw StarNetError.probeTimedOut(path: binary) }
+    return answer
   }
 
   private static func probe(_ binary: String) async -> Self {

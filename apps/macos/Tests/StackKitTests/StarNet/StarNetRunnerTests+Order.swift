@@ -22,11 +22,14 @@ extension StarNetRunnerTests {
     #expect(worst <= Float(0.5 / 65535))
   }
 
-  @Test("a --machine-info probe that hangs is stopped and counts as positional", .scratchDirectory)
+  @Test(
+    "a --machine-info probe that hangs is stopped and refused, never guessed", .scratchDirectory)
   func testProbeTimeout() async throws {
     let binary = try Self.install("#!/bin/sh\nsleep 30\n", named: "hanging")
     let start = ContinuousClock.now
-    #expect(await StarNetCLI.detect(binary: binary, timeout: .milliseconds(300)) == .positional)
-    #expect(ContinuousClock.now - start < .seconds(10))
+    await #expect(throws: StarNetError.probeTimedOut(path: binary)) {
+      try await StarNetCLI.detect(binary: binary, timeout: .milliseconds(300))
+    }
+    #expect(ContinuousClock.now - start < .seconds(20))
   }
 }

@@ -84,9 +84,10 @@ struct HDRTests {
   func testMonotoneC1() throws {
     for count in [1, 3] {
       let width = 512
-      // From the sky to 0.02 above it: t1 sits a quarter of the way along the ramp.
-      let image = Image(width: width, height: 1, planes: count, sky: 0.0132) { _, x, _ in
-        Float(0.0132 + 0.02 * Double(x) / Double(width - 1))
+      // From the sky to 0.02 above it: t1 sits a quarter of the way along the ramp. The planes
+      // differ, so a swapped colour binding shows.
+      let image = Image(width: width, height: 1, planes: count, sky: 0.0132) { plane, x, _ in
+        Float((0.0132 + 0.02 * Double(x) / Double(width - 1)) * (1 - 0.1 * Double(plane)))
       }
       let values: [String: ParamValue] = [
         "enabled": .flag(true), "kneeAboveSky": .number(0.005), "softness": .number(0.002),
@@ -95,13 +96,14 @@ struct HDRTests {
       let out = try Self.run(image, values)
       #expect(Self.maxDifference(out, try Self.oracle(image, values)) <= 1.0 / 65535)
       // Away from the clamped edges the smooth part of a ramp is the ramp itself.
-      let lum = out[0]
-      let slopes = (8..<width - 9).map { Double(lum[$0 + 1] - lum[$0]) }
-      #expect(slopes.allSatisfy { $0 > 0 }, "\(count) plane(s): not monotone")
-      let breaks = zip(slopes, slopes.dropFirst()).map { abs($1 - $0) / max($0, $1) }
-      #expect((breaks.max() ?? 1) <= 0.05, "\(count) plane(s): slope break \(breaks.max() ?? 1)")
+      for (plane, values) in out.enumerated() {
+        let slopes = (8..<width - 9).map { Double(values[$0 + 1] - values[$0]) }
+        #expect(slopes.allSatisfy { $0 > 0 }, "plane \(plane) of \(count): not monotone")
+        let breaks = zip(slopes, slopes.dropFirst()).map { abs($1 - $0) / max($0, $1) }
+        #expect((breaks.max() ?? 1) <= 0.05, "plane \(plane) of \(count): slope break")
+      }
       // Compression happened: the top of the ramp is lower than the input.
-      #expect(lum[width - 9] < image.planes[0][width - 9] - 0.005)
+      #expect(out[0][width - 9] < image.planes[0][width - 9] - 0.004)
     }
   }
 
@@ -152,8 +154,8 @@ struct HDRTests {
       return Float(0.0132 + 0.9 * exp(-(dx * dx + dy * dy) / (2 * 3 * 3)))
     }
     let out = try Self.run(image, Self.validated)
-    let lowest = zip(out.joined(), image.planes.joined()).map { Double($0 - $1) }.min() ?? -1
-    #expect(lowest >= -1e-6, "a halo pixel fell \(-lowest) below its input")
+    // The opened smooth part stays at the sky, under the knee: every pixel is left bit for bit.
+    #expect(out.map { $0.map(\.bitPattern) } == image.planes.map { $0.map(\.bitPattern) })
     #expect(Self.maxDifference(out, try Self.oracle(image, Self.validated)) <= 1.0 / 65535)
 
     var unopened = Self.validated

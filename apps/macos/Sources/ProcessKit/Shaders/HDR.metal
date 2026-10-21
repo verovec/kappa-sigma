@@ -34,10 +34,14 @@ kernel void hdrCompress(texture2d<float, access::read> r [[texture(0)]],
   float ls = smooth.read(gid).r;
   float t1 = p[1];
   float s = p[2];
-  float compressed = ls > t1 ? t1 + s * asinh((ls - t1) / s) : ls;
-  // Floored at 0, unlike hdrcomp: a dead pixel (L ≈ 0) inside a compressed core would otherwise
-  // get a huge negative ratio.
-  float ratio = l <= 1e-9f ? 1.0f : max((compressed + (l - ls)) / l, 0.0f);
+  // Below the knee the ratio is exactly 1 (not (ls + (l − ls)) / l, an ulp off): untouched
+  // pixels stay bit-identical. Above it the ratio is floored at 0, unlike hdrcomp: a dead pixel
+  // (L ≈ 0) inside a compressed core would otherwise get a huge negative ratio.
+  float ratio = 1.0f;
+  if (ls > t1 && l > 1e-9f) {
+    float compressed = t1 + s * asinh((ls - t1) / s);
+    ratio = max((compressed + (l - ls)) / l, 0.0f);
+  }
   outR.write(float4(r.read(gid).r * ratio), gid);
   if (p[0] < 3.0f) { return; }
   outG.write(float4(g.read(gid).r * ratio), gid);

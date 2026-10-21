@@ -70,8 +70,10 @@ enum HDROracle {
   static func ratios(luminance: [Float], smooth: [Float], t1: Double, softness: Double) -> [Float] {
     zip(luminance, smooth).map { value, smoothed in
       let (lum, ls) = (Double(value), Double(smoothed))
-      let compressed = ls > t1 ? t1 + softness * asinh((ls - t1) / softness) : ls
-      return lum <= 1e-9 ? 1 : Float(max((compressed + lum - ls) / lum, 0))
+      // hdrcomp computes (ls + lum − ls) / lum below the knee: 1 up to rounding, exactly 1 here.
+      guard ls > t1, lum > 1e-9 else { return 1 }
+      let compressed = t1 + softness * asinh((ls - t1) / softness)
+      return Float(max((compressed + lum - ls) / lum, 0))
     }
   }
 

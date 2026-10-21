@@ -35,8 +35,11 @@ struct HDRLiveTests {
     let bundleSky = stats.channels.map(\.median).reduce(0, +) / Double(stats.channels.count)
     var params = ParamSet(schema: HDRProcess.schema)
     try params.set("enabled", .flag(true))
-    try params.set(
-      "kneeAboveSky", .number(try Self.flag("-t1", in: stage.flags) * legacySky - bundleSky))
+    let knee = try Self.flag("-t1", in: stage.flags) * legacySky - bundleSky
+    // `set` would clamp a knee outside the schema bounds and the parity would fail for no shown
+    // reason: refuse it here instead.
+    try #require((0...0.1).contains(knee), "hdrcomp's t1 lies \(knee) from the bundle sky")
+    try params.set("kneeAboveSky", .number(knee))
     try params.set("softness", .number(try Self.flag("-s", in: stage.flags) * legacySky))
     try params.set("sigma", .number(try Self.flag("-sigma", in: stage.flags)))
     // hdrcomp's default opening radius: the recorded flags leave it unset.

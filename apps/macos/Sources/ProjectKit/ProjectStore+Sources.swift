@@ -25,6 +25,17 @@ extension ProjectStore {
     }
   }
 
+  /// Records `profileID` (`nil`: none) as the profile kept for the source of `kind` at `path`.
+  package func setProfile(_ profileID: String?, kind: ProjectSource.Kind, path: String) throws {
+    let canonical = URL(fileURLWithPath: path).standardizedFileURL.path
+    let stamp = now()
+    try pool.write { db in
+      try db.execute(
+        sql: "UPDATE sources SET profile_id = ?, updated_at = ? WHERE kind = ? AND path = ?",
+        arguments: [profileID, stamp, kind.rawValue, canonical])
+    }
+  }
+
   /// Every source, by id.
   package func sources() throws -> [ProjectSource] {
     try pool.read { db in
@@ -35,8 +46,8 @@ extension ProjectStore {
   private static func source(_ row: Row) -> ProjectSource {
     ProjectSource(
       id: row["id"], kind: ProjectSource.Kind(rawValue: row["kind"]) ?? .night,
-      path: row["path"], readOnly: row["read_only"], createdAt: row["created_at"],
-      updatedAt: row["updated_at"])
+      path: row["path"], readOnly: row["read_only"], profileID: row["profile_id"],
+      createdAt: row["created_at"], updatedAt: row["updated_at"])
   }
 
   /// Records a stack, the sources it was built from and one image per `imageRoles`, in one

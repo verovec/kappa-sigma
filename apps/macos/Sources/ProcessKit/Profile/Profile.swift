@@ -65,7 +65,7 @@ package struct Profile: Equatable, Sendable {
     /// The values the profile sets.
     package private(set) var values: [String: ParamValue]
     /// Why each value is what it is.
-    package let why: [String: Text]
+    package private(set) var why: [String: Text]
     /// Auto or breakpoint.
     package let mode: PipelineStep.Mode
     /// Kept as applied on replay.
@@ -100,6 +100,8 @@ package struct Profile: Equatable, Sendable {
       try params.set(id, value)
       values[id] = params[id]
       recipe = Recipe(processID: recipe.processID, params: params)
+      // A value the profile did not set is the user's: it says so, and the copy stays readable.
+      if why[id] == nil { why[id] = Profile.userValue }
     }
 
     package static func == (lhs: Self, rhs: Self) -> Bool {
@@ -143,6 +145,10 @@ package struct Profile: Equatable, Sendable {
       name: id,
       steps: steps.map { PipelineStep(recipe: $0.recipe, mode: $0.mode, locked: $0.locked) })
   }
+
+  /// The « why » of a value the user set on a copy.
+  package static let userValue = Text(
+    english: "Your value, set on this copy.", french: "Votre valeur, réglée sur cette copie.")
 
   /// Sets value `id` of step `index` (validated and clamped, as a panel would).
   package mutating func set(_ id: String, to value: ParamValue, inStep index: Int) throws {

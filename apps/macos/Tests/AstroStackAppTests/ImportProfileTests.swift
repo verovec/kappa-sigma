@@ -40,7 +40,7 @@ struct ImportProfileTests {
     #expect(model.selectedProfile == nil, "no profile is a choice too")
   }
 
-  @Test("Add records the selected profile in the project", .scratchDirectory)
+  @Test("Add records the kept profile with each imported source", .scratchDirectory)
   func testAddRecordsProfile() async throws {
     let project = try ProjectPackage.create(
       at: ScratchDirectory.url.appendingPathComponent("M31.astrostack"))
@@ -51,9 +51,54 @@ struct ImportProfileTests {
     importing.choose(folder: URL(fileURLWithPath: "/c/M31"))
     await importing.settled()
     window.add(importing.request)
-    #expect(
-      try project.store.setting(ProfileChoice.settingKey)
-        == "galaxy-osc-broadband-dualband")
+    #expect(try project.store.sources().map(\.profileID) == ["galaxy-osc-broadband-dualband"])
+
+    // A second night with no profile kept leaves the first night's choice alone.
+    window.startImport()
+    let second = try #require(window.importing)
+    second.choose(folder: URL(fileURLWithPath: "/c/M31-night2"))
+    await second.settled()
+    second.chooseProfile(.none)
+    window.add(second.request)
+    #expect(try project.store.sources().map(\.profileID) == ["galaxy-osc-broadband-dualband", nil])
+  }
+
+  @Test("a plan that is not the request's records nothing", .scratchDirectory)
+  func testStalePlanNotRecorded() async throws {
+    let project = try ProjectPackage.create(
+      at: ScratchDirectory.url.appendingPathComponent("M31.astrostack"))
+    defer { try? project.close() }
+    let window = ProjectWindowModel(store: { project.store }, planning: { _ in Self.m31 })
+    window.startImport()
+    let importing = try #require(window.importing)
+    // Add before any scan: no plan, no proposal the user saw.
+    window.add(ImportRequest(paths: ["/c/IC1848"]))
+    #expect(try project.store.sources().map(\.profileID) == [nil])
+    #expect(importing.planIsCurrent == false)
+  }
+
+  @Test("a new folder resets the profile choice to the proposal")
+  func testFolderResetsChoice() async throws {
+    let model = await Self.model()
+    model.chooseProfile(.none)
+    model.choose(folder: URL(fileURLWithPath: "/c/M31-other"))
+    await model.settled()
+    #expect(model.selectedProfile?.id == "galaxy-osc-broadband-dualband")
+  }
+
+  @Test("the import offers the project's user copies over the shipped profiles", .scratchDirectory)
+  func testUserCopiesOffered() throws {
+    let project = try ProjectPackage.create(
+      at: ScratchDirectory.url.appendingPathComponent("M31.astrostack"))
+    defer { try? project.close() }
+    var copy = try #require(
+      ImportViewModel.shippedProfiles.first { $0.id == "emission-osc-dualband" })
+    try copy.set("lumaDesat", to: .number(0.5), inStep: 3)
+    try project.store.saveUserProfile(id: copy.id, json: copy.json())
+    try project.store.saveUserProfile(id: "broken", json: Data("{}".utf8))
+    let profiles = ImportViewModel.profiles(store: project.store)
+    #expect(profiles.count == 5, "the copy shadows its builtin; the broken copy is left out")
+    #expect(profiles.first { $0.id == copy.id }?.isUserCopy == true)
   }
 
   @Test("each reason and each profile reads in French and English")

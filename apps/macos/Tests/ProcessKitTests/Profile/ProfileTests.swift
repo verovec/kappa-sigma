@@ -91,6 +91,14 @@ struct ProfileTests {
         proposed: "cluster-osc-broadband",
         reasons: [.camera(.osc), .object("M 45")], candidates: 3),
       Case(
+        name: "OSC broadband M 31: not a cluster",
+        inputs: .init(object: "M 31", camera: .osc, filters: .broadband),
+        proposed: nil, reasons: [], candidates: 1),
+      Case(
+        name: "camera unknown, known target",
+        inputs: .init(object: "M 31", camera: nil, filters: nil),
+        proposed: nil, reasons: [], candidates: 5),
+      Case(
         name: "OSC, filters unknown, target unknown",
         inputs: .init(object: "NGC 891", camera: .osc, filters: nil),
         proposed: nil, reasons: [], candidates: 3),

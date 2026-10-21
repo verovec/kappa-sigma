@@ -47,13 +47,25 @@ package struct ProfileProposal: Equatable, Sendable {
       (inputs.camera.map { $0 == profile.camera } ?? true)
         && (inputs.filters.map(profile.filters.contains) ?? true)
     }
-    var reasons: [Reason] = []
-    if let camera = inputs.camera { reasons.append(.camera(camera)) }
+    // Without the camera nothing is proposed: an example name alone may be another rig's.
+    guard let camera = inputs.camera else {
+      return Self(proposed: nil, reasons: [], candidates: candidates)
+    }
+    var reasons: [Reason] = [.camera(camera)]
     if let filters = inputs.filters { reasons.append(.filters(filters)) }
-    if candidates.count == 1, inputs.camera != nil, inputs.filters != nil {
+    let target = inputs.object.map(Self.normalised)
+    // The profile whose validated targets include this one, among all profiles.
+    let owner = profiles.first { profile in
+      profile.examples.contains { Self.normalised($0) == target }
+    }
+    if candidates.count == 1, inputs.filters != nil {
+      // The only match for these captures, unless the target is another profile's (M 31 shot in
+      // broadband only is not a cluster): then nothing is proposed.
+      guard owner == nil || owner?.id == candidates[0].id else {
+        return Self(proposed: nil, reasons: [], candidates: candidates)
+      }
       return Self(proposed: candidates[0], reasons: reasons + [.onlyMatch], candidates: candidates)
     }
-    let target = inputs.object.map(Self.normalised)
     let named = candidates.compactMap { profile in
       profile.examples.first { Self.normalised($0) == target }.map { (profile, $0) }
     }

@@ -27,11 +27,7 @@ extension ProjectStore {
 
   /// The user's profile copies (ProcessKit `Profile.json()`), by profile id.
   package func userProfiles() throws -> [String: Data] {
-    var profiles: [String: Data] = [:]
-    for id in try names(in: .userProfiles) {
-      profiles[id] = try body(named: id, in: .userProfiles)
-    }
-    return profiles
+    try entries(in: .userProfiles)
   }
 
   /// Saves the user's copy of profile `id` (never touches the shipped profile of that id).

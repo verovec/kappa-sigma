@@ -87,12 +87,19 @@ package final class ImportViewModel {
     !request.filterMap.values.contains(row.filter)
   }
 
+  /// Whether the shown plan describes the request as it stands (scanned for it, no scan
+  /// running): only then does its proposal belong to what Add records.
+  package var planIsCurrent: Bool {
+    plan != nil && !isScanning && scanned == request
+  }
+
   // MARK: - Controls
 
-  /// Starts over on `folder`: no override survives a change of capture.
+  /// Starts over on `folder`: no override survives a change of capture, nor a profile choice.
   package func choose(folder: URL) {
     request = ImportRequest(paths: [folder.path])
     excludedRows = []
+    profileChoice = .proposed
     refresh()
   }
 

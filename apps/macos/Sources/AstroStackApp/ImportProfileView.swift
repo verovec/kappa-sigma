@@ -64,7 +64,7 @@ package struct ImportProfileView: View {
     VStack(alignment: .leading, spacing: DesignMetrics.spacingXXS) {
       ForEach(Array(profile.steps.enumerated()), id: \.offset) { _, step in
         ForEach(step.values.keys.sorted(), id: \.self) { id in
-          Text(verbatim: "\(step.recipe.processID) · \(id) = \(Self.text(step.values[id], locale))")
+          Text(verbatim: Self.line(step, id, locale: locale))
             .font(.caption.monospacedDigit())
             .help(Text(verbatim: step.why[id]?.text(language: language) ?? ""))
         }
@@ -73,6 +73,18 @@ package struct ImportProfileView: View {
   }
 
   private var language: String { AppLocale.language(of: locale) }
+
+  /// « Process · Parameter = value », titles from ProcessKit's catalog in `locale`.
+  nonisolated static func line(_ step: Profile.Step, _ id: String, locale: Locale) -> String {
+    let type = (try? ProcessRegistry.standard())?.type(id: step.recipe.processID)
+    let process = type.map { title($0.title, locale) } ?? step.recipe.processID
+    let parameter = type?.schema.spec(id).map { title($0.title, locale) } ?? id
+    return "\(process) · \(parameter) = \(text(step.values[id], locale))"
+  }
+
+  private nonisolated static func title(_ key: String, _ locale: Locale) -> String {
+    String(localized: ProcessKitResources.title(key, locale: locale))
+  }
 
   /// A value as the panel writes it, numbers in `locale` (« 0,115 »).
   nonisolated static func text(_ value: ParamValue?, _ locale: Locale) -> String {

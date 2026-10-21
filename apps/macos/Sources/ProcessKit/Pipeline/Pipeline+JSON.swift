@@ -42,12 +42,10 @@ extension Pipeline {
     _ data: Data, registry: ProcessRegistry, batch: [String: ParamSchema] = [:]
   ) throws -> Loaded {
     guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-      let versionNumber = object["schemaVersion"] as? NSNumber,
-      CFGetTypeID(versionNumber) != CFBooleanGetTypeID(), versionNumber.intValue >= 1,
+      let version = JSONScalar.int(object["schemaVersion"]), version >= 1,
       let name = object["name"] as? String,
       let steps = object["steps"] as? [[String: Any]]
     else { throw PipelineFileError.malformed("not a pipeline file") }
-    let version = versionNumber.intValue
     guard version <= schemaVersion else { throw PipelineFileError.newerFormat(version) }
     var warnings = object.keys.sorted().filter { !keys.contains($0) }
       .map { "unknown key \($0) ignored" }
@@ -70,14 +68,13 @@ extension Pipeline {
   ) throws -> (PipelineStep, [String]) {
     guard let recipeObject = step["recipe"] as? [String: Any],
       let modeName = step["mode"] as? String, let mode = PipelineStep.Mode(rawValue: modeName),
-      let lockedValue = step["locked"] as? NSNumber,
-      CFGetTypeID(lockedValue) == CFBooleanGetTypeID()
+      let locked = JSONScalar.bool(step["locked"])
     else { throw PipelineFileError.malformed("a step needs a recipe, an auto|stop mode, locked") }
     let warnings = step.keys.sorted().filter { !stepKeys.contains($0) }
       .map { "unknown key \($0) ignored" }
     let (recipe, recipeWarnings) = try loadRecipe(recipeObject, registry: registry, batch: batch)
     return (
-      PipelineStep(recipe: recipe, mode: mode, locked: lockedValue.boolValue),
+      PipelineStep(recipe: recipe, mode: mode, locked: locked),
       warnings + recipeWarnings
     )
   }

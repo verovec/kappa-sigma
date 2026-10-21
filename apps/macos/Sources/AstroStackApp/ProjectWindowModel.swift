@@ -100,7 +100,9 @@ package final class ProjectWindowModel {
   package func startImport() {
     closeImport()
     let services = services(store())
-    importing = ImportViewModel(planning: services.planning, masters: services.masters)
+    importing = ImportViewModel(
+      planning: services.planning, masters: services.masters,
+      profiles: ImportViewModel.profiles(store: store()))
   }
 
   /// Closes the Import sheet and stops its scan, which would otherwise run on for minutes.
@@ -122,9 +124,12 @@ package final class ProjectWindowModel {
       for path in request.paths {
         try store.addSource(kind: .night, path: path)
       }
-      // The profile the user kept (or none, as an empty value): recorded, applied by nothing.
-      if let importing {
-        try store.setSetting(ProfileChoice.settingKey, to: importing.selectedProfile?.id ?? "")
+      // The profile kept for these sources, recorded with them — only when the sheet's plan is
+      // this request's (a stale proposal is never recorded); applied by nothing here.
+      if let importing, importing.planIsCurrent {
+        for path in request.paths {
+          try store.setProfile(importing.selectedProfile?.id, kind: .night, path: path)
+        }
       }
       imports.append(request)
       // The sources first: whether the sheet's plan is the project's scan depends on them.

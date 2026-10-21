@@ -17,6 +17,18 @@ extension ProjectStore {
     }
   }
 
+  /// Every name and body of `table`, in one snapshot.
+  func entries(in table: NamedJSONTable) throws -> [String: Data] {
+    try pool.read { db in
+      var entries: [String: Data] = [:]
+      for row in try Row.fetchAll(db, sql: "SELECT name, body_json FROM \(table.rawValue)") {
+        let body: String = row["body_json"]
+        entries[row["name"]] = Data(body.utf8)
+      }
+      return entries
+    }
+  }
+
   /// The body saved as `name` in `table`, `nil` when none.
   func body(named name: String, in table: NamedJSONTable) throws -> Data? {
     try pool.read { db in

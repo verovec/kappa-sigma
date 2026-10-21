@@ -10,6 +10,26 @@ struct ProfileLibraryTests {
     SHA256.hash(data: try Data(contentsOf: url)).map { String(format: "%02x", $0) }.joined()
   }
 
+  @Test(
+    "a value the user sets gets its why; an unreadable or knob-invalid copy is left out, listed")
+  func testUserValuesAndRejectedCopies() throws {
+    let registry = try ProcessRegistry.standard()
+    var copy = try #require(
+      try ProfileLibrary.builtins(registry: registry).first { $0.id == "emission-osc-dualband" })
+    try copy.set("oiiiOpacity", to: .number(0.6), inStep: 2)
+    #expect(copy.steps[2].why["oiiiOpacity"] == Profile.userValue)
+    #expect(
+      try Profile.load(copy.json(), registry: registry).steps[2].values["oiiiOpacity"]
+        == .number(0.6))
+    let stored = ["emission-osc-dualband": try copy.json(), "broken": Data("{}".utf8)]
+    let library = try ProfileLibrary(
+      registry: registry, user: { stored }, save: { _, _ in },
+      acceptsKnob: { id, _ in id != "trail_mask_k" })
+    #expect(library.profiles.count == 5)
+    #expect(
+      Set(library.rejected.keys) == ["broken", "emission-osc-dualband"], "a knob refused too")
+  }
+
   @Test("saving over a builtin creates a user copy; the builtin's bytes are unchanged")
   func testUserProfileNeverOverwritesBuiltin() throws {
     let registry = try ProcessRegistry.standard()
@@ -60,6 +80,8 @@ struct ProfileLibraryTests {
       ("unknown process", step { $0["process"] = "nope" }),
       ("value out of bounds", step { $0["values"] = ["enabled": 3] }),
       ("missing why", step { $0["why"] = [:] }),
+      ("locked as a number", step { $0["locked"] = 1 }),
+      ("version as a boolean", { $0["schemaVersion"] = true }),
     ]
     for (name, mutate) in refusals {
       var copy = object

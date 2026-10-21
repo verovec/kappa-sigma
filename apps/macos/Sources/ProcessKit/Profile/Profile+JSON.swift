@@ -15,7 +15,7 @@ extension Profile {
     guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
       throw ProfileError.malformed("not JSON")
     }
-    let version = object["schemaVersion"] as? Int ?? 0
+    let version = JSONScalar.int(object["schemaVersion"]) ?? 0
     guard version >= 1 else { throw ProfileError.malformed("schemaVersion") }
     guard version <= schemaVersion else { throw ProfileError.newerFormat(version) }
     guard let id = object["id"] as? String,
@@ -60,7 +60,7 @@ extension Profile {
   private static func loadStep(_ step: [String: Any], registry: ProcessRegistry) throws -> Step {
     guard let id = step["process"] as? String,
       let mode = (step["mode"] as? String).flatMap(PipelineStep.Mode.init(rawValue:)),
-      let locked = step["locked"] as? Bool, let values = step["values"] as? [String: Any],
+      let locked = JSONScalar.bool(step["locked"]), let values = step["values"] as? [String: Any],
       let whys = step["why"] as? [String: Any]
     else { throw ProfileError.malformed("a step needs process, mode, locked, values, why") }
     guard let type = registry.type(id: id) else { throw ProfileError.unknownProcess(id) }

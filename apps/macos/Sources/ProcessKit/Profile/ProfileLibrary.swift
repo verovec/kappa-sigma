@@ -9,21 +9,37 @@ package struct ProfileLibrary {
   /// Every profile the user can pick: builtins, each replaced by the user's copy when there is
   /// one, then the user's own profiles; sorted by id.
   package let profiles: [Profile]
+  /// The user copies that could not be used, by id, with why (shown, never silently dropped).
+  package let rejected: [String: String]
   private let builtins: [Profile]
   private let save: (String, Data) throws -> Void
 
-  /// The library over the builtins and the user's saved profiles (`user`: JSON by id), saving
-  /// through `save`.
+  /// The library over the builtins and the user's saved profiles (`user`: JSON by id).
+  ///
+  /// Saves go through `save`; `acceptsKnob` checks a copy's preprocessing knobs (StackKit's
+  /// `KnobSchema`, which ProcessKit cannot import). A copy that does not load or check is left out
+  /// and listed in `rejected`: one bad file never hides the other profiles.
   package init(
     registry: ProcessRegistry, user: () throws -> [String: Data],
-    save: @escaping (String, Data) throws -> Void
+    save: @escaping (String, Data) throws -> Void,
+    acceptsKnob: (String, ParamValue) -> Bool = { _, _ in true }
   ) throws {
     let builtins = try Self.builtins(registry: registry)
-    let copies = try user().values.map { data -> Profile in
-      var profile = try Profile.load(data, registry: registry)
-      profile.isUserCopy = true
-      return profile
+    var copies: [Profile] = []
+    var rejected: [String: String] = [:]
+    for (id, data) in try user() {
+      do {
+        var profile = try Profile.load(data, registry: registry)
+        if let knob = profile.preprocessing.knobs.first(where: { !acceptsKnob($0.key, $0.value) }) {
+          throw ProfileError.unknownParameter("preprocessing", knob.key)
+        }
+        profile.isUserCopy = true
+        copies.append(profile)
+      } catch {
+        rejected[id] = "\(error)"
+      }
     }
+    self.rejected = rejected
     let shadowed = Set(copies.map(\.id))
     self.builtins = builtins
     profiles = (builtins.filter { !shadowed.contains($0.id) } + copies).sorted { $0.id < $1.id }

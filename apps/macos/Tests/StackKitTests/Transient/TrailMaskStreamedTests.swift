@@ -73,12 +73,14 @@ struct TrailMaskStreamedTests {
   static let monoFrame = Int64(6248) * 4176 * 4
 
   /// One `plan` case; a struct, not a 5-tuple, so the `@Test` arguments type-check in time.
-  struct BasisCase: Sendable {
+  struct BasisCase: Sendable, CustomTestStringConvertible {
     let frames: Int
     let frameBytes: Int64
     let budget: Int64
     let streamed: Bool
     let basis: Int
+
+    var testDescription: String { "\(frames) frames, budget \(budget >> 30) GiB" }
   }
 
   @Test(

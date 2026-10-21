@@ -61,6 +61,15 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
   /// The Données stage's « Import Captures… ».
   package static let importCaptures = stageControl("data", "import")
 
+  /// The Données stage's « Rescan » (0078).
+  package static let dataRescan = stageControl("data", "rescan")
+
+  /// The Données stage's « Cancel » of a Rescan in flight (0078).
+  package static let dataCancelScan = stageControl("data", "cancelScan")
+
+  /// The Données stage's « Open Calibration » above the coverage (0078).
+  package static let dataOpenCalibration = stageControl("data", "openCalibration")
+
   /// The Empilement stage's preset picker.
   package static let stackingPreset = stageControl("stacking", "preset")
 

@@ -81,6 +81,22 @@
         }
       }
     },
+    "Compress the core": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compress the core"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compresser le cœur"
+          }
+        }
+      }
+    },
     "Foraxx": {
       "localizations": {
         "en": {
@@ -161,6 +177,22 @@
         }
       }
     },
+    "HDR core compression": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HDR core compression"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compression HDR du cœur"
+          }
+        }
+      }
+    },
     "HOO": {
       "localizations": {
         "en": {
@@ -221,6 +253,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Protection des hautes lumières"
+          }
+        }
+      }
+    },
+    "Knee above the sky": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Knee above the sky"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seuil au-dessus du fond"
           }
         }
       }
@@ -461,6 +509,54 @@
           "stringUnit": {
             "state": "translated",
             "value": "Écrêtage des ombres"
+          }
+        }
+      }
+    },
+    "Smooth scale σ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Smooth scale σ"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échelle lisse σ"
+          }
+        }
+      }
+    },
+    "Softness": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Softness"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Douceur"
+          }
+        }
+      }
+    },
+    "Star removal radius": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Star removal radius"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rayon d’effacement des étoiles"
           }
         }
       }

@@ -609,6 +609,22 @@
         }
       }
     },
+    "Recomposition": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recomposition"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recomposition"
+          }
+        }
+      }
+    },
     "Red": {
       "localizations": {
         "en": {
@@ -733,6 +749,54 @@
           "stringUnit": {
             "state": "translated",
             "value": "Douceur"
+          }
+        }
+      }
+    },
+    "Star colour": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Star colour"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couleur des étoiles"
+          }
+        }
+      }
+    },
+    "Star layer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Star layer"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calque d’étoiles"
+          }
+        }
+      }
+    },
+    "Star presence": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Star presence"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Présence des étoiles"
           }
         }
       }
@@ -1149,6 +1213,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "autostretch comme Siril : ombres 2,8σ sous le fond"
+          }
+        }
+      }
+    },
+    "star colour 0.25: red giants otherwise render as orange blobs (the validated M31 chain)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "star colour 0.25: red giants otherwise render as orange blobs (the validated M31 chain)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "couleur des étoiles 0,25 : sinon les géantes rouges deviennent des taches orange (la chaîne M31 validée)"
           }
         }
       }

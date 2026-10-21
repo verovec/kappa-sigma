@@ -1,9 +1,10 @@
 internal import RenderKit
 package import SwiftUI
 
-/// The content of a project window: its sources, and the Import sheet.
+/// The content of a project window: the journey sidebar (Données → … → Export, each stage with
+/// its state) and the selected stage's pane.
 ///
-/// The Studio cards fill the rest.
+/// The sidebar shows where the project stands; only the user moves the selection.
 package struct ProjectWindowView: View {
   @State var model: ProjectWindowModel
 
@@ -13,31 +14,18 @@ package struct ProjectWindowView: View {
   }
 
   package var body: some View {
-    VStack(spacing: 0) {
-      if model.sources.isEmpty {
-        ContentUnavailableView {
-          Label {
-            Text(.app("Empty project"))
-          } icon: {
-            Image(systemName: "sparkles")
-          }
-        } description: {
-          Text(.app("Import a capture night to see how it will be calibrated and stacked."))
-        } actions: {
-          importButton
+    NavigationSplitView {
+      JourneySidebar(model: model)
+        .navigationSplitViewColumnWidth(min: 180, ideal: 210, max: 280)
+    } detail: {
+      VStack(spacing: 0) {
+        StagePane.pane(for: model.selection, model: model)
+          .frame(maxWidth: .infinity, maxHeight: .infinity)
+        if let error = model.error {
+          StatusBadge(.error, error.message)
+            .padding(DesignMetrics.spacingS)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-      } else {
-        List(model.sources, id: \.id) { source in
-          Label(source.path, systemImage: "folder")
-        }
-        HStack {
-          Spacer()
-          importButton
-        }
-        .padding(8)
-      }
-      if let error = model.error {
-        StatusBadge(.error, error.message).padding(8)
       }
     }
     .frame(minWidth: 640, minHeight: 400)
@@ -51,9 +39,5 @@ package struct ProjectWindowView: View {
           addError: model.error)
       }
     }
-  }
-
-  private var importButton: some View {
-    Button(.app("Import Captures…")) { model.startImport() }
   }
 }

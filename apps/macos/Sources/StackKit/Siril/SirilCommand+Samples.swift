@@ -20,7 +20,8 @@ extension SirilCommand {
       .seqapplyreg(seq: "light", framing: "min"),
       .seqsubsky(seq: "light", degree: 1, prefix: "flat_"), .load("missing"), .fmul("1.0"),
       .save("out"),
-      .savepng("out"), .savetif("out"), .mirrorx, .subsky(degree: 1), .rmgreen(type: 0),
+      .savepng("out"), .savetif("out"), .mirrorx, .subsky(degree: 1),
+      .subskyRBF(smooth: 0.5, samples: 30, tolerance: 1.5, dither: true), .rmgreen(type: 0),
       .autostretchLinked, .satu(0.12), .platesolve(coords: nil, noFlip: true),
       .rgbcomp(r: "r", g: "g", b: "b", lum: "l", out: "combined"),
     ].map(\.line)

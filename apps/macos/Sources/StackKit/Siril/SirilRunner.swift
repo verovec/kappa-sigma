@@ -1,6 +1,4 @@
 package import Foundation
-internal import Subprocess
-internal import System
 
 /// Runs one script in its own `siril-cli` process (script mode).
 ///
@@ -40,34 +38,13 @@ package struct SirilRunner: Sendable {
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     let file = directory.appendingPathComponent("_astrostack.ssf")
     try Data(limits.apply(to: script.render()).utf8).write(to: file)
-    var options = PlatformOptions()
-    // Cancelling the task stops Siril: SIGTERM, then SIGKILL two seconds later.
-    options.teardownSequence = [.gracefulShutDown(allowedDurationToNextStep: .seconds(2))]
-    let result = try await Subprocess.run(
-      .path(FilePath(binary)), arguments: ["-d", directory.path, "-s", file.path],
-      platformOptions: options, input: .none, output: .sequence, error: .combinedWithOutput
-    ) { execution in
-      // Lines end at `\n` only, with no length cap: the legacy bufio.Scanner's rule (a bare `\r`
-      // or U+2028 stays inside its line).
-      let splitter = LineSplitter()
-      var log = ""
-      func take(_ lines: [String]) {
-        for line in lines {
-          log += line + "\n"
-          onLine(SirilLine(parsing: line))
-        }
-      }
-      for try await buffer in execution.standardOutput {
-        take(splitter.append(Data(buffer: buffer)))
-      }
-      take(splitter.flush())
-      return log
-    }
-    guard case .exited(let code) = result.terminationStatus, code == 0 else {
-      let code: Int32 = if case .exited(let value) = result.terminationStatus { value } else { -1 }
+    let outcome = try await ToolProcess.runLines(
+      binary, arguments: ["-d", directory.path, "-s", file.path]
+    ) { line in onLine(SirilLine(parsing: line)) }
+    guard outcome.exitCode == 0 else {
       throw SirilError.scriptFailed(
-        exitCode: code, hint: SirilOutput.errorHint(log: result.closureResult))
+        exitCode: outcome.exitCode ?? -1, hint: SirilOutput.errorHint(log: outcome.log))
     }
-    return result.closureResult
+    return outcome.log
   }
 }

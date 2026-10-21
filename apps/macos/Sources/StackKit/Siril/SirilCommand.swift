@@ -38,6 +38,8 @@ package enum SirilCommand: Equatable, Sendable {
   case savetif(String)
   case mirrorx
   case subsky(degree: Int)
+  /// `subsky -rbf …` (`SubskyRBFCmd`): a radial-basis model for an asymmetric gradient.
+  case subskyRBF(smooth: Double, samples: Int, tolerance: Double, dither: Bool)
   case rmgreen(type: Int)
   case autostretchLinked
   case autostretch(linked: Bool, target: Double)
@@ -49,6 +51,7 @@ package enum SirilCommand: Equatable, Sendable {
   package var verb: String {
     switch self {
     case .autostretchLinked: "autostretch"
+    case .subskyRBF: "subsky"
     default: String(String(describing: self).prefix { $0.isLetter })
     }
   }
@@ -89,6 +92,9 @@ package enum SirilCommand: Equatable, Sendable {
     case .savetif(let name): "savetif \(name)"
     case .mirrorx: "mirrorx"
     case .subsky(let degree): "subsky \(degree)"
+    case .subskyRBF(let smooth, let samples, let tolerance, let dither):
+      "subsky -rbf -smooth=\(GoFormat.shortest(smooth)) -samples=\(samples)"
+        + " -tolerance=\(GoFormat.shortest(tolerance))" + (dither ? " -dither" : "")
     case .rmgreen(let type): "rmgreen \(type)"
     case .autostretchLinked: "autostretch -linked"
     case .autostretch(let linked, let target):

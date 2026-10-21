@@ -10,7 +10,8 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   `render(_:stats:into:context:)`, `suggestions(stats:)`. R2: `render` reads the image, the
   bundle `LayerStats` and `params`, never measures the image to set itself; measurements return
   as `Suggestion`s.
-- `ParamSchema` / `ParamSpec` (number with bounds, flag, choice; `ParamUnit` none/px/sigma/opacity;
+- `ParamSchema` / `ParamSpec` (number with bounds, flag, choice, curve `points` (card 0053: 2 to
+  `maxCount` `CurvePoint`s, clamped into [0, 1], sorted, one per x; JSON `[[x, y], …]`); `ParamUnit` none/px/sigma/opacity;
   `ParamLevel` simple/advanced with the display rule `visible(disclosed:promoted:)`), `ParamSet`
   (schema order, clamped, NaN refused, encoded as ordered JSON; no decoder: stored values come
   back through `ParamSet.loading`, which validates them and returns what it refused).
@@ -48,6 +49,21 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   Every coefficient is computed on the CPU (`StretchUniforms`) from the panel values and the
   stats; "autostretch like Siril" and the deep-sky 0.90 headroom are suggestions, not defaults
   hidden in the shader. No panel yet: the Studio renders the schema generically (0075/0076).
+- **EmissionScreensProcess** (card 0051, id `emission-screens`): astrocomp's HOO-over-broadband
+  chain on a stretched RGB base. Per line (`EmissionLine`: Hα, [OIII], [SII]; params
+  `<ha|oiii|sii><Enabled|Continuum|ContinuumK|Background|Black|Opacity|Tint|Boost>`) on its own
+  linear bundle layer: continuum `max(line − k·ref, 0)` (k = the panel value; the bundle's
+  `continuum_k` is a suggestion, the reference plane is the bundle's `continuum_ref`), the
+  astrocomp MTF (`LineStretch`: x₀ normalised by 1 − c, NOT the Siril form of `stretch`), black
+  point, tanh boost (knee 0.60, ceiling 0.98), grey opening (`starRadius` px), 3-box smoothing
+  (`smooth` px), then `base + α·line·tint·(1 − base)` in line order (α = opacity · `nbBlend`).
+  After a continuum subtraction the stretch stats are derived (median − k·ref median, MADNs in
+  quadrature), never measured. The black point reads in σ of the stretched bundle noise
+  (`blackInSigma`); suggestions: k, black = 3σ. Global `linkLayers` = astrocomp `-link-layers`.
+- `LayerPlane` (`R` / `RGB.r` tokens → texture + per-plane stats). `RenderContext.layerStats`
+  (and `ProcessRunner.run(layerStats:)`, `ProcessContracts(layerStats:)`) hand a process the
+  bundle statistics of every layer it reads; `LayerStats.continuumK/continuumReference` carry a
+  line layer's fit; `suggestions(stats:layers:)` may read them.
 - **HDRProcess** (card 0052, id `hdr`, stage linear, off by default): the port of the v9
   runbook's hdrcomp. Luminance (mean of the planes) → grey opening (`GreyMorphology`, radius
   `openRadius` px) so stars never enter the smooth part → three box passes (`BoxBlur`, Kovesi's
@@ -57,13 +73,37 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   absolute above it (PO 2026-10-19: 0.00084 / 0.00118, σ 30, radius 16), never multiples of a
   measured sky. Pinned against hdrcomp's recorded `crop/hdr_only.fits` (max |Δ| 6e-8).
 - Shared GPU helpers: `GreyMorphology` (erode/dilate/open, separable, window clipped to the
-  image), `BoxBlur` (edge-clamped x+y passes, one per radius) and `ScratchTexture` (private
+  image, bit-exact vs a van Herk oracle), `BoxBlur` (edge-clamped x+y passes, one per radius;
+  also `MaskBuilder.feather`) and `ScratchTexture` (private
   r32Float intermediates) — encode into the caller's command buffer; reuse them, never a second
-  min/max or blur kernel.
+  min/max or blur kernel. `BoxBlur` runs Kahan running sums (cost independent of the radius);
+  `BoxGaussian` (card 0053) is the legacy `imgops.GaussianBlur` widths for σ on top of it.
 - `ProcessRegistry`: refuses duplicates and invalid schemas (`.px` without
   `previewExactOnlyAt1to1`, a default outside its bounds or options, infinite bounds);
   `standard()` is validated like any registry and lists the shipped processes (today:
-  `channel-combination`, `stretch`, `hdr`; pipeline order is E15's — `stage` documents it).
+  `channel-combination`, `stretch`, `hdr`, `emission-screens`, `colour-balance`, `sky-desat`,
+  `curves`, `saturation`; pipeline order is E15's — `stage` documents it).
+- **Colour processes** (card 0053), `Processes/Colour/`, kernels in `Colour.metal` (they share the
+  HSL helpers; a runtime-compiled source has no `#include`) and `SkyDesat.metal`; every default is
+  the identity, bit for bit:
+  - `colour-balance` (linear): `(in + offset) · gain` per channel; untouched values copy. A sky
+    region is measured by `regionMedians` (RenderKit's robust median) and only fills
+    suggestions: `neutraliseSuggestions` (offsets equalising its medians, level kept) and
+    `greySuggestions` (gains after the offsets, green fixed). The region picker is the viewer's
+    `PixelRegion`, wired by the Studio panel; a grey gain outside the bounds is not offered.
+  - `sky-desat` (linear): the legacy `chromasmooth.go` `sky_desat` passes, brightness-relative
+    masks (fractions of the sky level) — stage 1 pulls the chroma toward its star-masked coarse
+    field, stage 2 greys the floor, keep-cool gates stage 1 on warm deviations, saturated cores are
+    guarded; the pixel mean is preserved. Sky level and chroma σ come from the bundle `LayerStats`
+    (refused without them); every band and radius is a parameter. Linear, not after the stretch:
+    the bands were tuned on linear data (+0.05 % of sky for the M45 veil). Blurs: `BoxGaussian`.
+  - `curves` (non-linear): RGB, R, G, B, luminance (lift by f(Y) − Y, Rec. 709), saturation (HSL
+    S) as `points` parameters; `MonotoneSpline` (Fritsch–Carlson, no overshoot) sampled into a
+    1024 × 6 LUT texture built at init. RenderKit's `CurveEditor` edits them (`CurveEditorPoints`,
+    the app converts to `CurvePoint` and passes `{ MonotoneSpline(points).callAsFunction }`).
+  - `saturation` (non-linear): astrocomp's `-sat -sat-masked` (HSL S through the
+    `saturationMaskLUT` band on the HSL lightness), the compose star-core desaturation
+    (`starDesatMaskLUT` on the luminance) and the `desat` tool's luma blend `k`; the PO's values are suggestions.
 
 ## Strings (card 0073)
 

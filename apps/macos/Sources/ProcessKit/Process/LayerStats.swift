@@ -3,10 +3,18 @@
 package struct LayerStats: Equatable, Sendable {
   /// One entry per plane.
   package let channels: [ChannelStats]
+  /// An emission layer's continuum scale k, fitted on the stack (`continuum_k`).
+  package let continuumK: Double?
+  /// The plane k was fitted against, as `LayerPlane` names it (`R`, `RGB.r`…: `continuum_ref`).
+  package let continuumReference: String?
 
-  /// Statistics of `channels`.
-  package init(channels: [ChannelStats]) {
+  /// Statistics of `channels`, with an emission layer's continuum fit.
+  package init(
+    channels: [ChannelStats], continuumK: Double? = nil, continuumReference: String? = nil
+  ) {
     self.channels = channels
+    self.continuumK = continuumK
+    self.continuumReference = continuumReference
   }
 }
 

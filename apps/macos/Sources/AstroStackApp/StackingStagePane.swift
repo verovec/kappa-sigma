@@ -39,8 +39,10 @@ struct StackingStagePane: View {
 
   /// Why Run is greyed, with the one action that ungreys it; nothing while a run goes.
   @ViewBuilder private var blocker: some View {
-    if !running && model.nightPaths.isEmpty {
+    if !running && model.nightPaths.isEmpty && !model.sources.isEmpty {
       notice(.app("Import a capture night to stack: a legacy run is shown, never stacked again."))
+    } else if !running && model.nightPaths.isEmpty {
+      notice(.app("Import a capture night to stack."))
     } else if !running && model.needsSave {
       HStack(alignment: .firstTextBaseline) {
         notice(.app("Save the project first: its masters and stacks are written inside it."))

@@ -15,6 +15,8 @@ package final class ProjectWindowModel {
   /// The open Import sheet's model, `nil` when no sheet is shown.
   package private(set) var importing: ImportViewModel?
   package internal(set) var error: UserFacingError?
+  /// The last Add's failure, shown on the Import sheet; an error of Run or the Studio is not.
+  package private(set) var importError: UserFacingError?
   /// The last scan of the sources in this window: the sheet's plan on Add, or a Rescan the user
   /// asked for; `nil` until then (an M31 scan takes ~90 s, never run on open).
   package internal(set) var scan: ImportPlan? {
@@ -38,6 +40,7 @@ package final class ProjectWindowModel {
   package let knobs: KnobPanelViewModel
   /// This session's imports, in order: the next run applies all their overrides.
   var imports: [ImportRequest] = []
+  @ObservationIgnored private var masterServices: MasterServices?
   /// The project is the untitled temporary package: a run needs it saved first (read on refresh).
   package private(set) var needsSave = false
 
@@ -104,7 +107,14 @@ package final class ProjectWindowModel {
 
   /// Opens the library master at `path` in the viewer; nothing without master services.
   package func previewMaster(_ path: String) {
-    services(store()).masters?.preview(path)
+    masters?.preview(path)
+  }
+
+  /// The master services of this window's planner, built once: the viewer needs no fresh index.
+  package var masters: MasterServices? {
+    if let masterServices { return masterServices }
+    masterServices = services(store()).masters
+    return masterServices
   }
 
   /// A window whose sheets plan with `planning` and have no master services.
@@ -116,11 +126,10 @@ package final class ProjectWindowModel {
     self.init(store: store, folder: folder, services: { ImportServices(planning: planning($0)) })
   }
 
-  /// Opens the Import sheet on a fresh request, without the window's last error.
+  /// Opens the Import sheet on a fresh request.
   package func startImport() {
     closeImport()
-    // The sheet shows `error` as Add's own: one left by Run or the Studio is not.
-    error = nil
+    importError = nil
     let services = services(store())
     importing = ImportViewModel(planning: services.planning, masters: services.masters)
   }
@@ -138,11 +147,14 @@ package final class ProjectWindowModel {
   package func add(_ request: ImportRequest) {
     guard let store = store() else {
       error = .projectClosed
+      importError = error
       return
     }
+    var recorded = 0
     do {
       for path in request.paths {
         try store.addSource(kind: .night, path: path)
+        recorded += 1
       }
       imports.append(request)
       edited()
@@ -153,10 +165,11 @@ package final class ProjectWindowModel {
       refresh()
     } catch {
       // Some folders may be recorded: the last scan no longer describes the project.
-      edited()
+      if recorded > 0 { edited() }
       dropScan()
       refresh()
       self.error = UserFacingError(error)
+      importError = self.error
     }
   }
 

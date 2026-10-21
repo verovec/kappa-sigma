@@ -1073,6 +1073,38 @@
         }
       }
     },
+    "Import a capture night to see the masters each light set gets.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import a capture night to see the masters each light set gets."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importez une nuit de capture pour voir les masters que reçoit chaque série de lights."
+          }
+        }
+      }
+    },
+    "Import a capture night to stack.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import a capture night to stack."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importez une nuit de capture pour empiler."
+          }
+        }
+      }
+    },
     "Import a capture night to stack: a legacy run is shown, never stacked again.": {
       "localizations": {
         "en": {
@@ -1485,6 +1517,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aucune capture"
+          }
+        }
+      }
+    },
+    "No capture night": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No capture night"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune nuit de capture"
           }
         }
       }

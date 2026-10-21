@@ -56,8 +56,10 @@ struct JourneyFlowTests {
     #expect(!Self.window(project).needsSave, "a saved project runs as is")
   }
 
-  @Test("opening the Import sheet drops an error the sheet would show as Add's", .scratchDirectory)
-  func testImportStartsWithoutStaleError() throws {
+  @Test(
+    "the Import sheet shows only Add's failure, never an error of Run left in the window",
+    .scratchDirectory)
+  func testImportSheetErrorIsAddsOwn() throws {
     let project = try ProjectWorkspaceTests.project()
     defer { try? project.close() }
     let model = Self.window(project, saved: false)
@@ -67,8 +69,21 @@ struct JourneyFlowTests {
 
     model.startImport()
 
-    #expect(model.error == nil)
+    #expect(model.importError == nil)
+    #expect(model.error == .projectUnsaved, "the window keeps its own error")
     model.closeImport()
+  }
+
+  @Test("an Add that records nothing leaves an untitled project unchanged")
+  func testFailedAddNotEdited() {
+    let calls = Calls()
+    let model = ProjectWindowModel(
+      store: { nil }, isSaved: { false }, edited: { calls.edited += 1 })
+
+    model.add(ImportRequest(paths: ["/captures/M31-DB"]))
+
+    #expect(calls.edited == 0)
+    #expect(model.importError == .projectClosed)
   }
 
   @Test(

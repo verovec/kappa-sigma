@@ -30,6 +30,11 @@ struct CalibrationStagePane: View {
           .padding([.horizontal, .bottom], DesignMetrics.spacingM)
           .frame(maxWidth: .infinity, alignment: .leading)
         }
+      } else if model.nightPaths.isEmpty {
+        EmptyState(
+          .app("No capture night"),
+          message: .app("Import a capture night to see the masters each light set gets."),
+          systemImage: "square.stack.3d.down.right")
       } else if !model.isScanning {
         EmptyState(
           .app("Not scanned in this window"),
@@ -86,9 +91,11 @@ struct CalibrationStagePane: View {
           .truncationMode(.middle)
           .textSelection(.enabled)
         Spacer()
-        Button(.app("Preview")) { model.previewMaster(path) }
-          .controlSize(.small)
-          .accessible(.calibrationPreview(cell.suggestionID), label: .app("Preview"))
+        if model.masters != nil {
+          Button(.app("Preview")) { model.previewMaster(path) }
+            .controlSize(.small)
+            .accessible(.calibrationPreview(cell.suggestionID), label: .app("Preview"))
+        }
       }
     }
   }

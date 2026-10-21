@@ -9,8 +9,8 @@ extension ImportPlanning {
     store: ProjectStore?, library: URL = libraryFolder, timeZone: TimeZone = .current
   ) -> ImportServices {
     let index = LibraryIndex(store: store, folder: library)
-    let planning: ImportViewModel.Planning = { request in
-      try await plan(request, index: index, timeZone: timeZone)
+    let planning: ImportViewModel.ProgressPlanning = { request, progress in
+      try await plan(request, index: index, timeZone: timeZone, progress: progress)
     }
     let masters = MasterServices(
       inspect: { path in try await inspect(path) },

@@ -19,18 +19,21 @@ package enum ImportPlanning {
   package nonisolated static func live(
     store: ProjectStore?, library: URL = libraryFolder, timeZone: TimeZone = .current
   ) -> ImportViewModel.Planning {
-    services(store: store, library: library, timeZone: timeZone).planning
+    let planning = services(store: store, library: library, timeZone: timeZone).planning
+    return { request in try await planning(request) { _ in } }
   }
 
   /// Plans `request` against the library `index` holds; without a library every master is one
-  /// the capture would build.
+  /// the capture would build. `progress` hears `.library`, then the scan's own steps.
   @concurrent
   package nonisolated static func plan(
-    _ request: ImportRequest, index: LibraryIndex, timeZone: TimeZone
+    _ request: ImportRequest, index: LibraryIndex, timeZone: TimeZone,
+    progress: @escaping @Sendable (ScanProgress) -> Void = { _ in }
   ) async throws -> ImportPlan {
+    progress(.library)
     let masters = try await index.masters()
     try Task.checkCancellation()
     return try ImportPlanner(builder: InventoryBuilder(timeZone: timeZone))
-      .plan(request, library: masters)
+      .plan(request, library: masters, progress: progress)
   }
 }

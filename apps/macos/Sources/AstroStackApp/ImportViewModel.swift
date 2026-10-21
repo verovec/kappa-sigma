@@ -10,6 +10,10 @@ package import StackKit
 package final class ImportViewModel {
   /// Scans a request and plans it, off the main actor.
   package typealias Planning = @Sendable (ImportRequest) async throws -> ImportPlan
+  /// `Planning` that reports where the scan is to its second argument.
+  package typealias ProgressPlanning =
+    @Sendable (ImportRequest, @escaping @Sendable (ScanProgress) -> Void) async throws
+    -> ImportPlan
 
   /// The channels a light filter can be mapped to: the canonical filters, or dropped.
   package static let channels = Filter.allCases.map(\.rawValue) + [ignored]
@@ -19,6 +23,8 @@ package final class ImportViewModel {
   package private(set) var request = ImportRequest(paths: [])
   package private(set) var plan: ImportPlan?
   package private(set) var isScanning = false
+  /// Where the running scan is; `nil` when none runs (or a calibration-only replan does).
+  package private(set) var progress: ScanProgress?
   package private(set) var error: UserFacingError?
   /// The sets the user excluded, as they were listed when excluded (a scan drops them).
   package private(set) var excludedRows: [ImportPlan.SetRow] = []
@@ -26,15 +32,21 @@ package final class ImportViewModel {
   /// What a master's disclosure can do (inspect, rebuild, preview); `nil` hides it.
   package let masters: MasterServices?
 
-  private let planning: Planning
+  private let planning: ProgressPlanning
   private var scan: Task<Void, Never>?
   /// The request the shown plan's scan was made for.
   private var scanned: ImportRequest?
 
-  /// A model planning through `planning`, with the master `masters` services if any.
-  package init(planning: @escaping Planning, masters: MasterServices? = nil) {
+  /// A model planning through `planning`, which reports its progress, with the master `masters`
+  /// services if any.
+  package init(planning: @escaping ProgressPlanning, masters: MasterServices? = nil) {
     self.planning = planning
     self.masters = masters
+  }
+
+  /// A model planning through `planning`, which reports no progress.
+  package convenience init(planning: @escaping Planning, masters: MasterServices? = nil) {
+    self.init(planning: { request, _ in try await planning(request) }, masters: masters)
   }
 
   /// The light filters as captured, in canonical order: the rows of the filter map.
@@ -124,13 +136,14 @@ package final class ImportViewModel {
     let rescans = force || (scanned.map { ImportPlanner.needsScan(from: $0, to: request) } ?? true)
     let last = rescans ? nil : plan
     isScanning = true
+    progress = nil
     scan = Task {
       do {
         let plan =
           if let last {
             await ImportPlanner.replanned(last, request: request)
           } else {
-            try await planning(request)
+            try await scanReporting(request)
           }
         guard !Task.isCancelled else { return }
         self.plan = plan
@@ -145,13 +158,42 @@ package final class ImportViewModel {
         self.error = UserFacingError(error)
       }
       isScanning = false
+      progress = nil
     }
+  }
+
+  /// `planning(request)`, called from the scan task itself (scans start in the order the controls
+  /// asked), its progress consumed by a child task into `progress` (newest value only: the sheet
+  /// shows where the scan is, not every step it took).
+  private func scanReporting(_ request: ImportRequest) async throws -> ImportPlan {
+    let (steps, continuation) = AsyncStream.makeStream(
+      of: ScanProgress.self, bufferingPolicy: .bufferingNewest(1))
+    async let watched: Void = watch(steps)
+    defer { continuation.finish() }
+    let plan = try await planning(request) { continuation.yield($0) }
+    continuation.finish()
+    await watched
+    return plan
+  }
+
+  /// Shows each step of `steps` until the stream ends or the scan is cancelled.
+  private func watch(_ steps: AsyncStream<ScanProgress>) async {
+    for await step in steps where !Task.isCancelled { progress = step }
   }
 
   /// Stops the scan in flight: the sheet is closing and nothing will read its plan.
   package func cancel() {
     scan?.cancel()
     isScanning = false
+    progress = nil
+  }
+
+  /// Stops the scan in flight and goes back to what the sheet showed before it: the last plan
+  /// and its request, or nothing.
+  package func cancelScan() {
+    cancel()
+    request = scanned ?? ImportRequest(paths: [])
+    if scanned == nil { plan = nil }
   }
 
   /// Waits for the scan in flight, if any.

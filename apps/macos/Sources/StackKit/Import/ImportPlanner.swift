@@ -7,9 +7,13 @@ package struct ImportPlanner: Sendable {
     self.builder = builder
   }
 
-  /// The plan of `request` against the library's indexed masters.
-  package func plan(_ request: ImportRequest, library: [CalibrationMaster]) throws -> ImportPlan {
-    let inventory = try builder.scan(paths: request.paths, overrides: request.overrides)
+  /// The plan of `request` against the library's indexed masters; `progress` hears the scan.
+  package func plan(
+    _ request: ImportRequest, library: [CalibrationMaster],
+    progress: @Sendable (ScanProgress) -> Void = { _ in }
+  ) throws -> ImportPlan {
+    let inventory = try builder.scan(
+      paths: request.paths, overrides: request.overrides, progress: progress)
     return ImportPlan(inventory: inventory, library: library, request: request)
   }
 

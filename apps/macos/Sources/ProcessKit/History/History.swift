@@ -73,6 +73,12 @@ package final class History {
     shown = Self.copy(result)
   }
 
+  /// The output of applied step `index` (0 = the first), read back from disk.
+  package func output(ofStep index: Int) throws -> AstroImage {
+    guard steps.indices.contains(index) else { throw HistoryError.noStep(index) }
+    return try image(file: steps[index].file)
+  }
+
   /// Goes back one step, reloading the previous output from disk.
   package func undo() throws {
     guard !steps.isEmpty else { throw HistoryError.nothingToUndo }
@@ -147,6 +153,8 @@ package final class History {
 
 /// A history operation that cannot be done.
 package enum HistoryError: Error, Equatable, Sendable {
+  /// No applied step has this index.
+  case noStep(Int)
   /// No applied step.
   case nothingToUndo
   /// No undone step.

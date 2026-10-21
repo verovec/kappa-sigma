@@ -90,6 +90,19 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   rounding), hflip/vflip, `{name}` template (one file name containing `{name}`); everything is
   checked before a file is written. `ExportGuard` refuses a folder under
   `~/Documents/astro/{captures,runs,library,fixtures}` (links resolved, case ignored, R7).
+- **Pipelines** (card 0059, `Pipeline/`): `Pipeline` = ordered `PipelineStep`s {recipe, mode
+  `auto`|`stop`, `locked`}; `problems(registry:batch:present:)` names an unknown process, a missing
+  layer or a linear step after a non-linear one (shown, never reordered). `PipelineRunner` applies
+  steps through a `History`: `run` halts *before* a `stop` step (`.stopped(at:)`, the Studio shows
+  that process with its recipe), `resume(at:params:)` is « Continue » with the edited values,
+  `replay(on:in:stats:previous:)` starts a new history on another bundle, and a locked step takes
+  the same step's output from `previous` (same process) instead of re-running. Batch processes
+  (host tools) are `BatchProcess` closures injected by id — ProcessKit never imports StackKit —
+  and report progress as `.progress` events. Stats are given (the bundle's, R2).
+  `PipelineDiff.entries` lists param / mode / lock / process / added / removed differences;
+  `Pipeline.json()` / `Pipeline.load` are versioned, each step's recipe read by `Recipe.load` so
+  unknown keys and clamps warn as for a recipe. Saved by name in the project with ProjectKit's
+  `savePipeline(named:json:)`. No UI yet: the Studio has no process-application panel.
 - `ProcessRegistry`: refuses duplicates and invalid schemas (`.px` without
   `previewExactOnlyAt1to1`, a default outside its bounds or options, infinite bounds);
   `standard()` is validated like any registry and lists the shipped processes (today:

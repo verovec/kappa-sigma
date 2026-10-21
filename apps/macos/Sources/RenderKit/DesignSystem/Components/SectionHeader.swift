@@ -17,7 +17,6 @@ package struct SectionHeader: View {
       Text(title).font(.headline).foregroundStyle(DesignColor.textPrimary.color)
       if let detail {
         Text(detail).font(.caption).foregroundStyle(DesignColor.textSecondary.color)
-          .fixedSize(horizontal: false, vertical: true)
       }
     }
     .accessibilityAddTraits(.isHeader)

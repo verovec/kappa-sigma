@@ -73,7 +73,7 @@ package final class LegacyRunWindow: NSWindowController, NSWindowDelegate {
     self.model = model
     let window = NSWindow(
       contentRect: NSRect(x: 0, y: 0, width: 1400, height: 860),
-      styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered,
+      styleMask: SplitWindow.styleMask, backing: .buffered,
       defer: false)
     window.title = model.title
     window.contentView = NSHostingView(rootView: LegacyRunView(model: model).interfaceLocale())

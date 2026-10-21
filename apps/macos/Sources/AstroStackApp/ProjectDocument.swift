@@ -180,7 +180,7 @@ package final class ProjectDocument: NSDocument {
   override package func makeWindowControllers() {
     let window = NSWindow(
       contentRect: NSRect(x: 0, y: 0, width: 960, height: 640),
-      styleMask: [.titled, .closable, .miniaturizable, .resizable],
+      styleMask: SplitWindow.styleMask,
       backing: .buffered, defer: false)
     let model = ProjectWindowModel(
       store: { [weak self] in self?.project?.store }, folder: { [weak self] in self?.project?.url },

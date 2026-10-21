@@ -2,7 +2,7 @@
 ///
 /// Card 0074 seeds the list so the glossary words each stage once; card 0076 builds the sidebar
 /// and the stage states on it. Never re-declare the stages elsewhere.
-package enum JourneyStage: String, CaseIterable, Sendable {
+nonisolated package enum JourneyStage: String, CaseIterable, Sendable {
   /// Nights, lights per filter, integration, calibration coverage.
   case data
   /// The masters (0071).
@@ -15,4 +15,7 @@ package enum JourneyStage: String, CaseIterable, Sendable {
   case studio
   /// The deliverables (0055).
   case export
+
+  /// The `project_settings` key of the stage a project window last showed (card 0076).
+  static let settingKey = "workspace.stage"
 }

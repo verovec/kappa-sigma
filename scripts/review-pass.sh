@@ -15,8 +15,8 @@ read -r st base head_sha <<<"$state"
 [ "$base" = "main" ] || { echo "review-pass: PR #$pr targets $base, not main"; exit 1; }
 
 # What was reviewed is the local tree: it must be clean and pushed as the PR's head.
-[ -z "$(git status --porcelain --untracked-files=no)" ] \
-  || { echo "review-pass: uncommitted changes — commit, push, review again"; exit 1; }
+[ -z "$(git status --porcelain)" ] \
+  || { echo "review-pass: uncommitted or untracked changes — commit, push, review again"; exit 1; }
 local_sha="$(git rev-parse HEAD)"
 [ "$local_sha" = "$head_sha" ] \
   || { echo "review-pass: local ${local_sha:0:7} is not the PR head ${head_sha:0:7} — push or pull"; exit 1; }

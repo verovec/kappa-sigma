@@ -50,11 +50,7 @@ what the card already answers; do not skip what it points at.
 - `just check` (hygiene + lint + build + full host suite, live tests included) must pass.
 - Run the code-review skill on the working diff (`/code-review`). Fix every finding you
   agree with; record the ones you reject and why (they go in the PR body). Re-run
-  `just check` after fixes. Once the PR is open and its head holds every fix, record the
-  pass: **`just review-pass <n> "<findings fixed / rejected and why>"`** — it posts
-  `code-review: passed <head sha>` on the PR, and `just merge` refuses without it. The
-  marker is bound to the head: any later push (a CI fix, a rebase) needs a fresh
-  `/code-review` of the new diff and a new `just review-pass`.
+  `just check` after fixes. The pass is recorded on the PR in §6.
 
 ## 6 · Ship
 
@@ -62,6 +58,11 @@ what the card already answers; do not skip what it points at.
   attribution anywhere in history).
 - Push and `gh pr create` — title = the card title in commit style, body = card ID,
   the acceptance criteria as a checklist, and the review notes.
+- Record the review pass from the pushed branch: **`just review-pass <n> "<findings fixed
+  / rejected and why>"`** — it posts `code-review: passed <head sha>` on the PR (refusing a
+  dirty tree or a local commit that is not the PR head), and `just merge` refuses without
+  it. The marker is bound to the head: any later push (a CI fix, a rebase) needs a fresh
+  `/code-review` of the new diff and a new `just review-pass`.
 - CI (`.github/workflows/tests.yml`) runs two jobs on the PR: `test continuity`
   (Linux: the suite may only grow — a deleted or edited existing test, or a lower
   test count, fails unless the PR body has a `Test-change: <why>` line) and

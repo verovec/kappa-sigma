@@ -8,7 +8,8 @@ pr="${1:?pr number}"
 # Every job of .github/workflows/tests.yml must be present and green — a missing job (workflow
 # edited, run cancelled, still queued) is a failure, not a pass.
 required=("test continuity" "hygiene · lint · build · test")
-# Resolved once: every gh call names the same repo, and none touches the local checkout.
+# Resolved once from the checkout's remote: every gh call then names that same repo, and the
+# merge itself never switches the local checkout (it fails from a worktree).
 repo="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
 
 state="$(gh pr view "$pr" --repo "$repo" --json state,isDraft,mergeable,baseRefName --jq '"\(.state) \(.isDraft) \(.mergeable) \(.baseRefName)"')"
@@ -48,8 +49,8 @@ fi
 # author (a quoted marker or another account does not count), read across every comment page.
 author="$(gh pr view "$pr" --repo "$repo" --json author --jq .author.login)"
 markers="$(gh api --paginate "repos/$repo/issues/$pr/comments" \
-  --jq ".[] | select(.user.login == \"$author\") | .body | split(\"\\n\")[0]")"
-if ! printf '%s\n' "$markers" | grep -Fxc "code-review: passed ${head_sha}" >/dev/null; then
+  --jq ".[] | select(.user.login == \"$author\") | .body | split(\"\\n\")[0] | rtrimstr(\"\\r\")")"
+if ! grep -qFx "code-review: passed ${head_sha}" <<<"$markers"; then
   echo "merge-pr: REFUSED — no code review recorded on ${head_sha:0:7}: run /code-review, then"
   echo "          just review-pass $pr \"<summary>\""
   exit 1

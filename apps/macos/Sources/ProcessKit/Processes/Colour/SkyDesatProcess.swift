@@ -30,7 +30,7 @@ package struct SkyDesatProcess: ImageProcess {
         in: 0...16),
       ParamSpec(
         id: "coreGuardPx", title: "Star-core guard", unit: .px, level: .advanced, number: 4,
-        in: 0...32),
+        in: 0...8),
       ParamSpec(
         id: "coreLevel", title: "Star-core level", unit: .none, level: .advanced, number: 0.85,
         in: 0...1),

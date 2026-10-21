@@ -84,7 +84,9 @@ kernel void saturation(texture2d<float, access::read> inR [[texture(0)]],
       float hue = hueOf(c, mx, mn);
       s *= 1.0f + p[0] * (p[1] != 0.0f ? bandMask(l, p) : 1.0f);
       s = min(s, 1.0f);
-      s *= 1.0f - p[6] * starMask(l, p[7], p[8]);
+      // The legacy star-core mask was a greyscale copy of the layer: luminance, not HSL lightness.
+      float luma = 0.2126f * c.r + 0.7152f * c.g + 0.0722f * c.b;
+      s *= 1.0f - p[6] * starMask(luma, p[7], p[8]);
       c = hslToRGB(hue, s, l);
     }
   }

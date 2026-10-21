@@ -38,7 +38,7 @@ enum ColourOracle {
         let hue = Self.hue(r, g, b, mx: mx, mn: mn)
         sat *= 1 + amount * (masked ? mask(lightness) : 1)
         sat = min(sat, 1)
-        sat *= 1 - starDesat * starMask(lightness)
+        sat *= 1 - starDesat * starMask(0.2126 * r + 0.7152 * g + 0.0722 * b)
         (r, g, b) = hslToRGB(hue, sat, lightness)
       }
     }

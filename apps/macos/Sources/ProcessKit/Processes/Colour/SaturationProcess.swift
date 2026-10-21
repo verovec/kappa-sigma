@@ -6,8 +6,8 @@ package import Metal
 /// Card 0053, ports of the PO's tools: astrocomp's `-sat -sat-masked` (the band of
 /// `gimp.saturationMaskLUT(0.12, 0.45, 0.70, 0.30)` on the HSL lightness: the sky's chroma noise
 /// is protected, star cores get a fraction), the compose step's star-core desaturation
-/// (`starDesatMaskLUT(0.50, 0.85)`, a desaturated copy blended through the mask — in HSL, the
-/// same as scaling S by 1 − desat·mask) and the `desat` tool (Rec. 709 luma, `k = 1` untouched,
+/// (`starDesatMaskLUT(0.50, 0.85)` on the luminance of a greyscale mask copy, a desaturated copy
+/// blended through it — in HSL, the same as scaling S by 1 − desat·mask) and the `desat` tool (Rec. 709 luma, `k = 1` untouched,
 /// IC 1848 "doux" 0.62). Defaults change nothing.
 package struct SaturationProcess: ImageProcess {
   package static let id = "saturation"

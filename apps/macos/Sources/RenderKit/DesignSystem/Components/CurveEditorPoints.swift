@@ -1,5 +1,8 @@
-/// The control points a `CurveEditor` edits, both coordinates in [0, 1]: sorted by x, a minimum
-/// gap apart, between 2 and `maxCount` points; the two ends keep their x.
+/// The control points a `CurveEditor` edits.
+///
+/// Both coordinates in [0, 1], sorted by x, distinct, between 2 and `maxCount` points; the two
+/// ends keep their x. A point the user adds keeps
+/// `minimumGap` from the others; loaded points are kept as the process applies them (R2).
 ///
 /// RenderKit never imports ProcessKit: the app converts these to the process's `points`
 /// parameter, which validates them again.
@@ -12,24 +15,14 @@ package struct CurveEditorPoints: Equatable, Sendable {
   package static let minimumGap = 0.01
   private static let identity = [SIMD2<Double>(0, 0), SIMD2(1, 1)]
 
-  /// An editor over `points` (the identity by default), made to hold the invariants: clamped,
-  /// sorted, a point closer than `minimumGap` to the one before dropped (the last one kept),
-  /// inner points beyond `maxCount` dropped.
+  /// An editor over `points` (the identity by default) — a validated `points` parameter, kept as
+  /// is: clamped, sorted, one point per x; anything else falls back to the identity.
   package init(points: [SIMD2<Double>]? = nil, maxCount: Int) {
     self.maxCount = max(2, maxCount)
     let sorted = (points ?? Self.identity).map(Self.clamped).sorted { $0.x < $1.x }
-    var kept: [SIMD2<Double>] = []
-    for point in sorted {
-      if let previous = kept.last, point.x - previous.x < Self.minimumGap {
-        if point == sorted.last, kept.count > 1 { kept[kept.count - 1] = point }
-        continue
-      }
-      kept.append(point)
-    }
-    if kept.count > self.maxCount {
-      kept = Array(kept.prefix(self.maxCount - 1)) + [kept[kept.count - 1]]
-    }
-    self.points = kept.count >= 2 ? kept : Self.identity
+    let distinct = zip(sorted, sorted.dropFirst()).allSatisfy { $0.x < $1.x }
+    self.points =
+      (2...self.maxCount).contains(sorted.count) && distinct ? sorted : Self.identity
   }
 
   /// The straight line from (0, 0) to (1, 1): the curve changes nothing.

@@ -61,6 +61,19 @@ struct ParamPointsTests {
     }
   }
 
+  @Test("a recipe whose curve validation changes is loaded with a warning, never silently")
+  func testRecipeWarnsOnChangedCurve() throws {
+    let json = """
+      {"schemaVersion": 1, "process": "curves",
+       "params": [{"id": "rgb", "value": [[1.2, 0.9], [-0.1, 0], [0.5, 0.5]]},
+                  {"id": "red", "value": [[0, 0], [1, 1]]}]}
+      """
+    let loaded = try Recipe.load(Data(json.utf8), registry: ProcessRegistry.standard())
+    #expect(
+      loaded.params.points("rgb") == [CurvePoint(0, 0), CurvePoint(0.5, 0.5), CurvePoint(1, 0.9)])
+    #expect(loaded.warnings == ["parameter rgb: curve points clamped into [0, 1] or reordered"])
+  }
+
   @Test("a schema whose default points would be changed by validation is invalid")
   func testInvalidDefault() {
     let bad = ParamSchema([

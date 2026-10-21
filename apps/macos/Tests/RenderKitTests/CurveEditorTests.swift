@@ -54,13 +54,13 @@ struct CurveEditorTests {
   }
 
   @Test(
-    "loaded points are made valid: sorted, a gap apart, at most maxCount, ends kept",
+    "loaded points are kept as the process applies them; an invalid set is the identity",
     arguments: zip(
       [
         [SIMD2(1, 1), SIMD2(0, 0)], [SIMD2(0, 0), SIMD2(0.4, 0.4), SIMD2(0.405, 0.5), SIMD2(1, 1)],
         (0...6).map { SIMD2(Double($0) / 6, 0.5) }, [SIMD2(0.5, 0.5)],
       ],
-      [[0, 1], [0, 0.4, 1], [0, 1.0 / 6, 2.0 / 6, 1], [0, 1]] as [[Double]]))
+      [[0, 1], [0, 0.4, 0.405, 1], [0, 1], [0, 1]] as [[Double]]))
   func testInitNormalises(points: [SIMD2<Double>], xs: [Double]) {
     let editor = CurveEditorPoints(points: points, maxCount: 4)
     #expect(editor.points.map(\.x) == xs)

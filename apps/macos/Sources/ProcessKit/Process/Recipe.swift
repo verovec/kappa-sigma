@@ -85,6 +85,11 @@ package struct Recipe: Equatable, Sendable {
     {
       return ["parameter \(entry.id) clamped from \(stored) to \(kept)"]
     }
+    if case .points(let stored) = entry.value, case .points(let kept)? = params[entry.id],
+      kept != stored
+    {
+      return ["parameter \(entry.id): curve points clamped into [0, 1] or reordered"]
+    }
     return []
   }
 

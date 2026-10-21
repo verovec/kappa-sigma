@@ -92,6 +92,17 @@ struct ColourBalanceTests {
         == mono)
   }
 
+  @Test("a grey gain the parameter cannot hold is not offered (it would be clamped)")
+  func testGreyOutOfBounds() {
+    let params = ParamSet(schema: ColourBalanceProcess.schema)
+    #expect(
+      ColourBalanceProcess.greySuggestions(regionMedians: [0.05, 0.05, 0.004], params: params)
+        .isEmpty)
+    #expect(
+      ColourBalanceProcess.greySuggestions(regionMedians: [0.05, 0.05, 0.01], params: params)
+        .count == 3)
+  }
+
   @Test("a region outside the image, or empty, is refused with the reason")
   func testRegionOutsideRefused() throws {
     let device = try #require(MTLCreateSystemDefaultDevice())

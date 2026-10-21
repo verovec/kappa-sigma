@@ -56,11 +56,16 @@ package struct ColourBalanceProcess: ImageProcess {
 
   /// Gains making the region grey after the current offsets, green fixed.
   ///
-  /// g = (m_G + o_G) / (m_c + o_c); empty when a channel's level is not positive.
+  /// g = (m_G + o_G) / (m_c + o_c); empty when a channel's level is not positive or a gain would
+  /// leave the parameter's bounds (applying it would clamp it: shown ≠ applied).
   package static func greySuggestions(regionMedians: [Double], params: ParamSet) -> [Suggestion] {
     guard regionMedians.count == 3 else { return [] }
     let levels = zip(channels, regionMedians).map { $1 + params.number("offset" + $0) }
     guard levels.allSatisfy({ $0 > 0 }) else { return [] }
+    let gains = levels.map { levels[1] / $0 }
+    guard case .number(_, let bounds)? = schema.spec("gainRed")?.kind,
+      gains.allSatisfy(bounds.contains)
+    else { return [] }
     return zip(channels, levels).map {
       Suggestion(
         paramID: "gain" + $0, value: .number(levels[1] / $1), reason: suggestionReasons[1])
@@ -75,12 +80,15 @@ package struct ColourBalanceProcess: ImageProcess {
     else {
       throw ProcessError.invalidParameter("the sky region must lie inside the image")
     }
-    return image.read().map { plane in
-      var values: [Float] = []
-      values.reserveCapacity(region.width * region.height)
-      for row in region.y..<region.y + region.height {
-        let start = row * image.width + region.x
-        values += plane[start..<start + region.width]
+    // Only the region comes back from the GPU, never the whole frame.
+    let box = MTLRegionMake2D(region.x, region.y, region.width, region.height)
+    return image.planes.map { plane in
+      let values = unsafe [Float](unsafeUninitializedCapacity: region.width * region.height) {
+        buffer, count in
+        guard let base = buffer.baseAddress else { return }
+        unsafe plane.getBytes(
+          base, bytesPerRow: region.width * MemoryLayout<Float>.stride, from: box, mipmapLevel: 0)
+        count = region.width * region.height
       }
       return AutoSTF.medianAndMADN(values).median
     }

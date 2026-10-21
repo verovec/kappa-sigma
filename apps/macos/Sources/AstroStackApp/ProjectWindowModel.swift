@@ -19,6 +19,8 @@ package final class ProjectWindowModel {
   package internal(set) var run: RunViewModel?
   /// The stack the Studio shows: the latest one, read-only.
   package internal(set) var studio: LegacyRunModel?
+  /// The Stacking panel's preset and knob edits: what the next run applies (card 0070).
+  package let knobs: KnobPanelViewModel
   /// This session's imports, in order: the next run applies all their overrides.
   var imports: [ImportRequest] = []
 
@@ -43,6 +45,11 @@ package final class ProjectWindowModel {
     self.services = services
     self.runs = runs
     self.isSaved = isSaved
+    // The panel starts where the latest stack left it; an unreadable record is reported on Run.
+    let latest = try? store()?.latestStack().flatMap {
+      try JSONDecoder().decode(StackRecord.self, from: Data($0.paramsJSON.utf8))
+    }
+    knobs = KnobPanelViewModel(mode: latest?.mode ?? .deepsky, patch: latest?.knobs ?? KnobPatch())
     refresh()
     do {
       let saved = try store()?.setting(JourneyStage.settingKey)

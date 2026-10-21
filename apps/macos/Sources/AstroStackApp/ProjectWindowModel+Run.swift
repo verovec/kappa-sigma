@@ -10,7 +10,7 @@ extension ProjectWindowModel {
   func runRequest() throws -> ImportRequest? {
     let nights = sources.filter { $0.kind == .night }.map(\.path)
     guard !nights.isEmpty else { return nil }
-    let base = try latestStackRequest() ?? ImportRequest(paths: nights)
+    let base = try latestStackRecord()?.request ?? ImportRequest(paths: nights)
     var request = imports.reduce(base) { $0.merging($1) }
     request.paths = nights
     return request
@@ -31,8 +31,12 @@ extension ProjectWindowModel {
   /// image per bundle layer and the Studio opens it; a cancelled or failed one registers nothing
   /// and keeps its artifacts. One run at a time, in a saved project only (an untitled package
   /// moves on Save and is deleted on Close).
-  package func startRun(mode: PreprocessRequest.Mode = .deepsky) {
+  ///
+  /// The settings are the panel's (`knobs`): the preset of its mode with the user's edits; `mode`
+  /// switches the panel's preset first.
+  package func startRun(mode: PreprocessRequest.Mode? = nil) {
     guard canRun else { return }
+    if let mode { knobs.mode = mode }
     guard let store = store(), let folder = folder() else {
       error = .projectClosed
       return
@@ -54,24 +58,27 @@ extension ProjectWindowModel {
     let work = runs.scratch.appendingPathComponent("run_\(runID)", isDirectory: true)
     let planning = services(store).planning
     let start = runs.run
+    let record = StackRecord(request: request, mode: knobs.mode, knobs: knobs.patch)
+    var applied = knobs.settings
+    applied.calibrationExcluded = request.calibExclude
+    applied.forceCalibration = request.forceCalibration
+    let settings = applied
     let model = RunViewModel(runID: runID, output: output)
     run = model
     refresh()
     model.start(
       {
         let plan = try await planning(request)
-        var preprocess = PreprocessRequest(
-          inventory: plan.inventory, output: output, work: work, runID: runID, mode: mode,
-          library: plan.library)
-        preprocess.settings.calibrationExcluded = request.calibExclude
-        preprocess.settings.forceCalibration = request.forceCalibration
-        return start(preprocess)
+        return start(
+          PreprocessRequest(
+            inventory: plan.inventory, output: output, work: work, runID: runID,
+            mode: record.mode, settings: settings, library: plan.library))
       },
       completion: { [weak self] outcome in
         await Self.remove(work)
         guard let self else { return }
         if case .success = outcome {
-          await register(request: request, runID: runID)
+          await register(record, runID: runID)
         } else {
           refresh()
         }
@@ -115,7 +122,7 @@ extension ProjectWindowModel {
   /// The stack is opened first: a bundle the Studio cannot open is reported, not recorded.
   /// The package is read where it is now: a project renamed in the Finder after the run's last
   /// write still records its stack.
-  private func register(request: ImportRequest, runID: String) async {
+  private func register(_ record: StackRecord, runID: String) async {
     do {
       guard let store = store(), let folder = folder() else {
         throw UserFacingError.projectClosed
@@ -124,8 +131,8 @@ extension ProjectWindowModel {
         folder.appendingPathComponent("stacks/\(runID)"), object: targetName)
       let encoder = JSONEncoder()
       encoder.outputFormatting = [.sortedKeys]
-      let params = String(bytes: try encoder.encode(request), encoding: .utf8) ?? "{}"
-      let read = sources.filter { request.paths.contains($0.path) }.map(\.id)
+      let params = String(bytes: try encoder.encode(record), encoding: .utf8) ?? "{}"
+      let read = sources.filter { record.request.paths.contains($0.path) }.map(\.id)
       try store.addStack(
         bundlePath: "stacks/\(runID)", sourceIDs: read, paramsJSON: params,
         imageRoles: source.layers.map(\.id))
@@ -138,12 +145,12 @@ extension ProjectWindowModel {
     }
   }
 
-  /// The request stored with the latest stack, or `nil` without one.
+  /// The record of the latest stack, or `nil` without one.
   ///
   /// One that no longer decodes is an error the user sees, never a run without its overrides (R2).
-  private func latestStackRequest() throws -> ImportRequest? {
+  func latestStackRecord() throws -> StackRecord? {
     guard let stack = try store()?.latestStack() else { return nil }
-    return try JSONDecoder().decode(ImportRequest.self, from: Data(stack.paramsJSON.utf8))
+    return try JSONDecoder().decode(StackRecord.self, from: Data(stack.paramsJSON.utf8))
   }
 
   /// `runID`, or `runID_2`, `_3`… when a stack folder of that name exists (two runs in one

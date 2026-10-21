@@ -59,3 +59,13 @@ extension JourneyStage {
   /// The term id, `stage.data` for instance.
   package nonisolated var termID: String { "stage." + rawValue }
 }
+
+extension Knob {
+  /// The term id of knob `id` in the knobs glossary, `knob.fwhm_sigma` for instance.
+  package nonisolated static func termID(_ id: String) -> String { "knob." + id }
+
+  /// The term id of one choice of knob `id`, `knob.stack_reject.winsorized` for instance.
+  package nonisolated static func termID(_ id: String, option: String) -> String {
+    termID(id) + "." + option
+  }
+}

@@ -1,0 +1,222 @@
+{
+  "knob.background_degree": {
+    "definition": "Degré du polynôme du fond de Siril à la combinaison ; 2 pour les nébuleuses faibles.",
+    "label": "Degré du modèle de fond"
+  },
+  "knob.background_sigma": {
+    "definition": "Rejette une pose dont le fond dépasse la médiane de la nuit de ce nombre de sigmas.",
+    "label": "Fond lumineux (σ)"
+  },
+  "knob.core_saturation_repair": {
+    "definition": "Reconstruit les cœurs saturés à partir des nuits non saturées avant l’empilement.",
+    "label": "Réparer les cœurs saturés"
+  },
+  "knob.coverage_crop": {
+    "definition": "Coupe chaque canal au champ que tous couvrent.",
+    "label": "Rogner au champ commun"
+  },
+  "knob.coverage_min_frac": {
+    "definition": "Part des poses qu’une zone doit avoir pour compter comme couverte.",
+    "label": "Seuil de couverture"
+  },
+  "knob.drop_wheel_transition": {
+    "definition": "Écarte la première pose d’un filtre quand la roue bougeait encore.",
+    "label": "Écarter la pose du changement"
+  },
+  "knob.edge_crop": {
+    "definition": "Retire la bordure irrégulière de l’empilement avant de combiner les canaux.",
+    "label": "Rogner les bords irréguliers"
+  },
+  "knob.flatten_background": {
+    "definition": "Retire le gradient propre à chaque pose avant un alignement multi-nuits.",
+    "label": "Aplanir le fond de chaque pose"
+  },
+  "knob.fwhm_sigma": {
+    "definition": "Rejette une pose dont la FWHM dépasse la médiane de la nuit de ce nombre de sigmas.",
+    "label": "Pose floue (σ)"
+  },
+  "knob.photometric_normalisation": {
+    "definition": "Ramène chaque nuit à l’échelle photométrique de la nuit d’ancrage avant la fusion.",
+    "label": "Égaliser l’éclat des nuits"
+  },
+  "knob.register_2pass": {
+    "definition": "Siril élit la meilleure pose de référence au lieu de la première.",
+    "label": "Alignement en deux passes"
+  },
+  "knob.reject_trails": {
+    "definition": "Rejette une pose où la sonde voit une traînée de satellite ou d’avion.",
+    "label": "Rejeter les poses traversées"
+  },
+  "knob.roundness_floor": {
+    "definition": "Une pose aux étoiles moins rondes que ce seuil est toujours rejetée (suivi filé).",
+    "label": "Rondeur minimale"
+  },
+  "knob.roundness_sigma": {
+    "definition": "Rejette aussi une pose dont la rondeur tombe de ce nombre de sigmas sous la médiane.",
+    "label": "Allongées vs session (σ)"
+  },
+  "knob.scnr": {
+    "definition": "Type rmgreen de Siril : 0 neutre moyen, 1 neutre maximum, 2 masque maximum, 3 masque additif.",
+    "label": "Type de retrait du vert"
+  },
+  "knob.seam_noise_eq": {
+    "definition": "Égalise la profondeur du bruit là où la couverture des nuits change.",
+    "label": "Égaliser le bruit aux coutures"
+  },
+  "knob.seam_offset_refit": {
+    "definition": "Recale le fond de chaque nuit sur son recouvrement avec la nuit d’ancrage.",
+    "label": "Recaler les coutures"
+  },
+  "knob.stack_combine": {
+    "definition": "Comment les pixels retenus sont combinés : seule la moyenne rejette.",
+    "label": "Combinaison"
+  },
+  "knob.stack_combine.max": {
+    "definition": "Garde la valeur la plus brillante de chaque pixel (filés d’étoiles).",
+    "label": "Maximum"
+  },
+  "knob.stack_combine.mean": {
+    "definition": "Moyenne après rejet : le meilleur rapport signal sur bruit.",
+    "label": "Moyenne"
+  },
+  "knob.stack_combine.median": {
+    "definition": "Médiane de chaque pixel : robuste mais plus bruitée que la moyenne.",
+    "label": "Médiane"
+  },
+  "knob.stack_combine.min": {
+    "definition": "Garde la valeur la plus sombre de chaque pixel.",
+    "label": "Minimum"
+  },
+  "knob.stack_combine.sum": {
+    "definition": "Additionne les poses sans normalisation.",
+    "label": "Somme"
+  },
+  "knob.stack_fast_norm": {
+    "definition": "Estime la normalisation plus vite, un peu moins précisément.",
+    "label": "Normalisation rapide"
+  },
+  "knob.stack_feather": {
+    "definition": "Adoucit les bords de l’empilement sur ce nombre de pixels ; 0 les garde nets.",
+    "label": "Adoucissement des bords"
+  },
+  "knob.stack_norm": {
+    "definition": "Comment les poses sont égalisées avant la combinaison ; additive et échelle par défaut.",
+    "label": "Normalisation"
+  },
+  "knob.stack_norm.add": {
+    "definition": "Égalise seulement le niveau du fond.",
+    "label": "Additive"
+  },
+  "knob.stack_norm.addscale": {
+    "definition": "Égalise le niveau du fond et la dispersion.",
+    "label": "Additive avec échelle"
+  },
+  "knob.stack_norm.auto": {
+    "definition": "Le défaut de Siril : égalise le fond et la dispersion.",
+    "label": "Additive + échelle"
+  },
+  "knob.stack_norm.mul": {
+    "definition": "Égalise seulement l’échelle ; le choix des flats.",
+    "label": "Multiplicative"
+  },
+  "knob.stack_norm.mulscale": {
+    "definition": "Égalise l’échelle et la dispersion.",
+    "label": "Multiplicative avec échelle"
+  },
+  "knob.stack_norm.none": {
+    "definition": "Les poses sont combinées telles quelles.",
+    "label": "Aucune"
+  },
+  "knob.stack_output_norm": {
+    "definition": "Ramène le master empilé dans l’intervalle 0–1.",
+    "label": "Normaliser la sortie"
+  },
+  "knob.stack_reject": {
+    "definition": "Comment les pixels aberrants (satellites, rayons cosmiques) sont rejetés à l’empilement ; auto choisit selon le nombre de poses.",
+    "label": "Rejet des pixels"
+  },
+  "knob.stack_reject.auto": {
+    "definition": "Percentile jusqu’à 7 poses, ESD généralisé dès 50, sigma winsorisé entre les deux.",
+    "label": "Auto"
+  },
+  "knob.stack_reject.generalized": {
+    "definition": "Test statistique des aberrants ; le plus juste à partir d’environ 50 poses.",
+    "label": "ESD généralisé"
+  },
+  "knob.stack_reject.linear": {
+    "definition": "Ajuste une droite par pixel sur les poses ; utile quand le fond change.",
+    "label": "Ajustement linéaire"
+  },
+  "knob.stack_reject.mad": {
+    "definition": "Écrêtage sigma sur l’écart absolu médian.",
+    "label": "Écrêtage MAD"
+  },
+  "knob.stack_reject.median": {
+    "definition": "Écrêtage sigma qui remplace les pixels rejetés par la médiane.",
+    "label": "Écrêtage sigma médian"
+  },
+  "knob.stack_reject.none": {
+    "definition": "Tous les pixels sont moyennés, aberrants compris.",
+    "label": "Aucun"
+  },
+  "knob.stack_reject.percentile": {
+    "definition": "Rejette les pixels éloignés de la médiane d’une fraction ; adapté à très peu de poses.",
+    "label": "Écrêtage par percentile"
+  },
+  "knob.stack_reject.sigma": {
+    "definition": "Rejette par itérations les pixels au-delà des sigmas autour de la moyenne.",
+    "label": "Écrêtage sigma"
+  },
+  "knob.stack_reject.winsorized": {
+    "definition": "Écrêtage sigma sur statistiques winsorisées : robuste d’environ 8 à 50 poses.",
+    "label": "Sigma winsorisé"
+  },
+  "knob.stack_reject_high": {
+    "definition": "Paramètre haut du rejet (sigma ou fraction) ; 0 prend la valeur par défaut de l’algorithme.",
+    "label": "Rejet haut"
+  },
+  "knob.stack_reject_low": {
+    "definition": "Paramètre bas du rejet (sigma ou fraction) ; 0 prend la valeur par défaut de l’algorithme.",
+    "label": "Rejet bas"
+  },
+  "knob.stack_rejection_maps": {
+    "definition": "Écrit aussi les images des pixels rejetés en bas et en haut.",
+    "label": "Cartes de rejet"
+  },
+  "knob.stack_weight": {
+    "definition": "Le poids de chaque pose dans l’empilement : avec wFWHM, les poses nettes comptent plus.",
+    "label": "Pondération des poses"
+  },
+  "knob.stack_weight.nbstack": {
+    "definition": "Pondère par le nombre de poses que chaque entrée empile déjà.",
+    "label": "Poses empilées"
+  },
+  "knob.stack_weight.nbstars": {
+    "definition": "Pondère par le nombre d’étoiles détectées.",
+    "label": "Nombre d’étoiles"
+  },
+  "knob.stack_weight.noise": {
+    "definition": "Pondère par l’inverse du bruit de chaque pose.",
+    "label": "Bruit"
+  },
+  "knob.stack_weight.none": {
+    "definition": "Chaque pose retenue compte autant.",
+    "label": "Égale"
+  },
+  "knob.stack_weight.wfwhm": {
+    "definition": "Pondère par la netteté et le nombre d’étoiles ; le réglage historique.",
+    "label": "Netteté (wFWHM)"
+  },
+  "knob.star_count_frac": {
+    "definition": "Rejette une pose ayant moins d’étoiles que cette part de la médiane : probablement des nuages.",
+    "label": "Nuages (part d’étoiles)"
+  },
+  "knob.trail_downsample": {
+    "definition": "Taille en pixels de l’image examinée par la sonde de traînées.",
+    "label": "Taille de la sonde"
+  },
+  "knob.trail_mask_k": {
+    "definition": "Masque satellites et rayons cosmiques au-delà de ce nombre de sigmas entre poses ; 0 le coupe.",
+    "label": "Masque de traînées (σ)"
+  }
+}

@@ -27,21 +27,25 @@ package struct Glossary: Sendable {
 
   private let terms: [String: [String: Term]]
 
-  /// The glossaries under `root`, one per `HelpIndex.locales`; a missing or malformed locale is
-  /// an empty glossary that the gate reports.
-  package init(root: URL) {
+  /// The glossaries `<root>/<locale>/<file>`, one per `HelpIndex.locales`; a missing or malformed
+  /// locale is an empty glossary that the gate reports.
+  ///
+  /// `glossary.json` holds the astronomy terms; `knobs.json` the preprocessing knobs and their
+  /// choices (card 0070), so each vocabulary keeps its own gate.
+  package init(root: URL, file: String = "glossary.json") {
     var terms: [String: [String: Term]] = [:]
     for locale in HelpIndex.locales {
-      let url = root.appendingPathComponent(locale).appendingPathComponent("glossary.json")
+      let url = root.appendingPathComponent(locale).appendingPathComponent(file)
       let data = try? Data(contentsOf: url)
       terms[locale] = data.flatMap { try? JSONDecoder().decode([String: Term].self, from: $0) }
     }
     self.terms = terms
   }
 
-  /// HelpKit's glossary in `bundle` (the packaged app passes its resolved resource bundle).
-  package init(bundle: Bundle) {
-    self.init(root: bundle.resourceURL?.appendingPathComponent("Help") ?? bundle.bundleURL)
+  /// HelpKit's glossary `file` in `bundle` (the packaged app passes its resolved resource bundle).
+  package init(bundle: Bundle, file: String = "glossary.json") {
+    self.init(
+      root: bundle.resourceURL?.appendingPathComponent("Help") ?? bundle.bundleURL, file: file)
   }
 
   /// HelpKit's glossary as SwiftPM builds it (tests, `swift run`).
@@ -56,7 +60,7 @@ package struct Glossary: Sendable {
   /// label, or a definition longer than a line.
   package func problems(ids: [String]) -> [String] {
     HelpIndex.locales.flatMap { locale -> [String] in
-      guard let entries = terms[locale] else { return ["\(locale): no readable glossary.json"] }
+      guard let entries = terms[locale] else { return ["\(locale): no readable glossary"] }
       return ids.flatMap { id -> [String] in
         guard let term = entries[id] else { return ["\(id): no \(locale) term"] }
         return Self.problems(of: term).map { "\(id) (\(locale)): \($0)" }

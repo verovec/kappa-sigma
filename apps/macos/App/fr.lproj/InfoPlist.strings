@@ -1,0 +1,2 @@
+/* The Documents-access prompt (card 0083): what the app reads there, and that it never writes. */
+"NSDocumentsFolderUsageDescription" = "AstroStack lit vos captures, vos anciens runs et vos masters de calibration dans Documents/astro, en lecture seule : il n’y écrit jamais.";

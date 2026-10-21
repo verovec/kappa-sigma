@@ -1,6 +1,22 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%@ / %@ files read": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ / %@ files read"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ / %@ fichiers lus"
+          }
+        }
+      }
+    },
     "%@ holds no layer to show.": {
       "localizations": {
         "en": {
@@ -305,6 +321,22 @@
         }
       }
     },
+    "Allow AstroStack to read %@ in System Settings › Privacy › Files and Folders.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow AstroStack to read %@ in System Settings › Privacy › Files and Folders."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorisez AstroStack à lire %@ dans Réglages Système › Confidentialité › Fichiers et dossiers."
+          }
+        }
+      }
+    },
     "Another run is already writing %@: wait for it or cancel it.": {
       "localizations": {
         "en": {
@@ -397,6 +429,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Annuler"
+          }
+        }
+      }
+    },
+    "Cancel Scan": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel Scan"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annuler le scan"
           }
         }
       }
@@ -1041,6 +1089,22 @@
         }
       }
     },
+    "Indexing the calibration library…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indexing the calibration library…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indexation de la bibliothèque de calibration…"
+          }
+        }
+      }
+    },
     "Inspect %@": {
       "localizations": {
         "en": {
@@ -1165,6 +1229,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bibliothèque : %@"
+          }
+        }
+      }
+    },
+    "Listing the capture folders…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listing the capture folders…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inventaire des dossiers de la capture…"
           }
         }
       }
@@ -1585,6 +1665,22 @@
         }
       }
     },
+    "Reading the FITS headers…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading the FITS headers…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lecture des en-têtes FITS…"
+          }
+        }
+      }
+    },
     "Ready": {
       "localizations": {
         "en": {
@@ -1857,6 +1953,22 @@
         }
       }
     },
+    "Scanning…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scanning…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Analyse…"
+          }
+        }
+      }
+    },
     "Search shortcuts": {
       "localizations": {
         "en": {
@@ -2113,6 +2225,22 @@
         }
       }
     },
+    "Sorting the frames into sets…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sorting the frames into sets…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Classement des poses en séries…"
+          }
+        }
+      }
+    },
     "Stack a night first": {
       "localizations": {
         "en": {
@@ -2237,6 +2365,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "La bibliothèque de calibration %@ est illisible."
+          }
+        }
+      }
+    },
+    "The capture is read, never written.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The capture is read, never written."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La capture est lue, jamais modifiée."
           }
         }
       }

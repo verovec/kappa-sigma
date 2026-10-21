@@ -50,7 +50,7 @@ what the card already answers; do not skip what it points at.
 - `just check` (hygiene + lint + build + full host suite, live tests included) must pass.
 - Run the code-review skill on the working diff (`/code-review`). Fix every finding you
   agree with; record the ones you reject and why (they go in the PR body). Re-run
-  `just check` after fixes.
+  `just check` after fixes. The pass is recorded on the PR in §6.
 
 ## 6 · Ship
 
@@ -58,14 +58,20 @@ what the card already answers; do not skip what it points at.
   attribution anywhere in history).
 - Push and `gh pr create` — title = the card title in commit style, body = card ID,
   the acceptance criteria as a checklist, and the review notes.
+- Record the review pass from the pushed branch: **`just review-pass <n> "<findings fixed
+  / rejected and why>"`** — it posts `code-review: passed <head sha>` on the PR (refusing a
+  dirty tree or a local commit that is not the PR head), and `just merge` refuses without
+  it. The marker is bound to the head: any later push (a CI fix, a rebase) needs a fresh
+  `/code-review` of the new diff and a new `just review-pass`.
 - CI (`.github/workflows/tests.yml`) runs two jobs on the PR: `test continuity`
   (Linux: the suite may only grow — a deleted or edited existing test, or a lower
   test count, fails unless the PR body has a `Test-change: <why>` line) and
   `hygiene · lint · build · test` (macOS: `just ci`, live suites self-skip).
 - **The worker merges; the PO is not in the loop** (PO decision 2026-10-20), and the
   only way to do it is **`just merge <n>`** (`scripts/merge-pr.sh`): it waits for the
-  checks, refuses unless every CI job exists and is green on the PR's current head,
-  then squash-merges and deletes the branch. Never call `gh pr merge` directly, never
+  checks, refuses unless every CI job exists and is green on the PR's current head
+  **and** a `just review-pass` marker names that head, then squash-merges and deletes the
+  branch (works from a worktree). Never call `gh pr merge` directly, never
   `--auto` (no branch protection here). A refusal → fix on the branch and push; after
   **two** red rounds on the same card, stop, set `blocked` with the failing check in
   the Journal, and report. Never weaken a test to get green, never skip the

@@ -24,6 +24,14 @@ GRDB 7), and later `images/`, `recipes/`, `history/` (design §4.5). No UI, no A
 - A project moved in the Finder while open is reopened at its new place on the next Save
   (`ProjectDocument`): SQLite derives its WAL paths from the path it opened.
 
+## Settings and summary (card 0076)
+
+- `project_settings` (migration 0003): `setting(_:)` / `setSetting(_:to:)` keep small per-project
+  values a window restores — the app's `JourneyStage.settingKey`, the journey stage last shown.
+  ProjectKit knows no key: UI state only: a processing parameter belongs in history steps or recipes.
+- `summary()` returns `ProjectSummary` (sources, stacks, images, history steps) in one read; the
+  app derives the journey's stage states from it (`JourneyState`).
+
 ## Why `NSDocument` over the package, not SwiftUI `FileDocument`
 
 `FileDocument`/`ReferenceFileDocument` save through `FileWrapper`: every save writes a new package

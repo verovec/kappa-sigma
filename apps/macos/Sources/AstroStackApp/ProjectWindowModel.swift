@@ -2,9 +2,14 @@ internal import Observation
 package import ProjectKit
 package import StackKit
 
-/// The state of a project window: its sources and the Import sheet when one is open.
+/// The state of a project window: the journey stage shown and every stage's status, the
+/// sources, and the Import sheet when one is open.
 @Observable
 package final class ProjectWindowModel {
+  /// The stage the user chose, restored per project; only `select` changes it.
+  package private(set) var selection = JourneyStage.data
+  /// Every stage's status, derived from the project on each refresh.
+  package private(set) var statuses = JourneyState.derive(from: ProjectFacts())
   package private(set) var sources: [ProjectSource] = []
   /// The open Import sheet's model, `nil` when no sheet is shown.
   package private(set) var importing: ImportViewModel?
@@ -22,6 +27,23 @@ package final class ProjectWindowModel {
     self.store = store
     self.services = services
     refresh()
+    do {
+      let saved = try store()?.setting(JourneyStage.settingKey)
+      selection = saved.flatMap(JourneyStage.init(rawValue:)) ?? .data
+    } catch {
+      self.error = UserFacingError(error)
+    }
+  }
+
+  /// Shows `stage` and remembers it for this project.
+  package func select(_ stage: JourneyStage) {
+    guard stage != selection else { return }
+    selection = stage
+    do {
+      try store()?.setSetting(JourneyStage.settingKey, to: stage.rawValue)
+    } catch {
+      self.error = UserFacingError(error)
+    }
   }
 
   /// A window whose sheets plan with `planning` and have no master services.
@@ -65,10 +87,13 @@ package final class ProjectWindowModel {
     }
   }
 
-  /// Rereads the sources.
+  /// Rereads the sources and the stage states; never changes the selection.
   package func refresh() {
     do {
-      sources = try store()?.sources() ?? []
+      let store = store()
+      sources = try store?.sources() ?? []
+      let summary = try store?.summary() ?? ProjectSummary()
+      statuses = JourneyState.derive(from: ProjectFacts(summary: summary))
       error = nil
     } catch {
       self.error = UserFacingError(error)

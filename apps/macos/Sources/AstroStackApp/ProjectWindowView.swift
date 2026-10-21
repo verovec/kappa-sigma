@@ -4,7 +4,8 @@ package import SwiftUI
 /// The content of a project window: the journey sidebar (Données → … → Export, each stage with
 /// its state) and the selected stage's pane.
 ///
-/// The sidebar shows where the project stands; only the user moves the selection.
+/// The sidebar shows where the project stands; only the user (or the first-stack guide they
+/// opened, in its side panel) moves the selection.
 package struct ProjectWindowView: View {
   @State var model: ProjectWindowModel
 
@@ -20,12 +21,21 @@ package struct ProjectWindowView: View {
     } detail: {
       VStack(spacing: 0) {
         StagePane.pane(for: model.selection, model: model)
-          .frame(maxWidth: .infinity, maxHeight: .infinity)
+          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         if let error = model.error {
           StatusBadge(.error, error.message)
             .padding(DesignMetrics.spacingS)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+      }
+    }
+    .inspector(
+      isPresented: Binding(
+        get: { model.guideStep != nil }, set: { if !$0 { model.closeGuide() } })
+    ) {
+      if let step = model.guideStep {
+        GuidePanel(model: model, step: step)
+          .inspectorColumnWidth(min: 220, ideal: 260, max: 340)
       }
     }
     .frame(minWidth: 640, minHeight: 400)
@@ -36,8 +46,13 @@ package struct ProjectWindowView: View {
       if let importing = model.importing {
         ImportSheet(
           model: importing, onAdd: { model.add($0) }, onCancel: { model.closeImport() },
-          addError: model.error)
+          addError: model.importError
+        )
+        // A sheet is its own window: set again so the ring reaches the profile picker whatever
+        // the sheet inherits.
+        .environment(\.guideTarget, model.guideTarget)
       }
     }
+    .environment(\.guideTarget, model.guideTarget)
   }
 }

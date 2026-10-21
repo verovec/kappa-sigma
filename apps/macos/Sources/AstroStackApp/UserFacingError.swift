@@ -7,10 +7,18 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
   case siril(SirilError)
   case inspect(InspectError)
   case calibration(CalibrationError)
+  case preprocess(PreprocessError)
+  case legacyRun(LegacyRunError)
   /// The document was closed under an open sheet.
   case projectClosed
   /// A new project's name has nothing left once cleaned for the file system.
   case projectName
+  /// macOS (or the folder's permissions) refuses the app a folder it only reads: what to allow.
+  case documentsAccess(path: String)
+  /// A run needs a saved project: its stack is written inside the package.
+  case projectUnsaved
+  /// The run's stream ended without its result, and nobody cancelled it.
+  case runIncomplete
   /// An error without a sentence of its own (SQLite, FITS, the file system): its description,
   /// which names the file or value it is about.
   case other(String)
@@ -22,6 +30,8 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     case let error as SirilError: self = .siril(error)
     case let error as InspectError: self = .inspect(error)
     case let error as CalibrationError: self = .calibration(error)
+    case let error as PreprocessError: self = .preprocess(error)
+    case let error as LegacyRunError: self = .legacyRun(error)
     case let error as LocalizedError where error.errorDescription != nil:
       self = .other(error.errorDescription ?? "")
     // A system error has a sentence of its own; a Swift error without one would read
@@ -37,8 +47,15 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     case .siril(let error): Self.message(error)
     case .inspect(let error): Self.message(error)
     case .calibration(let error): Self.message(error)
+    case .preprocess(let error): Self.message(error)
+    case .legacyRun(let error): Self.message(error)
     case .projectClosed: .app("This project is not open any more; reopen it and import again.")
     case .projectName: .app("Name the project after its target, for example M 31.")
+    case .documentsAccess(let path):
+      .app("Allow AstroStack to read \(path) in System Settings › Privacy › Files and Folders.")
+    case .projectUnsaved: .app("Save the project first: its stacks are written inside it.")
+    case .runIncomplete:
+      .app("The run stopped without writing its bundle; its journal shows the last step.")
     case .other(let description): .app("\(description)")
     }
   }
@@ -88,6 +105,31 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     case .unreadableMaster(let path): .app("The master \(path) cannot be measured.")
     case .masterFailed(let name, let reason):
       .app("Siril could not build the master \(name): \(reason)")
+    }
+  }
+
+  private static func message(_ error: PreprocessError) -> LocalizedStringResource {
+    switch error {
+    case .belowStackMinimum(let survivors, let registered):
+      .app("Only \(survivors) of \(registered) frames survived grading: Siril needs two to stack.")
+    case .mixedDimensions(let layers):
+      .app("The stacked layers have different sizes: \(layers.joined(separator: ", ")).")
+    case .targetBusy(let path):
+      .app("Another run is already writing \(path): wait for it or cancel it.")
+    case .noChannels(let errors):
+      .app("No channel could be stacked: \(errors.joined(separator: "; "))")
+    case .mixedColorModel:
+      .app("Mono and colour lights are mixed: exclude one kind on the Import sheet, then rerun.")
+    }
+  }
+
+  private static func message(_ error: LegacyRunError) -> LocalizedStringResource {
+    switch error {
+    case .notARun(let path): .app("\(path) is not a run folder: it has no run.json.")
+    case .noBundle(let path): .app("The stack \(path) has no bundle.json: run it again.")
+    case .noLayers(let path): .app("\(path) holds no layer to show.")
+    case .mixedDimensions(let layers):
+      .app("The stacked layers have different sizes: \(layers.joined(separator: ", ")).")
     }
   }
 }

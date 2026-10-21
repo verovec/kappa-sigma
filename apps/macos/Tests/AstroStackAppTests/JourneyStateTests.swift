@@ -39,6 +39,15 @@ struct JourneyStateTests {
         .studio: .unavailable(.needsStack), .export: .unavailable(.needsStack),
       ]),
     Row(
+      name: "scanned capture: one light set without calibration (coverage, 0078)",
+      facts: ProjectFacts(
+        summary: ProjectSummary(sources: 1),
+        coverage: CoverageMatrix(plan: DataScanTests.gapPlan(ImportRequest(paths: ["/c"])))),
+      expected: [
+        .data: .done, .calibration: .attention(1), .review: .ready, .stacking: .ready,
+        .studio: .unavailable(.needsStack), .export: .unavailable(.needsStack),
+      ]),
+    Row(
       name: "calibration complete",
       facts: ProjectFacts(summary: ProjectSummary(sources: 1), calibrationGaps: 0),
       expected: [

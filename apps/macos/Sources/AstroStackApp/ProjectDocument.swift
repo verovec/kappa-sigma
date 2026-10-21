@@ -13,6 +13,8 @@ internal import SwiftUI
 package final class ProjectDocument: NSDocument {
   private var project: ProjectPackage?
   private var isTemporary = false
+  /// The window's model, so closing the project stops a run that writes into it.
+  private var windowModel: ProjectWindowModel?
 
   /// The folder of the package the document currently edits.
   package var packageURL: URL? { project?.url }
@@ -73,6 +75,8 @@ package final class ProjectDocument: NSDocument {
     let moved = try ProjectPackage.open(at: url)
     release(project)
     self.project = moved
+    // An untitled project just got its name: the window offers Run now.
+    windowModel?.refresh()
   }
 
   /// Follows a move of the package in the Finder as soon as AppKit reports it.
@@ -101,14 +105,25 @@ package final class ProjectDocument: NSDocument {
     self.project = reopened
   }
 
+  /// Help › First-Stack Guide: opens this project's guide (card 0061), the only way it opens.
+  @objc package func showGuide(_ sender: Any?) {
+    windowModel?.openGuide()
+  }
+
   /// Records a legacy run opened from this project: its path only, read-only (R7).
   @discardableResult
   package func importLegacyRun(_ source: LegacyRunSource) throws -> ProjectSource {
     guard let project else { throw CocoaError(.fileReadUnknown) }
     let recorded = try source.record(in: project.store)
     // The project changed: an untitled one must offer to be saved, not be discarded silently.
-    updateChangeCount(.changeDone)
+    markEditedIfUntitled()
     return recorded
+  }
+
+  /// An untitled project that changed must offer to be saved on close, not be deleted silently;
+  /// a titled one is already written in place (`project.db`), nothing is pending.
+  private func markEditedIfUntitled() {
+    if isTemporary { updateChangeCount(.changeDone) }
   }
 
   /// The sources the project records; `nil` without an open package.
@@ -123,6 +138,8 @@ package final class ProjectDocument: NSDocument {
 
   /// Closes the package (deleting an unsaved untitled one) before closing the document.
   override package func close() {
+    windowModel?.cancelRun()
+    windowModel?.cancelScan()
     if let project { release(project) }
     project = nil
     super.close()
@@ -180,10 +197,15 @@ package final class ProjectDocument: NSDocument {
   /// One window per project, centred; the window controller cascades further ones.
   override package func makeWindowControllers() {
     let window = NSWindow(
-      contentRect: NSRect(x: 0, y: 0, width: 960, height: 640),
-      styleMask: [.titled, .closable, .miniaturizable, .resizable],
+      contentRect: SplitWindow.contentRect(panes: NSSize(width: 960, height: 640)),
+      styleMask: SplitWindow.styleMask,
       backing: .buffered, defer: false)
-    let model = ProjectWindowModel(store: { [weak self] in self?.project?.store })
+    let model = ProjectWindowModel(
+      store: { [weak self] in self?.project?.store }, folder: { [weak self] in self?.project?.url },
+      isSaved: { [weak self] in self?.isTemporary == false },
+      edited: { [weak self] in self?.markEditedIfUntitled() },
+      save: { [weak self] in self?.save(nil) })
+    windowModel = model
     let content = NSHostingView(rootView: ProjectWindowView(model: model).interfaceLocale())
     // Only the minimum size comes from SwiftUI; the window keeps its own frame.
     content.sizingOptions = [.minSize]

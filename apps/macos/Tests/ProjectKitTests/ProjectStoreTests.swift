@@ -26,8 +26,9 @@ struct ProjectStoreTests {
 
     #expect(try store.tableNames() == (Self.applicationTables + ["schema_migrations"]).sorted())
     let applied = try store.appliedMigrations()
-    #expect(applied.map(\.version) == [1, 2, 3])
-    #expect(applied.map(\.name) == ["init", "calibration_masters", "project_settings"])
+    #expect(applied.map(\.version) == [1, 2, 3, 4])
+    #expect(
+      applied.map(\.name) == ["init", "calibration_masters", "project_settings", "source_profile"])
 
     try store.migrate(to: 0)
     #expect(try store.tableNames() == ["schema_migrations"])
@@ -38,6 +39,39 @@ struct ProjectStoreTests {
     let after = Int64(Date().timeIntervalSince1970 * 1000)
     #expect((before...after).contains(reapplied.appliedAtMs), "applied_at is int64 ms")
     #expect(try store.tableNames() == (Self.applicationTables + ["schema_migrations"]).sorted())
+  }
+
+  @Test("stacks lists every stack oldest first, each with its sources", .scratchDirectory)
+  func testStacksListed() throws {
+    let package = try Self.newPackage()
+    defer { try? package.close() }
+    let store = package.store
+    #expect(try store.stacks().isEmpty)
+    #expect(try store.latestStack() == nil)
+    let night = try store.addSource(kind: .night, path: "/captures/M31-DB")
+    let other = try store.addSource(kind: .night, path: "/captures/M31-BB")
+    let first = try store.addStack(
+      bundlePath: "stacks/A", sourceIDs: [other.id, night.id], paramsJSON: "{}")
+    let second = try store.addStack(bundlePath: "stacks/B", sourceIDs: [], paramsJSON: "{}")
+
+    #expect(try store.stacks() == [first, second])
+    #expect(try store.latestStack() == second)
+    #expect(try store.stacks().first?.sourceIDs == [night.id, other.id])
+  }
+
+  @Test("a stack and its images are recorded together, or not at all", .scratchDirectory)
+  func testStackWithImagesIsOneTransaction() throws {
+    let package = try Self.newPackage()
+    defer { try? package.close() }
+    let store = package.store
+    let stack = try store.addStack(
+      bundlePath: "stacks/A", sourceIDs: [], paramsJSON: "{}", imageRoles: ["Ha", "OIII", "RGB"])
+    #expect(try store.images(stackID: stack.id).map(\.role) == ["Ha", "OIII", "RGB"])
+
+    #expect(throws: (any Error).self) {
+      try store.addStack(bundlePath: "stacks/B", sourceIDs: [9_999], paramsJSON: "{}")
+    }
+    #expect(try store.stacks() == [stack], "an unknown source rolls the whole stack back")
   }
 
   struct RoundTrip: Sendable, CustomTestStringConvertible {
@@ -186,7 +220,7 @@ struct ProjectStoreTests {
     try package.close()
 
     let reopened = try ProjectPackage.open(at: package.url)
-    #expect(try reopened.store.appliedMigrations().map(\.version) == [1, 2, 3])
+    #expect(try reopened.store.appliedMigrations().map(\.version) == [1, 2, 3, 4])
     #expect(try reopened.store.sources().count == 1)
     try reopened.close()
     let items = try FileManager.default.contentsOfDirectory(atPath: package.url.path)

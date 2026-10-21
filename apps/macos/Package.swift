@@ -47,7 +47,7 @@ let package = Package(
       swiftSettings: common, plugins: ["CatalogPlugin"]),
     .target(
       name: "ProcessKit", dependencies: ["ImageKit", "RenderKit"],
-      exclude: ["README.md", "Localizable.xcstrings"], resources: [.copy("Shaders")],
+      exclude: ["README.md", "Localizable.xcstrings"], resources: [.copy("Shaders"), .copy("Profiles")],
       swiftSettings: safe, plugins: ["CatalogPlugin"]),
     .target(
       name: "ProjectKit", dependencies: ["ImageKit", .product(name: "GRDB", package: "GRDB.swift")],

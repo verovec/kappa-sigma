@@ -42,6 +42,12 @@ package struct Recipe: Equatable, Sendable {
   /// unknown keys, unknown or invalid parameters, values clamped into today's bounds. An unknown
   /// process, a newer format or a malformed file is a `RecipeError`.
   package static func load(_ data: Data, registry: ProcessRegistry) throws -> Loaded {
+    try load(data) { registry.type(id: $0)?.schema }
+  }
+
+  /// Reads `data` for a process whose schema `schema(id)` gives (a registered process, or a
+  /// batch tool of a pipeline), with the same warnings and refusals as `load(_:registry:)`.
+  package static func load(_ data: Data, schema: (String) -> ParamSchema?) throws -> Loaded {
     let file: File
     let object: [String: Any]
     do {
@@ -53,13 +59,13 @@ package struct Recipe: Equatable, Sendable {
     guard file.schemaVersion <= schemaVersion else {
       throw RecipeError.newerFormat(file.schemaVersion)
     }
-    guard let type = registry.type(id: file.process) else {
+    guard let processSchema = schema(file.process) else {
       throw RecipeError.unknownProcess(file.process)
     }
     var warnings = object.keys.sorted().filter { !File.keys.contains($0) }
       .map { "unknown key \($0) ignored" }
     let entryKeys = (object["params"] as? [[String: Any]] ?? []).map { Set($0.keys) }
-    var params = ParamSet(schema: type.schema)
+    var params = ParamSet(schema: processSchema)
     for (index, entry) in file.params.enumerated() {
       let extra = index < entryKeys.count ? entryKeys[index].subtracting(["id", "value"]) : []
       warnings += extra.sorted().map { "parameter \(entry.id): unknown key \($0) ignored" }

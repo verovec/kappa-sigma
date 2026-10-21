@@ -54,12 +54,14 @@ package struct InstallCard: View {
         .fixedSize(horizontal: false, vertical: true)
       HStack(spacing: DesignMetrics.spacingM) {
         Link(destination: installURL) { Text(.renderKit("Install…")) }
+          .accessible(.installCard(tool, .install), label: .renderKit("Install…"))
         Button {
           Task { await model.recheck() }
         } label: {
           Text(.renderKit("Re-check"))
         }
         .disabled(model.state == .checking)
+        .accessible(.installCard(tool, .recheck), label: .renderKit("Re-check"))
       }
     }
     .padding(DesignMetrics.spacingL)

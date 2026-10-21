@@ -82,6 +82,59 @@ struct UserFacingErrorTests {
     #expect(!french.contains("Error"), "never the raw enum")
   }
 
+  nonisolated static let preprocessCases: [Case] = [
+    Case(
+      error: PreprocessError.belowStackMinimum(survivors: 1, registered: 34), names: "34",
+      english: "Only 1 of 34 frames survived grading: Siril needs two to stack."),
+    Case(
+      error: PreprocessError.mixedDimensions(["RGB 6000×4000", "Ha 3000×2000"]),
+      names: "Ha 3000×2000",
+      english: "The stacked layers have different sizes: RGB 6000×4000, Ha 3000×2000."),
+    Case(
+      error: PreprocessError.targetBusy("/p/stacks/R"), names: "/p/stacks/R",
+      english: "Another run is already writing /p/stacks/R: wait for it or cancel it."),
+    Case(
+      error: PreprocessError.noChannels(["RGB: no frame survived"]),
+      names: "RGB: no frame survived",
+      english: "No channel could be stacked: RGB: no frame survived"),
+    Case(
+      error: PreprocessError.mixedColorModel, names: "",
+      english: "Mono and colour lights are mixed: exclude one kind on the Import sheet, then rerun."
+    ),
+  ]
+
+  nonisolated static let runCases: [Case] = [
+    Case(
+      error: LegacyRunError.notARun("/runs/M_31/x"), names: "/runs/M_31/x",
+      english: "/runs/M_31/x is not a run folder: it has no run.json."),
+    Case(
+      error: LegacyRunError.noBundle("/p/stacks/R"), names: "/p/stacks/R",
+      english: "The stack /p/stacks/R has no bundle.json: run it again."),
+    Case(
+      error: LegacyRunError.noLayers("/runs/M_31/x"), names: "/runs/M_31/x",
+      english: "/runs/M_31/x holds no layer to show."),
+    Case(
+      error: LegacyRunError.mixedDimensions(["RGB 4×3", "Ha 2×2"]), names: "Ha 2×2",
+      english: "The stacked layers have different sizes: RGB 4×3, Ha 2×2."),
+    Case(
+      error: UserFacingError.projectUnsaved, names: "",
+      english: "Save the project first: its stacks are written inside it."),
+    Case(
+      error: UserFacingError.runIncomplete, names: "",
+      english: "The run stopped without writing its bundle; its journal shows the last step."),
+  ]
+
+  @Test("every run and stack error has an English and a French sentence", arguments: runCases)
+  func testEveryRunErrorHasASentence(_ row: Case) {
+    testEverySirilAndImportErrorHasASentence(row)
+  }
+
+  @Test(
+    "every preprocessing error has an English and a French sentence", arguments: preprocessCases)
+  func testEveryPreprocessErrorHasASentence(_ row: Case) {
+    testEverySirilAndImportErrorHasASentence(row)
+  }
+
   /// A Swift error with no sentence of its own, carrying the path the user must act on.
   struct BrokenFrame: Error { let path: String }
 

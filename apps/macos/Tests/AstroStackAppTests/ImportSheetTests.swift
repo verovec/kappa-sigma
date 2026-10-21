@@ -106,7 +106,10 @@ struct ImportSheetTests {
     "ImportOverridesView", "ImportCalibrationView", "SettingsView", "MasterInspectView",
     "MasterInspectViewModel", "MasterFormat", "LegacyRunView", "LegacyRunModel",
     "UserFacingError", "ProjectFacts", "StageStatus", "JourneyState", "JourneySidebar",
-    "StagePane", "DataStagePane",
+    "StagePane", "DataStagePane", "DataIntegrationView", "DataCoverageView", "StackingStagePane",
+    "StudioStagePane", "RunPanel", "RunOutcomeView", "RunSummary", "RunViewModel", "LayerList",
+    "LayerDetail", "JournalView", "PreviewThumbnail", "KnobPanel", "KnobRow", "KnobPanelViewModel",
+    "CalibrationStagePane", "CoverageMatrix+Heading",
   ]
 
   @Test("the project window and import sheet carry no English literal outside the catalog")

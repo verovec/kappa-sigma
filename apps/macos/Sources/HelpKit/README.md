@@ -23,11 +23,24 @@ Help content: process cards, "why this value", the first-stack guide, in French 
   their `allCases` — a case added without its term fails.
 - Filters keep their short name (`Ha`) on screen in both languages; the term is the long name.
 
+## Renderer and guide (card 0061)
+
+- `HelpMarkdown.parse`: the subset help is written in — one paragraph per line, `- `/`* `/`1. `
+  items, `**bold**`, `*italic*`/`_italic_`. Headings, links, code, an unclosed marker stay plain
+  text; it never fails. The app's `HelpText` view draws the blocks.
+- `Help/<locale>/guide/first-stack.md`: the first-stack guide, one step per line opening on a
+  bold title; `HelpIndex.guide(locale:)` reads it, `guideProblems(steps:)` gates the count per
+  locale and ≤ 40 words a step. The app's `FirstStackGuide` pairs each line with the control it
+  points at (an `AccessibilityID`), so the step count lives there.
+- Profiles' « why » lines are ProcessKit data (0060); `HelpCoverageTests` (ProcessKit) gates
+  them in fr and en with the process cards.
+
 ## How to extend
 
 - A new process ships its two cards in the same PR, or the gate fails.
 - A new case in a glossary-backed enum ships its `fr` and `en` terms in the same PR.
-- Card 0061 brings the renderer (Markdown → panel) and the other help content; in the packaged
-  app, pass the bundle resolved from `Contents/Resources` (see ImageKit's `KitBundle`) to
-  `HelpIndex(bundle:)` — `Bundle.module` does not look there.
+- A guide step added or removed changes both locale files and `FirstStackGuide.steps` together;
+  `FirstStackGuideTests` checks every target is a control a hosted view reports.
+- In the packaged app, pass the bundle resolved from `Contents/Resources` (see ImageKit's
+  `KitBundle`) to `HelpIndex(bundle:)` — `Bundle.module` does not look there (`AppGlossary.help`).
 - Allowed dependencies: none (`Tests/TestSupport/BoundaryRules.swift`).

@@ -4,29 +4,14 @@ internal import SwiftUI
 
 /// AstroStack › Settings… (⌘,): one window, reused.
 package enum SettingsWindow {
-  private static var window: NSWindow?
-
   /// Shows the Settings window, creating it the first time.
   @discardableResult
   package static func show() -> NSWindow {
-    let window = window ?? make()
-    Self.window = window
+    // The tools are probed once; afterwards only « Re-check » runs siril-cli again.
     if WelcomeWindow.model.tools.isEmpty { Task { await WelcomeWindow.model.recheckTools() } }
-    window.makeKeyAndOrderFront(nil)
-    return window
-  }
-
-  private static func make() -> NSWindow {
-    let window = NSWindow(
-      contentViewController: NSHostingController(
-        rootView: SettingsView(
-          setting: LanguageSetting(), relaunch: relaunch,
-          tools: WelcomeWindow.model
-        ).interfaceLocale()))
-    window.title = String(localized: .app("Settings"))
-    window.styleMask = [.titled, .closable]
-    window.isReleasedWhenClosed = false
-    return window
+    UtilityWindow.show("settings", title: .app("Settings"), resizable: false) {
+      SettingsView(setting: LanguageSetting(), relaunch: relaunch, tools: WelcomeWindow.model)
+    }
   }
 
   /// Opens a new instance of the app, then quits this one (the language is read at launch).

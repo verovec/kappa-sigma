@@ -1,7 +1,7 @@
 # project.db schema
 
-The schema of a `.astrostack` package's `project.db`, at migration **0003_project_settings**
-(0001_init: card 0068; 0002: card 0047; 0003: card 0076).
+The schema of a `.astrostack` package's `project.db`, at migration **0004_source_profile**
+(0001_init: card 0068; 0002: card 0047; 0003: card 0076; 0004: card 0060).
 Source of truth: `Migrations/NNNN_name.{up,down}.sql`; this page is the map. Every table has
 `id`, `created_at` and `updated_at`, the last two in int64 Unix milliseconds, except where noted.
 `ProjectStore` writes the timestamps.
@@ -9,7 +9,7 @@ Source of truth: `Migrations/NNNN_name.{up,down}.sql`; this page is the map. Eve
 | Table | One row per | Columns besides id/timestamps | Keys and rules |
 |---|---|---|---|
 | `schema_migrations` | applied migration | `version` (PK), `name`, `applied_at` ms | written by the migrator only; no id/updated_at |
-| `sources` | capture night or legacy run, by path | `kind` (`night`, `legacy_run`), `path`, `read_only` | unique (kind, path); never written to (R7) |
+| `sources` | capture night or legacy run, by path | `kind` (`night`, `legacy_run`), `path`, `read_only`, `profile_id` (0004) | unique (kind, path); never written to (R7); `profile_id` = the profile kept at import, NULL for none |
 | `stacks` | bundle (0057, 0043) | `bundle_path`, `params_json` | — |
 | `stack_sources` | stack ↔ source link | `stack_id`, `source_id` | PK (stack_id, source_id); a source used by a stack cannot be deleted |
 | `images` | image of a stack | `stack_id`, `role`, `head_step_id` | cascades with its stack; head set to NULL if its step goes |

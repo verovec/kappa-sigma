@@ -5,8 +5,8 @@ internal import SwiftUI
 /// The one place that maps a journey stage to its pane and its state's badge and words.
 ///
 /// A stage whose card has not landed shows an empty state naming what will appear there — no fake
-/// controls. A card that builds a stage's pane replaces its case here (0057 stacking, 0069
-/// review, 0071/0078 calibration, E12 studio, 0055 export).
+/// controls. A card that builds a stage's pane replaces its case here (0069 review, 0071/0078
+/// calibration, E12 studio processes, 0055 export).
 package enum StagePane {
   /// The pane of `stage`.
   @ViewBuilder
@@ -15,27 +15,16 @@ package enum StagePane {
     case .data:
       DataStagePane(model: model)
     case .calibration:
-      EmptyState(
-        .app("Calibration masters"),
-        message: .app(
-          "The masters each light set uses, their statistics and the gaps will appear here."),
-        systemImage: "square.stack.3d.down.right")
+      CalibrationStagePane(model: model)
     case .review:
       EmptyState(
         .app("Frame review"),
         message: .app("Per-frame metrics, blink and keep or reject will appear here."),
         systemImage: "rectangle.grid.3x2")
     case .stacking:
-      EmptyState(
-        .app("Stacking"),
-        message: .app(
-          "The stacking settings and the run, with its progress and journal, will appear here."),
-        systemImage: "square.3.layers.3d")
+      StackingStagePane(model: model)
     case .studio:
-      EmptyState(
-        .app("Studio"),
-        message: .app("The stacked image and its finishing processes will appear here."),
-        systemImage: "wand.and.stars")
+      StudioStagePane(model: model)
     case .export:
       EmptyState(
         .app("Export"),

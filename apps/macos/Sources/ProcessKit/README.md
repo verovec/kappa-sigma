@@ -90,6 +90,32 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   rounding), hflip/vflip, `{name}` template (one file name containing `{name}`); everything is
   checked before a file is written. `ExportGuard` refuses a folder under
   `~/Documents/astro/{captures,runs,library,fixtures}` (links resolved, case ignored, R7).
+- **Pipelines** (card 0059, `Pipeline/`): `Pipeline` = ordered `PipelineStep`s {recipe, mode
+  `auto`|`stop`, `locked`}; `problems(registry:batch:present:)` names an unknown process, a missing
+  layer or a linear step after a non-linear one (shown, never reordered). `PipelineRunner` applies
+  steps through a `History`: `run` halts *before* a `stop` step (`.stopped(at:)`, the Studio shows
+  that process with its recipe), `resume(at:params:)` is « Continue » with the edited values,
+  `replay(on:in:bundle:previous:)` starts a new history on another bundle, and a locked step takes
+  the same step's output from `previous` (a `PipelineRun`: history + bundle) only when the input is
+  the same (original image, bundle, every earlier step) — else it re-runs (`PipelineReuse`). Batch processes
+  (host tools) are `BatchProcess` closures injected by id — ProcessKit never imports StackKit —
+  and report progress live as `.progress` events. The first step gets the bundle's stats, each
+  later one the stats of the image it receives (`LayerStats.measured`); layers reach every step.
+  `PipelineDiff.entries` lists param / mode / lock / process / added / removed differences;
+  `Pipeline.json()` / `Pipeline.load` are versioned, each step's recipe read by `Recipe.load` so
+  unknown keys and clamps warn as for a recipe. Saved by name in the project with ProjectKit's
+  `savePipeline(named:json:)`. No UI yet: the Studio has no process-application panel.
+- **Profiles** (card 0060, `Profile/`, resources `Profiles/*.json`): `Profile` = key (object
+  type × camera × filter compositions) + preprocessing (mode, 0070 knob wire keys) + steps (a
+  process, the values the profile sets, a fr/en « why » for each) → `pipeline`. Five builtins from
+  the PO's validated recipes (M 31 HaPlus, IC 1848 « doux », M 45, mono LRGB+Hα, mono SHO/HOO — the
+  mono values are starting points E18 refines). `Profile.load` is strict: an unknown process or
+  parameter, a value outside its bounds, a value without both « why » refuse the file — a profile
+  is never clamped. `ProfileLibrary` = builtins (read-only resources) + user copies (the project's
+  `user_profiles`, through closures): a copy shadows its builtin, `builtin(id:)` still offers it.
+  `ProfileProposal.propose` narrows by camera and filters, proposes the only match or the one a
+  target was validated on (`examples`), else lists candidates without picking; reasons are values
+  the app words. Knob ids and values are 0070 `KnobSchema` knobs (`ProfileKnobTests`).
 - `ProcessRegistry`: refuses duplicates and invalid schemas (`.px` without
   `previewExactOnlyAt1to1`, a default outside its bounds or options, infinite bounds);
   `standard()` is validated like any registry and lists the shipped processes (today:

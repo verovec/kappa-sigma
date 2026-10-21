@@ -1,5 +1,6 @@
 import AppKit
 import AstroStackApp
+import RenderKit
 import Testing
 
 @MainActor
@@ -83,12 +84,55 @@ struct MainMenuTests {
   func testMainMenu_order() {
     #expect(
       MainMenu.make(locale: Self.english).items.compactMap(\.submenu?.title) == [
-        "AstroStack", "File", "Edit", "View", "Window",
+        "AstroStack", "File", "Edit", "View", "Window", "Help",
       ])
     #expect(
       MainMenu.make(locale: Self.french).items.compactMap(\.submenu?.title) == [
-        "AstroStack", "Fichier", "Édition", "Présentation", "Fenêtre",
+        "AstroStack", "Fichier", "Édition", "Présentation", "Fenêtre", "Aide",
       ])
+  }
+
+  @Test("every menu item is a catalog command, in catalog order, with its declared shortcut")
+  func testMenusGeneratedFromCatalog() {
+    let bar = MainMenu.make(locale: Self.french)
+    for (kind, item) in zip(CommandMenu.allCases, bar.items) {
+      let items = item.submenu?.items.filter { !$0.isSeparatorItem } ?? []
+      let commands = CommandCatalog.commands(in: kind).filter(\.isBuilt)
+      #expect(
+        items.compactMap { $0.identifier?.rawValue }
+          == commands.map { "fr.astrostack.command." + $0.id }, "\(kind)")
+      for (menuItem, command) in zip(items, commands) {
+        #expect(menuItem.keyEquivalent == command.keyEquivalent, "\(command.id)")
+        #expect(menuItem.action.map(NSStringFromSelector) == command.action, "\(command.id)")
+      }
+    }
+  }
+
+  /// The classes that can answer a menu action through the responder chain.
+  static let responders: [AnyClass] = [
+    NSApplication.self, AppDelegate.self, NSDocumentController.self, ProjectDocument.self,
+    NSWindow.self, NSTextView.self, ViewerMTKView.self,
+  ]
+
+  @Test("every catalog action is implemented by a class of the responder chain (no typo ships)")
+  func testEveryActionHasAResponder() {
+    for command in CommandCatalog.commands {
+      guard let action = command.action else { continue }
+      let selector = NSSelectorFromString(action)
+      #expect(
+        Self.responders.contains { $0.instancesRespond(to: selector) },
+        "\(command.id): nothing answers \(action)")
+    }
+  }
+
+  @Test("Help holds the shortcuts, the glossary and the first-stack guide")
+  func testHelpMenu() throws {
+    let help = try #require(MainMenu.helpMenu(in: MainMenu.make(locale: Self.french)))
+    #expect(help.title == "Aide")
+    let titles = help.items.filter { !$0.isSeparatorItem }.map(\.title)
+    #expect(titles == ["Raccourcis clavier", "Glossaire", "Guide du premier empilement"])
+    #expect(help.items.last?.action.map(NSStringFromSelector) == "showGuide:")
+    #expect(help.items.first?.action.map(NSStringFromSelector) == "showShortcuts:")
   }
 
   @Test("the Window menu is found by identity, whatever its title")

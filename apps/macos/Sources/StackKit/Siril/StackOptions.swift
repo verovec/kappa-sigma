@@ -2,7 +2,7 @@
 /// weighting), rendered by `StackClause`.
 package struct StackOptions: Equatable, Sendable {
   /// The pixel combination.
-  package enum Combine: String, Sendable {
+  package enum Combine: String, CaseIterable, Sendable {
     case mean, median, sum, max, min
 
     /// Siril's token (`rej` for a rejecting mean).
@@ -14,12 +14,12 @@ package struct StackOptions: Equatable, Sendable {
   }
 
   /// The rejection algorithm; `.auto` picks one from the frame count.
-  package enum Rejection: Sendable {
+  package enum Rejection: CaseIterable, Sendable {
     case auto, none, percentile, sigma, medianSigma, winsorized, linearFit, gesd, mad
   }
 
   /// Input normalization; `.auto` is Siril's additive + scaling.
-  package enum Normalization: String, Sendable {
+  package enum Normalization: String, CaseIterable, Sendable {
     case auto, none, add, mul, addscale, mulscale
   }
 

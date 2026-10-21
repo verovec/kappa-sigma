@@ -46,6 +46,7 @@ struct ProjectStoreTests {
     defer { try? package.close() }
     let store = package.store
     #expect(try store.stacks().isEmpty)
+    #expect(try store.latestStack() == nil)
     let night = try store.addSource(kind: .night, path: "/captures/M31-DB")
     let other = try store.addSource(kind: .night, path: "/captures/M31-BB")
     let first = try store.addStack(
@@ -53,6 +54,7 @@ struct ProjectStoreTests {
     let second = try store.addStack(bundlePath: "stacks/B", sourceIDs: [], paramsJSON: "{}")
 
     #expect(try store.stacks() == [first, second])
+    #expect(try store.latestStack() == second)
     #expect(try store.stacks().first?.sourceIDs == [night.id, other.id])
   }
 

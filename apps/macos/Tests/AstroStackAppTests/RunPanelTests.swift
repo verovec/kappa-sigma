@@ -162,7 +162,7 @@ struct RunPanelTests {
       (
         "fr",
         [
-          "RGB : 34 poses empilées sur 36",
+          "RGB : 34 sur 36 poses empilées",
           "Ha : non empilé — below Siril's two-frame stack minimum",
           "RGB, masque de traînées : 5 traînées sur 3 des 34 poses",
         ]

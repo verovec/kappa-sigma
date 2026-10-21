@@ -185,7 +185,12 @@ struct LegacyRunSourceTests {
     #expect(source.layers.allSatisfy { $0.frames == nil })
     #expect(source.grid.width == 4 && source.grid.height == 3)
 
-    try FileManager.default.removeItem(at: run.appendingPathComponent(BundleWriter.fileName))
+    let bundleFile = run.appendingPathComponent(BundleWriter.fileName)
+    try Data("{\"runID\": 7}".utf8).write(to: bundleFile)
+    #expect(throws: DecodingError.self, "a corrupt bundle keeps its own error") {
+      try LegacyRunSource(stack: run, object: "M31")
+    }
+    try FileManager.default.removeItem(at: bundleFile)
     #expect(throws: LegacyRunError.noBundle(run.path)) {
       try LegacyRunSource(stack: run, object: "M31")
     }

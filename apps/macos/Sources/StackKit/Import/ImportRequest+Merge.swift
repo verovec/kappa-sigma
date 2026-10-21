@@ -3,7 +3,9 @@ extension ImportRequest {
   ///
   /// Every earlier override is kept (a night marked dual-band stays so); the later one wins on a
   /// conflict. Folders and lists are unions in order of appearance; an `auto` colour model defers to the
-  /// earlier choice; forcing the calibration once forces it for the project's run.
+  /// earlier choice; forcing the calibration is the later import's choice, so it can be undone.
+  /// Unchecked suggestions and dropped sets stay unions: their ids are per light set, and
+  /// undoing one project-wide is the Données stage's (0078).
   package func merging(_ later: ImportRequest) -> ImportRequest {
     var merged = self
     merged.paths = Self.union(paths, later.paths)
@@ -12,7 +14,7 @@ extension ImportRequest {
     merged.excludeSets = Self.union(excludeSets, later.excludeSets)
     merged.calibExclude = Self.union(calibExclude, later.calibExclude)
     if later.colorModel != .auto { merged.colorModel = later.colorModel }
-    merged.forceCalibration = forceCalibration || later.forceCalibration
+    merged.forceCalibration = later.forceCalibration
     return merged
   }
 

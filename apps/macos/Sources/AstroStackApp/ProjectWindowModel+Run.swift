@@ -7,10 +7,10 @@ extension ProjectWindowModel {
   /// The import the next run plans: every capture night of the project, with the overrides
   /// stored with the latest stack and then those of each import this session, merged (a later
   /// choice wins); `nil` without a night.
-  var runRequest: ImportRequest? {
+  func runRequest() throws -> ImportRequest? {
     let nights = sources.filter { $0.kind == .night }.map(\.path)
     guard !nights.isEmpty else { return nil }
-    let base = latestStackRequest ?? ImportRequest(paths: nights)
+    let base = try latestStackRequest() ?? ImportRequest(paths: nights)
     var request = imports.reduce(base) { $0.merging($1) }
     request.paths = nights
     return request
@@ -32,7 +32,7 @@ extension ProjectWindowModel {
   /// and keeps its artifacts. One run at a time, in a saved project only (an untitled package
   /// moves on Save and is deleted on Close).
   package func startRun(mode: PreprocessRequest.Mode = .deepsky) {
-    guard canRun, let request = runRequest else { return }
+    guard canRun else { return }
     guard let store = store(), let folder = folder() else {
       error = .projectClosed
       return
@@ -41,7 +41,15 @@ extension ProjectWindowModel {
       error = .projectUnsaved
       return
     }
-    let runID = runs.nextRunID
+    let request: ImportRequest
+    do {
+      guard let planned = try runRequest() else { return }
+      request = planned
+    } catch {
+      self.error = UserFacingError(error)
+      return
+    }
+    let runID = Self.unusedRunID(runs.nextRunID, in: folder)
     let output = folder.appendingPathComponent("stacks/\(runID)", isDirectory: true)
     let work = runs.scratch.appendingPathComponent("run_\(runID)", isDirectory: true)
     let planning = services(store).planning
@@ -63,7 +71,7 @@ extension ProjectWindowModel {
         await Self.remove(work)
         guard let self else { return }
         if case .success = outcome {
-          await register(request: request, runID: runID, output: output)
+          await register(request: request, runID: runID)
         } else {
           refresh()
         }
@@ -79,7 +87,7 @@ extension ProjectWindowModel {
   package func openStudio() async {
     guard studio == nil, let folder = folder() else { return }
     do {
-      guard let stack = try store()?.stacks().last else { return }
+      guard let stack = try store()?.latestStack() else { return }
       let source = try await Self.openStack(
         folder.appendingPathComponent(stack.bundlePath), object: targetName)
       studio = studio ?? LegacyRunModel(source: source)
@@ -105,10 +113,15 @@ extension ProjectWindowModel {
   /// and one image per layer in one transaction, and shows it in the Studio.
   ///
   /// The stack is opened first: a bundle the Studio cannot open is reported, not recorded.
-  private func register(request: ImportRequest, runID: String, output: URL) async {
+  /// The package is read where it is now: a project renamed in the Finder after the run's last
+  /// write still records its stack.
+  private func register(request: ImportRequest, runID: String) async {
     do {
-      let source = try await Self.openStack(output, object: targetName)
-      guard let store = store() else { throw UserFacingError.projectClosed }
+      guard let store = store(), let folder = folder() else {
+        throw UserFacingError.projectClosed
+      }
+      let source = try await Self.openStack(
+        folder.appendingPathComponent("stacks/\(runID)"), object: targetName)
       let encoder = JSONEncoder()
       encoder.outputFormatting = [.sortedKeys]
       let params = String(bytes: try encoder.encode(request), encoding: .utf8) ?? "{}"
@@ -116,7 +129,6 @@ extension ProjectWindowModel {
       try store.addStack(
         bundlePath: "stacks/\(runID)", sourceIDs: read, paramsJSON: params,
         imageRoles: source.layers.map(\.id))
-      onEdit()
       studio = LegacyRunModel(source: source)
       refresh()
       select(.studio)
@@ -126,9 +138,24 @@ extension ProjectWindowModel {
     }
   }
 
-  /// The request stored with the latest stack (this app wrote it); `nil` without one.
-  private var latestStackRequest: ImportRequest? {
-    guard let stack = try? store()?.stacks().last else { return nil }
-    return try? JSONDecoder().decode(ImportRequest.self, from: Data(stack.paramsJSON.utf8))
+  /// The request stored with the latest stack, or `nil` without one.
+  ///
+  /// One that no longer decodes is an error the user sees, never a run without its overrides (R2).
+  private func latestStackRequest() throws -> ImportRequest? {
+    guard let stack = try store()?.latestStack() else { return nil }
+    return try JSONDecoder().decode(ImportRequest.self, from: Data(stack.paramsJSON.utf8))
+  }
+
+  /// `runID`, or `runID_2`, `_3`… when a stack folder of that name exists (two runs in one
+  /// second, the repeated hour of a DST change).
+  static func unusedRunID(_ runID: String, in folder: URL) -> String {
+    let stacks = folder.appendingPathComponent("stacks")
+    var candidate = runID
+    var suffix = 1
+    while FileManager.default.fileExists(atPath: stacks.appendingPathComponent(candidate).path) {
+      suffix += 1
+      candidate = "\(runID)_\(suffix)"
+    }
+    return candidate
   }
 }

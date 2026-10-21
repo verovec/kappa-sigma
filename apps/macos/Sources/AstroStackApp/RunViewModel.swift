@@ -36,6 +36,8 @@ package final class RunViewModel {
   package struct Thumbnail: Identifiable, Equatable, Sendable {
     package let stage: String
     package let url: URL
+    /// Bumped when the stage's preview is written again at the same path: the view reloads it.
+    package let revision: Int
     package var id: String { stage }
   }
 
@@ -47,6 +49,9 @@ package final class RunViewModel {
 
   /// Journal lines kept for a failed run's summary.
   package static let tailLength = 20
+  /// Journal lines kept: the oldest go first, so a run of tens of thousands of Siril lines keeps
+  /// the panel responsive (the filter rescans what is kept on every line).
+  package static let journalLimit = 2_000
 
   package let runID: String
   /// The run's folder in the project (`stacks/<run_id>`).
@@ -64,6 +69,7 @@ package final class RunViewModel {
   /// Text the journal is filtered on; empty shows every line.
   package var journalFilter = ""
   @ObservationIgnored private var task: Task<Void, Never>?
+  @ObservationIgnored private var linesSeen = 0
 
   /// A run `runID` writing into `output`.
   package init(runID: String, output: URL) {
@@ -89,11 +95,12 @@ package final class RunViewModel {
     switch event {
     case .progress(let progress): reduce(progress)
     case .preview(let preview):
-      let thumbnail = Thumbnail(stage: preview.stage, url: URL(fileURLWithPath: preview.pngPath))
+      let url = URL(fileURLWithPath: preview.pngPath)
       if let index = previews.firstIndex(where: { $0.stage == preview.stage }) {
-        previews[index] = thumbnail
+        previews[index] = Thumbnail(
+          stage: preview.stage, url: url, revision: previews[index].revision + 1)
       } else {
-        previews.append(thumbnail)
+        previews.append(Thumbnail(stage: preview.stage, url: url, revision: 0))
       }
     case .finished(let result):
       self.result = result
@@ -118,7 +125,11 @@ package final class RunViewModel {
     if progress.line.isEmpty {
       percent = nil
     } else {
-      journal.append(Line(id: journal.count, step: progress.step, text: progress.line))
+      journal.append(Line(id: linesSeen, step: progress.step, text: progress.line))
+      linesSeen += 1
+      if journal.count > Self.journalLimit {
+        journal.removeFirst(journal.count - Self.journalLimit)
+      }
       if let value = progress.percent { percent = value }
     }
   }

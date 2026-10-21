@@ -28,8 +28,6 @@ package final class ProjectWindowModel {
   let runs: RunServices
   /// The package is saved (not the untitled temporary one a Save moves).
   let isSaved: () -> Bool
-  /// Tells the document the project changed outside an undoable edit (a stack was recorded).
-  let onEdit: () -> Void
 
   /// A window over the document's current store and package folder (both change when the package
   /// moves); each sheet and run gets fresh `services`, and runs go through `runs`.
@@ -38,15 +36,13 @@ package final class ProjectWindowModel {
     folder: @escaping () -> URL? = { nil },
     services: @escaping (ProjectStore?) -> ImportServices = { ImportPlanning.services(store: $0) },
     runs: RunServices = .live,
-    isSaved: @escaping () -> Bool = { true },
-    onEdit: @escaping () -> Void = {}
+    isSaved: @escaping () -> Bool = { true }
   ) {
     self.store = store
     self.folder = folder
     self.services = services
     self.runs = runs
     self.isSaved = isSaved
-    self.onEdit = onEdit
     refresh()
     do {
       let saved = try store()?.setting(JourneyStage.settingKey)

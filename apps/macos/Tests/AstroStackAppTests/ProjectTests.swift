@@ -63,7 +63,6 @@ struct ProjectTests {
     let window: ProjectWindowModel
     let planned: Recorded<ImportRequest>
     let ran: Recorded<PreprocessRequest>
-    let edits: Recorded<Bool>
     let work: URL
   }
 
@@ -72,7 +71,6 @@ struct ProjectTests {
     let project = try ProjectPackage.create(at: scratch.appendingPathComponent("M31.astrostack"))
     let planned = Recorded<ImportRequest>()
     let ran = Recorded<PreprocessRequest>()
-    let edits = Recorded<Bool>()
     let work = scratch.appendingPathComponent("work")
     let services = RunServices(
       run: run ?? fakeRun(ran), now: { Self.start }, scratch: work, timeZone: .gmt)
@@ -84,9 +82,9 @@ struct ProjectTests {
           return try await ImportPlanningStub.empty(request)
         })
       },
-      runs: services, isSaved: { saved }, onEdit: { edits.append(true) })
+      runs: services, isSaved: { saved })
     return Fixture(
-      project: project, window: window, planned: planned, ran: ran, edits: edits, work: work)
+      project: project, window: window, planned: planned, ran: ran, work: work)
   }
 
   @Test(
@@ -126,7 +124,7 @@ struct ProjectTests {
   }
 
   @Test(
-    "every import's overrides and calibration choices reach the run; the document is edited",
+    "every import's overrides and calibration choices reach the run",
     .scratchDirectory)
   func testImportsMergedIntoTheRun() async throws {
     let fixture = try Self.fixture()
@@ -134,9 +132,10 @@ struct ProjectTests {
     var first = ImportRequest(paths: ["/c/M31-DB"])
     first.filterSets = ["night-2026-09-22": .dualband]
     first.calibExclude = ["dark|RGB|g100o50b1|e300000|t-17"]
-    first.forceCalibration = true
     fixture.window.add(first)
-    fixture.window.add(ImportRequest(paths: ["/c/M31-BB"]))
+    var second = ImportRequest(paths: ["/c/M31-BB"])
+    second.forceCalibration = true
+    fixture.window.add(second)
 
     fixture.window.startRun()
     await fixture.window.run?.settled()
@@ -146,8 +145,39 @@ struct ProjectTests {
     #expect(planned.filterSets == first.filterSets, "the second import keeps the dual-band night")
     let ran = try #require(fixture.ran.all.first)
     #expect(ran.settings.calibrationExcluded == first.calibExclude)
-    #expect(ran.settings.forceCalibration)
-    #expect(fixture.edits.all == [true], "a recorded stack marks the document edited")
+    #expect(ran.settings.forceCalibration, "the latest import's choice")
+  }
+
+  @Test("a second run in the same second gets its own stack folder", .scratchDirectory)
+  func testRunIDsNeverCollide() async throws {
+    let fixture = try Self.fixture()
+    defer { try? fixture.project.close() }
+    fixture.window.add(ImportRequest(paths: ["/c/M31-DB"]))
+    fixture.window.startRun()
+    await fixture.window.run?.settled()
+    fixture.window.startRun()
+    await fixture.window.run?.settled()
+
+    #expect(fixture.ran.all.map(\.runID) == [Self.runID, Self.runID + "_2"])
+    #expect(
+      try fixture.project.store.stacks().map(\.bundlePath) == [
+        "stacks/\(Self.runID)", "stacks/\(Self.runID)_2",
+      ])
+  }
+
+  @Test(
+    "a stored request that no longer decodes is reported, not run without it",
+    .scratchDirectory)
+  func testUnreadableStoredRequestReported() throws {
+    let fixture = try Self.fixture()
+    defer { try? fixture.project.close() }
+    fixture.window.add(ImportRequest(paths: ["/c/M31-DB"]))
+    try fixture.project.store.addStack(
+      bundlePath: "stacks/old", sourceIDs: [], paramsJSON: #"{"color_model": "rgb"}"#)
+    fixture.window.startRun()
+
+    #expect(fixture.window.run == nil)
+    #expect(fixture.window.error == .inspect(.unknownColorChoice("rgb")))
   }
 
   @Test("an untitled project asks to be saved before a run", .scratchDirectory)

@@ -8,13 +8,15 @@ package nonisolated enum RunSummary {
   package static func channels(_ result: PreprocessResult, locale: Locale? = nil)
     -> [LocalizedStringResource]
   {
-    result.channels.map { channel in
+    let format = AstroFormat(locale: locale ?? Locale.autoupdatingCurrent)
+    return result.channels.map { channel in
       if let error = channel.error {
         return .app("\(channel.filter): not stacked — \(error)", locale: locale)
       }
-      return .app(
-        "\(channel.filter): \(channel.stackedFrames) of \(channel.inputFrames) frames stacked",
-        locale: locale)
+      let (stacked, of) = (
+        format.integer(channel.stackedFrames), format.frames(channel.inputFrames)
+      )
+      return .app("\(channel.filter): \(stacked) of \(of) stacked", locale: locale)
     }
   }
 
@@ -22,12 +24,13 @@ package nonisolated enum RunSummary {
   package static func trailMasks(_ result: PreprocessResult, locale: Locale? = nil)
     -> [LocalizedStringResource]
   {
-    result.channels.compactMap { channel in
+    let format = AstroFormat(locale: locale ?? Locale.autoupdatingCurrent)
+    return result.channels.compactMap { channel in
       guard let mask = channel.trailMask else { return nil }
-      let (trails, hit, frames) = (mask.segments, mask.framesWithTrails, mask.frames)
+      let trails = format.integer(mask.segments)
+      let (hit, of) = (format.integer(mask.framesWithTrails), format.frames(mask.frames))
       return .app(
-        "\(channel.filter) trail mask: \(trails) trails on \(hit) of \(frames) frames",
-        locale: locale)
+        "\(channel.filter) trail mask: \(trails) trails on \(hit) of \(of)", locale: locale)
     }
   }
 }

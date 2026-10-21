@@ -13,6 +13,7 @@ struct ImportRequestMergeTests {
     first.filterSets = [Self.dualbandNight: .dualband]
     first.calibExclude = ["dark|RGB|g100o50b1|e300000|t-17"]
     first.colorModel = .osc
+    first.forceCalibration = true
     let second = ImportRequest(paths: ["/c/M31-BB"])
 
     let merged = first.merging(second)
@@ -20,7 +21,8 @@ struct ImportRequestMergeTests {
     #expect(merged.filterSets == [Self.dualbandNight: .dualband])
     #expect(merged.calibExclude == first.calibExclude)
     #expect(merged.colorModel == .osc, "auto defers to the earlier choice")
-    #expect(!merged.forceCalibration)
+    #expect(!merged.forceCalibration, "the later import did not force")
+    #expect(second.merging(first).forceCalibration == first.forceCalibration)
   }
 
   @Test("on a conflict the later choice wins; lists are unions without repeats")

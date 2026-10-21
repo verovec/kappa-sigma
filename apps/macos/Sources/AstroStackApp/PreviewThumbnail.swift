@@ -1,8 +1,10 @@
 internal import AppKit
+internal import Foundation
 internal import RenderKit
 internal import SwiftUI
 
-/// A stage's quick look, decoded once per file: the panel's body runs on every journal line.
+/// A stage's quick look, read once per revision off the main actor: the panel's body runs on
+/// every journal line.
 struct PreviewThumbnail: View {
   let thumbnail: RunViewModel.Thumbnail
   @State private var image: NSImage?
@@ -19,6 +21,13 @@ struct PreviewThumbnail: View {
       .frame(height: 96)
       Text(verbatim: thumbnail.stage).font(.caption)
     }
-    .task(id: thumbnail.url) { image = NSImage(contentsOf: thumbnail.url) }
+    .task(id: thumbnail.revision) {
+      image = await Self.read(thumbnail.url).flatMap(NSImage.init(data:))
+    }
+  }
+
+  @concurrent
+  private nonisolated static func read(_ url: URL) async -> Data? {
+    try? Data(contentsOf: url)
   }
 }

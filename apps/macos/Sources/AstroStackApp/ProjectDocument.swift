@@ -183,8 +183,7 @@ package final class ProjectDocument: NSDocument {
       backing: .buffered, defer: false)
     let model = ProjectWindowModel(
       store: { [weak self] in self?.project?.store }, folder: { [weak self] in self?.project?.url },
-      isSaved: { [weak self] in self?.isTemporary == false },
-      onEdit: { [weak self] in self?.updateChangeCount(.changeDone) })
+      isSaved: { [weak self] in self?.isTemporary == false })
     windowModel = model
     let content = NSHostingView(rootView: ProjectWindowView(model: model).interfaceLocale())
     // Only the minimum size comes from SwiftUI; the window keeps its own frame.

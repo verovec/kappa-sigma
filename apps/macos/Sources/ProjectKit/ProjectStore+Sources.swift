@@ -81,6 +81,14 @@ extension ProjectStore {
     }
   }
 
+  /// The newest stack, or `nil`.
+  package func latestStack() throws -> ProjectStack? {
+    try pool.read { db in
+      try Row.fetchOne(db, sql: "SELECT * FROM stacks ORDER BY id DESC LIMIT 1")
+        .map { try Self.stack($0, in: db) }
+    }
+  }
+
   /// Every stack, oldest first.
   package func stacks() throws -> [ProjectStack] {
     try pool.read { db in

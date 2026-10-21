@@ -116,6 +116,7 @@ struct RunViewModelTests {
 
     #expect(model.steps.map(\.title) == [Self.masters, Self.stacking, "", "", ""])
     #expect(model.previews.map(\.url.path) == ["/again.png"])
+    #expect(model.previews.map(\.revision) == [1], "rewritten: the view reloads it")
   }
 
   @Test(
@@ -128,6 +129,17 @@ struct RunViewModelTests {
     for event in Self.recorded.prefix(5) { model.reduce(event) }
     model.journalFilter = filter
     #expect(model.shownJournal.count == shown)
+  }
+
+  @Test("the journal keeps its last lines, each with its own id")
+  func testJournalIsCapped() {
+    let model = RunViewModel(runID: "R", output: Self.output)
+    let total = RunViewModel.journalLimit + 5
+    for number in 1...total { model.reduce(Self.line(2, Self.stacking, "line \(number)")) }
+
+    #expect(model.journal.count == RunViewModel.journalLimit)
+    #expect(model.journal.first?.text == "line 6" && model.journal.last?.text == "line \(total)")
+    #expect(Set(model.journal.map(\.id)).count == RunViewModel.journalLimit)
   }
 
   @Test("a full run streamed through start finishes and reports its result")

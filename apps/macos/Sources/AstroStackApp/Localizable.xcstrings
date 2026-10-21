@@ -49,34 +49,34 @@
         }
       }
     },
-    "%@ trail mask: %lld trails on %lld of %lld frames": {
+    "%@ trail mask: %@ trails on %@ of %@": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ trail mask: %lld trails on %lld of %lld frames"
+            "value": "%@ trail mask: %@ trails on %@ of %@"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@, masque de traînées : %lld traînées sur %lld des %lld poses"
+            "value": "%@, masque de traînées : %@ traînées sur %@ des %@"
           }
         }
       }
     },
-    "%@: %lld of %lld frames stacked": {
+    "%@: %@ of %@ stacked": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@: %lld of %lld frames stacked"
+            "value": "%@: %@ of %@ stacked"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ : %lld poses empilées sur %lld"
+            "value": "%@ : %@ sur %@ empilées"
           }
         }
       }

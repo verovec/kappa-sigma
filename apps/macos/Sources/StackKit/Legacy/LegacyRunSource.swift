@@ -70,11 +70,14 @@ package struct LegacyRunSource: Sendable {
   /// `bundle.json` is the whole record, so there is no `run.json` and no frame count.
   ///
   /// `object` names the target (the project's). Throws `LegacyRunError.noBundle` without a
-  /// bundle, `mixedDimensions` when its layers disagree.
+  /// bundle, the decoder's or file system's own error for an unreadable one, `mixedDimensions`
+  /// when its layers disagree.
   package init(stack folder: URL, object: String) throws {
-    guard let bundle = try? BundleWriter.read(from: folder) else {
+    let file = folder.appendingPathComponent(BundleWriter.fileName)
+    guard FileManager.default.fileExists(atPath: file.path) else {
       throw LegacyRunError.noBundle(folder.path)
     }
+    let bundle = try BundleWriter.read(from: folder)
     self.folder = folder
     runID = bundle.runID
     self.object = object

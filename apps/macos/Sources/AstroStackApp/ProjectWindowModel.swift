@@ -16,9 +16,21 @@ package final class ProjectWindowModel {
   package internal(set) var error: UserFacingError?
   /// The last scan of the sources in this window: the sheet's plan on Add, or a Rescan the user
   /// asked for; `nil` until then (an M31 scan takes ~90 s, never run on open).
-  package internal(set) var scan: ImportPlan?
+  package internal(set) var scan: ImportPlan? {
+    didSet {
+      integration = scan.map { IntegrationSummary.make(inventory: $0.inventory) }
+      coverage = scan.map(CoverageMatrix.init(plan:))
+    }
+  }
+  /// The lights per filter × night of `scan`, computed once per scan.
+  package private(set) var integration: IntegrationSummary?
+  /// The calibration coverage of `scan`, the matcher's verdict as is.
+  package private(set) var coverage: CoverageMatrix?
   /// A Rescan is running.
   package internal(set) var isScanning = false
+  /// The request `scan` was planned for, the user's import choices included: a Rescan of the
+  /// same sources keeps them (the request itself is not persisted before 0057).
+  var scanRequest: ImportRequest?
   var scanTask: Task<Void, Never>?
 
   let store: () -> ProjectStore?
@@ -85,11 +97,7 @@ package final class ProjectWindowModel {
       for path in request.paths {
         try store.addSource(kind: .night, path: path)
       }
-      // The sheet's plan is this import's scan: the Données stage shows it without rescanning.
-      if let plan = importing?.plan, importing?.request == request {
-        cancelScan()
-        scan = plan
-      }
+      adoptScan(of: importing, for: request, sources: try store.sources().map(\.path))
       closeImport()
       refresh()
     } catch {

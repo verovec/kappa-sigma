@@ -19,6 +19,10 @@ struct DataIntegrationView: View {
         columns
         Divider()
         ForEach(summary.rows) { row in gridRow(row) }
+        if summary.rows.count > summary.totals.count {
+          Divider()
+          ForEach(summary.totals) { total in totalRow(total) }
+        }
       }
     }
   }
@@ -34,6 +38,19 @@ struct DataIntegrationView: View {
     }
     .font(.caption)
     .foregroundStyle(DesignColor.textSecondary.color)
+  }
+
+  /// A filter over every night, shown once a filter spans several rows.
+  private func totalRow(_ total: IntegrationSummary.Total) -> some View {
+    GridRow {
+      Text(verbatim: ImportFormat.filter(total.filter, filterSet: total.filterSet, locale: locale))
+      Text(.app("total"))
+      Text(verbatim: format.integer(total.frames))
+      Text(verbatim: "")
+      Text(verbatim: format.integration(seconds: total.integrationMs / 1000))
+      Text(verbatim: "")
+    }
+    .font(DesignMetrics.valueFont.weight(.semibold))
   }
 
   private func gridRow(_ row: IntegrationSummary.Row) -> some View {

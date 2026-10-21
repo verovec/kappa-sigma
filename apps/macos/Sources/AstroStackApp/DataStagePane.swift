@@ -54,7 +54,7 @@ struct DataStagePane: View {
       Divider()
       DataCoverageView(coverage: coverage) { model.select(.calibration) }
       // The scan's own warnings, as StackKit words them.
-      ForEach(model.scan?.warnings ?? [], id: \.self) { warning in
+      ForEach(Array((model.scan?.warnings ?? []).enumerated()), id: \.offset) { _, warning in
         Label(warning, systemImage: "exclamationmark.triangle")
           .foregroundStyle(DesignColor.statusAttention.color)
       }

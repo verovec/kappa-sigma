@@ -12,23 +12,31 @@ package struct IntegrationSummary: Equatable, Sendable {
     package var filterSet: FilterSet
     /// The night key (`YYYY-MM-DD`); `""` for undated frames.
     package var night: String
+    /// Lights in the row.
     package var frames: Int
     /// The distinct sub-exposures, shortest first.
     package var exposuresMs: [Int]
+    /// The sum of the row's exposures.
     package var integrationMs: Int
     /// Coldest and warmest sensor temperature, °C; `nil` when no frame recorded one.
     package var temperatureC: ClosedRange<Double>?
+    /// Filter, clip filter and night.
     package var id: String { "\(filter)|\(filterSet.rawValue)|\(night)" }
   }
 
   /// One filter (and clip filter) over every night.
   package struct Total: Equatable, Sendable, Identifiable {
+    /// The filter name.
     package var filter: String
+    /// The clip filter of a colour night; `unknown` for mono.
     package var filterSet: FilterSet
+    /// Lights over every night.
     package var frames: Int
+    /// Integration over every night.
     package var integrationMs: Int
     /// Dated nights with lights of this filter.
     package var nights: Int
+    /// Filter and clip filter.
     package var id: String { "\(filter)|\(filterSet.rawValue)" }
   }
 
@@ -36,7 +44,9 @@ package struct IntegrationSummary: Equatable, Sendable {
   package var rows: [Row]
   /// One per filter and clip filter, in the rows' order.
   package var totals: [Total]
+  /// Every light.
   package var frames: Int { rows.map(\.frames).reduce(0, +) }
+  /// The whole integration.
   package var integrationMs: Int { rows.map(\.integrationMs).reduce(0, +) }
   /// Dated nights with any light.
   package var nights: Int { Set(rows.map(\.night).filter { !$0.isEmpty }).count }

@@ -101,6 +101,61 @@ struct DataScanTests {
     #expect(window.statuses[.calibration] == .attention(1))
   }
 
+  @Test(
+    "a second import's plan covers only its own folder: the stale scan is dropped, not shown",
+    .scratchDirectory)
+  func testPartialPlanIsNotAdopted() async throws {
+    let project = try ProjectWindowModelTests.package()
+    defer { try? project.close() }
+    let window = Self.window(project)
+    for folder in ["/c/M31-DB", "/c/M31-BB"] {
+      window.startImport()
+      let sheet = try #require(window.importing)
+      sheet.choose(folder: URL(fileURLWithPath: folder))
+      await sheet.settled()
+      window.add(sheet.request)
+    }
+    #expect(window.sources.count == 2)
+    #expect(window.scan == nil, "M31-BB's plan alone would hide M31-DB's gaps")
+    #expect(window.statuses[.calibration] == .ready)
+  }
+
+  @Test("a rescan of the same sources keeps the user's import choices", .scratchDirectory)
+  func testRescanKeepsImportChoices() async throws {
+    let project = try ProjectWindowModelTests.package()
+    defer { try? project.close() }
+    let recorder = Recorder()
+    let window = Self.window(project, recorder: recorder)
+    window.startImport()
+    let sheet = try #require(window.importing)
+    sheet.choose(folder: URL(fileURLWithPath: "/c/M31-DB"))
+    await sheet.settled()
+    sheet.mapFilter("RGB", to: "ignore")
+    await sheet.settled()
+    window.add(sheet.request)
+
+    window.rescan()
+    await window.scanSettled()
+    #expect(recorder.requests.last?.filterMap == ["RGB": "ignore"])
+  }
+
+  @Test(
+    "a rescan once the document is closed says so instead of planning without a library",
+    .scratchDirectory)
+  func testRescanClosedProject() throws {
+    let project = try ProjectWindowModelTests.package()
+    let store = project.store
+    var open = true
+    let window = ProjectWindowModel(
+      store: { open ? store : nil }, planning: { _ in { Self.gapPlan($0) } })
+    window.add(ImportRequest(paths: ["/c/M31-DB"]))
+    try project.close()
+    open = false
+    window.rescan()
+    #expect(window.error == .projectClosed)
+    #expect(window.isScanning == false)
+  }
+
   @Test("cancelling stops the scan and keeps the previous result", .scratchDirectory)
   func testCancelKeepsPrevious() async throws {
     let project = try ProjectWindowModelTests.package()

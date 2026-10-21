@@ -129,13 +129,17 @@ package struct ImportPlan: Equatable, Sendable {
     var order: [String] = []
     var rows: [String: [SetRow]] = [:]
     for set in inventory.sets {
-      let night =
-        [.light, .flat].contains(set.key.type)
-        ? (set.key.session.isEmpty ? set.frames.first?.session ?? "" : set.key.session) : ""
+      let night = [.light, .flat].contains(set.key.type) ? Self.night(of: set) : ""
       if rows[night] == nil { order.append(night) }
       rows[night, default: []].append(SetRow(set))
     }
     let sorted = order.filter { !$0.isEmpty }.sorted() + (order.contains("") ? [""] : [])
     return sorted.map { Night(session: $0, sets: rows[$0] ?? []) }
+  }
+
+  /// The night of a set: its key's, else its frames' (a one-night scan keeps no night in its
+  /// keys, so all its frames share one); `""` when undated.
+  package static func night(of set: FrameSet) -> String {
+    set.key.session.isEmpty ? set.frames.first?.session ?? "" : set.key.session
   }
 }

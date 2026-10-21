@@ -12,13 +12,17 @@ package struct CoverageMatrix: Equatable, Sendable {
     package var night: String
     /// The clip filter of a colour light set; `unknown` otherwise.
     package var filterSet: FilterSet
+    /// Dark, flat and bias, in that order.
     package var cells: [ImportPlan.Cell] { channel.cells }
+    /// The matcher's explanation of every fallback and gap, verbatim.
     package var notes: [String] { channel.notes }
+    /// A role nothing covers that the user did not ask to skip.
     package var hasGap: Bool { channel.hasGap }
+    /// The light set's id.
     package var id: String { channel.id }
   }
 
-  /// Nights in order (undated last), then filters in canonical order.
+  /// Nights in order (undated last), then filters in canonical order, clip filter, set id.
   package var rows: [Row]
   /// Light sets with a role nothing covers that the user did not ask to skip.
   package var gaps: Int { rows.filter(\.hasGap).count }
@@ -29,14 +33,23 @@ package struct CoverageMatrix: Equatable, Sendable {
       plan.inventory.sets.map { ($0.key, $0) }, uniquingKeysWith: { first, _ in first })
     rows = plan.calibration.map { channel in
       let set = sets[channel.key]
-      // A single-night scan keeps no night in its keys: the frames carry it.
-      let night =
-        channel.key.session.isEmpty ? set?.frames.first?.session ?? "" : channel.key.session
-      return Row(channel: channel, night: night, filterSet: set?.filterSet ?? .unknown)
+      return Row(
+        channel: channel, night: set.map(ImportPlan.night(of:)) ?? channel.key.session,
+        filterSet: set?.filterSet ?? .unknown)
     }
-    .sorted { lhs, rhs in
-      let (left, right) = (lhs.night.isEmpty ? "~" : lhs.night, rhs.night.isEmpty ? "~" : rhs.night)
-      return left != right ? left < right : Filter.less(lhs.channel.filter, rhs.channel.filter)
+    .sorted(by: Self.precedes)
+  }
+
+  private static func precedes(_ lhs: Row, _ rhs: Row) -> Bool {
+    let (left, right) = (lhs.night.isEmpty ? "~" : lhs.night, rhs.night.isEmpty ? "~" : rhs.night)
+    if left != right { return left < right }
+    if lhs.channel.filter != rhs.channel.filter {
+      return Filter.less(lhs.channel.filter, rhs.channel.filter)
     }
+    if lhs.filterSet != rhs.filterSet {
+      let order = FilterSet.allCases
+      return order.firstIndex(of: lhs.filterSet) ?? 0 < order.firstIndex(of: rhs.filterSet) ?? 0
+    }
+    return lhs.id < rhs.id
   }
 }

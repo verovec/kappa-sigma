@@ -45,7 +45,8 @@ struct DataCoverageView: View {
         StatusBadge(ImportFormat.badge(cell.status), ImportFormat.status(cell.status))
       }
     }
-    ForEach(row.notes, id: \.self) { note in
+    // By position: the matcher may word two notes alike.
+    ForEach(Array(row.notes.enumerated()), id: \.offset) { _, note in
       GridRow {
         Label(note, systemImage: "info.circle")
           .font(.caption)

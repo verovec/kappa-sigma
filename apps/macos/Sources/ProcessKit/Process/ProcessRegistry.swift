@@ -21,7 +21,10 @@ package struct ProcessRegistry {
   ///
   /// Each ships fr+en help cards (`ProcessSchemaTests` gates both). E12 cards add theirs here, in menu order.
   package static func standard() throws -> Self {
-    try Self([ChannelCombinationProcess.self, StretchProcess.self, EmissionScreensProcess.self])
+    try Self([
+      ChannelCombinationProcess.self, StretchProcess.self, HDRProcess.self,
+      EmissionScreensProcess.self,
+    ])
   }
 
   /// The ids, in menu order.

@@ -17,7 +17,7 @@ non-destructive history, recipes and the registry (design §2, §4.1).
 - `GPUImage` (r32Float planes, read/write, shared), `ProcessRunner` (synchronous run),
   `ProcessLibrary` (pipelines with RenderKit's fast-math-off compile options).
 - `ProcessContracts`: **PreviewEqualsApply**, **NoHiddenState**, **PxUnitsScale** (a `.px` value
-  `v` at scale 2 = `v / 2` at scale 1), bit-exact.
+  `v` at scale 2 = `v / 2` at scale 1, every other `.px` value halved with it), bit-exact.
 - `History` (one folder per image): steps (process, params, output FITS via `FITSFile.create`,
   numbered after what the folder already holds), undo/redo reloading from disk (atomic), named
   `snapshots` that survive undo (the viewer's compare reference), `save()` removes only the
@@ -59,16 +59,27 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   After a continuum subtraction the stretch stats are derived (median − k·ref median, MADNs in
   quadrature), never measured. The black point reads in σ of the stretched bundle noise
   (`blackInSigma`); suggestions: k, black = 3σ. Global `linkLayers` = astrocomp `-link-layers`.
-- GPU building blocks: `GreyMorphology` (erode/dilate/opening, separable, window clipped to the
-  image, bit-exact vs van Herk), `BoxBlur` (one edge-clamped x+y pass per radius),
-  `ScratchTexture` (private intermediates), `LayerPlane` (`R` / `RGB.r` tokens → texture + stats).
-- `RenderContext.layerStats` (and `ProcessRunner.run(layerStats:)`, `ProcessContracts(layerStats:)`)
-  hand a process the bundle statistics of every layer it reads; `LayerStats.continuumK/
-  continuumReference` carry a line layer's fit; `suggestions(stats:layers:)` may read them.
+- `LayerPlane` (`R` / `RGB.r` tokens → texture + per-plane stats). `RenderContext.layerStats`
+  (and `ProcessRunner.run(layerStats:)`, `ProcessContracts(layerStats:)`) hand a process the
+  bundle statistics of every layer it reads; `LayerStats.continuumK/continuumReference` carry a
+  line layer's fit; `suggestions(stats:layers:)` may read them.
+- **HDRProcess** (card 0052, id `hdr`, stage linear, off by default): the port of the v9
+  runbook's hdrcomp. Luminance (mean of the planes) → grey opening (`GreyMorphology`, radius
+  `openRadius` px) so stars never enter the smooth part → three box passes (`BoxBlur`, Kovesi's
+  widths for σ `sigma` px, hdrcomp's own approximation) → above t1 = bundle sky + `kneeAboveSky`
+  the smooth part becomes t1 + s·asinh((smooth − t1)/s), the detail is put back, one ratio L′/L
+  scales every plane. The sky is the mean of the bundle's plane medians and the thresholds are
+  absolute above it (PO 2026-10-19: 0.00084 / 0.00118, σ 30, radius 16), never multiples of a
+  measured sky. Pinned against hdrcomp's recorded `crop/hdr_only.fits` (max |Δ| 6e-8).
+- Shared GPU helpers: `GreyMorphology` (erode/dilate/open, separable, window clipped to the
+  image, bit-exact vs a van Herk oracle), `BoxBlur` (edge-clamped x+y passes, one per radius;
+  also `MaskBuilder.feather`) and `ScratchTexture` (private
+  r32Float intermediates) — encode into the caller's command buffer; reuse them, never a second
+  min/max or blur kernel.
 - `ProcessRegistry`: refuses duplicates and invalid schemas (`.px` without
   `previewExactOnlyAt1to1`, a default outside its bounds or options, infinite bounds);
   `standard()` is validated like any registry and lists the shipped processes (today:
-  `channel-combination`, `stretch`, `emission-screens`).
+  `channel-combination`, `stretch`, `hdr`, `emission-screens`; pipeline order is E15's — `stage` documents it).
 
 ## Strings (card 0073)
 

@@ -107,15 +107,24 @@ package struct ProcessContracts {
     }
     var atFull = params
     try atFull.set(id, .number(full))
-    // Every other pixel parameter is halved too: at scale 2 the process divides all of them.
+    // Every other pixel parameter is halved too: at scale 2 the process divides all of them. A
+    // half below its bound would be clamped, and the reference would compare the wrong values.
     var atHalf = atFull
     for other in type.schema.pixelParameters {
-      try atHalf.set(other, .number(atFull.number(other) / 2))
+      let value = atFull.number(other) / 2
+      if case .number(_, let otherBounds)? = type.schema.spec(other)?.kind,
+        value < otherBounds.lowerBound
+      {
+        return "\(other) = \(value * 2): v / 2 is below its bounds \(otherBounds)"
+      }
+      try atHalf.set(other, .number(value))
     }
     let scaled = try render(type.init(params: atFull, device: device), scale: 2)
     let reference = try render(type.init(params: atHalf, device: device), scale: 1)
+    let halved = type.schema.pixelParameters.map { "\($0) = \(atHalf.number($0))" }
     return Self.identical(scaled, reference)
-      ? nil : "\(id) = \(full) at scale 2 ≠ \(id) = \(half) at scale 1"
+      ? nil
+      : "\(id) = \(full) at scale 2 ≠ \(halved.joined(separator: ", ")) at scale 1"
   }
 
   private func render(

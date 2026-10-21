@@ -10,6 +10,7 @@ cd "$pkg"
 swift build --product AstroStackApp "$@"
 # The last line only: a flag such as `-v` makes --show-bin-path print more than the path.
 bin="$(swift build --show-bin-path "$@" | tail -1)"
+[ -d "$bin" ] || { echo "app-bundle: swift build --show-bin-path gave no folder: $bin" >&2; exit 1; }
 
 app=".build/AstroStack.app"
 rm -rf "$app"

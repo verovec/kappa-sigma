@@ -36,9 +36,9 @@ app-build *args:
     @./scripts/app-bundle.sh {{pkg}} {{swiftflags}} {{args}}
 
 # Build the optimized bundle (replacing the debug one), then open it: for real runs.
-app-run-release *projects:
-    @./scripts/app-bundle.sh {{pkg}} {{swiftflags}} -c release
-    open -W -n -a "{{justfile_directory()}}/{{app}}" {{projects}}
+[positional-arguments]
+app-run-release *projects: (app-build "-c" "release")
+    open -W -n -a "{{justfile_directory()}}/{{app}}" "$@"
 
 # Build, then open the app (and the given `.astrostack` projects); returns when the app quits.
 app-run *projects: app-build

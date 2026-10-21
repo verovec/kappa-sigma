@@ -17,8 +17,9 @@
 |---------|--------------|
 | `just` | List every recipe |
 | `just setup` | Install swiftlint and the pre-push hook, then run `just doctor` |
-| `just app-build` | Assemble `apps/macos/.build/AstroStack.app` (ad-hoc signed) |
+| `just app-build [swift build args]` | Assemble `apps/macos/.build/AstroStack.app` (ad-hoc signed); debug unless `-c release` |
 | `just app-run [project.astrostack]` | Build the app and open it, optionally on a project |
+| `just app-run-release [project.astrostack]` | The same with the optimized build, for real runs (replaces the debug bundle) |
 | `just test` | The whole suite, live tests included |
 | `just test-unit` | Everything except the `Live…` suites (the fast loop) |
 | `just test-live` | Only the live suites (host tools and fixtures) |

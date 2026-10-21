@@ -5,6 +5,7 @@
 # Usage: scripts/merge-pr.sh <pr-number>   (called by `just merge <n>`)
 set -euo pipefail
 pr="${1:?pr number}"
+[[ "$pr" =~ ^[0-9]+$ ]] || { echo "merge-pr: '$pr' is not a PR number"; exit 1; }
 # Every job of .github/workflows/tests.yml must be present and green — a missing job (workflow
 # edited, run cancelled, still queued) is a failure, not a pass.
 required=("test continuity" "hygiene · lint · build · test")
@@ -12,8 +13,8 @@ required=("test continuity" "hygiene · lint · build · test")
 # merge itself never switches the local checkout (it fails from a worktree).
 repo="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
 
-state="$(gh pr view "$pr" --repo "$repo" --json state,isDraft,mergeable,baseRefName --jq '"\(.state) \(.isDraft) \(.mergeable) \(.baseRefName)"')"
-read -r st draft mergeable base <<<"$state"
+state="$(gh pr view "$pr" --repo "$repo" --json state,isDraft,mergeable,baseRefName,author --jq '"\(.state) \(.isDraft) \(.mergeable) \(.baseRefName) \(.author.login)"')"
+read -r st draft mergeable base author <<<"$state"
 [ "$st" = "OPEN" ]        || { echo "merge-pr: PR #$pr is $st, not open"; exit 1; }
 [ "$draft" = "false" ]    || { echo "merge-pr: PR #$pr is a draft"; exit 1; }
 [ "$base" = "main" ]      || { echo "merge-pr: PR #$pr targets $base, not main"; exit 1; }
@@ -47,9 +48,9 @@ fi
 
 # The code review must have passed on this exact head: the first line of a comment by the PR's
 # author (a quoted marker or another account does not count), read across every comment page.
-author="$(gh pr view "$pr" --repo "$repo" --json author --jq .author.login)"
 markers="$(gh api --paginate "repos/$repo/issues/$pr/comments" \
-  --jq ".[] | select(.user.login == \"$author\") | .body | split(\"\\n\")[0] | rtrimstr(\"\\r\")")"
+  --jq '.[] | [.user.login, (.body | split("\n")[0] | rtrimstr("\r"))] | @tsv' \
+  | awk -F'\t' -v a="$author" '$1 == a { print $2 }')"
 if ! grep -qFx "code-review: passed ${head_sha}" <<<"$markers"; then
   echo "merge-pr: REFUSED — no code review recorded on ${head_sha:0:7}: run /code-review, then"
   echo "          just review-pass $pr \"<summary>\""

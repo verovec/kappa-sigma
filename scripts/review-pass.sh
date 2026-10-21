@@ -6,13 +6,17 @@
 set -euo pipefail
 pr="${1:?pr number}"
 summary="${2:?review summary (findings fixed / rejected and why)}"
+[[ "$pr" =~ ^[0-9]+$ ]] || { echo "review-pass: '$pr' is not a PR number"; exit 1; }
 repo="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
 
-state="$(gh pr view "$pr" --repo "$repo" --json state,baseRefName,headRefOid \
-  --jq '"\(.state) \(.baseRefName) \(.headRefOid)"')"
-read -r st base head_sha <<<"$state"
+state="$(gh pr view "$pr" --repo "$repo" --json state,baseRefName,headRefOid,author \
+  --jq '"\(.state) \(.baseRefName) \(.headRefOid) \(.author.login)"')"
+read -r st base head_sha author <<<"$state"
 [ "$st" = "OPEN" ]   || { echo "review-pass: PR #$pr is $st, not open"; exit 1; }
 [ "$base" = "main" ] || { echo "review-pass: PR #$pr targets $base, not main"; exit 1; }
+# merge-pr only counts the PR author's markers: one posted from another account would never match.
+me="$(gh api user --jq .login)"
+[ "$me" = "$author" ] || { echo "review-pass: gh is logged in as $me, the PR author is $author"; exit 1; }
 
 # What was reviewed is the local tree: it must be clean and pushed as the PR's head.
 [ -z "$(git status --porcelain)" ] \

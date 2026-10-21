@@ -97,6 +97,7 @@ package struct InventoryBuilder: Sendable {
   /// The steps that must run once over every folder (`finalizeInventory`).
   private func finalize(_ inventory: inout Inventory, overrides: InspectOverrides) throws {
     inventory.clearSpuriousBayer(pixels: pixels)
+    try Task.checkCancellation()
     inventory.colorModel = inventory.lightColorModel
     // An explicit choice answers the mixed folder: resolved before anything is keyed on it.
     if inventory.colorModel == .mixed && overrides.colorModel == .auto {
@@ -120,6 +121,8 @@ package struct InventoryBuilder: Sendable {
     // Last among the grouping steps: verdicts are stored against a set's final id.
     try Task.checkCancellation()
     FilterSetClassifier.annotate(&inventory, overrides: overrides.filterSets, pixels: pixels)
+    // annotate stops measuring once cancelled: its partial verdicts must never be returned.
+    try Task.checkCancellation()
     inventory.sessions = SessionInfo.summary(inventory.frames)
     if Night.spansSeveral(inventory.frames) { inventory.warnUndatedSplit() }
     inventory.addCompletenessWarnings()

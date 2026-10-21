@@ -34,19 +34,21 @@ struct LiveImportScanProgressTests {
       }
     })
     model.choose(folder: capture)
+    // Headers read fast; the pixel verdicts after them are what takes long on a real capture.
+    var counts: [Int] = []
     for await step in heard {
-      if case .reading(let done, _) = step, done >= 2 * ScanProgress.readingStep { break }
+      if case .reading(let done, _) = step { counts.append(done) }
+      if Self.counting(model.progress) && !counts.isEmpty { try Self.screenshot(model) }
+      if step == .classifying { break }
     }
-    for _ in 0..<100_000 where !Self.counting(model.progress) { await Task.yield() }
-    #expect(Self.counting(model.progress), "\(String(describing: model.progress))")
+    #expect(Set(counts).count >= 3, "the counter moved: \(counts)")
     #expect(ImportSheet.content(of: model) == .scanning)
-    try Self.screenshot(model)
 
     let start = ContinuousClock.now
     model.cancelScan()
     #expect(!model.isScanning && model.progress == nil && model.request.paths.isEmpty)
     await model.settled()
-    #expect(ContinuousClock.now - start < .seconds(5), "the scan stops at the next file")
+    #expect(ContinuousClock.now - start < .seconds(5), "the scan stops at the next frame read")
     tell.finish()
   }
 

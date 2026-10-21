@@ -15,11 +15,7 @@ package enum StagePane {
     case .data:
       DataStagePane(model: model)
     case .calibration:
-      EmptyState(
-        .app("Calibration masters"),
-        message: .app(
-          "The masters each light set uses, their statistics and the gaps will appear here."),
-        systemImage: "square.stack.3d.down.right")
+      CalibrationStagePane(model: model)
     case .review:
       EmptyState(
         .app("Frame review"),

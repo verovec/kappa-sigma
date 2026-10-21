@@ -36,7 +36,7 @@ package struct ProjectWindowView: View {
       if let importing = model.importing {
         ImportSheet(
           model: importing, onAdd: { model.add($0) }, onCancel: { model.closeImport() },
-          addError: model.error)
+          addError: model.importError)
       }
     }
   }

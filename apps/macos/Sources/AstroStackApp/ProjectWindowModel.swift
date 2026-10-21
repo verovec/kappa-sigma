@@ -15,6 +15,8 @@ package final class ProjectWindowModel {
   /// The open Import sheet's model, `nil` when no sheet is shown.
   package private(set) var importing: ImportViewModel?
   package internal(set) var error: UserFacingError?
+  /// The last Add's failure, shown on the Import sheet; an error of Run or the Studio is not.
+  package private(set) var importError: UserFacingError?
   /// The last scan of the sources in this window: the sheet's plan on Add, or a Rescan the user
   /// asked for; `nil` until then (an M31 scan takes ~90 s, never run on open).
   package internal(set) var scan: ImportPlan? {
@@ -38,6 +40,9 @@ package final class ProjectWindowModel {
   package let knobs: KnobPanelViewModel
   /// This session's imports, in order: the next run applies all their overrides.
   var imports: [ImportRequest] = []
+  @ObservationIgnored private var masterServices: MasterServices?
+  /// The project is the untitled temporary package: a run needs it saved first (read on refresh).
+  package private(set) var needsSave = false
 
   let store: () -> ProjectStore?
   let folder: () -> URL?
@@ -45,6 +50,10 @@ package final class ProjectWindowModel {
   let runs: RunServices
   /// The package is saved (not the untitled temporary one a Save moves).
   let isSaved: () -> Bool
+  /// Tells the document the project changed, so an untitled one asks to be saved on close.
+  let edited: () -> Void
+  /// Asks the document to save (the Save panel for an untitled project).
+  let saveDocument: () -> Void
 
   /// A window over the document's current store and package folder (both change when the package
   /// moves); each sheet and run gets fresh `services`, and runs go through `runs`.
@@ -53,13 +62,17 @@ package final class ProjectWindowModel {
     folder: @escaping () -> URL? = { nil },
     services: @escaping (ProjectStore?) -> ImportServices = { ImportPlanning.services(store: $0) },
     runs: RunServices = .live,
-    isSaved: @escaping () -> Bool = { true }
+    isSaved: @escaping () -> Bool = { true },
+    edited: @escaping () -> Void = {},
+    save: @escaping () -> Void = {}
   ) {
     self.store = store
     self.folder = folder
     self.services = services
     self.runs = runs
     self.isSaved = isSaved
+    self.edited = edited
+    self.saveDocument = save
     // The panel starts where the latest stack left it; an unreadable record is reported.
     let latest = Result { try store()?.latestStack().map(StackRecord.init(stack:)) }
     let record = (try? latest.get()) ?? nil
@@ -87,6 +100,23 @@ package final class ProjectWindowModel {
     }
   }
 
+  /// Saves the project: the Save panel names an untitled one, then Run is offered.
+  package func save() {
+    saveDocument()
+  }
+
+  /// Opens the library master at `path` in the viewer; nothing without master services.
+  package func previewMaster(_ path: String) {
+    masters?.preview(path)
+  }
+
+  /// The master services of this window's planner, built once: the viewer needs no fresh index.
+  package var masters: MasterServices? {
+    if let masterServices { return masterServices }
+    masterServices = services(store()).masters
+    return masterServices
+  }
+
   /// A window whose sheets plan with `planning` and have no master services.
   package convenience init(
     store: @escaping () -> ProjectStore?,
@@ -99,6 +129,7 @@ package final class ProjectWindowModel {
   /// Opens the Import sheet on a fresh request.
   package func startImport() {
     closeImport()
+    importError = nil
     let services = services(store())
     importing = ImportViewModel(planning: services.planning, masters: services.masters)
   }
@@ -116,13 +147,17 @@ package final class ProjectWindowModel {
   package func add(_ request: ImportRequest) {
     guard let store = store() else {
       error = .projectClosed
+      importError = error
       return
     }
+    var recorded = 0
     do {
       for path in request.paths {
         try store.addSource(kind: .night, path: path)
+        recorded += 1
       }
       imports.append(request)
+      edited()
       // The sources first: whether the sheet's plan is the project's scan depends on them.
       refresh()
       adoptScan(of: importing, for: request)
@@ -130,9 +165,11 @@ package final class ProjectWindowModel {
       refresh()
     } catch {
       // Some folders may be recorded: the last scan no longer describes the project.
+      if recorded > 0 { edited() }
       dropScan()
       refresh()
       self.error = UserFacingError(error)
+      importError = self.error
     }
   }
 
@@ -140,6 +177,7 @@ package final class ProjectWindowModel {
   package func refresh() {
     do {
       let store = store()
+      needsSave = !isSaved()
       sources = try store?.sources() ?? []
       let summary = try store?.summary() ?? ProjectSummary()
       let running = run?.isRunning == true ? 1 : 0

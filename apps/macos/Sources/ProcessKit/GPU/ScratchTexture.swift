@@ -2,7 +2,7 @@ package import Metal
 
 /// GPU-only intermediates of multi-pass kernels (morphology, box blurs).
 package enum ScratchTexture {
-  /// A private `r32Float` texture of `input`'s size, read and written by kernels.
+  /// A private `r32Float` texture the size of `input`, for kernels to read and write.
   package static func make(like input: MTLTexture, device: MTLDevice) throws -> MTLTexture {
     let descriptor = MTLTextureDescriptor.texture2DDescriptor(
       pixelFormat: .r32Float, width: input.width, height: input.height, mipmapped: false)

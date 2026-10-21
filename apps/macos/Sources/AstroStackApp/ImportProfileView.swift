@@ -113,7 +113,7 @@ package struct ImportProfileView: View {
   private var language: String { AppLocale.language(of: locale) }
 
   /// « Process · Parameter = value », titles from ProcessKit's catalog in `locale`.
-  nonisolated static func line(
+  package nonisolated static func line(
     _ step: Profile.Step, _ id: String, registry: ProcessRegistry?, locale: Locale
   ) -> String {
     let type = registry?.type(id: step.recipe.processID)

@@ -71,3 +71,34 @@ extension PipelineRunnerTests {
     #expect(result.history.current.planes == byHand)
   }
 }
+
+/// `PipelineBundle.isSameInput`: what a locked step's reuse compares.
+@Suite("Pipeline bundle — same input")
+struct PipelineBundleTests {
+  static func image(_ value: Float, rows: RowOrder = .topDown) -> AstroImage {
+    AstroImage(
+      width: 2, height: 1, planes: [[value, value]], metadata: ImageMetadata(rowOrder: rows))
+  }
+
+  @Test("same stats and identical layers are the same input; any difference is not")
+  func testSameInput() {
+    let stats = LayerStats(channels: [ChannelStats(median: 0.1, madn: 0.01, minimum: 0, maximum: 1)]
+    )
+    let base = PipelineBundle(
+      stats: stats, layers: ["Ha": Self.image(0.2)], layerStats: ["Ha": stats])
+    #expect(base.isSameInput(as: base))
+    var other = base
+    other.layers = ["Ha": Self.image(0.3)]
+    #expect(!base.isSameInput(as: other), "other pixels")
+    other.layers = ["Ha": Self.image(0.2, rows: .bottomUp)]
+    #expect(!base.isSameInput(as: other), "other metadata")
+    other.layers = ["OIII": Self.image(0.2)]
+    #expect(!base.isSameInput(as: other), "other layers")
+    other = base
+    other.layerStats = [:]
+    #expect(!base.isSameInput(as: other), "other layer stats")
+    other = base
+    other.stats = LayerStats(channels: [])
+    #expect(!base.isSameInput(as: other), "other stats")
+  }
+}

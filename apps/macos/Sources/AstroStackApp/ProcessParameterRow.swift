@@ -18,7 +18,7 @@ struct ProcessParameterRow: View {
         Button {
           model.take(suggestion)
         } label: {
-          Text(.app("Suggested: \(words(suggestion.value)) — \(suggestion.reason)"))
+          Text(.app("Suggested: \(words(suggestion.value)) — \(reason(suggestion))"))
             .font(.caption)
         }
         .buttonStyle(.link)
@@ -79,9 +79,15 @@ struct ProcessParameterRow: View {
     }
   }
 
+  /// The process's reason in the view's language (ProcessKit's catalog holds every reason).
+  private func reason(_ suggestion: Suggestion) -> String {
+    String(localized: ProcessKitResources.title(suggestion.reason, locale: locale))
+  }
+
   private func words(_ value: ParamValue) -> String {
     switch value {
-    case .number(let number): AstroFormat(locale: locale).parameter(number)
+    // A suggestion is read, not typed: four decimals at most.
+    case .number(let number): LocaleNumber.decimal(number, locale: locale, maxFractionDigits: 4)
     case .flag(let flag):
       String(localized: flag ? .app("On", locale: locale) : .app("Off", locale: locale))
     case .choice(let option): option

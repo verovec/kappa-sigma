@@ -1,12 +1,17 @@
 internal import RenderKit
-internal import SwiftUI
+package import SwiftUI
 
 /// The Studio (card 0087, design §5 B): the catalogue, the working image (the history's head,
 /// or the preview of the panel's values), the panel and the history.
-struct StudioWorkspaceView: View {
+package struct StudioWorkspaceView: View {
   let model: StudioWorkspaceModel
 
-  var body: some View {
+  /// The Studio of `model`.
+  package init(model: StudioWorkspaceModel) {
+    self.model = model
+  }
+
+  package var body: some View {
     HStack(spacing: 0) {
       StudioCatalogueView(model: model).frame(width: 220)
       Divider()

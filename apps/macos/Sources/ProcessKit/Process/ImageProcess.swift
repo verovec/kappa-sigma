@@ -48,6 +48,10 @@ package protocol ImageProcess {
   /// Advanced parameters `params` makes relevant enough to show without the disclosure
   /// (`ParamSchema.visible(disclosed:promoted:)`); none by default.
   static func promoted(_ params: ParamSet) -> Set<String>
+
+  /// The arrow step of number parameters that need a finer one than the panel's default (a
+  /// tenth of it with ⇧ or ⌥), by id.
+  static var steps: [String: Double] { get }
 }
 
 extension ImageProcess {
@@ -70,6 +74,9 @@ extension ImageProcess {
 
   /// No promotion.
   package static func promoted(_ params: ParamSet) -> Set<String> { [] }
+
+  /// The panel's default steps.
+  package static var steps: [String: Double] { [:] }
 }
 
 /// Where a process belongs in a pipeline.

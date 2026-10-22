@@ -125,7 +125,7 @@ struct AccessibilityAuditTests {
     "AstroStackApp/ShortcutsSheet.swift", "AstroStackApp/StudioCatalogueView.swift",
     "AstroStackApp/StudioSideView.swift", "AstroStackApp/ProcessPanel.swift",
     "AstroStackApp/ProcessParameterRow.swift", "AstroStackApp/StudioMaskRow.swift",
-    "AstroStackApp/StudioCatalogueRow.swift",
+    "AstroStackApp/StudioCatalogueRow.swift", "AstroStackApp/ProcessHistogramExtras.swift",
     "AstroStackApp/GlossaryView.swift", "AstroStackApp/GuidePanel.swift",
     "AstroStackApp/ReviewStagePane.swift", "AstroStackApp/FrameReviewView.swift",
     "AstroStackApp/FrameTable.swift", "AstroStackApp/FrameBlinkView.swift",

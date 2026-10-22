@@ -40,6 +40,7 @@ struct ProcessParameterRow: View {
     case .number(let fallback, let bounds):
       ParameterRow(
         label, parameter: number(fallback, bounds), help: help, key: key,
+        step: model.step(for: spec.id),
         format: { AstroFormat(locale: locale).parameter($0) },
         parse: { AstroFormat(locale: locale).parameter(parsing: $0) })
     case .flag:

@@ -25,6 +25,18 @@ package struct ProcessPanel: View {
             .font(.headline)
         }
       }
+      if !model.handles.isEmpty, let sample = model.sample {
+        ProcessHistogramExtras(model: model, sample: sample)
+      }
+      ForEach(Array(model.groupedReasons.enumerated()), id: \.offset) { offset, reason in
+        Button {
+          model.take(reason: reason)
+        } label: {
+          let words = String(localized: ProcessKitResources.title(reason, locale: locale))
+          Text(.app("Take together: \(words)"))
+        }
+        .accessible(.suggestion(model.togetherKey, offset), label: .app("Take together"))
+      }
       ForEach(model.visibleSpecs, id: \.id) { spec in
         ProcessParameterRow(spec: spec, model: model)
       }

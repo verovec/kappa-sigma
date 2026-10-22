@@ -94,3 +94,27 @@ extension HistoryTests {
     #expect(history.steps.count == 1 && history.current.planes == [[1, 1, 1, 1]])
   }
 }
+
+extension HistoryTests {
+  /// A manifest naming a process or a layer role this build does not know is refused, never
+  /// read as another history.
+  @Test("a manifest with an unknown process or layer role is unreadable", .scratchDirectory)
+  func testReopenRefusesUnknownEntries() throws {
+    let directory = try ScratchDirectory.url.appendingPathComponent("history")
+    let original = try Self.image([0, 1, 2, 3])
+    let history = try History(directory: directory, original: original)
+    try history.apply(
+      processID: "a", params: Self.params, result: try Self.image([1, 1, 1, 1]),
+      outputs: [.starless: try Self.image([6, 6, 6, 6])])
+    #expect(throws: HistoryError.unreadable("unknown process a")) {
+      _ = try History.reopen(directory: directory, original: original) { _ in nil }
+    }
+    let manifest = directory.deletingLastPathComponent().appendingPathComponent("history.json")
+    let text = try String(contentsOf: manifest, encoding: .utf8)
+    try text.replacingOccurrences(of: "\"starless\"", with: "\"moon\"")
+      .write(to: manifest, atomically: true, encoding: .utf8)
+    #expect(throws: HistoryError.unreadable("unknown layer role moon")) {
+      _ = try History.reopen(directory: directory, original: original) { _ in Self.gainSchema }
+    }
+  }
+}

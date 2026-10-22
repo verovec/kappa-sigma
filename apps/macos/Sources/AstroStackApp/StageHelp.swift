@@ -1,6 +1,7 @@
+package import Foundation
 internal import HelpKit
 package import RenderKit
-package import SwiftUI
+internal import SwiftUI
 
 /// A journey stage's help (card 0086): its card from HelpKit, read once per stage and language,
 /// the first line as the summary.

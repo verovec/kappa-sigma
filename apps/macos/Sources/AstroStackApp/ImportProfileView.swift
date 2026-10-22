@@ -106,15 +106,19 @@ package struct ImportProfileView: View {
           HStack(spacing: DesignMetrics.spacingXS) {
             Text(verbatim: Self.line(step, id, registry: registry, locale: locale))
               .font(.caption.monospacedDigit())
-            let why = step.why[id]?.text(language: language) ?? ""
             let process = step.recipe.processID
             let definition = AppGlossary.help.paramDoc(
               process: process, param: id, locale: language)
-            KeyedHelp(
-              HelpContent(summary: .app("\(definition ?? why)")) {
-                HelpText(Self.valueHelp(process, id, why: why, language: language))
-              }, key: .help("profile.\(offset).\(process).\(id)"), label: .whyThisValue
-            ).button
+            let why = step.why[id]?.text(language: language)
+            // No words at all (a user copy's value with no why, an undocumented parameter): no
+            // « ? » rather than an empty one.
+            if let summary = definition ?? why {
+              KeyedHelp(
+                HelpContent(summary: .app("\(summary)")) {
+                  HelpText(Self.valueHelp(definition: definition, why: why))
+                }, key: .help("profile.\(offset).\(process).\(id)"), label: .whyThisValue
+              ).button
+            }
           }
         }
       }
@@ -122,11 +126,8 @@ package struct ImportProfileView: View {
   }
 
   /// The parameter's definition (HelpKit `params.json`) then the profile's why, one paragraph each.
-  package nonisolated static func valueHelp(
-    _ process: String, _ param: String, why: String, language: String
-  ) -> String {
-    let definition = AppGlossary.help.paramDoc(process: process, param: param, locale: language)
-    return [definition, why].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: "\n")
+  package nonisolated static func valueHelp(definition: String?, why: String?) -> String {
+    [definition, why].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: "\n")
   }
 
   private var language: String { AppLocale.language(of: locale) }

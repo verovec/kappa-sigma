@@ -45,18 +45,12 @@ package struct DisplayUniforms {
 
   /// 1:1 at the origin of a `width`×`height` image with `channels` planes.
   package init(width: Int, height: Int, mipLevels: Int, channels: Int, stf: [STFParameters]?) {
-    func lane(_ value: (STFParameters) -> Double) -> SIMD4<Float> {
-      let values = (0..<4).map { index -> Float in
-        guard let stf, !stf.isEmpty else { return 0 }
-        return Float(value(stf[min(index, stf.count - 1)]))
-      }
-      return SIMD4(values)
-    }
-    shadows = lane(\.shadows)
-    midtone = lane(\.midtone)
-    highlights = lane(\.highlights)
+    let lanes = STFLanes(stf)
+    shadows = lanes.shadows
+    midtone = lanes.midtone
+    highlights = lanes.highlights
     self.channels = UInt32(channels)
-    stfEnabled = stf == nil ? 0 : 1
+    stfEnabled = lanes.enabled
     clippingOverlay = 0
     compareMode = 0
     splitX = 0

@@ -14,7 +14,23 @@ struct ViewerPanel: View {
       viewSection
       stretchSection
       Section {
-        HistogramView(bins: model.histogram).frame(height: 120)
+        Picker(selection: $model.frame.histogramDomain) {
+          ForEach(HistogramDomain.allCases, id: \.self) { Text($0.label) }
+        } label: {
+          Text(.renderKit("Histogram domain"))
+        }
+        .pickerStyle(.segmented)
+        .accessible(.viewer("histogramDomain"), label: .renderKit("Histogram domain"))
+        HistogramHandles(
+          bins: model.histogram,
+          handles: model.frame.stf?.map { $0.handlePositions(in: model.frame.histogramDomain) },
+          key: "viewer", label: .renderKit("Histogram"), hint: Self.handlesHint,
+          onDragEnded: { model.endHandleDrag() },
+          onDrag: { channel, handle, position in
+            model.dragHandle(handle, channel: channel, to: position)
+          }
+        )
+        .frame(height: 120)
       } header: {
         Text(
           model.frame.region == nil
@@ -71,18 +87,28 @@ struct ViewerPanel: View {
       .pickerStyle(.segmented)
       Toggle(isOn: $model.linked) { Text(.renderKit("Linked channels")) }
         .disabled(model.stretch != .auto)
+      Button(.renderKit("Reset to auto")) { model.resetToAuto() }
+        .disabled(model.stretch == .auto)
+        .accessible(.viewer("resetAuto"), label: .renderKit("Reset to auto"))
       stretchNumbers
     } header: {
       Text(.renderKit("Display stretch"))
     }
   }
 
+  /// What a drag on the histogram does (the canvas's accessibility hint).
+  static let handlesHint: LocalizedStringResource = .renderKit(
+    "Drag a handle: the value shown there becomes the black point, the midtone or the white point."
+  )
+
   @ViewBuilder private var stretchNumbers: some View {
     if model.stretch == .manual {
       ForEach(model.manualSTF.indices, id: \.self) { channel in
-        ChannelSliders(
-          name: Self.channelName(channel, of: model.manualSTF.count),
-          parameters: $model.manualSTF[channel])
+        let name = Self.channelName(channel, of: model.manualSTF.count)
+        STFControls(
+          name: name, parameters: $model.manualSTF[channel],
+          auto: model.autoParameters[channel], mapping: model.mapping(for: channel),
+          key: "stf." + name.lowercased())
       }
     } else if let stf = model.frame.stf {
       ForEach(stf.indices, id: \.self) { channel in
@@ -149,27 +175,12 @@ struct ViewerPanel: View {
   }
 }
 
-/// Manual stretch of one channel: the three numbers, each with a slider and its value.
-private struct ChannelSliders: View {
-  let name: String
-  @Binding var parameters: STFParameters
-  @Environment(\.locale) private var locale
-
-  var body: some View {
-    VStack(alignment: .leading) {
-      Text(verbatim: name).font(.headline)
-      slider(.renderKit("Shadows"), value: $parameters.shadows)
-      slider(.renderKit("Midtone"), value: $parameters.midtone)
-      slider(.renderKit("Highlights"), value: $parameters.highlights)
-    }
-  }
-
-  private func slider(_ label: LocalizedStringResource, value: Binding<Double>) -> some View {
-    HStack {
-      Text(label).frame(width: 72, alignment: .leading)
-      Slider(value: value, in: 0...1)
-      Text(verbatim: ViewerPanel.number(value.wrappedValue, digits: 5, locale: locale))
-        .monospacedDigit().frame(width: 64)
+extension HistogramDomain {
+  /// The segmented control's word.
+  var label: LocalizedStringResource {
+    switch self {
+    case .linear: .renderKit("Linear")
+    case .display: .renderKit("Displayed")
     }
   }
 }

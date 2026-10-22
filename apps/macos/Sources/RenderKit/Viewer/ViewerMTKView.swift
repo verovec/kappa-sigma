@@ -20,8 +20,8 @@ package final class ViewerMTKView: MTKView, MTKViewDelegate {
   private var dragStart: SIMD2<Double>?
   private var dragLast: SIMD2<Double>?
   private var fitted = false
-  /// The region the shown histogram counts (`.none`: nothing counted yet).
-  private var countedRegion: PixelRegion??
+  /// What the shown histogram counted (`nil`: nothing counted yet).
+  private var counted: ViewerFrame.HistogramInput?
   private var frameNumber = 0
   /// The newest histogram buffer: read on the main actor once its frame completes.
   private var pendingBins: (frame: Int, bins: MTLBuffer)?
@@ -100,8 +100,9 @@ package final class ViewerMTKView: MTKView, MTKViewDelegate {
     }
     var frame = model.frame
     frame.canvasGrey = DesignColor.canvasGrey(in: DesignAppearance(effectiveAppearance))
-    // The histogram depends on the image and the region only: count again when they change.
-    let counting = countedRegion != .some(frame.region)
+    // The histogram depends on the image, the region and (display domain) the stretch only:
+    // count again when they change.
+    let counting = counted != frame.histogramInput
     let interval = Self.signposter.beginInterval("frame", id: Self.signposter.makeSignpostID())
     do {
       let bins = try renderer.encode(
@@ -110,7 +111,7 @@ package final class ViewerMTKView: MTKView, MTKViewDelegate {
       frameNumber += 1
       let number = frameNumber
       if let bins {
-        countedRegion = .some(frame.region)
+        counted = frame.histogramInput
         pendingBins = (number, bins)
       }
       commands.addCompletedHandler { [weak self] _ in

@@ -25,8 +25,9 @@ package final class ViewerRenderer {
   /// Encodes `frame` into `commands`.
   ///
   /// With `histogram`, the returned buffer holds the counts once they complete
-  /// (`Histogram.counts`). The histogram depends on the image and region only, so
-  /// the viewer counts again only when those change.
+  /// (`Histogram.counts`). The histogram depends on the image and `frame.histogramInput` (region,
+  /// stride, and the stretch in the display domain) only, so the viewer counts again only when
+  /// those change.
   package func encode(
     into commands: MTLCommandBuffer, image: ImageTexture, reference: ImageTexture?,
     frame: ViewerFrame, output: MTLTexture, histogram counting: Bool = true,
@@ -39,7 +40,7 @@ package final class ViewerRenderer {
     let bins = try histogram.makeBins(channels: image.planes.count)
     try histogram.encode(
       into: commands, image: image, stride: frame.histogramStride,
-      region: frame.storedRegion(imageHeight: image.height), bins: bins)
+      region: frame.storedRegion(imageHeight: image.height), stf: frame.histogramSTF, bins: bins)
     return bins
   }
 

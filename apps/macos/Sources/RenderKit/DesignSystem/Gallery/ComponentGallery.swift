@@ -27,9 +27,20 @@ package struct ComponentGallery: View {
       points: [SIMD2(0, 0), SIMD2(0.3, 0.2), SIMD2(0.7, 0.85), SIMD2(1, 1)], maxCount: 16),
   ]
 
+  /// A dark sky's statistics and its autostretch, for the stretch controls (card 0085).
+  package static let stretchMapping = STFMapping(median: 0.011_72, madn: 0.001_48)
+  /// −2.8 σ at 0.25 over `stretchMapping`.
+  package static let stretchAuto = stretchMapping.parameters(
+    sigma: AutoSTF.shadowsClip, targetBackground: AutoSTF.targetBackground)
+  /// Sample counts: one sky peak per channel, low in the range.
+  package static let histogramBins: [[Int]] = (0..<3).map { channel in
+    (0..<256).map { bin in Int(1000 * exp(-pow(Double(bin - 20 - 8 * channel), 2) / 60)) }
+  }
+
   @State private var parameters = Self.parameters
   @State private var curves = Self.curves
   @State private var installs = Self.installStates.map { InstallCardModel(state: $0) { nil } }
+  @State private var stretch = Self.stretchAuto
   @Environment(\.locale) private var locale
 
   /// The gallery.
@@ -41,6 +52,7 @@ package struct ComponentGallery: View {
       measurements
       statuses
       parameterRows
+      displayStretch
       curveEditors
       tools
       empty
@@ -122,8 +134,27 @@ package struct ComponentGallery: View {
           },
           key: index == 0 ? "haBlend" : "haCeiling",
           format: { LocaleNumber.decimal($0, locale: locale, maxFractionDigits: 3) },
-          parse: { Double($0.replacing(locale.decimalSeparator ?? ".", with: ".")) })
+          parse: { LocaleNumber.parse($0, locale: locale) })
       }
+    }
+  }
+
+  private var displayStretch: some View {
+    VStack(alignment: .leading, spacing: DesignMetrics.spacingM) {
+      SectionHeader(
+        .renderKit("Display stretch"),
+        detail: .renderKit(
+          "Shadows in σ, target background, raw numbers; the histogram's handles drag."))
+      STFControls(
+        name: ViewerPanel.channelName(0, of: 1), parameters: $stretch, auto: Self.stretchAuto,
+        mapping: Self.stretchMapping, key: "gallery")
+      HistogramHandles(
+        bins: Self.histogramBins, handles: [stretch.handlePositions(in: .linear)], key: "gallery",
+        label: .renderKit("Histogram"), hint: ViewerPanel.handlesHint
+      ) { _, handle, position in
+        stretch = stretch.dragging(handle, to: position, in: .linear)
+      }
+      .frame(height: 100)
     }
   }
 

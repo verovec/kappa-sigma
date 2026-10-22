@@ -11,7 +11,8 @@ nonisolated struct LoadedImage {
 
   let image: AstroImage
   let texture: ImageTexture
-  let autoSTF: [STFParameters]
+  /// Each plane's median and MADN: the viewer's autostretch and σ controls read them.
+  let statistics: [STFMapping]
 
   /// Decodes, uploads and measures `url` off the main actor.
   ///
@@ -25,7 +26,7 @@ nonisolated struct LoadedImage {
     let texture = try ImageTexture(
       device: device, width: image.width, height: image.height, planes: image.planes)
     let uploaded = ContinuousClock.now
-    let autoSTF = AutoSTF.compute(planes: image.planes, linked: false)
+    let statistics = STFMapping.measure(planes: image.planes, linked: false)
     logger.info(
       """
       opened \(url.lastPathComponent, privacy: .public) \(image.width)×\(image.height)×\
@@ -33,6 +34,6 @@ nonisolated struct LoadedImage {
       \(decoded - started, privacy: .public), upload \(uploaded - decoded, privacy: .public), \
       STF \(ContinuousClock.now - uploaded, privacy: .public)
       """)
-    return Self(image: image, texture: texture, autoSTF: autoSTF)
+    return Self(image: image, texture: texture, statistics: statistics)
   }
 }

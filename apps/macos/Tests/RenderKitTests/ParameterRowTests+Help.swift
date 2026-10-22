@@ -21,10 +21,15 @@ extension ParameterRowTests {
     host.frame = NSRect(x: 0, y: 0, width: 900, height: 1800)
     host.layoutSubtreeIfNeeded()
     RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+    // Every parameter row of the gallery has its « ? »: the two Hα rows and the stretch controls'
+    // three visible rows (card 0085).
     let help = reported.entries.filter { $0.id.hasSuffix(".help") }
     #expect(
       help.map(\.id) == [
         "fr.astrostack.parameter.haBlend.help", "fr.astrostack.parameter.haCeiling.help",
+        "fr.astrostack.parameter.gallery.shadowsSigma.help",
+        "fr.astrostack.parameter.gallery.targetBackground.help",
+        "fr.astrostack.parameter.gallery.highlights.help",
       ])
     #expect(help.allSatisfy { $0.label == "Pourquoi cette valeur ?" })
     #expect(help.first?.hint == "Part de la couche Hα ajoutée au canal rouge.")

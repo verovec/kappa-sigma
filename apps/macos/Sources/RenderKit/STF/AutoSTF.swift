@@ -3,33 +3,24 @@
 /// Per channel (Siril `find_unlinked_midtones_balance`): MADN = 1.4826 · MAD; c0 = median +
 /// shadowsClip · MADN clamped to [0, 1]; m = MTF(target, median − c0), so the background lands on
 /// `targetBackground`; c1 = 1. Linked: the same parameters for every channel, from the mean of the
-/// channels' medians and MADNs. Medians are the upper median (`sorted[n/2]`).
+/// channels' medians and MADNs. Medians are the upper median (`sorted[n/2]`). The arithmetic is
+/// `STFMapping`'s: the stretch controls read an autostretch back as −2.8 σ at 0.25.
 package enum AutoSTF {
   /// MAD → standard deviation of a normal distribution.
   static let madToSigma = 1.4826
+  /// Siril's shadows clip, in σ of the MADN.
+  package static let shadowsClip = -2.8
+  /// Siril's target background.
+  package static let targetBackground = 0.25
 
   /// The STF of each plane.
   package static func compute(
-    planes: [[Float]], linked: Bool, shadowsClip: Double = -2.8, targetBackground: Double = 0.25
+    planes: [[Float]], linked: Bool, shadowsClip: Double = shadowsClip,
+    targetBackground: Double = targetBackground
   ) -> [STFParameters] {
-    let stats = planes.map(Self.medianAndMADN)
-    if linked, !stats.isEmpty {
-      let median = stats.map(\.median).reduce(0, +) / Double(stats.count)
-      let madn = stats.map(\.madn).reduce(0, +) / Double(stats.count)
-      let shared = parameters(median: median, madn: madn, shadowsClip, targetBackground)
-      return Array(repeating: shared, count: planes.count)
+    STFMapping.measure(planes: planes, linked: linked).map {
+      $0.parameters(sigma: shadowsClip, targetBackground: targetBackground)
     }
-    return stats.map { parameters(median: $0.median, madn: $0.madn, shadowsClip, targetBackground) }
-  }
-
-  private static func parameters(
-    median: Double, madn: Double, _ shadowsClip: Double, _ target: Double
-  ) -> STFParameters {
-    let shadows = min(max(median + shadowsClip * madn, 0), 1)
-    // The midtone m with MTF(m, median − c0) = target is MTF(target, median − c0): the MTF is
-    // its own inverse in this sense.
-    let midtone = min(max(MTF.apply(target, median - shadows), 0), 1)
-    return STFParameters(shadows: shadows, midtone: midtone, highlights: 1)
   }
 
   /// Upper median and normalised MAD of a plane's finite values (NaN/Inf blanks left out; a

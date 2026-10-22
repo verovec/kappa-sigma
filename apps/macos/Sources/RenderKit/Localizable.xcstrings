@@ -17,6 +17,22 @@
         }
       }
     },
+    "Black point in σ of the noise (MADN; auto −2.8 σ). Arrows ±0.1 σ, ⇧ or ⌥ ±0.01 σ.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Black point in σ of the noise (MADN; auto −2.8 σ). Arrows ±0.1 σ, ⇧ or ⌥ ±0.01 σ."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Point noir en σ du bruit (MADN ; auto −2,8 σ). Flèches ±0,1 σ, ⇧ ou ⌥ ±0,01 σ."
+          }
+        }
+      }
+    },
     "Checking…": {
       "localizations": {
         "en": {
@@ -161,6 +177,38 @@
         }
       }
     },
+    "Displayed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Displayed"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affiché"
+          }
+        }
+      }
+    },
+    "Drag a handle: the value shown there becomes the black point, the midtone or the white point.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag a handle: the value shown there becomes the black point, the midtone or the white point."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Glissez une poignée : la valeur affichée à cet endroit devient le point noir, le ton moyen ou le point blanc."
+          }
+        }
+      }
+    },
     "Empty state": {
       "localizations": {
         "en": {
@@ -257,6 +305,22 @@
         }
       }
     },
+    "Histogram": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Histogram"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Histogramme"
+          }
+        }
+      }
+    },
     "Histogram (image)": {
       "localizations": {
         "en": {
@@ -285,6 +349,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Histogramme (région)"
+          }
+        }
+      }
+    },
+    "Histogram domain": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Histogram domain"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Domaine de l’histogramme"
           }
         }
       }
@@ -413,6 +493,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Les valeurs claires et sombres suivent l’apparence de la fenêtre."
+          }
+        }
+      }
+    },
+    "Linear": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Linear"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Linéaire"
           }
         }
       }
@@ -721,6 +817,22 @@
         }
       }
     },
+    "Raw numbers (c0, m, c1)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Raw numbers (c0, m, c1)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valeurs brutes (c0, m, c1)"
+          }
+        }
+      }
+    },
     "Re-check": {
       "localizations": {
         "en": {
@@ -801,6 +913,22 @@
         }
       }
     },
+    "Reset to auto": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset to auto"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revenir à l’auto"
+          }
+        }
+      }
+    },
     "Reset to default": {
       "localizations": {
         "en": {
@@ -829,6 +957,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ombres"
+          }
+        }
+      }
+    },
+    "Shadows (σ)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shadows (σ)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ombres (σ)"
+          }
+        }
+      }
+    },
+    "Shadows in σ, target background, raw numbers; the histogram's handles drag.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shadows in σ, target background, raw numbers; the histogram's handles drag."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ombres en σ, fond cible, valeurs brutes ; les poignées de l’histogramme se glissent."
           }
         }
       }
@@ -929,6 +1089,22 @@
         }
       }
     },
+    "Target background": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Target background"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fond cible"
+          }
+        }
+      }
+    },
     "Tokens": {
       "localizations": {
         "en": {
@@ -993,6 +1169,38 @@
         }
       }
     },
+    "Where the median lands, Siril's meaning (auto 0.25). Arrows ±0.01, ⇧ or ⌥ ±0.001.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Where the median lands, Siril's meaning (auto 0.25). Arrows ±0.01, ⇧ or ⌥ ±0.001."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Niveau où la médiane s’affiche, au sens de Siril (auto 0,25). Flèches ±0,01, ⇧ ou ⌥ ±0,001."
+          }
+        }
+      }
+    },
+    "White point c1: values above it show white. Arrows ±0.01, ⇧ or ⌥ ±0.001.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "White point c1: values above it show white. Arrows ±0.01, ⇧ or ⌥ ±0.001."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Point blanc c1 : au-dessus, tout s’affiche blanc. Flèches ±0,01, ⇧ ou ⌥ ±0,001."
+          }
+        }
+      }
+    },
     "Why this value?": {
       "localizations": {
         "en": {
@@ -1005,6 +1213,54 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pourquoi cette valeur ?"
+          }
+        }
+      }
+    },
+    "c0, the black point applied. Arrows ±0.0001, ⇧ or ⌥ ±0.00001.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "c0, the black point applied. Arrows ±0.0001, ⇧ or ⌥ ±0.00001."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "c0, le point noir appliqué. Flèches ±0,0001, ⇧ ou ⌥ ±0,00001."
+          }
+        }
+      }
+    },
+    "c1, the white point applied. Arrows ±0.01, ⇧ or ⌥ ±0.001.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "c1, the white point applied. Arrows ±0.01, ⇧ or ⌥ ±0.001."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "c1, le point blanc appliqué. Flèches ±0,01, ⇧ ou ⌥ ±0,001."
+          }
+        }
+      }
+    },
+    "m, the midtone balance applied. Arrows ±0.001, ⇧ or ⌥ ±0.0001.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "m, the midtone balance applied. Arrows ±0.001, ⇧ or ⌥ ±0.0001."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "m, l’équilibre des tons moyens appliqué. Flèches ±0,001, ⇧ ou ⌥ ±0,0001."
           }
         }
       }

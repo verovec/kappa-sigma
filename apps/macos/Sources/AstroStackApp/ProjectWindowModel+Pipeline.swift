@@ -1,5 +1,5 @@
 internal import Foundation
-internal import ProcessKit
+package import ProcessKit
 package import ProjectKit
 
 /// A pipeline the user replays on another stack (card 0088): run once that stack's working
@@ -21,26 +21,27 @@ extension ProjectWindowModel {
     of workspace: StudioWorkspaceModel, stackID: Int64, store: ProjectStore,
     roles: Set<LayerRole>
   ) throws -> PipelineSidebarModel {
-    let applied = workspace.studio.steps
-    let own = Pipeline(
-      name: "Studio",
-      steps: applied.map {
-        PipelineStep(recipe: Recipe(processID: $0.processID, params: $0.params))
-      })
-    var pipeline = own
-    var warnings: [String] = []
-    if let profile = keptProfile(of: stackID)?.pipeline {
-      let planned = profile.steps.prefix(applied.count).map(\.recipe.processID)
-      if applied.count <= profile.steps.count, applied.map(\.processID) == Array(planned) {
-        pipeline = profile
-      } else {
-        warnings.append("the history left the pipeline of profile \(profile.name): its own steps")
-      }
+    let applied = workspace.studio.steps.map {
+      Recipe(processID: $0.processID, params: $0.params)
     }
+    let (pipeline, warnings) = Self.pipeline(
+      applied: applied, profile: keptProfile(of: stackID)?.pipeline)
     let sidebar = try PipelineSidebarModel(
       workspace: workspace, pipeline: pipeline, warnings: warnings, store: store, base: roles)
     sidebar.onReplay = { [weak self] in self?.isChoosingReplay = true }
     return sidebar
+  }
+
+  /// The pipeline a history of `applied` steps shows: `profile` while the history follows it,
+  /// else the history's own steps (with a warning naming the profile it left).
+  package static func pipeline(applied: [Recipe], profile: Pipeline?) -> (Pipeline, [String]) {
+    let own = Pipeline(name: "Studio", steps: applied.map { PipelineStep(recipe: $0) })
+    guard let profile else { return (own, []) }
+    let planned = profile.steps.prefix(applied.count).map(\.recipe.processID)
+    if applied.count <= profile.steps.count, applied.map(\.processID) == Array(planned) {
+      return (profile, [])
+    }
+    return (own, ["the history left the pipeline of profile \(profile.name): its own steps"])
   }
 
   /// The stacks the pipeline can be replayed on: the project's others, newest last.

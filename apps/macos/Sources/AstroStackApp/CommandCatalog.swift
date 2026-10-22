@@ -40,7 +40,8 @@ nonisolated package enum CommandCatalog {
   ]
 
   private static let file: [AppCommand] = [
-    AppCommand("file.newProject", "New Project", menu: .file, action: "newDocument:", key: "n"),
+    // A project is named after its target: ⌘N raises the welcome window's naming sheet.
+    AppCommand("file.newProject", "New Project…", menu: .file, action: "newProject:", key: "n"),
     AppCommand("file.open", "Open…", menu: .file, action: "openDocument:", key: "o"),
     AppCommand("file.openImage", "Open Image…", menu: .file, action: "openImage:", key: "O"),
     AppCommand("file.openRun", "Open Run…", menu: .file, action: "openRun:", key: "r"),
@@ -90,6 +91,9 @@ nonisolated package enum CommandCatalog {
     AppCommand(
       "window.minimize", "Minimize", menu: .window, action: "performMiniaturize:", key: "m"),
     AppCommand("window.zoom", "Zoom", menu: .window, action: "performZoom:"),
+    AppCommand(
+      "window.welcome", "Welcome Window", menu: .window, action: "showWelcome:",
+      separatorBefore: true),
     AppCommand(
       "window.bringAllToFront", "Bring All to Front", menu: .window, action: "arrangeInFront:",
       separatorBefore: true),

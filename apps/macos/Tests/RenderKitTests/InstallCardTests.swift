@@ -86,4 +86,37 @@ struct InstallCardTests {
     let missing = String(localized: InstallCard.label(of: .missing, locale: locale))
     #expect(missing == (language == "fr" ? "Non installé" : "Not installed"))
   }
+
+  @Test(
+    "a too old install is flagged, not called missing, in each language", arguments: ["en", "fr"])
+  func testOutdatedStatus(_ language: String) {
+    #expect(InstallCard.status(of: .outdated(version: "1.2.6")) == .attention)
+    let words = String(
+      localized: InstallCard.label(
+        of: .outdated(version: "1.2.6"), locale: Locale(identifier: language)))
+    #expect(words.contains("1.2.6"))
+    #expect(
+      words
+        != String(localized: InstallCard.label(of: .missing, locale: Locale(identifier: language))))
+  }
+
+  @Test("a card checking a full state keeps an outdated install outdated")
+  func testCheckKeepsOutdated() async {
+    let model = InstallCardModel(state: .outdated(version: "1.2.6")) { @concurrent in
+      .outdated(version: "1.2.6")
+    }
+
+    await model.recheck()
+
+    #expect(model.state == .outdated(version: "1.2.6"))
+  }
+
+  @Test("a verdict from elsewhere is shown, unless the card's own re-check is running")
+  func testShowVerdict() async {
+    let model = InstallCardModel(state: .missing) { @concurrent in .missing }
+
+    model.show(.found(URL(fileURLWithPath: "/usr/local/bin/starnet2")))
+
+    #expect(model.state == .found(URL(fileURLWithPath: "/usr/local/bin/starnet2")))
+  }
 }

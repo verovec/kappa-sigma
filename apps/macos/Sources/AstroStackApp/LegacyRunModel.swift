@@ -80,7 +80,7 @@ package final class LegacyRunModel {
       selected = id
       failure = nil
       viewer = Viewer(
-        model: ViewerModel(image: loaded.image, autoSTF: loaded.autoSTF), renderer: renderer,
+        model: ViewerModel(image: loaded.image, statistics: loaded.statistics), renderer: renderer,
         texture: loaded.texture)
     } catch is CancellationError {
       throw CancellationError()

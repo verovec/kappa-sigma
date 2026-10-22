@@ -33,10 +33,11 @@ package final class Histogram {
     return bins
   }
 
-  /// Encodes the count of `image` (inside `region`, whole image when `nil`) into `bins`.
+  /// Encodes the count of `image` (inside `region`, whole image when `nil`) into `bins`: the
+  /// linear values, or the displayed ones through `stf` (the display domain, card 0085).
   package func encode(
     into commands: MTLCommandBuffer, image: ImageTexture, stride: Int, region: PixelRegion?,
-    bins: MTLBuffer
+    stf: [STFParameters]? = nil, bins: MTLBuffer
   ) throws {
     guard let encoder = commands.makeComputeCommandEncoder() else {
       throw RenderError.commandFailed("histogram encoder")
@@ -44,8 +45,7 @@ package final class Histogram {
     let area = region ?? PixelRegion(x: 0, y: 0, width: image.width, height: image.height)
     let step = max(stride, 1)
     var uniforms = HistogramUniforms(
-      channels: UInt32(image.planes.count), stride: UInt32(step), originX: UInt32(area.x),
-      originY: UInt32(area.y), width: UInt32(area.width), height: UInt32(area.height))
+      channels: image.planes.count, stride: step, area: area, stf: stf)
     encoder.setComputePipelineState(state)
     for index in 0..<3 {
       encoder.setTexture(image.planes[min(index, image.planes.count - 1)], index: index)
@@ -59,15 +59,16 @@ package final class Histogram {
     encoder.endEncoding()
   }
 
-  /// Counts per channel (`bins[c][0..<256]`) of `image`, sampling every `stride` pixels.
-  package func compute(_ image: ImageTexture, stride: Int, region: PixelRegion? = nil) throws
-    -> [[Int]]
-  {
+  /// Counts per channel (`bins[c][0..<256]`) of `image`, sampling every `stride` pixels, of the
+  /// linear values or of the displayed ones through `stf`.
+  package func compute(
+    _ image: ImageTexture, stride: Int, region: PixelRegion? = nil, stf: [STFParameters]? = nil
+  ) throws -> [[Int]] {
     let bins = try makeBins(channels: image.planes.count)
     guard let commands = queue.makeCommandBuffer() else {
       throw RenderError.commandFailed("histogram")
     }
-    try encode(into: commands, image: image, stride: stride, region: region, bins: bins)
+    try encode(into: commands, image: image, stride: stride, region: region, stf: stf, bins: bins)
     commands.commit()
     commands.waitUntilCompleted()
     if let error = commands.error { throw RenderError.commandFailed("\(error)") }

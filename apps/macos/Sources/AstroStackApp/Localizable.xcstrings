@@ -465,6 +465,22 @@
         }
       }
     },
+    "Calibrates, registers and stacks the captures.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calibrates, registers and stacks the captures."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calibre, aligne et empile les brutes."
+          }
+        }
+      }
+    },
     "Calibration coverage": {
       "localizations": {
         "en": {
@@ -561,6 +577,22 @@
         }
       }
     },
+    "Cannot be read": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cannot be read"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Illisible"
+          }
+        }
+      }
+    },
     "Capture nights": {
       "localizations": {
         "en": {
@@ -589,6 +621,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Canaux"
+          }
+        }
+      }
+    },
+    "Checking tools…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checking tools…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérification des outils…"
           }
         }
       }
@@ -817,6 +865,22 @@
         }
       }
     },
+    "Create": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créer"
+          }
+        }
+      }
+    },
     "Cut": {
       "localizations": {
         "en": {
@@ -1021,6 +1085,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Temps de pose"
+          }
+        }
+      }
+    },
+    "Extracts the background and denoises.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Extracts the background and denoises."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Extrait le fond de ciel et débruite."
           }
         }
       }
@@ -1297,6 +1377,22 @@
         }
       }
     },
+    "Host tools": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Host tools"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Outils externes"
+          }
+        }
+      }
+    },
     "Import Captures…": {
       "localizations": {
         "en": {
@@ -1437,6 +1533,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Inspecter %@"
+          }
+        }
+      }
+    },
+    "Installed: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installed: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installé : %@"
+          }
+        }
+      }
+    },
+    "Installed: %@ — %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installed: %@ — %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installé : %@ — %@"
           }
         }
       }
@@ -1825,6 +1953,38 @@
         }
       }
     },
+    "Name it after the target: M 31, NGC 7000, IC 1848…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name it after the target: M 31, NGC 7000, IC 1848…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nommez-le d’après la cible : M 31, NGC 7000, IC 1848…"
+          }
+        }
+      }
+    },
+    "Name the project after its target, for example M 31.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name the project after its target, for example M 31."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nommez le projet d’après sa cible, par exemple M 31."
+          }
+        }
+      }
+    },
     "Narrowband filters": {
       "localizations": {
         "en": {
@@ -1857,18 +2017,18 @@
         }
       }
     },
-    "New Project": {
+    "New Project…": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "New Project"
+            "value": "New Project…"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nouveau projet"
+            "value": "Nouveau projet…"
           }
         }
       }
@@ -2061,6 +2221,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aucun profil n’est proposé : choisissez-en un, ou aucun."
+          }
+        }
+      }
+    },
+    "No recent project": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No recent project"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun projet récent"
           }
         }
       }
@@ -2353,6 +2529,22 @@
         }
       }
     },
+    "Re-check tools": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Re-check tools"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revérifier les outils"
+          }
+        }
+      }
+    },
     "Read, never written.": {
       "localizations": {
         "en": {
@@ -2477,6 +2669,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "La reconstruction remplacerait le master %@ de la bibliothèque."
+          }
+        }
+      }
+    },
+    "Recent projects": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recent projects"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Projets récents"
           }
         }
       }
@@ -2929,6 +3137,22 @@
         }
       }
     },
+    "Separates the stars from the nebula.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Separates the stars from the nebula."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sépare les étoiles de la nébuleuse."
+          }
+        }
+      }
+    },
     "Settings": {
       "localizations": {
         "en": {
@@ -3153,6 +3377,22 @@
         }
       }
     },
+    "Sources: %lld · Stacks: %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sources: %lld · Stacks: %lld"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sources : %lld · Empilements : %lld"
+          }
+        }
+      }
+    },
     "Stack a night first": {
       "localizations": {
         "en": {
@@ -3277,6 +3517,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Système"
+          }
+        }
+      }
+    },
+    "Target": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Target"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cible"
           }
         }
       }
@@ -3725,6 +3981,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Avertissements"
+          }
+        }
+      }
+    },
+    "Welcome Window": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Welcome Window"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fenêtre de bienvenue"
+          }
+        }
+      }
+    },
+    "Welcome to AstroStack": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Welcome to AstroStack"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bienvenue dans AstroStack"
           }
         }
       }

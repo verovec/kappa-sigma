@@ -52,7 +52,7 @@ package final class ImageViewerWindow: NSWindowController, NSWindowDelegate {
     guard let device = MTLCreateSystemDefaultDevice() else { throw RenderError.noDevice }
     let renderer = try ViewerRenderer(device: device)
     let loaded = try await LoadedImage.read(url, device: device)
-    let model = ViewerModel(image: loaded.image, autoSTF: loaded.autoSTF)
+    let model = ViewerModel(image: loaded.image, statistics: loaded.statistics)
     let view = ViewerView(model: model, renderer: renderer, texture: loaded.texture, reference: nil)
     let controller = ImageViewerWindow(view: view, title: url.lastPathComponent)
     controller.model = model

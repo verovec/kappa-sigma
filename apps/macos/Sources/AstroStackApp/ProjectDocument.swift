@@ -185,6 +185,11 @@ package final class ProjectDocument: NSDocument {
     try project?.store.sources()
   }
 
+  /// The project's counts through its own pool; `nil` without an open package or when unreadable.
+  package func projectSummary() -> ProjectSummary? {
+    try? project?.store.summary()
+  }
+
   /// Closes the package (deleting an unsaved untitled one) before closing the document.
   override package func close() {
     windowModel?.cancelRun()
@@ -261,6 +266,8 @@ package final class ProjectDocument: NSDocument {
     window.contentView = content
     window.center()
     addWindowController(NSWindowController(window: window))
+    // A project is open, however it was opened (welcome, ⌘O, Open Recent, Finder, -openRun).
+    WelcomeWindow.dismiss()
     Self.logger.info("project window opened: \(window.title, privacy: .public)")
   }
 

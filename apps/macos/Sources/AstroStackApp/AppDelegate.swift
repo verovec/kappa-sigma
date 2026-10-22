@@ -1,15 +1,28 @@
 package import AppKit
 
-/// Opens an untitled project when the app starts without a document, as document apps do;
+/// Shows the welcome window when the app starts without a document (or is reopened from the Dock
+/// with no window): a project is named after its target there, never « Untitled ».
 /// `NSDocumentController` does the rest.
 package final class AppDelegate: NSObject, NSApplicationDelegate {
-  /// Yes: a launch without a file opens an untitled project.
+  /// Set once AppKit first asked: `-openImage` only holds the welcome window back at launch,
+  /// whenever AppKit asks then (restoration may defer it past `applicationDidFinishLaunching`).
+  private var askedOnce = false
+
+  /// Yes, unless the app is launching with `-openImage`: AppKit then asks
+  /// `applicationOpenUntitledFile` (at launch, and from the Dock with no window open).
   package func applicationShouldOpenUntitledFile(_ sender: NSApplication) -> Bool {
-    Self.launchImage == nil
+    defer { askedOnce = true }
+    return askedOnce || Self.launchImage == nil
+  }
+
+  /// Shows the welcome window instead of creating an untitled project.
+  package func applicationOpenUntitledFile(_ sender: NSApplication) -> Bool {
+    WelcomeWindow.show()
+    return true
   }
 
   /// `-openImage <path>` opens that FITS in the viewer at launch; `-openRun <folder>` opens a
-  /// legacy run into the untitled project.
+  /// legacy run into the open project, or an untitled one so the run is still recorded.
   package func applicationDidFinishLaunching(_ notification: Notification) {
     Task { await Self.openLaunchArguments(UserDefaults.standard) }
   }
@@ -23,8 +36,13 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
       await ImageViewerWindow.show(URL(fileURLWithPath: path), report: report).value
     }
     if let path = defaults.string(forKey: "openRun") {
+      // A developer flag: with no project open, an untitled one records the run.
+      let project =
+        LegacyRunWindow.projectDocument()
+        ?? (try? NSDocumentController.shared.openUntitledDocumentAndDisplay(true))
+        as? ProjectDocument
       let window = await LegacyRunWindow.open(
-        URL(fileURLWithPath: path), into: LegacyRunWindow.projectDocument(), report: report)
+        URL(fileURLWithPath: path), into: project, report: report)
       if let window, let base = window.model.source.layers.first?.id {
         // A failed load shows in the window (`failure`); nothing is swallowed.
         try? await window.model.select(base)
@@ -42,7 +60,17 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
     ImageViewerWindow.choose()
   }
 
-  /// AstroStack › Settings…: the interface language.
+  /// File › New Project…: the welcome window's sheet naming the project after its target.
+  @objc package func newProject(_ sender: Any?) {
+    WelcomeWindow.showNewProject()
+  }
+
+  /// Window › Welcome Window: recent projects, a new project, the host tools.
+  @objc package func showWelcome(_ sender: Any?) {
+    WelcomeWindow.show()
+  }
+
+  /// AstroStack › Settings…: the interface language and the host tools.
   @objc package func showSettings(_ sender: Any?) {
     SettingsWindow.show()
   }

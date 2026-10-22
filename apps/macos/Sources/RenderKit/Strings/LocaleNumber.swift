@@ -26,6 +26,18 @@ package enum LocaleNumber {
     return minus(value.formatted(style))
   }
 
+  /// A number typed in `locale`: its decimal mark, grouping or thin spaces, a typographic minus;
+  /// `nil` for anything else.
+  package static func parse(_ text: String, locale: Locale) -> Double? {
+    var plain = text.replacing("\u{2212}", with: "-")
+    for space in [" ", "\u{a0}", "\u{202f}"] { plain = plain.replacing(space, with: "") }
+    if let group = locale.groupingSeparator, group != locale.decimalSeparator {
+      plain = plain.replacing(group, with: "")
+    }
+    plain = plain.replacing(locale.decimalSeparator ?? ".", with: ".")
+    return Double(plain)
+  }
+
   /// `text` with a leading `-` written as U+2212, the typographic minus.
   package static func minus(_ text: String) -> String {
     text.hasPrefix("-") ? "\u{2212}" + text.dropFirst() : text

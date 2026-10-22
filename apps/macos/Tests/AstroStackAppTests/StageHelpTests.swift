@@ -1,6 +1,8 @@
 import AstroStackApp
 import Foundation
 import HelpKit
+import ProjectKit
+import TestSupport
 import Testing
 
 /// `HelpCoverageTests.testEveryStageHasCardFrEn` of card 0086: the six journey stages have a
@@ -27,5 +29,19 @@ struct StageHelpTests {
     // The summary follows the language: « Terminé » is French, "Done" English.
     #expect(StageHelp.card(.data, locale: Locale(identifier: "fr"))?.contains("Terminé") == true)
     #expect(StageHelp.card(.data, locale: Locale(identifier: "en"))?.contains("Done") == true)
+  }
+
+  @Test("every stage pane reports the stage's « ? », built or not", .scratchDirectory)
+  func testEveryStagePaneShowsItsHelp() throws {
+    let project = try ProjectPackage.create(
+      at: ScratchDirectory.url.appendingPathComponent("M31.astrostack"))
+    defer { try? project.close() }
+    let model = ProjectWindowModel(
+      store: { project.store }, planning: { _ in ImportPlanningStub.empty })
+    for stage in JourneyStage.allCases {
+      model.select(stage)
+      let ids = AccessibilityAuditTests.entries(ProjectWindowView(model: model)).map(\.id)
+      #expect(ids.contains(StageHelp.key(stage).rawValue), "\(stage): \(ids)")
+    }
   }
 }

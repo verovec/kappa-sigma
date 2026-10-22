@@ -27,7 +27,7 @@ package struct EmptyState<Actions: View>: View {
       Label {
         HStack(spacing: DesignMetrics.spacingS) {
           Text(title)
-          if let help { help.button }
+          if let help { help.button.font(.body) }
         }
       } icon: {
         Image(systemName: systemImage)

@@ -1,5 +1,6 @@
-/// A registered sub and its keep/reject decision (`grade.Metric`).
-package struct FrameGrade: Equatable, Sendable {
+/// A registered sub and its keep/reject decision (`grade.Metric`); `Codable` for `grades.json`
+/// (card 0069), snake_case keys set by the record's coder.
+package struct FrameGrade: Codable, Equatable, Sendable {
   /// 1-based position in the Siril sequence.
   package var index: Int
   package var path: String
@@ -16,6 +17,16 @@ package struct FrameGrade: Equatable, Sendable {
   /// Registration translation against the reference, in pixels (dither/drift diagnostics).
   package var shiftX = 0.0
   package var shiftY = 0.0
+
+  private enum CodingKeys: String, CodingKey {
+    case index, path, fwhm, wfwhm, roundness, background, quality, rejected
+    case starCount = "star_count"
+    case trailDetected = "trail_detected"
+    case trailScore = "trail_score"
+    case rejectReason = "reject_reason"
+    case shiftX = "shift_x"
+    case shiftY = "shift_y"
+  }
 
   /// A sub at `index` with no metrics yet.
   package init(index: Int, path: String) {

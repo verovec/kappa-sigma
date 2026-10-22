@@ -39,7 +39,14 @@ package final class ProjectWindowModel {
   /// The Stacking panel's preset and knob edits: what the next run applies (card 0070).
   package let knobs: KnobPanelViewModel
   /// The profile id the knobs' help was last looked up for.
-  private var profileLookupID: String?
+  ///
+  /// Cleared when the Import sheet closes (user copies are saved there); not state a view reads.
+  @ObservationIgnored private var profileLookupID: String?
+  /// The last run's lanes read-only (this session's result, or the latest stack's `grades.json`),
+  /// rebuilt by `refresh()` only when their source changes (card 0069).
+  package internal(set) var lastReviewLanes: [FrameReviewViewModel] = []
+  /// What `lastReviewLanes` were built from (`run:<id>` or `stack:<id>`), to rebuild once.
+  var lastReviewSource: String?
   /// This session's imports, in order: the next run applies all their overrides.
   var imports: [ImportRequest] = []
   @ObservationIgnored private var masterServices: MasterServices?
@@ -145,6 +152,8 @@ package final class ProjectWindowModel {
   package func closeImport() {
     importing?.cancel()
     importing = nil
+    // The sheet saves user copies: the kept profile is looked up afresh at the next refresh.
+    profileLookupID = nil
   }
 
   /// Records the imported folders as read-only sources of the project and closes the sheet; the
@@ -197,8 +206,7 @@ package final class ProjectWindowModel {
       // does not): no guessing. Looked up once per id.
       let kept = Set(sources.filter { $0.kind == .night }.map(\.profileID))
       let agreed = kept.count == 1 ? kept.first.flatMap { $0 } : nil
-      // An id that resolved to nothing is tried again (a user copy fixed or saved since).
-      if agreed != profileLookupID || (agreed != nil && knobs.profile == nil) {
+      if agreed != profileLookupID {
         profileLookupID = agreed
         knobs.profile = agreed.flatMap { id in
           ImportViewModel.profiles(store: store).profiles.first { $0.id == id }
@@ -206,8 +214,15 @@ package final class ProjectWindowModel {
       }
       let summary = try store?.summary() ?? ProjectSummary()
       let running = run?.isRunning == true ? 1 : 0
-      statuses = JourneyState.derive(
-        from: ProjectFacts(summary: summary, coverage: coverage, stacksRunning: running))
+      var facts = ProjectFacts(summary: summary, coverage: coverage, stacksRunning: running)
+      // Tri is done when the latest stack went through the review (card 0069). A record that no
+      // longer decodes was reported where it is read (init, Run); here it only means « not
+      // reviewed », never a window whose stages stop refreshing.
+      let latest = try store?.latestStack()
+      facts.framesReviewed =
+        (latest.flatMap { try? StackRecord(stack: $0) })?.framesReviewed ?? false
+      statuses = JourneyState.derive(from: facts)
+      refreshReviewLanes(latest: latest)
       error = nil
     } catch {
       self.error = UserFacingError(error)

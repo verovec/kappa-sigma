@@ -63,30 +63,35 @@ package final class KnobPanelViewModel {
   }
 
   /// The help of knob `id` in `locale` (`HelpMarkdown`): its glossary definition and, when
-  /// `profile` sets the knob, a second paragraph naming the profile, the value it sets and why —
-  /// the why belongs to that value, which may not be the one on screen (R2, card 0086).
+  /// `profile` sets the knob, a second paragraph naming the profile, the value it sets and its
+  /// why when it has one — the why belongs to that value, which may not be the one on screen
+  /// (R2, card 0086).
   package func help(for id: String, locale: Locale) -> String {
     let definition = AppGlossary.term(Knob.termID(id), locale: locale, in: AppGlossary.knobs)
       .definition
-    guard let profile, let why = profile.preprocessing.why[id] else { return definition }
+    guard let profile, let set = profile.preprocessing.knobs[id] else { return definition }
     let language = AppLocale.language(of: locale)
-    let value = profile.preprocessing.knobs[id].flatMap {
-      Self.words(for: $0, id: id, locale: locale)
-    }
-    return definition + "\n"
-      + Self.profileLine(
-        profile.title.text(language: language), value, why.text(language: language),
-        locale: locale)
+    let line = Self.profileLine(
+      profile.title.text(language: language), Self.words(for: set, id: id, locale: locale),
+      profile.preprocessing.why[id]?.text(language: language), locale: locale)
+    return [definition, line].filter { !$0.isEmpty }.joined(separator: "\n")
   }
 
-  /// « <profile>, <value>: <why> » with the locale's punctuation (French spaces its colon).
+  /// « <profile>, <value>: <why> » with the locale's punctuation (French spaces its colon);
+  /// without a why, « <profile>, <value> »; without a value, « <profile>: <why> ».
   package nonisolated static func profileLine(
-    _ profile: String, _ value: String?, _ why: String, locale: Locale
+    _ profile: String, _ value: String?, _ why: String?, locale: Locale
   ) -> String {
-    if let value {
-      return String(localized: .app("\(profile), \(value): \(why)", locale: locale))
+    switch (value, why) {
+    case (let value?, let why?):
+      String(localized: .app("\(profile), \(value): \(why)", locale: locale))
+    case (let value?, nil):
+      String(localized: .app("\(profile), \(value)", locale: locale))
+    case (nil, let why?):
+      String(localized: .app("\(profile): \(why)", locale: locale))
+    case (nil, nil):
+      profile
     }
-    return String(localized: .app("\(profile): \(why)", locale: locale))
   }
 
   /// A profile's value of knob `id` as the panel shows it: the user's number, the choice's

@@ -82,6 +82,14 @@ package actor Preprocessor {
       result.warnings += outcome.warnings
       result.channels.append(outcome)
     }
+    // The verdicts outlive the work folder: the Tri stage reads them back (card 0069). A record
+    // that cannot be written is a warning, never the end of a run whose lanes are all stacked.
+    do {
+      try GradesRecord(result: result).write(to: request.output)
+    } catch {
+      journal.warn(
+        "grades.json not written — the Tri stage will show nothing for this run: \(error)")
+    }
     try await assemble(request, emitter: emitter, journal: &journal, into: &result)
     result.warnings += journal.warnings
     return result

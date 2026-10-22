@@ -1,6 +1,22 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "#": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "#"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "N°"
+          }
+        }
+      }
+    },
     "%@ / %@ files read": {
       "localizations": {
         "en": {
@@ -77,6 +93,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@, masque de traînées : %@ traînées sur %@ des %@"
+          }
+        }
+      }
+    },
+    "%@, %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$@"
           }
         }
       }
@@ -417,6 +449,22 @@
         }
       }
     },
+    "Background": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Background"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fond"
+          }
+        }
+      }
+    },
     "Bring All to Front": {
       "localizations": {
         "en": {
@@ -689,6 +737,22 @@
         }
       }
     },
+    "Choose a frame in the table to see it.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a frame in the table to see it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez une pose dans le tableau pour la voir."
+          }
+        }
+      }
+    },
     "Choose a layer": {
       "localizations": {
         "en": {
@@ -765,6 +829,70 @@
           "stringUnit": {
             "state": "translated",
             "value": "Galerie de composants"
+          }
+        }
+      }
+    },
+    "Continue": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuer"
+          }
+        }
+      }
+    },
+    "Continue (%@ kept)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue (%@ kept)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuer (%@ gardées)"
+          }
+        }
+      }
+    },
+    "Continue Stacking": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue Stacking"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuer l’empilement"
+          }
+        }
+      }
+    },
+    "Continuing: %@ kept of %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuing: %@ kept of %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reprise : %@ gardées sur %@"
           }
         }
       }
@@ -929,6 +1057,22 @@
         }
       }
     },
+    "Every verdict of the grader, yours to veto before the stack.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Every verdict of the grader, yours to veto before the stack."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chaque verdict de la notation, à votre main avant l’empilement."
+          }
+        }
+      }
+    },
     "Exclude": {
       "localizations": {
         "en": {
@@ -1005,6 +1149,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Extrait le fond de ciel et débruite."
+          }
+        }
+      }
+    },
+    "FWHM": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FWHM"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FWHM"
           }
         }
       }
@@ -1121,6 +1281,22 @@
         }
       }
     },
+    "Frame %@ · %@ · FWHM %@ · %@ stars": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frame %@ · %@ · FWHM %@ · %@ stars"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pose %@ · %@ · FWHM %@ · %@ étoiles"
+          }
+        }
+      }
+    },
     "Frame review": {
       "localizations": {
         "en": {
@@ -1181,6 +1357,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Glossaire"
+          }
+        }
+      }
+    },
+    "Grading: each lane pauses here after its registration.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grading: each lane pauses here after its registration."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notation en cours : chaque voie marque une pause ici après son alignement."
           }
         }
       }
@@ -1441,6 +1633,54 @@
         }
       }
     },
+    "Keep": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Garder"
+          }
+        }
+      }
+    },
+    "Keep Frame": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep Frame"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Garder la pose"
+          }
+        }
+      }
+    },
+    "Keep frame %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep frame %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Garder la pose %@"
+          }
+        }
+      }
+    },
     "Kept in the stack folder": {
       "localizations": {
         "en": {
@@ -1505,6 +1745,22 @@
         }
       }
     },
+    "Lane": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lane"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voie"
+          }
+        }
+      }
+    },
     "Language": {
       "localizations": {
         "en": {
@@ -1533,6 +1789,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Dernières lignes du journal"
+          }
+        }
+      }
+    },
+    "Last run: %@ stacked of %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last run: %@ stacked of %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dernier run : %@ empilées sur %@"
           }
         }
       }
@@ -1661,6 +1933,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mesuré sur les pixels"
+          }
+        }
+      }
+    },
+    "Metric": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Metric"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mesure"
           }
         }
       }
@@ -1805,6 +2093,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Suivant"
+          }
+        }
+      }
+    },
+    "Next Frame": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next Frame"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pose suivante"
           }
         }
       }
@@ -2209,22 +2513,6 @@
         }
       }
     },
-    "Per-frame metrics, blink and keep or reject will appear here.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Per-frame metrics, blink and keep or reject will appear here."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les mesures par brute, le blink et le choix garder ou rejeter apparaîtront ici."
-          }
-        }
-      }
-    },
     "Preset": {
       "localizations": {
         "en": {
@@ -2253,6 +2541,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aperçu"
+          }
+        }
+      }
+    },
+    "Previous Frame": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Previous Frame"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pose précédente"
           }
         }
       }
@@ -2385,6 +2689,22 @@
         }
       }
     },
+    "Reason": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reason"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Motif"
+          }
+        }
+      }
+    },
     "Rebuild from the capture": {
       "localizations": {
         "en": {
@@ -2461,6 +2781,54 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rétablir"
+          }
+        }
+      }
+    },
+    "Registration reference: frame %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Registration reference: frame %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Référence d’alignement : pose %@"
+          }
+        }
+      }
+    },
+    "Reject": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reject"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rejeter"
+          }
+        }
+      }
+    },
+    "Reject Frame": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reject Frame"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rejeter la pose"
           }
         }
       }
@@ -2561,6 +2929,22 @@
         }
       }
     },
+    "Roundness": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Roundness"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rondeur"
+          }
+        }
+      }
+    },
     "Run": {
       "localizations": {
         "en": {
@@ -2573,6 +2957,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lancer"
+          }
+        }
+      }
+    },
+    "Run a stack with the review on: each lane pauses here after grading.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Run a stack with the review on: each lane pauses here after grading."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lancez un empilement avec le tri activé : chaque voie marque une pause ici après la notation."
           }
         }
       }
@@ -2881,6 +3281,22 @@
         }
       }
     },
+    "Shift": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shift"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Décalage"
+          }
+        }
+      }
+    },
     "Show All": {
       "localizations": {
         "en": {
@@ -3101,6 +3517,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Empilement"
+          }
+        }
+      }
+    },
+    "Stars": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stars"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Étoiles"
           }
         }
       }
@@ -3489,6 +3921,22 @@
         }
       }
     },
+    "Trail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trail"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Traînée"
+          }
+        }
+      }
+    },
     "Type": {
       "localizations": {
         "en": {
@@ -3553,6 +4001,22 @@
         }
       }
     },
+    "Verdict": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verdict"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verdict"
+          }
+        }
+      }
+    },
     "View": {
       "localizations": {
         "en": {
@@ -3565,6 +4029,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Présentation"
+          }
+        }
+      }
+    },
+    "Waiting for you: %@ registered, %@ kept": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waiting for you: %@ registered, %@ kept"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En attente de vous : %@ alignées, %@ gardées"
           }
         }
       }

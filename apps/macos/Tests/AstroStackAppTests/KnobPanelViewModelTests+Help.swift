@@ -50,4 +50,14 @@ extension KnobPanelViewModelTests {
     let french = Locale(identifier: "fr")
     #expect(KnobPanelViewModel.words(for: .points([]), id: "stack_reject", locale: french) == nil)
   }
+
+  @Test("the profile line without a why or without a value keeps its shape")
+  func testProfileLineShapes() {
+    let french = Locale(identifier: "fr")
+    #expect(KnobPanelViewModel.profileLine("P", "3,5", nil, locale: french) == "P, 3,5")
+    #expect(KnobPanelViewModel.profileLine("P", nil, "why", locale: french) == "P : why")
+    #expect(KnobPanelViewModel.profileLine("P", nil, nil, locale: french) == "P")
+    let english = Locale(identifier: "en")
+    #expect(KnobPanelViewModel.profileLine("P", "3.5", "why", locale: english) == "P, 3.5: why")
+  }
 }

@@ -77,12 +77,12 @@ extension ProjectWindowModel {
   /// Starts one run of `scope` (every light when `nil`) with `patch` on the preset of `mode`.
   private func launch(scope: RunScope?, mode: PreprocessRequest.Mode, patch: KnobPatch) {
     guard let store = store(), let folder = folder() else {
-      endQueue()
+      endQueue(drained: false)
       error = .projectClosed
       return
     }
     guard let (record, settings) = prepare(scope: scope, mode: mode, patch: patch) else {
-      endQueue()
+      endQueue(drained: false)
       return
     }
     // The run plans the same folders again: a Rescan still reading them only competes for disk.
@@ -114,7 +114,7 @@ extension ProjectWindowModel {
         await Self.remove(work)
         guard let self else { return }
         guard case .success = outcome else {
-          endQueue()
+          endQueue(drained: false)
           return
         }
         await register(record, runID: runID)
@@ -122,7 +122,7 @@ extension ProjectWindowModel {
           queuedScopes.removeFirst()
           launch(scope: next, mode: mode, patch: patch)
         } else {
-          endQueue()
+          endQueue(drained: error == nil)
         }
       })
   }
@@ -143,9 +143,10 @@ extension ProjectWindowModel {
   }
 
   /// The queue is over (drained, cancelled or failed): Run is offered again, its stacks are
-  /// listed and the last one it recorded is chosen and shown in the Studio; an error reported on
-  /// the way stays shown (a refresh clears none).
-  private func endQueue() {
+  /// listed and the last one it recorded is chosen and loaded in the Studio — shown only when
+  /// the queue `drained`, so a failed run stays in view; an error reported on the way stays
+  /// shown (a refresh clears none).
+  private func endQueue(drained: Bool) {
     let reported = error
     queuedScopes = []
     queueActive = false
@@ -153,8 +154,11 @@ extension ProjectWindowModel {
     if let recorded = queueRecorded {
       queueRecorded = nil
       selectStack(recorded.stack.id)
-      studio = LegacyRunModel(source: recorded.source)
-      select(.studio)
+      // A choice refused (the project closed meanwhile) loads nothing the picker does not name.
+      if selectedStackID == recorded.stack.id {
+        studio = LegacyRunModel(source: recorded.source)
+        if drained { select(.studio) }
+      }
     }
     if error == nil { error = reported }
   }

@@ -15,8 +15,14 @@ struct ProjectScopeTests {
   /// The queue runs until it ended (a finished run starts the next scope; the last one's
   /// completion ends the queue).
   static func queueSettled(_ window: ProjectWindowModel) async {
+    var turns = 0
     while window.isStacking {
       if let run = window.run, run.isRunning { await run.settled() } else { await Task.yield() }
+      turns += 1
+      guard turns < 100_000 else {
+        Issue.record("the queue never ended")
+        return
+      }
     }
   }
 
@@ -179,7 +185,8 @@ struct ProjectScopeTests {
     let recorded = try #require(window.stacks.last)
     #expect(window.stacks.map(\.id) == [shown.id, recorded.id], "the first run's stack, once")
     #expect(window.selectedStackID == recorded.id, "the queue's last stack is chosen")
-    #expect(window.studio?.source.runID == ProjectTests.runID && window.selection == .studio)
+    #expect(window.studio?.source.runID == ProjectTests.runID)
+    #expect(window.selection != .studio, "the failed run stays in view: no jump to the Studio")
     #expect(try project.store.setting("workspace.stack") == "\(recorded.id)")
   }
 

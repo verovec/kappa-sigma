@@ -52,8 +52,12 @@ extension History {
         outputs: Dictionary(uniqueKeysWithValues: step.outputs.map { ($0.key.rawValue, $0.value) }),
         bundleLayers: step.bundleLayers.isEmpty ? nil : step.bundleLayers)
     }
+    // Version 2 only when a step carries bundle layers: other histories stay readable by older
+    // builds, which would drop those layers silently.
+    let moved = (steps + undone).contains { !$0.bundleLayers.isEmpty }
     return HistoryManifest(
-      version: HistoryManifest.version, nextNumber: nextStepNumber, steps: steps.map(entry),
+      version: moved ? HistoryManifest.version : 1, nextNumber: nextStepNumber,
+      steps: steps.map(entry),
       undone: undone.map(entry),
       snapshots: snapshots.map { HistoryManifest.Snapshot(name: $0.name, file: $0.file) })
   }

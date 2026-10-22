@@ -16,7 +16,7 @@ package protocol GeometricProcess: ImageProcess {
   /// `header`.
   func header(_ header: FITSHeader, width: Int, height: Int, bottomUp: Bool) throws -> FITSHeader
 
-  /// The values leave every pixel where it is: applied, the step is an ordinary one (no layer
-  /// rewritten, untouched defaults stay byte-identical).
-  var isIdentity: Bool { get }
+  /// Whether `params` leave every pixel where it is: applied, the step is an ordinary one (no
+  /// layer rewritten, no header moved: untouched defaults stay byte-identical).
+  static func isIdentity(_ params: ParamSet) -> Bool
 }

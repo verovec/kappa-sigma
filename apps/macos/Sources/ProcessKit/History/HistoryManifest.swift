@@ -20,8 +20,8 @@ struct HistoryManifest: Codable, Equatable {
     let file: String?
   }
 
-  /// The format this code writes.
-  /// 2: steps may carry `bundleLayers` (card 0090), which an older build would drop silently.
+  /// The newest format this code reads and writes; 2: steps may carry `bundleLayers` (card
+  /// 0090), which an older build would drop silently.
   static let version = 2
   /// The manifest of the history in `directory`: `<directory>.json`, beside it.
   static func url(of directory: URL) -> URL {

@@ -52,7 +52,9 @@ package struct StepRunner {
       mask: try mask.map { try GPUImage(device: device, image: $0) },
       rowsBottomUp: source.metadata.rowOrder == .bottomUp)
     var metadata = source.metadata
-    if let geometric = process as? any GeometricProcess {
+    if let geometric = process as? any GeometricProcess,
+      !type(of: geometric).isIdentity(geometric.params)
+    {
       metadata.wcs = try movedWCS(geometric, of: source)
     }
     return AstroImage(
@@ -70,7 +72,9 @@ package struct StepRunner {
   ) throws {
     let input = history.current
     let result = try render(process, on: history, mask: mask)
-    guard let geometric = process as? any GeometricProcess, !geometric.isIdentity else {
+    guard let geometric = process as? any GeometricProcess,
+      !type(of: geometric).isIdentity(geometric.params)
+    else {
       try history.apply(processID: processID, params: params, result: result)
       return
     }

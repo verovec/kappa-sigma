@@ -11,10 +11,10 @@ extension StudioWorkspaceModel {
   }
 
   private func movesPixels(_ step: History.Step) -> Bool {
-    guard let type = registry.type(id: step.processID), type is any GeometricProcess.Type else {
+    guard let type = registry.type(id: step.processID) as? any GeometricProcess.Type else {
       return false
     }
-    return !GeometryProcess.isIdentity(step.params)
+    return !type.isIdentity(step.params)
   }
 
   /// Drops the viewer's region when the head changed through a step that moved the pixels
@@ -47,8 +47,9 @@ extension StudioWorkspaceModel {
 
   /// The values of a preview that moves pixels, or `nil` for one that leaves them in place.
   func movedGrid(_ values: (processID: String, params: ParamSet)?) -> ParamSet? {
-    guard let values, let type = registry.type(id: values.processID),
-      type is any GeometricProcess.Type, !GeometryProcess.isIdentity(values.params)
+    guard let values,
+      let type = registry.type(id: values.processID) as? any GeometricProcess.Type,
+      !type.isIdentity(values.params)
     else { return nil }
     return values.params
   }

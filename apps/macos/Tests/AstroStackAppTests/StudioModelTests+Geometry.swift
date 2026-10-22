@@ -117,14 +117,16 @@ extension StudioModelTests {
     #expect(viewer.frame.region == nil, "undoing the flip drops it too")
     try workspace.redo()
 
-    try workspace.compare(toStep: 1)
     let panel = try #require(workspace.panel)
     panel.set("flipV", .flag(false))
+    await workspace.previewNow()
+    #expect(throws: StudioError.otherGrid(step: 1)) { try workspace.compare(toStep: 1) }
+    try workspace.compare(toStep: 2)
     panel.set("cropLeft", .number(2))
     await workspace.previewNow()
     try workspace.apply()
-    #expect(workspace.comparing == nil, "the compared step no longer fits the head")
-    #expect(throws: StudioError.otherSize(step: 1)) { try workspace.compare(toStep: 1) }
+    #expect(workspace.comparing == nil, "the compared step is off the cropped head's grid")
+    #expect(throws: StudioError.otherGrid(step: 2)) { try workspace.compare(toStep: 2) }
   }
 }
 
@@ -175,5 +177,26 @@ extension StudioModelTests {
     // Choosing another process takes the moved preview off screen at once.
     workspace.choose(StretchProcess.id)
     #expect(!workspace.showsMovedGrid && workspace.viewer.model.image.height == 8)
+  }
+}
+
+extension StudioModelTests {
+  /// Whole-branch review of card 0090: a step from before an applied flip has the head's size
+  /// but not its grid — compare is refused, and a running compare stops when the flip lands.
+  @Test("a step before an applied same-size flip is off the head's grid", .scratchDirectory)
+  func testCompareRefusedAcrossAppliedFlip() async throws {
+    let opened = try Self.project()
+    defer { try? opened.package.close() }
+    let workspace = try StudioWorkspaceModelTests.workspace(opened, bundle: Self.bundle())
+    try workspace.compare(toStep: 0)
+    workspace.choose(GeometryProcess.id)
+    try #require(workspace.panel).set("flipH", .flag(true))
+    await workspace.previewNow()
+    try workspace.apply()
+    #expect(workspace.comparing == nil)
+    #expect(throws: StudioError.otherGrid(step: 0)) { try workspace.compare(toStep: 0) }
+    workspace.closePanel()
+    try workspace.compare(toStep: 1)
+    #expect(workspace.comparing == 1, "the flip's own output is on the head's grid")
   }
 }

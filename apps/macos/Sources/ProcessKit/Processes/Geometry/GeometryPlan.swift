@@ -23,6 +23,11 @@ struct GeometryPlan {
   /// The plan of `params` for a `width` × `height` input at `scale` (crop values in
   /// full-resolution pixels, rounded to whole working pixels).
   init(params: ParamSet, width: Int, height: Int, scale: Double, bottomUp: Bool) throws {
+    let crops = ["cropLeft", "cropTop", "cropRight", "cropBottom"]
+    // Values applied = values shown (R2): a fraction of a pixel is refused, never rounded.
+    if let fraction = crops.first(where: { params.number($0).rounded() != params.number($0) }) {
+      throw ProcessError.invalidParameter("\(fraction) must be whole pixels")
+    }
     func pixels(_ id: String) -> Int { Int((params.number(id) / scale).rounded()) }
     var map = GridMap.identity(width: width, height: height)
     if bottomUp { map = map.flippedY() }

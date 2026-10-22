@@ -3,24 +3,29 @@ internal import ProcessKit
 internal import RenderKit
 
 extension StudioWorkspaceModel {
-  /// Whether the output of step `index` has the head's size (compare reads it pixel for pixel).
-  func fitsHead(step index: Int) -> Bool {
-    // The header alone: decoding the step's pixels on every head change would be wasted.
-    guard let size = try? studio.session.history.size(ofStep: index) else { return false }
-    return size.width == studio.head.width && size.height == studio.head.height
+  /// Whether step `index` lies on the head's grid: no geometric step after it moved the pixels
+  /// (decided from the recorded values, no image read).
+  func onHeadGrid(step index: Int) -> Bool {
+    studio.steps.indices.contains(index)
+      && !studio.steps[(index + 1)...].contains { movesPixels($0) }
   }
 
-  /// Drops the viewer's region when a history move applied or took back a geometric step (card
-  /// 0090): its pixels belong to another part of the image even at the same size (a flip, a
-  /// half turn).
-  func dropRegionIfMoved(since before: [History.Step]) {
-    let after = studio.steps
-    let common = zip(before, after).prefix { $0 == $1 }.count
-    let changed = before.dropFirst(common) + after.dropFirst(common)
-    let moved = changed.contains { step in
-      registry.type(id: step.processID).map { $0 is any GeometricProcess.Type } ?? false
+  private func movesPixels(_ step: History.Step) -> Bool {
+    guard let type = registry.type(id: step.processID), type is any GeometricProcess.Type else {
+      return false
     }
-    if moved { viewer.model.clearRegion() }
+    return !GeometryProcess.isIdentity(step.params)
+  }
+
+  /// Drops the viewer's region when the head changed through a step that moved the pixels
+  /// (applied, undone, redone, or run by the pipeline): its pixels belong to another part of the
+  /// image even at the same size (a flip, a half turn).
+  func dropRegionIfMoved() {
+    let after = studio.steps
+    let common = zip(headSteps, after).prefix { $0 == $1 }.count
+    let changed = headSteps.dropFirst(common) + after.dropFirst(common)
+    if changed.contains(where: movesPixels) { viewer.model.clearRegion() }
+    headSteps = after
   }
 
   /// Before the preview of `processID` with `params` replaces the image: a compare stops first

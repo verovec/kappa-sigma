@@ -71,6 +71,8 @@ package struct GeometryProcess: GeometricProcess {
       && params.choice("rotation") == "0" && !params.flag("flipH") && !params.flag("flipV")
   }
 
+  package var isIdentity: Bool { Self.isIdentity(params) }
+
   /// Whether the output loses its plate solution: a fine angle resamples the frame (the exact
   /// moves keep it, moved with the pixels).
   package static func removesWCS(_ params: ParamSet) -> Bool {

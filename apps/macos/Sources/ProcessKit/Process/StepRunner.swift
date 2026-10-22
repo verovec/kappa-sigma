@@ -70,7 +70,7 @@ package struct StepRunner {
   ) throws {
     let input = history.current
     let result = try render(process, on: history, mask: mask)
-    guard let geometric = process as? any GeometricProcess else {
+    guard let geometric = process as? any GeometricProcess, !geometric.isIdentity else {
       try history.apply(processID: processID, params: params, result: result)
       return
     }

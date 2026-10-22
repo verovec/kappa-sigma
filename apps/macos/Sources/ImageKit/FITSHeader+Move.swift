@@ -24,12 +24,26 @@ extension FITSHeader {
       ("CD1_1", cd[0] * i0 + cd[1] * i2), ("CD1_2", cd[0] * i1 + cd[1] * i3),
       ("CD2_1", cd[2] * i0 + cd[3] * i2), ("CD2_2", cd[2] * i1 + cd[3] * i3),
     ]
-    let polynomials = movedPolynomial("A", "B", map) + movedPolynomial("AP", "BP", map)
+    // A quarter turn swaps the A and B polynomials: both pairs declare the larger order, so no
+    // moved term sits above a declared order.
+    let orders = [("A", "B"), ("AP", "BP")].flatMap { first, second -> [(String, Double)] in
+      let order = max(int(first + "_ORDER") ?? 0, int(second + "_ORDER") ?? 0)
+      return order == 0
+        ? [] : [(first + "_ORDER", Double(order)), (second + "_ORDER", Double(order))]
+    }
+    let polynomials =
+      movedPolynomial("A", "B", map) + movedPolynomial("AP", "BP", map) + orders
+    let integers = Set(orders.map(\.0))
     let replaced = cards.filter {
       !Self.isMovedKeyword($0.keyword) && !Self.isAlternateWCSKeyword($0.keyword)
     }
     return FITSHeader(
-      cards: replaced + (moved + polynomials).map { Card(keyword: $0.0, number: $0.1) })
+      cards: replaced
+        + (moved + polynomials).map { keyword, value in
+          integers.contains(keyword)
+            ? Card(keyword: keyword, value: String(Int(value)))
+            : Card(keyword: keyword, number: value)
+        })
   }
 
   /// This header without any plate-solution card (an image resampled at an angle needs a new
@@ -81,6 +95,7 @@ extension FITSHeader {
   private static func isMovedKeyword(_ keyword: String) -> Bool {
     ["CRPIX1", "CRPIX2", "CDELT1", "CDELT2", "CROTA1", "CROTA2"].contains(keyword)
       || isMatrixKeyword(keyword) || isSIPTerm(keyword)
+      || ["A_ORDER", "B_ORDER", "AP_ORDER", "BP_ORDER"].contains(keyword)
   }
 
   private static let namedWCS: Set<String> = [

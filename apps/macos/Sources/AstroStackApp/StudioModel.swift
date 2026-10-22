@@ -154,7 +154,8 @@ package final class StudioModel {
 
   private func appendRow(_ step: History.Step) throws -> HistoryStep {
     // The step's image and the layers it wrote: what the disk budget counts.
-    let bytes = ([step.file] + step.outputs.values).reduce(0) { total, file in
+    let files = [step.file] + step.outputs.values + step.bundleLayers.values
+    let bytes = files.reduce(0) { total, file in
       let url = session.history.directory.appendingPathComponent(file)
       let size = try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int
       return total + (size ?? 0)

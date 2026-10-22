@@ -21,7 +21,8 @@ struct HistoryManifest: Codable, Equatable {
   }
 
   /// The format this code writes.
-  static let version = 1
+  /// 2: steps may carry `bundleLayers` (card 0090), which an older build would drop silently.
+  static let version = 2
   /// The manifest of the history in `directory`: `<directory>.json`, beside it.
   static func url(of directory: URL) -> URL {
     directory.deletingLastPathComponent()

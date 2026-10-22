@@ -88,4 +88,25 @@ struct GridMapTests {
     #expect(moved.string("OBJECT") == "M31")
     #expect(header.droppingWCS().cards.map(\.keyword) == ["OBJECT", "CDFORM", "FILTERA"])
   }
+
+  @Test("a quarter turn with unequal SIP orders declares the larger one on both axes")
+  func testUnequalSIPOrders() throws {
+    let header = WCSTests.header([
+      ("CTYPE1", "'RA---TAN-SIP'"), ("CTYPE2", "'DEC--TAN-SIP'"), ("CRPIX1", "2.6"),
+      ("CRPIX2", "1.7"), ("CRVAL1", "10.68"), ("CRVAL2", "41.27"), ("CD1_1", "-2.1E-4"),
+      ("CD1_2", "3.0E-5"), ("CD2_1", "2.5E-5"), ("CD2_2", "2.0E-4"), ("A_ORDER", "2"),
+      ("B_ORDER", "3"), ("A_2_0", "1.0E-3"), ("B_3_0", "2.0E-4"), ("B_1_2", "-1.0E-4"),
+    ])
+    let wcs = try #require(WCS(header: header))
+    let map = GridMap.identity(width: 5, height: 3).quarterTurned()
+    let moved = header.moved(by: map)
+    #expect(moved.int("A_ORDER") == 3 && moved.int("B_ORDER") == 3)
+    let solution = try #require(WCS(header: moved))
+    for (x, y) in [(0, 0), (4, 2), (2, 1)] {
+      let out = map.output(ofInput: SIMD2(x, y))
+      let before = wcs.sky(x: Double(x), y: Double(y))
+      let after = solution.sky(x: Double(out.x), y: Double(out.y))
+      #expect(TangentPlaneOracle.separation(before, after) < 1e-6)
+    }
+  }
 }

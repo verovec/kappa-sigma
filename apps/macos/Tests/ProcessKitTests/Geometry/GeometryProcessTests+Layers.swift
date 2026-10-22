@@ -100,3 +100,26 @@ extension GeometryProcessTests {
     #expect(try session.render("geometry", params: params, input: other).metadata.wcs == want)
   }
 }
+
+extension GeometryProcessTests {
+  /// Whole-branch review of card 0090: geometry at its defaults moves nothing, so it rewrites no
+  /// layer (untouched defaults stay byte-identical); a fraction of a pixel is refused.
+  @Test("identity geometry rewrites no layer; a fractional crop is refused", .scratchDirectory)
+  func testIdentityAndFractionalCrop() throws {
+    let device = try #require(MTLCreateSystemDefaultDevice())
+    let bundle = PipelineBundle(
+      stats: LayerStats(channels: []), layers: ["Ha": Self.image(6, 4, planes: 1, seed: 9)])
+    let history = try History(
+      directory: ScratchDirectory.url.appendingPathComponent("history"),
+      original: Self.image(6, 4, planes: 3, seed: 0))
+    let session = try StudioSession(
+      history: history, bundle: bundle, registry: ProcessRegistry([GeometryProcess.self]),
+      device: device)
+    try session.apply("geometry", params: Self.params([:]))
+    #expect(history.steps.last?.bundleLayers.isEmpty == true)
+    #expect(history.current.planes == Self.image(6, 4, planes: 3, seed: 0).planes)
+    #expect(throws: ProcessError.invalidParameter("cropLeft must be whole pixels")) {
+      try session.render("geometry", params: Self.params(["cropLeft": .number(1.5)]))
+    }
+  }
+}

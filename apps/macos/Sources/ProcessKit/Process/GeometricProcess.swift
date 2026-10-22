@@ -15,4 +15,8 @@ package protocol GeometricProcess: ImageProcess {
   /// The header of the full-resolution output of a `width` × `height` image described by
   /// `header`.
   func header(_ header: FITSHeader, width: Int, height: Int, bottomUp: Bool) throws -> FITSHeader
+
+  /// The values leave every pixel where it is: applied, the step is an ordinary one (no layer
+  /// rewritten, untouched defaults stay byte-identical).
+  var isIdentity: Bool { get }
 }

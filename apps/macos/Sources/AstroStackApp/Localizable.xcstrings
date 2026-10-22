@@ -4753,22 +4753,6 @@
         }
       }
     },
-    "Step %lld has another size than the image: it cannot be compared.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Step %lld has another size than the image: it cannot be compared."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "L’étape %lld n’a pas la taille de l’image : elle ne peut pas être comparée."
-          }
-        }
-      }
-    },
     "Step %lld has values its process refuses: %@.": {
       "localizations": {
         "en": {
@@ -4781,6 +4765,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "L’étape %lld a des valeurs que son process refuse : %@."
+          }
+        }
+      }
+    },
+    "Step %lld is from before a crop, turn or flip: it cannot be compared.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Step %lld is from before a crop, turn or flip: it cannot be compared."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’étape %lld précède un rognage, une rotation ou un miroir : elle ne peut pas être comparée."
           }
         }
       }

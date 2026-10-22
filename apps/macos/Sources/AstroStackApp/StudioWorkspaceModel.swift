@@ -56,6 +56,8 @@ package final class StudioWorkspaceModel {
   package private(set) var comparing: Int?
   /// The viewer shows a geometric preview that moves the pixels (card 0090, `gridMoved`).
   package internal(set) var showsMovedGrid = false
+  /// The steps the viewer's head was shown for (`dropRegionIfMoved`).
+  @ObservationIgnored var headSteps: [History.Step] = []
   /// Where the process may act (luminosity range, stars), applied by the kit after the
   /// process, to the preview and Apply alike; `nil`: everywhere.
   package var mask: Mask? {
@@ -109,6 +111,7 @@ package final class StudioWorkspaceModel {
     refreshCatalogue()
     headStatistics = viewer.model.statistics
     watchDisplayStretch()
+    headSteps = studio.steps
   }
 
   /// Marks this workspace replaced (a newer stack opened in the Studio).
@@ -181,7 +184,8 @@ package final class StudioWorkspaceModel {
     guard isShowing(panel) else { return }
     try reported { try studio.apply(panel.type.id, params: panel.params, mask: maskImage()) }
     // The user's manual work becomes the recipe (R5): the pipeline records the step.
-    pipeline?.applied(panel.type.id, params: panel.params, masked: mask != nil)
+    let masked = mask != nil && !(panel.type is any GeometricProcess.Type)
+    pipeline?.applied(panel.type.id, params: panel.params, masked: masked)
   }
 
   /// Whether the viewer shows the current values and mask of `panel`.
@@ -202,8 +206,6 @@ package final class StudioWorkspaceModel {
 
   /// Runs a history move, then shows the head; a failure is shown in the panel and rethrown.
   func reported(_ move: () throws -> Void) throws {
-    let before = studio.steps
-    defer { dropRegionIfMoved(since: before) }
     do {
       try move()
       failure = nil
@@ -232,11 +234,9 @@ package final class StudioWorkspaceModel {
     }
     // On a moved preview (a crop, a flip) the step's pixels are not under the ones shown.
     guard !showsMovedGrid else { throw UserFacingError.movedPreview }
+    // A step before a crop, turn or flip is not on the head's grid (decided before any read).
+    guard onHeadGrid(step: index) else { throw StudioError.otherGrid(step: index) }
     let image = try studio.session.history.output(ofStep: index)
-    // A step of another size (before a crop or a quarter turn) does not lie on the head's grid.
-    guard image.width == studio.head.width, image.height == studio.head.height else {
-      throw StudioError.otherSize(step: index)
-    }
     viewer.reference = try Self.texture(image, device: studio.session.device)
     comparing = index
   }
@@ -277,13 +277,14 @@ package final class StudioWorkspaceModel {
   /// The history moved (an Apply, an undo, a pipeline run): the viewer, the panel's inputs and
   /// the catalogue follow the new head.
   func headChanged() throws {
+    dropRegionIfMoved()
     shown = nil
     // A report speaks of the head it was made on.
     toolReport = nil
     defer { headStatistics = viewer.model.statistics }
     isPreviewing = false
     // A compared step undone, or off the head's grid (a crop applied), stops the compare.
-    if let comparing, comparing >= studio.steps.count || !fitsHead(step: comparing) {
+    if let comparing, comparing >= studio.steps.count || !onHeadGrid(step: comparing) {
       try compare(toStep: nil)
     }
     try show(studio.head)

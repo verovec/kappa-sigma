@@ -47,11 +47,4 @@ extension History {
       result: try read(step.file), outputs: try step.outputs.mapValues(read),
       bundleLayers: try step.bundleLayers.mapValues(read))
   }
-
-  /// The size of the output of applied step `index`, from its header (no pixel read).
-  package func size(ofStep index: Int) throws -> (width: Int, height: Int) {
-    guard steps.indices.contains(index) else { throw HistoryError.noStep(index) }
-    let header = try FITSFile.read(at: directory.appendingPathComponent(steps[index].file)).header
-    return (header.int("NAXIS1") ?? 0, header.int("NAXIS2") ?? 0)
-  }
 }

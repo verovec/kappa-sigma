@@ -16,7 +16,7 @@ the PO validated:
 
 | Target · lane | Lights in | Stacked (app) | Stacked (legacy) |
 |---|---|---|---|
-| M 31 · RGB (BB, 3 groups) | 84 | 76 (78 in a first run) | 76 |
+| M 31 · RGB (BB, 3 groups) | 84 | 77 (76 and 78 in two earlier runs) | 76 |
 | M 31 · RGB-dualband | 36 | 34 | 34 |
 | IC 1848 · RGB (3 groups) | 111 | 95 | 95 |
 
@@ -43,7 +43,7 @@ same frames (the 0066 live test already allows it); nothing in the app chooses d
 | grading + stacking RGB | 514 s | 489 s | 740 s | 535 s |
 | grading + stacking RGB-dualband | 152 s | 185 s | — | — |
 | align + combine + bundle | 12 s | 11 s + finishing | 5 s | 10 s + finishing |
-| **preprocessing total** | **695 s** | ~711 s (829 s with finishing) | **754 s** | ~563 s (1869 s with finishing) |
+| **preprocessing total** | **695–729 s** (3 runs) | ~711 s (829 s with finishing) | **754–822 s** (2 runs) | ~563 s (1869 s with finishing) |
 
 The legacy totals include finishing steps the app does in the Studio (background extraction,
 colour calibration, GraXpert denoise 1172 s for #79, StarNet, GIMP). Stacking is within the

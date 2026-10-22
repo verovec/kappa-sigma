@@ -154,5 +154,15 @@ struct PreprocessorTests {
     #expect(throws: PreprocessError.mixedObjects(["", "TESTFIELD"])) {
       try Preprocessor.plan(unnamed)
     }
+    // Two rigs on two objects: the objects are named first, never a colour kind to exclude.
+    var rigs = two
+    for index in rigs.frames.indices where rigs.frames[index].object == "OTHER" {
+      rigs.frames[index].channels = 3
+    }
+    rigs.regroup()
+    rigs.colorModel = .mixed
+    #expect(throws: PreprocessError.mixedObjects(["OTHER", "TESTFIELD"])) {
+      try Preprocessor.plan(rigs)
+    }
   }
 }

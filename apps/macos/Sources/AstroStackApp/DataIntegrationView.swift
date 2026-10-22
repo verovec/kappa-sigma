@@ -68,9 +68,8 @@ struct DataIntegrationView: View {
 
   private var format: AstroFormat { AstroFormat(locale: locale) }
 
-  /// Rounded to the second, never truncated: sub-second exposures still add up.
   private func integration(_ milliseconds: Int) -> String {
-    format.integration(seconds: Int((Double(milliseconds) / 1000).rounded()))
+    format.integration(ms: milliseconds)
   }
 
   /// The filter in words, after its target when the capture holds several.

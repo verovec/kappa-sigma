@@ -120,14 +120,15 @@ struct RunScopeTests {
     var shrunk = testfield
     shrunk.setIDs.append("light|TESTFIELD|X|e1|g0o0b1|i0|t0|s:")
     #expect(shrunk.unlistedSets(in: two) == ["light|TESTFIELD|X|e1|g0o0b1|i0|t0|s:"])
-    // A scope mixing a mono object with an OSC one is not a mixed run on its own.
+    // A mono object beside an OSC one: the scan's mixed verdict travels (its colour lights were
+    // never named), so the scoped run is refused as mixed rather than stacked on an unnamed lane.
     var osc = two
     for index in osc.frames.indices where osc.frames[index].object == "OTHER" {
       osc.frames[index].channels = 3
     }
     osc.regroup()
     osc.colorModel = .mixed
-    #expect(osc.scoped(testfield).colorModel == .mono)
+    #expect(osc.scoped(testfield).colorModel == .mixed)
   }
 
   @Test("a scope round-trips through JSON under its wire keys")

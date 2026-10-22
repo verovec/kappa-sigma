@@ -13,29 +13,40 @@ package final class StackingStageModel {
   package struct Series: Identifiable, Equatable, Sendable {
     /// The set id (`SetKey.id`), what the scope records.
     package let id: String
+    /// The `OBJECT` of the lights.
     package let object: String
     /// The capture night; `""` when undated or single-night.
     package let night: String
+    /// The filter name as the capture wrote it.
     package let filter: String
     /// The lane of a colour set (`dualband` only when the run splits), `unknown` otherwise.
     package let filterSet: FilterSet
+    /// The sub-exposure.
     package let exposureMs: Int
+    /// The camera gain.
     package let gain: Int
+    /// Lights in the set.
     package let frames: Int
+    /// The sum of the set's exposures.
     package let integrationMs: Int
   }
 
   /// The sets of one object on one night.
   package struct Night: Identifiable, Equatable, Sendable {
+    /// The object the night belongs to.
     package let object: String
+    /// The night key; `""` when undated or single-night.
     package let night: String
+    /// Its sets, in the scan's order.
     package let series: [Series]
     package var id: String { object + "|" + night }
   }
 
   /// The nights of one object.
   package struct Group: Identifiable, Equatable, Sendable {
+    /// The object.
     package let object: String
+    /// Its nights, undated last.
     package let nights: [Night]
     package var id: String { object }
   }

@@ -106,7 +106,10 @@ sets and every calibration set with the ids the scan gave (unlike `subset`, whic
 `Preprocessor.plan` refuses lights of several objects (`PreprocessError.mixedObjects`, an empty
 OBJECT being an object of its own) or none (`noLights`) — one object per run, never the legacy
 « dominant object ». `RunScope.unlistedSets(in:)` names the sets of the object a re-planned scan
-holds beyond the scope (the app refuses the run with `scopeOutdated`). The app queues one run per
+holds beyond the scope or lists no more (the app refuses the run with `scopeOutdated`). A scoped
+inventory keeps the scan's colour model: a mixed scan never named its colour lights, so a mono
+object beside an OSC one is refused as mixed, never stacked on an unnamed lane (naming them at
+scan time is a follow-up). The app queues one run per
 checked object.
 
 ## How to extend

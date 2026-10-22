@@ -43,8 +43,9 @@ package struct RunScope: Equatable, Sendable, Codable {
     let listed = Set(setIDs)
     let present = inventory.sets.filter { $0.key.type == .light && $0.key.object == object }
       .map(\.key.id)
+    let presentIDs = Set(present)
     let added = present.filter { !listed.contains($0) }
-    let gone = setIDs.filter { !Set(present).contains($0) }
+    let gone = setIDs.filter { !presentIDs.contains($0) }
     return added + gone
   }
 }
@@ -67,8 +68,9 @@ extension Inventory {
     var out = Inventory(root: root, frames: indices.map { frames[$0] })
     out.warnings = warnings
     out.channelDetection = channelDetection
-    // The kept lights decide: a mono object beside an OSC one is not a mixed run on its own.
-    out.colorModel = out.lightColorModel
+    // The scan's verdict stays: a mixed scan never named its colour lights (`nameColorChannel`),
+    // so a mono object beside an OSC one is refused as mixed, never stacked on an unnamed lane.
+    out.colorModel = colorModel
     out.sets = kept.map { set in
       var set = set
       set.indices = set.indices.compactMap { position[$0] }

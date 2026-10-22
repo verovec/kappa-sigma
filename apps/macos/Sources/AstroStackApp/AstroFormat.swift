@@ -29,6 +29,12 @@ package nonisolated struct AstroFormat: Sendable {
   }
 
   /// A total integration time: `5 h 48 min`, `12 min`, `45 s`.
+  /// An integration given in milliseconds, rounded to the second (never truncated: sub-second
+  /// exposures still add up).
+  package func integration(ms: Int) -> String {
+    integration(seconds: Int((Double(ms) / 1000).rounded()))
+  }
+
   package func integration(seconds: Int) -> String {
     let (hours, minutes) = (seconds / 3600, seconds / 60 % 60)
     if hours > 0 {

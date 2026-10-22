@@ -67,7 +67,7 @@ struct StackingSeriesView: View {
       format.exposure(ms: series.exposureMs),
       ImportFormat.gain(series.gain, locale: locale),
       format.lights(series.frames),
-      format.integration(seconds: Int((Double(series.integrationMs) / 1000).rounded())),
+      format.integration(ms: series.integrationMs),
     ].joined(separator: " · ")
   }
 }

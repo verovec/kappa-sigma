@@ -22,6 +22,7 @@ struct SirilCommandTests {
       SirilCommand.autostretchLinked, .autostretch(linked: false, target: 0.06),
       .seqapplyreg(seq: "s", framing: nil), .rgbcomp(r: "r", g: "g", b: "b", lum: nil, out: "o"),
       .platesolve(coords: "10.68,41.27", noFlip: false), .satu(0.125),
+      .mtf(low: 0.002, mid: 0.02, high: 0.95),
     ])
   func testSirilCommand_verbMatchesLine(_ command: SirilCommand) {
     #expect(command.line.split(separator: " ").first.map(String.init) == command.verb)
@@ -34,6 +35,7 @@ struct SirilCommandTests {
       (.autostretch(linked: false, target: 0.25), "autostretch -2.8 0.250"),
       (.autostretch(linked: true, target: 0.9), "autostretch -linked -2.8 0.060"),
       (.autostretch(linked: false, target: 0), "autostretch -2.8 0.060"),
+      (.mtf(low: 0.002, mid: 0.02, high: 0.95), "mtf 0.002 0.02 0.95"),
     ])
   func testSirilCommand_numbers(command: SirilCommand, expected: String) {
     #expect(command.line == expected)

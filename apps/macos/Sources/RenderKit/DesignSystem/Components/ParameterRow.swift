@@ -136,7 +136,7 @@ package struct ParameterRow: View {
         .onKeyPress(keys: [.leftArrow, .rightArrow]) { press in
           let fine = !press.modifiers.isDisjoint(with: [.shift, .option])
           parameter.set(
-            parameter.value + step.delta(forward: press.key == .rightArrow, fine: fine))
+            step.moved(parameter.value, forward: press.key == .rightArrow, fine: fine))
           return .handled
         }
         .onModifierKeysChanged(mask: .option) { _, held in fineHeld = !held.isEmpty }

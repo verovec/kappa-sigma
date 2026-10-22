@@ -24,8 +24,8 @@ extension KnobPanelViewModelTests {
     // The why belongs to the profile's value, named with it: « <profile>, <value>: <why> ».
     let value = try #require(profile.preprocessing.knobs["trail_mask_k"])
     let words = KnobPanelViewModel.words(for: value, id: "trail_mask_k", locale: french)
-    let line = KnobPanelViewModel.profileLine(
-      profile.title.french, words, why.french, locale: french)
+    let line = try #require(
+      KnobPanelViewModel.profileLine(profile.title.french, words, why.french, locale: french))
     #expect(line.hasSuffix(" : " + why.french), "French spaces its colon: \(line)")
     #expect(panel.help(for: "trail_mask_k", locale: french) == definition + "\n" + line)
     let english = panel.help(for: "trail_mask_k", locale: Locale(identifier: "en"))
@@ -56,7 +56,7 @@ extension KnobPanelViewModelTests {
     let french = Locale(identifier: "fr")
     #expect(KnobPanelViewModel.profileLine("P", "3,5", nil, locale: french) == "Profil P, 3,5")
     #expect(KnobPanelViewModel.profileLine("P", nil, "why", locale: french) == "Profil P : why")
-    #expect(KnobPanelViewModel.profileLine("P", nil, nil, locale: french) == "Profil P")
+    #expect(KnobPanelViewModel.profileLine("P", nil, nil, locale: french) == nil)
     let english = Locale(identifier: "en")
     #expect(
       KnobPanelViewModel.profileLine("P", "3.5", "why", locale: english) == "Profile P, 3.5: why")

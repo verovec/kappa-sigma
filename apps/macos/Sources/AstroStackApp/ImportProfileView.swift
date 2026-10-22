@@ -110,7 +110,9 @@ package struct ImportProfileView: View {
             let process = step.recipe.processID
             let definition = AppGlossary.help.paramDoc(
               process: process, param: id, locale: language)
-            let why = step.why[id]?.text(language: language)
+            let why = step.why[id].map { $0.text(language: language) }.flatMap {
+              $0.isEmpty ? nil : $0
+            }
             // No words at all (a user copy's value with no why, an undocumented parameter): no
             // « ? » rather than an empty one.
             if let summary = definition ?? why {

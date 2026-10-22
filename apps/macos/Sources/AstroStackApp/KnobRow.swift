@@ -19,7 +19,8 @@ struct KnobRow: View {
     case .number(let bounds, let integer):
       ParameterRow(
         .app("\(term.label)"), parameter: number(bounds, integer: integer),
-        help: help(term), key: row.id, frozen: frozen,
+        help: KnobHelpButton.content(row.id, model: model, locale: locale), key: row.id,
+        frozen: frozen,
         format: { AstroFormat(locale: locale).parameter($0) },
         parse: { AstroFormat(locale: locale).parameter(parsing: $0) })
     case .flag:
@@ -27,7 +28,7 @@ struct KnobRow: View {
         Toggle(isOn: flag) { Text(verbatim: term.label) }
           .accessible(control, verbatim: term.label)
           .disabled(frozen)
-        helpButton(term)
+        KnobHelpButton(id: row.id, model: model)
         Spacer()
         reset
       }
@@ -46,16 +47,9 @@ struct KnobRow: View {
         }
         .accessible(control, verbatim: term.label)
         .disabled(frozen)
-        helpButton(term)
+        KnobHelpButton(id: row.id, model: model)
         reset
       }
-    }
-  }
-
-  /// The knob's help: its definition, and the kept profile's why when it sets this knob.
-  private func help(_ term: Glossary.Term) -> HelpContent {
-    HelpContent(summary: .app("\(term.definition)")) {
-      HelpText(model.help(for: row.id, locale: locale))
     }
   }
 
@@ -72,11 +66,6 @@ struct KnobRow: View {
       .help(Text(.app("Back to the preset")))
       .accessible(.parameter(row.id, .reset), label: .app("Back to the preset"))
     }
-  }
-
-  /// The « ? » of a flag or choice row (a number row's sits in its `ParameterRow`).
-  private func helpButton(_ term: Glossary.Term) -> some View {
-    KeyedHelp(help(term), key: .parameter(row.id, .help), label: .whyThisValue).button
   }
 
   /// The identifier of a flag or choice knob: its term id under the stacking stage.

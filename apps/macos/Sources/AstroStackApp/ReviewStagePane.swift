@@ -51,14 +51,9 @@ struct ReviewStagePane: View {
     let term = AppGlossary.term(Knob.termID(id), locale: locale, in: AppGlossary.knobs)
     return HStack(spacing: DesignMetrics.spacingXS) {
       Toggle(isOn: frameReview) { Text(verbatim: term.label) }
-        .help(term.definition)
         .disabled(model.run?.isRunning == true)
         .accessible(.reviewToggle, verbatim: term.label)
-      KeyedHelp(
-        HelpContent(summary: .app("\(term.definition)")) {
-          HelpText(model.knobs.help(for: id, locale: locale))
-        }, key: .parameter(id, .help), label: .whyThisValue
-      ).button
+      KnobHelpButton(id: id, model: model.knobs)
     }
   }
 

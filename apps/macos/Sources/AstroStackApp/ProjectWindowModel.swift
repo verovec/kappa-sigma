@@ -205,7 +205,8 @@ package final class ProjectWindowModel {
       let kept = Set(sources.filter { $0.kind == .night }.map(\.profileID))
       let agreed = kept.count == 1 ? kept.first.flatMap { $0 } : nil
       if agreed != profileLookupID {
-        profileLookupID = agreed
+        // Before the store opens only the shipped profiles answer: not an answer to keep.
+        profileLookupID = store == nil ? nil : agreed
         knobs.profile = agreed.flatMap { id in
           ImportViewModel.profiles(store: store).profiles.first { $0.id == id }
         }

@@ -74,15 +74,15 @@ package final class KnobPanelViewModel {
     let line = Self.profileLine(
       profile.title.text(language: language), Self.words(for: set, id: id, locale: locale),
       profile.preprocessing.why[id]?.text(language: language), locale: locale)
-    return [definition, line].filter { !$0.isEmpty }.joined(separator: "\n")
+    return [definition, line].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: "\n")
   }
 
   /// « Profile <profile>, <value>: <why> » with the locale's punctuation (French spaces its
   /// colon); without a why, « Profile <profile>, <value> »; without a value, « Profile
-  /// <profile>: <why> ».
+  /// <profile>: <why> »; nothing to say, nil.
   package nonisolated static func profileLine(
     _ profile: String, _ value: String?, _ why: String?, locale: Locale
-  ) -> String {
+  ) -> String? {
     // Keys with a word of their own: a bare "%@: %@" would be every "a: b" interpolation's key.
     switch (value, why) {
     case (let value?, let why?):
@@ -92,7 +92,7 @@ package final class KnobPanelViewModel {
     case (nil, let why?):
       String(localized: .app("Profile \(profile): \(why)", locale: locale))
     case (nil, nil):
-      String(localized: .app("Profile \(profile)", locale: locale))
+      nil
     }
   }
 

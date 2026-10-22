@@ -2529,22 +2529,6 @@
         }
       }
     },
-    "Profile %@": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Profile %@"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Profil %@"
-          }
-        }
-      }
-    },
     "Profile %@, %@": {
       "localizations": {
         "en": {

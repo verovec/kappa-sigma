@@ -55,7 +55,8 @@ optional. Xcode is not required.
 ```bash
 git clone https://github.com/verovec/kappa-sigma.git && cd kappa-sigma
 just setup      # install swiftlint and the pre-push hook, then check the host
-just app-run    # build AstroStack.app and open it
+just app-run    # build AstroStack.app (debug) and open it
+just app-run-release   # optimized build for real runs (same bundle path, replaces the debug one)
 ```
 
 File › New Project opens a project window; **Import Captures…** reads a capture folder (it is never

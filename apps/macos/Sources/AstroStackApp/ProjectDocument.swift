@@ -14,7 +14,7 @@ package final class ProjectDocument: NSDocument {
   private var project: ProjectPackage?
   private var isTemporary = false
   /// The window's model, so closing the project stops a run that writes into it.
-  private var windowModel: ProjectWindowModel?
+  package private(set) var windowModel: ProjectWindowModel?
 
   /// The folder of the package the document currently edits.
   package var packageURL: URL? { project?.url }
@@ -165,6 +165,9 @@ package final class ProjectDocument: NSDocument {
       guard let status = windowModel?.statuses[.export] else { return false }
       if case .unavailable = status { return false }
       return true
+    }
+    if let action = item.action, Self.pipelineActions.contains(action) {
+      return Self.pipelineEnabled(action, in: windowModel)
     }
     guard let action = item.action, Self.reviewActions.contains(action) else {
       return super.validateUserInterfaceItem(item)

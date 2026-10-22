@@ -23,23 +23,36 @@ package struct Pipeline: Equatable, Sendable {
   package func problems(
     registry: ProcessRegistry, batch: Set<String> = [], present: Set<LayerRole>
   ) -> [String] {
-    var problems: [String] = []
+    let problems = stepProblems(registry: registry, batch: batch, present: present)
+    return problems.enumerated().flatMap { index, reasons in
+      let id = steps[index].recipe.processID
+      // An unknown process is named by the reason itself.
+      let label = registry.type(id: id) == nil ? "step \(index + 1)" : "step \(index + 1) (\(id))"
+      return reasons.map { "\(label): \($0)" }
+    }
+  }
+
+  /// The same reasons, one list per step (empty when the step can run): the sidebar greys each
+  /// step with its own.
+  package func stepProblems(
+    registry: ProcessRegistry, batch: Set<String> = [], present: Set<LayerRole>
+  ) -> [[String]] {
     var stretched = false
-    for (index, step) in steps.enumerated() {
+    return steps.map { step in
       let id = step.recipe.processID
       guard let type = registry.type(id: id) else {
-        if !batch.contains(id) { problems.append("step \(index + 1): unknown process \(id)") }
-        continue
+        return batch.contains(id) ? [] : ["unknown process \(id)"]
       }
+      var reasons: [String] = []
       if let reason = LayerRole.unavailableReason(requires: type.requires, present: present) {
-        problems.append("step \(index + 1) (\(id)): \(reason)")
+        reasons.append(reason)
       }
       if type.stage == .linear, stretched {
-        problems.append("step \(index + 1) (\(id)): a linear process after a non-linear one")
+        reasons.append("a linear process after a non-linear one")
       }
       stretched = stretched || Self.leavesNonLinear(type)
+      return reasons
     }
-    return problems
   }
 }
 

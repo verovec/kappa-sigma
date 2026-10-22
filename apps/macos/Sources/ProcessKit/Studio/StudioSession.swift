@@ -108,12 +108,8 @@ package final class StudioSession {
   func context() throws -> ([String: GPUImage], [String: LayerStats]) {
     let files = history.layerFiles
     if let overlay, overlay.files == files { return (overlay.layers, overlay.stats) }
-    var layers = bundleLayers
-    var stats = bundle.layerStats
-    for (role, image) in try history.layers() {
-      layers[role.rawValue] = try GPUImage(device: device, image: image)
-      stats[role.rawValue] = LayerStats.measured(image)
-    }
+    let (layers, stats) = try history.context(
+      over: bundleLayers, stats: bundle.layerStats, device: device)
     overlay = Overlay(files: files, layers: layers, stats: stats)
     return (layers, stats)
   }

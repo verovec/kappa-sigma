@@ -112,9 +112,7 @@ package final class History {
   /// The layers the applied steps wrote, the latest of each role winning (read from disk): what
   /// overlays the bundle's layers for the next step.
   package func layers() throws -> [LayerRole: AstroImage] {
-    var latest: [LayerRole: String] = [:]
-    for step in steps { latest.merge(step.outputs) { _, newer in newer } }
-    return try latest.mapValues {
+    try layerFiles.mapValues {
       try FITSFile.read(at: directory.appendingPathComponent($0)).image()
     }
   }
@@ -231,6 +229,8 @@ package enum HistoryError: Error, Equatable, Sendable {
   case unknownSnapshot(String)
   /// A snapshot already has this name.
   case duplicateSnapshot(String)
+  /// The history moved while the host tool `processID` ran: its step would overwrite the move.
+  case movedDuring(String)
   /// The history's manifest cannot be read back: why.
   case unreadable(String)
 }

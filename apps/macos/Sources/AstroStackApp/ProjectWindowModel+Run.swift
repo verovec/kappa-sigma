@@ -255,6 +255,7 @@ extension ProjectWindowModel {
     workspace?.retire()
     workspace = nil
     workspaceStackID = nil
+    dropExport()
   }
 
   /// The Studio's working image of stack `stackID`: its layers read off the main actor, its
@@ -279,6 +280,7 @@ extension ProjectWindowModel {
     // An undo from another stage brings the Studio into view before moving its history.
     workspace.reveal = { [weak self] in self?.select(.studio) }
     self.workspace = workspace
+    showExport(of: studio, stackID: stackID, folder: folder)
     // The Studio's stage state follows; an error the window shows stays (a refresh clears it).
     let reported = error
     refresh()

@@ -53,6 +53,10 @@ package final class ProjectWindowModel {
   package internal(set) var studio: LegacyRunModel?
   /// The Studio's working image of the latest stack (card 0087), once its layers are read.
   package internal(set) var workspace: StudioWorkspaceModel?
+  /// The Export stage of the Studio's stack (card 0091), once its workspace is open.
+  package internal(set) var exportStage: ExportStageModel?
+  /// StarNet, the Finder and the clock the Export stage uses.
+  @ObservationIgnored let exportServices: ExportServices
   /// The load of `workspace`, owned by the window (not by the pane that shows it).
   @ObservationIgnored var workspaceTask: Task<Void, Never>?
   /// The stack `workspace` (or its load) is of.
@@ -93,6 +97,7 @@ package final class ProjectWindowModel {
     folder: @escaping () -> URL? = { nil },
     services: @escaping (ProjectStore?) -> ImportServices = { ImportPlanning.services(store: $0) },
     runs: RunServices = .live,
+    exports: ExportServices = .live,
     isSaved: @escaping () -> Bool = { true },
     edited: @escaping () -> Void = {},
     save: @escaping () -> Void = {}
@@ -101,6 +106,7 @@ package final class ProjectWindowModel {
     self.folder = folder
     self.services = services
     self.runs = runs
+    exportServices = exports
     self.isSaved = isSaved
     self.edited = edited
     self.saveDocument = save

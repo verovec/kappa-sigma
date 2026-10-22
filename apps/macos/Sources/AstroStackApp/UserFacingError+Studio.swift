@@ -19,6 +19,8 @@ extension UserFacingError {
     case .unknownSnapshot(let name): .app("No snapshot is named “\(name)”.")
     case .duplicateSnapshot(let name): .app("A snapshot is already named “\(name)”.")
     case .unreadable(let why): .app("This stack's Studio history cannot be read back: \(why).")
+    case .movedDuring(let id):
+      .app("The history moved while “\(id)” ran: its result was not recorded, run it again.")
     }
   }
 }

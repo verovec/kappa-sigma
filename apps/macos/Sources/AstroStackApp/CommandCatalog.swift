@@ -52,6 +52,10 @@ nonisolated package enum CommandCatalog {
     AppCommand(
       "file.saveAs", "Save As…", menu: .file, action: "saveDocumentAs:", key: "s",
       modifiers: [.command, .shift]),
+    // The Export stage (card 0091): ⌘E is the Studio's Apply, so ⇧⌘E.
+    AppCommand(
+      "file.export", "Export…", menu: .file, action: "showExport:", key: "E", stage: .export,
+      separatorBefore: true),
   ]
 
   private static let edit: [AppCommand] = [

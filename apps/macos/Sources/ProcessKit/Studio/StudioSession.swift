@@ -18,6 +18,7 @@ package final class StudioSession {
   package let device: MTLDevice
   private let runner: ProcessRunner
   private let bundleLayers: [String: GPUImage]
+  private var overlay: Overlay?
 
   /// A session over `history` and `bundle`, running the processes of `registry` on `device`.
   package init(
@@ -91,14 +92,36 @@ package final class StudioSession {
     try history.apply(processID: processID, params: params, result: result, outputs: outputs)
   }
 
+  /// Runs the host tool `batch` as the step `id` with `params` on the head, its progress (0…1)
+  /// handed to `onProgress`: the layer it writes overlays the bundle for the steps after it.
+  package func apply(
+    _ batch: PipelineRunner.BatchProcess, id: String, params: ParamSet,
+    onProgress: @escaping @Sendable (Double) -> Void
+  ) async throws {
+    try await batch.record(id, params: params, in: history, onProgress: onProgress)
+  }
+
   /// The layers a render reads: the bundle's, overlaid by the outputs of the applied steps.
-  private func context() throws -> ([String: GPUImage], [String: LayerStats]) {
+  ///
+  /// The overlay is read, measured and uploaded once per set of step files (a starless is
+  /// ~260 MB at 22 Mpx), not at every preview.
+  func context() throws -> ([String: GPUImage], [String: LayerStats]) {
+    let files = history.layerFiles
+    if let overlay, overlay.files == files { return (overlay.layers, overlay.stats) }
     var layers = bundleLayers
     var stats = bundle.layerStats
     for (role, image) in try history.layers() {
       layers[role.rawValue] = try GPUImage(device: device, image: image)
       stats[role.rawValue] = LayerStats.measured(image)
     }
+    overlay = Overlay(files: files, layers: layers, stats: stats)
     return (layers, stats)
+  }
+
+  /// The context of the step files `files`.
+  private struct Overlay {
+    let files: [LayerRole: String]
+    let layers: [String: GPUImage]
+    let stats: [String: LayerStats]
   }
 }

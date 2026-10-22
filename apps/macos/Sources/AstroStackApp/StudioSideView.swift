@@ -52,8 +52,10 @@ package struct StudioSideView: View {
           .accessible(.studioRedo, label: .app("Redo"))
       }
       ForEach(Array(model.studio.steps.enumerated()), id: \.offset) { index, step in
-        let title = ProcessKitResources.title(
-          model.title(of: step.processID), locale: locale)
+        // A host-tool step has no ProcessKit title: its own, in the view's language.
+        let title =
+          StarSeparation.title(of: step.processID, locale: locale)
+          ?? ProcessKitResources.title(model.title(of: step.processID), locale: locale)
         Button {
           model.toggleCompare(index)
         } label: {

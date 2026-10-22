@@ -16,31 +16,21 @@ struct StudioStagePane: View {
 
   /// Which stack the Studio shows (card 0095): the chosen one, newest first in the list.
   private var picker: some View {
-    HStack {
-      Picker(
-        .app("Stack"),
-        selection: Binding(
-          get: { model.selectedStack?.id ?? 0 }, set: { model.selectStack($0) })
-      ) {
-        ForEach(model.stacks.reversed()) { stack in
-          Text(
-            verbatim: model.stackLabel(stack, locale: locale)
-          )
-          .tag(stack.id)
-        }
-      }
-      .fixedSize()
-      .accessible(.studioStack, label: .app("Stack"))
-      Spacer()
-    }
-    .padding(DesignMetrics.spacingM)
+    StackPicker(model: model)
   }
 
   @ViewBuilder private var content: some View {
     if let workspace = model.workspace {
       VStack(alignment: .leading, spacing: 0) {
-        SectionHeader(.app("Studio"), help: StageHelp.help(.studio, locale: locale))
-          .padding(DesignMetrics.spacingM)
+        HStack(alignment: .firstTextBaseline) {
+          SectionHeader(.app("Studio"), help: StageHelp.help(.studio, locale: locale))
+          Spacer()
+          // Star recomposition reads StarNet's starless: separating is offered where it is used.
+          if let export = model.exportStage, !export.hasStarless {
+            StarSeparationButton(model: export) { model.separateStarsFromStudio() }
+          }
+        }
+        .padding(DesignMetrics.spacingM)
         StudioWorkspaceView(model: workspace)
       }
     } else if let studio = model.studio {

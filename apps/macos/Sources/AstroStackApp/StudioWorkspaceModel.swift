@@ -261,7 +261,9 @@ package final class StudioWorkspaceModel {
     try? show(studio.head)
   }
 
-  private func headChanged() throws {
+  /// The history moved (an Apply, an undo, a pipeline run): the viewer, the panel's inputs and
+  /// the catalogue follow the new head.
+  func headChanged() throws {
     shown = nil
     defer { headStatistics = viewer.model.statistics }
     isPreviewing = false

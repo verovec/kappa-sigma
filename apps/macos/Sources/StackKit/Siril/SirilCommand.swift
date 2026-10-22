@@ -73,25 +73,27 @@ package enum SirilCommand: Equatable, Sendable {
   /// The command line, without the newline.
   package var line: String {
     switch self {
-    case .link(let seq): "link \(seq) -out=."
-    case .convert(let seq): "convert \(seq) -out=."
+    case .link(let seq): "link \(Self.token(seq)) -out=."
+    case .convert(let seq): "convert \(Self.token(seq)) -out=."
     case .calibrate(let seq, let arguments):
-      "calibrate \(seq) \(arguments.joined(separator: " ")) -prefix=pp_"
+      "calibrate \(Self.token(seq)) \(Self.tokens(arguments)) -prefix=pp_"
     case .calibrateSingle(let image, let arguments):
-      "calibrate_single \(image) \(arguments.joined(separator: " ")) -prefix=pp_"
+      "calibrate_single \(Self.token(image)) \(Self.tokens(arguments)) -prefix=pp_"
     case .register(let seq, let twoPass, let transformation):
-      "register \(seq)" + (twoPass ? " -2pass" : "")
+      "register \(Self.token(seq))" + (twoPass ? " -2pass" : "")
         + (transformation.map { " -transf=\($0)" } ?? "")
-    case .select(let seq, let from, let to): "select \(seq) \(from) \(to)"
-    case .unselect(let seq, let from, let to): "unselect \(seq) \(from) \(to)"
+    case .select(let seq, let from, let to): "select \(Self.token(seq)) \(from) \(to)"
+    case .unselect(let seq, let from, let to): "unselect \(Self.token(seq)) \(from) \(to)"
     case .stack(let seq, let clause, let filterIncluded, let out):
-      "stack \(seq) \(clause)" + (filterIncluded ? " -filter-incl" : "") + " -out=\(out)"
-    case .setref(let seq, let index): "setref \(seq) \(index)"
+      "stack \(Self.token(seq)) \(clause)" + (filterIncluded ? " -filter-incl" : "") + " "
+        + Self.token("-out=" + out)
+    case .setref(let seq, let index): "setref \(Self.token(seq)) \(index)"
     case .setfindstarRelaxed: "setfindstar -sigma=0.5 -roundness=0.42 -relax=on"
     case .setfindstarReset: "setfindstar reset"
     case .seqapplyreg(let seq, let framing):
-      "seqapplyreg \(seq)" + (framing.map { " -framing=\($0)" } ?? "")
-    case .seqsubsky(let seq, let degree, let prefix): "seqsubsky \(seq) \(degree) -prefix=\(prefix)"
+      "seqapplyreg \(Self.token(seq))" + (framing.map { " -framing=\($0)" } ?? "")
+    case .seqsubsky(let seq, let degree, let prefix):
+      "seqsubsky \(Self.token(seq)) \(degree) " + Self.token("-prefix=" + prefix)
     default: tail
     }
   }
@@ -99,11 +101,11 @@ package enum SirilCommand: Equatable, Sendable {
   /// Lines of the image commands (split for the function-length budget).
   private var tail: String {
     switch self {
-    case .load(let name): "load \(name)"
-    case .save(let name): "save \(name)"
+    case .load(let name): "load \(Self.token(name))"
+    case .save(let name): "save \(Self.token(name))"
     case .fmul(let factor): "fmul \(factor)"
-    case .savepng(let name): "savepng \(name)"
-    case .savetif(let name): "savetif \(name)"
+    case .savepng(let name): "savepng \(Self.token(name))"
+    case .savetif(let name): "savetif \(Self.token(name))"
     case .mirrorx: "mirrorx"
     case .subsky(let degree): "subsky \(degree)"
     case .subskyRBF(let smooth, let samples, let tolerance, let dither):
@@ -120,13 +122,29 @@ package enum SirilCommand: Equatable, Sendable {
       "mtf \(GoFormat.shortest(low)) \(GoFormat.shortest(mid)) \(GoFormat.shortest(high))"
     case .platesolve(let coords, let noFlip):
       "platesolve" + (coords.map { " \($0)" } ?? "") + (noFlip ? " -noflip" : "")
-    case .platesolveForced(let arguments): (["platesolve"] + arguments).joined(separator: " ")
-    case .spcc(let arguments): (["spcc"] + arguments).joined(separator: " ")
-    case .pcc(let arguments): (["pcc"] + arguments).joined(separator: " ")
+    case .platesolveForced(let arguments): "platesolve " + Self.tokens(arguments)
+    case .spcc(let arguments): "spcc " + Self.tokens(arguments)
+    case .pcc(let arguments): "pcc " + Self.tokens(arguments)
     case .spccList(let kind): "spcc_list " + kind
     case .rgbcomp(let r, let g, let b, let lum, let out):
-      "rgbcomp \(r) \(g) \(b)" + (lum.map { " -lum=\($0)" } ?? "") + " -out=\(out)"
+      Self.tokens(["rgbcomp", r, g, b] + (lum.map { ["-lum=" + $0] } ?? []) + ["-out=" + out])
     default: ""
     }
+  }
+
+  /// `token` as one Siril word: whole in double quotes when it has a space or a tab (Siril splits a word
+  /// at a space unless the word starts with a quote: `-out="a b"` fails, `"-out=a b"` works),
+  /// unchanged otherwise, so a script without one stays byte-identical (card 0112).
+  static func token(_ token: String) -> String {
+    // Siril's words end at a space or a tab only (a bare CR stays inside its word).
+    guard token.contains(where: { $0 == " " || $0 == "\t" }), !token.hasPrefix("\"") else {
+      return token
+    }
+    return "\"" + token + "\""
+  }
+
+  /// `tokens`, each as one Siril word, separated by a space.
+  static func tokens(_ tokens: [String]) -> String {
+    tokens.map(token).joined(separator: " ")
   }
 }

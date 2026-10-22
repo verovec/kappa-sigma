@@ -40,4 +40,71 @@ struct SirilCommandTests {
   func testSirilCommand_numbers(command: SirilCommand, expected: String) {
     #expect(command.line == expected)
   }
+
+  @Test(
+    "a token with a space is quoted whole, flag included; others are unchanged (card 0112)",
+    arguments: [
+      (
+        SirilCommand.stack(
+          seq: "r_pp_light_", clause: "rej 3 3", filterIncluded: true,
+          out: "/P/M_31 2.astrostack/stacks/run/master_RGB"),
+        #"stack r_pp_light_ rej 3 3 -filter-incl "-out=/P/M_31 2.astrostack/stacks/run/master_RGB""#
+      ),
+      (
+        .stack(seq: "r_", clause: "sum", filterIncluded: false, out: "/P/M31/master"),
+        "stack r_ sum -out=/P/M31/master"
+      ),
+      (.load("/P/a b/x"), #"load "/P/a b/x""#), (.save("/P/a b/x"), #"save "/P/a b/x""#),
+      (.savepng("/P/a b/x"), #"savepng "/P/a b/x""#),
+      (.savetif("/P/a b/x"), #"savetif "/P/a b/x""#), (.load("x"), "load x"),
+      (
+        .rgbcomp(r: "/a b/r", g: "g", b: "b", lum: "/a b/l", out: "/a b/o"),
+        #"rgbcomp "/a b/r" g b "-lum=/a b/l" "-out=/a b/o""#
+      ),
+      (
+        .calibrate(seq: "light", arguments: ["-dark=/L/my darks/d.fits", "-cfa"]),
+        #"calibrate light "-dark=/L/my darks/d.fits" -cfa -prefix=pp_"#
+      ),
+      (
+        .calibrateSingle(image: "light_00001", arguments: ["-flat=/L/f f.fits"]),
+        #"calibrate_single light_00001 "-flat=/L/f f.fits" -prefix=pp_"#
+      ),
+      (
+        .spcc([#""-oscsensor=Sony IMX571""#, "-catalog=localgaia"]),
+        #"spcc "-oscsensor=Sony IMX571" -catalog=localgaia"#
+      ),
+    ])
+  func testSirilCommand_quotesTokensWithSpaces(command: SirilCommand, expected: String) {
+    #expect(command.line == expected)
+  }
+
+  @Test(
+    "the calibrate line keeps -cc=bpm and its map as two words; a map path with a space is quoted",
+    arguments: [
+      (
+        CalibrationMasters(dark: "d.fits", badPixelMap: "d_defects.lst"),
+        "calibrate light -dark=d.fits -cc=bpm d_defects.lst -prefix=pp_"
+      ),
+      (
+        CalibrationMasters(dark: "/L/a b/d.fits", badPixelMap: "/L/a b/d_defects.lst"),
+        #"calibrate light "-dark=/L/a b/d.fits" -cc=bpm "/L/a b/d_defects.lst" -prefix=pp_"#
+      ),
+    ])
+  func testSirilCommand_calibrateBadPixelMap(masters: CalibrationMasters, expected: String) {
+    #expect(SirilCommand.calibrate(seq: "light", arguments: masters.arguments).line == expected)
+  }
+
+  @Test(
+    "a sequence name with a space is quoted in every sequence verb",
+    arguments: [
+      (SirilCommand.register(seq: "a b", twoPass: false, transformation: nil), #"register "a b""#),
+      (.select(seq: "a b", from: 1, to: 3), #"select "a b" 1 3"#),
+      (.unselect(seq: "a b", from: 2, to: 2), #"unselect "a b" 2 2"#),
+      (.setref(seq: "a b", index: 4), #"setref "a b" 4"#),
+      (.seqapplyreg(seq: "a b", framing: nil), #"seqapplyreg "a b""#),
+      (.seqsubsky(seq: "a b", degree: 1, prefix: "bkg_"), #"seqsubsky "a b" 1 -prefix=bkg_"#),
+    ])
+  func testSirilCommand_quotesSequenceNames(command: SirilCommand, expected: String) {
+    #expect(command.line == expected)
+  }
 }

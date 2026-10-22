@@ -64,6 +64,29 @@ nebula 3.0, 0 = off), in memory or streamed under the memory budget
 wording; a failure is a note and the frames stack as they are. The 0044 cases were recorded with
 the mask off: their tests run `PreprocessSettings.recorded` (k = 0).
 
+## The frame review breakpoint (card 0069)
+
+With `PreprocessSettings.frameReview` on (knob `frame_review`, simple, default off), every lane
+pauses right after `ChannelGrading.grade`, single night and merged nights alike: the stacker's
+`frameReview` hook gets a `FrameReviewContext` (grades as graded, spans, nights, the `.seq`
+reference as `FrameGrade.index`, the registered frame of each grade) and must return a
+`FrameDecision` (`exclude`, `forceKeep`, by `FrameGrade.index`). `ChannelGrading.apply` puts the
+decision on the grades before the `unselect` mapping: an excluded frame is rejected with reason
+`user` (`user — was: <the grader's wording>` when the grader had restored it for the stack
+minimum), a force-kept one is restored as `kept (user) — was: <the grader's reason>`; an
+unregistered frame cannot be kept. Nothing restores a frame the user excluded (R2): under Siril's
+two-frame minimum the lane fails with `belowStackMinimum`, and the Tri pane greys Continue first. The `Preprocessor` installs the hook itself: it renders a
+quick look per registered frame under `work/frames/<lane>/NNNNN.png` (`tools.preview`), emits
+`PreprocessEvent.frames(…)` carrying a `FrameReviewGate`, journals that it waits, and awaits
+`gate.resume(_:)` from whoever consumes the stream (the app's `RunViewModel`). Cancelling the run
+releases the gate with `CancellationError`; a late answer is ignored. Off, no event, no hook, and
+the scripts are the recorded ones byte for byte (`PreprocessorFrameReviewTests`).
+
+Every run writes `grades.json` (`GradesRecord`) beside the bundle once the lanes are stacked:
+per lane the grades as stacked, the nights, the reference, whether it was reviewed and the
+decision — the Tri stage reads it back after the work folder is gone. The stack's record in the
+app (`StackRecord.frameReview`) keeps the decisions per lane too.
+
 ## The bundle (`LinearBundle`, `bundle.json`)
 
 ```

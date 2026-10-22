@@ -31,6 +31,10 @@
     "definition": "Retire le gradient propre à chaque pose avant un alignement multi-nuits.",
     "label": "Aplanir le fond de chaque pose"
   },
+  "knob.frame_review": {
+    "definition": "Marque une pause par voie après la notation pour garder ou rejeter des poses avant l’empilement.",
+    "label": "Trier les poses avant l’empilement"
+  },
   "knob.fwhm_sigma": {
     "definition": "Rejette une pose dont la FWHM dépasse la médiane de la nuit de ce nombre de sigmas.",
     "label": "Pose floue (σ)"

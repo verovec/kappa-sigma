@@ -118,6 +118,38 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
 
   /// The Studio stage's stack picker (card 0095).
   package static let studioStack = stageControl("studio", "stack")
+  /// The Tri stage's « Review frames before stacking » toggle (card 0069).
+  package static let reviewToggle = stageControl("review", "toggle")
+
+  /// The Tri stage's lane picker, when a run had several lanes.
+  package static let reviewLane = stageControl("review", "lane")
+
+  /// The Tri stage's « Continue » (card 0069).
+  package static let reviewContinue = stageControl("review", "continue")
+
+  /// The Tri stage's blink arrow to the previous frame.
+  package static let reviewBlinkPrevious = stageControl("review", "blink.previous")
+
+  /// The Tri stage's blink arrow to the next frame.
+  package static let reviewBlinkNext = stageControl("review", "blink.next")
+
+  /// The Tri stage's keep / reject toggle of frame `index`.
+  package static func reviewKeep(_ index: Int) -> Self {
+    stageControl("review", "keep.\(index)")
+  }
+
+  /// The Tri stage's « Keep » of frame `index` in the blink panel (the table has the toggle).
+  package static func reviewBlinkKeep(_ index: Int) -> Self {
+    stageControl("review", "blink.keep.\(index)")
+  }
+
+  /// The Tri stage's « Reject » of frame `index` in the blink panel.
+  package static func reviewBlinkReject(_ index: Int) -> Self {
+    stageControl("review", "blink.reject.\(index)")
+  }
+
+  /// The Tri stage's metric picker over the histogram.
+  package static let reviewMetric = stageControl("review", "metric")
 
   /// The Import sheet's profile picker (card 0060).
   package static let importProfile = Self("import", "profile")

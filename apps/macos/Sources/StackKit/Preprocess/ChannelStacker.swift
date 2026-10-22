@@ -11,6 +11,9 @@ package struct ChannelStacker: Sendable {
   package typealias TrailProbe =
     @Sendable (_ frame: URL, _ size: Int) -> (detected: Bool, score: Double)?
 
+  /// The user's decision on a graded lane (card 0069); it may throw to stop (cancellation).
+  package typealias FrameReviewHook = @Sendable (FrameReviewContext) async throws -> FrameDecision
+
   package var runner: SirilRunner
   package var settings: PreprocessSettings
   package var trailProbe: TrailProbe
@@ -18,6 +21,9 @@ package struct ChannelStacker: Sendable {
   package var report: @Sendable (String) -> Void
   /// Bytes the cross-frame trail mask may hold before it streams (`TrailMaskBudget`).
   package var memoryBudget = TrailMaskBudget.bytes()
+  /// Asked after grading, before the stack; nil never pauses (the run installs it when the
+  /// `frame_review` knob is on).
+  package var frameReview: FrameReviewHook?
 
   /// A stacker; trails are probed on the pixels unless a test substitutes them.
   package init(

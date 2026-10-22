@@ -66,6 +66,15 @@ package final class RunViewModel {
   package private(set) var result: PreprocessResult?
   /// The files a cancelled or failed run left in `output` (masters stay, no bundle).
   package private(set) var kept: [String] = []
+  /// The lane waiting at the frame review (card 0069), nil while the run goes on its own.
+  package private(set) var paused: FrameReviewViewModel?
+  /// The lanes answered so far, read-only with the user's hand, in the order the run asked: what
+  /// the Tri stage shows between two pauses of this run.
+  package private(set) var answered: [FrameReviewViewModel] = []
+  /// The user's decision per reviewed lane; empty until a lane was answered.
+  package private(set) var decisions: [String: FrameDecision] = [:]
+  /// The run paused at least once: its stack records the review (`StackRecord.frameReview`).
+  package var wasReviewed: Bool { !decisions.isEmpty }
   /// Text the journal is filtered on; empty shows every line.
   package var journalFilter = ""
   @ObservationIgnored private var task: Task<Void, Never>?
@@ -101,6 +110,17 @@ package final class RunViewModel {
           stage: preview.stage, url: url, revision: previews[index].revision + 1)
       } else {
         previews.append(Thumbnail(stage: preview.stage, url: url, revision: 0))
+      }
+    case .frames(let frames):
+      // The closure keeps the gate and the lane only, not the grades the model already holds.
+      let (lane, gate) = (frames.lane, frames.gate)
+      paused = FrameReviewViewModel(frames: frames) { [weak self] decision in
+        // A lane of a run that stopped, or that was answered already, records nothing.
+        guard let self, isRunning, let paused, paused.lane == lane else { return }
+        decisions[lane] = decision
+        answered.append(paused)
+        self.paused = nil
+        gate.resume(decision)
       }
     case .finished(let result):
       self.result = result
@@ -185,6 +205,8 @@ package final class RunViewModel {
     }
     percent = nil
     phase = error.map { .failed(UserFacingError($0)) } ?? .cancelled
+    // A lane waiting at the review belongs to a run that is over: nothing to answer any more.
+    paused = nil
     let names = (try? FileManager.default.contentsOfDirectory(atPath: output.path)) ?? []
     kept = names.filter { !$0.hasPrefix(".") }.sorted()
   }

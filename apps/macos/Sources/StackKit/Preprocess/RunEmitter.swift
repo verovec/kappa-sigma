@@ -32,4 +32,9 @@ final class RunEmitter: Sendable {
   func preview(stage: String, png: URL) {
     sink(.preview(.init(stage: stage, pngPath: png.path)))
   }
+
+  /// A lane paused at the frame review (card 0069).
+  func frames(_ frames: PreprocessEvent.Frames) {
+    sink(.frames(frames))
+  }
 }

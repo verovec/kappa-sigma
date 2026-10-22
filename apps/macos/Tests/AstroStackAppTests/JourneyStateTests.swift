@@ -121,4 +121,34 @@ struct JourneyStateTests {
     model.add(ImportRequest(paths: ["/captures/M31/2026-10-19"]))
     #expect(model.selection == .review)
   }
+
+  @Test(
+    "a reviewed latest stack marks Tri done through the window's facts; an unreviewed one does not",
+    .scratchDirectory)
+  func testReviewedStackMarksTriDone() throws {
+    let project = try ProjectPackage.create(
+      at: ScratchDirectory.url.appendingPathComponent("M31.astrostack"))
+    defer { try? project.close() }
+    let night = try project.store.addSource(kind: .night, path: "/c/M31-DB")
+    let model = ProjectWindowModel(
+      store: { project.store }, planning: { _ in ImportPlanningStub.empty })
+    #expect(model.statuses[.review] == .ready)
+
+    try project.store.addStack(
+      bundlePath: "stacks/one", sourceIDs: [night.id],
+      paramsJSON: #"{"path": "/c/M31-DB", "frame_review": {"L": {"exclude": [2]}}}"#)
+    model.refresh()
+    #expect(model.statuses[.review] == .done, "the latest stack was reviewed")
+
+    try project.store.addStack(
+      bundlePath: "stacks/two", sourceIDs: [night.id], paramsJSON: #"{"path": "/c/M31-DB"}"#)
+    model.refresh()
+    #expect(model.statuses[.review] == .ready, "the latest stack skipped the review")
+
+    // A record that no longer decodes never stops the stages from refreshing.
+    try project.store.addStack(bundlePath: "stacks/three", sourceIDs: [night.id], paramsJSON: "{}")
+    model.refresh()
+    #expect(model.statuses[.review] == .ready && model.statuses[.stacking] == .done)
+    #expect(model.error == nil)
+  }
 }

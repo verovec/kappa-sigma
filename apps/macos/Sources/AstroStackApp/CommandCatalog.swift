@@ -70,6 +70,21 @@ nonisolated package enum CommandCatalog {
     AppCommand(
       "view.actualPixels", "Actual Pixels", menu: .view, action: "zoomToActualSize:", key: "1",
       stage: .studio),
+    // The Tri stage's blink and verdicts (card 0069): greyed unless a run waits at the review.
+    AppCommand(
+      "review.blinkPrevious", "Previous Frame", menu: .view, action: "blinkPrevious:",
+      key: "\u{F702}", stage: .review, separatorBefore: true),
+    AppCommand(
+      "review.blinkNext", "Next Frame", menu: .view, action: "blinkNext:", key: "\u{F703}",
+      stage: .review),
+    AppCommand(
+      "review.keep", "Keep Frame", menu: .view, action: "keepFrame:", key: "k", stage: .review),
+    AppCommand(
+      "review.reject", "Reject Frame", menu: .view, action: "rejectFrame:", key: "\u{8}",
+      stage: .review),
+    AppCommand(
+      "review.continue", "Continue Stacking", menu: .view, action: "continueStacking:", key: "\r",
+      stage: .review),
   ]
 
   private static let window: [AppCommand] = [

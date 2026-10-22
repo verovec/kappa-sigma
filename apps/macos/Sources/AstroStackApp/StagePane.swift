@@ -5,8 +5,8 @@ internal import SwiftUI
 /// The one place that maps a journey stage to its pane and its state's badge and words.
 ///
 /// A stage whose card has not landed shows an empty state naming what will appear there — no fake
-/// controls. A card that builds a stage's pane replaces its case here (0069 review, 0071/0078
-/// calibration, E12 studio processes, 0055 export).
+/// controls. A card that builds a stage's pane replaces its case here (0071/0078 calibration,
+/// 0069 review, E12 studio processes, 0091 export).
 package enum StagePane {
   /// The pane of `stage`.
   @ViewBuilder
@@ -17,10 +17,7 @@ package enum StagePane {
     case .calibration:
       CalibrationStagePane(model: model)
     case .review:
-      EmptyState(
-        .app("Frame review"),
-        message: .app("Per-frame metrics, blink and keep or reject will appear here."),
-        systemImage: "rectangle.grid.3x2")
+      ReviewStagePane(model: model)
     case .stacking:
       StackingStagePane(model: model)
     case .studio:

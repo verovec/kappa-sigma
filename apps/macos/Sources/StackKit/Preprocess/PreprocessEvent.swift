@@ -4,8 +4,44 @@ package enum PreprocessEvent: Equatable, Sendable {
   case progress(Progress)
   /// A quick-look PNG of a stage's output is ready.
   case preview(Preview)
+  /// A lane's frames are graded and the run waits for the user's decision (card 0069).
+  case frames(Frames)
   /// The run finished; the last event.
   case finished(PreprocessResult)
+
+  /// A lane paused at the frame-review breakpoint: every grade as the grader left it, the
+  /// elected reference, a thumbnail per registered frame, and the gate that resumes the run.
+  package struct Frames: Equatable, Sendable {
+    /// The lane (filter) under review.
+    package var lane: String
+    /// One grade per input frame, in sequence order, as graded (before any decision).
+    package var grades: [FrameGrade]
+    /// The capture nights as positions in `grades` (one span per night; one span alone for a
+    /// single night).
+    package var spans: [Range<Int>]
+    /// Each frame's capture night (`CaptureFrame.session`), parallel to `grades`.
+    package var nights: [String]
+    /// The registration reference as `FrameGrade.index`; nil when Siril's sequence does not say.
+    package var elected: Int?
+    /// A quick-look PNG per frame, parallel to `grades`; nil for a frame Siril could not register.
+    package var thumbnails: [String?]
+    /// Answers the pause.
+    package var gate: FrameReviewGate
+
+    /// A pause of `lane`.
+    package init(
+      lane: String, grades: [FrameGrade], spans: [Range<Int>], nights: [String], elected: Int?,
+      thumbnails: [String?], gate: FrameReviewGate
+    ) {
+      self.lane = lane
+      self.grades = grades
+      self.spans = spans
+      self.nights = nights
+      self.elected = elected
+      self.thumbnails = thumbnails
+      self.gate = gate
+    }
+  }
 
   /// A step's progress.
   package struct Progress: Equatable, Sendable {

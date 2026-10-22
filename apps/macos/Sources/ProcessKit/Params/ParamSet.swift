@@ -86,6 +86,12 @@ package struct ParamSet: Equatable, Sendable {
     return []
   }
 
+  /// The text of `id` (empty when it is not a text).
+  package func text(_ id: String) -> String {
+    if case .text(let value) = self[id] { return value }
+    return ""
+  }
+
   /// Sets compare values only.
   package static func == (lhs: Self, rhs: Self) -> Bool {
     lhs.entries == rhs.entries

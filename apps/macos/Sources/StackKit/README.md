@@ -97,6 +97,20 @@ Re-recording is a contract change: the PR that commits new fixtures says why (`T
   under its area, list it in the fixture (`preprocess` or `swiftOnly`), and give it its words in
   HelpKit's `Help/<locale>/knobs.json` (`knob.<id>`, plus `knob.<id>.<option>` for a choice).
   `KnobSchemaTests` and `KnobPanelViewModelTests` fail on any one missing.
+**Plate solving** (card 0093, `Astrometry/`): `PlateSolver(siril:support:catalogues:)` — or
+`.live(binary:support:catalogues:)`, a `SirilRunner.live(…, initFile:)` passing `-i` — runs
+`load input` → `platesolve <ra,dec> -force -focal= -pixelsize= [-limitmag=] -catalog= -noflip` →
+`save solved` (`SirilCommand.platesolveForced`; Siril 1.4.4 refuses the coordinates after
+`-force`) on the image as is, and returns `Solved {solution, wcs}`: the `PlateSolution` read from
+Siril's lines (centre, ″/px, rotation, focal, pixel size, field, catalogue, offset) and the `WCS`
+of the file Siril wrote — the pixels stay the caller's (`-noflip`). Siril runs on the app's own
+settings file (`<support>/siril-platesolve.ini`, rewritten before each run: the local Gaia paths
+under `catalogues`, `update_default_scale=false`), never on the user's, which a plain
+`platesolve` rewrites and whose stale catalogue paths made Siril go online silently
+(`docs/design/validation-e17.md`). Local Gaia without `siril_cat_healpix8_astro.dat` is
+`PlateSolveError.catalogueMissing` before Siril runs; no solution is `.failed(reason:)` with
+Siril's `Plate solving failed: …` line, never retried with other settings. Transcripts recorded
+on run #78's crop are in `Tests/StackKitTests/Fixtures/platesolve/` (0.6 s wall live).
 
 ## Run scope (card 0095)
 

@@ -89,4 +89,6 @@ package enum PipelineError: Error, Equatable, Sendable {
   /// The step's values `ids` are refused by its process (unknown, wrong kind, not finite): the
   /// run stops rather than apply defaults the user never saw.
   case invalidValues(step: Int, ids: [String])
+  /// A host-tool process (plate solving…) whose tool the caller did not inject.
+  case toolMissing(String)
 }

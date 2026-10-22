@@ -183,6 +183,21 @@ in en/fr; the English title is the key, resolved with `ProcessKitResources.title
   histogram in the panel.
 - A host-tool step (StarNet 0091, background extraction 0092) records its result and the layers
   it wrote with `StudioSession.apply(_:params:result:outputs:)`.
+- **Host-tool processes** (card 0093, `PlateSolveProcess`): a registered `ImageProcess` with
+  `hostTool = true` — its `render` is the preview only (plate solving: the image itself), so the
+  catalogue, panel, help gates and history reopen treat it like any process, while
+  `StudioSession.apply(_:params:mask:)` refuses it (`StudioError.needsTool`) and `PipelineRunner`
+  runs the injected `BatchProcess` of its id or stops (`PipelineError.toolMissing`). The app
+  injects the tool (`StudioTool`, by id) into `StudioWorkspaceModel`: Apply runs it in the
+  background (`startTool`, progress in `toolRun`, Stop = `cancelTool`), records the step only on
+  the head it started from, and shows the tool's `toolReport`.
+- **WCS per step** (0093): `History` writes each step with the stack header's cards but the
+  image's own solution (`FITSHeader.carrying(metadata.wcs)`; `WCS.cards` keeps the cards it was
+  read from), so a solve survives later steps, undo, redo and reopen, and the readout follows. A
+  geometry step (0090) that moves pixels must give its result the moved `WCS`, or `nil` to drop
+  it.
+- `.text` parameters (`ParamSpec(id:title:level:text:maxLength:)`): free text, trimmed, empty by
+  default — a coordinate the user types or takes from a suggestion; JSON stores a string.
 
 ## How to add a process
 

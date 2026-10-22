@@ -275,7 +275,12 @@ extension ProjectWindowModel {
       store: store, stackID: stackID, packageFolder: folder,
       stackFolder: folder.appendingPathComponent(bundlePath), bundle: bundle, header: header,
       combination: combination)
-    let workspace = try StudioWorkspaceModel(studio: studio, base: roles)
+    let workspace = try StudioWorkspaceModel(
+      studio: studio, base: roles,
+      // Host tools work outside the document package: a crash never leaves files inside it.
+      tools: StudioTool.standard(
+        scratch: FileManager.default.temporaryDirectory.appendingPathComponent(
+          "AstroStack/Work", isDirectory: true)))
     // An undo from another stage brings the Studio into view before moving its history.
     workspace.reveal = { [weak self] in self?.select(.studio) }
     self.workspace = workspace

@@ -17,6 +17,7 @@ struct ProcessPanelTests {
     case .flag: return "fr.astrostack.parameter.\(key).toggle"
     case .choice: return "fr.astrostack.parameter.\(key).choice"
     case .points: return "fr.astrostack.curve.\(key).canvas"
+    case .text: return "fr.astrostack.parameter.\(key).text"
     }
   }
 

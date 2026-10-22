@@ -11,6 +11,8 @@ package struct ParamSpec: Equatable, Sendable {
     case choice(default: String, options: [String])
     /// Between 2 and `maxCount` control points of a curve.
     case points(default: [CurvePoint], maxCount: Int)
+    /// Free text, at most `maxLength` characters.
+    case text(default: String, maxLength: Int)
   }
 
   /// Stable identifier, used by recipes and history (never renamed once shipped).
@@ -55,6 +57,13 @@ package struct ParamSpec: Equatable, Sendable {
       kind: .points(default: points, maxCount: maxCount))
   }
 
+  /// A free-text parameter (empty by default: not given until the user types or accepts one).
+  package init(id: String, title: String, level: ParamLevel, text: String, maxLength: Int) {
+    self.init(
+      id: id, title: title, unit: .none, level: level,
+      kind: .text(default: text, maxLength: maxLength))
+  }
+
   /// A parameter of any kind.
   package init(id: String, title: String, unit: ParamUnit, level: ParamLevel, kind: Kind) {
     self.id = id
@@ -71,6 +80,7 @@ package struct ParamSpec: Equatable, Sendable {
     case .flag(let value): .flag(value)
     case .choice(let value, _): .choice(value)
     case .points(let value, _): .points(value)
+    case .text(let value, _): .text(value)
     }
   }
 
@@ -90,6 +100,11 @@ package struct ParamSpec: Equatable, Sendable {
       return value
     case (.points(_, let maxCount), .points(let points)):
       return .points(try Self.validated(points, maxCount: maxCount, id: id))
+    // A stored string comes back as a choice (`ParamValue` decoding): the text it was.
+    case (.text(_, let maxLength), .text(let text)), (.text(_, let maxLength), .choice(let text)):
+      guard text.count <= maxLength else { throw ParamError.tooLong(id: id) }
+      // Kept as typed (a field binds every keystroke: « 00 » then a space); readers trim.
+      return .text(text)
     default:
       throw ParamError.wrongKind(id: id)
     }
@@ -147,4 +162,6 @@ package enum ParamError: Error, Equatable, Sendable {
   case unknownOption(id: String, option: String)
   /// Too few or too many curve points, or two at the same x.
   case invalidPoints(id: String)
+  /// A text longer than the parameter allows.
+  case tooLong(id: String)
 }

@@ -131,7 +131,7 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
   /// The scan moved since the series were chosen (card 0095): a rescan lists what is there now.
   private static func scopeOutdated(_ count: Int) -> LocalizedStringResource {
     .app(
-      "The scan moved since the series were chosen (\(count) new sets): rescan and pick again."
+      "The scan moved since the series were chosen (\(count) sets changed): rescan and pick again."
     )
   }
 

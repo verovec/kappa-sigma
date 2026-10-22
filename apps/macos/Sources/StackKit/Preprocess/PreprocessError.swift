@@ -40,8 +40,8 @@ extension PreprocessError: LocalizedError {
     case .noLights:
       "no light set to stack — the capture holds none, or the series chosen are not in this scan"
     case .scopeOutdated(let sets):
-      "the scan moved since the series were chosen (\(sets.count) new set(s)) — rescan and choose "
-        + "again"
+      "the scan moved since the series were chosen (\(sets.count) set(s) changed) — "
+        + "rescan and choose again"
     }
   }
 

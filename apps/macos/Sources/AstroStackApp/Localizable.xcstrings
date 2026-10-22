@@ -2289,6 +2289,22 @@
         }
       }
     },
+    "No series checked.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No series checked."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune série cochée."
+          }
+        }
+      }
+    },
     "Not applied, no longer valid settings: %@": {
       "localizations": {
         "en": {
@@ -3873,7 +3889,7 @@
         }
       }
     },
-    "The scan moved since the series were chosen (%lld new sets): rescan and pick again.": {
+    "The scan moved since the series were chosen (%lld sets changed): rescan and pick again.": {
       "localizations": {
         "en": {
           "variations": {
@@ -3881,13 +3897,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "The scan moved since the series were chosen (%lld new set): rescan and pick again."
+                  "value": "The scan moved since the series were chosen (%lld set changed): rescan and pick again."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "The scan moved since the series were chosen (%lld new sets): rescan and pick again."
+                  "value": "The scan moved since the series were chosen (%lld sets changed): rescan and pick again."
                 }
               }
             }
@@ -3899,13 +3915,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "L’analyse a changé depuis le choix des séries (%lld nouvelle série) : relisez et choisissez à nouveau."
+                  "value": "L’analyse a changé depuis le choix des séries (%lld série modifiée) : relisez et choisissez à nouveau."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "L’analyse a changé depuis le choix des séries (%lld nouvelles séries) : relisez et choisissez à nouveau."
+                  "value": "L’analyse a changé depuis le choix des séries (%lld séries modifiées) : relisez et choisissez à nouveau."
                 }
               }
             }

@@ -13,12 +13,14 @@ extension ProjectWindowModel {
     return lastReviewLanes
   }
 
-  /// Rebuilds `lastReviewLanes` when their source changed: this session's finished run, or the
-  /// `grades.json` of `latest`, the latest stack (read once, not per render).
+  /// Rebuilds `lastReviewLanes` when their source changed: this session's finished run when it is
+  /// the stack shown (or none is chosen yet), else the `grades.json` of `latest`, the stack the
+  /// Studio shows (read once, not per render).
   func refreshReviewLanes(latest: ProjectStack?) {
     let source: String?
     let lanes: () -> [FrameReviewViewModel]
-    if let run, let result = run.result {
+    let shownIsRun = latest.map { $0.bundlePath == "stacks/" + (run?.runID ?? "") } ?? true
+    if let run, let result = run.result, shownIsRun {
       source = "run:" + run.runID
       lanes = { result.channels.map { FrameReviewViewModel(lane: GradesRecord.Lane($0)) } }
     } else if let folder = folder(), let stack = latest {

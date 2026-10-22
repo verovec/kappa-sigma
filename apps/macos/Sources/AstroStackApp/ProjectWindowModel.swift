@@ -98,19 +98,23 @@ package final class ProjectWindowModel {
     knobs = KnobPanelViewModel(
       mode: record?.mode ?? .deepsky, patch: record?.knobs ?? KnobPatch(),
       ignored: record?.ignoredEntries ?? [])
+    // The chosen stack is known before the first refresh, which derives Tri from it (0095): a
+    // stack that no longer exists reads as no choice, the latest is shown.
+    let settings = Result {
+      (
+        stage: try store()?.setting(JourneyStage.settingKey),
+        stack: try store()?.setting(Self.stackSettingKey).flatMap(Int64.init),
+        stacks: try store()?.stacks() ?? []
+      )
+    }
+    if case .success(let saved) = settings {
+      stacks = saved.stacks
+      selectedStackID = saved.stack.flatMap { id in stacks.contains { $0.id == id } ? id : nil }
+      selection = saved.stage.flatMap(JourneyStage.init(rawValue:)) ?? .data
+    }
     refresh()
     if case .failure(let failure) = latest { error = UserFacingError(failure) }
-    do {
-      let saved = try store()?.setting(JourneyStage.settingKey)
-      selection = saved.flatMap(JourneyStage.init(rawValue:)) ?? .data
-      // A chosen stack that no longer exists reads as no choice: the latest is shown.
-      let chosen = try store()?.setting(Self.stackSettingKey).flatMap(Int64.init)
-      selectedStackID = chosen.flatMap { id in stacks.contains { $0.id == id } ? id : nil }
-      // Tri reads the chosen stack: derived again now that the choice is known.
-      if selectedStackID != nil { refresh() }
-    } catch {
-      self.error = UserFacingError(error)
-    }
+    if case .failure(let failure) = settings { error = UserFacingError(failure) }
   }
 
   /// Shows `id` in the Studio and remembers it; a stack the project does not have is not chosen.

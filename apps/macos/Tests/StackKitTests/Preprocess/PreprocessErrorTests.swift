@@ -14,7 +14,7 @@ struct PreprocessErrorTests {
     (.mixedObjects(["IC 1848", "M 31"]), "IC 1848, M 31"),
     (.mixedObjects(["", "M 31"]), "(no OBJECT), M 31"),
     (.noLights, "no light set"),
-    (.scopeOutdated(["a", "b"]), "2 new set(s)"),
+    (.scopeOutdated(["a", "b"]), "2 set(s) changed"),
   ]
 
   @Test("every case names its subject", arguments: cases)

@@ -43,6 +43,7 @@ struct StackingSeriesView: View {
 
   private var detail: LocalizedStringResource {
     let runs = model.scopes.count
+    if runs == 0 { return .app("No series checked.") }
     return runs > 1 ? .app("\(runs) objects, one run each.") : .app("One run of every checked set.")
   }
 

@@ -96,16 +96,14 @@ package final class StackingStageModel {
       inventory.sets.map { ($0.key.id, $0) }, uniquingKeysWith: { first, _ in first })
     return RunScope.scopes(of: inventory).map { scope in
       // The lane as the scoped run will stack it: splitting is decided per run (R2).
-      let scoped = inventory.scoped(scope)
-      let split = FilterSetLanes.splits(scoped)
+      let lanes = IntegrationSummary.Lanes(inventory.scoped(scope))
       var nights: [String: [Series]] = [:]
       for set in scope.setIDs.compactMap({ sets[$0] }) {
-        let lane = FilterSetLanes.lane(for: set, in: scoped, split: split)
         nights[set.key.session, default: []].append(
           Series(
             id: set.key.id, object: set.key.object, night: set.key.session,
             filter: set.key.filter,
-            filterSet: FilterSetLanes.baseFilter(of: lane) == lane ? .unknown : .dualband,
+            filterSet: lanes.filterSet(of: set),
             exposureMs: set.key.exposureMs, gain: set.key.gain, frames: set.count,
             integrationMs: set.totalIntegrationMs))
       }

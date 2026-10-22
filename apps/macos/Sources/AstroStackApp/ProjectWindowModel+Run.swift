@@ -221,12 +221,15 @@ extension ProjectWindowModel {
         bundlePath: "stacks/\(runID)", sourceIDs: read, paramsJSON: params,
         imageRoles: source.layers.map(\.id), object: object, scopeJSON: scopeJSON)
       knobs.clearIgnored()
-      // The new row is known before it is chosen; selectStack refreshes once.
+      // The new row is known before it is chosen; only the queue's last stack is chosen and
+      // opened (an intermediate one would be parsed and dropped).
       stacks.append(stack)
-      selectStack(stack.id)
       if queuedScopes.isEmpty {
+        selectStack(stack.id)
         studio = LegacyRunModel(source: source)
         select(.studio)
+      } else {
+        refresh()
       }
     } catch {
       queuedScopes = []

@@ -115,7 +115,7 @@ struct UserFacingErrorTests {
     Case(
       error: PreprocessError.scopeOutdated(["a", "b"]), names: "",
       english:
-        "The scan moved since the series were chosen (2 new sets): rescan and pick again."
+        "The scan moved since the series were chosen (2 sets changed): rescan and pick again."
     ),
   ]
 

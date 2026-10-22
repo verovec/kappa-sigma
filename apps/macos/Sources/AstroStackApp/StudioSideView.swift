@@ -68,20 +68,7 @@ struct StudioSideView: View {
   /// Applies the panel and records the step with the window's undo manager, so ⌘Z / ⇧⌘Z reach
   /// the history too.
   private func applyRecorded() {
-    guard (try? model.apply()) != nil else { return }
-    record(undoing: true)
-  }
-
-  /// Registers the inverse of the last move: an undo after an apply or a redo, a redo after an
-  /// undo.
-  private func record(undoing: Bool) {
-    let model = model
-    undoManager?.registerUndo(withTarget: model) { target in
-      MainActor.assumeIsolated {
-        guard (try? undoing ? target.undo() : target.redo()) != nil else { return }
-        Self(model: target).record(undoing: !undoing)
-      }
-    }
+    StudioUndo.apply(model, undoManager: undoManager)
   }
 
   /// One step back: through the undo manager when it holds the step, else on the history

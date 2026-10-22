@@ -103,7 +103,7 @@ struct StudioModelTests {
     let opened = try Self.project()
     defer { try? opened.package.close() }
     let model = try Self.model(opened)
-    #expect(try model.session.layerIDs().contains("starless") == false)
+    #expect(model.session.layerIDs().contains("starless") == false)
 
     let starless = AstroImage(
       width: Self.size, height: Self.size,
@@ -112,11 +112,34 @@ struct StudioModelTests {
     try model.apply(
       "stars-split", params: ParamSet(schema: ParamSchema([])), result: model.head,
       outputs: [.starless: starless])
-    #expect(try model.session.layerIDs().contains("starless"))
+    #expect(model.session.layerIDs().contains("starless"))
     // The next step's context reads the overlay: star recomposition runs on it.
     _ = try model.session.render(
       StarRecompositionProcess.id, params: ParamSet(schema: StarRecompositionProcess.schema))
     try model.undo()
-    #expect(try model.session.layerIDs().contains("starless") == false)
+    #expect(model.session.layerIDs().contains("starless") == false)
+  }
+}
+
+extension StudioModelTests {
+  /// The rows follow the history whatever fails: an apply that throws after an undo leaves the
+  /// undone step redoable, and the rows still one per kept step with the head on the last one.
+  @Test("a failed apply after an undo keeps the history and its rows in step", .scratchDirectory)
+  func testFailedApplyKeepsRowsInStep() throws {
+    let opened = try Self.project()
+    defer { try? opened.package.close() }
+    let model = try Self.model(opened)
+    try model.apply(StretchProcess.id, params: ParamSet(schema: StretchProcess.schema))
+    try model.undo()
+    #expect(throws: StudioError.unknownProcess("nope")) {
+      try model.apply("nope", params: ParamSet(schema: ParamSchema([])))
+    }
+    try model.redo()
+    let store = opened.package.store
+    let image = try #require(
+      try store.images(stackID: opened.stackID).first { $0.role == "studio" })
+    let rows = try store.history(imageID: image.id)
+    #expect(rows.map(\.processID) == ["channel-combination", "stretch"])
+    #expect(image.headStepID == rows.last?.id)
   }
 }

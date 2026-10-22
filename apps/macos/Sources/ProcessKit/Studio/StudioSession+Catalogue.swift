@@ -1,22 +1,25 @@
+/// Why a process cannot be the Studio's next step: shown on the greyed process, never enforced
+/// behind the user's back (R2).
+package enum StudioUnavailable: Equatable, Sendable {
+  /// Layers the process reads are missing (no StarNet step yet, no emission layer…).
+  case missing([LayerRole])
+  /// A linear process after the stretch.
+  case linearAfterStretch
+}
+
 extension StudioSession {
-  /// Why `type` cannot be the next step (a layer it needs is missing, or it is linear after the
-  /// stretch), or `nil`: the `Pipeline.problems` rule over the steps so far, shown on the greyed
-  /// process, never enforced behind the user's back (R2).
-  package func unavailableReason(
+  /// Why `type` cannot be the next step, or `nil`: the `Pipeline.problems` rules (required
+  /// layers, linear after non-linear) over the steps so far.
+  package func unavailable(
     for type: any ImageProcess.Type, base: Set<LayerRole>, registry: ProcessRegistry
-  ) throws -> String? {
-    let present = try presentRoles(base: base)
-    let steps = history.steps.map {
-      PipelineStep(recipe: Recipe(processID: $0.processID, params: $0.params))
+  ) -> StudioUnavailable? {
+    let present = presentRoles(base: base)
+    let missing = type.requires.filter { !present.contains($0) }
+    if !missing.isEmpty { return .missing(missing) }
+    let stretched = history.steps.contains { step in
+      registry.type(id: step.processID).map(Pipeline.leavesNonLinear) ?? false
     }
-    let candidate = PipelineStep(
-      recipe: Recipe(processID: type.id, params: ParamSet(schema: type.schema)))
-    let index = steps.count + 1
-    let problems = Pipeline(name: "studio", steps: steps + [candidate])
-      .problems(registry: registry, present: present)
-      .filter { $0.hasPrefix("step \(index) ") }
-    guard let first = problems.first, let colon = first.range(of: "): ") else { return nil }
-    return String(first[colon.upperBound...])
+    return type.stage == .linear && stretched ? .linearAfterStretch : nil
   }
 
   /// What `type` with `params` proposes from the statistics of the next step: values the panel

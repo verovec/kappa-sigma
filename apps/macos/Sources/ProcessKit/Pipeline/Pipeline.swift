@@ -37,10 +37,18 @@ package struct Pipeline: Equatable, Sendable {
       if type.stage == .linear, stretched {
         problems.append("step \(index + 1) (\(id)): a linear process after a non-linear one")
       }
-      // The stretch takes linear data (stage `.linear`) and leaves it non-linear.
-      stretched = stretched || type.stage == .nonlinear || id == StretchProcess.id
+      stretched = stretched || Self.leavesNonLinear(type)
     }
     return problems
+  }
+}
+
+extension Pipeline {
+  /// Whether the data are non-linear after `type`: the stretch takes linear data (stage
+  /// `.linear`) and leaves it non-linear; a non-linear process needs it so (the Studio's
+  /// catalogue reads the same rule, card 0087).
+  package static func leavesNonLinear(_ type: any ImageProcess.Type) -> Bool {
+    type.stage == .nonlinear || type.id == StretchProcess.id
   }
 }
 

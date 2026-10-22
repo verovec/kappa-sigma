@@ -25,8 +25,9 @@ package enum StudioBundle {
       layers[layer.id] = image
       roles.insert(role(of: layer.role))
     }
-    let base = layers["RGB"].map { _ in "RGB" } ?? source.layers.first?.id
-    guard let base, let baseStats = stats[base] else { throw StudioError.emptyBundle }
+    guard let base = StudioSession.baseLayerID(layers.keys), let baseStats = stats[base] else {
+      throw StudioError.emptyBundle
+    }
     return (PipelineBundle(stats: baseStats, layers: layers, layerStats: stats), roles)
   }
 

@@ -17,7 +17,7 @@ package final class StudioWorkspaceModel {
     /// Its catalogue title (ProcessKit's catalog key).
     package let title: String
     /// Why it cannot be the next step, shown on the greyed row (R2: shown, never enforced).
-    package let unavailableReason: String?
+    package let unavailable: StudioUnavailable?
   }
 
   /// The processes of one stage.
@@ -74,7 +74,7 @@ package final class StudioWorkspaceModel {
     viewer = Viewer(
       model: ViewerModel(image: studio.head), renderer: renderer,
       texture: try Self.texture(studio.head, device: studio.session.device))
-    try refreshCatalogue()
+    refreshCatalogue()
   }
 
   /// Opens the panel of `processID` at its defaults, with its suggestions.
@@ -108,22 +108,34 @@ package final class StudioWorkspaceModel {
   }
 
   /// Applies the panel's values at full resolution: the head moves.
+  ///
+  /// A failure is shown in the panel.
   package func apply() throws {
     guard let panel else { return }
     previewTask?.cancel()
-    try studio.apply(panel.type.id, params: panel.params, mask: maskImage())
-    try headChanged()
+    try reported { try studio.apply(panel.type.id, params: panel.params, mask: maskImage()) }
   }
 
   /// Back one step.
   package func undo() throws {
-    try studio.undo()
-    try headChanged()
+    try reported { try studio.undo() }
   }
 
   /// Forward one undone step.
   package func redo() throws {
-    try studio.redo()
+    try reported { try studio.redo() }
+  }
+
+  /// Runs a history move, then shows the head; a failure is shown in the panel and rethrown.
+  private func reported(_ move: () throws -> Void) throws {
+    do {
+      try move()
+      failure = nil
+    } catch {
+      failure = UserFacingError(error).message
+      try? headChanged()
+      throw error
+    }
     try headChanged()
   }
 
@@ -169,8 +181,10 @@ package final class StudioWorkspaceModel {
 
   private func headChanged() throws {
     isPreviewing = false
+    // A compared step that no longer exists (undone) stops the compare.
+    if let comparing, comparing >= studio.steps.count { try compare(toStep: nil) }
     try show(studio.head)
-    try refreshCatalogue()
+    refreshCatalogue()
   }
 
   private func show(_ image: AstroImage) throws {
@@ -178,14 +192,13 @@ package final class StudioWorkspaceModel {
     viewer.model.replace(image: image)
   }
 
-  private func refreshCatalogue() throws {
+  private func refreshCatalogue() {
     var groups: [Group] = []
     for stage in [ProcessStage.linear, .any, .nonlinear] {
-      let entries = try registry.types.filter { $0.stage == stage }.map { type in
+      let entries = registry.types.filter { $0.stage == stage }.map { type in
         Entry(
           id: type.id, title: type.title,
-          unavailableReason: try studio.session.unavailableReason(
-            for: type, base: base, registry: registry))
+          unavailable: studio.session.unavailable(for: type, base: base, registry: registry))
       }
       if !entries.isEmpty { groups.append(Group(stage: stage, entries: entries)) }
     }

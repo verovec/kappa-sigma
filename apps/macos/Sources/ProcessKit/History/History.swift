@@ -103,6 +103,11 @@ package final class History {
     try writeManifest()
   }
 
+  /// The roles the applied steps wrote layers for (no pixel read).
+  package var layerRoles: Set<LayerRole> {
+    Set(steps.flatMap { $0.outputs.keys })
+  }
+
   /// The layers the applied steps wrote, the latest of each role winning (read from disk): what
   /// overlays the bundle's layers for the next step.
   package func layers() throws -> [LayerRole: AstroImage] {

@@ -31,9 +31,12 @@ struct StudioWorkspaceModelTests {
     let entries = workspace.catalogue.flatMap(\.entries)
     #expect(Set(entries.map(\.id)) == Set(try ProcessRegistry.standard().ids))
     let stars = try #require(entries.first { $0.id == StarRecompositionProcess.id })
-    #expect(stars.unavailableReason?.contains("starless") == true)
+    #expect(stars.unavailable == .missing([.starless]))
     let stretch = try #require(entries.first { $0.id == StretchProcess.id })
-    #expect(stretch.unavailableReason == nil)
+    #expect(stretch.unavailable == nil)
+    #expect(
+      StudioCatalogueView.reason(.missing([.starless]), locale: Locale(identifier: "fr"))
+        == "Il faut une couche sans étoiles")
   }
 
   @Test("choose, preview, apply, undo, redo, compare", .scratchDirectory)
@@ -61,6 +64,11 @@ struct StudioWorkspaceModelTests {
     try workspace.redo()
     #expect(workspace.viewer.model.image.planes == previewed)
 
+    try workspace.compare(toStep: 1)
+    #expect(workspace.comparing == 1 && workspace.viewer.reference != nil)
+    try workspace.undo()
+    #expect(workspace.comparing == nil && workspace.viewer.reference == nil, "a step gone")
+    try workspace.redo()
     try workspace.compare(toStep: 0)
     #expect(workspace.comparing == 0 && workspace.viewer.reference != nil)
     try workspace.compare(toStep: nil)

@@ -1,6 +1,7 @@
 package import Foundation
 package import ImageKit
 internal import Metal
+internal import OSLog
 internal import Observation
 package import ProcessKit
 package import ProjectKit
@@ -33,9 +34,9 @@ package final class StudioModel {
   ) throws {
     guard let device = MTLCreateSystemDefaultDevice() else { throw RenderError.noDevice }
     let registry = try registry ?? ProcessRegistry.standard()
-    guard let base = bundle.layers["RGB"] ?? bundle.layers.values.first else {
-      throw StudioError.emptyBundle
-    }
+    guard let baseID = StudioSession.baseLayerID(bundle.layers.keys),
+      let base = bundle.layers[baseID]
+    else { throw StudioError.emptyBundle }
     let history = try History.reopen(
       directory: stackFolder.appendingPathComponent("history"), original: base
     ) { registry.type(id: $0)?.schema }
@@ -60,9 +61,9 @@ package final class StudioModel {
 
   /// Applies `processID` with `params` (under `mask`) to the head.
   package func apply(_ processID: String, params: ParamSet, mask: AstroImage? = nil) throws {
-    try dropUndone()
+    defer { mirror() }
     try session.apply(processID, params: params, mask: mask)
-    try mirrorApplied()
+    try session.history.save()
   }
 
   /// Records a step made elsewhere (a host tool) with the layers it wrote.
@@ -70,9 +71,9 @@ package final class StudioModel {
     _ processID: String, params: ParamSet, result: AstroImage,
     outputs: [LayerRole: AstroImage] = [:]
   ) throws {
-    try dropUndone()
+    defer { mirror() }
     try session.apply(processID, params: params, result: result, outputs: outputs)
-    try mirrorApplied()
+    try session.history.save()
   }
 
   /// What `processID` with `params` makes of the head at `scale` (the live preview; at scale 1
@@ -85,14 +86,14 @@ package final class StudioModel {
 
   /// Back one step.
   package func undo() throws {
+    defer { mirror() }
     try session.history.undo()
-    try mirrorHead()
   }
 
   /// Forward one undone step.
   package func redo() throws {
+    defer { mirror() }
     try session.history.redo()
-    try mirrorHead()
   }
 
   /// Whether a step can be undone (step 0 included: back to the base layer).
@@ -100,36 +101,50 @@ package final class StudioModel {
   /// Whether an undone step can be redone.
   package var canRedo: Bool { session.history.canRedo }
 
-  /// The mirrored rows, oldest first: the applied steps, then the undone ones in redo order.
-  private func rows() throws -> [HistoryStep] {
-    try store.history(imageID: imageID)
+  /// Brings the project's rows in line with the history, whatever happened.
+  ///
+  /// A failed apply or a manifest that could not be written leaves nothing behind: one row per
+  /// kept step, matched by its output file (never by position), the head on the last applied.
+  private func mirror() {
+    defer { refresh() }
+    do {
+      let history = session.history
+      let kept = history.steps + history.undone.reversed()
+      var rows = try store.history(imageID: imageID)
+      let wanted = Set(kept.map { path(of: $0.file) })
+      for row in rows where !wanted.contains(row.outputPath ?? "") {
+        try store.deleteHistoryStep(id: row.id)
+      }
+      rows = rows.filter { wanted.contains($0.outputPath ?? "") }
+      for step in kept where !rows.contains(where: { $0.outputPath == path(of: step.file) }) {
+        rows.append(try appendRow(step))
+      }
+      let head = history.steps.last.flatMap { last in
+        rows.first { $0.outputPath == path(of: last.file) }?.id
+      }
+      try store.setHead(imageID: imageID, stepID: head)
+    } catch {
+      // The rows only mirror the history (its files are the truth): a failed write is retried
+      // by the next move.
+      Self.logger.error("history mirror: \(String(describing: error), privacy: .public)")
+    }
   }
 
-  /// A new step drops the undone ones: their rows go (the files go at the next save).
-  private func dropUndone() throws {
-    let applied = session.history.steps.count
-    for row in try rows().dropFirst(applied) { try store.deleteHistoryStep(id: row.id) }
+  private func path(of file: String) -> String {
+    let url = session.history.directory.appendingPathComponent(file)
+    return String(url.path.dropFirst(packageRoot.path.count + 1))
   }
 
-  private func mirrorApplied() throws {
-    let history = session.history
-    guard let step = history.steps.last else { return }
-    let url = history.directory.appendingPathComponent(step.file)
+  private func appendRow(_ step: History.Step) throws -> HistoryStep {
+    let url = session.history.directory.appendingPathComponent(step.file)
     let bytes = (try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int) ?? 0
     let json = String(bytes: try JSONEncoder().encode(step.params), encoding: .utf8) ?? "[]"
-    let path = String(url.path.dropFirst(packageRoot.path.count + 1))
-    try store.appendHistoryStep(
+    return try store.appendHistoryStep(
       imageID: imageID, processID: step.processID, paramsJSON: json,
-      output: HistoryStep.Output(path: path, bytes: Int64(bytes)), contentHash: nil)
-    refresh()
+      output: HistoryStep.Output(path: path(of: step.file), bytes: Int64(bytes)), contentHash: nil)
   }
 
-  private func mirrorHead() throws {
-    let applied = session.history.steps.count
-    let rows = try rows()
-    try store.setHead(imageID: imageID, stepID: applied > 0 ? rows[applied - 1].id : nil)
-    refresh()
-  }
+  private static let logger = Logger(subsystem: "fr.astrostack", category: "App/studio")
 
   private func refresh() {
     steps = session.history.steps

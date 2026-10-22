@@ -2241,6 +2241,22 @@
         }
       }
     },
+    "Needs %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needs %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il faut %@"
+          }
+        }
+      }
+    },
     "New Project…": {
       "localizations": {
         "en": {
@@ -3309,6 +3325,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "En cours"
+          }
+        }
+      }
+    },
+    "Runs on linear data: undo the stretch first": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Runs on linear data: undo the stretch first"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "S’applique aux données linéaires : annulez d’abord l’étirement"
           }
         }
       }
@@ -4525,6 +4557,102 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ajuster à la fenêtre"
+          }
+        }
+      }
+    },
+    "a colour layer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "a colour layer"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "une couche couleur"
+          }
+        }
+      }
+    },
+    "a luminance layer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "a luminance layer"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "une couche de luminance"
+          }
+        }
+      }
+    },
+    "a mask layer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "a mask layer"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "une couche de masque"
+          }
+        }
+      }
+    },
+    "a starless layer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "a starless layer"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "une couche sans étoiles"
+          }
+        }
+      }
+    },
+    "a stars layer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "a stars layer"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "une couche d’étoiles"
+          }
+        }
+      }
+    },
+    "an emission layer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "an emission layer"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "une couche d’émission"
           }
         }
       }

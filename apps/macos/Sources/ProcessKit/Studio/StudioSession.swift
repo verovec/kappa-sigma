@@ -36,13 +36,19 @@ package final class StudioSession {
   }
 
   /// The ids of the layers the next step can read: the bundle's and the step outputs'.
-  package func layerIDs() throws -> Set<String> {
-    Set(bundle.layers.keys).union(try history.layers().keys.map(\.rawValue))
+  package func layerIDs() -> Set<String> {
+    Set(bundle.layers.keys).union(history.layerRoles.map(\.rawValue))
+  }
+
+  /// The layer the working image starts from: `RGB`, else the first id in order (never the
+  /// dictionary's order, which changes from one launch to the next).
+  package static func baseLayerID(_ ids: some Collection<String>) -> String? {
+    ids.contains("RGB") ? "RGB" : ids.sorted().first
   }
 
   /// The roles present for the next step (a process's `requires` is checked against them).
-  package func presentRoles(base: Set<LayerRole>) throws -> Set<LayerRole> {
-    base.union(try history.layers().keys)
+  package func presentRoles(base: Set<LayerRole>) -> Set<LayerRole> {
+    base.union(history.layerRoles)
   }
 
   /// The statistics the next step gets.

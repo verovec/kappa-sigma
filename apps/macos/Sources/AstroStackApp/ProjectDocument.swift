@@ -115,11 +115,9 @@ package final class ProjectDocument: NSDocument {
   /// Edit › Apply Process (⌘E): the open panel's values become a history step.
   @objc package func applyProcess(_ sender: Any?) {
     guard let workspace = windowModel?.workspace else { return }
-    do {
-      try workspace.apply()
-    } catch {
-      windowModel?.error = UserFacingError(error)
-    }
+    // The same move as the panel's button: registered with the window's undo manager; a failure
+    // is shown in the panel.
+    StudioUndo.apply(workspace, undoManager: undoManager)
   }
 
   // MARK: - The Tri stage's commands (card 0069)

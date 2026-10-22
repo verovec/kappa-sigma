@@ -103,7 +103,7 @@ package struct InventoryBuilder: Sendable {
     if inventory.colorModel == .mixed && overrides.colorModel == .auto {
       inventory.warnings.append(
         "this folder mixes monochrome and one-shot-color lights — one run stacks one kind: "
-          + "each object stacks on its own, an object shot by both rigs needs a colour choice")
+          + "each object stacks on its own, an object shot by both rigs needs a mono/OSC choice")
     }
     inventory.nameColorChannel()
     inventory.regroup()

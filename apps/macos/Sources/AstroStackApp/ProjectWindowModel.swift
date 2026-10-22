@@ -122,7 +122,8 @@ package final class ProjectWindowModel {
   /// Shows `id` in the Studio (`nil`: the latest) and remembers it; a stack the project does not
   /// have is not chosen.
   ///
-  /// A choice that names the stack already shown is remembered without reopening it.
+  /// A choice that names the stack already shown is remembered without reopening it (the Studio
+  /// only ever shows `selectedStack`).
   package func selectStack(_ id: Int64?) {
     guard id == nil || stacks.contains(where: { $0.id == id }) else { return }
     guard id != selectedStackID || studio == nil else { return }

@@ -150,7 +150,7 @@ struct ProjectScopeTests {
   }
 
   @Test(
-    "a queue that stops after its first run, nothing chosen: the picker stays on the stack shown",
+    "a queue that stops after its first run, nothing chosen: the Studio follows the latest",
     .scratchDirectory)
   func testStoppedQueueKeepsTheShownStack() async throws {
     // Plans: the scan, the first run's; the second run finds M 31 regrouped and is refused.
@@ -173,11 +173,12 @@ struct ProjectScopeTests {
       return
     }
     #expect(window.stacks.count == 2, "the first run's stack is recorded")
-    #expect(window.studio?.source.runID == "A")
-    #expect(window.selectedStack?.id == shown.id, "the picker names the stack the Studio shows")
-    #expect(
-      try project.store.setting("workspace.stack") == "\(shown.id)",
-      "the stack on screen is the one a reopen shows")
+    #expect(Set(window.stacks.map(\.id)).count == 2, "recorded once")
+    #expect(window.studio == nil, "the stack shown is no longer « the latest »: it closes")
+    #expect(window.selectedStack?.id != shown.id)
+    await window.openStudio()
+    #expect(window.studio?.source.runID == ProjectTests.runID, "the first run's stack opens")
+    #expect(try project.store.setting("workspace.stack") == nil, "nothing persisted in silence")
   }
 
   @Test(

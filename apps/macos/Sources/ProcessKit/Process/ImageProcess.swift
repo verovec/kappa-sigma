@@ -44,6 +44,10 @@ package protocol ImageProcess {
 
   /// Planes of the output for an input of `input` planes (the input's count by default).
   static func outputChannels(input: Int) -> Int
+
+  /// Advanced parameters `params` makes relevant enough to show without the disclosure
+  /// (`ParamSchema.visible(disclosed:promoted:)`); none by default.
+  static func promoted(_ params: ParamSet) -> Set<String>
 }
 
 extension ImageProcess {
@@ -63,6 +67,9 @@ extension ImageProcess {
 
   /// As many planes as the input.
   package static func outputChannels(input: Int) -> Int { input }
+
+  /// No promotion.
+  package static func promoted(_ params: ParamSet) -> Set<String> { [] }
 }
 
 /// Where a process belongs in a pipeline.

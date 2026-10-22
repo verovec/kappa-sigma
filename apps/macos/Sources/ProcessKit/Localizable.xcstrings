@@ -113,6 +113,54 @@
         }
       }
     },
+    "Blue highlights": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blue highlights"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hautes lumières bleues"
+          }
+        }
+      }
+    },
+    "Blue midtones": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blue midtones"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tons moyens bleus"
+          }
+        }
+      }
+    },
+    "Blue shadows": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blue shadows"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ombres bleues"
+          }
+        }
+      }
+    },
     "Blue weight": {
       "localizations": {
         "en": {
@@ -385,6 +433,54 @@
         }
       }
     },
+    "Green highlights": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Green highlights"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hautes lumières vertes"
+          }
+        }
+      }
+    },
+    "Green midtones": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Green midtones"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tons moyens verts"
+          }
+        }
+      }
+    },
+    "Green shadows": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Green shadows"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ombres vertes"
+          }
+        }
+      }
+    },
     "Green weight": {
       "localizations": {
         "en": {
@@ -493,6 +589,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Atténuation des hautes lumières"
+          }
+        }
+      }
+    },
+    "Highlights": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Highlights"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hautes lumières"
+          }
+        }
+      }
+    },
+    "Histogram transformation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Histogram transformation"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transformation d’histogramme"
           }
         }
       }
@@ -817,6 +945,22 @@
         }
       }
     },
+    "Midtones": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Midtones"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tons moyens"
+          }
+        }
+      }
+    },
     "Mode": {
       "localizations": {
         "en": {
@@ -861,6 +1005,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Naturelle"
+          }
+        }
+      }
+    },
+    "Output high": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Output high"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sortie haute"
+          }
+        }
+      }
+    },
+    "Output low": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Output low"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sortie basse"
           }
         }
       }
@@ -977,6 +1153,54 @@
         }
       }
     },
+    "Red highlights": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Red highlights"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hautes lumières rouges"
+          }
+        }
+      }
+    },
+    "Red midtones": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Red midtones"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tons moyens rouges"
+          }
+        }
+      }
+    },
+    "Red shadows": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Red shadows"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ombres rouges"
+          }
+        }
+      }
+    },
     "Red weight": {
       "localizations": {
         "en": {
@@ -1053,6 +1277,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Protection des ombres"
+          }
+        }
+      }
+    },
+    "Shadows": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shadows"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ombres"
           }
         }
       }
@@ -1761,6 +2001,22 @@
         }
       }
     },
+    "autostretch like Siril: shadows 2.8σ below the background, background at 0.25": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "autostretch like Siril: shadows 2.8σ below the background, background at 0.25"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "autostretch comme Siril : ombres 2,8σ sous le fond, fond à 0,25"
+          }
+        }
+      }
+    },
     "makes the sky region grey: green kept, red and blue scaled to it": {
       "localizations": {
         "en": {
@@ -1869,6 +2125,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "le préréglage ciel profond plafonne les cœurs linéaires à 0,90 pour que les étoiles gardent leur couleur"
+          }
+        }
+      }
+    },
+    "the viewer's display stretch, made a real adjustment": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the viewer's display stretch, made a real adjustment"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "l’étirement d’affichage du visualiseur, devenu un vrai réglage"
           }
         }
       }

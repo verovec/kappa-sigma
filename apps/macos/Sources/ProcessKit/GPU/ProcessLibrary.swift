@@ -5,6 +5,9 @@ internal import RenderKit
 /// Builds a process's compute pipelines with RenderKit's compile options (Metal 3.1, fast-math
 /// off): every process kernel is oracle-pinned.
 package enum ProcessLibrary {
+  /// RenderKit's header of the screen transfer function, shared with the process kernels.
+  package static let sharedHeader = "STF.h"
+
   /// The pipeline of `function` in the Metal `source`.
   package static func pipeline(
     device: MTLDevice, source: String, function: String
@@ -29,11 +32,23 @@ package enum ProcessLibrary {
   }
 
   /// ProcessKit's bundled `Shaders/<file>`, compiled once for several pipelines.
+  ///
+  /// `#include "STF.h"` is replaced by RenderKit's header (the runtime compiler has no include
+  /// path): the display, the stretch and the levels share one MTF.
   package static func library(device: MTLDevice, file: String) throws -> MTLLibrary {
     let bundle = ProcessKitResources.bundle
     guard let url = bundle.url(forResource: "Shaders/" + file, withExtension: nil),
-      let source = try? String(contentsOf: url, encoding: .utf8)
+      var source = try? String(contentsOf: url, encoding: .utf8)
     else { throw ProcessError.shader("\(file) missing from ProcessKit's resources") }
+    let include = "#include \"\(sharedHeader)\""
+    if source.contains(include) {
+      guard
+        let header = try? String(
+          contentsOf: ShaderLibrary.sourceFolder().appendingPathComponent(sharedHeader),
+          encoding: .utf8)
+      else { throw ProcessError.shader("\(sharedHeader) missing from RenderKit's resources") }
+      source = source.replacingOccurrences(of: include, with: header)
+    }
     do {
       return try device.makeLibrary(source: source, options: ShaderLibrary.compileOptions)
     } catch {

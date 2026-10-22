@@ -3,13 +3,8 @@
 // opening and smoothing between the two kernels are Morphology.metal and maskBoxBlur. Pinned
 // against ScreensOracle and astrocomp's screens_only render of run #78; fast-math off.
 #include <metal_stdlib>
+#include "STF.h"
 using namespace metal;
-
-static float mtf(float x, float m) {
-  if (x <= 0.0f) { return 0.0f; }
-  if (x >= 1.0f) { return 1.0f; }
-  return (m - 1.0f) * x / ((2.0f * m - 1.0f) * x - m);
-}
 
 // p[0] 1 to subtract the continuum · p[1] k · p[2] shadows c · p[3] midtone m · p[4] black point
 // p[5] boost (≤ 1: none)
@@ -21,7 +16,7 @@ kernel void screenLinePrepare(texture2d<float, access::read> line [[texture(0)]]
   if (gid.x >= out.get_width() || gid.y >= out.get_height()) { return; }
   float v = line.read(gid).r;
   if (p[0] != 0.0f) { v = max(v - p[1] * reference.read(gid).r, 0.0f); }
-  float x = mtf((v - p[2]) / (1.0f - p[2]), p[3]);
+  float x = mtf(p[3], (v - p[2]) / (1.0f - p[2]));
   if (p[4] > 0.0f) { x = max((x - p[4]) / (1.0f - p[4]), 0.0f); }
   if (p[5] > 1.0f) {
     // astrocomp's soft shoulder: identity to the knee, then tanh towards the ceiling.

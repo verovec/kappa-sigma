@@ -38,6 +38,11 @@ package final class ProjectWindowModel {
   package internal(set) var studio: LegacyRunModel?
   /// The Stacking panel's preset and knob edits: what the next run applies (card 0070).
   package let knobs: KnobPanelViewModel
+  /// The last run's lanes read-only (this session's result, or the latest stack's `grades.json`),
+  /// rebuilt by `refresh()` only when their source changes (card 0069).
+  package internal(set) var lastReviewLanes: [FrameReviewViewModel] = []
+  /// What `lastReviewLanes` were built from (`run:<id>` or `stack:<id>`), to rebuild once.
+  var lastReviewSource: String?
   /// This session's imports, in order: the next run applies all their overrides.
   var imports: [ImportRequest] = []
   @ObservationIgnored private var masterServices: MasterServices?
@@ -192,8 +197,15 @@ package final class ProjectWindowModel {
       sources = try store?.sources() ?? []
       let summary = try store?.summary() ?? ProjectSummary()
       let running = run?.isRunning == true ? 1 : 0
-      statuses = JourneyState.derive(
-        from: ProjectFacts(summary: summary, coverage: coverage, stacksRunning: running))
+      var facts = ProjectFacts(summary: summary, coverage: coverage, stacksRunning: running)
+      // Tri is done when the latest stack went through the review (card 0069). A record that no
+      // longer decodes was reported where it is read (init, Run); here it only means « not
+      // reviewed », never a window whose stages stop refreshing.
+      let latest = try store?.latestStack()
+      facts.framesReviewed =
+        (latest.flatMap { try? StackRecord(stack: $0) })?.framesReviewed ?? false
+      statuses = JourneyState.derive(from: facts)
+      refreshReviewLanes(latest: latest)
       error = nil
     } catch {
       self.error = UserFacingError(error)

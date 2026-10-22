@@ -55,11 +55,23 @@ extension ChannelStacker {
     }
     let size = settings.trailDownsample
     // Each probe reads a whole frame: a cancelled run stops between them.
-    let graded = try ChannelGrading.grade(
+    var graded = try ChannelGrading.grade(
       sequence, frames: frames, settings: settings, preReject: preReject, spans: spans
     ) { index in
       try Task.checkCancellation()
       return trailProbe(light.frame(light.calibrated, index + 1), size)
+    }
+    outcome.frameNights = frames.map(\.session)
+    outcome.reference = sequence.reference >= 0 ? sequence.reference + 1 : nil
+    // The hook's presence is the one decision (the run installs it when the knob is on).
+    if let frameReview {
+      let context = FrameReviewContext(
+        lane: outcome.filter, grades: graded.grades,
+        spans: spans.isEmpty ? [0..<graded.grades.count] : spans, nights: outcome.frameNights,
+        elected: outcome.reference, registeredFrames: Self.registeredFrames(light, graded.grades))
+      let decision = try await frameReview(context)
+      ChannelGrading.apply(decision, to: &graded)
+      outcome.frameDecision = decision
     }
     outcome.grades = graded.grades
     outcome.stackedFrames = graded.registeredCount - graded.rejectedRegistered.count
@@ -81,6 +93,17 @@ extension ChannelStacker {
     let master = out.appendingPathComponent("master_" + ChannelTag.of(outcome.filter))
     try await stackOrCopy(light, graded: graded, master: master, into: &outcome)
     finish(master, into: &outcome)
+  }
+
+  /// The registered frame of each grade (`r_<seq>_NNNNN`, numbered over the registered frames
+  /// only), nil for a frame Siril dropped.
+  static func registeredFrames(_ light: Light, _ grades: [FrameGrade]) -> [URL?] {
+    var registered = 0
+    return grades.map { grade in
+      guard grade.fwhm > 0 else { return nil }
+      registered += 1
+      return light.frame(light.registered, registered)
+    }
   }
 
   /// The registered frames' cross-frame pass (`applyTrailMask`).

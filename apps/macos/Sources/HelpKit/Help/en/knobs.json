@@ -31,6 +31,10 @@
     "definition": "Removes each frame’s own gradient before a multi-night registration.",
     "label": "Flatten each frame’s sky"
   },
+  "knob.frame_review": {
+    "definition": "Pauses each lane after grading so you can keep or reject frames before the stack.",
+    "label": "Review frames before stacking"
+  },
   "knob.fwhm_sigma": {
     "definition": "Rejects a frame whose FWHM exceeds the night’s median by this many sigmas.",
     "label": "Soft frame (σ)"

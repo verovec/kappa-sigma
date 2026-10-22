@@ -28,13 +28,21 @@ nonisolated package struct AppCommand: Equatable, Sendable {
     /// The modifiers as flags.
     package var flags: NSEvent.ModifierFlags { NSEvent.ModifierFlags(rawValue: modifiers) }
 
-    /// As macOS writes it: ⌃⌥⇧⌘ then the key, uppercased (`⇧⌘O`, `⌥⌘H`, `⌘,`).
+    /// As macOS writes it: ⌃⌥⇧⌘ then the key, uppercased (`⇧⌘O`, `⌥⌘H`, `⌘,`); the arrow,
+    /// delete and return keys as their glyphs (`⌘←`, `⌘⌫`, `⌘↩`).
     package var symbols: String {
       let order: [(NSEvent.ModifierFlags, String)] = [
         (.control, "⌃"), (.option, "⌥"), (.shift, "⇧"), (.command, "⌘"),
       ]
-      return order.filter { flags.contains($0.0) }.map(\.1).joined() + key.uppercased()
+      return order.filter { flags.contains($0.0) }.map(\.1).joined()
+        + (Self.glyphs[key] ?? key.uppercased())
     }
+
+    /// The keys the sheet cannot print as typed.
+    private static let glyphs: [String: String] = [
+      "\u{F702}": "←", "\u{F703}": "→", "\u{F700}": "↑", "\u{F701}": "↓", "\u{8}": "⌫",
+      "\u{7F}": "⌦", "\r": "↩", "\u{1B}": "⎋", "\t": "⇥",
+    ]
   }
 
   /// Stable identifier (`file.save`), never shown.

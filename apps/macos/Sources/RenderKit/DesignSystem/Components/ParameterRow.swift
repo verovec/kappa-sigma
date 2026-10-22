@@ -63,7 +63,8 @@ package struct ParameterRow: View {
     .onAppear { text = format(parameter.value) }
     // The slider and reset move the value while the field may have focus: always show it.
     .onChange(of: parameter.value) { text = format(parameter.value) }
-    .onChange(of: editing) { if !editing { commit() } }
+    // A freeze takes the focus too: that loss of focus commits nothing (R2).
+    .onChange(of: editing) { if !editing && !frozen { commit() } }
     // A freeze (a run starting) shows the applied value, never a typed one nobody committed.
     .onChange(of: frozen) {
       if frozen {

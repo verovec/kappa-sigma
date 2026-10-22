@@ -151,6 +151,14 @@ package enum SirilScripts {
     ])
   }
 
+  /// Pins `index` as the reference of a one-pass registered sequence and registers it again
+  /// onto that frame (card 0096): the single-night path has no `seqapplyreg` to carry a `setref`.
+  package static func pinReference(seq: String, index: Int) -> SirilScript {
+    SirilScript([
+      .setref(seq: seq, index: index), .register(seq: seq, twoPass: false, transformation: nil),
+    ])
+  }
+
   /// Applies a registration onto a reference frame (`ApplyRegistrationScript`); a reference of 0
   /// keeps Siril's own.
   package static func applyRegistration(seq: String, reference: Int, framing: String?)

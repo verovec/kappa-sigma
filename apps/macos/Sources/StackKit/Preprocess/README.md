@@ -87,6 +87,33 @@ per lane the grades as stacked, the nights, the reference, whether it was review
 decision — the Tri stage reads it back after the work folder is gone. The stack's record in the
 app (`StackRecord.frameReview`) keeps the decisions per lane too.
 
+## The registration reference pin (card 0096)
+
+With `PreprocessSettings.referenceBreakpoint` on (knob `reference_breakpoint`, advanced, default
+off), every lane pauses once Siril has measured its frames and before the registration is
+applied: the stacker's `referencePin` hook gets a `ReferencePinContext` (the frames as measured,
+never graded; each frame's night and parity; the elected reference as `FrameGrade.index`) and
+returns a pin, or nil to keep the election. The `Preprocessor` installs the hook and emits
+`PreprocessEvent.reference(…)` with a `ReferencePinGate` (a `ReviewGate<Int?>`, the same type
+the frame review uses with a `FrameDecision`).
+
+- Several nights (`GroupedChannelStacker+Merge`): the pause sits after `register -2pass` and
+  before `RegistrationReview`, whose `pinned:` replaces the anchor night's middle frame as the
+  reference the overlap pre-rejects, the seam refit, `setref` + `seqapplyreg` and the coverage
+  homographies are computed against. A pin on a dropped frame is a warning; the election stands.
+  A pin on another night moves that lane's canvas and orientation to the pinned frame's field
+  (the « every lane on the anchor night's canvas » rule of 0066 holds without a pin); the
+  election shown is the anchor night's middle registered frame, else Siril's own reference.
+  Only frames registered with a transform are candidates (`RegistrationReview.registered`), on
+  every path and in the Tri pane alike.
+- One night (`ChannelStacker.calibrateRegister`): the election is Siril's own (`S` line, else
+  frame 1). With two-pass registration the pin rides `applyRegistration(reference:)`; one-pass,
+  a pin that differs runs `SirilScripts.pinReference` (`setref` + `register` once more).
+
+No pin, or the elected frame, leaves the recorded scripts byte for byte
+(`PreprocessorReferencePinTests`). The pin is `ChannelOutcome.referencePin`, in `grades.json` as
+`pinned_reference`, and in the app's stack record as `reference_pins`.
+
 ## The bundle (`LinearBundle`, `bundle.json`)
 
 ```

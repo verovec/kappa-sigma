@@ -23,6 +23,9 @@ package struct StackRecord: Equatable, Sendable {
   /// The frame review's decisions per lane (card 0069, `frame_review`): one entry per lane the run
   /// paused on, empty lists when the hand changed nothing; nil when the run never paused.
   package var frameReview: [String: FrameDecision]?
+  /// The registration reference pinned per lane (card 0096, `reference_pins`); nil when the run
+  /// never paused there or every election was kept.
+  package var referencePins: [String: Int]?
 
   /// A record of `request` run with the preset of `mode` and `knobs`.
   package init(
@@ -55,6 +58,7 @@ extension StackRecord: Codable {
   private enum Key: String, CodingKey {
     case mode, knobs, scope
     case frameReview = "frame_review"
+    case referencePins = "reference_pins"
   }
 
   package init(from decoder: any Decoder) throws {
@@ -66,6 +70,7 @@ extension StackRecord: Codable {
     knobs = try record.decodeIfPresent(KnobPatch.self, forKey: .knobs) ?? KnobPatch()
     scope = try record.decodeIfPresent(RunScope.self, forKey: .scope)
     frameReview = try record.decodeIfPresent([String: FrameDecision].self, forKey: .frameReview)
+    referencePins = try record.decodeIfPresent([String: Int].self, forKey: .referencePins)
   }
 
   package func encode(to encoder: any Encoder) throws {
@@ -75,5 +80,6 @@ extension StackRecord: Codable {
     if !knobs.values.isEmpty { try record.encode(knobs, forKey: .knobs) }
     try record.encodeIfPresent(scope, forKey: .scope)
     try record.encodeIfPresent(frameReview, forKey: .frameReview)
+    try record.encodeIfPresent(referencePins, forKey: .referencePins)
   }
 }

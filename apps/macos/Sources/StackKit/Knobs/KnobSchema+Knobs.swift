@@ -52,6 +52,7 @@ extension KnobSchema {
   /// Registration, framing, the transient mask, several nights and the combine.
   static let run: [Knob] = [
     .flag("register_2pass", .simple, \.register2Pass),
+    .flag(referenceBreakpointID, .advanced, \.referenceBreakpoint),
     .flag("edge_crop", .simple, \.edgeCrop),
     .flag("coverage_crop", .simple, \.coverageCrop),
     .number("trail_mask_k", .simple, 0...6, \.trailMaskK),

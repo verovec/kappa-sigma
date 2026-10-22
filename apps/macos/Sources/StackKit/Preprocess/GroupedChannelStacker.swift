@@ -29,6 +29,8 @@ package struct GroupedChannelStacker: Sendable {
     var frames: [CaptureFrame] = []
     var photometry: [PhotomGroup] = []
     var nights: [FrameSet] = []
+    /// Each night's parity correction (mirrored on disk), parallel to `nights` (card 0096).
+    var flipped: [Bool] = []
   }
 
   /// The masters of one night, minus the roles the user unchecked, forced if asked.
@@ -134,6 +136,7 @@ package struct GroupedChannelStacker: Sendable {
     merge.calibrated += paths
     merge.frames += group.frames
     merge.nights.append(group)
+    merge.flipped.append(parity.flipped)
     merge.photometry.append(Self.photometryGroup(group, filter: filter, paths: paths))
     outcome.inputFrames += group.count
   }

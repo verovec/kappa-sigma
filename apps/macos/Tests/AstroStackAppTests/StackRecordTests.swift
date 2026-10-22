@@ -32,4 +32,19 @@ struct StackRecordTests {
       StackRecord.self, from: Data(#"{"path": "/c/M31-DB"}"#.utf8))
     #expect(!unreviewed.framesReviewed && unreviewed.frameReview == nil)
   }
+
+  @Test("the reference pins per lane encode under reference_pins and decode back (card 0096)")
+  func testReferencePinsRoundTrip() throws {
+    var record = StackRecord(request: ImportRequest(paths: ["/c/M31-DB"]))
+    record.referencePins = ["RGB": 67]
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = [.sortedKeys]
+    let json = try #require(String(bytes: try encoder.encode(record), encoding: .utf8))
+    #expect(json == #"{"mode":"deepsky","path":"\/c\/M31-DB","reference_pins":{"RGB":67}}"#)
+    let decoded = try JSONDecoder().decode(StackRecord.self, from: Data(json.utf8))
+    #expect(decoded == record && !decoded.framesReviewed, "a pin alone is no frame review")
+    let none = try JSONDecoder().decode(
+      StackRecord.self, from: Data(#"{"path": "/c/M31-DB"}"#.utf8))
+    #expect(none.referencePins == nil)
+  }
 }

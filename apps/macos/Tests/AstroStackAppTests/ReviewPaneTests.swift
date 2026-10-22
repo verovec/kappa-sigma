@@ -192,4 +192,73 @@ struct ReviewPaneTests {
     review.continueStacking()
     #expect(run.decisions.isEmpty, "a dead lane's Continue records nothing")
   }
+
+  /// A run that pauses on lane L at the reference pin (card 0096), then finishes.
+  nonisolated static func pinningRun(seen: Recorded<PreprocessRequest>) -> RunServices.Run {
+    { request in
+      seen.append(request)
+      return AsyncThrowingStream(PreprocessEvent.self) { continuation in
+        let task = Task {
+          let frames = FrameReviewViewModelTests.frames()
+          let pause = PreprocessEvent.Reference(
+            lane: "L", candidates: frames.grades, registered: [true, true, true, false],
+            nights: frames.nights,
+            parity: [.same, .same, .mirrored, .unprobed], elected: 3,
+            gate: ReferencePinGate(lane: "L"))
+          continuation.yield(.reference(pause))
+          do {
+            let pin = try await pause.gate.answer()
+            var result = try RunPanelTests.finished(request)
+            // The pin lands on the lane that paused.
+            result.channels[0].filter = "L"
+            result.channels[0].referencePin = pin
+            result.channels[0].reference = pin ?? 3
+            continuation.yield(.finished(result))
+            continuation.finish()
+          } catch {
+            continuation.finish(throwing: error)
+          }
+        }
+        continuation.onTermination = { _ in task.cancel() }
+      }
+    }
+  }
+
+  @Test(
+    "a reference pause lays out with its radio column; Continue pins, the stack records the pin",
+    .scratchDirectory, arguments: ["en", "fr"])
+  func testReferencePauseRecordsPin(_ language: String) async throws {
+    let ran = Recorded<PreprocessRequest>()
+    let fixture = try ProjectTests.fixture(run: Self.pinningRun(seen: ran))
+    defer { try? fixture.project.close() }
+    let window = fixture.window
+    window.add(ImportRequest(paths: ["/c/M31-DB"]))
+    window.knobs.set(KnobSchema.referenceBreakpointID, to: .flag(true))
+    window.startRun()
+    let run = try #require(window.run)
+    await Self.settlePause(run)
+    let review = try #require(run.paused)
+    #expect(review.kind == .reference && review.reference == 3 && review.isLive)
+    #expect(ran.all.first?.settings.referenceBreakpoint == true, "the knob reaches the run")
+    window.select(.review)
+    let host = ImportSheetTests.host(
+      ProjectWindowView(model: window).environment(\.locale, Locale(identifier: language))
+        .background(Color(nsColor: .windowBackgroundColor)))
+    host.appearance = NSAppearance(named: .aqua)
+    host.layoutSubtreeIfNeeded()
+    #expect(host.fittingSize.width >= 640 && host.fittingSize.height >= 400)
+    host.sizingOptions = [.minSize]
+    host.layoutSubtreeIfNeeded()
+    if language == "en" { try RunPanelTests.attach(host, "review-reference.png") }
+
+    review.setReference(1)
+    review.continueStacking()
+    await run.settled()
+    #expect(run.phase == .finished && run.pins == ["L": 1] && !run.wasReviewed)
+    let stack = try #require(try fixture.project.store.latestStack())
+    let record = try StackRecord(stack: stack)
+    #expect(record.referencePins == ["L": 1] && record.frameReview == nil)
+    #expect(window.statuses[.review] == .ready, "a pin alone does not review the frames")
+    #expect(window.reviewLanes.first?.elected == 1, "the lane read back shows the pinned reference")
+  }
 }

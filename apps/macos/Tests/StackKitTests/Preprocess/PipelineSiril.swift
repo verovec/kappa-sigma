@@ -13,6 +13,9 @@ final class PipelineSiril: Sendable {
   }
 
   private let state = Mutex<[Call]>([])
+  /// The reference pinned by `setref` per sequence folder+name (card 0096): the `.seq` written
+  /// by a later `register` carries it, as Siril keeps a pinned reference.
+  private let pinned = Mutex<[String: Int]>([:])
   /// The `.seq` text a registration writes, by folder name (`light_L`); nil: one line per link.
   let sequence: @Sendable (String) -> String?
   /// Runs before each script plays out (a test cancels from here).
@@ -77,6 +80,8 @@ final class PipelineSiril: Sendable {
     case "calibrate_single":
       try Self.frame(directory.appendingPathComponent("pp_" + words[1] + ".fits"))
     case "seqapplyreg": try applyRegistration(words[1], in: directory)
+    case "setref":
+      if words.count > 2, let index = Int(words[2]) { try pin(words[1], index - 1, in: directory) }
     case "stack", "rgbcomp":
       if let out = words.first(where: { $0.hasPrefix("-out=") }) {
         try Self.frame(Self.target(String(out.dropFirst(5)), in: directory))
@@ -103,6 +108,9 @@ final class PipelineSiril: Sendable {
       sequence(directory.lastPathComponent)
       ?? links.map { _ in Self.healthyLine }.joined(separator: "\n")
     try Data(text.utf8).write(to: directory.appendingPathComponent(target + "_.seq"))
+    if let reference = pinned.withLock({ $0[directory.path + "/" + target] }) {
+      try pin(target, reference, in: directory)
+    }
     let parsed = SirilSequence(parsing: text)
     var registered = 0
     for (index, metric) in parsed.metrics.enumerated() {
@@ -113,6 +121,17 @@ final class PipelineSiril: Sendable {
       try frame(
         directory.appendingPathComponent("r_" + target + String(format: "_%05d.fits", registered)))
     }
+  }
+
+  /// Records `reference` (0-based) for `seq` and rewrites its `.seq`'s `S` line, as Siril does.
+  private func pin(_ seq: String, _ reference: Int, in directory: URL) throws {
+    pinned.withLock { $0[directory.path + "/" + seq] = reference }
+    let url = directory.appendingPathComponent(seq + "_.seq")
+    guard let text = try? String(contentsOf: url, encoding: .utf8) else { return }
+    let lines = text.split(separator: "\n").filter { !$0.hasPrefix("S ") }
+    let count = lines.count { $0.hasPrefix("R") }
+    let header = "S '\(seq)_' 1 \(count) \(count) 0 \(reference) 0 1"
+    try Data(([header] + lines.map(String.init)).joined(separator: "\n").utf8).write(to: url)
   }
 
   private func ingest(_ seq: String, in directory: URL) throws {

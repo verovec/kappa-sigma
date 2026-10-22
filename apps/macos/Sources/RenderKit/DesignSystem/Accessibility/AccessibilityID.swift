@@ -151,6 +151,14 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
   /// The Tri stage's metric picker over the histogram.
   package static let reviewMetric = stageControl("review", "metric")
 
+  /// The Tri stage's « Choose the reference frame » toggle (card 0096).
+  package static let referenceToggle = stageControl("review", "referenceToggle")
+
+  /// The Tri stage's « reference » radio of frame `index` at a reference pause (card 0096).
+  package static func reviewReference(_ index: Int) -> Self {
+    stageControl("review", "reference.\(index)")
+  }
+
   /// The Import sheet's profile picker (card 0060).
   package static let importProfile = Self("import", "profile")
 

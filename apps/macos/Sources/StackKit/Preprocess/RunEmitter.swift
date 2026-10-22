@@ -37,4 +37,9 @@ final class RunEmitter: Sendable {
   func frames(_ frames: PreprocessEvent.Frames) {
     sink(.frames(frames))
   }
+
+  /// A lane paused at the reference pin (card 0096).
+  func reference(_ reference: PreprocessEvent.Reference) {
+    sink(.reference(reference))
+  }
 }

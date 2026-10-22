@@ -210,6 +210,7 @@ extension ProjectWindowModel {
       var record = record
       // The hand the user gave at the review travels with the stack (card 0069).
       if let run, run.runID == runID, run.wasReviewed { record.frameReview = run.decisions }
+      if let run, run.runID == runID, !run.pins.isEmpty { record.referencePins = run.pins }
       let encoder = JSONEncoder()
       encoder.outputFormatting = [.sortedKeys]
       let params = String(bytes: try encoder.encode(record), encoding: .utf8) ?? "{}"

@@ -97,6 +97,22 @@
         }
       }
     },
+    "%@ · reference": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · reference"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · référence"
+          }
+        }
+      }
+    },
     "%@: %@ of %@ stacked": {
       "localizations": {
         "en": {
@@ -769,6 +785,22 @@
         }
       }
     },
+    "Choose the registration reference: frame %@ is elected": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose the registration reference: frame %@ is elected"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez la référence d’alignement : la pose %@ est élue"
+          }
+        }
+      }
+    },
     "Close": {
       "localizations": {
         "en": {
@@ -845,6 +877,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Continuer (%@ gardées)"
+          }
+        }
+      }
+    },
+    "Continue (reference: frame %@)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue (reference: frame %@)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuer (référence : pose %@)"
           }
         }
       }
@@ -1889,6 +1937,22 @@
         }
       }
     },
+    "Make frame %@ the reference": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Make frame %@ the reference"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Faire de la pose %@ la référence"
+          }
+        }
+      }
+    },
     "Masters, stacks and the bundle are written inside the project.": {
       "localizations": {
         "en": {
@@ -1917,6 +1981,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mesuré sur les pixels"
+          }
+        }
+      }
+    },
+    "Measuring: each lane pauses here before its registration is applied.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Measuring: each lane pauses here before its registration is applied."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mesure en cours : chaque voie marque une pause ici avant d’appliquer son alignement."
           }
         }
       }
@@ -2497,6 +2577,22 @@
         }
       }
     },
+    "Parity": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Parity"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Parité"
+          }
+        }
+      }
+    },
     "Paste": {
       "localizations": {
         "en": {
@@ -2509,6 +2605,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Coller"
+          }
+        }
+      }
+    },
+    "Pinned reference: frame %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pinned reference: frame %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Référence épinglée : pose %@"
           }
         }
       }
@@ -2781,6 +2893,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rétablir"
+          }
+        }
+      }
+    },
+    "Reference": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reference"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Référence"
+          }
+        }
+      }
+    },
+    "Reference kept: frame %@ (elected)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reference kept: frame %@ (elected)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Référence conservée : pose %@ (élue)"
           }
         }
       }
@@ -4465,6 +4609,22 @@
         }
       }
     },
+    "elected": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "elected"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "élue"
+          }
+        }
+      }
+    },
     "excluded (proposed: %@)": {
       "localizations": {
         "en": {
@@ -4593,6 +4753,22 @@
         }
       }
     },
+    "mirrored": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "mirrored"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "retournée"
+          }
+        }
+      }
+    },
     "missing": {
       "localizations": {
         "en": {
@@ -4621,6 +4797,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "quadrants %@"
+          }
+        }
+      }
+    },
+    "reference": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "reference"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "référence"
           }
         }
       }

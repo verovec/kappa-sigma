@@ -224,9 +224,16 @@ extension ProjectWindowModel {
   /// Opens the workspace of the stack the Studio shows when none is loaded or loading (a failed
   /// load retried when the Studio is shown again).
   package func retryWorkspace() {
-    guard workspace == nil, workspaceStackID == nil, let studio, let stack = selectedStack else {
+    guard workspace == nil, workspaceStackID == nil, let studio, let folder = folder() else {
       return
     }
+    // The stack whose layers the Studio shows, never another one the selection now names.
+    let shown = studio.source.folder.standardizedFileURL
+    guard
+      let stack = stacks.first(where: {
+        folder.appendingPathComponent($0.bundlePath).standardizedFileURL == shown
+      })
+    else { return }
     showWorkspace(of: stack, source: studio.source)
   }
 

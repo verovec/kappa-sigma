@@ -96,12 +96,10 @@ extension StudioWorkspaceModelTests {
     try workspace.apply()
     #expect(workspace.studio.head.planes == combined)
     workspace.mask = nil
-    try workspace.apply()
-    #expect(workspace.studio.steps.count == 2, "values never shown are not applied (R2)")
-    #expect(workspace.failure != nil)
-    await workspace.previewNow()
+    // Values not drawn yet are drawn by Apply first; what it records is what it showed (R2).
     try workspace.apply()
     #expect(workspace.studio.head.planes != combined && workspace.studio.steps.count == 3)
+    #expect(workspace.viewer.model.image.planes == workspace.studio.head.planes)
   }
 }
 

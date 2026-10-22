@@ -125,6 +125,12 @@ package final class StudioWorkspaceModel {
 
   /// Renders the panel's values now (the debounced preview calls it one frame after a change).
   package func previewNow() async {
+    drawPreview()
+  }
+
+  /// Draws the panel's values on the head now; a failure shows the head again (never an older
+  /// preview standing for the current values).
+  private func drawPreview() {
     guard let panel else { return }
     do {
       let preview = try studio.preview(panel.type.id, params: panel.params, mask: maskImage())
@@ -141,6 +147,10 @@ package final class StudioWorkspaceModel {
       shown = nil
       failure = UserFacingError(error).message
       previewFailed = true
+      if isPreviewing {
+        isPreviewing = false
+        try? show(studio.head, statistics: headStatistics)
+      }
     }
   }
 
@@ -149,18 +159,18 @@ package final class StudioWorkspaceModel {
   /// A failure is shown in the panel.
   package func apply() throws {
     guard let panel else { return }
-    // Apply records what the viewer shows (R2): values not drawn yet are drawn first, and the
-    // user applies once they show.
-    guard let shown, shown.processID == panel.type.id, shown.params == panel.params,
-      shown.mask == mask
-    else {
-      failure = .app("The preview is being drawn: apply again once it shows.")
-      previewFailed = true
-      schedulePreview()
-      return
-    }
+    // Apply records what the viewer shows (R2): values not drawn yet (a value just typed, a
+    // drag within the frame) are drawn first, and what was drawn is what is recorded.
     previewTask?.cancel()
+    if !isShowing(panel) { drawPreview() }
+    guard isShowing(panel) else { return }
     try reported { try studio.apply(panel.type.id, params: panel.params, mask: maskImage()) }
+  }
+
+  /// Whether the viewer shows the current values and mask of `panel`.
+  private func isShowing(_ panel: ProcessPanelModel) -> Bool {
+    guard let shown else { return false }
+    return shown.processID == panel.type.id && shown.params == panel.params && shown.mask == mask
   }
 
   /// Back one step.

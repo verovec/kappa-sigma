@@ -1,16 +1,16 @@
-internal import ProcessKit
+package import ProcessKit
 internal import RenderKit
-internal import SwiftUI
+package import SwiftUI
 
 /// Where the chosen process acts (card 0087): everywhere, a luminosity range or the stars,
 /// inverted or not, feathered — every value shown and adjustable (R2), applied by the kit after
 /// the process, to the preview and Apply alike.
-struct StudioMaskRow: View {
+package struct StudioMaskRow: View {
   let model: StudioWorkspaceModel
   @Environment(\.locale) private var locale
 
   /// A mask value the row edits (its raw value names its parameter key).
-  enum Field: String {
+  package enum Field: String, CaseIterable, Sendable {
     case low, high, softness, threshold, radius, feather
   }
 
@@ -43,7 +43,7 @@ struct StudioMaskRow: View {
     }
   }
 
-  var body: some View {
+  package var body: some View {
     VStack(alignment: .leading, spacing: DesignMetrics.spacingS) {
       HStack {
         Picker(selection: source) {
@@ -65,22 +65,12 @@ struct StudioMaskRow: View {
   @ViewBuilder private func values(of mask: Mask) -> some View {
     switch mask.source {
     case .luminosityRange(let low, let high, let softness):
-      row(.app("Range start"), .low, low, 0...1) { value in
-        .luminosityRange(low: value, high: max(value, high), softness: softness)
-      }
-      row(.app("Range end"), .high, high, 0...1) { value in
-        .luminosityRange(low: min(low, value), high: value, softness: softness)
-      }
-      row(.app("Softness"), .softness, softness, 0...0.5) { value in
-        .luminosityRange(low: low, high: high, softness: value)
-      }
+      row(.app("Range start"), .low, low, 0...1)
+      row(.app("Range end"), .high, high, 0...1)
+      row(.app("Softness"), .softness, softness, 0...0.5)
     case .stars(let threshold, let radiusPx):
-      row(.app("Star threshold"), .threshold, threshold, 0.001...0.5) { value in
-        .stars(threshold: value, radiusPx: radiusPx)
-      }
-      row(.app("Star radius (px)"), .radius, radiusPx, 1...64) { value in
-        .stars(threshold: threshold, radiusPx: value)
-      }
+      row(.app("Star threshold"), .threshold, threshold, 0.001...0.5)
+      row(.app("Star radius (px)"), .radius, radiusPx, 1...64)
     }
     ParameterRow(
       .app("Feather (px)"),
@@ -92,19 +82,41 @@ struct StudioMaskRow: View {
 
   private func row(
     _ label: LocalizedStringResource, _ key: Field, _ value: Double,
-    _ range: ClosedRange<Double>, _ source: @escaping (Double) -> MaskSource
+    _ range: ClosedRange<Double>
   ) -> some View {
     let start = Source(model.mask).mask.flatMap { Self.value(key, of: $0) } ?? value
     return ParameterRow(
       label,
       parameter: Binding(
         get: { ParameterValue(default: start, range: range, value: value) },
-        set: { model.mask?.source = source($0.value) }),
+        set: { moved in
+          if let source = model.mask?.source {
+            model.mask?.source = Self.moved(source, key, to: moved.value)
+          }
+        }),
       key: AccessibilityID.studioMaskKey(key.rawValue), format: format, parse: parse)
   }
 
+  /// `source` with its `key` value set to `value`: a range end never crosses its start; a key
+  /// the source has not leaves it as it is.
+  nonisolated package static func moved(_ source: MaskSource, _ key: Field, to value: Double)
+    -> MaskSource
+  {
+    switch (source, key) {
+    case (.luminosityRange(_, let high, let softness), .low):
+      .luminosityRange(low: value, high: max(value, high), softness: softness)
+    case (.luminosityRange(let low, _, let softness), .high):
+      .luminosityRange(low: min(low, value), high: value, softness: softness)
+    case (.luminosityRange(let low, let high, _), .softness):
+      .luminosityRange(low: low, high: high, softness: value)
+    case (.stars(_, let radiusPx), .threshold): .stars(threshold: value, radiusPx: radiusPx)
+    case (.stars(let threshold, _), .radius): .stars(threshold: threshold, radiusPx: value)
+    default: source
+    }
+  }
+
   /// The starting value of `key` in `source` (the row's default badge and reset).
-  private static func value(_ key: Field, of source: MaskSource) -> Double? {
+  nonisolated package static func value(_ key: Field, of source: MaskSource) -> Double? {
     switch (source, key) {
     case (.luminosityRange(let low, _, _), .low): low
     case (.luminosityRange(_, let high, _), .high): high

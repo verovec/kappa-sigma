@@ -2,8 +2,9 @@ internal import RenderKit
 internal import StackKit
 internal import SwiftUI
 
-/// One lane's review (card 0069): where it stands, Continue, the metric histogram, the table of
-/// every frame with its verdict, and the blink panel while the run waits.
+/// One lane's review (cards 0069, 0096): where it stands, Continue, the metric histogram, the
+/// table of every frame with its verdict or the reference radio, and the blink panel while the
+/// run waits at the grading pause.
 struct FrameReviewView: View {
   @Bindable var review: FrameReviewViewModel
   @State private var selection: FrameReviewViewModel.Row.ID?
@@ -44,7 +45,9 @@ struct FrameReviewView: View {
           histogram
           FrameTable(review: review, selection: $selection)
         }
-        if review.isLive { FrameBlinkView(review: review).frame(width: 300) }
+        if review.isLive, review.kind == .verdicts {
+          FrameBlinkView(review: review).frame(width: 300)
+        }
       }
     }
     .padding([.horizontal, .bottom], DesignMetrics.spacingM)
@@ -52,34 +55,55 @@ struct FrameReviewView: View {
     .onChange(of: review.current, initial: true) { _, shown in selection = shown }
   }
 
-  /// Live: waiting, the counts and Continue; read-only: what the last run stacked.
+  /// The lane, where it stands, the reference, and Continue while the run waits.
   private var status: some View {
-    let registered = format.frames(review.rows.count(where: \.isRegistered))
-    let kept = format.frames(review.keptCount)
-    return HStack(alignment: .firstTextBaseline, spacing: DesignMetrics.spacingM) {
+    HStack(alignment: .firstTextBaseline, spacing: DesignMetrics.spacingM) {
       Text(verbatim: review.lane).font(.headline)
-      if let error = review.error {
-        StatusBadge(.error, verbatim: error)
-      } else if review.isLive {
-        StatusBadge(.attention, .app("Waiting for you: \(registered) registered, \(kept) kept"))
-      } else if review.isAnswered {
-        StatusBadge(.ok, .app("Continuing: \(kept) kept of \(registered)"))
-      } else {
-        StatusBadge(.ok, .app("Last run: \(kept) stacked of \(registered)"))
-      }
-      if let elected = review.elected {
-        Text(.app("Registration reference: frame \(format.integer(elected))"))
-          .foregroundStyle(.secondary)
+      badge
+      if review.kind == .verdicts, review.elected != nil {
+        Text(.app("Registration reference: frame \(electedWords)")).foregroundStyle(.secondary)
       }
       Spacer()
-      if review.isLive {
-        Button(.app("Continue (\(format.frames(review.keptCount)) kept)")) {
-          review.continueStacking()
-        }
-        .disabled(!review.canContinue)
-        .accessible(.reviewContinue, label: .app("Continue"))
+      if review.isLive { continueButton }
+    }
+  }
+
+  /// Live: waiting (verdicts or reference) and the counts; answered: the hand given; read-only:
+  /// what the last run stacked; a failed lane: why.
+  @ViewBuilder private var badge: some View {
+    let registered = format.frames(review.rows.count(where: \.isRegistered))
+    let kept = format.frames(review.keptCount)
+    if let error = review.error {
+      StatusBadge(.error, verbatim: error)
+    } else if review.isLive, review.kind == .reference {
+      StatusBadge(
+        .attention, .app("Choose the registration reference: frame \(electedWords) is elected"))
+    } else if review.isLive {
+      StatusBadge(.attention, .app("Waiting for you: \(registered) registered, \(kept) kept"))
+    } else if review.isAnswered, review.kind == .reference, review.pinnedAnswer != nil {
+      StatusBadge(.ok, .app("Pinned reference: frame \(referenceWords)"))
+    } else if review.isAnswered, review.kind == .reference {
+      StatusBadge(.ok, .app("Reference kept: frame \(electedWords) (elected)"))
+    } else if review.isAnswered {
+      StatusBadge(.ok, .app("Continuing: \(kept) kept of \(registered)"))
+    } else {
+      StatusBadge(.ok, .app("Last run: \(kept) stacked of \(registered)"))
+    }
+  }
+
+  /// Continue, worded with what it hands the run.
+  private var continueButton: some View {
+    Button {
+      review.continueStacking()
+    } label: {
+      if review.kind == .reference {
+        Text(.app("Continue (reference: frame \(referenceWords))"))
+      } else {
+        Text(.app("Continue (\(format.frames(review.keptCount)) kept)"))
       }
     }
+    .disabled(!review.canContinue)
+    .accessible(.reviewContinue, label: .app("Continue"))
   }
 
   /// The chosen metric over the registered frames (0085's handles come later).
@@ -95,6 +119,8 @@ struct FrameReviewView: View {
   }
 
   private var format: AstroFormat { AstroFormat(locale: locale) }
+  private var electedWords: String { review.elected.map { format.integer($0) } ?? "—" }
+  private var referenceWords: String { review.reference.map { format.integer($0) } ?? "—" }
 }
 
 extension FrameReviewViewModel.Row {

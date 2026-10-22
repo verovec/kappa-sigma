@@ -143,6 +143,55 @@ struct FrameReviewViewModelTests {
     #expect(model.rows[2].isKept)
   }
 
+  @Test("a reference pause: one reference per lane, the elected shown until changed, Continue pins")
+  func testReferenceSingleSelect() {
+    let frames = Self.frames()
+    let gate = ReferencePinGate(lane: "L")
+    let pause = PreprocessEvent.Reference(
+      lane: "L", candidates: frames.grades, registered: [true, true, true, false],
+      nights: frames.nights,
+      parity: [.same, .same, .mirrored, .unprobed], elected: 3, gate: gate)
+    let handed = Recorded<Int?>()
+    let model = FrameReviewViewModel(reference: pause) { handed.append($0) }
+    #expect(model.kind == .reference && model.isLive && model.elected == 3)
+    #expect(model.reference == 3, "the elected frame is the reference until changed")
+    #expect(model.rows.map(model.isReference) == [false, false, true, false])
+    #expect(model.rows.map(\.parity) == [.same, .same, .mirrored, .unprobed])
+    #expect(model.decision == FrameDecision(), "no verdicts at this pause")
+    model.setReference(1)
+    #expect(
+      model.reference == 1 && model.rows.map(model.isReference) == [true, false, false, false])
+    model.setReference(4)
+    #expect(model.reference == 1, "an unregistered frame cannot be the reference")
+    model.toggle(2)
+    #expect(model.rows[1].isKept == false, "verdicts are not this pause's")
+    #expect(model.canContinue)
+    model.continueStacking()
+    model.continueStacking()
+    #expect(handed.all == [1] && !model.isLive && model.pinnedAnswer == 1)
+    model.setReference(3)
+    #expect(model.reference == 1, "read-only after Continue")
+
+    let kept = FrameReviewViewModel(reference: pause) { handed.append($0) }
+    kept.continueStacking()
+    #expect(handed.all == [1, nil], "the elected frame kept = no pin, Siril's choice stands")
+    #expect(kept.pinnedAnswer == nil && kept.isAnswered, "the badge says kept, never pinned")
+    #expect(model.id == "L/reference", "a lane pauses twice in a run: the pane keys on both")
+
+    // The election on a frame Siril dropped: nothing is chosen for the user, Continue is still
+    // offered and hands « keep the election » (nil) — the run never hangs, nothing is pinned.
+    let dropped = PreprocessEvent.Reference(
+      lane: "L", candidates: frames.grades, registered: [true, true, true, false],
+      nights: frames.nights,
+      parity: [.unprobed, .unprobed, .unprobed, .unprobed], elected: 4,
+      gate: ReferencePinGate(lane: "L"))
+    let fallback = FrameReviewViewModel(reference: dropped) { handed.append($0) }
+    #expect(fallback.elected == 4 && fallback.reference == nil && fallback.canContinue)
+    #expect(fallback.rows.map(fallback.isReference) == [false, false, false, false])
+    fallback.continueStacking()
+    #expect(handed.all == [1, nil, nil])
+  }
+
   @Test("a metric histogram bins the registered frames over the metric's range")
   func testHistogram() {
     let model = FrameReviewViewModel(frames: Self.frames()) { _ in }

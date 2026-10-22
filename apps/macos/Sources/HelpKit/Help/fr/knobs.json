@@ -43,6 +43,10 @@
     "definition": "Ramène chaque nuit à l’échelle photométrique de la nuit d’ancrage avant la fusion.",
     "label": "Égaliser l’éclat des nuits"
   },
+  "knob.reference_breakpoint": {
+    "definition": "Marque une pause par voie une fois les poses mesurées pour choisir la pose de référence de l’alignement.",
+    "label": "Choisir la pose de référence"
+  },
   "knob.register_2pass": {
     "definition": "Siril élit la meilleure pose de référence au lieu de la première.",
     "label": "Alignement en deux passes"

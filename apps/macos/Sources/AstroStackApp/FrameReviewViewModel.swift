@@ -24,13 +24,15 @@ package final class FrameReviewViewModel {
     package let shiftX: Double
     package let shiftY: Double
     /// Siril registered it (an unregistered frame cannot be stacked).
-    package let isRegistered: Bool
+    package var isRegistered: Bool
     /// The grader's verdict, before the user.
     package let autoRejected: Bool
     /// The grader's reason, empty when it kept the frame.
     package let autoReason: String
     /// The quick look, while the run's work folder lives.
     package let thumbnail: URL?
+    /// The night’s parity against the run’s convention (card 0096).
+    package var parity = FrameParity.unprobed
     /// Kept as the user left it.
     package var isKept: Bool
 
@@ -53,6 +55,24 @@ package final class FrameReviewViewModel {
   package let elected: Int?
   /// Why the lane failed, read back from the record; nil for a lane that stacked.
   package let error: String?
+  /// Which breakpoint the lane is at: verdicts after grading (0069) or the reference pin before
+  /// the registration is applied (0096).
+  package enum Kind: Equatable, Sendable {
+    case verdicts, reference
+  }
+  package let kind: Kind
+  /// One lane may pause twice in a run (reference, then verdicts): the pane keys on both.
+  package var id: String { "\(lane)/\(kind)" }
+  /// The registration reference as the user left it (`Row.index`), at a reference pause.
+  package private(set) var reference: Int?
+  /// What Continue hands the run: the verdicts, or the pin (nil keeps the election).
+  package enum Answer: Equatable, Sendable {
+    case verdicts(FrameDecision)
+    case reference(Int?)
+  }
+  /// The pin Continue handed at a reference pause; nil when the election was kept.
+  package private(set) var pinnedAnswer: Int?
+  private let answer: (Answer) -> Void
   package private(set) var rows: [Row]
   /// A run waits on this lane: toggles count and Continue is offered.
   package private(set) var isLive: Bool
@@ -62,7 +82,6 @@ package final class FrameReviewViewModel {
   package var sortOrder: [KeyPathComparator<Row>]
   /// The frame shown in the blink panel, by `Row.index`.
   package private(set) var current: Int?
-  private let onContinue: (FrameDecision) -> Void
 
   /// A live lane: the run waits for `onContinue`.
   package init(frames: PreprocessEvent.Frames, onContinue: @escaping (FrameDecision) -> Void) {
@@ -76,9 +95,39 @@ package final class FrameReviewViewModel {
           ? frames.thumbnails[position].map { URL(fileURLWithPath: $0) } : nil)
     }
     isLive = true
-    self.onContinue = onContinue
+    kind = .verdicts
+    answer = { if case .verdicts(let decision) = $0 { onContinue(decision) } }
     sortOrder = [KeyPathComparator(\.index)]
     current = rows.first { $0.thumbnail != nil }?.index
+  }
+
+  /// A live reference pause (card 0096): the run waits for `onContinue` with the pin, nil when
+  /// the elected frame is kept.
+  package init(reference pause: PreprocessEvent.Reference, onContinue: @escaping (Int?) -> Void) {
+    let built = zip(pause.candidates.indices, pause.candidates).map { position, grade in
+      var row = Row(
+        grade, night: pause.nights.indices.contains(position) ? pause.nights[position] : "")
+      row.parity = pause.parity.indices.contains(position) ? pause.parity[position] : .unprobed
+      // Registered means « with a transform » here: the engine's rule, so the radio never offers
+      // a frame the run would refuse.
+      row.isRegistered =
+        pause.registered.indices.contains(position) ? pause.registered[position] : false
+      return row
+    }
+    // The election, when Siril kept that frame; otherwise nothing is chosen for the user, and
+    // Continue hands « keep the election » (nil): untouched runs stay byte-identical.
+    let chosen = pause.elected.flatMap { index in
+      built.contains { $0.index == index && $0.isRegistered } ? index : nil
+    }
+    lane = pause.lane
+    elected = pause.elected
+    error = nil
+    rows = built
+    isLive = true
+    kind = .reference
+    reference = chosen
+    answer = { if case .reference(let pin) = $0 { onContinue(pin) } }
+    sortOrder = [KeyPathComparator(\.index)]
   }
 
   /// A lane read back from `grades.json`: the verdicts as stacked, nothing to answer.
@@ -90,7 +139,8 @@ package final class FrameReviewViewModel {
       Row(grade, night: lane.nights.indices.contains(position) ? lane.nights[position] : "")
     }
     isLive = false
-    onContinue = { _ in }
+    kind = .verdicts
+    answer = { _ in }
     sortOrder = [KeyPathComparator(\.index)]
   }
 
@@ -152,7 +202,8 @@ package final class FrameReviewViewModel {
   }
 
   private func set(_ index: Int, kept: Bool) {
-    guard isLive, let position = rows.firstIndex(where: { $0.index == index }),
+    // Verdicts belong to the grading pause; a reference pause only picks a frame.
+    guard isLive, kind == .verdicts, let position = rows.firstIndex(where: { $0.index == index }),
       rows[position].isRegistered
     else { return }
     rows[position].isKept = kept
@@ -168,15 +219,44 @@ package final class FrameReviewViewModel {
   /// Frames that will be stacked.
   package var keptCount: Int { rows.count { $0.isRegistered && $0.isKept } }
 
-  /// Continue is offered: the run waits and Siril's stack minimum holds.
-  package var canContinue: Bool { isLive && keptCount >= Grader.stackMinimum }
+  /// Continue is offered: the run waits and, at a verdicts pause, Siril's stack minimum holds;
+  /// at a reference pause always (keeping the election is an answer: the run never hangs).
+  package var canContinue: Bool {
+    guard isLive else { return false }
+    switch kind {
+    case .verdicts: return keptCount >= Grader.stackMinimum
+    case .reference: return true
+    }
+  }
 
-  /// Hands the run the decision, once; the lane turns read-only.
+  /// Hands the run the decision (or the pin), once; the lane turns read-only.
   package func continueStacking() {
     guard canContinue else { return }
     isLive = false
     isAnswered = true
-    onContinue(decision)
+    switch kind {
+    case .verdicts: answer(.verdicts(decision))
+    // The elected frame kept is no pin: the scripts stay as recorded (card 0096).
+    case .reference:
+      pinnedAnswer = reference == elected ? nil : reference
+      answer(.reference(pinnedAnswer))
+    }
+  }
+
+  // MARK: - Reference (card 0096)
+
+  /// Makes frame `index` the registration reference, one per lane; an unregistered frame or a
+  /// read-only lane changes nothing.
+  package func setReference(_ index: Int) {
+    guard isLive, kind == .reference, let row = rows.first(where: { $0.index == index }),
+      row.isRegistered
+    else { return }
+    reference = index
+  }
+
+  /// `row` is the registration reference as the user left it.
+  package func isReference(_ row: Row) -> Bool {
+    row.index == reference
   }
 
   // MARK: - Metrics

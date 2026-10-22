@@ -20,6 +20,8 @@ package struct GradesRecord: Codable, Equatable, Sendable {
     package var grades: [FrameGrade]
     /// Why the lane failed, when it did: a failed lane never reads back as an empty one.
     package var error: String?
+    /// The reference the user pinned (card 0096), when one was; `reference` is the one applied.
+    package var pinnedReference: Int?
 
     /// The lane of `outcome`.
     package init(_ outcome: ChannelOutcome) {
@@ -30,6 +32,12 @@ package struct GradesRecord: Codable, Equatable, Sendable {
       nights = outcome.frameNights
       grades = outcome.grades
       error = outcome.error
+      pinnedReference = outcome.referencePin
+    }
+
+    private enum CodingKeys: String, CodingKey {
+      case lane, reviewed, decision, reference, nights, grades, error
+      case pinnedReference = "pinned_reference"
     }
   }
 

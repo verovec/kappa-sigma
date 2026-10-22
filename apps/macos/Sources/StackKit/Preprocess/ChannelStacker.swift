@@ -24,6 +24,12 @@ package struct ChannelStacker: Sendable {
   /// Asked after grading, before the stack; nil never pauses (the run installs it when the
   /// `frame_review` knob is on).
   package var frameReview: FrameReviewHook?
+  /// The user's reference pin on a measured lane (card 0096): `FrameGrade.index`, or nil to keep
+  /// the elected frame; it may throw to stop (cancellation).
+  package typealias ReferencePinHook = @Sendable (ReferencePinContext) async throws -> Int?
+  /// Asked once the frames are measured, before the registration is applied; nil never pauses
+  /// (the run installs it when the `reference_breakpoint` knob is on).
+  package var referencePin: ReferencePinHook?
 
   /// A stacker; trails are probed on the pixels unless a test substitutes them.
   package init(
@@ -69,7 +75,7 @@ package struct ChannelStacker: Sendable {
       if set.count == 1 {
         try await promoteLone(light, into: &outcome, out: out)
       } else {
-        try await calibrateRegister(light, into: &outcome)
+        try await calibrateRegister(light, frames: set.frames, into: &outcome)
         try await gradeAndStack(light, frames: set.frames, into: &outcome, out: out)
       }
     } catch is CancellationError {

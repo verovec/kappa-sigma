@@ -95,6 +95,7 @@
     "flatten_background",
     "frame_review",
     "photometric_normalisation",
+    "reference_breakpoint",
     "register_2pass",
     "reject_trails",
     "roundness_sigma",

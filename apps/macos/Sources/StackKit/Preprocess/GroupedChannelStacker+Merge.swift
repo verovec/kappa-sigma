@@ -23,10 +23,14 @@ extension GroupedChannelStacker {
       return
     }
     let size = DimensionGuard.dimensions(merge.calibrated[0])
+    let sequence = try ChannelStacker.sequence(of: light)
+    // The reference pin (card 0096): the anchor night's election unless the user pins a frame.
+    let pin = try await pinReference(sequence, merge: merge, anchor: anchor, into: &outcome)
     let review = RegistrationReview(
-      try ChannelStacker.sequence(of: light), spans: merge.spans, anchor: anchor,
-      width: size?.width ?? 0, height: size?.height ?? 0)
+      sequence, spans: merge.spans, anchor: anchor, width: size?.width ?? 0,
+      height: size?.height ?? 0, pinned: pin)
     for warning in review.warnings { stacker.warn("\(filter): \(warning)", into: &outcome) }
+    if let pin, review.referenceIndex == pin { outcome.referencePin = pin }
     outcome.nights = Self.nights(merge, review: review)
     // The homographies are known but no registered pixel is written yet: each night's pedestal
     // can still be refitted in place before `seqapplyreg` reads the frames.
@@ -45,6 +49,35 @@ extension GroupedChannelStacker {
       saturationCeilings: saturationCeilings(merge, records: outcome.photometry), into: &outcome,
       out: out)
     summarise(merge, review: review, size: size, filter: filter, into: &outcome)
+  }
+
+  /// Asks the pin hook, when installed, with the merged frames as Siril measured them.
+  ///
+  /// Each frame carries its night and parity; the election is the anchor night's middle
+  /// registered frame, as the review would pick it. A pin on a dropped frame is refused by the
+  /// review (a warning).
+  func pinReference(
+    _ sequence: SirilSequence, merge: Merge, anchor: Int, into outcome: inout ChannelOutcome
+  ) async throws -> Int? {
+    guard let referencePin = stacker.referencePin else { return nil }
+    let elected = RegistrationReview.election(sequence, spans: merge.spans, anchor: anchor)
+    var parity = [FrameParity](repeating: .unprobed, count: sequence.metrics.count)
+    for (night, span) in merge.spans.enumerated() where night < merge.flipped.count {
+      for index in span where index < parity.count {
+        parity[index] = merge.flipped[night] ? .mirrored : .same
+      }
+    }
+    let context = ReferencePinContext(
+      lane: outcome.filter, sequence: sequence, frames: merge.frames, parity: parity,
+      elected: elected)
+    guard let pin = try await referencePin(context) else { return nil }
+    // A pin on the election changes nothing and is recorded as such; another frame is recorded
+    // once the review has accepted it (`mergeAndStack`): values shown = values applied.
+    guard pin != elected else {
+      outcome.referencePin = pin
+      return nil
+    }
+    return pin
   }
 
   /// Writes the registered frames (`seqapplyreg`); false, the error recorded, when Siril fails.

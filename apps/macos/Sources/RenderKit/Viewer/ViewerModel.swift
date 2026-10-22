@@ -27,8 +27,8 @@ package final class ViewerModel {
     case split
   }
 
-  /// The image shown (linear data, never modified by the viewer).
-  package let image: AstroImage
+  /// The image shown (linear data, never modified by the viewer; `replace` swaps it).
+  package private(set) var image: AstroImage
   /// What the GPU draws next.
   package var frame: ViewerFrame {
     didSet { redraw?() }
@@ -68,8 +68,8 @@ package final class ViewerModel {
   @ObservationIgnored package var redraw: (@MainActor () -> Void)?
 
   /// Each channel's median and MADN, measured once: the autostretch and the σ controls read them.
-  package let statistics: [STFMapping]
-  private let linkedStatistics: [STFMapping]
+  package private(set) var statistics: [STFMapping]
+  private var linkedStatistics: [STFMapping]
   private var split: Double?
   private var autoSTF: [STFParameters]
   /// The stretch a histogram drag started from: every event of the drag maps from it, so a
@@ -88,6 +88,21 @@ package final class ViewerModel {
     manualSTF = auto
     frame = ViewerFrame(transform: ViewTransform(scale: 1, origin: .zero), stf: auto)
     frame.flipRows = image.metadata.rowOrder == .bottomUp
+  }
+
+  /// Shows `image` in place of the current one (the Studio's new head, card 0087): zoom, tool,
+  /// region, compare and the stretch mode stay; the autostretch follows the new image; manual
+  /// numbers stay unless the plane count changed.
+  package func replace(image: AstroImage, statistics measured: [STFMapping]? = nil) {
+    let statistics = measured ?? STFMapping.measure(planes: image.planes, linked: false)
+    let samePlanes = statistics.count == self.statistics.count
+    self.image = image
+    self.statistics = statistics
+    linkedStatistics = STFMapping.linked(statistics)
+    autoSTF = Self.autostretch(statistics)
+    if !samePlanes { manualSTF = autoSTF }
+    frame.flipRows = image.metadata.rowOrder == .bottomUp
+    applyStretch()
   }
 
   /// The autostretch currently offered.

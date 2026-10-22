@@ -153,8 +153,8 @@ package final class PipelineSidebarModel {
     let recipe = Recipe(processID: processID, params: params)
     if masked {
       warnings.append(
-        "step \(index + 1) (\(processID)) was applied under a mask; the pipeline replays it unmasked"
-      )
+        "step \(index + 1) (\(processID)) was applied under a mask; "
+          + "the pipeline replays it unmasked")
     }
     if pipeline.steps.indices.contains(index), pipeline.steps[index].recipe.processID == processID {
       pipeline.steps[index].recipe = recipe

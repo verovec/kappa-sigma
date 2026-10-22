@@ -2961,6 +2961,38 @@
         }
       }
     },
+    "Move down": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move down"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Descendre"
+          }
+        }
+      }
+    },
+    "Move up": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move up"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Monter"
+          }
+        }
+      }
+    },
     "Name": {
       "localizations": {
         "en": {
@@ -4237,6 +4269,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Relancer"
+          }
+        }
+      }
+    },
+    "Remove step": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove step"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retirer l’étape"
           }
         }
       }
@@ -6681,6 +6729,22 @@
         }
       }
     },
+    "Undo back before this step to change it": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Undo back before this step to change it"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annulez jusqu’avant cette étape pour la modifier"
+          }
+        }
+      }
+    },
     "Unnamed object": {
       "localizations": {
         "en": {
@@ -6773,6 +6837,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Présentation"
+          }
+        }
+      }
+    },
+    "Wait for the run to end": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wait for the run to end"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Attendez la fin de l’exécution"
           }
         }
       }

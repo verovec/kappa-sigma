@@ -259,6 +259,16 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
     studioPipeline("step." + String(index) + (lock ? ".lock" : ".mode"))
   }
 
+  /// The « Remove step » of step `index` (card 0107).
+  package static func studioPipelineStepRemove(_ index: Int) -> Self {
+    studioPipeline("step." + String(index) + ".remove")
+  }
+
+  /// The « Move up » of step `index`, or its « Move down » when `up` is false (card 0107).
+  package static func studioPipelineStepMove(_ index: Int, up: Bool) -> Self {
+    studioPipeline("step." + String(index) + (up ? ".up" : ".down"))
+  }
+
   /// The Replay chooser's stack `stackID`.
   package static func studioPipelineReplayTarget(_ stackID: Int64) -> Self {
     studioPipeline("replay." + String(stackID))

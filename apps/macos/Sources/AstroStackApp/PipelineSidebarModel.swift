@@ -25,9 +25,9 @@ package final class PipelineSidebarModel {
   }
 
   /// The pipeline shown (edited by the user's toggles, Continue values and manual Applies).
-  package private(set) var pipeline: Pipeline
+  package internal(set) var pipeline: Pipeline
   /// The breakpoint the run halted at, if any.
-  package private(set) var stoppedAt: Int?
+  package internal(set) var stoppedAt: Int?
   /// A batch step's progress (0…1) while it runs, by step.
   package private(set) var progress: [Int: Double] = [:]
   /// What loading the pipeline ignored or changed (unknown keys, clamped values).

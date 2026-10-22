@@ -4,10 +4,14 @@ package import ProcessKit
 package import RenderKit
 
 extension StudioWorkspaceModel {
-  /// What `type` with `params` proposes on the head, and for the levels the viewer's display
-  /// stretch (the STF → HT handoff, card 0089): offered, never set (R2).
+  /// What `type` with `params` proposes on the head, for the levels the viewer's display
+  /// stretch (the STF → HT handoff, card 0089), for plate solving the stack header's pointing and
+  /// optics (0093): offered, never set (R2).
   package func offers(for type: any ImageProcess.Type, params: ParamSet) -> [Suggestion] {
     let suggestions = (try? studio.session.suggestions(for: type, params: params)) ?? []
+    if type == PlateSolveProcess.self {
+      return suggestions + PlateSolveProcess.suggestions(header: studio.header)
+    }
     guard type == LevelsProcess.self else { return suggestions }
     return suggestions + Self.displaySuggestions(viewer.model.frame.stf)
   }

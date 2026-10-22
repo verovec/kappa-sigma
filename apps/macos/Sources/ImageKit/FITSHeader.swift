@@ -45,6 +45,11 @@ package struct FITSHeader: Equatable, Sendable {
   /// Every card before `END`, in order.
   package let cards: [Card]
 
+  /// A header of `cards` (an empty one: a file that only describes its data).
+  package init(cards: [Card]) {
+    self.cards = cards
+  }
+
   /// The first card named `keyword`, as text (quotes and trailing spaces removed).
   package func string(_ keyword: String) -> String? {
     cards.first { $0.keyword == keyword }?.value

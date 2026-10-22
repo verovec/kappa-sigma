@@ -17,7 +17,7 @@ struct ProfileKnobTests {
           case .number(let number): .number(number)
           case .flag(let flag): .flag(flag)
           case .choice(let option): .choice(option)
-          case .points: nil
+          case .points, .text: nil
           }
         #expect(converted.map(knob.accepts) == true, "\(profile.id): \(id) = \(value)")
       }

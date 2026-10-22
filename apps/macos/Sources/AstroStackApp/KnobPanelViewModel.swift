@@ -97,7 +97,7 @@ package final class KnobPanelViewModel {
   }
 
   /// A profile's value of knob `id` as the panel shows it: the user's number, the choice's
-  /// glossary label, « On » / « Off »; nil for a curve (no knob is one).
+  /// glossary label, « On » / « Off »; nil for a curve or a text (no knob is one).
   package nonisolated static func words(for value: ParamValue, id: String, locale: Locale)
     -> String?
   {
@@ -107,7 +107,7 @@ package final class KnobPanelViewModel {
       String(localized: flag ? .app("On", locale: locale) : .app("Off", locale: locale))
     case .choice(let option):
       AppGlossary.label(Knob.termID(id, option: option), locale: locale, in: AppGlossary.knobs)
-    case .points: nil
+    case .points, .text: nil
     }
   }
 

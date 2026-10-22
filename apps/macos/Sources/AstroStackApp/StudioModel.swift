@@ -20,6 +20,8 @@ package final class StudioModel {
   package private(set) var steps: [History.Step] = []
   /// The working image: the history's head.
   package private(set) var head: AstroImage
+  /// The stack's header (its base layer's): where suggestions read pointing and optics.
+  @ObservationIgnored package let header: FITSHeader?
 
   @ObservationIgnored private let store: ProjectStore
   @ObservationIgnored private let imageID: Int64
@@ -48,6 +50,7 @@ package final class StudioModel {
     session = try StudioSession(
       history: history, bundle: bundle, registry: registry, device: device)
     self.store = store
+    self.header = header
     packageRoot = packageFolder
     let images = try store.images(stackID: stackID)
     imageID =

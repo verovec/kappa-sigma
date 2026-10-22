@@ -4,6 +4,7 @@ internal import Metal
 internal import Observation
 package import ProcessKit
 package import RenderKit
+package import StackKit
 
 /// What the Studio pane drives (card 0087, design §5 B): the catalogue by stage, the panel of
 /// the chosen process with its live preview in the viewer, Apply / Undo / Redo on the history,
@@ -61,7 +62,16 @@ package final class StudioWorkspaceModel {
   /// The pipeline the left column shows (card 0088), set by the window once it is loaded.
   package var pipeline: PipelineSidebarModel?
   /// Why the last action failed.
-  package private(set) var failure: LocalizedStringResource?
+  package internal(set) var failure: LocalizedStringResource?
+  /// The host tool running for the panel (card 0093), with its last line.
+  package internal(set) var toolRun: ToolProgress?
+  /// What the last host tool reported (a plate solution), in a locale.
+  package internal(set) var toolReport: (@Sendable (Locale) -> LocalizedStringResource)?
+  /// The host tools by process id: what Apply runs for a `hostTool` process.
+  @ObservationIgnored package let tools: [String: StudioTool]
+  @ObservationIgnored var toolTask: Task<Void, Never>?
+  /// Numbers the tool runs, so a late progress line finds its own run or none.
+  @ObservationIgnored var toolRunNumber = 0
 
   /// The processes it offers.
   @ObservationIgnored package let registry: ProcessRegistry
@@ -82,8 +92,11 @@ package final class StudioWorkspaceModel {
   @ObservationIgnored private var previewFailed = false
 
   /// The workspace of `studio` whose bundle holds the layer roles `base`.
-  package init(studio: StudioModel, base: Set<LayerRole>) throws {
+  package init(
+    studio: StudioModel, base: Set<LayerRole>, tools: [String: StudioTool] = [:]
+  ) throws {
     self.studio = studio
+    self.tools = tools
     self.base = base
     registry = studio.session.registry
     let renderer = try ViewerRenderer(device: studio.session.device)
@@ -99,6 +112,7 @@ package final class StudioWorkspaceModel {
   package func retire() {
     isRetired = true
     previewTask?.cancel()
+    toolTask?.cancel()
     undoManager?.removeAllActions(withTarget: self)
   }
 
@@ -109,6 +123,7 @@ package final class StudioWorkspaceModel {
     refresh(panel)
     panel.onChange = { [weak self] in self?.panelChanged() }
     self.panel = panel
+    toolReport = nil
     shown = nil
     // The defaults are previewed at once: Apply never records what was not shown (R2).
     schedulePreview()
@@ -117,6 +132,7 @@ package final class StudioWorkspaceModel {
   /// Closes the panel: the viewer shows the head again.
   package func closePanel() {
     panel = nil
+    toolReport = nil
     stopPreview()
   }
 
@@ -183,7 +199,7 @@ package final class StudioWorkspaceModel {
   }
 
   /// Runs a history move, then shows the head; a failure is shown in the panel and rethrown.
-  private func reported(_ move: () throws -> Void) throws {
+  func reported(_ move: () throws -> Void) throws {
     do {
       try move()
       failure = nil
@@ -252,6 +268,8 @@ package final class StudioWorkspaceModel {
   /// the catalogue follow the new head.
   func headChanged() throws {
     shown = nil
+    // A report speaks of the head it was made on.
+    toolReport = nil
     defer { headStatistics = viewer.model.statistics }
     isPreviewing = false
     // A compared step that no longer exists (undone) stops the compare.
@@ -275,7 +293,8 @@ package final class StudioWorkspaceModel {
       let entries = registry.types.filter { $0.stage == stage }.map { type in
         Entry(
           id: type.id, title: type.title,
-          unavailable: studio.session.unavailable(for: type, base: base, registry: registry))
+          unavailable: studio.session.unavailable(for: type, base: base, registry: registry)
+            ?? (type.hostTool && tools[type.id] == nil ? .toolMissing : nil))
       }
       if !entries.isEmpty { groups.append(Group(stage: stage, entries: entries)) }
     }

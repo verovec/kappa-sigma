@@ -23,24 +23,22 @@ extension StudioWorkspaceModel {
     if moved { viewer.model.clearRegion() }
   }
 
-  /// Before the viewer shows the preview of `values` (`nil`: the head): a change of the moved
-  /// grid (a geometric preview other than the identity) drops the region, whose pixels are no
-  /// longer under it even at the same size, and a compare whose step no longer has `size` stops.
-  func previewMoves(
-    to values: (processID: String, params: ParamSet)?, size: (width: Int, height: Int)
-  ) {
-    if movedGrid(shown.map { ($0.processID, $0.params) }) != movedGrid(values) {
-      viewer.model.clearRegion()
-    }
-    if let comparing, let step = try? studio.session.history.size(ofStep: comparing),
-      step != size
-    {
-      try? compare(toStep: nil)
-    }
+  /// Drops the region and the compare when the moved grid on screen changed.
+  ///
+  /// A geometric preview other than the identity appeared, changed or went away: the region's
+  /// pixels are no longer under it, even at the same size, and a compare would set the step
+  /// against moved pixels.
+  /// The viewer shows a geometric preview that moves the pixels.
+  var showsMovedGrid: Bool { movedGrid(shown.map { ($0.processID, $0.params) }) != nil }
+
+  func gridMoved(from old: (processID: String, params: ParamSet)?) {
+    let now = movedGrid(shown.map { ($0.processID, $0.params) })
+    if movedGrid(old) != now { viewer.model.clearRegion() }
+    if now != nil, comparing != nil { try? compare(toStep: nil) }
   }
 
   /// The values of a preview that moves pixels, or `nil` for one that leaves them in place.
-  private func movedGrid(_ values: (processID: String, params: ParamSet)?) -> ParamSet? {
+  func movedGrid(_ values: (processID: String, params: ParamSet)?) -> ParamSet? {
     guard let values, let type = registry.type(id: values.processID),
       type is any GeometricProcess.Type, !GeometryProcess.isIdentity(values.params)
     else { return nil }

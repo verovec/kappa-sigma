@@ -74,8 +74,10 @@ package final class StudioWorkspaceModel {
   /// The head's display statistics: a preview is drawn through them, never through a previous
   /// preview's.
   @ObservationIgnored private var headStatistics: [STFMapping] = []
-  /// The values and mask the preview on screen was drawn with (`nil`: none on screen).
-  @ObservationIgnored private(set) var shown: (processID: String, params: ParamSet, mask: Mask?)?
+  /// The values and mask of the preview on screen (`nil`: none); see `gridMoved`.
+  @ObservationIgnored private(set) var shown: (processID: String, params: ParamSet, mask: Mask?)? {
+    didSet { gridMoved(from: oldValue.map { ($0.processID, $0.params) }) }
+  }
   /// The failure shown is a preview's (the next preview clears it).
   @ObservationIgnored private var previewFailed = false
 
@@ -112,7 +114,6 @@ package final class StudioWorkspaceModel {
     refresh(panel)
     panel.onChange = { [weak self] in self?.panelChanged() }
     self.panel = panel
-    previewMoves(to: nil, size: (studio.head.width, studio.head.height))
     shown = nil
     // The defaults are previewed at once: Apply never records what was not shown (R2).
     schedulePreview()
@@ -137,7 +138,6 @@ package final class StudioWorkspaceModel {
       let preview = try studio.preview(panel.type.id, params: panel.params, mask: maskImage())
       // Through the head's display stretch: an auto-stretch fitted to the preview would hide
       // the very change the process makes (what is shown is what Apply records, R2).
-      previewMoves(to: (panel.type.id, panel.params), size: (preview.width, preview.height))
       let same = preview.planes.count == headStatistics.count
       try show(preview, statistics: same ? headStatistics : nil)
       isPreviewing = true
@@ -215,6 +215,8 @@ package final class StudioWorkspaceModel {
       comparing = nil
       return
     }
+    // On a moved preview (a crop, a flip) the step's pixels are not under the ones shown.
+    guard !showsMovedGrid else { throw StudioError.movedPreview }
     let image = try studio.session.history.output(ofStep: index)
     // A step of another size (before a crop or a quarter turn) does not lie on the head's grid.
     guard image.width == studio.head.width, image.height == studio.head.height else {
@@ -252,7 +254,6 @@ package final class StudioWorkspaceModel {
 
   private func stopPreview() {
     previewTask?.cancel()
-    previewMoves(to: nil, size: (studio.head.width, studio.head.height))
     shown = nil
     guard isPreviewing else { return }
     isPreviewing = false
@@ -263,8 +264,7 @@ package final class StudioWorkspaceModel {
     shown = nil
     defer { headStatistics = viewer.model.statistics }
     isPreviewing = false
-    // A compared step that no longer exists (undone) or no longer fits the head's grid (a crop
-    // applied) stops the compare.
+    // A compared step undone, or off the head's grid (a crop applied), stops the compare.
     if let comparing, comparing >= studio.steps.count || !fitsHead(step: comparing) {
       try compare(toStep: nil)
     }

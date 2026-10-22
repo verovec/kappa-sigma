@@ -9,9 +9,8 @@ extension StudioWorkspaceModel {
     guard viewer.model.frame.region != nil else { return .noRegion }
     // A region drawn on a moved preview (a crop, but also a same-size flip or half turn) is
     // not in the head's pixels.
-    guard let panel, !isPreviewing || GeometryProcess.isIdentity(panel.params) else {
-      return .previewMoved
-    }
+    // The values on screen, not the panel's: those may not be drawn yet, or failed to draw.
+    guard !showsMovedGrid else { return .previewMoved }
     return nil
   }
 

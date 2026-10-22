@@ -2,7 +2,8 @@ extension FITSHeader {
   /// The header of the image `map` makes of this header's image (card 0090).
   ///
   /// A TAN or TAN-SIP plate solution moves with the pixels (every star keeps its RA/Dec); any
-  /// other solution is removed rather than left wrong. Every other card stays.
+  /// other solution, and any alternate one (`CTYPE1A`…), is removed rather than left wrong.
+  /// Every other card stays.
   ///
   /// With `p' = M·p + t`: `CRPIX' = M·CRPIX + t`, `CD' = CD·M⁻¹`, and the SIP polynomials become
   /// `S'(u') = M·S(M⁻¹·u')` (the forward `A`/`B` and the inverse `AP`/`BP` alike).
@@ -24,7 +25,9 @@ extension FITSHeader {
       ("CD2_1", cd[2] * i0 + cd[3] * i2), ("CD2_2", cd[2] * i1 + cd[3] * i3),
     ]
     let polynomials = movedPolynomial("A", "B", map) + movedPolynomial("AP", "BP", map)
-    let replaced = cards.filter { !Self.isMovedKeyword($0.keyword) }
+    let replaced = cards.filter {
+      !Self.isMovedKeyword($0.keyword) && !Self.isAlternateWCSKeyword($0.keyword)
+    }
     return FITSHeader(
       cards: replaced + (moved + polynomials).map { Card(keyword: $0.0, number: $0.1) })
   }
@@ -80,20 +83,40 @@ extension FITSHeader {
       || isMatrixKeyword(keyword) || isSIPTerm(keyword)
   }
 
-  /// Every card of a plate solution: the axis cards (`CTYPEn`, `CRPIXn`, `CDi_j`, `PVi_j`…),
-  /// the frame (`RADESYS`, `EQUINOX`), the solver's flag (`PLTSOLVD`) and the SIP terms.
+  private static let namedWCS: Set<String> = [
+    "WCSAXES", "WCSNAME", "LONPOLE", "LATPOLE", "RADESYS", "RADECSYS", "EQUINOX", "PLTSOLVD",
+    "A_ORDER", "B_ORDER", "AP_ORDER", "BP_ORDER",
+  ]
+  private static let axisPrefixes = [
+    "CTYPE", "CUNIT", "CRPIX", "CRVAL", "CDELT", "CROTA", "CNAME", "CRDER", "CSYER",
+  ]
+  private static let matrixPrefixes = ["CD", "PC", "PV", "PS"]
+
+  /// Every card of a plate solution, primary or alternate: the axis cards (`CTYPEn`, `CRPIXn`,
+  /// `CDi_j`, `PVi_j`…), the frame (`RADESYS`, `EQUINOX`), the solver's flag (`PLTSOLVD`) and
+  /// the SIP terms.
   private static func isWCSKeyword(_ keyword: String) -> Bool {
-    let named: Set<String> = [
-      "WCSAXES", "LONPOLE", "LATPOLE", "RADESYS", "RADECSYS", "EQUINOX", "PLTSOLVD",
-      "A_ORDER", "B_ORDER", "AP_ORDER", "BP_ORDER",
-    ]
-    if named.contains(keyword) || isMovedKeyword(keyword) { return true }
-    let axis = ["CTYPE", "CUNIT", "CRPIX", "CRVAL", "CDELT", "CROTA", "CNAME", "CRDER", "CSYER"]
-    if let prefix = axis.first(where: keyword.hasPrefix) {
+    namedWCS.contains(keyword) || isMovedKeyword(keyword) || isPrimaryAxisKeyword(keyword)
+      || isAlternateWCSKeyword(keyword)
+  }
+
+  /// A card of an alternate solution: a primary WCS keyword followed by a letter A–Z
+  /// (`CTYPE1A`, `CD1_1B`, `WCSNAMEA`; FITS WCS paper I §3.5).
+  private static func isAlternateWCSKeyword(_ keyword: String) -> Bool {
+    guard let last = keyword.last, last.isUppercase, last.isLetter, keyword.count > 2 else {
+      return false
+    }
+    let base = String(keyword.dropLast())
+    return base == "WCSNAME" || base == "LONPOLE" || base == "LATPOLE" || base == "RADESYS"
+      || base == "EQUINOX" || isPrimaryAxisKeyword(base)
+  }
+
+  /// `CTYPEn`…`CSYERn` and `CDi_j`, `PCi_j`, `PVi_j`, `PSi_j` of any axes.
+  private static func isPrimaryAxisKeyword(_ keyword: String) -> Bool {
+    if let prefix = axisPrefixes.first(where: keyword.hasPrefix) {
       return Int(keyword.dropFirst(prefix.count)) != nil
     }
-    // CDi_j, PCi_j, PVi_j, PSi_j of any axes.
-    guard ["CD", "PC", "PV", "PS"].contains(where: keyword.hasPrefix) else { return false }
+    guard matrixPrefixes.contains(where: keyword.hasPrefix) else { return false }
     let indices = keyword.dropFirst(2).split(separator: "_", omittingEmptySubsequences: false)
     return indices.count == 2 && indices.allSatisfy { Int($0) != nil }
   }

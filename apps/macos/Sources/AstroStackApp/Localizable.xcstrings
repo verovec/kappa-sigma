@@ -4353,6 +4353,22 @@
         }
       }
     },
+    "Step %lld has another size than the image: it cannot be compared.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Step %lld has another size than the image: it cannot be compared."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’étape %lld n’a pas la taille de l’image : elle ne peut pas être comparée."
+          }
+        }
+      }
+    },
     "Step %lld of %lld": {
       "localizations": {
         "en": {
@@ -4717,6 +4733,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le préréglage, intact."
+          }
+        }
+      }
+    },
+    "The preview moves the pixels: compare once the geometry is applied or reset.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The preview moves the pixels: compare once the geometry is applied or reset."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’aperçu déplace les pixels : comparez une fois la géométrie appliquée ou remise à zéro."
           }
         }
       }

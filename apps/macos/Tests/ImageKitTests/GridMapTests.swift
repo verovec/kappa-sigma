@@ -48,7 +48,7 @@ struct GridMapTests {
       ("CRPIX2", "1.7"), ("CRVAL1", "10.68"), ("CRVAL2", "41.27"), ("CD1_1", "-2.1E-4"),
       ("CD1_2", "3.0E-5"), ("CD2_1", "2.5E-5"), ("CD2_2", "2.0E-4"), ("A_ORDER", "2"),
       ("B_ORDER", "2"), ("A_2_0", "1.0E-3"), ("A_1_1", "-4.0E-4"), ("B_0_2", "2.0E-3"),
-      ("B_1_1", "5.0E-4"), ("OBJECT", "'M31'"),
+      ("B_1_1", "5.0E-4"), ("OBJECT", "'M31'"), ("CRPIX1A", "3.0"),
     ])
     let wcs = try #require(WCS(header: header))
     let base = GridMap.identity(width: 5, height: 3)
@@ -61,6 +61,7 @@ struct GridMapTests {
     for map in maps {
       let moved = header.moved(by: map)
       #expect(moved.string("OBJECT") == "M31", "other cards stay")
+      #expect(moved.string("CRPIX1A") == nil, "an alternate solution is not left unmoved")
       let solution = try #require(WCS(header: moved))
       for y in 0..<3 {
         for x in 0..<5 {
@@ -79,11 +80,12 @@ struct GridMapTests {
     let header = WCSTests.header([
       ("CTYPE1", "'RA---ZEA'"), ("CRPIX1", "2"), ("CDELT1", "1E-4"), ("OBJECT", "'M31'"),
       ("PLTSOLVD", "T"), ("RADESYS", "'ICRS'"), ("PV1_1", "0.0"), ("CD3_3", "1.0"),
-      ("WCSAXES", "2"), ("CDFORM", "'x'"),
+      ("WCSAXES", "2"), ("CDFORM", "'x'"), ("CTYPE1A", "'RA---TAN'"), ("CD1_1A", "1E-4"),
+      ("WCSNAMEA", "'alt'"), ("FILTERA", "'L'"),
     ])
     let moved = header.moved(by: GridMap.identity(width: 5, height: 3).flippedX())
     #expect(moved.string("CRPIX1") == nil && moved.string("CTYPE1") == nil)
     #expect(moved.string("OBJECT") == "M31")
-    #expect(header.droppingWCS().cards.map(\.keyword) == ["OBJECT", "CDFORM"])
+    #expect(header.droppingWCS().cards.map(\.keyword) == ["OBJECT", "CDFORM", "FILTERA"])
   }
 }

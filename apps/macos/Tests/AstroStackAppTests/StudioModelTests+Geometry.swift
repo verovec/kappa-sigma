@@ -154,8 +154,14 @@ extension StudioModelTests {
     #expect(viewer.frame.region == nil, "back to the head's grid: the flipped region goes")
 
     try workspace.compare(toStep: 0)
-    panel.set("cropTop", .number(3))
+    panel.set("flipV", .flag(true))
     await workspace.previewNow()
-    #expect(workspace.comparing == nil, "a cropped preview no longer fits step 1")
+    #expect(workspace.comparing == nil, "a flipped preview, same size, no longer lies on step 1")
+    #expect(throws: StudioError.movedPreview) { try workspace.compare(toStep: 0) }
+    #expect(workspace.regionUnavailable == .noRegion)
+    viewer.drag(from: [1, 1], to: [4, 4], tool: .region)
+    panel.set("flipV", .flag(false))
+    // Not drawn yet: Use region reads what is on screen, still the flipped preview.
+    #expect(workspace.regionUnavailable == .previewMoved)
   }
 }

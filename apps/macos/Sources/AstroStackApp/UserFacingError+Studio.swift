@@ -9,6 +9,8 @@ extension UserFacingError {
     case .emptyBundle: .app("This stack has no layer to start the Studio from.")
     case .otherSize(let step):
       .app("Step \(step + 1) has another size than the image: it cannot be compared.")
+    case .movedPreview:
+      .app("The preview moves the pixels: compare once the geometry is applied or reset.")
     }
   }
 

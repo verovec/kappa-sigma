@@ -23,8 +23,8 @@ package struct Pipeline: Equatable, Sendable {
   package func problems(
     registry: ProcessRegistry, batch: Set<String> = [], present: Set<LayerRole>
   ) -> [String] {
-    stepProblems(registry: registry, batch: batch, present: present).enumerated().flatMap {
-      index, reasons in
+    let problems = stepProblems(registry: registry, batch: batch, present: present)
+    return problems.enumerated().flatMap { index, reasons in
       let id = steps[index].recipe.processID
       // An unknown process is named by the reason itself.
       let label = registry.type(id: id) == nil ? "step \(index + 1)" : "step \(index + 1) (\(id))"

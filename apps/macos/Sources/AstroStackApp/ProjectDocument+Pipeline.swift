@@ -21,14 +21,15 @@ extension ProjectDocument {
     windowModel?.isChoosingReplay = true
   }
 
-  /// Whether a pipeline command is enabled, `nil` for another action: on the Studio stage with
-  /// a pipeline not running; Continue at a breakpoint whose process the panel shows; Replay with
-  /// another stack to replay on.
-  package static func pipelineState(of action: Selector?, in window: ProjectWindowModel?) -> Bool? {
-    let actions = [
-      #selector(runPipeline(_:)), #selector(continuePipeline(_:)), #selector(replayPipeline(_:)),
-    ]
-    guard let action, actions.contains(action) else { return nil }
+  /// The pipeline commands' actions.
+  package static let pipelineActions: [Selector] = [
+    #selector(runPipeline(_:)), #selector(continuePipeline(_:)), #selector(replayPipeline(_:)),
+  ]
+
+  /// Whether pipeline command `action` is enabled: on the Studio stage with a pipeline not
+  /// running; Continue at a breakpoint whose process the panel shows; Replay with another stack
+  /// to replay on.
+  package static func pipelineEnabled(_ action: Selector, in window: ProjectWindowModel?) -> Bool {
     guard let window, window.selection == .studio, let pipeline = window.workspace?.pipeline,
       !pipeline.isRunning
     else { return false }

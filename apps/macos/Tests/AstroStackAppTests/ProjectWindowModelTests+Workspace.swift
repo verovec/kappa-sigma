@@ -80,11 +80,11 @@ extension ProjectWindowWorkspaceTests {
     let sidebar = try #require(window.workspace?.pipeline)
     #expect(sidebar.pipeline.steps.map(\.recipe.processID) == ["channel-combination"])
     #expect(window.replayTargets.map(\.id) == [stacks[1].id])
-    let state = { (action: Selector) in ProjectDocument.pipelineState(of: action, in: window) }
-    #expect(state(#selector(ProjectDocument.runPipeline(_:))) == true)
-    #expect(state(#selector(ProjectDocument.continuePipeline(_:))) == false, "no breakpoint")
-    #expect(state(#selector(ProjectDocument.replayPipeline(_:))) == true)
-    #expect(state(#selector(ProjectDocument.applyProcess(_:))) == nil, "not a pipeline command")
+    let state = { (action: Selector) in ProjectDocument.pipelineEnabled(action, in: window) }
+    #expect(state(#selector(ProjectDocument.runPipeline(_:))))
+    #expect(!state(#selector(ProjectDocument.continuePipeline(_:))), "no breakpoint")
+    #expect(state(#selector(ProjectDocument.replayPipeline(_:))))
+    #expect(!ProjectDocument.pipelineActions.contains(#selector(ProjectDocument.applyProcess(_:))))
 
     window.workspace?.choose(StretchProcess.id)
     await window.workspace?.previewNow()

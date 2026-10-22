@@ -14,6 +14,16 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
   case studio(StudioError)
   /// The Studio's history refused a move or could not be read back (card 0087).
   case history(HistoryError)
+  /// StarNet could not separate the stars (card 0091).
+  case starnet(StarNetError)
+  /// The deliverable set could not be written (card 0091).
+  case export(DeliverableExport.ExportError)
+  /// The export folder is inside a read-only source (R7): the folder, to choose another.
+  case exportReadOnlyFolder(path: String)
+  /// No deliverable or no format is chosen.
+  case exportNothingChosen
+  /// The export would replace this file of an earlier one.
+  case exportWouldOverwrite(path: String)
   /// A pipeline run stopped on a step (cards 0059, 0088, 0093).
   case pipeline(PipelineError)
   /// Siril found no plate solution, or could not look (card 0093).
@@ -45,6 +55,8 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     case let error as LegacyRunError: self = .legacyRun(error)
     case let error as StudioError: self = .studio(error)
     case let error as HistoryError: self = .history(error)
+    case let error as StarNetError: self = .starnet(error)
+    case let error as DeliverableExport.ExportError: self = .export(error)
     case let error as PipelineError: self = .pipeline(error)
     case let error as PlateSolveError: self = .plateSolve(error)
     case let error as PlateSolveTool.InputError: self = .plateSolveInput(error)
@@ -67,6 +79,13 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     case .legacyRun(let error): Self.message(error)
     case .studio(let error): Self.message(error)
     case .history(let error): Self.message(error)
+    case .starnet(let error): Self.message(error)
+    case .export(let error): Self.message(error)
+    case .exportReadOnlyFolder(let path):
+      .app("AstroStack never writes into \(path): it is a read-only source. Choose another folder.")
+    case .exportNothingChosen: .app("Choose at least one file and one format to export.")
+    case .exportWouldOverwrite(let path):
+      .app("\(path) already exists: choose another folder or file name.")
     case .pipeline(let error): Self.message(error)
     case .plateSolve(let error): Self.message(error)
     case .plateSolveInput(let error): Self.message(error)

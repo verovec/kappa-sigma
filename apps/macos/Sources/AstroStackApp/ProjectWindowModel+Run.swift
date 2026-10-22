@@ -256,6 +256,7 @@ extension ProjectWindowModel {
     workspace?.retire()
     workspace = nil
     workspaceStackID = nil
+    dropExport()
   }
 
   /// The Studio's working image of stack `stackID`: its layers read off the main actor, its
@@ -286,6 +287,7 @@ extension ProjectWindowModel {
     workspace.reveal = { [weak self] in self?.select(.studio) }
     workspace.pipeline = try sidebar(of: workspace, stackID: stackID, store: store, roles: roles)
     self.workspace = workspace
+    showExport(of: studio, stackID: stackID, folder: folder)
     // The Studio's stage state follows; an error the window shows stays (a refresh clears it).
     let reported = error
     refresh()

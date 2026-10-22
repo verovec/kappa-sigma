@@ -9,12 +9,17 @@ package struct ProjectSummary: Equatable, Sendable {
   package var images = 0
   /// History steps applied to those images.
   package var historySteps = 0
+  /// Exports written by the Export stage (card 0091).
+  package var exports = 0
 
   /// A summary of these counts.
-  package init(sources: Int = 0, stacks: Int = 0, images: Int = 0, historySteps: Int = 0) {
+  package init(
+    sources: Int = 0, stacks: Int = 0, images: Int = 0, historySteps: Int = 0, exports: Int = 0
+  ) {
     self.sources = sources
     self.stacks = stacks
     self.images = images
     self.historySteps = historySteps
+    self.exports = exports
   }
 }

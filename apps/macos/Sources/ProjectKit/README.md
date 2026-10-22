@@ -45,6 +45,15 @@ GRDB 7), and later `images/`, `recipes/`, `history/` (design §4.5). No UI, no A
 - `stacks()` lists them oldest first. The Studio shows the last one, and the next run reuses its
   `params_json` overrides when the session has no newer import.
 
+## Exports (card 0091)
+
+- `exports` (migration 0006): `addExport(stackID:imageID:headStepID:folder:settingsJSON:files:)`
+  records one « Export » — the image and history head written, the folder, ProcessKit's
+  `ExportSettings` as JSON (never decoded here) and the file names; `exports(stackID:)` lists a
+  stack's newest first. `summary().exports` counts them: the app's Export stage is « Done » from it.
+- `summary(in:)` counts a table only if it exists: `readSummary(at:)` never migrates, so a package
+  written before a migration reads 0 for the table it adds instead of failing.
+
 ## Why `NSDocument` over the package, not SwiftUI `FileDocument`
 
 `FileDocument`/`ReferenceFileDocument` save through `FileWrapper`: every save writes a new package

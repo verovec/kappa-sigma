@@ -131,6 +131,11 @@ struct AccessibilityAuditTests {
     "AstroStackApp/GlossaryView.swift", "AstroStackApp/GuidePanel.swift",
     "AstroStackApp/ReviewStagePane.swift", "AstroStackApp/FrameReviewView.swift",
     "AstroStackApp/FrameTable.swift", "AstroStackApp/FrameBlinkView.swift",
+    "AstroStackApp/StackPicker.swift", "AstroStackApp/ExportStagePane.swift",
+    "AstroStackApp/ExportStageView.swift", "AstroStackApp/ExportForm.swift",
+    "AstroStackApp/ExportRecordList.swift", "AstroStackApp/ExportRecordRow.swift",
+    "AstroStackApp/StarSeparationSection.swift", "AstroStackApp/StarSeparationButton.swift",
+    "AstroStackApp/StarSeparationSheet.swift",
   ]
 
   @Test("no raw control: each audited source has as many `.accessible` as controls")

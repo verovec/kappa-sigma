@@ -19,6 +19,9 @@ package final class History {
     package let file: String
     /// The layers it wrote besides its image, by role (files in the history folder).
     package let outputs: [LayerRole: String]
+    /// The bundle layers it rewrote, by bundle id (`RGB`, `Ha`…): a geometry step moves them
+    /// with its image (card 0090).
+    package var bundleLayers: [String: String] = [:]
   }
 
   /// A named state ("v9"): the output of a step, or the original (`file == nil`).
@@ -80,28 +83,71 @@ package final class History {
   /// Whether there is a step to redo.
   package var canRedo: Bool { !undone.isEmpty }
 
-  /// Records `result` as the output of `processID` with `params`, and `outputs` as the layers
-  /// it wrote; what was undone is dropped.
+  /// Records `result` as the output of `processID` with `params`, `outputs` as the layers it
+  /// wrote and `bundleLayers` as the bundle layers it rewrote; what was undone is dropped.
+  ///
+  /// Its files keep the head's header, or `header` when the step changed it (a geometry step's
+  /// moved plate solution); the steps after it keep that one.
   package func apply(
     processID: String, params: ParamSet, result: AstroImage,
-    outputs: [LayerRole: AstroImage] = [:]
+    outputs: [LayerRole: AstroImage] = [:], bundleLayers: [String: AstroImage] = [:],
+    header: FITSHeader? = nil
   ) throws {
+    let kept = try header ?? headHeader()
     let digits = String(nextNumber)
     let stem = "step-" + String(repeating: "0", count: max(0, 4 - digits.count)) + digits
     nextNumber += 1
     let file = stem + ".fits"
-    try write(result, file)
+    try write(result, file, header: kept)
     var written: [LayerRole: String] = [:]
     for (role, image) in outputs {
       let name = stem + "-" + role.rawValue + ".fits"
-      try write(image, name)
+      try write(image, name, header: kept)
       written[role] = name
     }
-    let step = Step(processID: processID, params: params, file: file, outputs: written)
+    var rewritten: [String: String] = [:]
+    for (id, image) in bundleLayers {
+      let name = stem + "-" + id + ".fits"
+      try write(image, name, header: kept)
+      rewritten[id] = name
+    }
+    var step = Step(processID: processID, params: params, file: file, outputs: written)
+    step.bundleLayers = rewritten
     try writeManifest(steps: steps + [step], undone: [], snapshots: snapshots)
     steps.append(step)
     undone.removeAll()
     shown = Self.copy(result)
+    if let header { shown.metadata.wcs = WCS(header: header) }
+  }
+
+  /// The header the head's file carries (the original's before any step): what the next step
+  /// keeps.
+  package func headHeader() throws -> FITSHeader? {
+    guard let file = steps.last?.file else { return header }
+    return try FITSFile.read(at: directory.appendingPathComponent(file)).header
+  }
+
+  /// The files of the layers the applied steps wrote over the bundle, by layer id.
+  ///
+  /// The latest bundle layer of each id, then the latest output of each role (by its raw
+  /// value): what `StepRunner` caches its uploaded context on.
+  package var overlayFiles: [String: String] {
+    var files: [String: String] = [:]
+    for step in steps { files.merge(step.bundleLayers) { _, newer in newer } }
+    for step in steps {
+      for (role, file) in step.outputs { files[role.rawValue] = file }
+    }
+    return files
+  }
+
+  /// The bundle layers the applied steps rewrote, the latest of each id winning (read from
+  /// disk): they overlay the bundle's layers, under the role outputs, for the next step.
+  package func bundleLayers() throws -> [String: AstroImage] {
+    var latest: [String: String] = [:]
+    for step in steps { latest.merge(step.bundleLayers) { _, newer in newer } }
+    return try latest.mapValues {
+      try FITSFile.read(at: directory.appendingPathComponent($0)).image()
+    }
   }
 
   /// The roles the applied steps wrote layers for (no pixel read).
@@ -130,6 +176,31 @@ package final class History {
   package func output(ofStep index: Int) throws -> AstroImage {
     guard steps.indices.contains(index) else { throw HistoryError.noStep(index) }
     return try image(file: steps[index].file)
+  }
+
+  /// Everything one step wrote, read back (a locked pipeline step reuses it all).
+  package struct Recorded {
+    /// Its image.
+    package let result: AstroImage
+    /// The layers it wrote, by role.
+    package let outputs: [LayerRole: AstroImage]
+    /// The bundle layers it rewrote, by id.
+    package let bundleLayers: [String: AstroImage]
+    /// The header its files carry.
+    package let header: FITSHeader
+  }
+
+  /// Everything applied step `index` wrote, read back: its image, its layers and its header.
+  package func recorded(ofStep index: Int) throws -> Recorded {
+    guard steps.indices.contains(index) else { throw HistoryError.noStep(index) }
+    let step = steps[index]
+    let read = { (file: String) in
+      try FITSFile.read(at: self.directory.appendingPathComponent(file)).image()
+    }
+    let main = try FITSFile.read(at: directory.appendingPathComponent(step.file))
+    return Recorded(
+      result: try main.image(), outputs: try step.outputs.mapValues(read),
+      bundleLayers: try step.bundleLayers.mapValues(read), header: main.header)
   }
 
   /// Goes back one step, reloading the previous output from disk.
@@ -174,7 +245,9 @@ package final class History {
   package var referencedFiles: Set<String> {
     let kept = steps + undone
     return Set(
-      kept.map(\.file) + kept.flatMap { $0.outputs.values } + snapshots.compactMap(\.file))
+      kept.map(\.file) + kept.flatMap { $0.outputs.values }
+        + kept.flatMap { $0.bundleLayers.values }
+        + snapshots.compactMap(\.file))
   }
 
   /// Bytes of the reachable outputs, counted against the project's disk budget (0068).
@@ -196,7 +269,7 @@ package final class History {
     try writeManifest()
   }
 
-  private func write(_ image: AstroImage, _ file: String) throws {
+  private func write(_ image: AstroImage, _ file: String, header: FITSHeader?) throws {
     try FITSFile.create(image, keeping: header, at: directory.appendingPathComponent(file))
     created.insert(file)
   }

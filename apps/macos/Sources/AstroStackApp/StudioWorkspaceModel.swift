@@ -185,6 +185,8 @@ package final class StudioWorkspaceModel {
 
   /// Runs a history move, then shows the head; a failure is shown in the panel and rethrown.
   private func reported(_ move: () throws -> Void) throws {
+    let before = studio.steps
+    defer { dropRegionIfMoved(since: before) }
     do {
       try move()
       failure = nil
@@ -212,19 +214,12 @@ package final class StudioWorkspaceModel {
       return
     }
     let image = try studio.session.history.output(ofStep: index)
+    // A step of another size (before a crop or a quarter turn) does not lie on the head's grid.
+    guard image.width == studio.head.width, image.height == studio.head.height else {
+      throw StudioError.otherSize(step: index)
+    }
     viewer.reference = try Self.texture(image, device: studio.session.device)
     comparing = index
-  }
-
-  /// The mask of the head, one plane, or `nil` without a mask.
-  private func maskImage() throws -> AstroImage? {
-    guard let mask else { return nil }
-    let device = studio.session.device
-    let head = studio.head
-    let built = try MaskBuilder(device: device)
-      .build(mask, image: GPUImage(device: device, image: head), scale: 1)
-    return AstroImage(
-      width: head.width, height: head.height, planes: built.read(), metadata: head.metadata)
   }
 
   /// A value moved: the suggestions follow the values they depend on, the preview follows.
@@ -265,8 +260,11 @@ package final class StudioWorkspaceModel {
     shown = nil
     defer { headStatistics = viewer.model.statistics }
     isPreviewing = false
-    // A compared step that no longer exists (undone) stops the compare.
-    if let comparing, comparing >= studio.steps.count { try compare(toStep: nil) }
+    // A compared step that no longer exists (undone) or no longer fits the head's grid (a crop
+    // applied) stops the compare.
+    if let comparing, comparing >= studio.steps.count || !fitsHead(step: comparing) {
+      try compare(toStep: nil)
+    }
     try show(studio.head)
     // After the viewer shows the new head: the display stretch offered is the one on screen.
     if let panel { refresh(panel) }

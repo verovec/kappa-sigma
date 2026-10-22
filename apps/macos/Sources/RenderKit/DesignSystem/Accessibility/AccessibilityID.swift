@@ -212,6 +212,9 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
   /// The Studio's « Redo » (card 0087).
   package static let studioRedo = stageControl("studio", "redo")
 
+  /// The geometry panel's « Use region » (card 0090).
+  package static let studioUseRegion = stageControl("studio", "geometry.useRegion")
+
   /// The Studio's « Close » of the process panel (card 0087).
   package static let studioClosePanel = stageControl("studio", "closePanel")
 

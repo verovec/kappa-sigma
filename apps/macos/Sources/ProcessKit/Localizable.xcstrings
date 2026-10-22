@@ -1,6 +1,22 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "Angle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Angle"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Angle"
+          }
+        }
+      }
+    },
     "Band full": {
       "localizations": {
         "en": {
@@ -225,6 +241,22 @@
         }
       }
     },
+    "Canvas": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canvas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toile"
+          }
+        }
+      }
+    },
     "Channel combination": {
       "localizations": {
         "en": {
@@ -305,6 +337,70 @@
         }
       }
     },
+    "Crop bottom": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crop bottom"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rogner en bas"
+          }
+        }
+      }
+    },
+    "Crop left": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crop left"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rogner à gauche"
+          }
+        }
+      }
+    },
+    "Crop right": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crop right"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rogner à droite"
+          }
+        }
+      }
+    },
+    "Crop top": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crop top"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rogner en haut"
+          }
+        }
+      }
+    },
     "Curves": {
       "localizations": {
         "en": {
@@ -337,6 +433,38 @@
         }
       }
     },
+    "Flip horizontally": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flip horizontally"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Miroir horizontal"
+          }
+        }
+      }
+    },
+    "Flip vertically": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flip vertically"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Miroir vertical"
+          }
+        }
+      }
+    },
     "Foraxx": {
       "localizations": {
         "en": {
@@ -365,6 +493,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "point de symétrie GHS sur la médiane du fond : l’étirement ouvre le signal faible"
+          }
+        }
+      }
+    },
+    "Geometry": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geometry"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Géométrie"
           }
         }
       }
@@ -765,6 +909,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "IC 1848 « doux » : couleur conservée à 0,62"
+          }
+        }
+      }
+    },
+    "Interpolation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Interpolation"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Interpolation"
           }
         }
       }
@@ -1213,6 +1373,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Poids du rouge"
+          }
+        }
+      }
+    },
+    "Rotation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rotation"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rotation"
           }
         }
       }

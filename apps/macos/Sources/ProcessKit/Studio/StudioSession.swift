@@ -16,8 +16,7 @@ package final class StudioSession {
   package let registry: ProcessRegistry
   /// The GPU it runs on (the viewer draws on the same one).
   package let device: MTLDevice
-  private let runner: ProcessRunner
-  private let bundleLayers: [String: GPUImage]
+  private let steps: StepRunner
 
   /// A session over `history` and `bundle`, running the processes of `registry` on `device`.
   package init(
@@ -27,8 +26,7 @@ package final class StudioSession {
     self.bundle = bundle
     self.registry = registry
     self.device = device
-    runner = try ProcessRunner(device: device)
-    bundleLayers = try bundle.layers.mapValues { try GPUImage(device: device, image: $0) }
+    steps = try StepRunner(device: device, bundle: bundle)
   }
 
   /// The statistics of `image` as a layer's (a bundle built from files, a step's output).
@@ -53,8 +51,12 @@ package final class StudioSession {
   }
 
   /// The statistics the next step gets.
-  package var stepStats: LayerStats {
-    history.steps.isEmpty ? bundle.stats : LayerStats.measured(history.current)
+  package var stepStats: LayerStats { steps.stepStats(history) }
+
+  /// The statistics of the layers the next step reads, by id (the bundle's, and those of the
+  /// layers the steps wrote or moved).
+  package func layerStats() throws -> [String: LayerStats] {
+    try steps.layerStats(history)
   }
 
   /// `processID` with `params` on `input` (the head by default) at `scale` for `purpose`,
@@ -63,24 +65,17 @@ package final class StudioSession {
     _ processID: String, params: ParamSet, input: AstroImage? = nil, scale: Double = 1,
     purpose: RenderContext.Purpose = .apply, mask: AstroImage? = nil
   ) throws -> AstroImage {
-    guard let type = registry.type(id: processID) else {
-      throw StudioError.unknownProcess(processID)
-    }
-    let source = input ?? history.current
-    let (layers, layerStats) = try context()
-    let output = try runner.run(
-      type.init(params: params, device: device), input: GPUImage(device: device, image: source),
-      stats: stepStats, scale: scale, purpose: purpose, layers: layers, layerStats: layerStats,
-      mask: try mask.map { try GPUImage(device: device, image: $0) })
-    return AstroImage(
-      width: source.width, height: source.height, planes: output.read(),
-      metadata: source.metadata)
+    try steps.render(
+      process(processID, params: params), on: history, input: input, scale: scale,
+      purpose: purpose, mask: mask)
   }
 
-  /// Applies `processID` with `params` at full resolution: the head moves to its result.
+  /// Applies `processID` with `params` at full resolution: the head moves to its result (a
+  /// geometry step moves every layer with it, card 0090).
   package func apply(_ processID: String, params: ParamSet, mask: AstroImage? = nil) throws {
-    let result = try render(processID, params: params, mask: mask)
-    try history.apply(processID: processID, params: params, result: result)
+    try steps.apply(
+      process(processID, params: params), processID: processID, params: params, to: history,
+      mask: mask)
   }
 
   /// Records a step whose result was made elsewhere (a host tool), with the layers it wrote.
@@ -91,14 +86,10 @@ package final class StudioSession {
     try history.apply(processID: processID, params: params, result: result, outputs: outputs)
   }
 
-  /// The layers a render reads: the bundle's, overlaid by the outputs of the applied steps.
-  private func context() throws -> ([String: GPUImage], [String: LayerStats]) {
-    var layers = bundleLayers
-    var stats = bundle.layerStats
-    for (role, image) in try history.layers() {
-      layers[role.rawValue] = try GPUImage(device: device, image: image)
-      stats[role.rawValue] = LayerStats.measured(image)
+  private func process(_ processID: String, params: ParamSet) throws -> any ImageProcess {
+    guard let type = registry.type(id: processID) else {
+      throw StudioError.unknownProcess(processID)
     }
-    return (layers, stats)
+    return try type.init(params: params, device: device)
   }
 }

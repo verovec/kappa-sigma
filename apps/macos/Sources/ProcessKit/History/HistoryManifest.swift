@@ -10,6 +10,8 @@ struct HistoryManifest: Codable, Equatable {
     let params: [ParamSet.Entry]
     let file: String
     let outputs: [String: String]
+    /// The bundle layers a geometry step rewrote (id → file); absent before card 0090.
+    var bundleLayers: [String: String]?
   }
 
   /// A named state.

@@ -19,7 +19,13 @@ package struct StudioSideView: View {
       VStack(alignment: .leading, spacing: DesignMetrics.spacingL) {
         if let panel = model.panel {
           ProcessPanel(model: panel)
-          StudioMaskRow(model: model)
+          if panel.type is any GeometricProcess.Type {
+            // Geometry moves the whole grid: no mask, the output's size and solution instead
+            // (none while the values leave no pixel: the panel shows that failure).
+            if let output = model.geometryOutput { GeometryExtras(model: model, output: output) }
+          } else {
+            StudioMaskRow(model: model)
+          }
           HStack {
             Button(.app("Close")) { model.closePanel() }
               .accessible(.studioClosePanel, label: .app("Close"))

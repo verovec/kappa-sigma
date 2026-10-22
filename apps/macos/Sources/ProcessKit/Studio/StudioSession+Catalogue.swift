@@ -18,9 +18,7 @@ extension StudioSession {
   package func suggestions(for type: any ImageProcess.Type, params: ParamSet) throws
     -> [Suggestion]
   {
-    var layers = bundle.layerStats
-    for (role, image) in try history.layers() { layers[role.rawValue] = LayerStats.measured(image) }
     let process = try type.init(params: params, device: device)
-    return process.suggestions(stats: stepStats, layers: layers)
+    return process.suggestions(stats: stepStats, layers: try layerStats())
   }
 }

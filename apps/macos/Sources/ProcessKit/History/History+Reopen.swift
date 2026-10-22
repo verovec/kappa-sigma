@@ -24,10 +24,12 @@ extension History {
         }
         outputs[role] = file
       }
-      return Step(
+      var step = Step(
         processID: entry.processID,
         params: ParamSet.loading(entry.params, onto: schema).params, file: entry.file,
         outputs: outputs)
+      step.bundleLayers = entry.bundleLayers ?? [:]
+      return step
     }
     try history.restore(
       steps: manifest.steps.map(step), undone: manifest.undone.map(step),
@@ -47,7 +49,8 @@ extension History {
     func entry(_ step: Step) -> HistoryManifest.Entry {
       HistoryManifest.Entry(
         processID: step.processID, params: step.params.entries, file: step.file,
-        outputs: Dictionary(uniqueKeysWithValues: step.outputs.map { ($0.key.rawValue, $0.value) }))
+        outputs: Dictionary(uniqueKeysWithValues: step.outputs.map { ($0.key.rawValue, $0.value) }),
+        bundleLayers: step.bundleLayers.isEmpty ? nil : step.bundleLayers)
     }
     return HistoryManifest(
       version: HistoryManifest.version, nextNumber: nextStepNumber, steps: steps.map(entry),

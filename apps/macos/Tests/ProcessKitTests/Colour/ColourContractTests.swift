@@ -71,7 +71,7 @@ struct ColourContractTests {
     #expect(
       registry.ids == [
         "channel-combination", "stretch", "levels", "hdr", "emission-screens", "colour-balance",
-        "sky-desat", "curves", "saturation", "star-recomposition",
+        "sky-desat", "curves", "saturation", "star-recomposition", "geometry",
       ])
     #expect(ColourBalanceProcess.stage == .linear && SkyDesatProcess.stage == .linear)
     #expect(CurvesProcess.stage == .nonlinear && SaturationProcess.stage == .nonlinear)

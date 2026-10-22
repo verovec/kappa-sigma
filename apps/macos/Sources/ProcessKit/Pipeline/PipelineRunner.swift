@@ -65,7 +65,6 @@ package final class PipelineRunner {
 
   private let registry: ProcessRegistry
   private let device: MTLDevice
-  private let runner: ProcessRunner
   private let batch: [String: BatchProcess]
 
   /// A runner of the processes of `registry` on `device`, and of the `batch` tools by id.
@@ -74,7 +73,6 @@ package final class PipelineRunner {
   ) throws {
     self.registry = registry
     self.device = device
-    runner = try ProcessRunner(device: device)
     self.batch = batch
   }
 
@@ -132,7 +130,7 @@ package final class PipelineRunner {
   private struct Session {
     let history: History
     let bundle: PipelineBundle
-    let layers: [String: GPUImage]
+    let steps: StepRunner
     let previous: PipelineRun?
     let onEvent: EventSink
 
@@ -142,16 +140,14 @@ package final class PipelineRunner {
     ) throws {
       self.history = history
       self.bundle = bundle
-      layers = try bundle.layers.mapValues { try GPUImage(device: device, image: $0) }
+      steps = try StepRunner(device: device, bundle: bundle)
       self.previous = previous
       self.onEvent = onEvent
     }
 
     /// The statistics a step gets: the bundle's for the original image, else those of the image
     /// the step receives (as the Studio shows for it).
-    var stats: LayerStats {
-      history.steps.isEmpty ? bundle.stats : LayerStats.measured(history.current)
-    }
+    var stats: LayerStats { steps.stepStats(history) }
   }
 
   private func steps(of pipeline: Pipeline, from start: Int, in session: Session) async throws
@@ -175,22 +171,18 @@ package final class PipelineRunner {
       PipelineReuse.canReuse(
         step: index, of: previous, into: history, bundle: session.bundle, processID: id)
     {
+      // Everything the step wrote: a reused geometry step brings its moved layers and header.
+      let recorded = try previous.history.recorded(ofStep: index)
       try history.apply(
-        processID: id, params: previous.history.steps[index].params,
-        result: previous.history.output(ofStep: index))
+        processID: id, params: previous.history.steps[index].params, result: recorded.result,
+        outputs: recorded.outputs, bundleLayers: recorded.bundleLayers, header: recorded.header)
       session.onEvent(.reused(index))
       return
     }
     if let type = registry.type(id: id) {
       let params = try Self.values(of: step, schema: type.schema, at: index)
-      let process = try type.init(params: params, device: device)
-      let input = history.current
-      let output = try runner.run(
-        process, input: GPUImage(device: device, image: input), stats: session.stats,
-        layers: session.layers, layerStats: session.bundle.layerStats)
-      let result = AstroImage(
-        width: input.width, height: input.height, planes: output.read(), metadata: input.metadata)
-      try history.apply(processID: id, params: params, result: result)
+      try session.steps.apply(
+        type.init(params: params, device: device), processID: id, params: params, to: history)
     } else if let tool = batch[id] {
       let params = try Self.values(of: step, schema: tool.schema, at: index)
       let onEvent = session.onEvent

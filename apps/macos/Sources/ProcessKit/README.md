@@ -184,6 +184,24 @@ in en/fr; the English title is the key, resolved with `ProcessKitResources.title
 - A host-tool step (StarNet 0091, background extraction 0092) records its result and the layers
   it wrote with `StudioSession.apply(_:params:result:outputs:)`.
 
+## Geometry (card 0090)
+
+- `GeometryProcess` (`geometry`, stage any): crops (`.px`, as shown: top = the displayed top),
+  clockwise quarter turns, then flips of the turned image — index copies through ImageKit's
+  `GridMap`, bit-exact — then a fine `angle` resampled by `Geometry.metal` (bilinear, Keys
+  bicubic, Lanczos-3; `canvas` keep or expand). `GeometryPlan` conjugates the display moves by
+  the bottom-up flip (`RenderContext.rowsBottomUp`), so recorded values mean what was shown.
+- A `GeometricProcess` sizes its own output (`outputSize`), refuses a mask (`ProcessRunner`) and
+  moves the header (`header(_:width:height:bottomUp:)`: TAN/SIP moved, dropped after an angle).
+- `StepRunner` is the one place a process runs on a history's head, for `StudioSession` and
+  `PipelineRunner` alike: the context is the bundle overlaid by the steps' `bundleLayers`, then
+  their role outputs; an applied geometric step moves every one of those layers (a role output
+  stays a role output, a bundle layer becomes one of the step's `bundleLayers`) and writes its
+  files with the moved header; later steps keep the head's header (`History.headHeader()`). A
+  locked pipeline step reuses everything its step wrote (`History.recorded(ofStep:)`).
+- No automatic crop of the stacking edges (R2): the app's « Use region » fills the crops from
+  the viewer's region.
+
 ## How to add a process
 
 1. A type conforming to `ImageProcess` in `ProcessKit/Processes/<Name>/`, its kernel in a
@@ -194,7 +212,10 @@ in en/fr; the English title is the key, resolved with `ProcessKitResources.title
 4. Register it in `ProcessRegistry.standard`.
 5. Write `HelpKit/Help/{fr,en}/process/<id>.md`: ≤ 5 lines, ≤ 90 words each (gated).
 6. Add its title and every parameter title, en + fr, to `ProcessKit/Localizable.xcstrings` (gated).
-7. Tests: `ProcessContracts(...).violations(of:params:)` is empty, plus the kernel against a CPU
-   oracle with its tolerance stated.
+7. Tests: `ProcessContracts(...).violations(of:params:)` is empty (`pixelProbes:` when a `.px`
+   bound does not fit the test input), plus the kernel against a CPU oracle with its tolerance
+   stated.
+8. A process that moves pixels conforms to `GeometricProcess` instead: `StepRunner` then moves
+   the layers and the header with it.
 
 Allowed dependencies: `ImageKit`, `RenderKit` (`Tests/TestSupport/BoundaryRules.swift`).

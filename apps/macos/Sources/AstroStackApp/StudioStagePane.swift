@@ -12,6 +12,12 @@ struct StudioStagePane: View {
       if model.stacks.count > 1 { picker }
       content
     }
+    .sheet(
+      isPresented: Binding(
+        get: { model.isChoosingReplay }, set: { model.isChoosingReplay = $0 })
+    ) {
+      ReplayChooser(model: model)
+    }
   }
 
   /// Which stack the Studio shows (card 0095): the chosen one, newest first in the list.

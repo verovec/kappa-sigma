@@ -1,6 +1,5 @@
 internal import Foundation
 package import ImageKit
-package import Metal
 
 extension History {
   /// The layers the next step reads: `bundle` by id, overlaid by `writtenLayers()`.
@@ -30,21 +29,6 @@ extension History {
     guard steps.indices.contains(index) else { throw HistoryError.noStep(index) }
     let step = steps[index]
     return (try step.outputs.mapValues(layer(file:)), try step.replaced.mapValues(layer(file:)))
-  }
-
-  /// The GPU context of the next step: `layers` (the bundle's, uploaded once) and their
-  /// `stats`, overlaid by the written layers uploaded to `device` and measured — the one rule
-  /// the Studio and a pipeline run share.
-  package func context(
-    over layers: [String: GPUImage], stats: [String: LayerStats], device: MTLDevice
-  ) throws -> ([String: GPUImage], [String: LayerStats]) {
-    var layers = layers
-    var stats = stats
-    for (id, image) in try writtenLayers() {
-      layers[id] = try GPUImage(device: device, image: image)
-      stats[id] = LayerStats.measured(image)
-    }
-    return (layers, stats)
   }
 
   func layer(file: String) throws -> AstroImage {

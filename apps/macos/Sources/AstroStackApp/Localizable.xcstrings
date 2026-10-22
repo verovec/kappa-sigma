@@ -161,6 +161,22 @@
         }
       }
     },
+    "%@: %@ to %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@: %2$@ to %3$@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ : %2$@ devient %3$@"
+          }
+        }
+      }
+    },
     "%@: %@ to black, %@ to white": {
       "localizations": {
         "en": {
@@ -301,6 +317,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld objets, un run chacun."
+          }
+        }
+      }
+    },
+    "%lld points": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld points"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld points"
           }
         }
       }
@@ -573,6 +605,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bleu"
+          }
+        }
+      }
+    },
+    "Breakpoint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Breakpoint"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Point d’arrêt"
           }
         }
       }
@@ -977,6 +1025,38 @@
         }
       }
     },
+    "Compare with": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compare with"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comparer avec"
+          }
+        }
+      }
+    },
+    "Compared with %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compared with %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comparé avec %@"
+          }
+        }
+      }
+    },
     "Component Gallery": {
       "localizations": {
         "en": {
@@ -1037,6 +1117,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Continuer (référence : pose %@)"
+          }
+        }
+      }
+    },
+    "Continue Pipeline": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue Pipeline"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuer le pipeline"
           }
         }
       }
@@ -2209,6 +2305,38 @@
         }
       }
     },
+    "Load": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Load"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Charger"
+          }
+        }
+      }
+    },
+    "Locked on replay": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Locked on replay"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verrouillé au rejeu"
+          }
+        }
+      }
+    },
     "Luminance": {
       "localizations": {
         "en": {
@@ -2381,6 +2509,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Caméra mono"
+          }
+        }
+      }
+    },
+    "Name": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nom"
           }
         }
       }
@@ -3025,6 +3169,38 @@
         }
       }
     },
+    "Pipeline": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pipeline"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pipeline"
+          }
+        }
+      }
+    },
+    "Pipeline files": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pipeline files"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fichiers du pipeline"
+          }
+        }
+      }
+    },
     "Preset": {
       "localizations": {
         "en": {
@@ -3505,6 +3681,54 @@
         }
       }
     },
+    "Replay Pipeline…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replay Pipeline…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rejouer le pipeline…"
+          }
+        }
+      }
+    },
+    "Replay on…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replay on…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rejouer sur…"
+          }
+        }
+      }
+    },
+    "Replay the pipeline on": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replay the pipeline on"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rejouer le pipeline sur"
+          }
+        }
+      }
+    },
     "Rescan": {
       "localizations": {
         "en": {
@@ -3617,6 +3841,22 @@
         }
       }
     },
+    "Run Pipeline": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Run Pipeline"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lancer le pipeline"
+          }
+        }
+      }
+    },
     "Run a stack with the review on: each lane pauses here after grading.": {
       "localizations": {
         "en": {
@@ -3725,6 +3965,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Enregistrer sous…"
+          }
+        }
+      }
+    },
+    "Save pipeline as": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save pipeline as"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrer le pipeline sous"
+          }
+        }
+      }
+    },
+    "Save pipeline as…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save pipeline as…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrer le pipeline sous…"
           }
         }
       }
@@ -4657,6 +4929,22 @@
         }
       }
     },
+    "The history does not follow the pipeline: undo to a step it shares": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The history does not follow the pipeline: undo to a step it shares"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’historique ne suit pas le pipeline : annulez jusqu’à une étape commune"
+          }
+        }
+      }
+    },
     "The image changed while “%@” ran: its result was not recorded. Apply it again.": {
       "localizations": {
         "en": {
@@ -4781,6 +5069,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "L’empilement s’est arrêté sans écrire son bundle ; son journal montre la dernière étape."
+          }
+        }
+      }
+    },
+    "The same pipeline.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The same pipeline."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le même pipeline."
           }
         }
       }
@@ -5385,6 +5689,22 @@
         }
       }
     },
+    "added": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "added"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ajouté"
+          }
+        }
+      }
+    },
     "an emission layer": {
       "localizations": {
         "en": {
@@ -5461,6 +5781,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "tel que détecté"
+          }
+        }
+      }
+    },
+    "auto": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "auto"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "auto"
+          }
+        }
+      }
+    },
+    "breakpoint: %@ to %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "breakpoint: %1$@ to %2$@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "point d’arrêt : %1$@ devient %2$@"
           }
         }
       }
@@ -5649,6 +6001,22 @@
         }
       }
     },
+    "locked": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "locked"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "verrouillé"
+          }
+        }
+      }
+    },
     "matches, ranked below the applied one": {
       "localizations": {
         "en": {
@@ -5745,6 +6113,38 @@
         }
       }
     },
+    "removed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "removed"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "retiré"
+          }
+        }
+      }
+    },
+    "replaces %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "replaces %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "remplace %@"
+          }
+        }
+      }
+    },
     "replaces %@ (%@) in the library": {
       "localizations": {
         "en": {
@@ -5777,6 +6177,22 @@
         }
       }
     },
+    "stop": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "stop"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "arrêt"
+          }
+        }
+      }
+    },
     "total": {
       "localizations": {
         "en": {
@@ -5805,6 +6221,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "non datée"
+          }
+        }
+      }
+    },
+    "unlocked": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "unlocked"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "déverrouillé"
           }
         }
       }

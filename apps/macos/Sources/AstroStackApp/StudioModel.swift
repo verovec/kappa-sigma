@@ -100,6 +100,15 @@ package final class StudioModel {
     try session.render(processID, params: params, purpose: .preview, mask: mask)
   }
 
+  /// Runs `move` on the history (a pipeline run, card 0088), then records what it applied in
+  /// the project, whether it finished or failed.
+  package func moving<Result>(_ move: (History) async throws -> Result) async throws -> Result {
+    defer { mirror() }
+    let result = try await move(session.history)
+    cleanUp()
+    return result
+  }
+
   /// Back one step.
   package func undo() throws {
     defer { mirror() }

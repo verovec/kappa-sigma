@@ -58,6 +58,8 @@ package final class StudioWorkspaceModel {
   package var mask: Mask? {
     didSet { if panel != nil { schedulePreview() } }
   }
+  /// The pipeline the left column shows (card 0088), set by the window once it is loaded.
+  package var pipeline: PipelineSidebarModel?
   /// Why the last action failed.
   package internal(set) var failure: LocalizedStringResource?
   /// A batch process's run, its tools and the model view (card 0092).
@@ -108,15 +110,10 @@ package final class StudioWorkspaceModel {
     undoManager?.removeAllActions(withTarget: self)
   }
 
-  /// The catalogue title of process `id` (ProcessKit's catalog key), or the id.
-  package func title(of id: String) -> String {
-    registry.type(id: id)?.title ?? id
-  }
-
-  /// Opens the panel of `processID` at its defaults, with its suggestions.
-  package func choose(_ processID: String) {
+  /// Opens the panel of `processID` at `params` (its defaults when `nil`), with its suggestions.
+  package func choose(_ processID: String, params: ParamSet? = nil) {
     guard let type = registry.type(id: processID) else { return }
-    let panel = ProcessPanelModel(type: type, params: ParamSet(schema: type.schema))
+    let panel = ProcessPanelModel(type: type, params: params ?? ParamSet(schema: type.schema))
     refresh(panel)
     panel.onChange = { [weak self] in self?.panelChanged() }
     hideModel()
@@ -179,6 +176,8 @@ package final class StudioWorkspaceModel {
     if !isShowing(panel) { drawPreview() }
     guard isShowing(panel) else { return }
     try reported { try studio.apply(panel.type.id, params: panel.params, mask: maskImage()) }
+    // The user's manual work becomes the recipe (R5): the pipeline records the step.
+    pipeline?.applied(panel.type.id, params: panel.params, masked: mask != nil)
   }
 
   /// Whether the viewer shows the current values and mask of `panel`.
@@ -220,17 +219,6 @@ package final class StudioWorkspaceModel {
     }
   }
 
-  /// The mask of the head, one plane, or `nil` without a mask.
-  private func maskImage() throws -> AstroImage? {
-    guard let mask else { return nil }
-    let device = studio.session.device
-    let head = studio.head
-    let built = try MaskBuilder(device: device)
-      .build(mask, image: GPUImage(device: device, image: head), scale: 1)
-    return AstroImage(
-      width: head.width, height: head.height, planes: built.read(), metadata: head.metadata)
-  }
-
   /// A value moved: the suggestions follow the values they depend on, the preview follows.
   private func panelChanged() {
     if let panel { panel.suggestions = offers(for: panel.type, params: panel.params) }
@@ -258,6 +246,8 @@ package final class StudioWorkspaceModel {
     try? show(studio.head)
   }
 
+  /// The history moved (an Apply, an undo, a pipeline run): the viewer, the panel's inputs and
+  /// the catalogue follow the new head.
   func headChanged() throws {
     shown = nil
     batch.showsModel = false

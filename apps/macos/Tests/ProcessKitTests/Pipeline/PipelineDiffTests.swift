@@ -72,3 +72,26 @@ struct PipelineDiffTests {
         == PipelineDiff.Entry(step: 2, processID: DummyGain.id, change: .removed))
   }
 }
+
+extension PipelineDiffTests {
+  @Test("the same problems, one list per step, for the sidebar's greyed rows")
+  func testStepProblems() throws {
+    let registry = try ProcessRegistry([
+      ChannelCombinationProcess.self, SaturationProcess.self, ColourBalanceProcess.self,
+      StarRecompositionProcess.self,
+    ])
+    func step(_ id: String) -> PipelineStep {
+      PipelineStep(recipe: Recipe(processID: id, params: ParamSet(schema: ParamSchema([]))))
+    }
+    let pipeline = Pipeline(
+      name: "M31",
+      steps: [
+        step("channel-combination"), step("saturation"), step("colour-balance"),
+        step("star-recomposition"), step("nope"),
+      ])
+    let problems = pipeline.stepProblems(registry: registry, present: [.color])
+    #expect(problems.count == 5 && problems[0].isEmpty && problems[1].isEmpty)
+    #expect(problems[2] == ["a linear process after a non-linear one"])
+    #expect(problems[3].count == 1 && problems[4] == ["unknown process nope"])
+  }
+}

@@ -993,6 +993,22 @@
         }
       }
     },
+    "Continue Pipeline": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue Pipeline"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuer le pipeline"
+          }
+        }
+      }
+    },
     "Continue Stacking": {
       "localizations": {
         "en": {
@@ -3457,6 +3473,22 @@
         }
       }
     },
+    "Replay Pipeline…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replay Pipeline…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rejouer le pipeline…"
+          }
+        }
+      }
+    },
     "Rescan": {
       "localizations": {
         "en": {
@@ -3565,6 +3597,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lancer"
+          }
+        }
+      }
+    },
+    "Run Pipeline": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Run Pipeline"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lancer le pipeline"
           }
         }
       }
@@ -4557,6 +4605,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le dossier %@ est illisible : vérifiez qu’il existe et qu’AstroStack peut l’ouvrir."
+          }
+        }
+      }
+    },
+    "The history does not follow the pipeline: undo to a step it shares": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The history does not follow the pipeline: undo to a step it shares"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’historique ne suit pas le pipeline : annulez jusqu’à une étape commune"
           }
         }
       }

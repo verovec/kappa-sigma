@@ -278,11 +278,13 @@ extension ProjectWindowModel {
     let workspace = try StudioWorkspaceModel(studio: studio, base: roles)
     // An undo from another stage brings the Studio into view before moving its history.
     workspace.reveal = { [weak self] in self?.select(.studio) }
+    workspace.pipeline = try sidebar(of: workspace, stackID: stackID, store: store, roles: roles)
     self.workspace = workspace
     // The Studio's stage state follows; an error the window shows stays (a refresh clears it).
     let reported = error
     refresh()
     if error == nil { error = reported }
+    await replayIfPending(on: stackID)
   }
 
   @concurrent

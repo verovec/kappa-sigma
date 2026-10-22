@@ -60,6 +60,12 @@ package final class PipelineSidebarModel {
     runner = try PipelineRunner(registry: session.registry, device: session.device)
   }
 
+  /// Whether Continue can run: halted at a breakpoint whose process the panel shows.
+  package var canContinue: Bool {
+    guard let index = stoppedAt, pipeline.steps.indices.contains(index) else { return false }
+    return workspace.panel?.type.id == pipeline.steps[index].recipe.processID
+  }
+
   /// Where step `index` stands.
   package func status(of index: Int) -> Status {
     if index < workspace.studio.steps.count { return .done }
@@ -109,9 +115,7 @@ package final class PipelineSidebarModel {
   /// The user's « Continue » at the breakpoint: the step with the panel's values, then on to
   /// the next breakpoint; the pipeline keeps the values applied (R5).
   package func continueRun() async {
-    guard let index = stoppedAt, let panel = workspace.panel,
-      panel.type.id == pipeline.steps[index].recipe.processID
-    else { return }
+    guard canContinue, let index = stoppedAt, let panel = workspace.panel else { return }
     let params = panel.params
     pipeline.steps[index].recipe = Recipe(processID: panel.type.id, params: params)
     await moving { [runner, pipeline, lastRun] history, bundle, sink in

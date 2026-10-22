@@ -7,4 +7,6 @@ package enum StudioUnavailable: Equatable, Sendable {
   case linearAfterStretch
   /// A host-tool process whose tool is not installed (card 0093): greyed, Apply refused.
   case toolMissing
+  /// A process reading the plate solution on a head without one (card 0094).
+  case unsolved
 }

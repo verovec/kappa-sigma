@@ -1,0 +1,60 @@
+Siril is started as macOS application
+log: Reading configuration file <WORK>/siril.ini
+log: Welcome to siril 1.4.4 for macos (aarch64) - CLI
+log: Supported file types: BMP images, PIC images (IRIS), PGM and PPM binary images, RAW images, FITS-CFA images, Films, SER sequences, TIFF images, XISF images, JPG images, JPEG XL images, PNG images, HEIF images, AVIF images.
+log: Setting CWD (Current Working Directory) to '<WORK>/work'
+log: Parallel processing enabled: using 18 logical processors.
+log: Color management active.
+log: JPEG ICC profiles supported.
+log: Running command: requires
+1792680360: running command requires
+log: OK! This script is compatible with this version of Siril.
+log: Running command: setext
+1792680360: running command setext
+log: Running command: set32bits
+1792680360: running command set32bits
+log: 32-bit per channel in processed images mode is active
+log: Running command: load
+1792680360: running command load
+HDU 1: type=0, EXTNAME=
+HDU 2: type=0, EXTNAME=ICCProfile
+Skipping HDU 2 with EXTNAME=ICCProfile
+log: Reading FITS: file solved.fits, 3 layer(s), 1024x768 pixels, 32 bits
+log: Running command: pcc
+1792680360: running command pcc
+log: Findstar: processing for channel 0...
+log: Findstar: processing for channel 2...
+log: Findstar: processing for channel 1...
+log: Getting stars from local catalogue Gaia DR3 astrometry for PCC, with a radius of 1.11 degrees and limit magnitude 17.00
+log: Computing background reference with tolerance +2.00σ / -2.80σ.
+log: Photometry radii set to 7.0 for inner and 17.0 for outer
+progress: Photometric color calibration in progress..., 0.00%
+log: Applying aperture photometry to 1307 stars.
+log: 720 stars excluded from the calculation
+log: Distribution of errors: 587 no error, 647 not in area, 73 inner radius too small
+log: Found a solution for color calibration using 587 stars. Factors:
+log: K0: 1.000	(deviation: 34.453)
+log: K1: 0.957	(deviation: 33.301)
+log: K2: 0.917	(deviation: 32.242)
+log: The photometric color calibration seems to have found an imprecise solution, consider correcting the image gradient first
+log: After renormalization, the following coefficients are applied
+log: White balance factors:
+log: K0: 1.000
+log: K1: 0.957
+log: K2: 0.917
+log: Background reference:
+log: B0: -6.22105e-05
+log: B1: +5.83497e-04
+log: B2: +1.17112e-03
+progress: , 0.00%
+log: Photometric Color Calibration succeeded.
+log: Running command: save
+1792680361: running command save
+log: Saving FITS: file pcc.fits, 3 layer(s), 1024x768 pixels, 32 bits
+log: Setting CWD (Current Working Directory) to '<WORK>/work'
+log: Script execution finished successfully.
+log: Total execution time: 541.15 ms
+closing pipes
+real 0.60
+user 1.48
+sys 0.07

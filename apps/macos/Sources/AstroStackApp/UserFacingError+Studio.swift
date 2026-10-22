@@ -40,6 +40,27 @@ extension UserFacingError {
     }
   }
 
+  /// Why colour calibration gave nothing (card 0094): the manual route is named, never taken.
+  static func message(_ error: ColourCalibrationError) -> LocalizedStringResource {
+    switch error {
+    case .unsolved:
+      .app("Solve the image first (plate solving): colour calibration reads its solution.")
+    case .unknownName(let kind, let name):
+      switch kind {
+      case .sensor: .app("Siril does not know the sensor “\(name)”: choose one from the list.")
+      case .filter: .app("Siril does not know the filter “\(name)”: choose one from the list.")
+      case .whiteReference:
+        .app("Siril does not know the white reference “\(name)”: choose one from the list.")
+      }
+    case .catalogueMissing(let path):
+      .app("No local Gaia catalogue at \(path): run just download-catalogues, or go online.")
+    case .failed(let reason):
+      .app("Siril could not calibrate: \(reason). Colour balance is the manual route.")
+    case .noOutput(let path): .app("Siril reported a calibration but wrote none in \(path).")
+    case .noFactors: .app("Siril printed no white-balance factors: nothing was recorded.")
+    }
+  }
+
   /// Why the plate-solve values cannot be solved with (card 0093).
   static func message(_ error: PlateSolveTool.InputError) -> LocalizedStringResource {
     switch error {

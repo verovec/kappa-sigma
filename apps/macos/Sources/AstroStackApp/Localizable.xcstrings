@@ -209,6 +209,70 @@
         }
       }
     },
+    "%@: %@, from %lld stars.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@: %@, from %lld stars."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ : %@, sur %lld étoiles."
+          }
+        }
+      }
+    },
+    "%@: %@, from %lld stars; imprecise fit, extract the background first.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@: %@, from %lld stars; imprecise fit, extract the background first."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ : %@, sur %lld étoiles ; ajustement imprécis, extrayez d’abord le fond."
+          }
+        }
+      }
+    },
+    "%@: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@: %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ : %@."
+          }
+        }
+      }
+    },
+    "%@: %@; imprecise fit, extract the background first.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@: %@; imprecise fit, extract the background first."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ : %@ ; ajustement imprécis, extrayez d’abord le fond."
+          }
+        }
+      }
+    },
     "%@: not stacked — %@": {
       "localizations": {
         "en": {
@@ -445,6 +509,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Un rognage de %@ sur chaque bord ne laisse rien de l’image."
+          }
+        }
+      }
+    },
+    "A host tool works on the whole image: clear the mask first.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A host tool works on the whole image: clear the mask first."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un outil externe travaille sur toute l’image : retirez d’abord le masque."
           }
         }
       }
@@ -3185,6 +3265,22 @@
         }
       }
     },
+    "No local Gaia catalogue at %@: run just download-catalogues, or go online.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No local Gaia catalogue at %@: run just download-catalogues, or go online."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun catalogue Gaia local dans %@ : lancez just download-catalogues, ou passez en ligne."
+          }
+        }
+      }
+    },
     "No local star catalogue at %@: run just download-catalogues, or go online.": {
       "localizations": {
         "en": {
@@ -4865,6 +4961,22 @@
         }
       }
     },
+    "Siril could not calibrate: %@. Colour balance is the manual route.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril could not calibrate: %@. Colour balance is the manual route."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril n’a pas pu calibrer : %@. La balance des couleurs est la voie manuelle."
+          }
+        }
+      }
+    },
     "Siril could not start: %@": {
       "localizations": {
         "en": {
@@ -4893,6 +5005,54 @@
           "stringUnit": {
             "state": "translated",
             "value": "Siril n’a pas indiqué sa version (réponse : %@)."
+          }
+        }
+      }
+    },
+    "Siril does not know the filter “%@”: choose one from the list.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril does not know the filter “%@”: choose one from the list."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril ne connaît pas le filtre « %@ » : choisissez-en un dans la liste."
+          }
+        }
+      }
+    },
+    "Siril does not know the sensor “%@”: choose one from the list.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril does not know the sensor “%@”: choose one from the list."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril ne connaît pas le capteur « %@ » : choisissez-en un dans la liste."
+          }
+        }
+      }
+    },
+    "Siril does not know the white reference “%@”: choose one from the list.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril does not know the white reference “%@”: choose one from the list."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril ne connaît pas la référence de blanc « %@ » : choisissez-en une dans la liste."
           }
         }
       }
@@ -4929,6 +5089,22 @@
         }
       }
     },
+    "Siril printed no white-balance factors: nothing was recorded.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril printed no white-balance factors: nothing was recorded."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril n’a affiché aucun facteur de balance des blancs : rien n’a été enregistré."
+          }
+        }
+      }
+    },
     "Siril refused “%@”: %@": {
       "localizations": {
         "en": {
@@ -4941,6 +5117,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Siril a refusé « %@ » : %@"
+          }
+        }
+      }
+    },
+    "Siril reported a calibration but wrote none in %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril reported a calibration but wrote none in %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril a annoncé une calibration mais n’en a écrit aucune dans %@."
           }
         }
       }
@@ -5005,6 +5197,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Douceur"
+          }
+        }
+      }
+    },
+    "Solve the image first (plate solving)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solve the image first (plate solving)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Résolvez d’abord l’image (résolution astrométrique)"
+          }
+        }
+      }
+    },
+    "Solve the image first (plate solving): colour calibration reads its solution.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solve the image first (plate solving): colour calibration reads its solution."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Résolvez d’abord l’image (résolution astrométrique) : la calibration des couleurs lit sa solution."
           }
         }
       }

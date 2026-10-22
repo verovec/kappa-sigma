@@ -33,6 +33,38 @@
         }
       }
     },
+    "Background tolerance above (σ)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Background tolerance above (σ)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tolérance du fond au-dessus (σ)"
+          }
+        }
+      }
+    },
+    "Background tolerance below (σ)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Background tolerance below (σ)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tolérance du fond en dessous (σ)"
+          }
+        }
+      }
+    },
     "Band full": {
       "localizations": {
         "en": {
@@ -257,6 +289,22 @@
         }
       }
     },
+    "Calibrate the colours": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calibrate the colours"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calibrer les couleurs"
+          }
+        }
+      }
+    },
     "Channel combination": {
       "localizations": {
         "en": {
@@ -301,6 +349,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Balance des couleurs"
+          }
+        }
+      }
+    },
+    "Colour calibration": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Colour calibration"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calibration des couleurs"
           }
         }
       }
@@ -429,6 +493,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Moteur"
+          }
+        }
+      }
+    },
+    "Filter on the camera (SPCC)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filter on the camera (SPCC)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filtre sur la caméra (SPCC)"
           }
         }
       }
@@ -1089,6 +1169,22 @@
         }
       }
     },
+    "Method": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Method"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Méthode"
+          }
+        }
+      }
+    },
     "Midtones": {
       "localizations": {
         "en": {
@@ -1517,6 +1613,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Renfort de saturation"
+          }
+        }
+      }
+    },
+    "Sensor (SPCC)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sensor (SPCC)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Capteur (SPCC)"
           }
         }
       }
@@ -1965,6 +2077,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fond cible"
+          }
+        }
+      }
+    },
+    "White reference (SPCC)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "White reference (SPCC)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Référence de blanc (SPCC)"
           }
         }
       }

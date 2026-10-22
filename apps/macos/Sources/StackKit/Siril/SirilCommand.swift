@@ -50,6 +50,13 @@ package enum SirilCommand: Equatable, Sendable {
   /// `platesolve <ra,dec> -force …`: the Studio's solve (card 0093). Siril 1.4.4 refuses the
   /// coordinates after `-force` (« Invalid argument »), so they come first.
   case platesolveForced([String])
+  /// `spcc …`: spectrophotometric colour calibration of a solved image (card 0094); names with
+  /// spaces arrive quoted in their argument.
+  case spcc([String])
+  /// `pcc …`: photometric colour calibration of a solved image (card 0094).
+  case pcc([String])
+  /// `spcc_list <kind>`: the names Siril knows for a sensor, filter or white reference.
+  case spccList(String)
   case rgbcomp(r: String, g: String, b: String, lum: String?, out: String)
 
   /// The command's verb, as Siril reads it.
@@ -58,6 +65,7 @@ package enum SirilCommand: Equatable, Sendable {
     case .autostretchLinked: "autostretch"
     case .subskyRBF: "subsky"
     case .platesolveForced: "platesolve"
+    case .spccList: "spcc_list"
     default: String(String(describing: self).prefix { $0.isLetter })
     }
   }
@@ -113,6 +121,9 @@ package enum SirilCommand: Equatable, Sendable {
     case .platesolve(let coords, let noFlip):
       "platesolve" + (coords.map { " \($0)" } ?? "") + (noFlip ? " -noflip" : "")
     case .platesolveForced(let arguments): (["platesolve"] + arguments).joined(separator: " ")
+    case .spcc(let arguments): (["spcc"] + arguments).joined(separator: " ")
+    case .pcc(let arguments): (["pcc"] + arguments).joined(separator: " ")
+    case .spccList(let kind): "spcc_list " + kind
     case .rgbcomp(let r, let g, let b, let lum, let out):
       "rgbcomp \(r) \(g) \(b)" + (lum.map { " -lum=\($0)" } ?? "") + " -out=\(out)"
     default: ""

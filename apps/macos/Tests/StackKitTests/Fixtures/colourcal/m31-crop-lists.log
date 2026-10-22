@@ -1,0 +1,266 @@
+Siril is started as macOS application
+log: Reading configuration file <WORK>/siril.ini
+log: Welcome to siril 1.4.4 for macos (aarch64) - CLI
+log: Supported file types: BMP images, PIC images (IRIS), PGM and PPM binary images, RAW images, FITS-CFA images, Films, SER sequences, TIFF images, XISF images, JPG images, JPEG XL images, PNG images, HEIF images, AVIF images.
+log: Setting CWD (Current Working Directory) to '<WORK>/work'
+log: Parallel processing enabled: using 18 logical processors.
+log: Color management active.
+log: JPEG ICC profiles supported.
+log: Running command: requires
+1792680387: running command requires
+log: OK! This script is compatible with this version of Siril.
+log: Running command: spcc_list
+1792680387: running command spcc_list
+log: OSC Sensors
+log: Canon EOS 1D Mark III
+log: Canon EOS 20D
+log: Canon EOS 300D
+log: Canon EOS 40D
+log: Canon EOS 500D
+log: Canon EOS 50D
+log: Canon EOS 600D
+log: Canon EOS 60D
+log: Fujifilm X-Trans 5 HR
+log: Nikon D200
+log: Nikon D3
+log: Nikon D300s
+log: Nikon D3X
+log: Nikon D40
+log: Nikon D50
+log: Nikon D500
+log: Nikon D5100
+log: Nikon D700
+log: Nikon D7200
+log: Nikon D750
+log: Nikon D80
+log: Nikon D90
+log: Onsemi MT9M034
+log: Samsung ISOCELL
+log: Sony IMX071
+log: Sony IMX178
+log: Sony IMX183
+log: Sony IMX193
+log: Sony IMX224
+log: Sony IMX269
+log: Sony IMX294
+log: Sony IMX385
+log: Sony IMX410
+log: Sony IMX415
+log: Sony IMX455
+log: Sony IMX462
+log: Sony IMX477
+log: Sony IMX482
+log: Sony IMX533
+log: Sony IMX571
+log: Sony IMX585
+log: Sony IMX662
+log: Sony IMX676
+log: Sony IMX678
+log: Sony IMX715
+log: ZWO Seestar S30
+log: ZWO Seestar S50
+log: Running command: spcc_list
+1792680388: running command spcc_list
+log: OSC Filters
+log: Antila RGB_ultra_ii
+log: Antlia Quad Band Anti-Light Pollution Filter
+log: Antlia Triband RGB Ultra II
+log: Askar Colour Magic C1 (Ha/OIII)
+log: Askar Colour Magic C2 (SII_OIII)
+log: Astronomik Astronomik L-1 UV/IR Block
+log: Astronomik Astronomik L-2 UV/IR Block
+log: Astronomik Astronomik L-3 UV/IR Block
+log: Astronomik CLS-CCD
+log: Baader Contrast Booster
+log: Baader Fringe Killer
+log: Baader Neodymium Moon & Skyglow
+log: Baader UHC-S
+log: Baader UV/IR Cut
+log: Dwarf Mini Astro
+log: Dwarf Mini Dual Band
+log: Hutech IDAS LPS-P2
+log: IDAS LPS P3
+log: LEVIATHAN Spectral Pro
+log: Lumicon UHC
+log: No filter
+log: Optolong L-Pro
+log: Optolong L-QEF
+log: Optolong Optolong CLS-CCD
+log: SIGHTRON Comet BP
+log: SIghtron Quad BP
+log: SVBONY SV231 Color Correction Filter
+log: SVBONY UHC
+log: SvBONY CLS
+log: SvBONY SV260
+log: Svbony SV240
+log: UV/IR Block
+log: Vaonis CLS
+log: ZWO Duo-Band
+log: ZWO Seestar LP
+log: Running command: spcc_list
+1792680388: running command spcc_list
+log: White References
+log: Average Spiral Galaxy
+log: Galaxy, elliptical, 13Gyr
+log: Galaxy, elliptical, 2Gyr
+log: Galaxy, elliptical, 5Gyr
+log: Galaxy, spiral, S0
+log: Galaxy, spiral, Sa
+log: Galaxy, spiral, Sb
+log: Galaxy, spiral, Sc
+log: Galaxy, spiral, Sd
+log: Galaxy, spiral, Sdm
+log: Galaxy, starburst (ARP220)
+log: Galaxy, starburst (M82)
+log: Galaxy, starburst (NGC6090)
+log: Star, type A0(i)
+log: Star, type A0(iii)
+log: Star, type A0(iv)
+log: Star, type A0(v)
+log: Star, type A2(i)
+log: Star, type A2(v)
+log: Star, type A3(iii)
+log: Star, type A3(v)
+log: Star, type A47(iv)
+log: Star, type A5(iii)
+log: Star, type A5(v)
+log: Star, type A7(iii)
+log: Star, type A7(v)
+log: Star, type B0(i)
+log: Star, type B0(v)
+log: Star, type B1(i)
+log: Star, type B1(v)
+log: Star, type B12(iii)
+log: Star, type B2(ii)
+log: Star, type B2(iv)
+log: Star, type B3(i)
+log: Star, type B3(iii)
+log: Star, type B3(v)
+log: Star, type B5(i)
+log: Star, type B5(ii)
+log: Star, type B5(iii)
+log: Star, type B57(v)
+log: Star, type B6(iv)
+log: Star, type B8(i)
+log: Star, type B8(v)
+log: Star, type B9(iii)
+log: Star, type B9(v)
+log: Star, type F0(i)
+log: Star, type F0(ii)
+log: Star, type F0(iii)
+log: Star, type F0(v)
+log: Star, type F02(iv)
+log: Star, type F2(ii)
+log: Star, type F2(iii)
+log: Star, type F2(v)
+log: Star, type F5(i)
+log: Star, type F5(iii)
+log: Star, type F5(iv)
+log: Star, type F5(v)
+log: Star, type F6(v)
+log: Star, type F8(i)
+log: Star, type F8(iv)
+log: Star, type F8(v)
+log: Star, type G0(i)
+log: Star, type G0(iii)
+log: Star, type G0(iv)
+log: Star, type G0(v)
+log: Star, type G2(i)
+log: Star, type G2(iv)
+log: Star, type G2(v)
+log: Star, type G5(i)
+log: Star, type G5(ii)
+log: Star, type G5(iii)
+log: Star, type G5(iv)
+log: Star, type G5(v)
+log: Star, type G8(i)
+log: Star, type G8(iii)
+log: Star, type G8(iv)
+log: Star, type G8(v)
+log: Star, type K0(iii)
+log: Star, type K0(iv)
+log: Star, type K0(v)
+log: Star, type K01(ii)
+log: Star, type K1(iii)
+log: Star, type K1(iv)
+log: Star, type K2(i)
+log: Star, type K2(iii)
+log: Star, type K2(v)
+log: Star, type K3(i)
+log: Star, type K3(iii)
+log: Star, type K3(iv)
+log: Star, type K3(v)
+log: Star, type K34(ii)
+log: Star, type K4(i)
+log: Star, type K4(iii)
+log: Star, type K4(v)
+log: Star, type K5(iii)
+log: Star, type K5(v)
+log: Star, type K7(v)
+log: Star, type M0(iii)
+log: Star, type M0(v)
+log: Star, type M1(iii)
+log: Star, type M1(v)
+log: Star, type M10(iii)
+log: Star, type M2(i)
+log: Star, type M2(iii)
+log: Star, type M2(v)
+log: Star, type M2.5(v)
+log: Star, type M3(ii)
+log: Star, type M3(iii)
+log: Star, type M3(v)
+log: Star, type M4(iii)
+log: Star, type M4(v)
+log: Star, type M5(iii)
+log: Star, type M5(v)
+log: Star, type M6(iii)
+log: Star, type M6(v)
+log: Star, type M7(iii)
+log: Star, type M8(iii)
+log: Star, type M9(iii)
+log: Star, type O5(v)
+log: Star, type O8(iii)
+log: Star, type O9(v)
+log: Star, type RF6(v)
+log: Star, type RF8(v)
+log: Star, type RG0(v)
+log: Star, type RG5(iii)
+log: Star, type RG5(v)
+log: Star, type RK0(iii)
+log: Star, type RK0(v)
+log: Star, type RK1(iii)
+log: Star, type RK2(iii)
+log: Star, type RK3(iii)
+log: Star, type RK4(iii)
+log: Star, type RK5(iii)
+log: Star, type WF5(v)
+log: Star, type WF8(v)
+log: Star, type WG0(v)
+log: Star, type WG5(iii)
+log: Star, type WG5(v)
+log: Star, type WG8(iii)
+log: Star, type WK0(iii)
+log: Star, type WK1(iii)
+log: Star, type WK2(iii)
+log: Star, type WK4(iii)
+log: Star, type Wk3(iii)
+log: Running command: spcc_list
+1792680388: running command spcc_list
+log: OSC Low-Pass Filters
+log: Baader BCF astromod LPF
+log: Canon EOS 350D blocking filter
+log: Full spectrum (no filter)
+log: Nikon D100 LPF
+log: Nikon D3000 LPF
+log: Nikon D3100 LPF
+log: Nikon D40 LPF
+log: Nikon D40x LPF
+log: Nikon D50 LPF
+log: Nikon D60 LPF
+log: Nikon D70 LPF
+log: Nikon D80 LPF
+log: Nikon D90 LPF
+log: Setting CWD (Current Working Directory) to '<WORK>/work'
+log: Script execution finished successfully.
+log: Total execution time: 71.58 ms
+closing pipes

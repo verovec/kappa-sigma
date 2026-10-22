@@ -31,6 +31,8 @@ package struct StudioCatalogueView: View {
       return String(localized: .app("Needs \(names)", locale: locale))
     case .linearAfterStretch:
       return String(localized: .app("Runs on linear data: undo the stretch first", locale: locale))
+    case .unsolved:
+      return String(localized: .app("Solve the image first (plate solving)", locale: locale))
     case .toolMissing:
       return String(
         localized: .app(

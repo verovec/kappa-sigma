@@ -112,6 +112,17 @@ under `catalogues`, `update_default_scale=false`), never on the user's, which a 
 Siril's `Plate solving failed: …` line, never retried with other settings. Transcripts recorded
 on run #78's crop are in `Tests/StackKitTests/Fixtures/platesolve/` (0.6 s wall live).
 
+**Colour calibration** (card 0094, `Colour/`): `ColourCalibrator(siril:support:catalogues:)` —
+or `.live(…)` with `-i` on `<support>/siril-colour.ini` (`SirilAppSettings`, shared with the plate
+solver) — runs `load input` → `spcc "-oscsensor=…" "-oscfilter=…" "-whiteref=…" -bgtol=below,above
+-catalog=…` or `pcc …` → `save calibrated` on a solved image (`.unsolved` otherwise; the input
+FITS carries the image's WCS). SPCC names are first checked against `spcc_list` (Siril 1.4.4
+runs an unknown sensor as the previous one: `.unknownName`); `-bgtol` takes both tolerances as
+magnitudes (a negative lower one is refused, despite Siril's help). `ColourCalibrationReport`
+reads the applied factors (last `K0…K2`), stars used, background and Siril's « imprecise
+solution » warning; a failure is `.failed(reason:)` with the line before Siril's locator — never
+another method. Transcripts in `Tests/StackKitTests/Fixtures/colourcal/` (0.7 s wall live).
+
 ## Run scope (card 0095)
 
 `Preprocess/RunScope.swift`: `RunScope(object:setIDs:lights:listed:)` names the light sets one run

@@ -25,9 +25,6 @@ package struct PlateSolver: Sendable {
   /// The folder holding the local Gaia catalogue.
   package let catalogues: URL
 
-  /// The Gaia DR3 astrometric file Siril reads for `localgaia`.
-  static let astrometricFile = "siril_cat_healpix8_astro.dat"
-
   /// A solver over `siril`, its settings in `support`, the local catalogue in `catalogues`.
   package init(siril: SirilRunner, support: URL, catalogues: URL) {
     self.siril = siril
@@ -53,13 +50,13 @@ package struct PlateSolver: Sendable {
     _ image: sending AstroImage, request: PlateSolveRequest, scratch: URL,
     onProgress: @escaping @Sendable (ToolProgress) -> Void
   ) async throws -> Solved {
-    let astrometric = catalogues.appendingPathComponent(Self.astrometricFile)
+    let astrometric = catalogues.appendingPathComponent(SirilAppSettings.astrometricFile)
     if request.catalogue == .localGaia,
       !FileManager.default.fileExists(atPath: astrometric.path)
     {
       throw PlateSolveError.catalogueMissing(path: astrometric.path)
     }
-    try writeConfig()
+    try SirilAppSettings.write(to: configFile, catalogues: catalogues)
     let folder = scratch.appendingPathComponent("platesolve-" + UUID().uuidString)
     try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
     defer { try? FileManager.default.removeItem(at: folder) }
@@ -95,20 +92,5 @@ package struct PlateSolver: Sendable {
       return PlateSolveError.failed(reason: hint)
     }
     return error
-  }
-
-  /// The app's settings: the local catalogue paths, and no default saved by a solve.
-  private func writeConfig() throws {
-    try FileManager.default.createDirectory(
-      at: configFile.deletingLastPathComponent(), withIntermediateDirectories: true)
-    let text = """
-      [core]
-      catalogue_gaia_astro=\(catalogues.appendingPathComponent(Self.astrometricFile).path)
-      catalogue_gaia_photo=\(catalogues.path)
-      [astrometry]
-      update_default_scale=false
-
-      """
-    try Data(text.utf8).write(to: configFile, options: .atomic)
   }
 }

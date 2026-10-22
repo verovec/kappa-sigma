@@ -122,6 +122,8 @@ package final class ProjectWindowModel {
     } catch {
       self.error = UserFacingError(error)
     }
+    // Tri follows the stack the Studio shows.
+    refresh()
   }
 
   /// The stack the Studio shows: the chosen one, else the latest.
@@ -247,14 +249,15 @@ package final class ProjectWindowModel {
       if summary.stacks != stacks.count { stacks = try store?.stacks() ?? [] }
       let running = run?.isRunning == true || queueActive ? 1 : 0
       var facts = ProjectFacts(summary: summary, coverage: coverage, stacksRunning: running)
-      // Tri is done when the latest stack went through the review (card 0069). A record that no
-      // longer decodes was reported where it is read (init, Run); here it only means « not
-      // reviewed », never a window whose stages stop refreshing.
-      let latest = try store?.latestStack()
+      // Tri is done when the stack the Studio shows (the chosen one, else the latest; 0095) went
+      // through the review (card 0069). A record that no longer decodes was reported where it is
+      // read (init, Run); here it only means « not reviewed », never a window whose stages stop
+      // refreshing.
+      let shown = selectedStack
       facts.framesReviewed =
-        (latest.flatMap { try? StackRecord(stack: $0) })?.framesReviewed ?? false
+        (shown.flatMap { try? StackRecord(stack: $0) })?.framesReviewed ?? false
       statuses = JourneyState.derive(from: facts)
-      refreshReviewLanes(latest: latest)
+      refreshReviewLanes(latest: shown)
       error = nil
     } catch {
       self.error = UserFacingError(error)

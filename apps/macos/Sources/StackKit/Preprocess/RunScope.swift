@@ -35,6 +35,15 @@ package struct RunScope: Equatable, Sendable, Codable {
     }
     return scopes.keys.sorted().compactMap { scopes[$0] }
   }
+
+  /// The light sets of this object `inventory` holds that the scope does not list: a scan that
+  /// moved since the series were chosen (a night added, a grouping changed), never stacked in
+  /// silence.
+  package func unlistedSets(in inventory: Inventory) -> [String] {
+    let listed = Set(setIDs)
+    return inventory.sets.filter { $0.key.type == .light && $0.key.object == object }
+      .map(\.key.id).filter { !listed.contains($0) }
+  }
 }
 
 extension Inventory {

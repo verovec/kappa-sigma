@@ -110,7 +110,12 @@ struct UserFacingErrorTests {
     Case(
       error: PreprocessError.noLights, names: "",
       english:
-        "No light set to stack: the series chosen are not in this scan. Rescan and choose again."
+        "No light set to stack: the capture holds none, or the series chosen are not in this scan."
+    ),
+    Case(
+      error: PreprocessError.scopeOutdated(["a", "b"]), names: "",
+      english:
+        "The scan moved since the series were chosen (2 new sets): rescan and pick again."
     ),
   ]
 

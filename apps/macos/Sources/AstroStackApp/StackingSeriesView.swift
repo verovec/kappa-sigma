@@ -47,14 +47,15 @@ struct StackingSeriesView: View {
   }
 
   private func row(_ series: StackingStageModel.Series) -> some View {
-    Toggle(
+    let words = words(series)
+    return Toggle(
       isOn: Binding(
         get: { model.isChecked(series.id) }, set: { model.set(series.id, checked: $0) })
     ) {
-      Text(verbatim: words(series))
+      Text(verbatim: words)
         .font(DesignMetrics.valueFont)
     }
-    .accessible(.stackingSeries(series.id), verbatim: words(series))
+    .accessible(.stackingSeries(series.id), verbatim: words)
   }
 
   /// « L · 120 s · g100 · 36 lights · 1 h 12 min » (the gain as masters name it).
@@ -63,7 +64,7 @@ struct StackingSeriesView: View {
     return [
       ImportFormat.filter(series.filter, filterSet: series.filterSet, locale: locale),
       format.exposure(ms: series.exposureMs),
-      String(localized: .app("g\(series.gain)", locale: locale)),
+      ImportFormat.gain(series.gain, locale: locale),
       format.lights(series.frames),
       format.integration(seconds: Int((Double(series.integrationMs) / 1000).rounded())),
     ].joined(separator: " · ")

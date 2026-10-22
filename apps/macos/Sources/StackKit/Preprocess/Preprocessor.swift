@@ -108,7 +108,7 @@ package actor Preprocessor {
     let objects = Set(lights.map(\.key.object))
     guard objects.count <= 1 else { throw PreprocessError.mixedObjects(objects.sorted()) }
     let split = FilterSetLanes.splits(inventory)
-    return NightPlan(inventory.sets.filter { $0.key.type == .light }) {
+    return NightPlan(lights) {
       FilterSetLanes.lane(for: $0, in: inventory, split: split)
     }
   }

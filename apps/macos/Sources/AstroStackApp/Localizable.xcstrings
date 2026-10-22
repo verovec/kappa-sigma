@@ -2225,18 +2225,18 @@
         }
       }
     },
-    "No light set to stack: the series chosen are not in this scan. Rescan and choose again.": {
+    "No light set to stack: the capture holds none, or the series chosen are not in this scan.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "No light set to stack: the series chosen are not in this scan. Rescan and choose again."
+            "value": "No light set to stack: the capture holds none, or the series chosen are not in this scan."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aucune série de poses à empiler : les séries cochées ne sont pas dans cette analyse. Relisez et choisissez à nouveau."
+            "value": "Aucune série de poses à empiler : la capture n’en contient pas, ou les séries cochées ne sont pas dans cette analyse."
           }
         }
       }
@@ -3869,6 +3869,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "L’empilement s’est arrêté sans écrire son bundle ; son journal montre la dernière étape."
+          }
+        }
+      }
+    },
+    "The scan moved since the series were chosen (%lld new sets): rescan and pick again.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The scan moved since the series were chosen (%lld new sets): rescan and pick again."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’analyse a changé depuis le choix des séries (%lld nouvelles séries) : relisez et choisissez à nouveau."
           }
         }
       }

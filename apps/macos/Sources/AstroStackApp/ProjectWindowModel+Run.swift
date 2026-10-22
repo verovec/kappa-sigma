@@ -46,7 +46,8 @@ extension ProjectWindowModel {
   /// (an untitled package moves on Save and is deleted on Close).
   ///
   /// The settings are the panel's edits (`knobs.patch`) on the preset of `mode`, the panel's own
-  /// preset unless a mode is given for this run; the panel is left as it is.
+  /// preset unless a mode is given for this run — read once here for the whole queue (the panel
+  /// is frozen until it ends) and left as they are.
   package func startRun(mode: PreprocessRequest.Mode? = nil) {
     guard canRun else { return }
     guard isSaved() else {
@@ -54,19 +55,20 @@ extension ProjectWindowModel {
       return
     }
     let scopes = series.scopes
+    let preset = mode ?? knobs.mode
     queuedScopes = Array(scopes.dropFirst())
     queueActive = true
-    launch(scope: scopes.first, mode: mode ?? knobs.mode)
+    launch(scope: scopes.first, mode: preset, patch: knobs.patch(for: preset))
   }
 
-  /// Starts one run of `scope` (every light when `nil`).
-  private func launch(scope: RunScope?, mode: PreprocessRequest.Mode) {
+  /// Starts one run of `scope` (every light when `nil`) with `patch` on the preset of `mode`.
+  private func launch(scope: RunScope?, mode: PreprocessRequest.Mode, patch: KnobPatch) {
     guard let store = store(), let folder = folder() else {
       endQueue()
       error = .projectClosed
       return
     }
-    guard let (record, settings) = prepare(scope: scope, mode: mode) else {
+    guard let (record, settings) = prepare(scope: scope, mode: mode, patch: patch) else {
       endQueue()
       return
     }
@@ -84,6 +86,11 @@ extension ProjectWindowModel {
     model.start(
       {
         let plan = try await planning(record.request)
+        // A scan that moved since the series were chosen is refused, never stacked in part.
+        if let scope {
+          let unlisted = scope.unlistedSets(in: plan.inventory)
+          guard unlisted.isEmpty else { throw PreprocessError.scopeOutdated(unlisted) }
+        }
         let inventory = scope.map { plan.inventory.scoped($0) } ?? plan.inventory
         return start(
           PreprocessRequest(
@@ -100,22 +107,21 @@ extension ProjectWindowModel {
         await register(record, runID: runID)
         if let next = queuedScopes.first, error == nil {
           queuedScopes.removeFirst()
-          launch(scope: next, mode: mode)
+          launch(scope: next, mode: mode, patch: patch)
         } else {
           endQueue()
         }
       })
   }
 
-  /// The record and settings of a run of `scope` with the preset of `mode`; `nil` (reported when
-  /// it is an error) when nothing can run.
-  private func prepare(scope: RunScope?, mode: PreprocessRequest.Mode) -> (
+  /// The record and settings of a run of `scope` with `patch` on the preset of `mode`; `nil`
+  /// (reported when it is an error) when nothing can run.
+  private func prepare(scope: RunScope?, mode: PreprocessRequest.Mode, patch: KnobPatch) -> (
     StackRecord, PreprocessSettings
   )? {
     do {
       guard let request = try runRequest() else { return nil }
-      let record = StackRecord(
-        request: request, mode: mode, knobs: knobs.patch(for: mode), scope: scope)
+      let record = StackRecord(request: request, mode: mode, knobs: patch, scope: scope)
       return (record, try Self.runSettings(record))
     } catch {
       self.error = UserFacingError(error)

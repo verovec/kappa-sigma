@@ -103,8 +103,11 @@ Re-recording is a contract change: the PR that commits new fixtures says why (`T
 `Preprocess/RunScope.swift`: `RunScope(object:setIDs:lights)` names the light sets one run stacks;
 `RunScope.scopes(of:)` gives one per object of a scan, `Inventory.scoped(_:)` keeps those light
 sets and every calibration set with the ids the scan gave (unlike `subset`, which regroups), and
-`Preprocessor.plan` refuses lights of several objects (`PreprocessError.mixedObjects`) — one object
-per run, never the legacy « dominant object ». The app queues one run per checked object.
+`Preprocessor.plan` refuses lights of several objects (`PreprocessError.mixedObjects`, an empty
+OBJECT being an object of its own) or none (`noLights`) — one object per run, never the legacy
+« dominant object ». `RunScope.unlistedSets(in:)` names the sets of the object a re-planned scan
+holds beyond the scope (the app refuses the run with `scopeOutdated`). The app queues one run per
+checked object.
 
 ## How to extend
 

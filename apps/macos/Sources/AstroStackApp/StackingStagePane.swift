@@ -7,7 +7,8 @@ internal import SwiftUI
 struct StackingStagePane: View {
   var model: ProjectWindowModel
 
-  private var running: Bool { model.run?.isRunning == true }
+  /// A run or a queue is going: the panel is frozen and Cancel offered until the last run ends.
+  private var running: Bool { model.queueActive || model.run?.isRunning == true }
 
   /// « Run » for one run; « Stack 2 objects (2 runs) » once the series span several (0095).
   private var runWords: LocalizedStringResource {

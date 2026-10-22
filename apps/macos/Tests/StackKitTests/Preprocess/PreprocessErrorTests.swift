@@ -12,6 +12,9 @@ struct PreprocessErrorTests {
     (.noChannels(["L: no stars"]), "L: no stars"),
     (.mixedColorModel, "mono and colour"),
     (.mixedObjects(["IC 1848", "M 31"]), "IC 1848, M 31"),
+    (.mixedObjects(["", "M 31"]), "(no OBJECT), M 31"),
+    (.noLights, "no light set"),
+    (.scopeOutdated(["a", "b"]), "2 new set(s)"),
   ]
 
   @Test("every case names its subject", arguments: cases)

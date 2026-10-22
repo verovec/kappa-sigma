@@ -14,8 +14,12 @@ package enum PreprocessError: Error, Equatable, Sendable {
   case mixedColorModel
   /// Lights of several objects together (card 0095): one run stacks one object, never a majority.
   case mixedObjects([String])
-  /// No light set to stack (a scope whose sets the re-planned scan no longer has, card 0095).
+  /// No light set to stack: the capture holds none, or a scope whose sets the re-planned scan no
+  /// longer has (card 0095).
   case noLights
+  /// The scan moved since the series were chosen: this object has light sets the scope does not
+  /// list (card 0095); rescan and choose again rather than stack a part in silence.
+  case scopeOutdated([String])
 }
 
 extension PreprocessError: LocalizedError {
@@ -33,7 +37,11 @@ extension PreprocessError: LocalizedError {
     case .mixedObjects(let objects):
       "the lights span several objects (\(Self.names(objects))) — choose the series of one object "
         + "per run"
-    case .noLights: "no light set to stack — the series chosen are not in this scan"
+    case .noLights:
+      "no light set to stack — the capture holds none, or the series chosen are not in this scan"
+    case .scopeOutdated(let sets):
+      "the scan moved since the series were chosen (\(sets.count) new set(s)) — rescan and choose "
+        + "again"
     }
   }
 

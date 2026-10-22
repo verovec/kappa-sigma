@@ -95,6 +95,29 @@ struct RunScopeTests {
     #expect(Self.lightIDs(none).isEmpty && calibration(none) == calibration(two))
   }
 
+  @Test(
+    "a scan that moved since the series were chosen names the sets the scope does not list",
+    .scratchDirectory)
+  func testUnlistedSets() throws {
+    let two = try Self.twoObjects()
+    let testfield = try #require(RunScope.scopes(of: two).first { $0.object == "TESTFIELD" })
+    #expect(testfield.unlistedSets(in: two).isEmpty, "nothing moved: nothing unlisted")
+    // A quarter of this object's lights regrouped under a longer exposure: new set ids.
+    var moved = two
+    for index in moved.frames.indices
+    where moved.frames[index].object == "TESTFIELD" && moved.frames[index].type == .light
+      && index % 4 == 0
+    {
+      moved.frames[index].exposureMs += 1000
+    }
+    moved.regroup()
+    let unlisted = testfield.unlistedSets(in: moved)
+    #expect(!unlisted.isEmpty)
+    #expect(unlisted.allSatisfy { $0.contains("|TESTFIELD|") && !testfield.setIDs.contains($0) })
+    let other = try #require(RunScope.scopes(of: two).first { $0.object == "OTHER" })
+    #expect(other.unlistedSets(in: moved).isEmpty, "the other object did not move")
+  }
+
   @Test("a scope round-trips through JSON under its wire keys")
   func testScopeJSON() throws {
     let scope = RunScope(object: "M 31", setIDs: ["a", "b"], lights: 77)

@@ -6,6 +6,7 @@ package import StackKit
 ///
 /// Nothing is picked for the user: two objects imported together are two runs, each visible here
 /// before Run (R2). Without a scan the table is empty and a run takes every light of the project.
+/// The grouping is `RunScope.scopes(of:)`'s, the one the engine refuses to cross.
 @Observable
 package final class StackingStageModel {
   /// One light set as the table shows it.
@@ -41,6 +42,8 @@ package final class StackingStageModel {
 
   /// Objects in name order, each with its nights (undated last) and their sets in scan order.
   package private(set) var groups: [Group] = []
+  /// One run per object with a checked set, in the table's order; empty without a scan.
+  package private(set) var scopes: [RunScope] = []
   private var checked: Set<String> = []
 
   /// The series of `inventory` (none for `nil`), every one checked.
@@ -50,34 +53,12 @@ package final class StackingStageModel {
 
   /// A new scan: the sets it still has keep their choice, the new ones are checked.
   package func replace(inventory: Inventory?) {
-    guard let inventory else {
-      groups = []
-      checked = []
-      return
-    }
-    let split = FilterSetLanes.splits(inventory)
-    var byObject: [String: [String: [Series]]] = [:]
-    for set in inventory.sets where set.key.type == .light {
-      let lane = FilterSetLanes.lane(for: set, in: inventory, split: split)
-      let series = Series(
-        id: set.key.id, object: set.key.object, night: set.key.session, filter: set.key.filter,
-        filterSet: FilterSetLanes.baseFilter(of: lane) == lane ? .unknown : .dualband,
-        exposureMs: set.key.exposureMs, gain: set.key.gain, frames: set.count,
-        integrationMs: set.totalIntegrationMs)
-      byObject[set.key.object, default: [:]][set.key.session, default: []].append(series)
-    }
     let known = Set(groups.flatMap(\.nights).flatMap(\.series).map(\.id))
-    groups = byObject.keys.sorted().map { object in
-      let nights = byObject[object] ?? [:]
-      return Group(
-        object: object,
-        nights: nights.keys.sorted(by: Self.nightPrecedes).map {
-          Night(object: object, night: $0, series: nights[$0] ?? [])
-        })
-    }
+    groups = inventory.map(Self.groups(of:)) ?? []
     let ids = Set(groups.flatMap(\.nights).flatMap(\.series).map(\.id))
     // Kept: the choice on a set the new scan still has; new sets start checked.
     checked = ids.filter { !known.contains($0) || checked.contains($0) }
+    rebuildScopes()
   }
 
   /// The set is checked: its lights go into its object's run.
@@ -86,6 +67,7 @@ package final class StackingStageModel {
   /// Checks or unchecks a set.
   package func set(_ id: String, checked value: Bool) {
     if value { checked.insert(id) } else { checked.remove(id) }
+    rebuildScopes()
   }
 
   /// Flips a set's checkbox.
@@ -96,13 +78,37 @@ package final class StackingStageModel {
   /// No scan: the table has nothing to show.
   package var isEmpty: Bool { groups.isEmpty }
 
-  /// One run per object with a checked set, in the table's order; empty without a scan.
-  package var scopes: [RunScope] {
-    groups.compactMap { group in
+  private func rebuildScopes() {
+    scopes = groups.compactMap { group in
       let series = group.nights.flatMap(\.series).filter { checked.contains($0.id) }
       guard !series.isEmpty else { return nil }
       return RunScope(
         object: group.object, setIDs: series.map(\.id), lights: series.map(\.frames).reduce(0, +))
+    }
+  }
+
+  /// The engine's scopes, each laid out as nights of series.
+  private static func groups(of inventory: Inventory) -> [Group] {
+    let sets = Dictionary(
+      inventory.sets.map { ($0.key.id, $0) }, uniquingKeysWith: { first, _ in first })
+    let split = FilterSetLanes.splits(inventory)
+    return RunScope.scopes(of: inventory).map { scope in
+      var nights: [String: [Series]] = [:]
+      for set in scope.setIDs.compactMap({ sets[$0] }) {
+        let lane = FilterSetLanes.lane(for: set, in: inventory, split: split)
+        nights[set.key.session, default: []].append(
+          Series(
+            id: set.key.id, object: set.key.object, night: set.key.session,
+            filter: set.key.filter,
+            filterSet: FilterSetLanes.baseFilter(of: lane) == lane ? .unknown : .dualband,
+            exposureMs: set.key.exposureMs, gain: set.key.gain, frames: set.count,
+            integrationMs: set.totalIntegrationMs))
+      }
+      return Group(
+        object: scope.object,
+        nights: nights.keys.sorted(by: nightPrecedes).map {
+          Night(object: scope.object, night: $0, series: nights[$0] ?? [])
+        })
     }
   }
 

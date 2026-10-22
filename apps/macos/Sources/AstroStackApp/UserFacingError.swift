@@ -123,7 +123,11 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     case .mixedObjects(let objects): mixedObjects(objects)
     case .noLights:
       .app(
-        "No light set to stack: the series chosen are not in this scan. Rescan and choose again.")
+        "No light set to stack: the capture holds none, or the series chosen are not in this scan.")
+    case .scopeOutdated(let sets):
+      .app(
+        "The scan moved since the series were chosen (\(sets.count) new sets): rescan and pick again."
+      )
     }
   }
 

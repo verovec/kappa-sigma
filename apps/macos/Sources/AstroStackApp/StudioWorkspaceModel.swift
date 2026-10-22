@@ -199,6 +199,8 @@ package final class StudioWorkspaceModel {
     }
     // The user's manual work becomes the recipe (R5): the pipeline records the step.
     pipeline?.applied(panel.type.id, params: panel.params, masked: used != nil)
+    // A geometry is relative to the image it moved: its values would move the new head again.
+    if panel.type is any GeometricProcess.Type { choose(panel.type.id) }
   }
 
   /// Whether the viewer shows the current values and mask of `panel`.
@@ -276,7 +278,10 @@ package final class StudioWorkspaceModel {
     defer { headStatistics = viewer.model.statistics }
     isPreviewing = false
     // A compared step undone, or off the head's grid (a crop applied), stops the compare.
-    if let comparing, !onHeadGrid(step: comparing) {
+    if let comparing,
+      !onHeadGrid(step: comparing) || viewer.reference?.width != studio.head.width
+        || viewer.reference?.height != studio.head.height
+    {
       try compare(toStep: nil)
     }
     try show(studio.head)

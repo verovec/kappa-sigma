@@ -31,6 +31,11 @@ package struct ProcessRegistry {
     ])
   }
 
+  /// The ids of the processes that move pixels (`GeometricProcess`, card 0090).
+  package var movingIDs: Set<String> {
+    Set(types.filter { $0 is any GeometricProcess.Type }.map { $0.id })
+  }
+
   /// The ids, in menu order.
   package var ids: [String] { types.map { $0.id } }
 

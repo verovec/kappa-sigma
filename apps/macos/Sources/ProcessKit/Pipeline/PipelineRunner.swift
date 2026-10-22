@@ -192,7 +192,8 @@ package final class PipelineRunner {
   /// The layers a step reads, as `StudioSession` gives them (`History.context`).
   private func context(_ session: Session) throws -> ([String: GPUImage], [String: LayerStats]) {
     try session.history.context(
-      over: session.layers, stats: session.bundle.layerStats, device: device)
+      over: session.layers, stats: session.bundle.layerStats, device: device,
+      moving: registry.movingIDs)
   }
 
   /// The step's values on `schema`; a value the schema refuses stops the run with its name

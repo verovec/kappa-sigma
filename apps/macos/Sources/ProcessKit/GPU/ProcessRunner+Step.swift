@@ -21,7 +21,9 @@ extension ProcessRunner {
       rowsBottomUp: input.metadata.rowOrder == .bottomUp)
     var metadata = input.metadata
     if let geometric = Self.moving(process) {
-      metadata.wcs = try Self.movedWCS(geometric, of: input)
+      // The header plan is at full resolution: a reduced render carries no solution rather than
+      // one moved by the wrong amount.
+      metadata.wcs = scale == 1 ? try Self.movedWCS(geometric, of: input) : nil
     }
     return AstroImage(
       width: output.width, height: output.height, planes: output.read(), metadata: metadata)

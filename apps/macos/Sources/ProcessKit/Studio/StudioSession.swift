@@ -127,7 +127,7 @@ package final class StudioSession {
     let files = history.writtenFiles
     if let overlay, overlay.files == files { return (overlay.layers, overlay.stats) }
     let (layers, stats) = try history.context(
-      over: bundleLayers, stats: bundle.layerStats, device: device)
+      over: bundleLayers, stats: bundle.layerStats, device: device, moving: registry.movingIDs)
     overlay = Overlay(files: files, layers: layers, stats: stats)
     return (layers, stats)
   }

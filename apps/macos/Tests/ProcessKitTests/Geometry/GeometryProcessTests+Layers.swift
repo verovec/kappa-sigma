@@ -127,3 +127,27 @@ extension GeometryProcessTests {
     }
   }
 }
+
+extension GeometryProcessTests {
+  /// Card 0090: only a layer a geometry step moved keeps the stack's continuum fit; a layer
+  /// another step rewrote (a background extraction) has none until one is made on it.
+  @Test("only a geometry-moved layer keeps the continuum fit", .scratchDirectory)
+  func testOnlyMovedLayersKeepTheFit() throws {
+    let device = try #require(MTLCreateSystemDefaultDevice())
+    let history = try History(
+      directory: ScratchDirectory.url.appendingPathComponent("history"),
+      original: Self.image(6, 4, planes: 1, seed: 0))
+    let fit = ["Ha": LayerStats(channels: [], continuumK: 0.42, continuumReference: "RGB.r")]
+    let ha = Self.image(6, 4, planes: 1, seed: 7)
+    try history.apply(
+      processID: "background-extraction", params: Self.params([:]), result: history.current,
+      replacing: ["Ha": ha])
+    let extracted = try history.context(over: [:], stats: fit, device: device, moving: ["geometry"])
+    #expect(extracted.1["Ha"]?.continuumK == nil)
+    try history.apply(
+      processID: "geometry", params: Self.params([:]), result: history.current,
+      replacing: ["Ha": ha])
+    let moved = try history.context(over: [:], stats: fit, device: device, moving: ["geometry"])
+    #expect(moved.1["Ha"]?.continuumK == 0.42)
+  }
+}

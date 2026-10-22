@@ -200,3 +200,23 @@ extension StudioModelTests {
     #expect(workspace.comparing == 1, "the flip's own output is on the head's grid")
   }
 }
+
+extension StudioModelTests {
+  /// Card 0090: a geometry is relative to the image it moved — after Apply the panel starts
+  /// again from the identity, so a second Apply never crops or turns twice.
+  @Test("after a geometry Apply the panel is back at the identity", .scratchDirectory)
+  func testGeometryPanelResetsAfterApply() async throws {
+    let opened = try Self.project()
+    defer { try? opened.package.close() }
+    let workspace = try StudioWorkspaceModelTests.workspace(opened, bundle: Self.bundle())
+    workspace.choose(GeometryProcess.id)
+    try #require(workspace.panel).set("cropLeft", .number(2))
+    await workspace.previewNow()
+    try workspace.apply()
+    let panel = try #require(workspace.panel)
+    #expect(panel.type == GeometryProcess.self && GeometryProcess.isIdentity(panel.params))
+    await workspace.previewNow()
+    #expect(workspace.viewer.model.image.width == 6, "the preview shows the head, not a re-crop")
+    #expect(!workspace.showsMovedGrid)
+  }
+}

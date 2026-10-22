@@ -5,20 +5,28 @@ internal import SwiftUI
 /// night) and how each light set is calibrated (0078), and the Import sheet that adds nights.
 struct DataStagePane: View {
   var model: ProjectWindowModel
+  @Environment(\.locale) private var locale
 
   var body: some View {
     if model.sources.isEmpty {
-      ContentUnavailableView {
-        Label {
-          Text(.app("Empty project"))
-        } icon: {
-          Image(systemName: "sparkles")
+      // The stage's « ? » is there before the first night too.
+      VStack(alignment: .leading, spacing: 0) {
+        SectionHeader(
+          .app("Capture nights"), help: StageHelp.help(.data, locale: locale)
+        )
+        .padding(DesignMetrics.spacingM)
+        ContentUnavailableView {
+          Label {
+            Text(.app("Empty project"))
+          } icon: {
+            Image(systemName: "sparkles")
+          }
+        } description: {
+          Text(.app("Import a capture night to see how it will be calibrated and stacked."))
+        } actions: {
+          Button(.app("Import Captures…")) { model.startImport() }
+            .accessible(.importCaptures, label: .app("Import Captures…"))
         }
-      } description: {
-        Text(.app("Import a capture night to see how it will be calibrated and stacked."))
-      } actions: {
-        Button(.app("Import Captures…")) { model.startImport() }
-          .accessible(.importCaptures, label: .app("Import Captures…"))
       }
     } else {
       ScrollView {
@@ -37,7 +45,9 @@ struct DataStagePane: View {
 
   private var header: some View {
     HStack(alignment: .firstTextBaseline) {
-      SectionHeader(.app("Capture nights"), detail: .app("Read, never written."))
+      SectionHeader(
+        .app("Capture nights"), detail: .app("Read, never written."),
+        help: StageHelp.help(.data, locale: locale))
       Spacer()
       if model.isScanning {
         ProgressView().controlSize(.small)

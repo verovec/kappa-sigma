@@ -1,4 +1,6 @@
+package import Foundation
 internal import Observation
+package import ProcessKit
 package import StackKit
 
 /// The Stacking panel's knobs (card 0070), rendered from `KnobSchema`: the preset of `mode`
@@ -32,6 +34,9 @@ package final class KnobPanelViewModel {
   package var mode: PreprocessRequest.Mode
   /// The advanced knobs are shown.
   package var showsAdvanced = false
+  /// The profile the stack's source kept (0060), whose « why » joins the help of each knob it
+  /// sets; nothing is applied from it here.
+  package var profile: Profile?
   /// Recorded edits the schema no longer accepts (a renamed knob, narrower bounds): dropped and
   /// shown, never applied silently (R2).
   package private(set) var ignored: [String]
@@ -55,6 +60,15 @@ package final class KnobPanelViewModel {
     }
     edits = accepted
     self.ignored = ignored + refused.sorted()
+  }
+
+  /// The help of knob `id` in `locale` (`HelpMarkdown`): its glossary definition and, when
+  /// `profile` sets the knob, the profile's « why » as a second paragraph (card 0086).
+  package func help(for id: String, locale: Locale) -> String {
+    let definition = AppGlossary.term(Knob.termID(id), locale: locale, in: AppGlossary.knobs)
+      .definition
+    guard let why = profile?.preprocessing.why[id] else { return definition }
+    return definition + "\n" + why.text(language: AppLocale.language(of: locale))
   }
 
   /// What differs from the preset of `mode`: the patch the run applies and records.

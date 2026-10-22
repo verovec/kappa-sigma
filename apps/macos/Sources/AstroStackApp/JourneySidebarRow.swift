@@ -21,7 +21,11 @@ package struct JourneySidebarRow: View {
       Spacer(minLength: DesignMetrics.spacingXS)
       indicator
     }
-    .help(Text(StagePane.words(for: status)))
+    // The stage card's first line (card 0086); its state is the accessibility value.
+    .help(
+      StageHelp.summary(stage, locale: locale).map { Text(verbatim: $0) }
+        ?? Text(StagePane.words(for: status))
+    )
     .accessibilityElement(children: .combine)
     .accessible(.journeyStage(stage.rawValue), verbatim: term)
     .accessibilityValue(Text(StagePane.words(for: status)))

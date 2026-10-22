@@ -96,18 +96,35 @@ package struct ImportProfileView: View {
     }
   }
 
-  /// Each value the profile sets, its « why » as the tooltip.
+  /// Each value the profile sets, with its « ? »: the why on hover, the parameter's definition
+  /// and the why on click (card 0086).
   private func values(of profile: Profile) -> some View {
     let registry = try? ProcessRegistry.standard()
     return VStack(alignment: .leading, spacing: DesignMetrics.spacingXXS) {
       ForEach(Array(profile.steps.enumerated()), id: \.offset) { _, step in
         ForEach(step.values.keys.sorted(), id: \.self) { id in
-          Text(verbatim: Self.line(step, id, registry: registry, locale: locale))
-            .font(.caption.monospacedDigit())
-            .help(Text(verbatim: step.why[id]?.text(language: language) ?? ""))
+          HStack(spacing: DesignMetrics.spacingXS) {
+            Text(verbatim: Self.line(step, id, registry: registry, locale: locale))
+              .font(.caption.monospacedDigit())
+            let why = step.why[id]?.text(language: language) ?? ""
+            HelpButton(
+              summary: .app("\(why)"), label: .whyThisValue,
+              key: .help("profile.\(step.recipe.processID).\(id)")
+            ) {
+              HelpText(Self.valueHelp(step.recipe.processID, id, why: why, language: language))
+            }
+          }
         }
       }
     }
+  }
+
+  /// The parameter's definition (HelpKit `params.json`) then the profile's why, one paragraph each.
+  package nonisolated static func valueHelp(
+    _ process: String, _ param: String, why: String, language: String
+  ) -> String {
+    let definition = AppGlossary.help.paramDoc(process: process, param: param, locale: language)
+    return [definition, why].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: "\n")
   }
 
   private var language: String { AppLocale.language(of: locale) }

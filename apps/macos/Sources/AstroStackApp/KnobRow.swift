@@ -1,9 +1,11 @@
+internal import HelpKit
 internal import RenderKit
 internal import StackKit
 internal import SwiftUI
 
 /// One knob of the Stacking panel, worded by the knobs glossary: a number in a `ParameterRow`, a
-/// flag in a toggle, a choice in a menu; a moved value has its reset at hand.
+/// flag in a toggle, a choice in a menu; a moved value has its reset at hand, and every kind has
+/// its « ? » (the definition on hover, the definition and the profile's why on click — 0086).
 struct KnobRow: View {
   let row: KnobPanelViewModel.Row
   let model: KnobPanelViewModel
@@ -15,17 +17,17 @@ struct KnobRow: View {
     case .number(let bounds, let integer):
       ParameterRow(
         .app("\(term.label)"), parameter: number(bounds, integer: integer),
-        why: .app("\(term.definition)"), key: row.id,
+        help: help(term), key: row.id,
         format: { AstroFormat(locale: locale).parameter($0) },
         parse: { AstroFormat(locale: locale).parameter(parsing: $0) })
     case .flag:
       HStack {
         Toggle(isOn: flag) { Text(verbatim: term.label) }
           .accessible(control, verbatim: term.label)
+        helpButton(term)
         Spacer()
         reset
       }
-      .help(term.definition)
     case .choice(let options):
       HStack {
         Picker(selection: choice) {
@@ -40,9 +42,26 @@ struct KnobRow: View {
           Text(verbatim: term.label)
         }
         .accessible(control, verbatim: term.label)
+        helpButton(term)
         reset
       }
-      .help(term.definition)
+    }
+  }
+
+  /// The knob's help: its definition, and the kept profile's why when it sets this knob.
+  private func help(_ term: Glossary.Term) -> HelpContent {
+    HelpContent(summary: .app("\(term.definition)")) {
+      HelpText(model.help(for: row.id, locale: locale))
+    }
+  }
+
+  /// The « ? » of a flag or choice row (a number row's sits in its `ParameterRow`).
+  private func helpButton(_ term: Glossary.Term) -> some View {
+    let help = help(term)
+    return HelpButton(
+      summary: help.summary, label: .whyThisValue, key: .parameter(row.id, .help)
+    ) {
+      help.content()
     }
   }
 

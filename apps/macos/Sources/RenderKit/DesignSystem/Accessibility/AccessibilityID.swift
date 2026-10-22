@@ -27,6 +27,8 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
     case recheck
     /// A curve's drawing surface.
     case canvas
+    /// The « ? » beside a parameter (card 0086).
+    case help
   }
 
   // MARK: - Shared components
@@ -44,6 +46,11 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
   /// A curve editor's `part` (`canvas`, `reset`) for the curve `key`.
   package static func curve(_ key: String, _ part: Part) -> Self {
     Self("curve", key, part.rawValue)
+  }
+
+  /// A help button (card 0086) on `key`: a stage, a profile value, a process card.
+  package static func help(_ key: String) -> Self {
+    Self("help", key)
   }
 
   // MARK: - Workspace

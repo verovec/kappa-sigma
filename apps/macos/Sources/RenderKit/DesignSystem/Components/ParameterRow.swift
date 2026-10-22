@@ -2,31 +2,31 @@ package import Foundation
 package import SwiftUI
 
 /// One parameter of a process or a preset: label, slider, a field in the user's notation, reset,
-/// the default badge, and the « why » of its value on hover.
+/// the default badge, and its help: the one-line « why » on hover, the card on click (0086).
 ///
 /// RenderKit never imports the app: the caller passes `format` and `parse` (the app's
 /// `AstroFormat.parameter` and `parameter(parsing:)`, which round-trip exactly).
 package struct ParameterRow: View {
   private let label: LocalizedStringResource
   @Binding private var parameter: ParameterValue
-  private let why: LocalizedStringResource?
+  private let help: HelpContent?
   private let format: (Double) -> String
   private let parse: (String) -> Double?
   private let key: String
   @State private var text = ""
   @FocusState private var editing: Bool
 
-  /// A row editing `parameter`; `why` explains the default (shown on hover of the « ? »);
+  /// A row editing `parameter`; `help` is its « ? » (summary on hover, content on click);
   /// `key` (the parameter's stable id) identifies its controls (`AccessibilityID.parameter`).
   package init(
     _ label: LocalizedStringResource, parameter: Binding<ParameterValue>,
-    why: LocalizedStringResource? = nil, key: String, format: @escaping (Double) -> String,
+    help: HelpContent? = nil, key: String, format: @escaping (Double) -> String,
     parse: @escaping (String) -> Double?
   ) {
     self.key = key
     self.label = label
     _parameter = parameter
-    self.why = why
+    self.help = help
     self.format = format
     self.parse = parse
   }
@@ -53,12 +53,12 @@ package struct ParameterRow: View {
   private var header: some View {
     HStack(spacing: DesignMetrics.spacingS) {
       Text(label)
-      if let why {
-        Image(systemName: "questionmark.circle")
-          .foregroundStyle(DesignColor.textSecondary.color)
-          .help(Text(why))
-          .accessibilityLabel(Text(.renderKit("Why this value?")))
-          .accessibilityHint(Text(why))
+      if let help {
+        HelpButton(
+          summary: help.summary, label: .whyThisValue, key: .parameter(key, .help)
+        ) {
+          help.content()
+        }
       }
       Spacer(minLength: DesignMetrics.spacingS)
       if let badge = Self.badge(for: parameter) {

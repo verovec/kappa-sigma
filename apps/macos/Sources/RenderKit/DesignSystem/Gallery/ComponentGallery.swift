@@ -115,7 +115,11 @@ package struct ComponentGallery: View {
         ParameterRow(
           index == 0 ? .renderKit("Hα blend") : .renderKit("Hα ceiling"),
           parameter: $parameters[index],
-          why: .renderKit("How much of the Hα layer is added to the red channel."),
+          help: HelpContent(
+            summary: .renderKit("How much of the Hα layer is added to the red channel.")
+          ) {
+            Text(.renderKit("How much of the Hα layer is added to the red channel."))
+          },
           key: index == 0 ? "haBlend" : "haCeiling",
           format: { LocaleNumber.decimal($0, locale: locale, maxFractionDigits: 3) },
           parse: { Double($0.replacing(locale.decimalSeparator ?? ".", with: ".")) })

@@ -17,12 +17,15 @@ package enum AccessibilityAudit {
     package let label: String
     /// The first-stack guide points at it (`guideTarget`).
     package let highlighted: Bool
+    /// What VoiceOver adds after the label (a help button's one-line summary), if any.
+    package let hint: String?
 
     /// The entry of a control identified by `id` and labelled `label`.
-    package init(id: String, label: String, highlighted: Bool = false) {
+    package init(id: String, label: String, highlighted: Bool = false, hint: String? = nil) {
       self.id = id
       self.label = label
       self.highlighted = highlighted
+      self.hint = hint
     }
   }
 
@@ -71,13 +74,17 @@ private struct GuideTargetKey: EnvironmentKey {
 extension View {
   /// Labels this control for VoiceOver with `label` and identifies it with `id`, and reports both
   /// to the accessibility audit.
-  package func accessible(_ id: AccessibilityID?, label: LocalizedStringResource) -> some View {
-    modifier(AccessibleControl(id: id, label: .resource(label)))
+  package func accessible(
+    _ id: AccessibilityID?, label: LocalizedStringResource, hint: LocalizedStringResource? = nil
+  ) -> some View {
+    modifier(AccessibleControl(id: id, label: .resource(label), hint: hint.map { .resource($0) }))
   }
 
   /// Labels this control with `label` (already in the view's language, a glossary term for
   /// instance) and identifies it with `id`.
-  package func accessible(_ id: AccessibilityID?, verbatim label: String) -> some View {
-    modifier(AccessibleControl(id: id, label: .verbatim(label)))
+  package func accessible(_ id: AccessibilityID?, verbatim label: String, hint: String? = nil)
+    -> some View
+  {
+    modifier(AccessibleControl(id: id, label: .verbatim(label), hint: hint.map { .verbatim($0) }))
   }
 }

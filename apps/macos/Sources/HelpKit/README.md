@@ -35,9 +35,29 @@ Help content: process cards, "why this value", the first-stack guide, in French 
 - Profiles' « why » lines are ProcessKit data (0060); `HelpCoverageTests` (ProcessKit) gates
   them in fr and en with the process cards.
 
+## Help on click (card 0086)
+
+- `Help/<locale>/stage/<stage id>.md`: one card per journey stage (`data`, `calibration`,
+  `review`, `stacking`, `studio`, `export`): what the stage is for, what you do there, what « done »
+  means; ≤ 5 lines / 90 words. `HelpIndex.stageCard(_:locale:)` reads it,
+  `coverageProblems(stages:)` gates it (`StageHelpTests` in the app over `JourneyStage.allCases`);
+  the app's `StageHelp` serves the first line as the summary of the stage's « ? » and of its
+  sidebar row.
+- `Help/<locale>/params.json`: `<process id>.<param id>` → one-line definition (≤ 24 words) of
+  every parameter of every registered process. The title stays ProcessKit's catalog (never
+  declared twice). `ParamDocs` reads it (over `LocalizedTable`, the per-locale JSON loader and gate
+  shapes `Glossary` shares); `HelpIndex.paramDoc(process:param:locale:)` and
+  `paramProblems(ids:)` serve and gate it (`HelpCoverageTests.testEveryProcessParamHasDocFrEn`
+  over `ProcessRegistry.standard()`, stale ids refused).
+- The « ? » itself is RenderKit's `HelpButton` (hover = summary, click = popover) fed by a
+  `HelpContent`; the app renders the Markdown with `HelpText`. A knob's help adds the kept
+  profile's « why » (`KnobPanelViewModel.help(for:locale:)`).
+
 ## How to extend
 
-- A new process ships its two cards in the same PR, or the gate fails.
+- A new process ships its two cards and the `params.json` definition of each of its parameters,
+  fr and en, in the same PR, or the gates fail.
+- A new journey stage ships its two stage cards.
 - A new case in a glossary-backed enum ships its `fr` and `en` terms in the same PR.
 - A guide step added or removed changes both locale files and `FirstStackGuide.steps` together;
   `FirstStackGuideTests` checks every target is a control a hosted view reports.

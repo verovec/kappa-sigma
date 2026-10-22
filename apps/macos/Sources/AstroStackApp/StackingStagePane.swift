@@ -6,6 +6,7 @@ internal import SwiftUI
 /// it goes.
 struct StackingStagePane: View {
   var model: ProjectWindowModel
+  @Environment(\.locale) private var locale
 
   private var running: Bool { model.run?.isRunning == true }
 
@@ -14,7 +15,8 @@ struct StackingStagePane: View {
       HStack(alignment: .firstTextBaseline, spacing: DesignMetrics.spacingM) {
         SectionHeader(
           .app("Stacking"),
-          detail: .app("Masters, stacks and the bundle are written inside the project."))
+          detail: .app("Masters, stacks and the bundle are written inside the project."),
+          help: StageHelp.help(.stacking, locale: locale))
         Spacer()
         controls
       }

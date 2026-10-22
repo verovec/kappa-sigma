@@ -1,7 +1,7 @@
 import AppKit
 import AstroStackApp
-import SwiftUI
 import Foundation
+import SwiftUI
 import Testing
 
 /// Help › Keyboard Shortcuts (card 0079): every catalog command, grouped by journey stage, found

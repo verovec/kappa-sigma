@@ -4,6 +4,10 @@ package import ImageKit
 /// The non-destructive history of an image (design §2): every applied step keeps its process,
 /// its parameters and its output as a FITS in the project; undo reloads the previous output,
 /// snapshots name states that survive undo, and `save` removes outputs nothing refers to.
+///
+/// A step may also write layers (card 0087: StarNet's starless, a background model) that
+/// overlay the bundle for the steps after it (`layers()`). `<folder>.json` beside the folder
+/// records the steps so `reopen` finds the history again.
 package final class History {
   /// One applied process.
   package struct Step: Equatable, Sendable {
@@ -13,6 +17,8 @@ package final class History {
     package let params: ParamSet
     /// Its output, a file in the history folder.
     package let file: String
+    /// The layers it wrote besides its image, by role (files in the history folder).
+    package let outputs: [LayerRole: String]
   }
 
   /// A named state ("v9"): the output of a step, or the original (`file == nil`).
@@ -38,6 +44,8 @@ package final class History {
   private let original: AstroImage
   private let header: FITSHeader?
   private var nextNumber: Int
+  /// The number the next step's file takes (the manifest records it).
+  var nextStepNumber: Int { nextNumber }
   /// The outputs this history wrote: the only files `save` may remove.
   private var created: Set<String> = []
 
@@ -56,21 +64,59 @@ package final class History {
     nextNumber = (numbers.max() ?? 0) + 1
   }
 
+  /// Puts back a recorded state (`reopen`): the steps' files become this history's own.
+  func restore(steps: [Step], undone: [Step], snapshots: [Snapshot], nextNumber: Int) throws {
+    let head = try image(file: steps.last?.file)
+    self.steps = steps
+    self.undone = undone
+    self.snapshots = snapshots
+    self.nextNumber = max(self.nextNumber, nextNumber)
+    shown = head
+    created.formUnion(referencedFiles)
+  }
+
   /// Whether there is a step to undo.
   package var canUndo: Bool { !steps.isEmpty }
   /// Whether there is a step to redo.
   package var canRedo: Bool { !undone.isEmpty }
 
-  /// Records `result` as the output of `processID` with `params`; what was undone is dropped.
-  package func apply(processID: String, params: ParamSet, result: AstroImage) throws {
+  /// Records `result` as the output of `processID` with `params`, and `outputs` as the layers
+  /// it wrote; what was undone is dropped.
+  package func apply(
+    processID: String, params: ParamSet, result: AstroImage,
+    outputs: [LayerRole: AstroImage] = [:]
+  ) throws {
     let digits = String(nextNumber)
-    let file = "step-" + String(repeating: "0", count: max(0, 4 - digits.count)) + digits + ".fits"
+    let stem = "step-" + String(repeating: "0", count: max(0, 4 - digits.count)) + digits
     nextNumber += 1
-    try FITSFile.create(result, keeping: header, at: directory.appendingPathComponent(file))
-    created.insert(file)
-    steps.append(Step(processID: processID, params: params, file: file))
+    let file = stem + ".fits"
+    try write(result, file)
+    var written: [LayerRole: String] = [:]
+    for (role, image) in outputs {
+      let name = stem + "-" + role.rawValue + ".fits"
+      try write(image, name)
+      written[role] = name
+    }
+    let step = Step(processID: processID, params: params, file: file, outputs: written)
+    try writeManifest(steps: steps + [step], undone: [], snapshots: snapshots)
+    steps.append(step)
     undone.removeAll()
     shown = Self.copy(result)
+  }
+
+  /// The roles the applied steps wrote layers for (no pixel read).
+  package var layerRoles: Set<LayerRole> {
+    Set(steps.flatMap { $0.outputs.keys })
+  }
+
+  /// The layers the applied steps wrote, the latest of each role winning (read from disk): what
+  /// overlays the bundle's layers for the next step.
+  package func layers() throws -> [LayerRole: AstroImage] {
+    var latest: [LayerRole: String] = [:]
+    for step in steps { latest.merge(step.outputs) { _, newer in newer } }
+    return try latest.mapValues {
+      try FITSFile.read(at: directory.appendingPathComponent($0)).image()
+    }
   }
 
   /// Whether `other` started from the same image (size, metadata, pixels): a locked pipeline step
@@ -90,14 +136,19 @@ package final class History {
   package func undo() throws {
     guard !steps.isEmpty else { throw HistoryError.nothingToUndo }
     // Load first: a failed read leaves the history as it was.
-    shown = try image(file: steps.dropLast().last?.file)
+    let previous = try image(file: steps.dropLast().last?.file)
+    let last = steps[steps.count - 1]
+    try writeManifest(steps: Array(steps.dropLast()), undone: undone + [last], snapshots: snapshots)
+    shown = previous
     undone.append(steps.removeLast())
   }
 
   /// Re-applies the last undone step from its output on disk.
   package func redo() throws {
     guard let step = undone.last else { throw HistoryError.nothingToRedo }
-    shown = try image(file: step.file)
+    let next = try image(file: step.file)
+    try writeManifest(steps: steps + [step], undone: Array(undone.dropLast()), snapshots: snapshots)
+    shown = next
     steps.append(undone.removeLast())
   }
 
@@ -106,7 +157,9 @@ package final class History {
     guard !snapshots.contains(where: { $0.name == name }) else {
       throw HistoryError.duplicateSnapshot(name)
     }
-    snapshots.append(Snapshot(name: name, file: steps.last?.file))
+    let snapshot = Snapshot(name: name, file: steps.last?.file)
+    try writeManifest(steps: steps, undone: undone, snapshots: snapshots + [snapshot])
+    snapshots.append(snapshot)
   }
 
   /// The image a snapshot names (the viewer's compare reference, 0042).
@@ -119,7 +172,9 @@ package final class History {
 
   /// The outputs still reachable: applied, undone (redo) and snapshotted.
   package var referencedFiles: Set<String> {
-    Set(steps.map(\.file) + undone.map(\.file) + snapshots.compactMap(\.file))
+    let kept = steps + undone
+    return Set(
+      kept.map(\.file) + kept.flatMap { $0.outputs.values } + snapshots.compactMap(\.file))
   }
 
   /// Bytes of the reachable outputs, counted against the project's disk budget (0068).
@@ -138,6 +193,12 @@ package final class History {
       try FileManager.default.removeItem(at: directory.appendingPathComponent(file))
       created.remove(file)
     }
+    try writeManifest()
+  }
+
+  private func write(_ image: AstroImage, _ file: String) throws {
+    try FITSFile.create(image, keeping: header, at: directory.appendingPathComponent(file))
+    created.insert(file)
   }
 
   private func image(file: String?) throws -> AstroImage {
@@ -170,4 +231,6 @@ package enum HistoryError: Error, Equatable, Sendable {
   case unknownSnapshot(String)
   /// A snapshot already has this name.
   case duplicateSnapshot(String)
+  /// The history's manifest cannot be read back: why.
+  case unreadable(String)
 }

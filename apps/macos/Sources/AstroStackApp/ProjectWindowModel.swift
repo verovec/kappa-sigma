@@ -51,6 +51,12 @@ package final class ProjectWindowModel {
   var queueRecorded: (stack: ProjectStack, source: LegacyRunSource)?
   /// The stack the Studio shows: the chosen one, else the latest, read-only.
   package internal(set) var studio: LegacyRunModel?
+  /// The Studio's working image of the latest stack (card 0087), once its layers are read.
+  package internal(set) var workspace: StudioWorkspaceModel?
+  /// The load of `workspace`, owned by the window (not by the pane that shows it).
+  @ObservationIgnored var workspaceTask: Task<Void, Never>?
+  /// The stack `workspace` (or its load) is of.
+  @ObservationIgnored var workspaceStackID: Int64?
   /// The Stacking panel's preset and knob edits: what the next run applies (card 0070).
   package let knobs: KnobPanelViewModel
   /// The profile id the knobs' help was last looked up for (`knobs.profile` is its result, nil
@@ -133,7 +139,10 @@ package final class ProjectWindowModel {
     guard id != selectedStackID || studio == nil else { return }
     let shownAlready = studio != nil && (id ?? stacks.last?.id) == selectedStack?.id
     selectedStackID = id
-    if !shownAlready { studio = nil }
+    if !shownAlready {
+      studio = nil
+      dropWorkspace()
+    }
     // Tri follows the stack the Studio shows; the refresh comes first so a failure to persist
     // the choice stays shown.
     refresh()
@@ -266,8 +275,7 @@ package final class ProjectWindowModel {
       // Every night must have kept the same profile (a night without one counts, a legacy run
       // does not): no guessing. Looked up once per agreed id (nothing saves a user copy from the
       // app yet; the card that does invalidates this).
-      let kept = Set(sources.filter { $0.kind == .night }.map(\.profileID))
-      let agreed = kept.count == 1 ? kept.first.flatMap { $0 } : nil
+      let agreed = Self.agreedProfileID(sources)
       if agreed != profileLookupID {
         profileLookupID = agreed
         knobs.profile = agreed.flatMap { id in
@@ -293,5 +301,12 @@ package final class ProjectWindowModel {
     } catch {
       self.error = UserFacingError(error)
     }
+  }
+
+  /// The profile every capture night of `sources` kept at import, or `nil` when they differ or
+  /// one kept none (a legacy run has no say): the knobs' help and the Studio's step 0 read it.
+  nonisolated static func agreedProfileID(_ sources: [ProjectSource]) -> String? {
+    let kept = Set(sources.filter { $0.kind == .night }.map(\.profileID))
+    return kept.count == 1 ? kept.first.flatMap { $0 } : nil
   }
 }

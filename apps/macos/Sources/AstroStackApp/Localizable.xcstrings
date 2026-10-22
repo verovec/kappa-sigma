@@ -305,6 +305,22 @@
         }
       }
     },
+    "A snapshot is already named “%@”.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A snapshot is already named “%@”."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un instantané s’appelle déjà « %@ »."
+          }
+        }
+      }
+    },
     "About AstroStack": {
       "localizations": {
         "en": {
@@ -397,6 +413,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Un autre empilement écrit déjà dans %@ : attendez-le ou annulez-le."
+          }
+        }
+      }
+    },
+    "Apply": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apply"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appliquer"
+          }
+        }
+      }
+    },
+    "Apply Process": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apply Process"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appliquer le traitement"
           }
         }
       }
@@ -765,6 +813,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choisissez une couche"
+          }
+        }
+      }
+    },
+    "Choose a process in the catalogue.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a process in the catalogue."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez un traitement dans le catalogue."
           }
         }
       }
@@ -1201,6 +1265,22 @@
         }
       }
     },
+    "Feather (px)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Feather (px)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adoucissement (px)"
+          }
+        }
+      }
+    },
     "File": {
       "localizations": {
         "en": {
@@ -1457,6 +1537,22 @@
         }
       }
     },
+    "History": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "History"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Historique"
+          }
+        }
+      }
+    },
     "Host tools": {
       "localizations": {
         "en": {
@@ -1661,6 +1757,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Intégration"
+          }
+        }
+      }
+    },
+    "Invert": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invert"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inverser"
           }
         }
       }
@@ -1921,6 +2033,38 @@
         }
       }
     },
+    "Linear": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Linear"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Linéaire"
+          }
+        }
+      }
+    },
+    "Linear or stretched": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Linear or stretched"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Linéaire ou étiré"
+          }
+        }
+      }
+    },
     "Listing the capture folders…": {
       "localizations": {
         "en": {
@@ -1937,6 +2081,22 @@
         }
       }
     },
+    "Luminosity": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Luminosity"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Luminosité"
+          }
+        }
+      }
+    },
     "Make frame %@ the reference": {
       "localizations": {
         "en": {
@@ -1949,6 +2109,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Faire de la pose %@ la référence"
+          }
+        }
+      }
+    },
+    "Mask": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mask"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masque"
           }
         }
       }
@@ -2125,6 +2301,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nébuleuse"
+          }
+        }
+      }
+    },
+    "Needs %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needs %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il faut %@"
           }
         }
       }
@@ -2321,6 +2513,22 @@
         }
       }
     },
+    "No mask": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No mask"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun masque"
+          }
+        }
+      }
+    },
     "No profile": {
       "localizations": {
         "en": {
@@ -2381,6 +2589,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aucune série cochée."
+          }
+        }
+      }
+    },
+    "No snapshot is named “%@”.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No snapshot is named “%@”."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun instantané ne s’appelle « %@ »."
           }
         }
       }
@@ -2797,6 +3021,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Quitter AstroStack"
+          }
+        }
+      }
+    },
+    "Range end": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Range end"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fin de plage"
+          }
+        }
+      }
+    },
+    "Range start": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Range start"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Début de plage"
           }
         }
       }
@@ -3245,6 +3501,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "En cours"
+          }
+        }
+      }
+    },
+    "Runs on linear data: undo the stretch first": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Runs on linear data: undo the stretch first"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "S’applique aux données linéaires : annulez d’abord l’étirement"
           }
         }
       }
@@ -3729,6 +4001,22 @@
         }
       }
     },
+    "Softness": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Softness"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Douceur"
+          }
+        }
+      }
+    },
     "Sorting the frames into sets…": {
       "localizations": {
         "en": {
@@ -3841,6 +4129,38 @@
         }
       }
     },
+    "Star radius (px)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Star radius (px)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rayon des étoiles (px)"
+          }
+        }
+      }
+    },
+    "Star threshold": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Star threshold"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seuil des étoiles"
+          }
+        }
+      }
+    },
     "Stars": {
       "localizations": {
         "en": {
@@ -3889,6 +4209,38 @@
         }
       }
     },
+    "Step %lld of the history no longer exists.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Step %lld of the history no longer exists."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’étape %lld de l’historique n’existe plus."
+          }
+        }
+      }
+    },
+    "Stretched": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stretched"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Étiré"
+          }
+        }
+      }
+    },
     "Studio": {
       "localizations": {
         "en": {
@@ -3901,6 +4253,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Studio"
+          }
+        }
+      }
+    },
+    "Suggested value": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suggested value"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valeur suggérée"
+          }
+        }
+      }
+    },
+    "Suggested: %@ — %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suggested: %1$@ — %2$@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suggéré : %1$@ — %2$@"
           }
         }
       }
@@ -3949,6 +4333,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Temp."
+          }
+        }
+      }
+    },
+    "The Studio has no process “%@”.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Studio has no process “%@”."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le Studio n’a pas de traitement « %@ »."
           }
         }
       }
@@ -4217,6 +4617,38 @@
         }
       }
     },
+    "There is nothing to redo.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There is nothing to redo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il n’y a rien à rétablir."
+          }
+        }
+      }
+    },
+    "There is nothing to undo.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There is nothing to undo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il n’y a rien à annuler."
+          }
+        }
+      }
+    },
     "This filter may come from the filter map: exclude the set before mapping it": {
       "localizations": {
         "en": {
@@ -4261,6 +4693,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ce projet empile plusieurs objets : relisez (Données › Relire) pour choisir les séries."
+          }
+        }
+      }
+    },
+    "This stack has no layer to start the Studio from.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This stack has no layer to start the Studio from."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet empilement n’a aucune couche d’où partir dans le Studio."
+          }
+        }
+      }
+    },
+    "This stack's Studio history cannot be read back: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This stack's Studio history cannot be read back: %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’historique Studio de cet empilement ne peut pas être relu : %@."
           }
         }
       }
@@ -4565,6 +5029,102 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ajuster à la fenêtre"
+          }
+        }
+      }
+    },
+    "a colour layer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "a colour layer"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "une couche couleur"
+          }
+        }
+      }
+    },
+    "a luminance layer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "a luminance layer"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "une couche de luminance"
+          }
+        }
+      }
+    },
+    "a mask layer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "a mask layer"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "une couche de masque"
+          }
+        }
+      }
+    },
+    "a starless layer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "a starless layer"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "une couche sans étoiles"
+          }
+        }
+      }
+    },
+    "a stars layer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "a stars layer"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "une couche d’étoiles"
+          }
+        }
+      }
+    },
+    "an emission layer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "an emission layer"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "une couche d’émission"
           }
         }
       }

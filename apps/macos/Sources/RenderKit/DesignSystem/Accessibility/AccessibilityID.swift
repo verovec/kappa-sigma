@@ -29,6 +29,12 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
     case canvas
     /// The « ? » beside a parameter (card 0086).
     case help
+    /// A flag parameter's toggle (card 0087).
+    case toggle
+    /// A choice parameter's menu (card 0087).
+    case choice
+    /// A process's suggested value, applied on click only (card 0087).
+    case suggestion
   }
 
   // MARK: - Shared components
@@ -165,6 +171,49 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
   package static func reviewReference(_ index: Int) -> Self {
     stageControl("review", "reference.\(index)")
   }
+
+  /// Suggestion `offset` of the parameter `key` (card 0087).
+  package static func suggestion(_ key: String, _ offset: Int) -> Self {
+    parameter(key + "." + String(offset), .suggestion)
+  }
+
+  /// A process panel's « Advanced » switch (card 0087).
+  package static func processAdvanced(_ processID: String) -> Self {
+    parameter(processID + ".advanced", .toggle)
+  }
+
+  /// A process of the Studio's catalogue (card 0087).
+  package static func studioProcess(_ processID: String) -> Self {
+    stageControl("studio", "process." + processID)
+  }
+
+  /// A step of the Studio's history list: compare to it (card 0087).
+  package static func studioStep(_ index: Int) -> Self {
+    stageControl("studio", "step." + String(index))
+  }
+
+  /// The parameter key of the Studio mask's value `name` (`ParameterRow(…, key:)`, card 0087).
+  package static func studioMaskKey(_ name: String) -> String {
+    "studio.mask." + name
+  }
+
+  /// The Studio's mask source menu (card 0087).
+  package static let studioMaskSource = stageControl("studio", "mask.source")
+
+  /// The Studio's mask « Invert » (card 0087).
+  package static let studioMaskInvert = stageControl("studio", "mask.invert")
+
+  /// The Studio's « Apply » (card 0087).
+  package static let studioApply = stageControl("studio", "apply")
+
+  /// The Studio's « Undo » (card 0087).
+  package static let studioUndo = stageControl("studio", "undo")
+
+  /// The Studio's « Redo » (card 0087).
+  package static let studioRedo = stageControl("studio", "redo")
+
+  /// The Studio's « Close » of the process panel (card 0087).
+  package static let studioClosePanel = stageControl("studio", "closePanel")
 
   /// The Import sheet's profile picker (card 0060).
   package static let importProfile = Self("import", "profile")

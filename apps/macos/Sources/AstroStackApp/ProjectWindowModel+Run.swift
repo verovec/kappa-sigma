@@ -1,4 +1,5 @@
 internal import Foundation
+internal import ProcessKit
 internal import ProjectKit
 package import StackKit
 
@@ -157,6 +158,7 @@ extension ProjectWindowModel {
       // A choice refused (the project closed meanwhile) loads nothing the picker does not name.
       if selectedStackID == recorded.stack.id {
         studio = LegacyRunModel(source: recorded.source)
+        showWorkspace(of: recorded.stack, source: recorded.source)
         if drained { select(.studio) }
       }
     }
@@ -188,10 +190,99 @@ extension ProjectWindowModel {
         folder.appendingPathComponent(stack.bundlePath), object: studioObject(stack.object))
       guard stack.id == selectedStack?.id else { return }
       studio = studio ?? LegacyRunModel(source: source)
+      showWorkspace(of: stack, source: source)
     } catch {
       guard stack.id == selectedStack?.id else { return }
       self.error = UserFacingError(error)
     }
+  }
+
+  /// Loads the Studio's working image of `stack` (the one the Studio shows) in a task the
+  /// window owns, never the view's (its pane changes while the layers load); another stack
+  /// replaces the one shown, the same one is kept.
+  func showWorkspace(of stack: ProjectStack, source: LegacyRunSource) {
+    guard workspaceStackID != stack.id, let folder = folder() else { return }
+    dropWorkspace()
+    workspaceStackID = stack.id
+    let (stackID, bundlePath) = (stack.id, stack.bundlePath)
+    workspaceTask = Task { [weak self] in
+      do {
+        try await self?.openWorkspace(
+          source, stackID: stackID, folder: folder, bundlePath: bundlePath)
+      } catch is CancellationError {
+        return
+      } catch {
+        // Not loaded: the same stack may be tried again (showing the Studio retries it); a
+        // stack dropped meanwhile reports nothing.
+        guard self?.workspaceStackID == stackID else { return }
+        self?.workspaceStackID = nil
+        self?.error = UserFacingError(error)
+      }
+    }
+  }
+
+  /// Opens the workspace of the stack the Studio shows when none is loaded or loading (a failed
+  /// load retried when the Studio is shown again).
+  package func retryWorkspace() {
+    guard workspace == nil, workspaceStackID == nil, let studio, let folder = folder() else {
+      return
+    }
+    // The stack whose layers the Studio shows, never another one the selection now names.
+    let shown = studio.source.folder.standardizedFileURL
+    guard
+      let stack = stacks.first(where: {
+        folder.appendingPathComponent($0.bundlePath).standardizedFileURL == shown
+      })
+    else { return }
+    showWorkspace(of: stack, source: studio.source)
+  }
+
+  /// The profile every night of stack `stackID` kept at import (a night without one counts),
+  /// whose channel combination is step 0 of a fresh history; `nil` when they differ.
+  func keptProfile(of stackID: Int64) -> Profile? {
+    guard let store = store(), let stack = stacks.first(where: { $0.id == stackID }) else {
+      return nil
+    }
+    let stackSources = sources.filter { stack.sourceIDs.contains($0.id) }
+    guard let id = Self.agreedProfileID(stackSources) else { return nil }
+    return ImportViewModel.profiles(store: store).profiles.first { $0.id == id }
+  }
+
+  /// The workspace of another stack, or none: its load stops, its undo actions go.
+  func dropWorkspace() {
+    workspaceTask?.cancel()
+    workspaceTask = nil
+    workspace?.retire()
+    workspace = nil
+    workspaceStackID = nil
+  }
+
+  /// The Studio's working image of stack `stackID`: its layers read off the main actor, its
+  /// history opened (step 0 = the channel combination of the kept profile, else the defaults).
+  func openWorkspace(
+    _ source: LegacyRunSource, stackID: Int64, folder: URL, bundlePath: String
+  ) async throws {
+    guard let store = store() else {
+      if workspaceStackID == stackID { workspaceStackID = nil }
+      return
+    }
+    let (bundle, roles, header) = try await StudioBundle.load(source)
+    let combination = keptProfile(of: stackID)?.steps
+      .first { $0.recipe.processID == ChannelCombinationProcess.id }
+      .map { ParamSet.loading($0.recipe.params, onto: ChannelCombinationProcess.schema).params }
+    try Task.checkCancellation()
+    let studio = try StudioModel(
+      store: store, stackID: stackID, packageFolder: folder,
+      stackFolder: folder.appendingPathComponent(bundlePath), bundle: bundle, header: header,
+      combination: combination)
+    let workspace = try StudioWorkspaceModel(studio: studio, base: roles)
+    // An undo from another stage brings the Studio into view before moving its history.
+    workspace.reveal = { [weak self] in self?.select(.studio) }
+    self.workspace = workspace
+    // The Studio's stage state follows; an error the window shows stays (a refresh clears it).
+    let reported = error
+    refresh()
+    if error == nil { error = reported }
   }
 
   @concurrent

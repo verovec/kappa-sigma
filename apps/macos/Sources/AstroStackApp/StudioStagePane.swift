@@ -1,8 +1,8 @@
 internal import RenderKit
 internal import SwiftUI
 
-/// The Studio stage: the chosen stack's layers and the viewer, read-only until the finishing
-/// processes (E12) land here.
+/// The Studio stage: the chosen stack's workspace (catalogue, working image, panel, history —
+/// card 0087), its read-only layers while the workspace loads.
 struct StudioStagePane: View {
   var model: ProjectWindowModel
   @Environment(\.locale) private var locale
@@ -37,7 +37,13 @@ struct StudioStagePane: View {
   }
 
   @ViewBuilder private var content: some View {
-    if let studio = model.studio {
+    if let workspace = model.workspace {
+      VStack(alignment: .leading, spacing: 0) {
+        SectionHeader(.app("Studio"), help: StageHelp.help(.studio, locale: locale))
+          .padding(DesignMetrics.spacingM)
+        StudioWorkspaceView(model: workspace)
+      }
+    } else if let studio = model.studio {
       VStack(alignment: .leading, spacing: 0) {
         SectionHeader(.app("Studio"), help: StageHelp.help(.studio, locale: locale))
           .padding(DesignMetrics.spacingM)
@@ -48,6 +54,8 @@ struct StudioStagePane: View {
         }
         .id(studio.source.runID)
       }
+      // The workspace of the shown stack failed or is loading: coming back retries it.
+      .task(id: model.selectedStack?.id) { model.retryWorkspace() }
     } else {
       EmptyState(
         .app("Studio"),

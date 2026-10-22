@@ -104,7 +104,7 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   `PipelineDiff.entries` lists param / mode / lock / process / added / removed differences;
   `Pipeline.json()` / `Pipeline.load` are versioned, each step's recipe read by `Recipe.load` so
   unknown keys and clamps warn as for a recipe. Saved by name in the project with ProjectKit's
-  `savePipeline(named:json:)`. No UI yet: the Studio has no process-application panel.
+  `savePipeline(named:json:)`. The pipeline sidebar (0088) runs it in the Studio.
 - **Profiles** (card 0060, `Profile/`, resources `Profiles/*.json`): `Profile` = key (object
   type × camera × filter compositions) + preprocessing (mode, 0070 knob wire keys) + steps (a
   process, the values the profile sets, a fr/en « why » for each) → `pipeline`. Five builtins from
@@ -149,6 +149,20 @@ non-destructive history, recipes and the registry (design §2, §4.1).
 in en/fr; the English title is the key, resolved with `ProcessKitResources.title(_:)`.
 `ProcessTitleCatalogTests` fails when a registered title has no key or a key no title. Rules:
 `Sources/StringCatalog/README.md`.
+
+## Studio (card 0087)
+
+- `History` steps may write layers besides their image (`apply(…, outputs: [LayerRole: AstroImage])`,
+  files `step-NNNN-<role>.fits`); `layers()` overlays them, latest per role, for the steps after
+  it; undo removes them. `<folder>.json` beside the history folder records steps, undone steps
+  and snapshots: `History.reopen(directory:original:header:schema:)` finds the history again.
+- `StudioSession` (history + bundle + registry + GPU): `render` (the preview and Apply both come
+  from it, a mask applied after the process), `apply`, step outputs overlaid as context layers
+  (`role.rawValue` ids), `unavailableReason` (the `Pipeline.problems` rule over the steps so far,
+  shown never enforced), `suggestions`. The app wraps it in `StudioModel` (every step mirrored in
+  ProjectKit) and `StudioWorkspaceModel` (catalogue, panel, live preview, compare, mask).
+- A host-tool step (StarNet 0091, background extraction 0092) records its result and the layers
+  it wrote with `StudioSession.apply(_:params:result:outputs:)`.
 
 ## How to add a process
 

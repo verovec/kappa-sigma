@@ -64,6 +64,24 @@ extension ProjectStore {
     }
   }
 
+  /// Makes `stepID` the image's head (`nil`: the original), keeping every step: undo and redo
+  /// move the head, a new step after an undo deletes the undone ones (card 0087).
+  package func setHead(imageID: Int64, stepID: Int64?) throws {
+    let stamp = now()
+    try pool.write { db in
+      if let stepID {
+        let owner = try Int64.fetchOne(
+          db, sql: "SELECT image_id FROM history_steps WHERE id = ?", arguments: [stepID])
+        guard owner == imageID else {
+          throw ProjectStoreError.notImageStep(imageID: imageID, stepID: stepID)
+        }
+      }
+      try db.execute(
+        sql: "UPDATE images SET head_step_id = ?, updated_at = ? WHERE id = ?",
+        arguments: [stepID, stamp, imageID])
+    }
+  }
+
   /// The image's history, by ordinal.
   package func history(imageID: Int64) throws -> [HistoryStep] {
     try pool.read { db in

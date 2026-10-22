@@ -1,4 +1,4 @@
-internal import ImageKit
+package import ImageKit
 internal import RenderKit
 
 extension LayerStats {
@@ -7,7 +7,7 @@ extension LayerStats {
   ///
   /// A pipeline step after the first gets the statistics of the image it receives, as the Studio
   /// would show for that image — never a process measuring itself (R2).
-  static func measured(_ image: AstroImage) -> LayerStats {
+  package static func measured(_ image: AstroImage) -> LayerStats {
     LayerStats(
       channels: image.planes.map { plane in
         let (median, madn) = AutoSTF.medianAndMADN(plane)

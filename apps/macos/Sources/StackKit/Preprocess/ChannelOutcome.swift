@@ -36,6 +36,12 @@ package struct ChannelOutcome: Equatable, Sendable {
   package var reference: Int?
   /// The user's decision at the review breakpoint (card 0069); nil when the lane was not reviewed.
   package var frameDecision: FrameDecision?
+  /// The reference the user pinned at the registration breakpoint (card 0096), applied.
+  ///
+  /// As `FrameGrade.index`; nil when the lane never paused, when the hook answered nil (the pane
+  /// does so for the election) or when the pin was refused. A hook that names the elected frame
+  /// explicitly is recorded, though the scripts do not change.
+  package var referencePin: Int?
 
   /// A channel about to be processed.
   package init(_ set: FrameSet, filter: String, selection: CalibrationSelection) {

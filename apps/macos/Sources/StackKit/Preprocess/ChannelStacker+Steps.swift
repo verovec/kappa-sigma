@@ -4,29 +4,84 @@ internal import ImageKit
 extension ChannelStacker {
   /// Calibrates and registers the sequence (`calibrateAndRegister`); the two-pass form notes the
   /// reference Siril elected, then applies the registration on the reference's own field.
-  func calibrateRegister(_ light: Light, into outcome: inout ChannelOutcome) async throws {
+  ///
+  /// The reference pin (card 0096) sits between the two: Siril's own choice unless the user pins
+  /// another frame, which the two-pass form carries as `setref` and the one-pass form by
+  /// registering once more onto it.
+  func calibrateRegister(_ light: Light, frames: [CaptureFrame], into outcome: inout ChannelOutcome)
+    async throws
+  {
     let twoPass = settings.register2Pass
     try await run(
       SirilScripts.calibrateRegister(
         seq: light.seq, masters: light.masters, ingest: light.ingest, twoPass: twoPass),
       in: light.folder)
-    guard twoPass else { return }
-    if let note = Self.referenceNote(light, filter: outcome.filter) {
+    // One pass and no pin hook: nothing reads the sequence here (`gradeAndStack` does). An
+    // unreadable sequence is grading's error to report; the pause is skipped with a warning.
+    guard twoPass || referencePin != nil else { return }
+    let sequence = try? Self.sequence(of: light)
+    if sequence == nil, referencePin != nil {
+      warn("\(outcome.filter): reference pin skipped — the sequence is unreadable", into: &outcome)
+    }
+    var pin: Int?
+    if let sequence { pin = try await pinReference(sequence, frames: frames, into: &outcome) }
+    guard twoPass else {
+      if let pin {
+        try await run(
+          SirilScripts.pinReference(seq: light.calibrated, index: pin), in: light.folder)
+      }
+      return
+    }
+    if let pin, let sequence {
+      outcome.selection.notes.append(
+        "\(outcome.filter): reference pinned on frame \(pin)/\(sequence.metrics.count) by the user "
+          + "(two-pass registration had elected frame \(Self.electedReference(sequence)))")
+    } else if let sequence, let note = Self.referenceNote(sequence, filter: outcome.filter) {
       outcome.selection.notes.append(note)
     }
     try await run(
-      SirilScripts.applyRegistration(seq: light.calibrated, reference: 0, framing: "current"),
+      SirilScripts.applyRegistration(
+        seq: light.calibrated, reference: pin ?? 0, framing: "current"),
       in: light.folder)
+  }
+
+  /// Siril's reference of a registered single-night `sequence`, as a frame index.
+  ///
+  /// The `.seq`'s `S` line, or frame 1 when it does not say.
+  static func electedReference(_ sequence: SirilSequence) -> Int {
+    sequence.referenceIndex ?? 1
+  }
+
+  /// Asks the pin hook, when installed, with `sequence` as Siril measured it.
+  ///
+  /// Returns the pin that changes the registration: a pin on the elected frame is recorded and
+  /// returns nil (the scripts stay as they were); a pin on a dropped frame is a warning and the
+  /// election stands.
+  func pinReference(
+    _ sequence: SirilSequence, frames: [CaptureFrame], into outcome: inout ChannelOutcome
+  ) async throws -> Int? {
+    guard let referencePin else { return nil }
+    let elected = Self.electedReference(sequence)
+    let context = ReferencePinContext(
+      lane: outcome.filter, sequence: sequence, frames: frames,
+      parity: frames.map { _ in .unprobed }, elected: elected)
+    guard let pin = try await referencePin(context) else { return nil }
+    guard context.accepts(pin) else {
+      warn(
+        "\(outcome.filter): pinned reference frame \(pin) did not register — keeping Siril's",
+        into: &outcome)
+      return nil
+    }
+    outcome.referencePin = pin
+    return pin == elected ? nil : pin
   }
 
   /// Which frame the two-pass metric pass elected (`noteRegistrationReference`); nil when the
   /// `.seq` does not say.
-  static func referenceNote(_ light: Light, filter: String) -> String? {
-    guard let sequence = try? sequence(of: light), sequence.reference >= 0,
-      sequence.reference < sequence.metrics.count
-    else { return nil }
-    let metric = sequence.metrics[sequence.reference]
-    return "\(filter): two-pass registration elected frame \(sequence.reference + 1)/"
+  static func referenceNote(_ sequence: SirilSequence, filter: String) -> String? {
+    guard let reference = sequence.referenceIndex else { return nil }
+    let metric = sequence.metrics[reference - 1]
+    return "\(filter): two-pass registration elected frame \(reference)/"
       + "\(sequence.metrics.count) as reference (\(metric.starCount) stars, FWHM "
       + "\(String(format: "%.2f", metric.fwhm)) px) instead of defaulting to frame 1"
   }
@@ -62,7 +117,7 @@ extension ChannelStacker {
       return trailProbe(light.frame(light.calibrated, index + 1), size)
     }
     outcome.frameNights = frames.map(\.session)
-    outcome.reference = sequence.reference >= 0 ? sequence.reference + 1 : nil
+    outcome.reference = sequence.referenceIndex
     // The hook's presence is the one decision (the run installs it when the knob is on).
     if let frameReview {
       let context = FrameReviewContext(

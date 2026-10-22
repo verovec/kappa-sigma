@@ -43,6 +43,10 @@
     "definition": "Maps every night onto the anchor night’s photometric scale before merging.",
     "label": "Match the nights’ brightness"
   },
+  "knob.reference_breakpoint": {
+    "definition": "Pauses each lane once its frames are measured so you can pin the registration reference.",
+    "label": "Choose the reference frame"
+  },
   "knob.register_2pass": {
     "definition": "Siril elects the best reference frame instead of the first one.",
     "label": "Two-pass registration"

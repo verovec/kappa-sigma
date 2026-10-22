@@ -33,6 +33,9 @@ extension Preprocessor {
     if request.settings.frameReview {
       stacker.frameReview = frameReviewHook(work: request.work, emitter: emitter)
     }
+    if request.settings.referenceBreakpoint {
+      stacker.referencePin = referencePinHook(emitter: emitter)
+    }
     let outcome: ChannelOutcome
     if plan.anchored {
       // Every channel of an anchored run lands on the anchor night's canvas, a one-night one too.

@@ -30,6 +30,30 @@ extension Preprocessor {
     }
   }
 
+  /// The reference pin hook of a run (card 0096).
+  ///
+  /// The `reference` event with its gate, then the wait for the pin (nil keeps the elected
+  /// frame). No thumbnails: the frames are not registered yet, and the pin is a choice on the
+  /// metrics.
+  func referencePinHook(emitter: RunEmitter) -> ChannelStacker.ReferencePinHook {
+    { context in
+      let gate = ReferencePinGate(lane: context.lane)
+      emitter.reference(
+        PreprocessEvent.Reference(
+          lane: context.lane, candidates: context.candidates, registered: context.registered,
+          nights: context.nights, parity: context.parity, elected: context.elected, gate: gate))
+      let elected = context.elected.map { "frame \($0)" } ?? "Siril's choice"
+      emitter.line(
+        "▶ reference pin: \(context.lane) paused before applying the registration (elected: "
+          + "\(elected)) — waiting for the user")
+      let pin = try await gate.answer()
+      emitter.line(
+        "reference pin: \(context.lane) resumed — "
+          + (pin.map { "reference pinned on frame \($0)" } ?? "elected frame kept"))
+      return pin
+    }
+  }
+
   /// Thumbnails are journaled every this many frames (a 350-frame lane takes a while).
   static let thumbnailProgressEvery = 25
 

@@ -73,6 +73,14 @@ package final class RunViewModel {
   package private(set) var answered: [FrameReviewViewModel] = []
   /// The user's decision per reviewed lane; empty until a lane was answered.
   package private(set) var decisions: [String: FrameDecision] = [:]
+  /// The reference pinned per lane as the run applied it (card 0096), read from the result:
+  /// a lane whose election was kept (the pane hands nil for it), or whose pin the run refused,
+  /// has no entry.
+  package var pins: [String: Int] {
+    (result?.channels ?? []).reduce(into: [:]) { pins, channel in
+      if let pin = channel.referencePin { pins[channel.filter] = pin }
+    }
+  }
   /// The run paused at least once: its stack records the review (`StackRecord.frameReview`).
   package var wasReviewed: Bool { !decisions.isEmpty }
   /// Text the journal is filtered on; empty shows every line.
@@ -121,6 +129,14 @@ package final class RunViewModel {
         answered.append(paused)
         self.paused = nil
         gate.resume(decision)
+      }
+    case .reference(let pause):
+      let (lane, gate) = (pause.lane, pause.gate)
+      paused = FrameReviewViewModel(reference: pause) { [weak self] pin in
+        guard let self, isRunning, let paused, paused.lane == lane else { return }
+        answered.append(paused)
+        self.paused = nil
+        gate.resume(pin)
       }
     case .finished(let result):
       self.result = result

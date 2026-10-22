@@ -1,16 +1,16 @@
 internal import Synchronization
 
-/// One lane's pause at the frame-review breakpoint (card 0069): the run waits on it, the user's
-/// decision resumes it, cancelling the run releases it.
+/// One lane's pause at a breakpoint (cards 0069, 0096): the run waits on it, the user's answer
+/// resumes it, cancelling the run releases it.
 ///
-/// The gate travels inside the `PreprocessEvent.frames` event, so whoever consumes the stream can
-/// answer without holding the `Preprocessor`. It answers once: a second `resume` or an answer
-/// after cancellation is ignored.
-package final class FrameReviewGate: Sendable {
+/// The gate travels inside the event that raised the pause, so whoever consumes the stream can
+/// answer without holding the `Preprocessor`. It answers once: a second `resume`, a second
+/// awaiter, or an answer after cancellation is ignored.
+package final class ReviewGate<Answer: Sendable>: Sendable {
   private enum State {
     case idle
-    case waiting(CheckedContinuation<FrameDecision, any Error>)
-    case answered(FrameDecision)
+    case waiting(CheckedContinuation<Answer, any Error>)
+    case answered(Answer)
     case closed
   }
 
@@ -31,12 +31,12 @@ package final class FrameReviewGate: Sendable {
     }
   }
 
-  /// Resumes the run with `decision`.
-  package func resume(_ decision: FrameDecision) {
-    let waiting: CheckedContinuation<FrameDecision, any Error>? = state.withLock { state in
+  /// Resumes the run with `answer`.
+  package func resume(_ answer: Answer) {
+    let waiting: CheckedContinuation<Answer, any Error>? = state.withLock { state in
       switch state {
       case .idle:
-        state = .answered(decision)
+        state = .answered(answer)
         return nil
       case .waiting(let continuation):
         state = .closed
@@ -45,24 +45,24 @@ package final class FrameReviewGate: Sendable {
         return nil
       }
     }
-    waiting?.resume(returning: decision)
+    waiting?.resume(returning: answer)
   }
 
-  /// The user's decision, once given.
+  /// The user's answer, once given.
   ///
   /// Throws `CancellationError` when the run is cancelled first. The run awaits it; a test's
   /// fake run may too.
-  package func decision() async throws -> FrameDecision {
+  package func answer() async throws -> Answer {
     try await withTaskCancellationHandler {
       try await withCheckedThrowingContinuation { continuation in
-        let early: Result<FrameDecision, any Error>? = state.withLock { state in
+        let early: Result<Answer, any Error>? = state.withLock { state in
           switch state {
           case .idle:
             state = .waiting(continuation)
             return nil
-          case .answered(let decision):
+          case .answered(let answer):
             state = .closed
-            return .success(decision)
+            return .success(answer)
           case .waiting:
             // A second awaiter is refused; the first keeps its wait.
             return .failure(CancellationError())
@@ -80,7 +80,7 @@ package final class FrameReviewGate: Sendable {
 
   /// Releases a waiting run with `CancellationError`; a later answer is ignored.
   private func cancel() {
-    let waiting: CheckedContinuation<FrameDecision, any Error>? = state.withLock { state in
+    let waiting: CheckedContinuation<Answer, any Error>? = state.withLock { state in
       guard case .waiting(let continuation) = state else {
         state = .closed
         return nil
@@ -92,9 +92,23 @@ package final class FrameReviewGate: Sendable {
   }
 }
 
-extension FrameReviewGate: Equatable {
+extension ReviewGate: Equatable {
   /// Identity: the event that carries a gate is equal to itself only.
-  package static func == (lhs: FrameReviewGate, rhs: FrameReviewGate) -> Bool {
+  package static func == (lhs: ReviewGate, rhs: ReviewGate) -> Bool {
     lhs === rhs
+  }
+}
+
+/// The frame review's gate (card 0069): answered with the keep / reject decision.
+package typealias FrameReviewGate = ReviewGate<FrameDecision>
+
+/// The reference pin's gate (card 0096): answered with the pinned `FrameGrade.index`, or nil to
+/// keep the elected frame.
+package typealias ReferencePinGate = ReviewGate<Int?>
+
+extension ReviewGate where Answer == FrameDecision {
+  /// The user's decision, once given (`answer()`).
+  package func decision() async throws -> FrameDecision {
+    try await answer()
   }
 }

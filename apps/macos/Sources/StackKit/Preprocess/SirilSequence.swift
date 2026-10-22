@@ -22,6 +22,13 @@ package struct SirilSequence: Equatable, Sendable {
   /// 0-based reference image; -1 when unset.
   package var reference = -1
 
+  /// The reference as a 1-based frame index, the one rule every reader uses.
+  ///
+  /// Nil when the `S` line is unset or names a frame the sequence does not have.
+  package var referenceIndex: Int? {
+    reference >= 0 && reference < metrics.count ? reference + 1 : nil
+  }
+
   /// Parses `.seq` text.
   ///
   /// `R0 fwhm wfwhm roundness quality background nbstars H h00 … h22`

@@ -6,8 +6,46 @@ package enum PreprocessEvent: Equatable, Sendable {
   case preview(Preview)
   /// A lane's frames are graded and the run waits for the user's decision (card 0069).
   case frames(Frames)
+  /// A lane's frames are measured and the run waits for the reference pin before applying the
+  /// registration (card 0096).
+  case reference(Reference)
   /// The run finished; the last event.
   case finished(PreprocessResult)
+
+  /// A lane paused before its registration is applied: every frame as Siril measured it (not
+  /// graded), its night and parity, the frame the port elected, and the gate that resumes the
+  /// run with a pin (`FrameGrade.index`) or nil to keep the election.
+  package struct Reference: Equatable, Sendable {
+    /// The lane (filter) under review.
+    package var lane: String
+    /// One measured frame per input frame, in sequence order; `rejected` is never set here.
+    package var candidates: [FrameGrade]
+    /// Each frame registered with a transform, parallel to `candidates`: the only frames a pin
+    /// may name (`ReferencePinContext.accepts`).
+    package var registered: [Bool]
+    /// Each frame's capture night, parallel to `candidates`.
+    package var nights: [String]
+    /// Each frame's parity against the run's convention, parallel to `candidates`.
+    package var parity: [FrameParity]
+    /// The frame the port would register onto, as `FrameGrade.index`; nil when unknown.
+    package var elected: Int?
+    /// Answers the pause.
+    package var gate: ReferencePinGate
+
+    /// A pause of `lane`.
+    package init(
+      lane: String, candidates: [FrameGrade], registered: [Bool], nights: [String],
+      parity: [FrameParity], elected: Int?, gate: ReferencePinGate
+    ) {
+      self.lane = lane
+      self.candidates = candidates
+      self.registered = registered
+      self.nights = nights
+      self.parity = parity
+      self.elected = elected
+      self.gate = gate
+    }
+  }
 
   /// A lane paused at the frame-review breakpoint: every grade as the grader left it, the
   /// elected reference, a thumbnail per registered frame, and the gate that resumes the run.

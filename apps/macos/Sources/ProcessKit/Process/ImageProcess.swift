@@ -21,11 +21,6 @@ package protocol ImageProcess {
   /// morphology and blurs do not commute with the pyramid.
   static var previewExactOnlyAt1to1: Bool { get }
 
-  /// A batch process (card 0092): its result comes from a host tool through a
-  /// `PipelineRunner.BatchProcess`, never from `render`; it is listed, validated and documented
-  /// like any other process.
-  static var isBatch: Bool { get }
-
   /// The values `render` reads.
   var params: ParamSet { get }
 
@@ -57,12 +52,13 @@ package protocol ImageProcess {
   /// The arrow step of number parameters that need a finer one than the panel's default (a
   /// tenth of it with ⇧ or ⌥), by id.
   static var steps: [String: Double] { get }
+
+  /// True when Apply runs a host tool (Siril…) the caller injects: `render` is only the preview,
+  /// and recording it as the step is refused (`StudioError.needsTool`).
+  static var hostTool: Bool { get }
 }
 
 extension ImageProcess {
-  /// Rendered on the GPU.
-  package static var isBatch: Bool { false }
-
   /// No layer requirement.
   package static var requires: [LayerRole] { [] }
 
@@ -85,6 +81,9 @@ extension ImageProcess {
 
   /// The panel's default steps.
   package static var steps: [String: Double] { [:] }
+
+  /// A GPU process: `render` is the step.
+  package static var hostTool: Bool { false }
 }
 
 /// Where a process belongs in a pipeline.

@@ -27,11 +27,8 @@ extension StudioModelTests {
   }
 
   /// Card 0087 (the 0049 contract through the model): the preview at scale 1 and the applied
-  /// head are the same pixels, for every GPU process of the standard registry (a batch process's
-  /// preview is its result, design §4.6: `BackgroundExtractionProcessTests`).
-  @Test(
-    "testPreviewEqualsApply", .scratchDirectory,
-    arguments: try ProcessRegistry.standard().types.filter { !$0.isBatch }.map { $0.id })
+  /// head are the same pixels, for every process of the standard registry.
+  @Test("testPreviewEqualsApply", .scratchDirectory, arguments: try ProcessRegistry.standard().ids)
   func testPreviewEqualsApply(processID: String) throws {
     let opened = try Self.project()
     defer { try? opened.package.close() }
@@ -42,6 +39,14 @@ extension StudioModelTests {
     let type = try #require(try ProcessRegistry.standard().type(id: processID))
     let params = ParamSet(schema: type.schema)
     let preview = try model.preview(processID, params: params)
+    // A host tool's step is its tool's (0093): the GPU render, the image itself, is refused.
+    if type.hostTool {
+      #expect(preview.planes == model.head.planes, "\(processID): the preview is the image")
+      #expect(throws: StudioError.needsTool(processID)) {
+        try model.apply(processID, params: params)
+      }
+      return
+    }
     try model.apply(processID, params: params)
     #expect(model.head.planes == preview.planes, "\(processID)")
   }

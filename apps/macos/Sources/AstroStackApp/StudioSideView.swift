@@ -19,7 +19,8 @@ package struct StudioSideView: View {
       VStack(alignment: .leading, spacing: DesignMetrics.spacingL) {
         if let panel = model.panel {
           ProcessPanel(model: panel)
-          if panel.type.isBatch {
+          // The extraction runs on the whole image and its layers: no mask, its own rows.
+          if panel.type.id == BackgroundExtractionProcess.id {
             StudioBatchRows(model: model)
           } else {
             StudioMaskRow(model: model)
@@ -30,9 +31,10 @@ package struct StudioSideView: View {
             Spacer()
             // No default-button Return: Return confirms a typed value (Edit › Apply Process ⌘E).
             Button(.app("Apply")) { applyRecorded() }
-              .disabled(model.batchProgress != nil)
+              .disabled(model.toolRun != nil)
               .accessible(.studioApply, label: .app("Apply"))
           }
+          StudioToolRow(model: model)
         } else {
           Text(.app("Choose a process in the catalogue."))
             .foregroundStyle(DesignColor.textSecondary.color)

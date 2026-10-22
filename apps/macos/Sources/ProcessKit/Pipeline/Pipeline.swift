@@ -47,6 +47,10 @@ package struct Pipeline: Equatable, Sendable {
       if let reason = LayerRole.unavailableReason(requires: type.requires, present: present) {
         reasons.append(reason)
       }
+      // A host tool's step runs only through its injected tool (card 0093): never its preview.
+      if type.hostTool, !batch.contains(id) {
+        reasons.append("runs a host tool: apply it in the Studio")
+      }
       if type.stage == .linear, stretched {
         reasons.append("a linear process after a non-linear one")
       }
@@ -102,7 +106,6 @@ package enum PipelineError: Error, Equatable, Sendable {
   /// The step's values `ids` are refused by its process (unknown, wrong kind, not finite): the
   /// run stops rather than apply defaults the user never saw.
   case invalidValues(step: Int, ids: [String])
-  /// A batch process (a host tool) was given no tool to run it: nothing else runs in its place
-  /// (R2).
-  case noTool(String)
+  /// A host-tool process (plate solving…) whose tool the caller did not inject.
+  case toolMissing(String)
 }

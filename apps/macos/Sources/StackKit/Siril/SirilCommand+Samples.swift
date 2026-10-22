@@ -23,6 +23,7 @@ extension SirilCommand {
       .savepng("out"), .savetif("out"), .mirrorx, .subsky(degree: 1),
       .subskyRBF(smooth: 0.5, samples: 30, tolerance: 1.5, dither: true), .rmgreen(type: 0),
       .autostretchLinked, .satu(0.12), .platesolve(coords: nil, noFlip: true),
+      .platesolveForced(["10.68333,41.26917", "-force", "-noflip"]),
       .rgbcomp(r: "r", g: "g", b: "b", lum: "l", out: "combined"),
     ].map(\.line)
 }

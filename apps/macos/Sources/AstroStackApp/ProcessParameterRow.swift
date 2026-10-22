@@ -67,6 +67,12 @@ struct ProcessParameterRow: View {
         .accessible(.parameter(key, .choice), label: label)
         helpButton
       }
+    case .text:
+      HStack {
+        TextField(text: text) { Text(label) }
+          .accessible(.parameter(key, .text), label: label)
+        helpButton
+      }
     case .points(_, let maxCount):
       CurveEditor(
         label, points: points(maxCount), key: key,
@@ -101,6 +107,7 @@ struct ProcessParameterRow: View {
       String(localized: flag ? .app("On", locale: locale) : .app("Off", locale: locale))
     case .choice(let option): option
     case .points: ""
+    case .text(let text): text
     }
   }
 
@@ -118,6 +125,12 @@ struct ProcessParameterRow: View {
     Binding(
       get: { model.params[spec.id] == .flag(true) },
       set: { model.set(spec.id, .flag($0)) })
+  }
+
+  private var text: Binding<String> {
+    Binding(
+      get: { model.params.text(spec.id) },
+      set: { model.set(spec.id, .text($0)) })
   }
 
   private var choice: Binding<String> {

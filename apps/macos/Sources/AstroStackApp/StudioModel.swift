@@ -20,6 +20,8 @@ package final class StudioModel {
   package private(set) var steps: [History.Step] = []
   /// The working image: the history's head.
   package private(set) var head: AstroImage
+  /// The stack's header (its base layer's): where suggestions read pointing and optics.
+  @ObservationIgnored package let header: FITSHeader?
 
   @ObservationIgnored private let store: ProjectStore
   @ObservationIgnored private let imageID: Int64
@@ -48,6 +50,7 @@ package final class StudioModel {
     session = try StudioSession(
       history: history, bundle: bundle, registry: registry, device: device)
     self.store = store
+    self.header = header
     packageRoot = packageFolder
     let images = try store.images(stackID: stackID)
     imageID =
@@ -74,21 +77,11 @@ package final class StudioModel {
   /// Records a step made elsewhere (a host tool) with the layers it wrote.
   package func apply(
     _ processID: String, params: ParamSet, result: AstroImage,
-    outputs: [LayerRole: AstroImage] = [:]
+    outputs: [LayerRole: AstroImage] = [:], replacing: [String: AstroImage] = [:]
   ) throws {
     defer { mirror() }
-    try session.apply(processID, params: params, result: result, outputs: outputs)
-    cleanUp()
-  }
-
-  /// Runs the batch process `processID` through `batch` with `params` (a host tool, reporting
-  /// 0…1 to `onProgress`) and records its step with the layers it wrote.
-  package func apply(
-    _ processID: String, batch: PipelineRunner.BatchProcess, params: ParamSet,
-    onProgress: @escaping @Sendable (Double) -> Void
-  ) async throws {
-    defer { mirror() }
-    try await session.apply(processID, batch: batch, params: params, onProgress: onProgress)
+    try session.apply(
+      processID, params: params, result: result, outputs: outputs, replacing: replacing)
     cleanUp()
   }
 

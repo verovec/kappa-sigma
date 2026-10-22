@@ -183,31 +183,50 @@ in en/fr; the English title is the key, resolved with `ProcessKitResources.title
   histogram in the panel.
 - A host-tool step (StarNet 0091, background extraction 0092) records its result and the layers
   it wrote with `StudioSession.apply(_:params:result:outputs:)`.
+- **Host-tool processes** (card 0093, `PlateSolveProcess`): a registered `ImageProcess` with
+  `hostTool = true` — its `render` is the preview only (plate solving: the image itself), so the
+  catalogue, panel, help gates and history reopen treat it like any process, while
+  `StudioSession.apply(_:params:mask:)` refuses it (`StudioError.needsTool`) and `PipelineRunner`
+  runs the injected `BatchProcess` of its id or stops (`PipelineError.toolMissing`); without it,
+  `Pipeline.stepProblems` names the step before any run. The pipeline sidebar (0088) injects no
+  tool yet: running Siril from a pipeline needs Stop, the report and one-run-at-a-time with the
+  Studio's Apply — a follow-up. The app
+  injects the tool (`StudioTool`, by id) into `StudioWorkspaceModel`: Apply runs it in the
+  background (`startTool`, progress in `toolRun`, Stop = `cancelTool`), records the step only on
+  the head it started from, and shows the tool's `toolReport`.
+- **WCS per step** (0093): `History` writes each step with the stack header's cards but the
+  image's own solution (`FITSHeader.carrying(metadata.wcs)`; `WCS.cards` keeps the cards it was
+  read from), so a solve survives later steps, undo, redo and reopen, and the readout follows. A
+  geometry step (0090) that moves pixels must give its result the moved `WCS`, or `nil` to drop
+  it.
+- `.text` parameters (`ParamSpec(id:title:level:text:maxLength:)`): free text, trimmed, empty by
+  default — a coordinate the user types or takes from a suggestion; JSON stores a string.
 
-## Batch processes (card 0092)
+## Host-tool processes with layers (card 0092)
 
-- A process whose result comes from a host tool is registered like any other (catalogue,
-  profiles, help, titles and parameter gates cover it) with `static isBatch = true`; its `render`
-  is never called (`StudioError.runsInTool`), and the preview==apply contract is the GPU one
-  (design §4.6: a batch process's preview is its result).
-- `PipelineRunner.BatchProcess` runs it: `step(BatchInput, params, progress) → BatchOutput`.
-  The input is the head and the bundle's layers as the steps so far left them; the output is the
-  step's image, new layers by role (`outputs`) and bundle layers rewritten by id (`replaced`).
-  `init(schema:run:)` still wraps a tool that only makes the image. A registered batch process
-  without its closure stops a pipeline with `PipelineError.noTool` — nothing runs in its place.
-- `History.apply(…outputs:replacing:)`: a rewritten bundle layer (`Ha` after a background
-  extraction) is read by later steps under the bundle's id and adds no role; `writtenLayers()`
-  and `context(over:)` give the overlay (`StudioSession` uploads it for every render).
+- Background extraction is a host-tool process like plate solving (`hostTool = true`, card
+  0093): its `render` is the image itself, Apply runs the tool the app injects
+  (`StudioTool`), a pipeline without it names the step (`PipelineError.toolMissing`).
+- A host tool may read and write layers: `PipelineRunner.BatchInput` (the head and the bundle's
+  layers as the steps so far left them) → `BatchOutput` (the step's image, new layers by role in
+  `outputs`, bundle layers rewritten by id in `replaced`). `BatchProcess.init(schema:run:)`
+  still wraps a tool that only makes the image; a locked step reused on replay carries its
+  layers.
+- `History.apply(…outputs:replacing:)`: a rewritten bundle layer (`Ha` after an extraction) is
+  read by later steps under the bundle's id and adds no role; `writtenLayers()` (each file read
+  once, evicted when no step refers to it) is the overlay `History.context(over:stats:device:)`
+  uploads for the Studio and the pipeline runner alike.
 - **BackgroundExtractionProcess** (`background-extraction`, linear): `engine` graxpert /
   siril-rbf / siril-polynomial (each engine's values advanced, promoted by the choice),
   `correction`, `applyTo` rgb (the head) / lines (the Hα/OIII/SII layers, the head kept) / all
-  (the head and every bundle layer). `batch(_ extract:)` runs the engine per target, head first,
-  progress shared out; the first target's model is the `backgroundModel` output. The app wires
-  `extract` to StackKit `BackgroundExtraction` (`StudioTools`), greys an engine whose tool is
-  missing with the reason, and refuses Apply with it — no other engine runs (R2).
+  (the head and every bundle layer). `run(_:params:extract:)` runs the engine per target, head
+  first; the first target's model is the `backgroundModel` output. The app's
+  `BackgroundExtractionTool` wires `extract` to StackKit `BackgroundExtraction`; the workspace
+  greys an engine whose tool is missing (and divide with Siril, StackKit's
+  `BackgroundEngine.supports`) and refuses Apply with the reason — no other engine runs (R2).
 
-To add a batch process: conform with `isBatch = true`, give it a `batch(...)` factory over an
-injected closure, wire the closure in the app's `StudioTools` and `batchProcess(_:)`.
+To give a host tool layers: return them in `StudioToolResult(…outputs:replaced:)` from a
+`StudioTool(step:)`; the Studio records them, the next steps read them.
 
 ## How to add a process
 

@@ -12,20 +12,25 @@ package import Foundation
 /// the Studio into view first.
 package enum StudioUndo {
   /// Applies the panel of `model` and registers the move with `undoManager` when a step was
-  /// added.
-  package static func apply(_ model: StudioWorkspaceModel, undoManager: UndoManager?) {
+  /// added; `done` runs once it is (a host tool's Apply ends later).
+  package static func apply(
+    _ model: StudioWorkspaceModel, undoManager: UndoManager?, then done: @escaping () -> Void = {}
+  ) {
     // A value typed and not confirmed is committed first: Apply never records an older one.
     NSApp?.keyWindow?.makeFirstResponder(nil)
     let before = model.studio.steps.count
-    if model.panel?.type.isBatch == true {
-      // A host tool runs for seconds to minutes: the move is registered once it is recorded.
-      model.startBatch { [weak undoManager] in
-        guard model.studio.steps.count > before else { return }
+    // A host tool (plate solving) runs in the background; its step is registered when recorded.
+    if model.panel?.type.hostTool == true {
+      model.startTool { [weak model, weak undoManager] recorded in
+        defer { done() }
+        // Only the tool's own step: another Apply made meanwhile registered its own undo.
+        guard recorded, let model else { return }
         model.undoManager = undoManager
         record(model, undoing: true, head: model.studio.steps.last?.file, on: undoManager)
       }
       return
     }
+    defer { done() }
     try? model.apply()
     guard model.studio.steps.count > before else { return }
     model.undoManager = undoManager

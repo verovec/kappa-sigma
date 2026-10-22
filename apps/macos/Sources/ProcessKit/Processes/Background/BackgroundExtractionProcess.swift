@@ -5,14 +5,15 @@ package import Metal
 /// model, Siril `subsky -rbf` or a Siril polynomial — removes the gradient of the head and, as
 /// `applyTo` says, of the bundle's line or colour layers; the model is kept as a step output.
 ///
-/// A batch process: its result comes from the host tool (StackKit `BackgroundExtraction`, wired
-/// by the app as an `Extract`), never from `render`. An engine whose tool is missing is refused
-/// with the tool's reason; no other engine runs in its place (R2).
+/// A host-tool process (`hostTool`, card 0093's seam): Apply runs the engine (StackKit
+/// `BackgroundExtraction`, wired by the app as an `Extract`) through `run(_:params:extract:)`;
+/// the preview is the image itself. An engine whose tool is missing is refused with the tool's
+/// reason; no other engine runs in its place (R2).
 package struct BackgroundExtractionProcess: ImageProcess {
   package static let id = "background-extraction"
   package static let title = "Background extraction"
   package static let stage = ProcessStage.linear
-  package static let isBatch = true
+  package static let hostTool = true
   package static let previewExactOnlyAt1to1 = false
 
   /// The engines, in the panel's order: GraXpert, Siril RBF, Siril polynomial.
@@ -64,11 +65,11 @@ package struct BackgroundExtractionProcess: ImageProcess {
     self.params = params
   }
 
-  /// Never on the GPU: the session refuses it before (`StudioError.runsInTool`).
+  /// The preview: the image itself (the tool's result is shown once Apply ran it).
   package func render(
     _ input: GPUImage, stats: LayerStats, into output: GPUImage, context: RenderContext
   ) throws {
-    throw StudioError.runsInTool(Self.id)
+    try ColourKernel.copy(input, into: output, commands: context.commands)
   }
 
   // MARK: - Batch
@@ -103,31 +104,38 @@ package struct BackgroundExtractionProcess: ImageProcess {
     }
   }
 
-  /// The batch process running `extract` on every target, in order (the head first): the
-  /// step's image is the corrected head (the head itself when only lines are corrected), the
-  /// model of the first target is its `backgroundModel` output, the corrected layers replace
-  /// the bundle's.
+  /// The batch process of a pipeline running `extract` (`run(_:params:extract:)`).
   package static func batch(_ extract: @escaping Extract) -> PipelineRunner.BatchProcess {
     PipelineRunner.BatchProcess(schema: schema) { input, params, progress in
-      let targets = targets(params, layerIDs: input.layers.keys)
-      let images =
-        (targets.head ? [input.image] : []) + targets.layers.compactMap { input.layers[$0] }
-      guard !images.isEmpty else {
-        throw ProcessError.missingLayer("an emission line layer (Ha, OIII, SII)")
-      }
-      var pairs: [(corrected: AstroImage, model: AstroImage)] = []
-      for image in images {
-        try Task.checkCancellation()
-        let start = Double(pairs.count)
-        let count = Double(images.count)
-        pairs.append(try await extract(image, params) { progress((start + $0) / count) })
-      }
-      let corrected = targets.head ? Array(pairs.dropFirst()) : pairs
-      return PipelineRunner.BatchOutput(
-        result: targets.head ? pairs[0].corrected : input.image,
-        outputs: [.backgroundModel: pairs[0].model],
-        replaced: Dictionary(
-          uniqueKeysWithValues: zip(targets.layers, corrected.map(\.corrected))))
+      try await run(input, params: params, extract: extract, progress: progress)
     }
+  }
+
+  /// `extract` on every target of `params`, in order (the head first): the step's image is the
+  /// corrected head (the head itself when only lines are corrected), the model of the first
+  /// target is its `backgroundModel` output, the corrected layers replace the bundle's.
+  package static func run(
+    _ input: PipelineRunner.BatchInput, params: ParamSet, extract: Extract,
+    progress: @escaping @Sendable (Double) -> Void = { _ in }
+  ) async throws -> PipelineRunner.BatchOutput {
+    let targets = targets(params, layerIDs: input.layers.keys)
+    let images =
+      (targets.head ? [input.image] : []) + targets.layers.compactMap { input.layers[$0] }
+    guard !images.isEmpty else {
+      throw ProcessError.missingLayer("an emission line layer (Ha, OIII, SII)")
+    }
+    var pairs: [(corrected: AstroImage, model: AstroImage)] = []
+    for image in images {
+      try Task.checkCancellation()
+      let start = Double(pairs.count)
+      let count = Double(images.count)
+      pairs.append(try await extract(image, params) { progress((start + $0) / count) })
+    }
+    let corrected = targets.head ? Array(pairs.dropFirst()) : pairs
+    return PipelineRunner.BatchOutput(
+      result: targets.head ? pairs[0].corrected : input.image,
+      outputs: [.backgroundModel: pairs[0].model],
+      replaced: Dictionary(
+        uniqueKeysWithValues: zip(targets.layers, corrected.map(\.corrected))))
   }
 }

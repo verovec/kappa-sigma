@@ -1,5 +1,6 @@
 internal import Foundation
 internal import ProcessKit
+internal import StackKit
 
 extension UserFacingError {
   /// What a Studio failure means to the user, in their words (card 0087).
@@ -7,11 +8,46 @@ extension UserFacingError {
     switch error {
     case .unknownProcess(let id): .app("The Studio has no process “\(id)”.")
     case .emptyBundle: .app("This stack has no layer to start the Studio from.")
-    case .headMoved(let id):
-      .app("The image changed while “\(id)” ran: its result was not recorded. Apply it again.")
-    case .toolRunning: .app("A host tool is running: wait for it to finish.")
-    case .runsInTool(let id):
-      .app("“\(id)” runs in its host tool: Apply runs it and shows its result.")
+    case .needsTool(let id): .app("“\(id)” runs a host tool: nothing was applied without it.")
+    }
+  }
+
+  /// Why a pipeline run stopped (step numbers from 1, as the column shows them).
+  static func message(_ error: PipelineError) -> LocalizedStringResource {
+    switch error {
+    case .unknownProcess(let id):
+      .app("The pipeline names a process the Studio does not have: “\(id)”.")
+    case .noStep(let index): .app("The pipeline has no step \(index + 1).")
+    case .notAtBreakpoint(let step, _):
+      .app(
+        "The history is not at step \(step + 1)'s breakpoint: Continue would misplace it."
+      )
+    case .invalidValues(let step, let ids):
+      .app("Step \(step + 1) has values its process refuses: \(ids.joined(separator: ", ")).")
+    case .toolMissing(let id):
+      .app("Step “\(id)” runs a host tool: apply it in the Studio, then continue.")
+    }
+  }
+
+  /// Why a plate solve gave nothing (card 0093).
+  static func message(_ error: PlateSolveError) -> LocalizedStringResource {
+    switch error {
+    case .failed(let reason):
+      .app("Siril found no solution: \(reason). Check the centre, focal length and pixel size.")
+    case .catalogueMissing(let path):
+      .app("No local star catalogue at \(path): run just download-catalogues, or go online.")
+    case .noSolution(let path): .app("Siril reported a solution but wrote none in \(path).")
+    }
+  }
+
+  /// Why the plate-solve values cannot be solved with (card 0093).
+  static func message(_ error: PlateSolveTool.InputError) -> LocalizedStringResource {
+    switch error {
+    case .coordinatesMissing:
+      .app("Give the image centre (right ascension and declination), or take the header's.")
+    case .unreadable(let text):
+      .app("“\(text)” is not a coordinate: write 00 42 44 and +41 16 09, or degrees.")
+    case .opticsMissing: .app("Give the focal length and the pixel size, or take the header's.")
     }
   }
 

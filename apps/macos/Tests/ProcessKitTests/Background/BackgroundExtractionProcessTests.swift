@@ -47,8 +47,7 @@ struct BackgroundExtractionProcessTests {
   func testRegistered() throws {
     let registry = try ProcessRegistry.standard()
     #expect(registry.type(id: "background-extraction") == BackgroundExtractionProcess.self)
-    #expect(BackgroundExtractionProcess.isBatch && BackgroundExtractionProcess.stage == .linear)
-    #expect(!StretchProcess.isBatch, "a GPU process is not a batch one")
+    #expect(BackgroundExtractionProcess.hostTool && BackgroundExtractionProcess.stage == .linear)
     let defaults = ParamSet(schema: BackgroundExtractionProcess.schema)
     #expect(BackgroundExtractionProcess.schema.specs.first?.id == "engine")
     #expect(defaults["engine"] == .choice("graxpert") && defaults["applyTo"] == .choice("rgb"))
@@ -140,7 +139,7 @@ struct BackgroundExtractionProcessTests {
 
 extension BackgroundExtractionProcessTests {
   @Test(
-    "never rendered on the GPU; a pipeline without its tool stops by name, nothing else runs",
+    "preview is the image; Apply and a pipeline without the tool are refused by name",
     .scratchDirectory, .enabled(if: MTLCreateSystemDefaultDevice() != nil))
   func testNoGPURenderNoSubstitute() async throws {
     let device = try #require(MTLCreateSystemDefaultDevice())
@@ -152,10 +151,12 @@ extension BackgroundExtractionProcessTests {
       stats: StudioSession.stats(of: original), layers: ["RGB": original])
     let session = try StudioSession(
       history: history, bundle: bundle, registry: registry, device: device)
-    #expect(throws: StudioError.runsInTool("background-extraction")) {
-      _ = try session.render(
-        BackgroundExtractionProcess.id,
-        params: ParamSet(schema: BackgroundExtractionProcess.schema))
+    let defaults = ParamSet(schema: BackgroundExtractionProcess.schema)
+    #expect(
+      try session.render(BackgroundExtractionProcess.id, params: defaults).planes
+        == original.planes)
+    #expect(throws: StudioError.needsTool("background-extraction")) {
+      try session.apply(BackgroundExtractionProcess.id, params: defaults)
     }
     let pipeline = Pipeline(
       name: "M31",
@@ -166,38 +167,44 @@ extension BackgroundExtractionProcessTests {
             params: ParamSet(schema: BackgroundExtractionProcess.schema)))
       ])
     let runner = try PipelineRunner(registry: registry, device: device)
-    await #expect(throws: PipelineError.noTool("background-extraction")) {
+    await #expect(throws: PipelineError.toolMissing("background-extraction")) {
       _ = try await runner.run(pipeline, on: history, bundle: bundle)
     }
     #expect(history.steps.isEmpty)
   }
 
   @Test(
-    "through the session: one step, the model as an output, the rewritten layers in the context",
+    "a pipeline with the tool: one step, the model as an output, the rewritten layers in context",
     .scratchDirectory, .enabled(if: MTLCreateSystemDefaultDevice() != nil))
-  func testSessionApplyBatch() async throws {
+  func testPipelineAppliesBatch() async throws {
     let device = try #require(MTLCreateSystemDefaultDevice())
     let original = Self.image(5, planes: 3)
     let history = try History(
       directory: ScratchDirectory.url.appendingPathComponent("h"), original: original)
     let bundle = PipelineBundle(
       stats: StudioSession.stats(of: original), layers: ["RGB": original, "Ha": Self.image(3)])
+    let registry = try ProcessRegistry.standard()
     let session = try StudioSession(
-      history: history, bundle: bundle, registry: try ProcessRegistry.standard(), device: device)
-    let batch = BackgroundExtractionProcess.batch(Self.fake(Calls()))
-    try await session.apply(
-      BackgroundExtractionProcess.id, batch: batch,
-      params: try Self.params(["applyTo": .choice("all")])
-    ) { _ in }
+      history: history, bundle: bundle, registry: registry, device: device)
+    let runner = try PipelineRunner(
+      registry: registry, device: device,
+      batch: [BackgroundExtractionProcess.id: BackgroundExtractionProcess.batch(Self.fake(Calls()))]
+    )
+    func step(_ applyTo: String) throws -> PipelineStep {
+      PipelineStep(
+        recipe: Recipe(
+          processID: BackgroundExtractionProcess.id,
+          params: try Self.params(["applyTo": .choice(applyTo)])))
+    }
+    _ = try await runner.run(Pipeline(name: "a", steps: [step("all")]), on: history, bundle: bundle)
     #expect(history.steps.map(\.processID) == ["background-extraction"])
     #expect(history.current.planes[0][0] == 4)
     #expect(session.layerIDs().contains("backgroundModel"))
     #expect(try history.context(over: bundle.layers)["Ha"]?.planes[0][0] == 2)
     // A second run reads the layers as the first one left them.
-    try await session.apply(
-      BackgroundExtractionProcess.id, batch: batch,
-      params: try Self.params(["applyTo": .choice("lines")])
-    ) { _ in }
+    _ = try await runner.run(
+      Pipeline(name: "b", steps: [step("all"), step("lines")]), on: history, bundle: bundle,
+      from: 1)
     #expect(try history.context(over: bundle.layers)["Ha"]?.planes[0][0] == 1)
   }
 }

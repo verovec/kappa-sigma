@@ -1,4 +1,32 @@
+internal import Foundation
+
 extension FITSHeader {
+  /// Keywords of a plate solution (FITS WCS papers I–II, SIP, Siril's `PLTSOLVD`).
+  private static let wcsPattern =
+    #"^((CTYPE|CUNIT|CRPIX|CRVAL|CDELT|CROTA)[12]|(CD|PC)[12]_[12]|(A|B|AP|BP)_(ORDER|\d+_\d+)"#
+    + #"|LONPOLE|LATPOLE|EQUINOX|RADESYS|PLTSOLVD)$"#
+
+  /// Whether `keyword` belongs to a plate solution.
+  package static func isWCS(_ keyword: String) -> Bool {
+    keyword.range(of: wcsPattern, options: .regularExpression) != nil
+  }
+
+  /// The cards of its plate solution, in order.
+  package var wcsCards: [Card] {
+    cards.filter { Self.isWCS($0.keyword) }
+  }
+
+  /// This header describing an image solved as `wcs`.
+  ///
+  /// Unchanged when it already says so, else its WCS cards replaced by those of `wcs`. For `nil`,
+  /// a solution it carries is dropped; cards no solution can be read from are left as they are
+  /// (nothing in them was the image's).
+  package func carrying(_ wcs: WCS?) -> FITSHeader {
+    let solution = wcs?.cards ?? []
+    guard wcsCards != solution, wcs != nil || WCS(header: self) != nil else { return self }
+    return FITSHeader(cards: cards.filter { !Self.isWCS($0.keyword) } + solution)
+  }
+
   /// det(CD) of the solved WCS (`Header.CDDeterminant`): the explicit CD matrix when all four
   /// cards are present, else CDELT × PC (PC defaulting to identity, Siril's representation).
   ///

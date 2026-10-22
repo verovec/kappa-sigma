@@ -40,8 +40,10 @@ struct StudioToolsTests {
     for (id, value) in row.values { try params.set(id, value) }
     #expect(BackgroundEngine(params: params) == row.engine)
     #expect(BackgroundCorrection(params: params) == row.correction)
-    #expect(StudioTools.tool(for: BackgroundExtractionProcess.id, params: params) == row.tool)
-    #expect(StudioTools.tool(for: StretchProcess.id, params: params) == nil)
+    #expect(
+      BackgroundExtractionTool.host(for: BackgroundExtractionProcess.id, params: params) == row.tool
+    )
+    #expect(BackgroundExtractionTool.host(for: StretchProcess.id, params: params) == nil)
   }
 
   @Test("a missing or too old tool has its reason; a found one none")

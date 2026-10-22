@@ -37,14 +37,19 @@ struct LiveStudioBackgroundRun78Tests {
       store: package.store, stackID: stack.id, packageFolder: package.url,
       stackFolder: package.url.appendingPathComponent("stacks/78"),
       bundle: LiveStudioRun78Tests.bundle(root))
-    let workspace = try StudioWorkspaceModel(studio: studio, base: [.color, .emission])
+    let workspace = try StudioWorkspaceModel(
+      studio: studio, base: [.color, .emission],
+      tools: [
+        BackgroundExtractionProcess.id: BackgroundExtractionTool.live(
+          scratch: try ScratchDirectory.url.appendingPathComponent("work"))
+      ])
     let input = studio.head
 
     workspace.choose(BackgroundExtractionProcess.id)
     await workspace.refreshTools()
     #expect(workspace.missingTool == nil)
     try LiveStudioRun78Tests.render(workspace, "bge-1-panel")
-    await workspace.runBatch()
+    #expect(await workspace.runTool())
     #expect(workspace.failure == nil)
     #expect(studio.steps.map(\.processID) == ["channel-combination", "background-extraction"])
 

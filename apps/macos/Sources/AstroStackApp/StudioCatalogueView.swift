@@ -31,6 +31,10 @@ package struct StudioCatalogueView: View {
       return String(localized: .app("Needs \(names)", locale: locale))
     case .linearAfterStretch:
       return String(localized: .app("Runs on linear data: undo the stretch first", locale: locale))
+    case .toolMissing:
+      return String(
+        localized: .app(
+          "Needs Siril, not found: install it, then reopen the project", locale: locale))
     }
   }
 

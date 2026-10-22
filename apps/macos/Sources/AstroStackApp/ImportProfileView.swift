@@ -156,6 +156,7 @@ package struct ImportProfileView: View {
     case .flag(let flag): flag ? "✓" : "✗"
     case .choice(let option): option
     case .points(let points): "\(points.count)"
+    case .text(let text): text
     case nil: ""
     }
   }

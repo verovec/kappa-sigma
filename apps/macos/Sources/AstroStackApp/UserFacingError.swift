@@ -14,6 +14,12 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
   case studio(StudioError)
   /// The Studio's history refused a move or could not be read back (card 0087).
   case history(HistoryError)
+  /// A pipeline run stopped on a step (cards 0059, 0088, 0093).
+  case pipeline(PipelineError)
+  /// Siril found no plate solution, or could not look (card 0093).
+  case plateSolve(PlateSolveError)
+  /// The plate-solve values Apply cannot solve with (card 0093).
+  case plateSolveInput(PlateSolveTool.InputError)
   /// The document was closed under an open sheet.
   case projectClosed
   /// A new project's name has nothing left once cleaned for the file system.
@@ -39,6 +45,9 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     case let error as LegacyRunError: self = .legacyRun(error)
     case let error as StudioError: self = .studio(error)
     case let error as HistoryError: self = .history(error)
+    case let error as PipelineError: self = .pipeline(error)
+    case let error as PlateSolveError: self = .plateSolve(error)
+    case let error as PlateSolveTool.InputError: self = .plateSolveInput(error)
     case let error as LocalizedError where error.errorDescription != nil:
       self = .other(error.errorDescription ?? "")
     // A system error has a sentence of its own; a Swift error without one would read
@@ -58,6 +67,9 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     case .legacyRun(let error): Self.message(error)
     case .studio(let error): Self.message(error)
     case .history(let error): Self.message(error)
+    case .pipeline(let error): Self.message(error)
+    case .plateSolve(let error): Self.message(error)
+    case .plateSolveInput(let error): Self.message(error)
     case .projectClosed: .app("This project is not open any more; reopen it and import again.")
     case .projectName: .app("Name the project after its target, for example M 31.")
     case .documentsAccess(let path):

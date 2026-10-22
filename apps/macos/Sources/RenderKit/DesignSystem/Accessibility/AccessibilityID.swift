@@ -33,6 +33,8 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
     case toggle
     /// A choice parameter's menu (card 0087).
     case choice
+    /// A text parameter's field (card 0093).
+    case text
     /// A process's suggested value, applied on click only (card 0087).
     case suggestion
   }
@@ -206,6 +208,9 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
   /// The Studio's « Apply » (card 0087).
   package static let studioApply = stageControl("studio", "apply")
 
+  /// The Studio's « Stop » of a running host tool (card 0093).
+  package static let studioToolStop = stageControl("studio", "tool.stop")
+
   /// The Studio's « Undo » (card 0087).
   package static let studioUndo = stageControl("studio", "undo")
 
@@ -262,9 +267,6 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
 
   /// The Studio's « Show the background model » toggle (card 0092).
   package static let studioShowModel = stageControl("studio", "showModel")
-
-  /// The Studio's batch-process progress (card 0092).
-  package static let studioBatchProgress = stageControl("studio", "batchProgress")
 
   /// The Import sheet's profile picker (card 0060).
   package static let importProfile = Self("import", "profile")

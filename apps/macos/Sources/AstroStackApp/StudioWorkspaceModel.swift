@@ -4,6 +4,7 @@ internal import Metal
 internal import Observation
 package import ProcessKit
 package import RenderKit
+package import StackKit
 
 /// What the Studio pane drives (card 0087, design §5 B): the catalogue by stage, the panel of
 /// the chosen process with its live preview in the viewer, Apply / Undo / Redo on the history,
@@ -62,8 +63,19 @@ package final class StudioWorkspaceModel {
   package var pipeline: PipelineSidebarModel?
   /// Why the last action failed.
   package internal(set) var failure: LocalizedStringResource?
-  /// A batch process's run, its tools and the model view (card 0092).
+  /// The host tool running for the panel (card 0093), with its last line.
+  package internal(set) var toolRun: ToolProgress?
+  /// What the last host tool reported (a plate solution), in a locale.
+  package internal(set) var toolReport: (@Sendable (Locale) -> LocalizedStringResource)?
+  /// The host tools by process id: what Apply runs for a `hostTool` process.
+  @ObservationIgnored package let tools: [String: StudioTool]
+  @ObservationIgnored var toolTask: Task<Void, Never>?
+  /// Numbers the tool runs, so a late progress line finds its own run or none.
+  @ObservationIgnored var toolRunNumber = 0
+  /// Where each host tool stands and the model view (card 0092).
   package internal(set) var batch = BatchState()
+  /// Probes a host tool: an engine whose tool is missing is greyed with the reason (card 0092).
+  @ObservationIgnored package let locate: @Sendable (HostTool) async -> ToolStatus
 
   /// The processes it offers.
   @ObservationIgnored package let registry: ProcessRegistry
@@ -73,8 +85,6 @@ package final class StudioWorkspaceModel {
   @ObservationIgnored package var reveal: () -> Void = {}
   /// The undo manager its moves are registered on, cleared of them when it is retired.
   @ObservationIgnored package weak var undoManager: UndoManager?
-  /// The host tools the batch processes run.
-  @ObservationIgnored package let tools: StudioTools
   @ObservationIgnored private let base: Set<LayerRole>
   @ObservationIgnored private var previewTask: Task<Void, Never>?
   /// The head's display statistics: a preview is drawn through them, never through a previous
@@ -85,12 +95,15 @@ package final class StudioWorkspaceModel {
   /// The failure shown is a preview's (the next preview clears it).
   @ObservationIgnored private var previewFailed = false
 
-  /// The workspace of `studio` whose bundle holds the layer roles `base`, running its batch
-  /// processes with `tools` (the installed ones, working in the stack's folder, by default).
-  package init(studio: StudioModel, base: Set<LayerRole>, tools: StudioTools? = nil) throws {
+  /// The workspace of `studio` whose bundle holds the layer roles `base`.
+  package init(
+    studio: StudioModel, base: Set<LayerRole>, tools: [String: StudioTool] = [:],
+    locate: @escaping @Sendable (HostTool) async -> ToolStatus = HostTools.live().locate
+  ) throws {
     self.studio = studio
+    self.tools = tools
+    self.locate = locate
     self.base = base
-    self.tools = tools ?? .live(scratch: Self.newScratch())
     registry = studio.session.registry
     let renderer = try ViewerRenderer(device: studio.session.device)
     viewer = Viewer(
@@ -105,8 +118,7 @@ package final class StudioWorkspaceModel {
   package func retire() {
     isRetired = true
     previewTask?.cancel()
-    clearScratch(after: batch.task)
-    batch.task?.cancel()
+    toolTask?.cancel()
     undoManager?.removeAllActions(withTarget: self)
   }
 
@@ -117,18 +129,19 @@ package final class StudioWorkspaceModel {
     refresh(panel)
     panel.onChange = { [weak self] in self?.panelChanged() }
     hideModel()
-    if type.isBatch { stopPreview() }
     self.panel = panel
+    toolReport = nil
     shown = nil
     // The defaults are previewed at once: Apply never records what was not shown (R2).
     schedulePreview()
-    if type.isBatch { batchChosen() }
+    toolsChosen()
   }
 
   /// Closes the panel: the viewer shows the head again.
   package func closePanel() {
     panel = nil
     hideModel()
+    toolReport = nil
     stopPreview()
   }
 
@@ -166,11 +179,8 @@ package final class StudioWorkspaceModel {
   /// Applies the panel's values at full resolution: the head moves.
   ///
   /// A failure is shown in the panel.
-  ///
-  /// A batch process runs through `runBatch()` instead (its result is its preview).
   package func apply() throws {
-    guard let panel, !panel.type.isBatch, batch.progress == nil, pipeline?.isRunning != true
-    else { return }
+    guard let panel else { return }
     // Apply records what the viewer shows (R2): values not drawn yet (a value just typed, a
     // drag within the frame) are drawn first, and what was drawn is what is recorded.
     previewTask?.cancel()
@@ -189,13 +199,11 @@ package final class StudioWorkspaceModel {
 
   /// Back one step.
   package func undo() throws {
-    try stopBatchForHistory()
     try reported { try studio.undo() }
   }
 
   /// Forward one undone step.
   package func redo() throws {
-    try stopBatchForHistory()
     try reported { try studio.redo() }
   }
 
@@ -223,14 +231,12 @@ package final class StudioWorkspaceModel {
   /// A value moved: the suggestions follow the values they depend on, the preview follows.
   private func panelChanged() {
     if let panel { panel.suggestions = offers(for: panel.type, params: panel.params) }
-    if panel?.type.isBatch == true { greyUnavailable() }
+    greyUnavailable()
     schedulePreview()
   }
 
   private func schedulePreview() {
     previewTask?.cancel()
-    // A batch process has no live preview: its tool runs on Apply (design §4.6).
-    guard panel?.type.isBatch != true else { return }
     previewTask = Task { [weak self] in
       // One frame: a slider drag renders its last position, not every intermediate one.
       try? await Task.sleep(for: .milliseconds(16))
@@ -251,6 +257,8 @@ package final class StudioWorkspaceModel {
   /// the catalogue follow the new head.
   func headChanged() throws {
     shown = nil
+    // A report speaks of the head it was made on.
+    toolReport = nil
     batch.showsModel = false
     defer { headStatistics = viewer.model.statistics }
     isPreviewing = false
@@ -275,7 +283,8 @@ package final class StudioWorkspaceModel {
       let entries = registry.types.filter { $0.stage == stage }.map { type in
         Entry(
           id: type.id, title: type.title,
-          unavailable: studio.session.unavailable(for: type, base: base, registry: registry))
+          unavailable: studio.session.unavailable(for: type, base: base, registry: registry)
+            ?? (type.hostTool && tools[type.id] == nil ? .toolMissing : nil))
       }
       if !entries.isEmpty { groups.append(Group(stage: stage, entries: entries)) }
     }

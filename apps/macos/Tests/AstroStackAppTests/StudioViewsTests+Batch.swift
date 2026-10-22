@@ -16,8 +16,7 @@ extension StudioViewsTests {
   func testBatchSideColumn() async throws {
     let opened = try StudioModelTests.project()
     defer { try? opened.package.close() }
-    let workspace = try BackgroundProcessTests.workspace(
-      opened, tools: BackgroundProcessTests.tools(missing: [.graxpert]))
+    let workspace = try BackgroundProcessTests.workspace(opened, missing: [.graxpert])
     workspace.choose(BackgroundExtractionProcess.id)
     await workspace.refreshTools()
     var ids = Set(AccessibilityAuditTests.entries(StudioSideView(model: workspace)).map(\.id))
@@ -27,7 +26,7 @@ extension StudioViewsTests {
     #expect(!ids.contains("fr.astrostack.stage.studio.mask.source"), "no mask on a host tool")
 
     try #require(workspace.panel).set("engine", .choice("siril-rbf"))
-    await workspace.runBatch()
+    #expect(await workspace.runTool())
     try workspace.toggleModel()
     let entries = AccessibilityAuditTests.entries(StudioSideView(model: workspace))
     ids = Set(entries.map(\.id))

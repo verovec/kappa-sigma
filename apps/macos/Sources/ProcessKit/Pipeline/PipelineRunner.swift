@@ -162,7 +162,17 @@ package final class PipelineRunner {
       session.onEvent(.reused(index))
       return
     }
-    if let type = registry.type(id: id), !type.isBatch {
+    if let tool = batch[id] {
+      let params = try Self.values(of: step, schema: tool.schema, at: index)
+      let onEvent = session.onEvent
+      let input = try BatchInput(history: history, bundle: session.bundle)
+      let output = try await tool.step(input, params) { onEvent(.progress(index, $0)) }
+      try history.apply(
+        processID: id, params: params, result: output.result, outputs: output.outputs,
+        replacing: output.replaced)
+    } else if let type = registry.type(id: id) {
+      // A host-tool process's render is its preview only: without the tool, refuse.
+      guard !type.hostTool else { throw PipelineError.toolMissing(id) }
       let params = try Self.values(of: step, schema: type.schema, at: index)
       let process = try type.init(params: params, device: device)
       let input = history.current
@@ -173,16 +183,6 @@ package final class PipelineRunner {
       let result = AstroImage(
         width: input.width, height: input.height, planes: output.read(), metadata: input.metadata)
       try history.apply(processID: id, params: params, result: result)
-    } else if let tool = batch[id] {
-      let params = try Self.values(of: step, schema: tool.schema, at: index)
-      let onEvent = session.onEvent
-      let input = try BatchInput(history: history, bundle: session.bundle)
-      let output = try await tool.step(input, params) { onEvent(.progress(index, $0)) }
-      try history.apply(
-        processID: id, params: params, result: output.result, outputs: output.outputs,
-        replacing: output.replaced)
-    } else if registry.type(id: id)?.isBatch == true {
-      throw PipelineError.noTool(id)
     } else {
       throw PipelineError.unknownProcess(id)
     }

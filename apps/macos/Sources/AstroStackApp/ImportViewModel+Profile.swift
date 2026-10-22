@@ -58,7 +58,7 @@ extension ImportViewModel {
       case .number(let number): .number(number)
       case .flag(let flag): .flag(flag)
       case .choice(let option): .choice(option)
-      case .points: nil
+      case .points, .text: nil
       }
     return converted.map(knob.accepts) ?? false
   }

@@ -8,32 +8,38 @@ import Synchronization
 import TestSupport
 import Testing
 
-/// Background extraction in the Studio (card 0092), over fake engines: Apply runs the chosen
-/// engine and records one step with the model as an output, the Model toggle shows it, a
-/// missing tool is named and never replaced by another engine (R2).
+/// Background extraction in the Studio (card 0092), on card 0093's host-tool seam, over fake
+/// engines: Apply runs the chosen engine and records one step with the model as an output, the
+/// Model toggle shows it, a missing tool is named and never replaced by another engine (R2).
 @MainActor
 @Suite(
   "Background extraction in the Studio — step, model view, no fallback, chosen layers",
   .enabled(if: MTLCreateSystemDefaultDevice() != nil, "no Metal device"))
 struct BackgroundProcessTests {
-  /// The tools the fake engine was asked for, in order.
+  /// The engines the fake tool was asked for, in order.
   final class Calls: Sendable {
     private let storage = Mutex<[String]>([])
     var engines: [String] { storage.withLock { $0 } }
     func record(_ engine: String) { storage.withLock { $0.append(engine) } }
   }
 
-  /// Tools where `missing` is not installed; the engine subtracts 0.01 and models 0.01.
-  static func tools(missing: Set<HostTool> = [], calls: Calls = Calls()) -> StudioTools {
-    StudioTools(
-      locate: { tool in
-        missing.contains(tool)
-          ? .missing(path: "/Applications/\(tool.productName).app")
-          : .found(path: "/usr/local/bin/\(tool.rawValue)", version: nil)
-      },
-      background: { image, params, progress in
+  /// Something the fake engine does on the main actor while it runs (an undo meanwhile).
+  final class During: Sendable {
+    private let storage = Mutex<(@MainActor @Sendable () -> Void)?>(nil)
+    func set(_ action: @escaping @MainActor @Sendable () -> Void) {
+      storage.withLock { $0 = action }
+    }
+    @MainActor func run() { storage.withLock { $0 }?() }
+  }
+
+  /// The tool over a fake engine: corrected = image − 0.01, model = 0.01 (the real targets and
+  /// step assembly of `BackgroundExtractionProcess.run`).
+  static func tool(calls: Calls = Calls(), during: During = During()) -> StudioTool {
+    StudioTool { input, params, onProgress in
+      let extract: BackgroundExtractionProcess.Extract = { image, params, _ in
         calls.record(params.choice("engine"))
-        progress(1)
+        await during.run()
+        onProgress(ToolProgress(line: "fake 100%", percent: 100))
         let corrected = AstroImage(
           width: image.width, height: image.height,
           planes: image.planes.map { $0.map { $0 - 0.01 } }, metadata: image.metadata)
@@ -41,7 +47,21 @@ struct BackgroundProcessTests {
           width: image.width, height: image.height,
           planes: image.planes.map { $0.map { _ in 0.01 } }, metadata: image.metadata)
         return (corrected, model)
-      })
+      }
+      let output = try await BackgroundExtractionProcess.run(
+        input, params: params, extract: extract)
+      return StudioToolResult(
+        image: output.result, report: nil, outputs: output.outputs, replaced: output.replaced)
+    }
+  }
+
+  /// A machine where `missing` is not installed.
+  static func locate(missing: Set<HostTool> = []) -> @Sendable (HostTool) async -> ToolStatus {
+    { tool in
+      missing.contains(tool)
+        ? .missing(path: "/Applications/\(tool.productName).app")
+        : .found(path: "/usr/local/bin/\(tool.rawValue)", version: nil)
+    }
   }
 
   /// The fake stack with two line layers.
@@ -58,35 +78,35 @@ struct BackgroundProcessTests {
     return bundle
   }
 
-  static func workspace(_ opened: StudioModelTests.Opened, tools: StudioTools) throws
-    -> StudioWorkspaceModel
-  {
+  static func workspace(
+    _ opened: StudioModelTests.Opened, tool: StudioTool = tool(), missing: Set<HostTool> = []
+  ) throws -> StudioWorkspaceModel {
     let studio = try StudioModel(
       store: opened.package.store, stackID: opened.stackID, packageFolder: opened.package.url,
       stackFolder: opened.folder, bundle: bundle())
-    return try StudioWorkspaceModel(studio: studio, base: [.color, .emission], tools: tools)
+    return try StudioWorkspaceModel(
+      studio: studio, base: [.color, .emission], tools: [BackgroundExtractionProcess.id: tool],
+      locate: locate(missing: missing))
   }
 
   @Test("testStepOutputsAndModelToggle", .scratchDirectory)
   func testStepOutputsAndModelToggle() async throws {
     let opened = try StudioModelTests.project()
     defer { try? opened.package.close() }
-    let workspace = try Self.workspace(opened, tools: Self.tools())
+    let workspace = try Self.workspace(opened)
     let combined = workspace.studio.head.planes
     #expect(!workspace.canShowModel)
 
     workspace.choose(BackgroundExtractionProcess.id)
     await workspace.refreshTools()
-    #expect(!workspace.isPreviewing, "a batch process has no live preview")
     let panel = try #require(workspace.panel)
     panel.set("applyTo", .choice("all"))
-    await workspace.runBatch()
-    #expect(workspace.failure == nil)
+    #expect(await workspace.runTool())
+    #expect(workspace.failure == nil && workspace.toolRun == nil)
     #expect(workspace.studio.steps.map(\.processID).last == BackgroundExtractionProcess.id)
     let step = try #require(workspace.studio.steps.last)
     #expect(step.outputs.keys.map(\.self) == [.backgroundModel])
     #expect(step.replaced.keys.sorted() == ["Ha", "OIII", "RGB"])
-    #expect(workspace.batchProgress == nil, "the progress row goes when the run ends")
     let head = workspace.studio.head.planes
     #expect(head[0][0] == combined[0][0] - 0.01)
 
@@ -112,8 +132,7 @@ struct BackgroundProcessTests {
     let opened = try StudioModelTests.project()
     defer { try? opened.package.close() }
     let calls = Calls()
-    let workspace = try Self.workspace(
-      opened, tools: Self.tools(missing: [.graxpert], calls: calls))
+    let workspace = try Self.workspace(opened, tool: Self.tool(calls: calls), missing: [.graxpert])
     workspace.choose(BackgroundExtractionProcess.id)
     await workspace.refreshTools()
     let panel = try #require(workspace.panel)
@@ -128,7 +147,7 @@ struct BackgroundProcessTests {
     #expect(panel.params.choice("engine") == "graxpert", "the user's choice is kept")
     #expect(workspace.missingTool?.tool == .graxpert)
 
-    await workspace.runBatch()
+    #expect(await workspace.runTool() == false)
     #expect(calls.engines.isEmpty, "no engine ran, GraXpert's nor another")
     #expect(workspace.studio.steps.count == 1)
     var failure = try #require(workspace.failure)
@@ -138,7 +157,7 @@ struct BackgroundProcessTests {
     // Another engine is the user's own pick: it runs.
     panel.set("engine", .choice("siril-polynomial"))
     #expect(workspace.missingTool == nil)
-    await workspace.runBatch()
+    #expect(await workspace.runTool())
     #expect(calls.engines == ["siril-polynomial"])
   }
 
@@ -158,21 +177,20 @@ struct BackgroundProcessTests {
       ScopeCase(applyTo: "all", head: true, layers: ["Ha", "OIII", "RGB"]),
     ])
   func testAppliesToChosenLayers(row: ScopeCase) async throws {
-    let (applyTo, expected) = (row.applyTo, row)
     let opened = try StudioModelTests.project()
     defer { try? opened.package.close() }
-    let workspace = try Self.workspace(opened, tools: Self.tools())
+    let workspace = try Self.workspace(opened)
     let before = workspace.studio.head.planes
     let bundle = Self.bundle()
     workspace.choose(BackgroundExtractionProcess.id)
-    try #require(workspace.panel).set("applyTo", .choice(applyTo))
-    await workspace.runBatch()
+    try #require(workspace.panel).set("applyTo", .choice(row.applyTo))
+    #expect(await workspace.runTool())
 
-    #expect((workspace.studio.head.planes != before) == expected.head)
+    #expect((workspace.studio.head.planes != before) == row.head)
     let context = try workspace.studio.session.history.context(over: bundle.layers)
     for (id, layer) in bundle.layers {
       let rewritten = context[id]?.planes != layer.planes
-      #expect(rewritten == expected.layers.contains(id), "\(applyTo): \(id)")
+      #expect(rewritten == row.layers.contains(id), "\(row.applyTo): \(id)")
     }
   }
 }

@@ -66,7 +66,6 @@ package final class StudioSession {
     guard let type = registry.type(id: processID) else {
       throw StudioError.unknownProcess(processID)
     }
-    guard !type.isBatch else { throw StudioError.runsInTool(processID) }
     let source = input ?? history.current
     let (layers, layerStats) = try context()
     let output = try runner.run(
@@ -80,38 +79,20 @@ package final class StudioSession {
 
   /// Applies `processID` with `params` at full resolution: the head moves to its result.
   package func apply(_ processID: String, params: ParamSet, mask: AstroImage? = nil) throws {
+    if registry.type(id: processID)?.hostTool == true { throw StudioError.needsTool(processID) }
     let result = try render(processID, params: params, mask: mask)
     try history.apply(processID: processID, params: params, result: result)
   }
 
-  /// Records a step whose result was made elsewhere (a host tool), with the layers it wrote.
+  /// Records a step whose result was made elsewhere (a host tool), with the layers it wrote and
+  /// the bundle layers it rewrote (card 0092).
   package func apply(
     _ processID: String, params: ParamSet, result: AstroImage,
-    outputs: [LayerRole: AstroImage] = [:]
+    outputs: [LayerRole: AstroImage] = [:], replacing: [String: AstroImage] = [:]
   ) throws {
-    try history.apply(processID: processID, params: params, result: result, outputs: outputs)
-  }
-
-  /// Runs the batch process `processID` through `batch` with `params` on the head and the
-  /// bundle's layers as the steps so far left them, and records its step: the head moves to
-  /// its result, its outputs and rewritten layers overlay the context of the next steps.
-  package func apply(
-    _ processID: String, batch: PipelineRunner.BatchProcess, params: ParamSet,
-    onProgress: @escaping @Sendable (Double) -> Void
-  ) async throws {
-    let input = try PipelineRunner.BatchInput(history: history, bundle: bundle)
-    let head = (history.steps.count, history.steps.last?.file)
-    let output = try await batch.step(input, params, onProgress)
-    // Cancelled meanwhile (an undo, the workspace replaced): nothing is recorded.
-    try Task.checkCancellation()
-    // The tool ran for seconds or minutes: a head moved meanwhile would get a result made
-    // from another image.
-    guard head == (history.steps.count, history.steps.last?.file) else {
-      throw StudioError.headMoved(processID)
-    }
     try history.apply(
-      processID: processID, params: params, result: output.result, outputs: output.outputs,
-      replacing: output.replaced)
+      processID: processID, params: params, result: result, outputs: outputs,
+      replacing: replacing)
   }
 
   /// The layers a render reads: the bundle's, overlaid by what the applied steps wrote.

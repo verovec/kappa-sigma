@@ -192,13 +192,15 @@ package final class StudioWorkspaceModel {
     previewTask?.cancel()
     if !isShowing(panel) { drawPreview() }
     guard isShowing(panel) else { return }
+    // The values applied: a geometry panel is back at the identity once the pixels moved.
+    let (id, params) = (panel.type.id, panel.params)
     var used: AstroImage?
     try reported {
       used = try maskImage()
-      try studio.apply(panel.type.id, params: panel.params, mask: used)
+      try studio.apply(id, params: params, mask: used)
     }
     // The user's manual work becomes the recipe (R5): the pipeline records the step.
-    pipeline?.applied(panel.type.id, params: panel.params, masked: used != nil)
+    pipeline?.applied(id, params: params, masked: used != nil)
   }
 
   /// Whether the viewer shows the current values and mask of `panel`.

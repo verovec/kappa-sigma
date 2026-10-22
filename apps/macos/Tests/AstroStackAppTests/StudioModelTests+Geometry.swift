@@ -218,5 +218,16 @@ extension StudioModelTests {
     await workspace.previewNow()
     #expect(workspace.viewer.model.image.width == 6, "the preview shows the head, not a re-crop")
     #expect(!workspace.showsMovedGrid)
+    #expect(
+      workspace.studio.steps.last?.params.number("cropLeft") == 2, "the step keeps its values")
+
+    // A redo moves the pixels again: the panel resets, its interpolation stays.
+    panel.set("interpolation", .choice("bicubic"))
+    try workspace.undo()
+    panel.set("cropTop", .number(1))
+    await workspace.previewNow()
+    try workspace.redo()
+    #expect(GeometryProcess.isIdentity(panel.params))
+    #expect(panel.params.choice("interpolation") == "bicubic")
   }
 }

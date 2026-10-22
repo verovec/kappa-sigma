@@ -148,6 +148,14 @@ extension GeometryProcessTests {
       processID: "geometry", params: Self.params([:]), result: history.current,
       replacing: ["Ha": ha])
     let moved = try history.context(over: [:], stats: fit, device: device, moving: ["geometry"])
-    #expect(moved.1["Ha"]?.continuumK == 0.42)
+    #expect(moved.1["Ha"]?.continuumK == nil, "extracted, then moved: still no stack fit")
+    try history.undo()
+    try history.undo()
+    try history.apply(
+      processID: "geometry", params: Self.params([:]), result: history.current,
+      replacing: ["Ha": ha])
+    let onlyMoved = try history.context(
+      over: [:], stats: fit, device: device, moving: ["geometry"])
+    #expect(onlyMoved.1["Ha"]?.continuumK == 0.42, "only moved: the stack fit stays")
   }
 }

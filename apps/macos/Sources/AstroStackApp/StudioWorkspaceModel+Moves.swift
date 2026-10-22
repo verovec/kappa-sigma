@@ -17,10 +17,10 @@ extension StudioWorkspaceModel {
     return !type.isIdentity(step.params)
   }
 
-  /// Drops the viewer's region when the head changed through a step that moved the pixels
-  /// (applied, undone, redone, or run by the pipeline): its pixels belong to another part of the
-  /// image even at the same size (a flip, a half turn).
-  /// Returns whether the pixels moved.
+  /// Drops the viewer's region when the head changed through a step that moved the pixels.
+  ///
+  /// Applied, undone, redone or run by the pipeline: the region's pixels belong to another part
+  /// of the image even at the same size (a flip, a half turn). Returns whether the pixels moved.
   @discardableResult
   func dropRegionIfMoved() -> Bool {
     let after = studio.steps
@@ -32,9 +32,10 @@ extension StudioWorkspaceModel {
     return true
   }
 
-  /// After the pixels moved (an Apply, an undo or redo, a pipeline run), an open geometry panel
-  /// starts again from the identity: its crops, turns, flips and angle were relative to the image
-  /// they moved and would move the new head again. Its interpolation and canvas stay.
+  /// Puts an open geometry panel back at the identity after the pixels moved.
+  ///
+  /// An Apply, an undo or redo, a pipeline run: its crops, turns, flips and angle were relative to
+  /// the image they moved and would move the new head again. Its interpolation and canvas stay.
   func resetMovingValues() {
     guard let panel, panel.type == GeometryProcess.self else { return }
     let identity = ParamSet(schema: GeometryProcess.schema)

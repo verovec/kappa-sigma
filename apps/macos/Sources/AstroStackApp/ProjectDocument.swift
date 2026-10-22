@@ -14,7 +14,8 @@ package final class ProjectDocument: NSDocument {
   private var project: ProjectPackage?
   private var isTemporary = false
   /// The window's model, so closing the project stops a run that writes into it.
-  private(set) var windowModel: ProjectWindowModel?
+  /// The window's model, once its controller is made.
+  package private(set) var windowModel: ProjectWindowModel?
 
   /// The folder of the package the document currently edits.
   package var packageURL: URL? { project?.url }

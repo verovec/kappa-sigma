@@ -29,6 +29,12 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
     case canvas
     /// The « ? » beside a parameter (card 0086).
     case help
+    /// A flag parameter's toggle (card 0087).
+    case toggle
+    /// A choice parameter's menu (card 0087).
+    case choice
+    /// A process's suggested value, applied on click only (card 0087).
+    case suggestion
   }
 
   // MARK: - Shared components

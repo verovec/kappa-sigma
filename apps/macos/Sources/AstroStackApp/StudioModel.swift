@@ -75,6 +75,14 @@ package final class StudioModel {
     try mirrorApplied()
   }
 
+  /// What `processID` with `params` makes of the head at `scale` (the live preview; at scale 1
+  /// it is the pixels Apply records), under `mask`.
+  package func preview(
+    _ processID: String, params: ParamSet, scale: Double = 1, mask: AstroImage? = nil
+  ) throws -> AstroImage {
+    try session.render(processID, params: params, scale: scale, purpose: .preview, mask: mask)
+  }
+
   /// Back one step.
   package func undo() throws {
     try session.history.undo()

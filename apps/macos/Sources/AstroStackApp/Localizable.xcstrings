@@ -3729,6 +3729,38 @@
         }
       }
     },
+    "Suggested value": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suggested value"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valeur suggérée"
+          }
+        }
+      }
+    },
+    "Suggested: %@ — %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suggested: %1$@ — %2$@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suggéré : %1$@ — %2$@"
+          }
+        }
+      }
+    },
     "System": {
       "localizations": {
         "en": {

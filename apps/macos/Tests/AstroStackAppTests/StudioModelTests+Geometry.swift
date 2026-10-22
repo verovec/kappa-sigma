@@ -158,8 +158,6 @@ extension StudioModelTests {
     await workspace.previewNow()
     #expect(workspace.comparing == nil, "a flipped preview, same size, no longer lies on step 1")
     #expect(throws: UserFacingError.movedPreview) { try workspace.compare(toStep: 0) }
-    workspace.toggleCompare(0)
-    #expect(workspace.failure == UserFacingError.movedPreview.message, "the click says why")
     #expect(workspace.regionUnavailable == .noRegion)
     viewer.drag(from: [1, 1], to: [4, 4], tool: .region)
     panel.set("flipV", .flag(false))
@@ -177,5 +175,27 @@ extension StudioModelTests {
     // Choosing another process takes the moved preview off screen at once.
     workspace.choose(StretchProcess.id)
     #expect(!workspace.showsMovedGrid && workspace.viewer.model.image.height == 8)
+  }
+}
+
+extension StudioModelTests {
+  /// Review of card 0090: a compare clicked on a moved preview says why it is refused, and the
+  /// reason goes once the preview no longer moves the pixels.
+  @Test("a refused compare click explains itself, then clears", .scratchDirectory)
+  func testRefusedCompareClears() async throws {
+    let opened = try Self.project()
+    defer { try? opened.package.close() }
+    let workspace = try StudioWorkspaceModelTests.workspace(opened, bundle: Self.bundle())
+    workspace.choose(GeometryProcess.id)
+    let panel = try #require(workspace.panel)
+    panel.set("flipH", .flag(true))
+    await workspace.previewNow()
+
+    workspace.toggleCompare(0)
+    #expect(workspace.comparing == nil)
+    #expect(workspace.failure == UserFacingError.movedPreview.message)
+    panel.set("flipH", .flag(false))
+    await workspace.previewNow()
+    #expect(workspace.failure == nil, "the identity preview clears the refusal")
   }
 }

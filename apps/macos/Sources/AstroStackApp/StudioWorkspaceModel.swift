@@ -238,6 +238,7 @@ package final class StudioWorkspaceModel {
       try compare(toStep: comparing == index ? nil : index)
     } catch {
       failure = UserFacingError(error).message
+      previewFailed = UserFacingError(error) == .movedPreview  // cleared by the next good preview
     }
   }
 

@@ -121,3 +121,15 @@ struct PlateSolveToolWiringTests {
     #expect(seen.withLock { $0 } == [0.5])
   }
 }
+
+extension PlateSolveToolWiringTests {
+  @Test("the pipeline sidebar gets the workspace's tools as batch steps", .scratchDirectory)
+  func testSidebarBatch() async throws {
+    let tool = StudioTool { image, _, _ in StudioToolResult(image: image, report: nil) }
+    let opened = try PlateSolveProcessTests.open(tools: [PlateSolveProcess.id: tool, "nope": tool])
+    defer { try? opened.project.package.close() }
+    let batch = PipelineSidebarModel.batch(of: opened.workspace)
+    #expect(batch.keys.sorted() == [PlateSolveProcess.id], "only registered processes")
+    #expect(batch[PlateSolveProcess.id]?.schema == PlateSolveProcess.schema)
+  }
+}

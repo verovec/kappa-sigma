@@ -19,8 +19,8 @@ struct StudioSideView: View {
             Button(.app("Close")) { model.closePanel() }
               .accessible(.studioClosePanel, label: .app("Close"))
             Spacer()
+            // No default-button Return: Return confirms a typed value (Edit › Apply Process ⌘E).
             Button(.app("Apply")) { applyRecorded() }
-              .keyboardShortcut(.defaultAction)
               .accessible(.studioApply, label: .app("Apply"))
           }
         } else {
@@ -48,7 +48,7 @@ struct StudioSideView: View {
       }
       ForEach(Array(model.studio.steps.enumerated()), id: \.offset) { index, step in
         let title = ProcessKitResources.title(
-          ProcessRegistryTitles.title(of: step.processID), locale: locale)
+          model.title(of: step.processID), locale: locale)
         Button {
           try? model.compare(toStep: model.comparing == index ? nil : index)
         } label: {
@@ -88,14 +88,4 @@ struct StudioSideView: View {
       try? model.redo()
     }
   }
-}
-
-/// The titles of the registry's processes by id (a step names its process by id).
-enum ProcessRegistryTitles {
-  static let titles: [String: String] = {
-    let types = (try? ProcessRegistry.standard().types) ?? []
-    return Dictionary(uniqueKeysWithValues: types.map { ($0.id, $0.title) })
-  }()
-
-  static func title(of id: String) -> String { titles[id] ?? id }
 }

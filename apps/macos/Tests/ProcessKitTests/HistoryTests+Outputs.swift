@@ -73,3 +73,24 @@ extension HistoryTests {
     #expect(reopened.steps.isEmpty && reopened.current.planes == original.planes)
   }
 }
+
+extension HistoryTests {
+  /// The manifest is written before the history moves: when it cannot be written, apply and
+  /// undo throw and the history is as it was.
+  @Test("a manifest that cannot be written leaves the history unchanged", .scratchDirectory)
+  func testManifestFailureLeavesHistory() throws {
+    let directory = try ScratchDirectory.url.appendingPathComponent("history")
+    let history = try History(directory: directory, original: try Self.image([0, 1, 2, 3]))
+    try history.apply(processID: "a", params: Self.params, result: try Self.image([1, 1, 1, 1]))
+    // A folder where the manifest file goes: every write of it fails.
+    let manifest = directory.deletingLastPathComponent().appendingPathComponent("history.json")
+    try FileManager.default.removeItem(at: manifest)
+    try FileManager.default.createDirectory(at: manifest, withIntermediateDirectories: false)
+    #expect(throws: (any Error).self) {
+      try history.apply(processID: "b", params: Self.params, result: try Self.image([2, 2, 2, 2]))
+    }
+    #expect(history.steps.map(\.processID) == ["a"] && history.current.planes == [[1, 1, 1, 1]])
+    #expect(throws: (any Error).self) { try history.undo() }
+    #expect(history.steps.count == 1 && history.current.planes == [[1, 1, 1, 1]])
+  }
+}

@@ -61,7 +61,10 @@ package final class StudioWorkspaceModel {
   /// Why the last action failed.
   package private(set) var failure: LocalizedStringResource?
 
-  @ObservationIgnored private let registry: ProcessRegistry
+  /// The processes it offers.
+  @ObservationIgnored package let registry: ProcessRegistry
+  /// Replaced by a newer stack's workspace: undo actions registered for it do nothing.
+  @ObservationIgnored package private(set) var isRetired = false
   @ObservationIgnored private let base: Set<LayerRole>
   @ObservationIgnored private var previewTask: Task<Void, Never>?
 
@@ -75,6 +78,17 @@ package final class StudioWorkspaceModel {
       model: ViewerModel(image: studio.head), renderer: renderer,
       texture: try Self.texture(studio.head, device: studio.session.device))
     refreshCatalogue()
+  }
+
+  /// Marks this workspace replaced (a newer stack opened in the Studio).
+  package func retire() {
+    isRetired = true
+    previewTask?.cancel()
+  }
+
+  /// The catalogue title of process `id` (ProcessKit's catalog key), or the id.
+  package func title(of id: String) -> String {
+    registry.type(id: id)?.title ?? id
   }
 
   /// Opens the panel of `processID` at its defaults, with its suggestions.
@@ -99,7 +113,9 @@ package final class StudioWorkspaceModel {
     guard let panel else { return }
     do {
       let preview = try studio.preview(panel.type.id, params: panel.params, mask: maskImage())
-      try show(preview)
+      // Through the head's display stretch: an auto-stretch fitted to the preview would hide
+      // the very change the process makes (what is shown is what Apply records, R2).
+      try show(preview, statistics: viewer.model.statistics)
       isPreviewing = true
       failure = nil
     } catch {
@@ -180,6 +196,10 @@ package final class StudioWorkspaceModel {
   }
 
   private func headChanged() throws {
+    if let panel {
+      panel.suggestions =
+        (try? studio.session.suggestions(for: panel.type, params: panel.params)) ?? []
+    }
     isPreviewing = false
     // A compared step that no longer exists (undone) stops the compare.
     if let comparing, comparing >= studio.steps.count { try compare(toStep: nil) }
@@ -187,9 +207,9 @@ package final class StudioWorkspaceModel {
     refreshCatalogue()
   }
 
-  private func show(_ image: AstroImage) throws {
+  private func show(_ image: AstroImage, statistics: [STFMapping]? = nil) throws {
     viewer.texture = try Self.texture(image, device: studio.session.device)
-    viewer.model.replace(image: image)
+    viewer.model.replace(image: image, statistics: statistics)
   }
 
   private func refreshCatalogue() {

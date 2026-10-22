@@ -97,10 +97,11 @@ package final class History {
       try write(image, name)
       written[role] = name
     }
-    steps.append(Step(processID: processID, params: params, file: file, outputs: written))
+    let step = Step(processID: processID, params: params, file: file, outputs: written)
+    try writeManifest(steps: steps + [step], undone: [], snapshots: snapshots)
+    steps.append(step)
     undone.removeAll()
     shown = Self.copy(result)
-    try writeManifest()
   }
 
   /// The roles the applied steps wrote layers for (no pixel read).
@@ -135,17 +136,20 @@ package final class History {
   package func undo() throws {
     guard !steps.isEmpty else { throw HistoryError.nothingToUndo }
     // Load first: a failed read leaves the history as it was.
-    shown = try image(file: steps.dropLast().last?.file)
+    let previous = try image(file: steps.dropLast().last?.file)
+    let last = steps[steps.count - 1]
+    try writeManifest(steps: Array(steps.dropLast()), undone: undone + [last], snapshots: snapshots)
+    shown = previous
     undone.append(steps.removeLast())
-    try writeManifest()
   }
 
   /// Re-applies the last undone step from its output on disk.
   package func redo() throws {
     guard let step = undone.last else { throw HistoryError.nothingToRedo }
-    shown = try image(file: step.file)
+    let next = try image(file: step.file)
+    try writeManifest(steps: steps + [step], undone: Array(undone.dropLast()), snapshots: snapshots)
+    shown = next
     steps.append(undone.removeLast())
-    try writeManifest()
   }
 
   /// Names the current state; a name is used once.
@@ -153,8 +157,9 @@ package final class History {
     guard !snapshots.contains(where: { $0.name == name }) else {
       throw HistoryError.duplicateSnapshot(name)
     }
-    snapshots.append(Snapshot(name: name, file: steps.last?.file))
-    try writeManifest()
+    let snapshot = Snapshot(name: name, file: steps.last?.file)
+    try writeManifest(steps: steps, undone: undone, snapshots: snapshots + [snapshot])
+    snapshots.append(snapshot)
   }
 
   /// The image a snapshot names (the viewer's compare reference, 0042).

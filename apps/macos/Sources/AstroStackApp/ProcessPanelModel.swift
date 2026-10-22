@@ -13,8 +13,9 @@ package final class ProcessPanelModel {
   package private(set) var params: ParamSet
   /// The advanced parameters are shown.
   package var showsAdvanced = false
-  /// What the process proposes from the statistics; nothing is set until one is taken.
-  package let suggestions: [Suggestion]
+  /// What the process proposes from the statistics of the head (refreshed when it moves);
+  /// nothing is set until one is taken.
+  package var suggestions: [Suggestion]
   /// Called after every accepted change (the live preview).
   @ObservationIgnored package var onChange: () -> Void = {}
 

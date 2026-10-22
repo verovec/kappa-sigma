@@ -108,10 +108,27 @@ extension ProjectWindowModel {
       let source = try await Self.openStack(
         folder.appendingPathComponent(stack.bundlePath), object: targetName)
       studio = studio ?? LegacyRunModel(source: source)
-      try await openWorkspace(
-        source, stackID: stack.id, folder: folder, bundlePath: stack.bundlePath)
+      startWorkspace(source, stackID: stack.id, folder: folder, bundlePath: stack.bundlePath)
     } catch {
       self.error = UserFacingError(error)
+    }
+  }
+
+  /// Loads the Studio's working image of stack `stackID` in a task the window owns, never the
+  /// view's (its pane changes while the layers load); a newer stack replaces the one shown.
+  func startWorkspace(_ source: LegacyRunSource, stackID: Int64, folder: URL, bundlePath: String) {
+    workspaceTask?.cancel()
+    workspace?.retire()
+    workspace = nil
+    workspaceTask = Task { [weak self] in
+      do {
+        try await self?.openWorkspace(
+          source, stackID: stackID, folder: folder, bundlePath: bundlePath)
+      } catch is CancellationError {
+        return
+      } catch {
+        self?.error = UserFacingError(error)
+      }
     }
   }
 
@@ -125,6 +142,7 @@ extension ProjectWindowModel {
     let combination = knobs.profile?.steps
       .first { $0.recipe.processID == ChannelCombinationProcess.id }
       .map { ParamSet.loading($0.recipe.params, onto: ChannelCombinationProcess.schema).params }
+    try Task.checkCancellation()
     let studio = try StudioModel(
       store: store, stackID: stackID, stackFolder: folder.appendingPathComponent(bundlePath),
       bundle: bundle, combination: combination)
@@ -166,11 +184,12 @@ extension ProjectWindowModel {
       encoder.outputFormatting = [.sortedKeys]
       let params = String(bytes: try encoder.encode(record), encoding: .utf8) ?? "{}"
       let read = sources.filter { record.request.paths.contains($0.path) }.map(\.id)
-      try store.addStack(
+      let stack = try store.addStack(
         bundlePath: "stacks/\(runID)", sourceIDs: read, paramsJSON: params,
         imageRoles: source.layers.map(\.id))
       knobs.clearIgnored()
       studio = LegacyRunModel(source: source)
+      startWorkspace(source, stackID: stack.id, folder: folder, bundlePath: stack.bundlePath)
       refresh()
       select(.studio)
     } catch {

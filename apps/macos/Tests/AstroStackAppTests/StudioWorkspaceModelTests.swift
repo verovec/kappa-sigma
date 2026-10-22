@@ -51,7 +51,9 @@ struct StudioWorkspaceModelTests {
     let panel = try #require(workspace.panel)
     #expect(panel.type.id == StretchProcess.id)
     panel.set("targetBackground", .number(0.2))
+    let headStatistics = workspace.viewer.model.statistics
     await workspace.previewNow()
+    #expect(workspace.viewer.model.statistics == headStatistics, "shown through the head's stretch")
     #expect(workspace.isPreviewing && workspace.viewer.model.image.planes != combined)
     let previewed = workspace.viewer.model.image.planes
 

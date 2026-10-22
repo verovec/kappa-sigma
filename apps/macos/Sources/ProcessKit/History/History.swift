@@ -86,29 +86,26 @@ package final class History {
   /// Records `result` as the output of `processID` with `params`, `outputs` as the layers it
   /// wrote and `bundleLayers` as the bundle layers it rewrote; what was undone is dropped.
   ///
-  /// Its files keep the head's header, or `header` when the step changed it (a geometry step's
-  /// moved plate solution); the steps after it keep that one.
+  /// Each file carries its image's own plate solution (`metadata.wcs`).
   package func apply(
     processID: String, params: ParamSet, result: AstroImage,
-    outputs: [LayerRole: AstroImage] = [:], bundleLayers: [String: AstroImage] = [:],
-    header: FITSHeader? = nil
+    outputs: [LayerRole: AstroImage] = [:], bundleLayers: [String: AstroImage] = [:]
   ) throws {
-    let kept = try header ?? headHeader()
     let digits = String(nextNumber)
     let stem = "step-" + String(repeating: "0", count: max(0, 4 - digits.count)) + digits
     nextNumber += 1
     let file = stem + ".fits"
-    try write(result, file, header: kept)
+    try write(result, file)
     var written: [LayerRole: String] = [:]
     for (role, image) in outputs {
       let name = stem + "-" + role.rawValue + ".fits"
-      try write(image, name, header: kept)
+      try write(image, name)
       written[role] = name
     }
     var rewritten: [String: String] = [:]
     for (id, image) in bundleLayers {
       let name = stem + "-" + id + ".fits"
-      try write(image, name, header: kept)
+      try write(image, name)
       rewritten[id] = name
     }
     var step = Step(processID: processID, params: params, file: file, outputs: written)
@@ -117,14 +114,6 @@ package final class History {
     steps.append(step)
     undone.removeAll()
     shown = Self.copy(result)
-    if let header { shown.metadata.wcs = WCS(header: header) }
-  }
-
-  /// The header the head's file carries (the original's before any step): what the next step
-  /// keeps.
-  package func headHeader() throws -> FITSHeader? {
-    guard let file = steps.last?.file else { return header }
-    return try FITSFile.read(at: directory.appendingPathComponent(file)).header
   }
 
   /// The roles the applied steps wrote layers for (no pixel read).
@@ -221,7 +210,10 @@ package final class History {
     try writeManifest()
   }
 
-  private func write(_ image: AstroImage, _ file: String, header: FITSHeader?) throws {
+  private func write(_ image: AstroImage, _ file: String) throws {
+    // The image's own solution (a plate solve adds one, a geometry step moves it, card 0090;
+    // the steps after it carry it on).
+    let header = (header ?? FITSHeader(cards: [])).carrying(image.metadata.wcs)
     try FITSFile.create(image, keeping: header, at: directory.appendingPathComponent(file))
     created.insert(file)
   }

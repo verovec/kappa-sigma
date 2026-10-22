@@ -33,6 +33,8 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
     case toggle
     /// A choice parameter's menu (card 0087).
     case choice
+    /// A text parameter's field (card 0093).
+    case text
     /// A process's suggested value, applied on click only (card 0087).
     case suggestion
   }
@@ -206,6 +208,9 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
   /// The Studio's « Apply » (card 0087).
   package static let studioApply = stageControl("studio", "apply")
 
+  /// The Studio's « Stop » of a running host tool (card 0093).
+  package static let studioToolStop = stageControl("studio", "tool.stop")
+
   /// The Studio's « Undo » (card 0087).
   package static let studioUndo = stageControl("studio", "undo")
 
@@ -214,6 +219,50 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
 
   /// The geometry panel's « Use region » (card 0090).
   package static let studioUseRegion = stageControl("studio", "geometry.useRegion")
+  /// A control of the Studio's pipeline column (card 0088).
+  private static func studioPipeline(_ name: String) -> Self {
+    stageControl("studio", "pipeline." + name)
+  }
+
+  /// The pipeline column's « Run ».
+  package static let studioPipelineRun = studioPipeline("run")
+  /// The pipeline column's « Continue ».
+  package static let studioPipelineContinue = studioPipeline("continue")
+  /// The pipeline column's « Replay on… ».
+  package static let studioPipelineReplay = studioPipeline("replay")
+  /// The pipeline column's files menu (save, load, compare).
+  package static let studioPipelineFiles = studioPipeline("files")
+  /// The files menu's « Save pipeline as… ».
+  package static let studioPipelineSaveAs = studioPipeline("saveAs")
+  /// The « Save pipeline as » name field.
+  package static let studioPipelineName = studioPipeline("name")
+  /// The « Save pipeline as » confirmation.
+  package static let studioPipelineSave = studioPipeline("save")
+  /// The « Save pipeline as » cancel.
+  package static let studioPipelineCancel = studioPipeline("cancel")
+  /// The files menu's « Load » submenu.
+  package static let studioPipelineLoad = studioPipeline("load")
+  /// The files menu's « Compare with » submenu.
+  package static let studioPipelineCompare = studioPipeline("compare")
+  /// The compare sheet's « Close ».
+  package static let studioPipelineCompareClose = studioPipeline("compare.close")
+  /// The Replay chooser's « Cancel ».
+  package static let studioPipelineReplayCancel = studioPipeline("replay.cancel")
+
+  /// The saved pipeline at `offset` in the Load (or Compare, `compare`) submenu.
+  package static func studioPipelineSaved(_ offset: Int, compare: Bool) -> Self {
+    studioPipeline((compare ? "compare." : "load.") + String(offset))
+  }
+
+  /// The breakpoint toggle of step `index`, or its lock when `lock` is true.
+  package static func studioPipelineStep(_ index: Int, lock: Bool) -> Self {
+    studioPipeline("step." + String(index) + (lock ? ".lock" : ".mode"))
+  }
+
+  /// The Replay chooser's stack `stackID`.
+  package static func studioPipelineReplayTarget(_ stackID: Int64) -> Self {
+    studioPipeline("replay." + String(stackID))
+  }
 
   /// The Studio's « Close » of the process panel (card 0087).
   package static let studioClosePanel = stageControl("studio", "closePanel")

@@ -20,6 +20,8 @@ package final class StudioModel {
   package private(set) var steps: [History.Step] = []
   /// The working image: the history's head.
   package private(set) var head: AstroImage
+  /// The stack's header (its base layer's): where suggestions read pointing and optics.
+  @ObservationIgnored package let header: FITSHeader?
 
   @ObservationIgnored private let store: ProjectStore
   @ObservationIgnored private let imageID: Int64
@@ -48,6 +50,7 @@ package final class StudioModel {
     session = try StudioSession(
       history: history, bundle: bundle, registry: registry, device: device)
     self.store = store
+    self.header = header
     packageRoot = packageFolder
     let images = try store.images(stackID: stackID)
     imageID =
@@ -87,6 +90,15 @@ package final class StudioModel {
     -> AstroImage
   {
     try session.render(processID, params: params, purpose: .preview, mask: mask)
+  }
+
+  /// Runs `move` on the history (a pipeline run, card 0088), then records what it applied in
+  /// the project, whether it finished or failed.
+  package func moving<Result>(_ move: (History) async throws -> Result) async throws -> Result {
+    defer { mirror() }
+    let result = try await move(session.history)
+    cleanUp()
+    return result
   }
 
   /// Back one step.

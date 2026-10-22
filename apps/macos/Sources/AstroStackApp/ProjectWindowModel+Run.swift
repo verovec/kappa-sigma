@@ -216,6 +216,7 @@ extension ProjectWindowModel {
         // stack dropped meanwhile reports nothing.
         guard self?.workspaceStackID == stackID else { return }
         self?.workspaceStackID = nil
+        self?.pendingReplay = nil
         self?.error = UserFacingError(error)
       }
     }
@@ -275,14 +276,21 @@ extension ProjectWindowModel {
       store: store, stackID: stackID, packageFolder: folder,
       stackFolder: folder.appendingPathComponent(bundlePath), bundle: bundle, header: header,
       combination: combination)
-    let workspace = try StudioWorkspaceModel(studio: studio, base: roles)
+    let workspace = try StudioWorkspaceModel(
+      studio: studio, base: roles,
+      // Host tools work outside the document package: a crash never leaves files inside it.
+      tools: StudioTool.standard(
+        scratch: FileManager.default.temporaryDirectory.appendingPathComponent(
+          "AstroStack/Work", isDirectory: true)))
     // An undo from another stage brings the Studio into view before moving its history.
     workspace.reveal = { [weak self] in self?.select(.studio) }
+    workspace.pipeline = try sidebar(of: workspace, stackID: stackID, store: store, roles: roles)
     self.workspace = workspace
     // The Studio's stage state follows; an error the window shows stays (a refresh clears it).
     let reported = error
     refresh()
     if error == nil { error = reported }
+    await replayIfPending(on: stackID)
   }
 
   @concurrent

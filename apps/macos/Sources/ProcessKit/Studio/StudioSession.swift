@@ -73,6 +73,8 @@ package final class StudioSession {
   /// Applies `processID` with `params` at full resolution: the head moves to its result (a
   /// geometry step moves every layer with it, card 0090).
   package func apply(_ processID: String, params: ParamSet, mask: AstroImage? = nil) throws {
+    // A host-tool process's render is its preview only: it applies through its tool.
+    if registry.type(id: processID)?.hostTool == true { throw StudioError.needsTool(processID) }
     try steps.apply(
       process(processID, params: params), processID: processID, params: params, to: history,
       mask: mask)

@@ -75,13 +75,15 @@ extension GeometryProcessTests {
 }
 
 extension GeometryProcessTests {
-  /// Second review of card 0090: rendering an image other than the head gives no plate solution
-  /// rather than the head's moved one.
-  @Test("an explicit input other than the head gets no WCS", .scratchDirectory)
-  func testExplicitInputHasNoWCS() throws {
+  /// Card 0090: a geometric render moves the plate solution of the image it renders — the head
+  /// or an explicit input — with the pixels.
+  @Test(
+    "the rendered image's own WCS is moved, the head's or an explicit input's", .scratchDirectory)
+  func testRenderMovesTheInputsWCS() throws {
     let device = try #require(MTLCreateSystemDefaultDevice())
     let header = try FITSFile.parse(Data(HistoryTests.solvedHeaderText.utf8)).header
     let original = try HistoryTests.image([0, 1, 2, 3])
+    original.metadata.wcs = WCS(header: header)
     let history = try History(
       directory: ScratchDirectory.url.appendingPathComponent("history"), original: original,
       header: header)
@@ -89,7 +91,12 @@ extension GeometryProcessTests {
       history: history, bundle: PipelineBundle(stats: LayerStats(channels: [])),
       registry: ProcessRegistry([GeometryProcess.self]), device: device)
     let params = try Self.params(["flipH": .flag(true)])
-    #expect(try session.render("geometry", params: params).metadata.wcs != nil)
-    #expect(try session.render("geometry", params: params, input: original).metadata.wcs == nil)
+    // The test image is stored top-down, so a display flip is a stored flip.
+    let want = WCS(header: header.moved(by: GridMap.identity(width: 2, height: 2).flippedX()))
+    #expect(try session.render("geometry", params: params).metadata.wcs == want)
+    let other = try HistoryTests.image([4, 5, 6, 7])
+    #expect(try session.render("geometry", params: params, input: other).metadata.wcs == nil)
+    other.metadata.wcs = WCS(header: header)
+    #expect(try session.render("geometry", params: params, input: other).metadata.wcs == want)
   }
 }

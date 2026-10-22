@@ -61,6 +61,17 @@ nonisolated package enum CommandCatalog {
     AppCommand(
       "studio.apply", "Apply Process", menu: .edit, action: "applyProcess:", key: "e",
       stage: .studio),
+    // The Studio's pipeline (card 0088): Run to the next breakpoint, Continue from it, Replay
+    // on another stack.
+    AppCommand(
+      "studio.runPipeline", "Run Pipeline", menu: .edit, action: "runPipeline:", key: "r",
+      modifiers: [.command, .option], stage: .studio),
+    AppCommand(
+      "studio.continuePipeline", "Continue Pipeline", menu: .edit, action: "continuePipeline:",
+      key: "\r", modifiers: [.command, .option], stage: .studio),
+    AppCommand(
+      "studio.replayPipeline", "Replay Pipeline…", menu: .edit, action: "replayPipeline:",
+      stage: .studio),
     AppCommand("edit.cut", "Cut", menu: .edit, action: "cut:", key: "x", separatorBefore: true),
     AppCommand("edit.copy", "Copy", menu: .edit, action: "copy:", key: "c"),
     AppCommand("edit.paste", "Paste", menu: .edit, action: "paste:", key: "v"),

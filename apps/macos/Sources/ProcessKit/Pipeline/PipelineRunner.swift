@@ -171,23 +171,25 @@ package final class PipelineRunner {
       PipelineReuse.canReuse(
         step: index, of: previous, into: history, bundle: session.bundle, processID: id)
     {
-      // Everything the step wrote: a reused geometry step brings its moved layers and header.
+      // Everything the step wrote: a reused geometry step brings its moved layers too.
       let recorded = try previous.history.recorded(ofStep: index)
       try history.apply(
         processID: id, params: previous.history.steps[index].params, result: recorded.result,
-        outputs: recorded.outputs, bundleLayers: recorded.bundleLayers, header: recorded.header)
+        outputs: recorded.outputs, bundleLayers: recorded.bundleLayers)
       session.onEvent(.reused(index))
       return
     }
-    if let type = registry.type(id: id) {
-      let params = try Self.values(of: step, schema: type.schema, at: index)
-      try session.steps.apply(
-        type.init(params: params, device: device), processID: id, params: params, to: history)
-    } else if let tool = batch[id] {
+    if let tool = batch[id] {
       let params = try Self.values(of: step, schema: tool.schema, at: index)
       let onEvent = session.onEvent
       let result = try await tool.run(history.current, params) { onEvent(.progress(index, $0)) }
       try history.apply(processID: id, params: params, result: result)
+    } else if let type = registry.type(id: id) {
+      // A host-tool process's render is its preview only: without the tool, refuse.
+      guard !type.hostTool else { throw PipelineError.toolMissing(id) }
+      let params = try Self.values(of: step, schema: type.schema, at: index)
+      try session.steps.apply(
+        type.init(params: params, device: device), processID: id, params: params, to: history)
     } else {
       throw PipelineError.unknownProcess(id)
     }

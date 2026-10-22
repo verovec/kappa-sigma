@@ -32,8 +32,10 @@ package struct StudioSideView: View {
             Spacer()
             // No default-button Return: Return confirms a typed value (Edit › Apply Process ⌘E).
             Button(.app("Apply")) { applyRecorded() }
+              .disabled(model.toolRun != nil)
               .accessible(.studioApply, label: .app("Apply"))
           }
+          StudioToolRow(model: model)
         } else {
           Text(.app("Choose a process in the catalogue."))
             .foregroundStyle(DesignColor.textSecondary.color)
@@ -73,7 +75,9 @@ package struct StudioSideView: View {
         .buttonStyle(.plain)
         // No step lies under a moved preview's pixels: the row says why it is greyed (R2).
         .disabled(model.showsMovedGrid)
-        .help(model.showsMovedGrid ? Text(UserFacingError.movedPreview.message) : Text(verbatim: ""))
+        .help(
+          model.showsMovedGrid ? Text(UserFacingError.movedPreview.message) : Text(verbatim: "")
+        )
         .accessible(.studioStep(index), label: title)
       }
     }

@@ -1,6 +1,7 @@
 import AstroStackApp
 import Foundation
 import Metal
+import ProcessKit
 import ProjectKit
 import TestSupport
 import Testing
@@ -50,5 +51,52 @@ struct ProjectWindowWorkspaceTests {
     #expect(ids.contains("fr.astrostack.stage.studio.undo"), "\(ids)")
     window.retryWorkspace()
     #expect(window.workspace === workspace, "a loaded workspace is kept")
+  }
+}
+
+extension ProjectWindowWorkspaceTests {
+  /// Card 0088: the Replay menu lists the project's other stacks; choosing one switches the
+  /// Studio to it and runs the pipeline shown there once its working image is loaded.
+  @Test("Replay lists the other stacks and runs the pipeline on the chosen one", .scratchDirectory)
+  func testReplayOnAnotherStack() async throws {
+    let fixture = try ProjectTests.fixture()
+    defer { try? fixture.project.close() }
+    var stacks: [ProjectStack] = []
+    for runID in ["A", "B"] {
+      let output = fixture.project.url.appendingPathComponent("stacks/\(runID)")
+      try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+      _ = try ProjectTests.writeBundle(in: output, runID: runID)
+      stacks.append(
+        try fixture.project.store.addStack(
+          bundlePath: "stacks/\(runID)", sourceIDs: [], paramsJSON: "{}", object: "M 31",
+          scopeJSON: nil))
+    }
+    let window = fixture.window
+    window.refresh()
+    window.selectStack(stacks[0].id)
+    window.select(.studio)
+    await window.openStudio()
+    await Self.settle { window.workspace?.pipeline != nil }
+    let sidebar = try #require(window.workspace?.pipeline)
+    #expect(sidebar.pipeline.steps.map(\.recipe.processID) == ["channel-combination"])
+    #expect(window.replayTargets.map(\.id) == [stacks[1].id])
+    let state = { (action: Selector) in ProjectDocument.pipelineEnabled(action, in: window) }
+    #expect(state(#selector(ProjectDocument.runPipeline(_:))))
+    #expect(!state(#selector(ProjectDocument.continuePipeline(_:))), "no breakpoint")
+    #expect(state(#selector(ProjectDocument.replayPipeline(_:))))
+    #expect(!ProjectDocument.pipelineActions.contains(#selector(ProjectDocument.applyProcess(_:))))
+
+    window.workspace?.choose(StretchProcess.id)
+    await window.workspace?.previewNow()
+    try window.workspace?.apply()
+    #expect(sidebar.pipeline.steps.count == 2, "the Apply is a step of the pipeline")
+
+    window.replayPipeline(on: stacks[1].id)
+    await Self.settle {
+      window.selectedStackID == stacks[1].id && window.workspace?.studio.steps.count == 2
+    }
+    let replayed = try #require(window.workspace)
+    #expect(replayed.studio.steps.map(\.processID) == ["channel-combination", "stretch"])
+    #expect(replayed.pipeline?.events == [.applied(1)])
   }
 }

@@ -38,9 +38,8 @@ package struct StepRunner {
 
   /// `process` of `input` (the head by default) at `scale` for `purpose`, under `mask`.
   ///
-  /// The preview and Apply both come from here. A geometric process's output of the head carries
-  /// the plate solution moved with it (none after a fine angle); of another `input`, whose header
-  /// is not known here, none rather than the head's.
+  /// The preview and Apply both come from here. A geometric process's output carries the input's
+  /// plate solution moved with it (none after a fine angle).
   package func render(
     _ process: any ImageProcess, on history: History, input: AstroImage? = nil,
     scale: Double = 1, purpose: RenderContext.Purpose = .apply, mask: AstroImage? = nil
@@ -54,10 +53,7 @@ package struct StepRunner {
       rowsBottomUp: source.metadata.rowOrder == .bottomUp)
     var metadata = source.metadata
     if let geometric = process as? any GeometricProcess {
-      metadata.wcs =
-        input == nil
-        ? try movedHeader(geometric, history: history, input: source).flatMap(WCS.init(header:))
-        : nil
+      metadata.wcs = try movedWCS(geometric, of: source)
     }
     return AstroImage(
       width: output.width, height: output.height, planes: output.read(), metadata: metadata)
@@ -67,7 +63,7 @@ package struct StepRunner {
   ///
   /// A geometric step also moves every layer the next steps read: a layer an earlier step wrote
   /// becomes this step's output of that role, a bundle layer one of its `bundleLayers`, all
-  /// with the moved header.
+  /// carrying the moved plate solution.
   package func apply(
     _ process: any ImageProcess, processID: String, params: ParamSet, to history: History,
     mask: AstroImage? = nil
@@ -98,7 +94,7 @@ package struct StepRunner {
     }
     try history.apply(
       processID: processID, params: params, result: result, outputs: outputs,
-      bundleLayers: rewritten, header: movedHeader(geometric, history: history, input: input))
+      bundleLayers: rewritten)
   }
 
   /// The layers a render reads, uploaded, with their statistics: the bundle's, overlaid by the
@@ -135,22 +131,12 @@ package struct StepRunner {
       continuumReference: recorded.continuumReference)
   }
 
-  /// The head's header, read once per head file (a geometry preview frame asks for it).
-  private func headHeader(_ history: History) throws -> FITSHeader? {
-    let key = ContextCache.HeadKey(directory: history.directory, file: history.steps.last?.file)
-    if let cached = cache.head, cached.key == key { return cached.header }
-    let header = try history.headHeader()
-    cache.head = (key, header)
-    return header
-  }
-
-  private func movedHeader(
-    _ process: any GeometricProcess, history: History, input: AstroImage
-  ) throws -> FITSHeader? {
-    try headHeader(history).map {
-      try process.header(
-        $0, width: input.width, height: input.height,
-        bottomUp: input.metadata.rowOrder == .bottomUp)
-    }
+  /// The plate solution of `image` after `process`: its cards moved, or none after an angle.
+  private func movedWCS(_ process: any GeometricProcess, of image: AstroImage) throws -> WCS? {
+    guard let wcs = image.metadata.wcs else { return nil }
+    let moved = try process.header(
+      FITSHeader(cards: wcs.cards), width: image.width, height: image.height,
+      bottomUp: image.metadata.rowOrder == .bottomUp)
+    return WCS(header: moved)
   }
 }

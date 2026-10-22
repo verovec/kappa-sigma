@@ -33,21 +33,19 @@ extension History {
     package let outputs: [LayerRole: AstroImage]
     /// The bundle layers it rewrote, by id.
     package let bundleLayers: [String: AstroImage]
-    /// The header its files carry.
-    package let header: FITSHeader
   }
 
-  /// Everything applied step `index` wrote, read back: its image, its layers and its header.
+  /// Everything applied step `index` wrote, read back: its image and its layers (each with the
+  /// plate solution its file carries).
   package func recorded(ofStep index: Int) throws -> Recorded {
     guard steps.indices.contains(index) else { throw HistoryError.noStep(index) }
     let step = steps[index]
     let read = { (file: String) in
       try FITSFile.read(at: self.directory.appendingPathComponent(file)).image()
     }
-    let main = try FITSFile.read(at: directory.appendingPathComponent(step.file))
     return Recorded(
-      result: try main.image(), outputs: try step.outputs.mapValues(read),
-      bundleLayers: try step.bundleLayers.mapValues(read), header: main.header)
+      result: try read(step.file), outputs: try step.outputs.mapValues(read),
+      bundleLayers: try step.bundleLayers.mapValues(read))
   }
 
   /// The size of the output of applied step `index`, from its header (no pixel read).

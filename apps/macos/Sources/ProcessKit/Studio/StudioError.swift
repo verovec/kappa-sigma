@@ -7,4 +7,7 @@ package enum StudioError: Error, Equatable, Sendable {
   /// The step's output has another size than the head (a crop or a quarter turn came after it):
   /// it cannot be compared pixel for pixel.
   case otherSize(step: Int)
+  /// A host-tool process (`ImageProcess.hostTool`) recorded without its tool: the step would
+  /// claim what the tool never did.
+  case needsTool(String)
 }

@@ -17,31 +17,36 @@ extension HistoryTests {
     return text
   }()
 
-  /// Card 0090: a geometry step rewrites bundle layers (`RGB`, `Ha`…) besides its image and its
-  /// header (the plate solution moved); they overlay the bundle until undone, survive a reopen,
-  /// and later steps keep the head's header, not the original's.
-  @Test("testBundleLayersAndHeaderFollowTheStep", .scratchDirectory)
-  func testBundleLayersAndHeaderFollowTheStep() throws {
+  /// Card 0090: a geometry step rewrites bundle layers (`RGB`, `Ha`…) besides its image; they
+  /// overlay the bundle until undone and survive a reopen. Its moved plate solution travels in
+  /// the image's metadata: written in its files, carried by the steps after it (0093's rule).
+  @Test("testBundleLayersAndMovedWCSFollowTheStep", .scratchDirectory)
+  func testBundleLayersAndMovedWCSFollowTheStep() throws {
     let directory = try ScratchDirectory.url.appendingPathComponent("history")
     let header = try FITSFile.parse(Data(Self.solvedHeaderText.utf8)).header
     let original = try Self.image([0, 1, 2, 3])
     let history = try History(directory: directory, original: original, header: header)
-    #expect(try history.headHeader()?.double("CRPIX1") == 1.5)
+    func cd11(_ step: Int) throws -> Double? {
+      try FITSFile.read(at: directory.appendingPathComponent(history.steps[step].file)).header
+        .double("CD1_1")
+    }
 
-    let moved = header.moved(by: GridMap.identity(width: 2, height: 2).flippedX())
+    let moved = try #require(
+      WCS(header: header.moved(by: GridMap.identity(width: 2, height: 2).flippedX())))
+    let flipped = try Self.image([1, 0, 3, 2])
+    flipped.metadata.wcs = moved
     try history.apply(
-      processID: "geometry", params: Self.params, result: try Self.image([1, 0, 3, 2]),
-      bundleLayers: ["Ha": try Self.image([7, 7, 7, 7])], header: moved)
+      processID: "geometry", params: Self.params, result: flipped,
+      bundleLayers: ["Ha": try Self.image([7, 7, 7, 7])])
     #expect(history.steps.last?.bundleLayers.keys.sorted() == ["Ha"])
     #expect(try history.bundleLayers()["Ha"]?.planes == [[7, 7, 7, 7]])
-    #expect(try history.headHeader()?.double("CRPIX1") == 1.5, "flipped about the centre")
-    #expect(try history.headHeader()?.double("CD1_1") == 2.0e-4)
-    #expect(history.current.metadata.wcs == WCS(header: moved), "the head carries the moved WCS")
+    #expect(try cd11(0) == 2.0e-4, "the step's file carries the moved solution")
+    #expect(history.current.metadata.wcs == moved)
 
-    // A later step keeps the head's header; undoing the geometry gives the original back.
-    try history.apply(processID: "a", params: Self.params, result: try Self.image([2, 2, 2, 2]))
-    #expect(try history.headHeader()?.double("CD1_1") == 2.0e-4)
-    #expect(try history.bundleLayers()["Ha"]?.planes == [[7, 7, 7, 7]])
+    // A later step carries the head's solution on; a reopen finds the layers again.
+    let next = history.current
+    try history.apply(processID: "a", params: Self.params, result: next)
+    #expect(try cd11(1) == 2.0e-4)
     let reopened = try History.reopen(
       directory: directory, original: original, header: header
     ) { _ in Self.gainSchema }
@@ -51,6 +56,5 @@ extension HistoryTests {
     try reopened.undo()
     try reopened.undo()
     #expect(try reopened.bundleLayers().isEmpty)
-    #expect(try reopened.headHeader()?.double("CD1_1") == -2.0e-4)
   }
 }

@@ -51,7 +51,10 @@ private struct MetalSurface: NSViewRepresentable {
       model: model, renderer: renderer, texture: texture, reference: reference, mask: mask)
   }
 
-  func updateNSView(_ view: ViewerMTKView, context: Context) {}
+  /// The view is kept (zoom, focus, the ⌥ compare key survive): only its inputs change.
+  func updateNSView(_ view: ViewerMTKView, context: Context) {
+    view.show(texture: texture, reference: reference, mask: mask)
+  }
 }
 
 /// The region's outline, in points over the Metal surface.

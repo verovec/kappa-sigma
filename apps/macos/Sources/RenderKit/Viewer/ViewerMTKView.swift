@@ -13,10 +13,12 @@ package final class ViewerMTKView: MTKView, MTKViewDelegate {
 
   private let model: ViewerModel
   private let renderer: ViewerRenderer
-  private let texture: ImageTexture
-  private let reference: ImageTexture?
+  /// The image drawn.
+  package private(set) var texture: ImageTexture
+  /// What the compare key and split show (the current image when `nil`).
+  package private(set) var reference: ImageTexture?
   /// The process mask the Studio shows with `ViewerFrame.maskOverlay` (one plane, image size).
-  private let mask: MTLTexture?
+  package private(set) var mask: MTLTexture?
   private var dragStart: SIMD2<Double>?
   private var dragLast: SIMD2<Double>?
   private var fitted = false
@@ -43,6 +45,25 @@ package final class ViewerMTKView: MTKView, MTKViewDelegate {
     isPaused = true
     enableSetNeedsDisplay = true
     model.redraw = { [weak self] in self?.needsDisplay = true }
+  }
+
+  /// Draws these inputs from now on (SwiftUI hands them on every update: the Studio swaps the
+  /// texture on each preview, Apply and undo); whether any changed.
+  @discardableResult
+  package func show(texture: ImageTexture, reference: ImageTexture?, mask: MTLTexture?) -> Bool {
+    guard texture !== self.texture || reference !== self.reference || mask !== self.mask else {
+      return false
+    }
+    if texture !== self.texture {
+      // The histogram counted the image drawn so far: count the new one.
+      counted = nil
+      pendingBins = nil
+    }
+    self.texture = texture
+    self.reference = reference
+    self.mask = mask
+    needsDisplay = true
+    return true
   }
 
   @available(*, unavailable)

@@ -98,10 +98,14 @@ package final class ViewerModel {
   package func replace(image: AstroImage, statistics measured: [STFMapping]? = nil) {
     let statistics = measured ?? STFMapping.measure(planes: image.planes, linked: false)
     let samePlanes = statistics.count == self.statistics.count
-    if image.width != self.image.width || image.height != self.image.height {
+    let resized = image.width != self.image.width || image.height != self.image.height
+    if resized {
       frame.region = nil
     }
     self.image = image
+    // The zoom is in the old image's pixels: a crop or a quarter turn is fitted again (a head of
+    // the same size keeps where the user looks).
+    if resized { zoomToFit() }
     self.statistics = statistics
     linkedStatistics = STFMapping.linked(statistics)
     autoSTF = Self.autostretch(statistics)

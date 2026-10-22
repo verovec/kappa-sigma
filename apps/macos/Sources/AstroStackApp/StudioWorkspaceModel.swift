@@ -61,7 +61,9 @@ package final class StudioWorkspaceModel {
     didSet { if panel != nil { schedulePreview() } }
   }
   /// Why the last action failed.
-  package private(set) var failure: LocalizedStringResource?
+  package internal(set) var failure: LocalizedStringResource?
+  /// The failure shown is a refused compare (`toggleCompare`): it goes when the refusal does.
+  @ObservationIgnored var compareRefused = false
 
   /// The processes it offers.
   @ObservationIgnored package let registry: ProcessRegistry
@@ -188,6 +190,7 @@ package final class StudioWorkspaceModel {
   /// Runs a history move, then shows the head; a failure is shown in the panel and rethrown.
   private func reported(_ move: () throws -> Void) throws {
     let before = studio.steps
+    compareRefused = false
     defer { dropRegionIfMoved(since: before) }
     do {
       try move()
@@ -230,16 +233,6 @@ package final class StudioWorkspaceModel {
   private func panelChanged() {
     if let panel { panel.suggestions = offers(for: panel.type, params: panel.params) }
     schedulePreview()
-  }
-
-  /// Compares with step `index`, or stops when it is the one compared; a failure is reported.
-  package func toggleCompare(_ index: Int) {
-    do {
-      try compare(toStep: comparing == index ? nil : index)
-    } catch {
-      failure = UserFacingError(error).message
-      previewFailed = UserFacingError(error) == .movedPreview  // cleared by the next good preview
-    }
   }
 
   private func schedulePreview() {

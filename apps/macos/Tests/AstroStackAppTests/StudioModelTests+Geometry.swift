@@ -197,5 +197,18 @@ extension StudioModelTests {
     panel.set("flipH", .flag(false))
     await workspace.previewNow()
     #expect(workspace.failure == nil, "the identity preview clears the refusal")
+
+    // Closing the panel takes the moved preview away: the refusal goes with it.
+    panel.set("flipH", .flag(true))
+    await workspace.previewNow()
+    workspace.toggleCompare(0)
+    #expect(workspace.failure != nil)
+    workspace.closePanel()
+    #expect(workspace.failure == nil && !workspace.showsMovedGrid)
+    // A refusal of another kind goes once a compare succeeds.
+    workspace.toggleCompare(5)
+    #expect(workspace.failure != nil && workspace.comparing == nil)
+    workspace.toggleCompare(0)
+    #expect(workspace.failure == nil && workspace.comparing == 0)
   }
 }

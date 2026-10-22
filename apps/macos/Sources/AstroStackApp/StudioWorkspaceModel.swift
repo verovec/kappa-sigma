@@ -169,7 +169,8 @@ package final class StudioWorkspaceModel {
   ///
   /// A batch process runs through `runBatch()` instead (its result is its preview).
   package func apply() throws {
-    guard let panel, !panel.type.isBatch, batch.progress == nil else { return }
+    guard let panel, !panel.type.isBatch, batch.progress == nil, pipeline?.isRunning != true
+    else { return }
     // Apply records what the viewer shows (R2): values not drawn yet (a value just typed, a
     // drag within the frame) are drawn first, and what was drawn is what is recorded.
     previewTask?.cancel()

@@ -1,6 +1,6 @@
 package import Foundation
 internal import ImageKit
-internal import ProcessKit
+package import ProcessKit
 package import StackKit
 
 /// Batch processes in the Studio (card 0092, design §4.6): their host tool runs on Apply and its
@@ -58,11 +58,12 @@ extension StudioWorkspaceModel {
   package func startBatch(recorded: @escaping () -> Void = {}) {
     guard batch.task == nil, batch.progress == nil else { return }
     batch.task = Task { [weak self] in
-      await self?.runBatch()
+      let applied = await self?.runBatch() ?? false
       guard let self else { return }
       batch.task = nil
-      // A run cancelled with its workspace registers no move.
-      if !Task.isCancelled, !isRetired { recorded() }
+      // Only the step this run recorded registers a move (never one a cancelled or refused
+      // run left to another).
+      if applied, !Task.isCancelled, !isRetired { recorded() }
     }
   }
 
@@ -142,29 +143,34 @@ extension StudioWorkspaceModel {
   /// Applies the panel's batch process: its tool is probed first (missing: the run is refused
   /// with the reason, nothing else runs), then the tool runs with its progress shown and the
   /// step is recorded; the head is shown.
-  package func runBatch() async {
-    guard let panel, panel.type.isBatch, batch.progress == nil else { return }
+  @discardableResult
+  package func runBatch() async -> Bool {
+    guard let panel, panel.type.isBatch, batch.progress == nil else { return false }
+    guard pipeline?.isRunning != true else {
+      failure = UserFacingError(StudioError.toolRunning).message
+      return false
+    }
     let params = panel.params
     // Marked running before the probe: a second Apply meanwhile finds it busy.
     batch.progress = 0
     defer { batch.progress = nil }
     if let reason = Self.correctionReason(params) {
       failure = reason
-      return
+      return false
     }
     if let tool = StudioTools.tool(for: panel.type.id, params: params) {
       let status = await tools.locate(tool)
       batch.statuses[tool] = status
       if let reason = Self.reason(tool, status) {
         failure = reason
-        return
+        return false
       }
     }
     // Cancelled during the probe (an undo): no tool is started.
-    guard !Task.isCancelled else { return }
-    guard let process = batchProcess(panel.type.id) else {
+    guard !Task.isCancelled else { return false }
+    guard let process = batchProcesses[panel.type.id] else {
       failure = UserFacingError(StudioError.unknownProcess(panel.type.id)).message
-      return
+      return false
     }
     do {
       try await studio.apply(panel.type.id, batch: process, params: params) { [weak self] value in
@@ -174,13 +180,17 @@ extension StudioWorkspaceModel {
         }
       }
       failure = nil
+      // The user's manual work becomes the recipe (R5), as a GPU Apply.
+      pipeline?.applied(panel.type.id, params: params)
       try headChanged()
+      return true
     } catch  where Task.isCancelled {
       // Cancelled by an undo or a retired workspace (whatever the tool's teardown threw):
       // nothing to report, and the undo's own outcome stays shown.
     } catch {
       failure = UserFacingError(error).message
     }
+    return false
   }
 
   /// Whether a background model is in the context (a background extraction was applied).
@@ -202,7 +212,9 @@ extension StudioWorkspaceModel {
     batch.showsModel = true
   }
 
-  private func batchProcess(_ id: String) -> PipelineRunner.BatchProcess? {
-    id == BackgroundExtractionProcess.id ? BackgroundExtractionProcess.batch(tools.background) : nil
+  /// The batch processes by id, over this workspace's tools: its Apply and its pipeline's runs
+  /// run the same.
+  package var batchProcesses: [String: PipelineRunner.BatchProcess] {
+    [BackgroundExtractionProcess.id: BackgroundExtractionProcess.batch(tools.background)]
   }
 }

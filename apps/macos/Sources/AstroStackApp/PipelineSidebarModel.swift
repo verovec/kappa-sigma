@@ -60,7 +60,9 @@ package final class PipelineSidebarModel {
     self.store = store
     self.base = base
     let session = workspace.studio.session
-    runner = try PipelineRunner(registry: session.registry, device: session.device)
+    // The batch steps (background extraction) run through the workspace's tools, as its Apply.
+    runner = try PipelineRunner(
+      registry: session.registry, device: session.device, batch: workspace.batchProcesses)
   }
 
   /// Whether Continue can run: halted at a breakpoint still on (the history holds exactly the
@@ -181,6 +183,11 @@ package final class PipelineSidebarModel {
       PipelineRunner.Outcome
   ) async -> Bool {
     guard !isRunning else { return false }
+    // A tool Apply records on the head it started from: a run waits for it (and it for a run).
+    guard workspace.batchProgress == nil, workspace.batchTask == nil else {
+      failure = UserFacingError(StudioError.toolRunning).message
+      return false
+    }
     isRunning = true
     failure = nil
     events = []

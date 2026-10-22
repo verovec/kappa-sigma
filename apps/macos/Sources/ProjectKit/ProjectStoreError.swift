@@ -4,4 +4,6 @@ package enum ProjectStoreError: Error, Equatable, Sendable {
   case emptyName
   /// A JSON body that is not UTF-8 text.
   case notText
+  /// The step is not one of the image's (card 0087: an image's head is its own step).
+  case notImageStep(imageID: Int64, stepID: Int64)
 }

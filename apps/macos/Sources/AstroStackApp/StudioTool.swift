@@ -47,16 +47,4 @@ package nonisolated struct StudioTool: Sendable {
   ) -> [String: Self] {
     sirilInstalled ? [PlateSolveProcess.id: PlateSolveTool.live(scratch: scratch)] : [:]
   }
-
-  /// The same tool for a pipeline step (`PipelineRunner`): one definition for both.
-  package func batchProcess(schema: ParamSchema) -> PipelineRunner.BatchProcess {
-    let run = self.run
-    return PipelineRunner.BatchProcess(schema: schema) { image, params, progress in
-      let copy = AstroImage(
-        width: image.width, height: image.height, planes: image.planes, metadata: image.metadata)
-      return try await run(copy, params) { line in
-        if let percent = line.percent { progress(Double(percent) / 100) }
-      }.image
-    }
-  }
 }

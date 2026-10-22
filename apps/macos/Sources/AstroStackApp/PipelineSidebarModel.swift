@@ -60,20 +60,7 @@ package final class PipelineSidebarModel {
     self.store = store
     self.base = base
     let session = workspace.studio.session
-    runner = try PipelineRunner(
-      registry: session.registry, device: session.device, batch: Self.batch(of: workspace))
-  }
-
-  /// The workspace's host tools as pipeline steps (card 0093): the Studio's Apply and a
-  /// pipeline run the same tool.
-  package static func batch(of workspace: StudioWorkspaceModel)
-    -> [String: PipelineRunner.BatchProcess]
-  {
-    let registry = workspace.studio.session.registry
-    return workspace.tools.reduce(into: [:]) { batch, entry in
-      guard let schema = registry.type(id: entry.key)?.schema else { return }
-      batch[entry.key] = entry.value.batchProcess(schema: schema)
-    }
+    runner = try PipelineRunner(registry: session.registry, device: session.device)
   }
 
   /// Whether Continue can run: halted at a breakpoint still on (the history holds exactly the

@@ -94,7 +94,7 @@ package struct PipelineDiffSheet: View {
       String(localized: flag ? .app("On", locale: locale) : .app("Off", locale: locale))
     case .choice(let option): option
     case .points(let points): String(localized: .app("\(points.count) points", locale: locale))
-    case .text(let text): text
+    case .text(let text): text.isEmpty ? "—" : text
     }
   }
 }

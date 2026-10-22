@@ -2,7 +2,6 @@ import AppKit
 import AstroStackApp
 import Foundation
 import ImageKit
-import Synchronization
 import Metal
 import ProcessKit
 import RenderKit
@@ -80,10 +79,10 @@ struct PlateSolveStudioViewsTests {
   }
 }
 
-/// Card 0093 review: the tool without Siril, and the same tool as a pipeline step.
+/// Card 0093 review: the tool without Siril.
 @MainActor
 @Suite(
-  "Plate solving — greyed without Siril, one tool for the pipeline",
+  "Plate solving — greyed without Siril",
   .enabled(if: MTLCreateSystemDefaultDevice() != nil, "no Metal device"))
 struct PlateSolveToolWiringTests {
   @Test("no Siril: no tool, the catalogue greys plate solving with the reason", .scratchDirectory)
@@ -103,33 +102,4 @@ struct PlateSolveToolWiringTests {
         == "Requiert Siril, introuvable : installez-le, puis rouvrez le projet")
   }
 
-  @Test("the Studio tool runs as a pipeline step, its percent as progress", .scratchDirectory)
-  func testBatchProcess() async throws {
-    let tool = StudioTool { image, _, onProgress in
-      onProgress(ToolProgress(line: "half", percent: 50))
-      image.planes = image.planes.map { $0.map { $0 + 1 } }
-      return StudioToolResult(image: image, report: nil)
-    }
-    let batch = tool.batchProcess(schema: PlateSolveProcess.schema)
-    let image = AstroImage(
-      width: 1, height: 1, planes: [[0.25]], metadata: ImageMetadata(rowOrder: .topDown))
-    let seen = Mutex<[Double]>([])
-    let result = try await batch.run(image, ParamSet(schema: PlateSolveProcess.schema)) { value in
-      seen.withLock { $0.append(value) }
-    }
-    #expect(result.planes == [[1.25]] && image.planes == [[0.25]], "the caller's image untouched")
-    #expect(seen.withLock { $0 } == [0.5])
-  }
-}
-
-extension PlateSolveToolWiringTests {
-  @Test("the pipeline sidebar gets the workspace's tools as batch steps", .scratchDirectory)
-  func testSidebarBatch() async throws {
-    let tool = StudioTool { image, _, _ in StudioToolResult(image: image, report: nil) }
-    let opened = try PlateSolveProcessTests.open(tools: [PlateSolveProcess.id: tool, "nope": tool])
-    defer { try? opened.project.package.close() }
-    let batch = PipelineSidebarModel.batch(of: opened.workspace)
-    #expect(batch.keys.sorted() == [PlateSolveProcess.id], "only registered processes")
-    #expect(batch[PlateSolveProcess.id]?.schema == PlateSolveProcess.schema)
-  }
 }

@@ -187,7 +187,10 @@ in en/fr; the English title is the key, resolved with `ProcessKitResources.title
   `hostTool = true` — its `render` is the preview only (plate solving: the image itself), so the
   catalogue, panel, help gates and history reopen treat it like any process, while
   `StudioSession.apply(_:params:mask:)` refuses it (`StudioError.needsTool`) and `PipelineRunner`
-  runs the injected `BatchProcess` of its id or stops (`PipelineError.toolMissing`). The app
+  runs the injected `BatchProcess` of its id or stops (`PipelineError.toolMissing`); without it,
+  `Pipeline.stepProblems` names the step before any run. The pipeline sidebar (0088) injects no
+  tool yet: running Siril from a pipeline needs Stop, the report and one-run-at-a-time with the
+  Studio's Apply — a follow-up. The app
   injects the tool (`StudioTool`, by id) into `StudioWorkspaceModel`: Apply runs it in the
   background (`startTool`, progress in `toolRun`, Stop = `cancelTool`), records the step only on
   the head it started from, and shows the tool's `toolReport`.

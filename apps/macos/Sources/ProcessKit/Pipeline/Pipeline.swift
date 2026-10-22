@@ -47,6 +47,10 @@ package struct Pipeline: Equatable, Sendable {
       if let reason = LayerRole.unavailableReason(requires: type.requires, present: present) {
         reasons.append(reason)
       }
+      // A host tool's step runs only through its injected tool (card 0093): never its preview.
+      if type.hostTool, !batch.contains(id) {
+        reasons.append("runs a host tool: apply it in the Studio")
+      }
       if type.stage == .linear, stretched {
         reasons.append("a linear process after a non-linear one")
       }

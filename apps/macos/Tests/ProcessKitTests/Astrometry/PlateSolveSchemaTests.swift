@@ -110,3 +110,23 @@ struct PlateSolveSchemaTests {
     #expect(replay.history.current.planes == [[0.5, 0.5]], "the tool's result, not the preview")
   }
 }
+
+extension PlateSolveSchemaTests {
+  @Test("a pipeline names a host-tool step without its tool before running")
+  func testStepProblemWithoutTool() throws {
+    let registry = try ProcessRegistry([PlateSolveProcess.self])
+    let pipeline = Pipeline(
+      name: "solve",
+      steps: [
+        PipelineStep(
+          recipe: Recipe(
+            processID: PlateSolveProcess.id, params: ParamSet(schema: PlateSolveProcess.schema)))
+      ])
+    #expect(
+      pipeline.stepProblems(registry: registry, present: [.color])
+        == [["runs a host tool: apply it in the Studio"]])
+    #expect(
+      pipeline.stepProblems(registry: registry, batch: [PlateSolveProcess.id], present: [.color])
+        == [[]])
+  }
+}

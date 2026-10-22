@@ -185,9 +185,10 @@ package final class PipelineRunner {
       let params = try Self.values(of: step, schema: type.schema, at: index)
       let process = try type.init(params: params, device: device)
       let input = history.current
+      let (layers, layerStats) = try context(session)
       let output = try runner.run(
         process, input: GPUImage(device: device, image: input), stats: session.stats,
-        layers: session.layers, layerStats: session.bundle.layerStats)
+        layers: layers, layerStats: layerStats)
       let result = AstroImage(
         width: input.width, height: input.height, planes: output.read(), metadata: input.metadata)
       try history.apply(processID: id, params: params, result: result)
@@ -200,6 +201,18 @@ package final class PipelineRunner {
       throw PipelineError.unknownProcess(id)
     }
     session.onEvent(.applied(index))
+  }
+
+  /// The layers a step reads, as `StudioSession` gives them: the bundle's, overlaid by the
+  /// outputs of the steps applied so far (StarNet's starless…).
+  private func context(_ session: Session) throws -> ([String: GPUImage], [String: LayerStats]) {
+    var layers = session.layers
+    var stats = session.bundle.layerStats
+    for (role, image) in try session.history.layers() {
+      layers[role.rawValue] = try GPUImage(device: device, image: image)
+      stats[role.rawValue] = LayerStats.measured(image)
+    }
+    return (layers, stats)
   }
 
   /// The step's values on `schema`; a value the schema refuses stops the run with its name

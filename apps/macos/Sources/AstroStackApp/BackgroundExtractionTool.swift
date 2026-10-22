@@ -2,6 +2,7 @@ package import Foundation
 internal import ImageKit
 package import ProcessKit
 package import StackKit
+internal import Synchronization
 
 /// Background extraction's tool (card 0092): the panel's values read as StackKit's request, the
 /// chosen engine run on every target `applyTo` names, the corrected layers and the model back
@@ -13,15 +14,27 @@ package nonisolated enum BackgroundExtractionTool {
     StudioTool { input, params, onProgress in
       let folder = scratch.appendingPathComponent(UUID().uuidString, isDirectory: true)
       defer { try? FileManager.default.removeItem(at: folder) }
+      // One bar for the whole run: each target's lines rescaled into its share of it.
+      let targets = BackgroundExtractionProcess.targets(params, layerIDs: input.layers.keys)
+      let count = max((targets.head ? 1 : 0) + targets.layers.count, 1)
+      let next = Mutex(0)
       let extract: BackgroundExtractionProcess.Extract = { image, params, _ in
+        let index = next.withLock { value in
+          defer { value += 1 }
+          return value
+        }
         // A copy of its own: the engine works on it off the main actor.
         let copy = AstroImage(
           width: image.width, height: image.height, planes: image.planes,
           metadata: image.metadata)
         let result = try await extraction.run(
           image: copy, engine: BackgroundEngine(params: params),
-          correction: BackgroundCorrection(params: params), scratch: folder,
-          onProgress: onProgress)
+          correction: BackgroundCorrection(params: params), scratch: folder
+        ) { line in
+          onProgress(
+            ToolProgress(
+              line: line.line, percent: line.percent.map { (index * 100 + $0) / count }))
+        }
         return (result.corrected, result.model)
       }
       let output = try await BackgroundExtractionProcess.run(

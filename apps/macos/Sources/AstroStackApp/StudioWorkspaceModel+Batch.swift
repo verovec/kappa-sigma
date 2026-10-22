@@ -103,10 +103,20 @@ extension StudioWorkspaceModel {
       try show(studio.head)
       return
     }
-    guard let model = try studio.session.history.writtenLayers()[LayerRole.backgroundModel.rawValue]
+    guard
+      let model = try studio.session.history.writtenLayer(LayerRole.backgroundModel.rawValue)
     else { return }
     try show(model)
     batch.showsModel = true
+  }
+
+  /// The toggle's click: a model that cannot be shown says why, as a compare does.
+  package func toggleModelReported() {
+    do {
+      try toggleModel()
+    } catch {
+      failure = UserFacingError(error).message
+    }
   }
 
   /// The model view goes: the viewer shows the head again.

@@ -127,9 +127,11 @@ package final class History {
   /// The layers the applied steps wrote, the latest of each role winning (read from disk): what
   /// overlays the bundle's layers for the next step.
   package func layers() throws -> [LayerRole: AstroImage] {
-    var latest: [LayerRole: String] = [:]
-    for step in steps { latest.merge(step.outputs) { _, newer in newer } }
-    return try latest.mapValues(layer(file:))
+    var roles: [LayerRole: AstroImage] = [:]
+    for (id, image) in try writtenLayers() {
+      if let role = LayerRole(rawValue: id) { roles[role] = image }
+    }
+    return roles
   }
 
   /// Whether `other` started from the same image (size, metadata, pixels): a locked pipeline step

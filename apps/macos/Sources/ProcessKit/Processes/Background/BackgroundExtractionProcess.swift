@@ -104,13 +104,6 @@ package struct BackgroundExtractionProcess: ImageProcess {
     }
   }
 
-  /// The batch process of a pipeline running `extract` (`run(_:params:extract:)`).
-  package static func batch(_ extract: @escaping Extract) -> PipelineRunner.BatchProcess {
-    PipelineRunner.BatchProcess(schema: schema) { input, params, progress in
-      try await run(input, params: params, extract: extract, progress: progress)
-    }
-  }
-
   /// `extract` on every target of `params`, in order (the head first): the step's image is the
   /// corrected head (the head itself when only lines are corrected), the model of the first
   /// target is its `backgroundModel` output, the corrected layers replace the bundle's.

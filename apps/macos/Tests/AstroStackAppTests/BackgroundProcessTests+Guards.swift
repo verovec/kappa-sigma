@@ -55,6 +55,13 @@ extension BackgroundProcessTests {
     try workspace.toggleModel()
     workspace.choose(StretchProcess.id)
     #expect(!workspace.showsModel)
+
+    // A value moved: its preview replaces the model view, the toggle says so.
+    workspace.choose(BackgroundExtractionProcess.id)
+    workspace.toggleModelReported()
+    #expect(workspace.showsModel)
+    try #require(workspace.panel).set("applyTo", .choice("lines"))
+    #expect(!workspace.showsModel && workspace.failure == nil)
   }
 
   /// Apply of the tool through the window's undo manager: the move is registered once the

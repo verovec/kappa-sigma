@@ -37,6 +37,17 @@ struct BackgroundExtractionProcessTests {
     }
   }
 
+  /// The process as a pipeline's batch step over `extract`.
+  static func batch(_ extract: @escaping BackgroundExtractionProcess.Extract)
+    -> PipelineRunner.BatchProcess
+  {
+    let step: PipelineRunner.BatchProcess.Step = { input, params, progress in
+      try await BackgroundExtractionProcess.run(
+        input, params: params, extract: extract, progress: progress)
+    }
+    return PipelineRunner.BatchProcess(schema: BackgroundExtractionProcess.schema, step: step)
+  }
+
   static func params(_ values: [String: ParamValue]) throws -> ParamSet {
     var params = ParamSet(schema: BackgroundExtractionProcess.schema)
     for (id, value) in values { try params.set(id, value) }
@@ -93,7 +104,7 @@ struct BackgroundExtractionProcessTests {
   @Test("a scope with nothing to correct is refused with the reason, before any engine runs")
   func testNothingToCorrect() async throws {
     let calls = Calls()
-    let batch = BackgroundExtractionProcess.batch(Self.fake(calls))
+    let batch = Self.batch(Self.fake(calls))
     let params = try Self.params(["applyTo": .choice("lines")])
     await #expect(throws: ProcessError.missingLayer("an emission line layer (Ha, OIII, SII)")) {
       _ = try await batch.step(
@@ -106,7 +117,7 @@ struct BackgroundExtractionProcessTests {
   @Test("the step: corrected head and lines, the model of the first target, progress in order")
   func testBatchStep() async throws {
     let calls = Calls()
-    let batch = BackgroundExtractionProcess.batch(Self.fake(calls))
+    let batch = Self.batch(Self.fake(calls))
     let params = try Self.params(["applyTo": .choice("all")])
     let progress = Mutex<[Double]>([])
     let input = PipelineRunner.BatchInput(
@@ -125,7 +136,7 @@ struct BackgroundExtractionProcessTests {
 
   @Test("lines only: the head is kept as it is, the model is the first line's")
   func testLinesKeepHead() async throws {
-    let batch = BackgroundExtractionProcess.batch(Self.fake(Calls()))
+    let batch = Self.batch(Self.fake(Calls()))
     let params = try Self.params(["applyTo": .choice("lines")])
     let input = PipelineRunner.BatchInput(
       image: Self.image(5, planes: 3),
@@ -188,7 +199,7 @@ extension BackgroundExtractionProcessTests {
       history: history, bundle: bundle, registry: registry, device: device)
     let runner = try PipelineRunner(
       registry: registry, device: device,
-      batch: [BackgroundExtractionProcess.id: BackgroundExtractionProcess.batch(Self.fake(Calls()))]
+      batch: [BackgroundExtractionProcess.id: Self.batch(Self.fake(Calls()))]
     )
     func step(_ applyTo: String) throws -> PipelineStep {
       PipelineStep(

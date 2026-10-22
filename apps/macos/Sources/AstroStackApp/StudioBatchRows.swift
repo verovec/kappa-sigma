@@ -22,7 +22,7 @@ struct StudioBatchRows: View {
           installURL: missing.tool.installURL, model: card)
       }
       Toggle(
-        isOn: Binding(get: { model.showsModel }, set: { _ in try? model.toggleModel() })
+        isOn: Binding(get: { model.showsModel }, set: { _ in model.toggleModelReported() })
       ) { Text(.app("Show the background model")) }
       .toggleStyle(.switch)
       .disabled(!model.canShowModel)

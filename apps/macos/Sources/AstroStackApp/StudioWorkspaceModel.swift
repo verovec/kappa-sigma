@@ -232,6 +232,8 @@ package final class StudioWorkspaceModel {
   private func panelChanged() {
     if let panel { panel.suggestions = offers(for: panel.type, params: panel.params) }
     greyUnavailable()
+    // The preview of the new values replaces the model view.
+    hideModel()
     schedulePreview()
   }
 

@@ -13,12 +13,23 @@ extension History {
   /// `role.rawValue`. Each file is read from disk once (every live preview asks), handed out as
   /// a copy.
   package func writtenLayers() throws -> [String: AstroImage] {
+    try writtenFiles().mapValues(layer(file:))
+  }
+
+  /// The layer the applied steps last wrote under `id` (a role's raw value or a bundle id), or
+  /// `nil`: one file read, not the whole overlay.
+  package func writtenLayer(_ id: String) throws -> AstroImage? {
+    try writtenFiles()[id].map(layer(file:))
+  }
+
+  /// The file each written layer id last went to: the one overlay rule.
+  private func writtenFiles() -> [String: String] {
     var latest: [String: String] = [:]
     for step in steps {
       latest.merge(step.replaced) { _, newer in newer }
       latest.merge(step.outputs.map { ($0.key.rawValue, $0.value) }) { _, newer in newer }
     }
-    return try latest.mapValues(layer(file:))
+    return latest
   }
 
   /// What applied step `index` wrote besides its image: its role outputs and the bundle layers

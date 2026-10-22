@@ -22,16 +22,25 @@ package struct SirilRunner: Sendable {
     self.run = run
   }
 
-  /// A runner over the `siril-cli` at `binary`, with optional CPU/memory limits.
-  package static func live(binary: String, limits: SirilLimits = SirilLimits()) -> Self {
+  /// A runner over the `siril-cli` at `binary`, with optional CPU/memory limits; `initFile`
+  /// replaces the user's Siril settings (`-i`) so a run never reads or rewrites them.
+  package static func live(
+    binary: String, limits: SirilLimits = SirilLimits(), initFile: URL? = nil
+  ) -> Self {
     Self(run: { script, directory, onLine in
-      try await runScript(script, in: directory, binary: binary, limits: limits, onLine: onLine)
+      try await runScript(
+        script, in: directory, binary: binary, limits: limits, initFile: initFile, onLine: onLine)
     })
+  }
+
+  /// The arguments of `siril-cli` for the script `file` run in `directory`.
+  package static func scriptArguments(directory: URL, file: URL, initFile: URL?) -> [String] {
+    (initFile.map { ["-i", $0.path] } ?? []) + ["-d", directory.path, "-s", file.path]
   }
 
   private static func runScript(
     _ script: SirilScript, in directory: URL, binary: String, limits: SirilLimits,
-    onLine: @escaping @Sendable (SirilLine) -> Void
+    initFile: URL?, onLine: @escaping @Sendable (SirilLine) -> Void
   ) async throws -> String {
     // Siril < 1.4 would silently ignore 1.4 syntax (`rgbcomp -lum=`): refuse it up front.
     _ = try await SirilTool.verify(binary)
@@ -39,7 +48,7 @@ package struct SirilRunner: Sendable {
     let file = directory.appendingPathComponent("_astrostack.ssf")
     try Data(limits.apply(to: script.render()).utf8).write(to: file)
     let outcome = try await ToolProcess.runLines(
-      binary, arguments: ["-d", directory.path, "-s", file.path]
+      binary, arguments: scriptArguments(directory: directory, file: file, initFile: initFile)
     ) { line in onLine(SirilLine(parsing: line)) }
     guard outcome.exitCode == 0 else {
       throw SirilError.scriptFailed(

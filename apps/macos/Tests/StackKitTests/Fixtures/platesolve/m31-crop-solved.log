@@ -1,0 +1,50 @@
+Siril is started as macOS application
+log: Reading configuration file <WORK>/siril.ini
+log: Welcome to siril 1.4.4 for macos (aarch64) - CLI
+log: Supported file types: BMP images, PIC images (IRIS), PGM and PPM binary images, RAW images, FITS-CFA images, Films, SER sequences, TIFF images, XISF images, JPG images, JPEG XL images, PNG images, HEIF images, AVIF images.
+log: Setting CWD (Current Working Directory) to '<WORK>/work'
+log: Parallel processing enabled: using 18 logical processors.
+log: Color management active.
+log: JPEG ICC profiles supported.
+log: Running command: requires
+1792673991: running command requires
+log: OK! This script is compatible with this version of Siril.
+log: Running command: setext
+1792673991: running command setext
+log: Running command: set32bits
+1792673991: running command set32bits
+log: 32-bit per channel in processed images mode is active
+log: Running command: load
+1792673991: running command load
+HDU 1: type=0, EXTNAME=
+HDU 2: type=0, EXTNAME=ICCProfile
+Skipping HDU 2 with EXTNAME=ICCProfile
+log: Reading FITS: file input.fits, 3 layer(s), 1024x768 pixels, 32 bits
+log: Running command: platesolve
+1792673991: running command platesolve
+log: Using provided pixel size: 3.76
+log: Using provided focal length: 250.00
+log: Plate solving image from local Gaia DR3 astrometry for a field of view of 1.10 degrees, using a limit magnitude of 16.20
+log: Findstar: processing for channel 1...
+log: Using 529 detected stars from image.
+log: Fetched 1336 stars from Gaia DR3 astrometry catalogue
+sig=5.5634e-02 Nr=425 Nm=492 sx=2.5656e-01 sy=1.9638e-01
+log: Up is +258.45 deg CounterclockWise wrt. N
+log: Resolution:      3.117 arcsec/px
+log: Focal length:  248.83 mm
+log: Pixel size:      3.76 µm
+log: Field of view:    53' 11.66" x 39' 53.75"
+log: Image center: alpha: 00 42 48.778, delta: +41 16 17.054
+log: Was 0.91 arcmin from initial value
+log: Siril solve succeeded.
+progress: , 0.00%
+log: Running command: save
+1792673992: running command save
+log: Saving FITS: file solved.fits, 3 layer(s), 1024x768 pixels, 32 bits
+log: Setting CWD (Current Working Directory) to '<WORK>/work'
+log: Script execution finished successfully.
+log: Total execution time: 51.69 ms
+closing pipes
+real 0.10
+user 0.16
+sys 0.03

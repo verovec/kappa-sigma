@@ -39,6 +39,14 @@ extension StudioModelTests {
     let type = try #require(try ProcessRegistry.standard().type(id: processID))
     let params = ParamSet(schema: type.schema)
     let preview = try model.preview(processID, params: params)
+    // A host tool's step is its tool's (0093): the GPU render, the image itself, is refused.
+    if type.hostTool {
+      #expect(preview.planes == model.head.planes, "\(processID): the preview is the image")
+      #expect(throws: StudioError.needsTool(processID)) {
+        try model.apply(processID, params: params)
+      }
+      return
+    }
     try model.apply(processID, params: params)
     #expect(model.head.planes == preview.planes, "\(processID)")
   }

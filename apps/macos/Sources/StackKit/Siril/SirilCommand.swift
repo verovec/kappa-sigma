@@ -47,6 +47,9 @@ package enum SirilCommand: Equatable, Sendable {
   /// `mtf low mid high`: the histogram transformation of every channel (card 0089's parity).
   case mtf(low: Double, mid: Double, high: Double)
   case platesolve(coords: String?, noFlip: Bool)
+  /// `platesolve <ra,dec> -force …`: the Studio's solve (card 0093). Siril 1.4.4 refuses the
+  /// coordinates after `-force` (« Invalid argument »), so they come first.
+  case platesolveForced([String])
   case rgbcomp(r: String, g: String, b: String, lum: String?, out: String)
 
   /// The command's verb, as Siril reads it.
@@ -54,6 +57,7 @@ package enum SirilCommand: Equatable, Sendable {
     switch self {
     case .autostretchLinked: "autostretch"
     case .subskyRBF: "subsky"
+    case .platesolveForced: "platesolve"
     default: String(String(describing: self).prefix { $0.isLetter })
     }
   }
@@ -108,6 +112,7 @@ package enum SirilCommand: Equatable, Sendable {
       "mtf \(GoFormat.shortest(low)) \(GoFormat.shortest(mid)) \(GoFormat.shortest(high))"
     case .platesolve(let coords, let noFlip):
       "platesolve" + (coords.map { " \($0)" } ?? "") + (noFlip ? " -noflip" : "")
+    case .platesolveForced(let arguments): (["platesolve"] + arguments).joined(separator: " ")
     case .rgbcomp(let r, let g, let b, let lum, let out):
       "rgbcomp \(r) \(g) \(b)" + (lum.map { " -lum=\($0)" } ?? "") + " -out=\(out)"
     default: ""

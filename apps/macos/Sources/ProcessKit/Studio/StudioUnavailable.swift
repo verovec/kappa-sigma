@@ -5,4 +5,6 @@ package enum StudioUnavailable: Equatable, Sendable {
   case missing([LayerRole])
   /// A linear process after the stretch.
   case linearAfterStretch
+  /// A host-tool process whose tool is not installed (card 0093): greyed, Apply refused.
+  case toolMissing
 }

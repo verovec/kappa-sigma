@@ -195,6 +195,8 @@ package final class History {
   }
 
   private func write(_ image: AstroImage, _ file: String) throws {
+    // The image's own solution (a plate solve adds one; the steps after it carry it on).
+    let header = (header ?? FITSHeader(cards: [])).carrying(image.metadata.wcs)
     try FITSFile.create(image, keeping: header, at: directory.appendingPathComponent(file))
     created.insert(file)
   }

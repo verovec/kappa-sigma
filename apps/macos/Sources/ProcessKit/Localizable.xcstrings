@@ -321,6 +321,22 @@
         }
       }
     },
+    "Declination": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Declination"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déclinaison"
+          }
+        }
+      }
+    },
     "Emission screens": {
       "localizations": {
         "en": {
@@ -337,6 +353,22 @@
         }
       }
     },
+    "Focal length (mm)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Focal length (mm)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Focale (mm)"
+          }
+        }
+      }
+    },
     "Foraxx": {
       "localizations": {
         "en": {
@@ -349,6 +381,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Foraxx"
+          }
+        }
+      }
+    },
+    "From the image header": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "From the image header"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Depuis l’en-tête de l’image"
           }
         }
       }
@@ -881,6 +929,22 @@
         }
       }
     },
+    "Limit magnitude (0: automatic)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Limit magnitude (0: automatic)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Magnitude limite (0 : automatique)"
+          }
+        }
+      }
+    },
     "Link layers": {
       "localizations": {
         "en": {
@@ -1037,6 +1101,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sortie basse"
+          }
+        }
+      }
+    },
+    "Pixel size (µm)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pixel size (µm)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Taille des pixels (µm)"
+          }
+        }
+      }
+    },
+    "Plate solving": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plate solving"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Résolution astrométrique"
           }
         }
       }
@@ -1213,6 +1309,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Poids du rouge"
+          }
+        }
+      }
+    },
+    "Right ascension": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Right ascension"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ascension droite"
           }
         }
       }
@@ -1421,6 +1533,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Début de la bande étoiles"
+          }
+        }
+      }
+    },
+    "Star catalogue": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Star catalogue"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Catalogue d’étoiles"
           }
         }
       }

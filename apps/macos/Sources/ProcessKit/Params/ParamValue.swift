@@ -8,6 +8,8 @@ package enum ParamValue: Equatable, Sendable {
   case choice(String)
   /// Control points of a curve, sorted by x (already validated when they come from a `ParamSet`).
   case points([CurvePoint])
+  /// Free text (a coordinate as typed); empty: not given.
+  case text(String)
 }
 
 /// A control point of a curve, both coordinates in [0, 1].
@@ -24,7 +26,8 @@ package struct CurvePoint: Equatable, Sendable {
   }
 }
 
-/// JSON: a number, a boolean, a string or an array of `[x, y]` pairs — the kind is the JSON type.
+/// JSON: a number, a boolean, a string or an array of `[x, y]` pairs — the kind is the JSON type
+/// (a string decodes as a choice; a text parameter takes it as its text).
 extension ParamValue: Codable {
   /// Decodes from the JSON type.
   package init(from decoder: any Decoder) throws {
@@ -51,6 +54,7 @@ extension ParamValue: Codable {
     case .flag(let flag): try container.encode(flag)
     case .choice(let option): try container.encode(option)
     case .points(let points): try container.encode(points.map { [$0.x, $0.y] })
+    case .text(let text): try container.encode(text)
     }
   }
 }

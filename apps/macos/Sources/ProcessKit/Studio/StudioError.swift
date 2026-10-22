@@ -4,4 +4,7 @@ package enum StudioError: Error, Equatable, Sendable {
   case unknownProcess(String)
   /// The stack has no layer to start the working image from.
   case emptyBundle
+  /// A host-tool process (`ImageProcess.hostTool`) recorded without its tool: the step would
+  /// claim what the tool never did.
+  case needsTool(String)
 }

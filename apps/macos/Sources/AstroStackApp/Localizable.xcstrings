@@ -433,6 +433,22 @@
         }
       }
     },
+    "A tool is already running: wait for it, or stop it.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A tool is already running: wait for it, or stop it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un outil tourne déjà : attendez-le, ou arrêtez-le."
+          }
+        }
+      }
+    },
     "About AstroStack": {
       "localizations": {
         "en": {
@@ -1873,6 +1889,38 @@
         }
       }
     },
+    "Give the focal length and the pixel size, or take the header's.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Give the focal length and the pixel size, or take the header's."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indiquez la focale et la taille des pixels, ou prenez celles de l’en-tête."
+          }
+        }
+      }
+    },
+    "Give the image centre (right ascension and declination), or take the header's.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Give the image centre (right ascension and declination), or take the header's."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indiquez le centre de l’image (ascension droite et déclinaison), ou prenez celui de l’en-tête."
+          }
+        }
+      }
+    },
     "Glossary": {
       "localizations": {
         "en": {
@@ -2865,6 +2913,22 @@
         }
       }
     },
+    "Needs Siril, not found: install it, then reopen the project": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needs Siril, not found: install it, then reopen the project"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Requiert Siril, introuvable : installez-le, puis rouvrez le projet"
+          }
+        }
+      }
+    },
     "Needs the starless: separate the stars first.": {
       "localizations": {
         "en": {
@@ -3069,6 +3133,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aucune série de poses à empiler : la capture n’en contient pas, ou les séries cochées ne sont pas dans cette analyse."
+          }
+        }
+      }
+    },
+    "No local star catalogue at %@: run just download-catalogues, or go online.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No local star catalogue at %@: run just download-catalogues, or go online."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun catalogue d’étoiles local dans %@ : lancez just download-catalogues, ou passez en ligne."
           }
         }
       }
@@ -4753,6 +4833,22 @@
         }
       }
     },
+    "Siril found no solution: %@. Check the centre, focal length and pixel size.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril found no solution: %@. Check the centre, focal length and pixel size."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril n’a trouvé aucune solution : %@. Vérifiez le centre, la focale et la taille des pixels."
+          }
+        }
+      }
+    },
     "Siril is not installed at %@. Install Siril 1.4 or later, then try again.": {
       "localizations": {
         "en": {
@@ -4785,6 +4881,22 @@
         }
       }
     },
+    "Siril reported a solution but wrote none in %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril reported a solution but wrote none in %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril a annoncé une solution mais n’en a écrit aucune dans %@."
+          }
+        }
+      }
+    },
     "Siril stopped during “%@” and was restarted; run the step again.": {
       "localizations": {
         "en": {
@@ -4813,6 +4925,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Douceur"
+          }
+        }
+      }
+    },
+    "Solved: centre %@, %@″/px, up %@° from north, %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solved: centre %@, %@″/px, up %@° from north, %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Résolue : centre %@, %@″/px, haut à %@° du nord, %@."
           }
         }
       }
@@ -5153,6 +5281,22 @@
         }
       }
     },
+    "Step %lld has values its process refuses: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Step %lld has values its process refuses: %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’étape %lld a des valeurs que son process refuse : %@."
+          }
+        }
+      }
+    },
     "Step %lld of %lld": {
       "localizations": {
         "en": {
@@ -5181,6 +5325,54 @@
           "stringUnit": {
             "state": "translated",
             "value": "L’étape %lld de l’historique n’existe plus."
+          }
+        }
+      }
+    },
+    "Step “%@” runs a host tool: apply it in the Studio, then continue.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Step “%@” runs a host tool: apply it in the Studio, then continue."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’étape « %@ » lance un outil externe : appliquez-la dans le Studio, puis continuez."
+          }
+        }
+      }
+    },
+    "Stop": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêter"
+          }
+        }
+      }
+    },
+    "Stopped: nothing was recorded.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopped: nothing was recorded."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêté : rien n’a été enregistré."
           }
         }
       }
@@ -5489,6 +5681,22 @@
         }
       }
     },
+    "The history is not at step %lld's breakpoint: Continue would misplace it.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The history is not at step %lld's breakpoint: Continue would misplace it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’historique n’est pas au point d’arrêt de l’étape %lld : Continuer le mal placerait."
+          }
+        }
+      }
+    },
     "The history moved while “%@” ran: its result was not recorded, run it again.": {
       "localizations": {
         "en": {
@@ -5533,6 +5741,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "L’image et son image sans étoiles ne rangent pas leurs lignes pareil : séparez à nouveau les étoiles."
+          }
+        }
+      }
+    },
+    "The image changed while the tool ran: nothing was recorded.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The image changed while the tool ran: nothing was recorded."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’image a changé pendant que l’outil tournait : rien n’a été enregistré."
           }
         }
       }
@@ -5597,6 +5821,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le seul profil pour ces captures"
+          }
+        }
+      }
+    },
+    "The pipeline has no step %lld.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The pipeline has no step %lld."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le pipeline n’a pas d’étape %lld."
+          }
+        }
+      }
+    },
+    "The pipeline names a process the Studio does not have: “%@”.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The pipeline names a process the Studio does not have: “%@”."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le pipeline nomme un process que le Studio n’a pas : « %@ »."
           }
         }
       }
@@ -6929,6 +7185,22 @@
         }
       }
     },
+    "“%@” is not a coordinate: write 00 42 44 and +41 16 09, or degrees.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” is not a coordinate: write 00 42 44 and +41 16 09, or degrees."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« %@ » n’est pas une coordonnée : écrivez 00 42 44 et +41 16 09, ou des degrés."
+          }
+        }
+      }
+    },
     "“%@” is not a filter set: use unknown, broadband or dualband.": {
       "localizations": {
         "en": {
@@ -6941,6 +7213,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "« %@ » n’est pas un type de filtre : utilisez unknown, broadband ou dualband."
+          }
+        }
+      }
+    },
+    "“%@” runs a host tool: nothing was applied without it.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” runs a host tool: nothing was applied without it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« %@ » lance un outil externe : rien n’a été appliqué sans lui."
           }
         }
       }

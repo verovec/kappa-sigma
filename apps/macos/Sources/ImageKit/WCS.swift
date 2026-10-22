@@ -16,6 +16,9 @@ package struct WCS: Equatable, Sendable {
   package let cd: SIMD4<Double>
   /// SIP pixel-to-sky distortion (`A_p_q`, `B_p_q`); empty for plain TAN.
   package let sip: [SIPTerm]
+  /// The header's WCS cards, in order: what a file written with this solution carries
+  /// (`FITSHeader.carrying`).
+  package let cards: [FITSHeader.Card]
 
   /// One SIP monomial u^`uPower` · v^`vPower`, times `onU` (A) added to u, times `onV` (B) to v.
   package struct SIPTerm: Equatable, Sendable {
@@ -38,6 +41,7 @@ package struct WCS: Equatable, Sendable {
     crval = SIMD2(crval1, crval2)
     self.cd = cd
     self.sip = sip ? Self.sipTerms(header) : []
+    cards = header.wcsCards
   }
 
   /// RA in [0, 360) and Dec of the array pixel (`x`, `y`) (0-based, file row order).

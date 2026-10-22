@@ -80,6 +80,7 @@ package final class StudioSession {
 
   /// Applies `processID` with `params` at full resolution: the head moves to its result.
   package func apply(_ processID: String, params: ParamSet, mask: AstroImage? = nil) throws {
+    if registry.type(id: processID)?.hostTool == true { throw StudioError.needsTool(processID) }
     let result = try render(processID, params: params, mask: mask)
     try history.apply(processID: processID, params: params, result: result)
   }

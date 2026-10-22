@@ -26,8 +26,10 @@ package struct StudioSideView: View {
             Spacer()
             // No default-button Return: Return confirms a typed value (Edit › Apply Process ⌘E).
             Button(.app("Apply")) { applyRecorded() }
+              .disabled(model.toolRun != nil)
               .accessible(.studioApply, label: .app("Apply"))
           }
+          StudioToolRow(model: model)
         } else {
           Text(.app("Choose a process in the catalogue."))
             .foregroundStyle(DesignColor.textSecondary.color)

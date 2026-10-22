@@ -41,6 +41,14 @@ package struct ProjectStore: Sendable {
     }
   }
 
+  /// The columns of `table`, sorted (a migration test reads them).
+  package func columnNames(of table: String) throws -> [String] {
+    try pool.read { db in
+      try Row.fetchAll(db, sql: "SELECT name FROM pragma_table_info(?)", arguments: [table])
+        .map { $0["name"] as String }.sorted()
+    }
+  }
+
   /// The tables of the database, sorted (SQLite's own tables excluded).
   package func tableNames() throws -> [String] {
     try pool.read { db in

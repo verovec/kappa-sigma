@@ -51,19 +51,21 @@ extension ProjectStore {
   }
 
   /// Records a stack, the sources it was built from and one image per `imageRoles`, in one
-  /// transaction: a failure leaves no half-recorded stack.
+  /// transaction: a failure leaves no half-recorded stack. `object` and `scopeJSON` (card 0095)
+  /// name what the run stacked; a stack of every light of its sources leaves them empty.
   @discardableResult
   package func addStack(
-    bundlePath: String, sourceIDs: [Int64], paramsJSON: String, imageRoles: [String] = []
+    bundlePath: String, sourceIDs: [Int64], paramsJSON: String, imageRoles: [String] = [],
+    object: String = "", scopeJSON: String? = nil
   ) throws -> ProjectStack {
     let stamp = now()
     return try pool.write { db in
       try db.execute(
         sql: """
-          INSERT INTO stacks (bundle_path, params_json, created_at, updated_at)
-          VALUES (?, ?, ?, ?)
+          INSERT INTO stacks (bundle_path, params_json, object, scope_json, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?)
           """,
-        arguments: [bundlePath, paramsJSON, stamp, stamp])
+        arguments: [bundlePath, paramsJSON, object, scopeJSON, stamp, stamp])
       let id = db.lastInsertedRowID
       for source in Set(sourceIDs) {
         try db.execute(
@@ -80,7 +82,8 @@ extension ProjectStore {
       }
       return ProjectStack(
         id: id, bundlePath: bundlePath, sourceIDs: Set(sourceIDs).sorted(),
-        paramsJSON: paramsJSON, createdAt: stamp, updatedAt: stamp)
+        paramsJSON: paramsJSON, object: object, scopeJSON: scopeJSON, createdAt: stamp,
+        updatedAt: stamp)
     }
   }
 
@@ -115,6 +118,7 @@ extension ProjectStore {
       arguments: [id])
     return ProjectStack(
       id: id, bundlePath: row["bundle_path"], sourceIDs: sources,
-      paramsJSON: row["params_json"], createdAt: row["created_at"], updatedAt: row["updated_at"])
+      paramsJSON: row["params_json"], object: row["object"] ?? "", scopeJSON: row["scope_json"],
+      createdAt: row["created_at"], updatedAt: row["updated_at"])
   }
 }

@@ -2,7 +2,7 @@ internal import Foundation
 internal import ProjectKit
 package import StackKit
 
-/// The Stacking stage's run and the Studio's stack.
+/// The Stacking stage's runs and the Studio's stack.
 extension ProjectWindowModel {
   /// The import the next run plans: every capture night of the project, with the overrides
   /// stored with the latest stack and then those of each import this session, merged (a later
@@ -16,43 +16,58 @@ extension ProjectWindowModel {
     return request
   }
 
-  /// Run is offered: a capture night to stack and no run going.
+  /// Run is offered: a capture night to stack, no run or queue going, and — once a scan lists
+  /// the series — at least one checked set.
   package var canRun: Bool {
-    run?.isRunning != true && sources.contains { $0.kind == .night }
+    !queueActive && run?.isRunning != true && sources.contains { $0.kind == .night }
+      && (series.isEmpty || !series.scopes.isEmpty)
   }
+
+  /// The `project_settings` key of the stack the Studio shows (card 0095).
+  static let stackSettingKey = "workspace.stack"
 
   /// The target, as the project is named (`M31.astrostack` → `M31`).
   var targetName: String { folder()?.deletingPathExtension().lastPathComponent ?? "" }
 
-  /// Runs preprocessing on the project's nights into `stacks/<run_id>/` of the package.
+  /// What a stack's Studio is named after: its object, else the project.
+  func studioObject(_ object: String) -> String {
+    object.isEmpty ? targetName : object
+  }
+
+  /// Runs preprocessing on the project's nights into `stacks/<run_id>/` of the package: one run
+  /// per object with a checked series (card 0095), in the table's order, one after the other —
+  /// or one run of every light when no scan listed the series.
   ///
-  /// The import is planned again (scan + calibration plan, the overrides as left), then StackKit
-  /// runs it with the calibration choices the plan showed. A finished run becomes a stack with one
-  /// image per bundle layer and the Studio opens it; a cancelled or failed one registers nothing
-  /// and keeps its artifacts. One run at a time, in a saved project only (an untitled package
-  /// moves on Save and is deleted on Close).
+  /// Each run plans the import again (scan + calibration plan, the overrides as left), scopes the
+  /// inventory to its object's light sets (every calibration set travels), then StackKit runs it
+  /// with the calibration choices the plan showed. A finished run becomes a stack with one image
+  /// per bundle layer; the Studio opens the last stack of the queue. A cancelled or failed run
+  /// registers nothing, keeps its artifacts and drops the rest of the queue. A saved project only
+  /// (an untitled package moves on Save and is deleted on Close).
   ///
   /// The settings are the panel's edits (`knobs.patch`) on the preset of `mode`, the panel's own
   /// preset unless a mode is given for this run; the panel is left as it is.
   package func startRun(mode: PreprocessRequest.Mode? = nil) {
     guard canRun else { return }
-    guard let store = store(), let folder = folder() else {
-      error = .projectClosed
-      return
-    }
     guard isSaved() else {
       error = .projectUnsaved
       return
     }
-    let record: StackRecord
-    let settings: PreprocessSettings
-    do {
-      guard let request = try runRequest() else { return }
-      let mode = mode ?? knobs.mode
-      record = StackRecord(request: request, mode: mode, knobs: knobs.patch(for: mode))
-      settings = try Self.runSettings(record)
-    } catch {
-      self.error = UserFacingError(error)
+    let scopes = series.scopes
+    queuedScopes = Array(scopes.dropFirst())
+    queueActive = true
+    launch(scope: scopes.first, mode: mode ?? knobs.mode)
+  }
+
+  /// Starts one run of `scope` (every light when `nil`).
+  private func launch(scope: RunScope?, mode: PreprocessRequest.Mode) {
+    guard let store = store(), let folder = folder() else {
+      endQueue()
+      error = .projectClosed
+      return
+    }
+    guard let (record, settings) = prepare(scope: scope, mode: mode) else {
+      endQueue()
       return
     }
     // The run plans the same folders again: a Rescan still reading them only competes for disk.
@@ -69,20 +84,53 @@ extension ProjectWindowModel {
     model.start(
       {
         let plan = try await planning(record.request)
+        let inventory = scope.map { plan.inventory.scoped($0) } ?? plan.inventory
         return start(
           PreprocessRequest(
-            inventory: plan.inventory, output: output, work: work, runID: runID,
-            mode: record.mode, settings: settings, library: plan.library))
+            inventory: inventory, output: output, work: work, runID: runID, mode: record.mode,
+            settings: settings, library: plan.library))
       },
       completion: { [weak self] outcome in
         await Self.remove(work)
         guard let self else { return }
-        if case .success = outcome {
-          await register(record, runID: runID)
+        guard case .success = outcome else {
+          endQueue()
+          return
+        }
+        await register(record, runID: runID)
+        if let next = queuedScopes.first, error == nil {
+          queuedScopes.removeFirst()
+          launch(scope: next, mode: mode)
         } else {
-          refresh()
+          endQueue()
         }
       })
+  }
+
+  /// The record and settings of a run of `scope` with the preset of `mode`; `nil` (reported when
+  /// it is an error) when nothing can run.
+  private func prepare(scope: RunScope?, mode: PreprocessRequest.Mode) -> (
+    StackRecord, PreprocessSettings
+  )? {
+    do {
+      guard let request = try runRequest() else { return nil }
+      let record = StackRecord(
+        request: request, mode: mode, knobs: knobs.patch(for: mode), scope: scope)
+      return (record, try Self.runSettings(record))
+    } catch {
+      self.error = UserFacingError(error)
+      return nil
+    }
+  }
+
+  /// The queue is over (drained, cancelled or failed): Run is offered again; an error reported
+  /// on the way stays shown (a refresh clears none).
+  private func endQueue() {
+    let reported = error
+    queuedScopes = []
+    queueActive = false
+    refresh()
+    if error == nil { error = reported }
   }
 
   /// The settings a run of `record` applies: its knobs on its preset, with the calibration
@@ -94,20 +142,25 @@ extension ProjectWindowModel {
     return settings
   }
 
-  /// Cancels the running run; its finished masters stay in its folder.
+  /// Cancels the running run and the rest of the queue; its finished masters stay in its folder.
   package func cancelRun() {
+    queuedScopes = []
     run?.cancel()
   }
 
-  /// Opens the latest stack in the Studio, off the main actor (bundle and FITS headers).
+  /// Opens the chosen stack (else the latest) in the Studio, off the main actor (bundle and FITS
+  /// headers); a choice made meanwhile wins over the stack this call opened.
   package func openStudio() async {
     guard studio == nil, let folder = folder() else { return }
+    let chosen = selectedStackID
     do {
-      guard let stack = try store()?.latestStack() else { return }
+      guard let stack = selectedStack else { return }
       let source = try await Self.openStack(
-        folder.appendingPathComponent(stack.bundlePath), object: targetName)
+        folder.appendingPathComponent(stack.bundlePath), object: studioObject(stack.object))
+      guard chosen == selectedStackID else { return }
       studio = studio ?? LegacyRunModel(source: source)
     } catch {
+      guard chosen == selectedStackID else { return }
       self.error = UserFacingError(error)
     }
   }
@@ -125,8 +178,9 @@ extension ProjectWindowModel {
     try? FileManager.default.removeItem(at: work)
   }
 
-  /// Records a finished run as a stack of the nights it read, with its request as parameters
-  /// and one image per layer in one transaction, and shows it in the Studio.
+  /// Records a finished run as a stack of the nights it read, with its request as parameters,
+  /// its object and scope, and one image per layer in one transaction; the last stack of the
+  /// queue is chosen and shown in the Studio.
   ///
   /// The stack is opened first: a bundle the Studio cannot open is reported, not recorded.
   /// The package is read where it is now: a project renamed in the Finder after the run's last
@@ -136,20 +190,28 @@ extension ProjectWindowModel {
       guard let store = store(), let folder = folder() else {
         throw UserFacingError.projectClosed
       }
+      let object = record.scope?.object ?? ""
       let source = try await Self.openStack(
-        folder.appendingPathComponent("stacks/\(runID)"), object: targetName)
+        folder.appendingPathComponent("stacks/\(runID)"), object: studioObject(object))
       let encoder = JSONEncoder()
       encoder.outputFormatting = [.sortedKeys]
       let params = String(bytes: try encoder.encode(record), encoding: .utf8) ?? "{}"
+      let scopeJSON = try record.scope.map {
+        String(bytes: try encoder.encode($0), encoding: .utf8) ?? "{}"
+      }
       let read = sources.filter { record.request.paths.contains($0.path) }.map(\.id)
-      try store.addStack(
+      let stack = try store.addStack(
         bundlePath: "stacks/\(runID)", sourceIDs: read, paramsJSON: params,
-        imageRoles: source.layers.map(\.id))
+        imageRoles: source.layers.map(\.id), object: object, scopeJSON: scopeJSON)
       knobs.clearIgnored()
-      studio = LegacyRunModel(source: source)
       refresh()
-      select(.studio)
+      selectStack(stack.id)
+      if queuedScopes.isEmpty {
+        studio = LegacyRunModel(source: source)
+        select(.studio)
+      }
     } catch {
+      queuedScopes = []
       refresh()
       self.error = UserFacingError(error)
     }

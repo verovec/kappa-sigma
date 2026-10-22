@@ -26,9 +26,11 @@ struct ProjectStoreTests {
 
     #expect(try store.tableNames() == (Self.applicationTables + ["schema_migrations"]).sorted())
     let applied = try store.appliedMigrations()
-    #expect(applied.map(\.version) == [1, 2, 3, 4])
+    #expect(applied.map(\.version) == [1, 2, 3, 4, 5])
     #expect(
-      applied.map(\.name) == ["init", "calibration_masters", "project_settings", "source_profile"])
+      applied.map(\.name) == [
+        "init", "calibration_masters", "project_settings", "source_profile", "stack_object_scope",
+      ])
 
     try store.migrate(to: 0)
     #expect(try store.tableNames() == ["schema_migrations"])
@@ -39,6 +41,39 @@ struct ProjectStoreTests {
     let after = Int64(Date().timeIntervalSince1970 * 1000)
     #expect((before...after).contains(reapplied.appliedAtMs), "applied_at is int64 ms")
     #expect(try store.tableNames() == (Self.applicationTables + ["schema_migrations"]).sorted())
+  }
+
+  @Test(
+    "a stack records its object and scope (0095); down to 0004 drops the columns, up restores them",
+    .scratchDirectory)
+  func testStackObjectScopeUpDown() throws {
+    let package = try Self.newPackage()
+    defer { try? package.close() }
+    let store = package.store
+    let scoped = try store.addStack(
+      bundlePath: "stacks/A", sourceIDs: [], paramsJSON: "{}", object: "M 31",
+      scopeJSON: #"{"object":"M 31","set_ids":["a"],"lights":36}"#)
+    #expect(
+      scoped.object == "M 31"
+        && scoped.scopeJSON == #"{"object":"M 31","set_ids":["a"],"lights":36}"#)
+    let plain = try store.addStack(bundlePath: "stacks/B", sourceIDs: [], paramsJSON: "{}")
+    #expect(plain.object == "" && plain.scopeJSON == nil)
+    #expect(try store.stacks() == [scoped, plain])
+    #expect(try store.stack(id: scoped.id) == scoped)
+
+    try store.migrate(to: 4)
+    #expect(try store.appliedMigrations().map(\.version) == [1, 2, 3, 4])
+    #expect(
+      try store.columnNames(of: "stacks") == [
+        "bundle_path", "created_at", "id", "params_json", "updated_at",
+      ])
+    try store.migrate(to: nil)
+    #expect(
+      try store.columnNames(of: "stacks")
+        == ["bundle_path", "created_at", "id", "object", "params_json", "scope_json", "updated_at"])
+    // The rows survived the round trip, unscoped now.
+    #expect(try store.stacks().map(\.bundlePath) == ["stacks/A", "stacks/B"])
+    #expect(try store.stacks().allSatisfy { $0.object == "" && $0.scopeJSON == nil })
   }
 
   @Test("stacks lists every stack oldest first, each with its sources", .scratchDirectory)
@@ -220,7 +255,7 @@ struct ProjectStoreTests {
     try package.close()
 
     let reopened = try ProjectPackage.open(at: package.url)
-    #expect(try reopened.store.appliedMigrations().map(\.version) == [1, 2, 3, 4])
+    #expect(try reopened.store.appliedMigrations().map(\.version) == [1, 2, 3, 4, 5])
     #expect(try reopened.store.sources().count == 1)
     try reopened.close()
     let items = try FileManager.default.contentsOfDirectory(atPath: package.url.path)

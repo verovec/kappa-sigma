@@ -98,6 +98,14 @@ Re-recording is a contract change: the PR that commits new fixtures says why (`T
   HelpKit's `Help/<locale>/knobs.json` (`knob.<id>`, plus `knob.<id>.<option>` for a choice).
   `KnobSchemaTests` and `KnobPanelViewModelTests` fail on any one missing.
 
+## Run scope (card 0095)
+
+`Preprocess/RunScope.swift`: `RunScope(object:setIDs:lights)` names the light sets one run stacks;
+`RunScope.scopes(of:)` gives one per object of a scan, `Inventory.scoped(_:)` keeps those light
+sets and every calibration set with the ids the scan gave (unlike `subset`, which regroups), and
+`Preprocessor.plan` refuses lights of several objects (`PreprocessError.mixedObjects`) — one object
+per run, never the legacy « dominant object ». The app queues one run per checked object.
+
 ## How to extend
 
 - A port loads its case with `OracleCase.load` and compares: bytes for scripts and Siril masters,

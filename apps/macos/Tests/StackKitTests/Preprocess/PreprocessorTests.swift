@@ -125,4 +125,34 @@ struct PreprocessorTests {
     twoNights.colorModel = .mixed
     #expect(throws: PreprocessError.mixedColorModel) { _ = try Preprocessor.plan(twoNights) }
   }
+  @Test(
+    "a scoped inventory spanning two objects is refused by name; one object plans unchanged",
+    .scratchDirectory)
+  func testRefusesMixedObjects() throws {
+    let two = try RunScopeTests.twoObjects()
+    #expect(throws: PreprocessError.mixedObjects(["OTHER", "TESTFIELD"])) {
+      try Preprocessor.plan(two)
+    }
+    let single = try RunScopeTests.single()
+    let plan = try Preprocessor.plan(single)
+    #expect(
+      plan == NightPlan(single.sets.filter { $0.key.type == .light }), "the plan is what it was")
+    #expect(plan.channels.keys.sorted() == ["B", "G", "L", "R"])
+    let testfield = try #require(RunScope.scopes(of: two).first { $0.object == "TESTFIELD" })
+    let scoped = try Preprocessor.plan(two.scoped(testfield))
+    #expect(scoped == plan, "scoped to its object the two-object scan plans like the single one")
+    // A scope the scan no longer has leaves no light: refused here, before any master is built.
+    let ghost = RunScope(object: "GHOST", setIDs: ["light|GHOST|L|e1|g0o0b1|i0|t0|s:"], lights: 0)
+    #expect(throws: PreprocessError.noLights) { try Preprocessor.plan(two.scoped(ghost)) }
+    // Unnamed lights are an object of their own, never merged into a named one.
+    var unnamed = single
+    for index in unnamed.frames.indices where unnamed.frames[index].type == .light && index % 2 == 0
+    {
+      unnamed.frames[index].object = ""
+    }
+    unnamed.regroup()
+    #expect(throws: PreprocessError.mixedObjects(["", "TESTFIELD"])) {
+      try Preprocessor.plan(unnamed)
+    }
+  }
 }

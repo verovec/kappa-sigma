@@ -12,6 +12,10 @@ package enum PreprocessError: Error, Equatable, Sendable {
   case noChannels([String])
   /// Mono and colour lights together: no single run stacks them.
   case mixedColorModel
+  /// Lights of several objects together (card 0095): one run stacks one object, never a majority.
+  case mixedObjects([String])
+  /// No light set to stack (a scope whose sets the re-planned scan no longer has, card 0095).
+  case noLights
 }
 
 extension PreprocessError: LocalizedError {
@@ -26,6 +30,15 @@ extension PreprocessError: LocalizedError {
     case .noChannels(let errors):
       "no channel could be stacked: \(errors.joined(separator: "; "))"
     case .mixedColorModel: "the capture mixes mono and colour lights — stack them as separate runs"
+    case .mixedObjects(let objects):
+      "the lights span several objects (\(Self.names(objects))) — choose the series of one object "
+        + "per run"
+    case .noLights: "no light set to stack — the series chosen are not in this scan"
     }
+  }
+
+  /// Object names as the message lists them; an empty OBJECT reads as such.
+  package static func names(_ objects: [String]) -> String {
+    objects.map { $0.isEmpty ? "(no OBJECT)" : $0 }.joined(separator: ", ")
   }
 }

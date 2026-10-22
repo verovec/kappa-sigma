@@ -209,6 +209,22 @@
         }
       }
     },
+    "%lld objects, one run each.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld objects, one run each."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld objets, un run chacun."
+          }
+        }
+      }
+    },
     "%lld to check": {
       "localizations": {
         "en": {
@@ -589,6 +605,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Canaux"
+          }
+        }
+      }
+    },
+    "Check at least one series to stack.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check at least one series to stack."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cochez au moins une série à empiler."
           }
         }
       }
@@ -1905,6 +1937,22 @@
         }
       }
     },
+    "No light set to stack: the series chosen are not in this scan. Rescan and choose again.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No light set to stack: the series chosen are not in this scan. Rescan and choose again."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune série de poses à empiler : les séries cochées ne sont pas dans cette analyse. Relisez et choisissez à nouveau."
+          }
+        }
+      }
+    },
     "No profile": {
       "localizations": {
         "en": {
@@ -1997,6 +2045,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Objet"
+          }
+        }
+      }
+    },
+    "One run of every checked set.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One run of every checked set."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un run de toutes les séries cochées."
           }
         }
       }
@@ -2449,6 +2513,22 @@
         }
       }
     },
+    "Rescan (Données › Rescan) to list the series; until then a run stacks every light.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rescan (Données › Rescan) to list the series; until then a run stacks every light."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Relisez (Données › Relire) pour lister les séries ; d’ici là un run empile toutes les poses."
+          }
+        }
+      }
+    },
     "Rescan reads the folders for their integration and calibration (~90 s a night).": {
       "localizations": {
         "en": {
@@ -2769,6 +2849,22 @@
         }
       }
     },
+    "Series": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Series"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Séries"
+          }
+        }
+      }
+    },
     "Settings": {
       "localizations": {
         "en": {
@@ -2797,6 +2893,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Réglages…"
+          }
+        }
+      }
+    },
+    "Several objects in the lights (%@): check one object's series on the Stacking stage.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Several objects in the lights (%@): check one object's series on the Stacking stage."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plusieurs objets dans les poses (%@) : cochez les séries d’un seul objet à l’étape Empilement."
           }
         }
       }
@@ -2989,6 +3101,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sources : %lld · Empilements : %lld"
+          }
+        }
+      }
+    },
+    "Stack": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stack"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Empilement"
+          }
+        }
+      }
+    },
+    "Stack %lld objects (%lld runs)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stack %lld objects (%lld runs)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Empiler %lld objets (%lld runs)"
           }
         }
       }
@@ -3457,6 +3601,22 @@
         }
       }
     },
+    "Unnamed object": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unnamed object"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Objet sans nom"
+          }
+        }
+      }
+    },
     "Use forced matches": {
       "localizations": {
         "en": {
@@ -3781,6 +3941,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "exclu (proposé : %@)"
+          }
+        }
+      }
+    },
+    "g%lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "g%lld"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "g%lld"
           }
         }
       }

@@ -101,6 +101,17 @@ struct UserFacingErrorTests {
       error: PreprocessError.mixedColorModel, names: "",
       english: "Mono and colour lights are mixed: exclude one kind on the Import sheet, then rerun."
     ),
+    Case(
+      error: PreprocessError.mixedObjects(["IC 1848", "M 31"]), names: "IC 1848, M 31",
+      english:
+        "Several objects in the lights (IC 1848, M 31): "
+        + "check one object's series on the Stacking stage."
+    ),
+    Case(
+      error: PreprocessError.noLights, names: "",
+      english:
+        "No light set to stack: the series chosen are not in this scan. Rescan and choose again."
+    ),
   ]
 
   nonisolated static let runCases: [Case] = [

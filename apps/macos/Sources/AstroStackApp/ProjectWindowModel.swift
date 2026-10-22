@@ -23,8 +23,15 @@ package final class ProjectWindowModel {
     didSet {
       integration = scan.map { IntegrationSummary.make(inventory: $0.inventory) }
       coverage = scan.map(CoverageMatrix.init(plan:))
+      series.replace(inventory: scan?.inventory)
     }
   }
+  /// The series the next run stacks, from the last scan (card 0095): one run per checked object.
+  package let series = StackingStageModel(inventory: nil)
+  /// Every stack of the project, oldest first (read on refresh).
+  package private(set) var stacks: [ProjectStack] = []
+  /// The stack the Studio shows (card 0095), persisted per project; `nil` = the latest.
+  package private(set) var selectedStackID: Int64?
   /// The lights per filter × night of `scan`, computed once per scan.
   package private(set) var integration: IntegrationSummary?
   /// The calibration coverage of `scan`, the matcher's verdict as is.
@@ -34,6 +41,11 @@ package final class ProjectWindowModel {
   var scanTask: Task<Void, Never>?
   /// The preprocessing run the Stacking stage shows: the one running, or the last one.
   package internal(set) var run: RunViewModel?
+  /// The scopes still to run after the current one (card 0095: one run per object).
+  var queuedScopes: [RunScope] = []
+  /// A queue is going: from Run until its last run registered, failed or was cancelled — Run
+  /// stays greyed in between two runs too.
+  var queueActive = false
   /// The stack the Studio shows: the latest one, read-only.
   package internal(set) var studio: LegacyRunModel?
   /// The Stacking panel's preset and knob edits: what the next run applies (card 0070).
@@ -86,9 +98,44 @@ package final class ProjectWindowModel {
     do {
       let saved = try store()?.setting(JourneyStage.settingKey)
       selection = saved.flatMap(JourneyStage.init(rawValue:)) ?? .data
+      // A chosen stack that no longer exists reads as no choice: the latest is shown.
+      let chosen = try store()?.setting(Self.stackSettingKey).flatMap(Int64.init)
+      selectedStackID = chosen.flatMap { id in stacks.contains { $0.id == id } ? id : nil }
     } catch {
       self.error = UserFacingError(error)
     }
+  }
+
+  /// Shows `id` in the Studio and remembers it; a stack the project does not have is not chosen.
+  package func selectStack(_ id: Int64?) {
+    guard id == nil || stacks.contains(where: { $0.id == id }) else { return }
+    guard id != selectedStackID || studio == nil else { return }
+    selectedStackID = id
+    studio = nil
+    do {
+      try store()?.setSetting(Self.stackSettingKey, to: id.map(String.init) ?? "")
+    } catch {
+      self.error = UserFacingError(error)
+    }
+  }
+
+  /// The stack the Studio shows: the chosen one, else the latest.
+  package var selectedStack: ProjectStack? {
+    selectedStackID.flatMap { id in stacks.first { $0.id == id } } ?? stacks.last
+  }
+
+  /// A stack as the picker lists it: « object · date · n lights » (the project's name for a
+  /// stack of every light, no count without a scope).
+  package func stackLabel(_ stack: ProjectStack, locale: Locale) -> String {
+    let object = studioObject(stack.object)
+    let date = Date(timeIntervalSince1970: Double(stack.createdAt) / 1000)
+      .formatted(.dateTime.locale(locale).year().month().day().hour().minute())
+    let scope = stack.scopeJSON.flatMap {
+      try? JSONDecoder().decode(RunScope.self, from: Data($0.utf8))
+    }
+    let lights = scope.map { AstroFormat(locale: locale).lights($0.lights) }
+    return ([object, date] + (lights.map { [$0] } ?? [])).filter { !$0.isEmpty }
+      .joined(separator: " · ")
   }
 
   /// Shows `stage` and remembers it for this project.
@@ -191,7 +238,9 @@ package final class ProjectWindowModel {
       needsSave = !isSaved()
       sources = try store?.sources() ?? []
       let summary = try store?.summary() ?? ProjectSummary()
-      let running = run?.isRunning == true ? 1 : 0
+      // The stacks are read again only when their count moved: a refresh runs on every event.
+      if summary.stacks != stacks.count { stacks = try store?.stacks() ?? [] }
+      let running = run?.isRunning == true || queueActive ? 1 : 0
       statuses = JourneyState.derive(
         from: ProjectFacts(summary: summary, coverage: coverage, stacksRunning: running))
       error = nil

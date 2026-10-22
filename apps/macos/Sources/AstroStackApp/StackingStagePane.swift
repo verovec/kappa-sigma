@@ -2,12 +2,18 @@ internal import RenderKit
 internal import StackKit
 internal import SwiftUI
 
-/// The Empilement stage: the preset and its knobs the run uses, Run and Cancel, and the run as
-/// it goes.
+/// The Empilement stage: the series the run stacks (card 0095), the preset and its knobs, Run
+/// and Cancel, and the run as it goes.
 struct StackingStagePane: View {
   var model: ProjectWindowModel
 
   private var running: Bool { model.run?.isRunning == true }
+
+  /// « Run » for one run; « Stack 2 objects (2 runs) » once the series span several (0095).
+  private var runWords: LocalizedStringResource {
+    let runs = model.series.scopes.count
+    return runs > 1 ? .app("Stack \(runs) objects (\(runs) runs)") : .app("Run")
+  }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
@@ -22,7 +28,14 @@ struct StackingStagePane: View {
       blocker
       HStack(spacing: 0) {
         // The values a run applies stay in view, frozen while it runs (R2).
-        KnobPanel(model: model.knobs).frame(width: 300).disabled(running)
+        ScrollView {
+          VStack(alignment: .leading, spacing: DesignMetrics.spacingL) {
+            StackingSeriesView(model: model.series).padding(DesignMetrics.spacingM)
+            KnobPanel(model: model.knobs)
+          }
+        }
+        .frame(width: 300)
+        .disabled(running)
         Divider()
         if let run = model.run {
           RunPanel(run: run)
@@ -50,6 +63,8 @@ struct StackingStagePane: View {
           .accessible(.stackingSave, label: .app("Save…"))
       }
       .padding(.trailing, DesignMetrics.spacingM)
+    } else if !running && !model.series.isEmpty && model.series.scopes.isEmpty {
+      notice(.app("Check at least one series to stack."))
     }
   }
 
@@ -78,10 +93,10 @@ struct StackingStagePane: View {
       Button(.app("Cancel"), role: .cancel) { model.cancelRun() }
         .accessible(.stackingCancel, label: .app("Cancel"))
     } else {
-      Button(.app("Run")) { model.startRun() }
+      Button(runWords) { model.startRun() }
         .keyboardShortcut(.defaultAction)
         .disabled(!model.canRun || model.needsSave)
-        .accessible(.stackingRun, label: .app("Run"))
+        .accessible(.stackingRun, label: runWords)
     }
   }
 }

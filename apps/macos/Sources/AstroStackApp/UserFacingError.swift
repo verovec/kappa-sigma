@@ -120,7 +120,19 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
       .app("No channel could be stacked: \(errors.joined(separator: "; "))")
     case .mixedColorModel:
       .app("Mono and colour lights are mixed: exclude one kind on the Import sheet, then rerun.")
+    case .mixedObjects(let objects): mixedObjects(objects)
+    case .noLights:
+      .app(
+        "No light set to stack: the series chosen are not in this scan. Rescan and choose again.")
     }
+  }
+
+  /// One run stacks one object (card 0095): the series table is where the user picks.
+  private static func mixedObjects(_ objects: [String]) -> LocalizedStringResource {
+    let names = PreprocessError.names(objects)
+    return .app(
+      "Several objects in the lights (\(names)): check one object's series on the Stacking stage."
+    )
   }
 
   private static func message(_ error: LegacyRunError) -> LocalizedStringResource {

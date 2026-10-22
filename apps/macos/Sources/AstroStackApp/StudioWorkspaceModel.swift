@@ -153,7 +153,7 @@ package final class StudioWorkspaceModel {
       previewFailed = true
       if isPreviewing {
         isPreviewing = false
-        try? show(studio.head, statistics: headStatistics)
+        try? show(studio.head)
       }
     }
   }

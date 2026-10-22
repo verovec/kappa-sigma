@@ -212,6 +212,8 @@ extension ProjectWindowModel {
       } catch is CancellationError {
         return
       } catch {
+        // Not loaded: the same stack may be tried again (its pane reopens it).
+        if self?.workspaceStackID == stackID { self?.workspaceStackID = nil }
         self?.error = UserFacingError(error)
       }
     }

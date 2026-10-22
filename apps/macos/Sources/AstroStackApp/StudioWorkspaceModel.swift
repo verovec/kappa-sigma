@@ -79,7 +79,7 @@ package final class StudioWorkspaceModel {
   package init(studio: StudioModel, base: Set<LayerRole>) throws {
     self.studio = studio
     self.base = base
-    registry = try ProcessRegistry.standard()
+    registry = studio.session.registry
     let renderer = try ViewerRenderer(device: studio.session.device)
     viewer = Viewer(
       model: ViewerModel(image: studio.head), renderer: renderer,
@@ -196,6 +196,16 @@ package final class StudioWorkspaceModel {
         (try? studio.session.suggestions(for: panel.type, params: panel.params)) ?? []
     }
     schedulePreview()
+  }
+
+  /// Compares with step `index`, or stops when it is the one compared; a step whose output
+  /// cannot be read is reported.
+  package func toggleCompare(_ index: Int) {
+    do {
+      try compare(toStep: comparing == index ? nil : index)
+    } catch {
+      failure = UserFacingError(error).message
+    }
   }
 
   private func schedulePreview() {

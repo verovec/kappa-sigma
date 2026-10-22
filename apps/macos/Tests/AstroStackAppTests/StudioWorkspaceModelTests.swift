@@ -100,3 +100,35 @@ extension StudioWorkspaceModelTests {
     #expect(workspace.studio.head.planes != combined)
   }
 }
+
+extension StudioWorkspaceModelTests {
+  /// ⌘Z only undoes the step it recorded: after the history's own Undo button moved the
+  /// history, the registered undo does nothing (it never takes the channel combination away).
+  @Test("a registered undo acts only on the step it recorded", .scratchDirectory)
+  func testRegisteredUndoChecksTheStep() throws {
+    let opened = try StudioModelTests.project()
+    defer { try? opened.package.close() }
+    let workspace = try Self.workspace(opened, bundle: StudioModelTests.bundle())
+    let undoManager = UndoManager()
+    undoManager.groupsByEvent = false
+    workspace.choose(StretchProcess.id)
+    undoManager.beginUndoGrouping()
+    StudioUndo.apply(workspace, undoManager: undoManager)
+    undoManager.endUndoGrouping()
+    #expect(workspace.studio.steps.count == 2)
+
+    try workspace.undo()  // the history's button
+    #expect(workspace.studio.steps.count == 1 && undoManager.canUndo)
+    undoManager.undo()  // ⌘Z: the stretch it names is already undone
+    #expect(workspace.studio.steps.map(\.processID) == ["channel-combination"])
+
+    try workspace.redo()
+    undoManager.removeAllActions()
+    undoManager.beginUndoGrouping()
+    workspace.choose(CurvesProcess.id)
+    StudioUndo.apply(workspace, undoManager: undoManager)
+    undoManager.endUndoGrouping()
+    undoManager.undo()
+    #expect(workspace.studio.steps.map(\.processID) == ["channel-combination", "stretch"])
+  }
+}

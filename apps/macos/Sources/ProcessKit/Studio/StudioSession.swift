@@ -12,7 +12,8 @@ package final class StudioSession {
   package let history: History
   /// The stack's layers and statistics.
   package let bundle: PipelineBundle
-  private let registry: ProcessRegistry
+  /// The processes it runs (the catalogue lists the same).
+  package let registry: ProcessRegistry
   /// The GPU it runs on (the viewer draws on the same one).
   package let device: MTLDevice
   private let runner: ProcessRunner
@@ -100,12 +101,4 @@ package final class StudioSession {
     }
     return (layers, stats)
   }
-}
-
-/// Why the Studio could not do what was asked.
-package enum StudioError: Error, Equatable, Sendable {
-  /// No registered process has this id.
-  case unknownProcess(String)
-  /// The stack has no layer to start the working image from.
-  case emptyBundle
 }

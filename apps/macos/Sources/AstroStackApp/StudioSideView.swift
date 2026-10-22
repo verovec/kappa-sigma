@@ -50,7 +50,7 @@ struct StudioSideView: View {
         let title = ProcessKitResources.title(
           model.title(of: step.processID), locale: locale)
         Button {
-          try? model.compare(toStep: model.comparing == index ? nil : index)
+          model.toggleCompare(index)
         } label: {
           HStack {
             Text(verbatim: "\(index + 1).")

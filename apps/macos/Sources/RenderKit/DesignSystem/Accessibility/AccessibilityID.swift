@@ -215,6 +215,12 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
   /// The Studio's « Close » of the process panel (card 0087).
   package static let studioClosePanel = stageControl("studio", "closePanel")
 
+  /// The Studio's « Show the background model » toggle (card 0092).
+  package static let studioShowModel = stageControl("studio", "showModel")
+
+  /// The Studio's batch-process progress (card 0092).
+  package static let studioBatchProgress = stageControl("studio", "batchProgress")
+
   /// The Import sheet's profile picker (card 0060).
   package static let importProfile = Self("import", "profile")
 

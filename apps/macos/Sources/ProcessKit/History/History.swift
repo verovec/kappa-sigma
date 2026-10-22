@@ -19,6 +19,9 @@ package final class History {
     package let file: String
     /// The layers it wrote besides its image, by role (files in the history folder).
     package let outputs: [LayerRole: String]
+    /// The bundle layers it rewrote, by the bundle's id (`Ha` after a background extraction):
+    /// later steps read them under that id, and they add no role.
+    package let replaced: [String: String]
   }
 
   /// A named state ("v9"): the output of a step, or the original (`file == nil`).
@@ -48,6 +51,8 @@ package final class History {
   var nextStepNumber: Int { nextNumber }
   /// The outputs this history wrote: the only files `save` may remove.
   private var created: Set<String> = []
+  /// Layer files already read, by file name (a step's files never change once written).
+  var layerCache: [String: AstroImage] = [:]
 
   /// A history of `original` with its outputs in `directory` (created).
   ///
@@ -80,11 +85,11 @@ package final class History {
   /// Whether there is a step to redo.
   package var canRedo: Bool { !undone.isEmpty }
 
-  /// Records `result` as the output of `processID` with `params`, and `outputs` as the layers
-  /// it wrote; what was undone is dropped.
+  /// Records `result` as the output of `processID` with `params`, `outputs` as the layers it
+  /// wrote and `replacing` as the bundle layers it rewrote; what was undone is dropped.
   package func apply(
     processID: String, params: ParamSet, result: AstroImage,
-    outputs: [LayerRole: AstroImage] = [:]
+    outputs: [LayerRole: AstroImage] = [:], replacing: [String: AstroImage] = [:]
   ) throws {
     let digits = String(nextNumber)
     let stem = "step-" + String(repeating: "0", count: max(0, 4 - digits.count)) + digits
@@ -97,10 +102,20 @@ package final class History {
       try write(image, name)
       written[role] = name
     }
-    let step = Step(processID: processID, params: params, file: file, outputs: written)
+    var replaced: [String: String] = [:]
+    for (id, image) in replacing {
+      let name = stem + "-" + id + ".fits"
+      try write(image, name)
+      replaced[id] = name
+    }
+    let step = Step(
+      processID: processID, params: params, file: file, outputs: written, replaced: replaced)
     try writeManifest(steps: steps + [step], undone: [], snapshots: snapshots)
     steps.append(step)
     undone.removeAll()
+    // The dropped steps' layers are not kept in memory.
+    let referenced = referencedFiles
+    layerCache = layerCache.filter { referenced.contains($0.key) }
     shown = Self.copy(result)
   }
 
@@ -114,9 +129,7 @@ package final class History {
   package func layers() throws -> [LayerRole: AstroImage] {
     var latest: [LayerRole: String] = [:]
     for step in steps { latest.merge(step.outputs) { _, newer in newer } }
-    return try latest.mapValues {
-      try FITSFile.read(at: directory.appendingPathComponent($0)).image()
-    }
+    return try latest.mapValues(layer(file:))
   }
 
   /// Whether `other` started from the same image (size, metadata, pixels): a locked pipeline step
@@ -174,7 +187,8 @@ package final class History {
   package var referencedFiles: Set<String> {
     let kept = steps + undone
     return Set(
-      kept.map(\.file) + kept.flatMap { $0.outputs.values } + snapshots.compactMap(\.file))
+      kept.map(\.file) + kept.flatMap { $0.outputs.values } + kept.flatMap { $0.replaced.values }
+        + snapshots.compactMap(\.file))
   }
 
   /// Bytes of the reachable outputs, counted against the project's disk budget (0068).
@@ -193,6 +207,8 @@ package final class History {
       try FileManager.default.removeItem(at: directory.appendingPathComponent(file))
       created.remove(file)
     }
+    // Images of files nothing refers to any more are not kept in memory either.
+    layerCache = layerCache.filter { referenced.contains($0.key) }
     try writeManifest()
   }
 
@@ -207,7 +223,7 @@ package final class History {
   }
 
   /// A new image object over the same planes (arrays copy on write).
-  private static func copy(_ image: AstroImage) -> AstroImage {
+  static func copy(_ image: AstroImage) -> AstroImage {
     AstroImage(
       width: image.width, height: image.height, planes: image.planes, metadata: image.metadata)
   }

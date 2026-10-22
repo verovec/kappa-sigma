@@ -66,6 +66,7 @@ package final class StudioSession {
     guard let type = registry.type(id: processID) else {
       throw StudioError.unknownProcess(processID)
     }
+    guard !type.isBatch else { throw StudioError.runsInTool(processID) }
     let source = input ?? history.current
     let (layers, layerStats) = try context()
     let output = try runner.run(
@@ -91,14 +92,30 @@ package final class StudioSession {
     try history.apply(processID: processID, params: params, result: result, outputs: outputs)
   }
 
-  /// The layers a render reads: the bundle's, overlaid by the outputs of the applied steps.
-  private func context() throws -> ([String: GPUImage], [String: LayerStats]) {
-    var layers = bundleLayers
-    var stats = bundle.layerStats
-    for (role, image) in try history.layers() {
-      layers[role.rawValue] = try GPUImage(device: device, image: image)
-      stats[role.rawValue] = LayerStats.measured(image)
+  /// Runs the batch process `processID` through `batch` with `params` on the head and the
+  /// bundle's layers as the steps so far left them, and records its step: the head moves to
+  /// its result, its outputs and rewritten layers overlay the context of the next steps.
+  package func apply(
+    _ processID: String, batch: PipelineRunner.BatchProcess, params: ParamSet,
+    onProgress: @escaping @Sendable (Double) -> Void
+  ) async throws {
+    let input = try PipelineRunner.BatchInput(history: history, bundle: bundle)
+    let head = (history.steps.count, history.steps.last?.file)
+    let output = try await batch.step(input, params, onProgress)
+    // Cancelled meanwhile (an undo, the workspace replaced): nothing is recorded.
+    try Task.checkCancellation()
+    // The tool ran for seconds or minutes: a head moved meanwhile would get a result made
+    // from another image.
+    guard head == (history.steps.count, history.steps.last?.file) else {
+      throw StudioError.headMoved(processID)
     }
-    return (layers, stats)
+    try history.apply(
+      processID: processID, params: params, result: output.result, outputs: output.outputs,
+      replacing: output.replaced)
+  }
+
+  /// The layers a render reads: the bundle's, overlaid by what the applied steps wrote.
+  private func context() throws -> ([String: GPUImage], [String: LayerStats]) {
+    try history.context(over: bundleLayers, stats: bundle.layerStats, device: device)
   }
 }

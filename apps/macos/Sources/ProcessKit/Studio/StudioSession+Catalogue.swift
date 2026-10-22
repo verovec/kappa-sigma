@@ -19,7 +19,7 @@ extension StudioSession {
     -> [Suggestion]
   {
     var layers = bundle.layerStats
-    for (role, image) in try history.layers() { layers[role.rawValue] = LayerStats.measured(image) }
+    for (id, image) in try history.writtenLayers() { layers[id] = LayerStats.measured(image) }
     let process = try type.init(params: params, device: device)
     return process.suggestions(stats: stepStats, layers: layers)
   }

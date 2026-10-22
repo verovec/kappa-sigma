@@ -27,8 +27,11 @@ extension StudioModelTests {
   }
 
   /// Card 0087 (the 0049 contract through the model): the preview at scale 1 and the applied
-  /// head are the same pixels, for every process of the standard registry.
-  @Test("testPreviewEqualsApply", .scratchDirectory, arguments: try ProcessRegistry.standard().ids)
+  /// head are the same pixels, for every GPU process of the standard registry (a batch process's
+  /// preview is its result, design §4.6: `BackgroundExtractionProcessTests`).
+  @Test(
+    "testPreviewEqualsApply", .scratchDirectory,
+    arguments: try ProcessRegistry.standard().types.filter { !$0.isBatch }.map { $0.id })
   func testPreviewEqualsApply(processID: String) throws {
     let opened = try Self.project()
     defer { try? opened.package.close() }

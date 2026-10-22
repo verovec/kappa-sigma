@@ -37,7 +37,7 @@ package struct BackgroundExtraction: Sendable {
     scratch: URL, onProgress: @escaping @Sendable (ToolProgress) -> Void
   ) async throws -> sending BackgroundResult {
     try engine.validate()
-    guard engine.usesGraXpert || correction == .subtract else {
+    guard engine.supports(correction) else {
       throw BackgroundExtractionError.unsupportedCorrection(engine: engine, correction: correction)
     }
     let cache = BackgroundCache(

@@ -17,6 +17,15 @@ package enum StudioUndo {
     // A value typed and not confirmed is committed first: Apply never records an older one.
     NSApp?.keyWindow?.makeFirstResponder(nil)
     let before = model.studio.steps.count
+    if model.panel?.type.isBatch == true {
+      // A host tool runs for seconds to minutes: the move is registered once it is recorded.
+      model.startBatch { [weak undoManager] in
+        guard model.studio.steps.count > before else { return }
+        model.undoManager = undoManager
+        record(model, undoing: true, head: model.studio.steps.last?.file, on: undoManager)
+      }
+      return
+    }
     try? model.apply()
     guard model.studio.steps.count > before else { return }
     model.undoManager = undoManager

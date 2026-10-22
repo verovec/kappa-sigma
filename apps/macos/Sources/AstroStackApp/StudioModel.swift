@@ -81,6 +81,17 @@ package final class StudioModel {
     cleanUp()
   }
 
+  /// Runs the batch process `processID` through `batch` with `params` (a host tool, reporting
+  /// 0…1 to `onProgress`) and records its step with the layers it wrote.
+  package func apply(
+    _ processID: String, batch: PipelineRunner.BatchProcess, params: ParamSet,
+    onProgress: @escaping @Sendable (Double) -> Void
+  ) async throws {
+    defer { mirror() }
+    try await session.apply(processID, batch: batch, params: params, onProgress: onProgress)
+    cleanUp()
+  }
+
   /// What `processID` with `params` makes of the head at `scale` (the live preview; at scale 1
   /// it is the pixels Apply records), under `mask`.
   package func preview(_ processID: String, params: ParamSet, mask: AstroImage? = nil) throws
@@ -141,8 +152,9 @@ package final class StudioModel {
   }
 
   private func appendRow(_ step: History.Step) throws -> HistoryStep {
-    // The step's image and the layers it wrote: what the disk budget counts.
-    let bytes = ([step.file] + step.outputs.values).reduce(0) { total, file in
+    // The step's image and the layers it wrote or rewrote: what the disk budget counts.
+    let files = [step.file] + step.outputs.values + step.replaced.values
+    let bytes = files.reduce(0) { total, file in
       let url = session.history.directory.appendingPathComponent(file)
       let size = try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int
       return total + (size ?? 0)

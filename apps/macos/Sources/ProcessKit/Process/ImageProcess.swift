@@ -21,6 +21,11 @@ package protocol ImageProcess {
   /// morphology and blurs do not commute with the pyramid.
   static var previewExactOnlyAt1to1: Bool { get }
 
+  /// A batch process (card 0092): its result comes from a host tool through a
+  /// `PipelineRunner.BatchProcess`, never from `render`; it is listed, validated and documented
+  /// like any other process.
+  static var isBatch: Bool { get }
+
   /// The values `render` reads.
   var params: ParamSet { get }
 
@@ -55,6 +60,9 @@ package protocol ImageProcess {
 }
 
 extension ImageProcess {
+  /// Rendered on the GPU.
+  package static var isBatch: Bool { false }
+
   /// No layer requirement.
   package static var requires: [LayerRole] { [] }
 

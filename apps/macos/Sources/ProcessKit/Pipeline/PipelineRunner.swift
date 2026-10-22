@@ -11,27 +11,6 @@ package import Metal
 /// `Sendable`: a caller on the main actor hops off it around the whole run; the run checks for
 /// cancellation between steps.
 package final class PipelineRunner {
-  /// A batch process: a host tool run on the whole image (StarNet, GraXpert).
-  package struct BatchProcess: Sendable {
-    /// Its parameters (what its recipe's values are validated on).
-    package let schema: ParamSchema
-    /// The image, its values and a progress callback (0…1) → the processed image.
-    package let run:
-      @Sendable (AstroImage, ParamSet, @escaping @Sendable (Double) -> Void) async throws
-        -> AstroImage
-
-    /// A batch process of `schema` running `run`.
-    package init(
-      schema: ParamSchema,
-      run:
-        @escaping @Sendable (AstroImage, ParamSet, @escaping @Sendable (Double) -> Void)
-        async throws -> AstroImage
-    ) {
-      self.schema = schema
-      self.run = run
-    }
-  }
-
   /// What the run did, step by step (indexes in the pipeline).
   package enum Event: Equatable, Sendable {
     /// The step was applied.
@@ -175,27 +154,36 @@ package final class PipelineRunner {
       PipelineReuse.canReuse(
         step: index, of: previous, into: history, bundle: session.bundle, processID: id)
     {
+      let written = try previous.history.written(ofStep: index)
       try history.apply(
         processID: id, params: previous.history.steps[index].params,
-        result: previous.history.output(ofStep: index))
+        result: previous.history.output(ofStep: index), outputs: written.outputs,
+        replacing: written.replaced)
       session.onEvent(.reused(index))
       return
     }
-    if let type = registry.type(id: id) {
+    if let type = registry.type(id: id), !type.isBatch {
       let params = try Self.values(of: step, schema: type.schema, at: index)
       let process = try type.init(params: params, device: device)
       let input = history.current
+      let (layers, layerStats) = try history.context(
+        over: session.layers, stats: session.bundle.layerStats, device: device)
       let output = try runner.run(
         process, input: GPUImage(device: device, image: input), stats: session.stats,
-        layers: session.layers, layerStats: session.bundle.layerStats)
+        layers: layers, layerStats: layerStats)
       let result = AstroImage(
         width: input.width, height: input.height, planes: output.read(), metadata: input.metadata)
       try history.apply(processID: id, params: params, result: result)
     } else if let tool = batch[id] {
       let params = try Self.values(of: step, schema: tool.schema, at: index)
       let onEvent = session.onEvent
-      let result = try await tool.run(history.current, params) { onEvent(.progress(index, $0)) }
-      try history.apply(processID: id, params: params, result: result)
+      let input = try BatchInput(history: history, bundle: session.bundle)
+      let output = try await tool.step(input, params) { onEvent(.progress(index, $0)) }
+      try history.apply(
+        processID: id, params: params, result: output.result, outputs: output.outputs,
+        replacing: output.replaced)
+    } else if registry.type(id: id)?.isBatch == true {
+      throw PipelineError.noTool(id)
     } else {
       throw PipelineError.unknownProcess(id)
     }

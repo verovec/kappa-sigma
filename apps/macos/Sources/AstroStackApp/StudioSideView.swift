@@ -19,13 +19,18 @@ package struct StudioSideView: View {
       VStack(alignment: .leading, spacing: DesignMetrics.spacingL) {
         if let panel = model.panel {
           ProcessPanel(model: panel)
-          StudioMaskRow(model: model)
+          if panel.type.isBatch {
+            StudioBatchRows(model: model)
+          } else {
+            StudioMaskRow(model: model)
+          }
           HStack {
             Button(.app("Close")) { model.closePanel() }
               .accessible(.studioClosePanel, label: .app("Close"))
             Spacer()
             // No default-button Return: Return confirms a typed value (Edit › Apply Process ⌘E).
             Button(.app("Apply")) { applyRecorded() }
+              .disabled(model.batchProgress != nil)
               .accessible(.studioApply, label: .app("Apply"))
           }
         } else {

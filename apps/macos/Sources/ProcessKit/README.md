@@ -184,6 +184,31 @@ in en/fr; the English title is the key, resolved with `ProcessKitResources.title
 - A host-tool step (StarNet 0091, background extraction 0092) records its result and the layers
   it wrote with `StudioSession.apply(_:params:result:outputs:)`.
 
+## Batch processes (card 0092)
+
+- A process whose result comes from a host tool is registered like any other (catalogue,
+  profiles, help, titles and parameter gates cover it) with `static isBatch = true`; its `render`
+  is never called (`StudioError.runsInTool`), and the preview==apply contract is the GPU one
+  (design §4.6: a batch process's preview is its result).
+- `PipelineRunner.BatchProcess` runs it: `step(BatchInput, params, progress) → BatchOutput`.
+  The input is the head and the bundle's layers as the steps so far left them; the output is the
+  step's image, new layers by role (`outputs`) and bundle layers rewritten by id (`replaced`).
+  `init(schema:run:)` still wraps a tool that only makes the image. A registered batch process
+  without its closure stops a pipeline with `PipelineError.noTool` — nothing runs in its place.
+- `History.apply(…outputs:replacing:)`: a rewritten bundle layer (`Ha` after a background
+  extraction) is read by later steps under the bundle's id and adds no role; `writtenLayers()`
+  and `context(over:)` give the overlay (`StudioSession` uploads it for every render).
+- **BackgroundExtractionProcess** (`background-extraction`, linear): `engine` graxpert /
+  siril-rbf / siril-polynomial (each engine's values advanced, promoted by the choice),
+  `correction`, `applyTo` rgb (the head) / lines (the Hα/OIII/SII layers, the head kept) / all
+  (the head and every bundle layer). `batch(_ extract:)` runs the engine per target, head first,
+  progress shared out; the first target's model is the `backgroundModel` output. The app wires
+  `extract` to StackKit `BackgroundExtraction` (`StudioTools`), greys an engine whose tool is
+  missing with the reason, and refuses Apply with it — no other engine runs (R2).
+
+To add a batch process: conform with `isBatch = true`, give it a `batch(...)` factory over an
+injected closure, wire the closure in the app's `StudioTools` and `batchProcess(_:)`.
+
 ## How to add a process
 
 1. A type conforming to `ImageProcess` in `ProcessKit/Processes/<Name>/`, its kernel in a

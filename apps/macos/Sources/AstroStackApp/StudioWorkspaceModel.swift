@@ -44,7 +44,7 @@ package final class StudioWorkspaceModel {
   /// The history and its mirror.
   @ObservationIgnored package let studio: StudioModel
   /// The viewer.
-  package private(set) var viewer: Viewer
+  package internal(set) var viewer: Viewer
   /// The registry by stage.
   package private(set) var catalogue: [Group] = []
   /// The chosen process's panel.
@@ -52,14 +52,16 @@ package final class StudioWorkspaceModel {
   /// The viewer shows the preview of the panel's values, not the head.
   package private(set) var isPreviewing = false
   /// The step compare shows, if any.
-  package private(set) var comparing: Int?
+  package internal(set) var comparing: Int?
   /// Where the process may act (luminosity range, stars), applied by the kit after the
   /// process, to the preview and Apply alike; `nil`: everywhere.
   package var mask: Mask? {
     didSet { if panel != nil { schedulePreview() } }
   }
   /// Why the last action failed.
-  package private(set) var failure: LocalizedStringResource?
+  package internal(set) var failure: LocalizedStringResource?
+  /// A batch process's run, its tools and the model view (card 0092).
+  package internal(set) var batch = BatchState()
 
   /// The processes it offers.
   @ObservationIgnored package let registry: ProcessRegistry
@@ -69,6 +71,8 @@ package final class StudioWorkspaceModel {
   @ObservationIgnored package var reveal: () -> Void = {}
   /// The undo manager its moves are registered on, cleared of them when it is retired.
   @ObservationIgnored package weak var undoManager: UndoManager?
+  /// The host tools the batch processes run.
+  @ObservationIgnored package let tools: StudioTools
   @ObservationIgnored private let base: Set<LayerRole>
   @ObservationIgnored private var previewTask: Task<Void, Never>?
   /// The head's display statistics: a preview is drawn through them, never through a previous
@@ -79,10 +83,12 @@ package final class StudioWorkspaceModel {
   /// The failure shown is a preview's (the next preview clears it).
   @ObservationIgnored private var previewFailed = false
 
-  /// The workspace of `studio` whose bundle holds the layer roles `base`.
-  package init(studio: StudioModel, base: Set<LayerRole>) throws {
+  /// The workspace of `studio` whose bundle holds the layer roles `base`, running its batch
+  /// processes with `tools` (the installed ones, working in the stack's folder, by default).
+  package init(studio: StudioModel, base: Set<LayerRole>, tools: StudioTools? = nil) throws {
     self.studio = studio
     self.base = base
+    self.tools = tools ?? .live(scratch: Self.newScratch())
     registry = studio.session.registry
     let renderer = try ViewerRenderer(device: studio.session.device)
     viewer = Viewer(
@@ -97,6 +103,8 @@ package final class StudioWorkspaceModel {
   package func retire() {
     isRetired = true
     previewTask?.cancel()
+    clearScratch(after: batch.task)
+    batch.task?.cancel()
     undoManager?.removeAllActions(withTarget: self)
   }
 
@@ -111,15 +119,19 @@ package final class StudioWorkspaceModel {
     let panel = ProcessPanelModel(type: type, params: ParamSet(schema: type.schema))
     refresh(panel)
     panel.onChange = { [weak self] in self?.panelChanged() }
+    hideModel()
+    if type.isBatch { stopPreview() }
     self.panel = panel
     shown = nil
     // The defaults are previewed at once: Apply never records what was not shown (R2).
     schedulePreview()
+    if type.isBatch { batchChosen() }
   }
 
   /// Closes the panel: the viewer shows the head again.
   package func closePanel() {
     panel = nil
+    hideModel()
     stopPreview()
   }
 
@@ -157,8 +169,10 @@ package final class StudioWorkspaceModel {
   /// Applies the panel's values at full resolution: the head moves.
   ///
   /// A failure is shown in the panel.
+  ///
+  /// A batch process runs through `runBatch()` instead (its result is its preview).
   package func apply() throws {
-    guard let panel else { return }
+    guard let panel, !panel.type.isBatch, batch.progress == nil else { return }
     // Apply records what the viewer shows (R2): values not drawn yet (a value just typed, a
     // drag within the frame) are drawn first, and what was drawn is what is recorded.
     previewTask?.cancel()
@@ -175,16 +189,18 @@ package final class StudioWorkspaceModel {
 
   /// Back one step.
   package func undo() throws {
+    try stopBatchForHistory()
     try reported { try studio.undo() }
   }
 
   /// Forward one undone step.
   package func redo() throws {
+    try stopBatchForHistory()
     try reported { try studio.redo() }
   }
 
   /// Runs a history move, then shows the head; a failure is shown in the panel and rethrown.
-  private func reported(_ move: () throws -> Void) throws {
+  func reported(_ move: () throws -> Void) throws {
     do {
       try move()
       failure = nil
@@ -204,18 +220,6 @@ package final class StudioWorkspaceModel {
     }
   }
 
-  /// Compares the viewer's image with the output of step `index` (`nil`: no compare).
-  package func compare(toStep index: Int?) throws {
-    guard let index else {
-      viewer.reference = nil
-      comparing = nil
-      return
-    }
-    let image = try studio.session.history.output(ofStep: index)
-    viewer.reference = try Self.texture(image, device: studio.session.device)
-    comparing = index
-  }
-
   /// The mask of the head, one plane, or `nil` without a mask.
   private func maskImage() throws -> AstroImage? {
     guard let mask else { return nil }
@@ -230,21 +234,14 @@ package final class StudioWorkspaceModel {
   /// A value moved: the suggestions follow the values they depend on, the preview follows.
   private func panelChanged() {
     if let panel { panel.suggestions = offers(for: panel.type, params: panel.params) }
+    if panel?.type.isBatch == true { greyUnavailable() }
     schedulePreview()
-  }
-
-  /// Compares with step `index`, or stops when it is the one compared; a step whose output
-  /// cannot be read is reported.
-  package func toggleCompare(_ index: Int) {
-    do {
-      try compare(toStep: comparing == index ? nil : index)
-    } catch {
-      failure = UserFacingError(error).message
-    }
   }
 
   private func schedulePreview() {
     previewTask?.cancel()
+    // A batch process has no live preview: its tool runs on Apply (design §4.6).
+    guard panel?.type.isBatch != true else { return }
     previewTask = Task { [weak self] in
       // One frame: a slider drag renders its last position, not every intermediate one.
       try? await Task.sleep(for: .milliseconds(16))
@@ -261,8 +258,9 @@ package final class StudioWorkspaceModel {
     try? show(studio.head)
   }
 
-  private func headChanged() throws {
+  func headChanged() throws {
     shown = nil
+    batch.showsModel = false
     defer { headStatistics = viewer.model.statistics }
     isPreviewing = false
     // A compared step that no longer exists (undone) stops the compare.
@@ -275,7 +273,7 @@ package final class StudioWorkspaceModel {
     if panel != nil { schedulePreview() }
   }
 
-  private func show(_ image: AstroImage, statistics: [STFMapping]? = nil) throws {
+  func show(_ image: AstroImage, statistics: [STFMapping]? = nil) throws {
     viewer.texture = try Self.texture(image, device: studio.session.device)
     viewer.model.replace(image: image, statistics: statistics)
   }
@@ -293,7 +291,7 @@ package final class StudioWorkspaceModel {
     catalogue = groups
   }
 
-  private static func texture(_ image: AstroImage, device: MTLDevice) throws -> ImageTexture {
+  static func texture(_ image: AstroImage, device: MTLDevice) throws -> ImageTexture {
     try ImageTexture(device: device, width: image.width, height: image.height, planes: image.planes)
   }
 }

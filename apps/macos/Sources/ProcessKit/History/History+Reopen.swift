@@ -27,7 +27,7 @@ extension History {
       return Step(
         processID: entry.processID,
         params: ParamSet.loading(entry.params, onto: schema).params, file: entry.file,
-        outputs: outputs)
+        outputs: outputs, replaced: entry.replaced ?? [:])
     }
     try history.restore(
       steps: manifest.steps.map(step), undone: manifest.undone.map(step),
@@ -47,7 +47,8 @@ extension History {
     func entry(_ step: Step) -> HistoryManifest.Entry {
       HistoryManifest.Entry(
         processID: step.processID, params: step.params.entries, file: step.file,
-        outputs: Dictionary(uniqueKeysWithValues: step.outputs.map { ($0.key.rawValue, $0.value) }))
+        outputs: Dictionary(uniqueKeysWithValues: step.outputs.map { ($0.key.rawValue, $0.value) }),
+        replaced: step.replaced.isEmpty ? nil : step.replaced)
     }
     return HistoryManifest(
       version: HistoryManifest.version, nextNumber: nextStepNumber, steps: steps.map(entry),

@@ -7,6 +7,11 @@ extension UserFacingError {
     switch error {
     case .unknownProcess(let id): .app("The Studio has no process “\(id)”.")
     case .emptyBundle: .app("This stack has no layer to start the Studio from.")
+    case .headMoved(let id):
+      .app("The image changed while “\(id)” ran: its result was not recorded. Apply it again.")
+    case .toolRunning: .app("A host tool is running: wait for it to finish.")
+    case .runsInTool(let id):
+      .app("“\(id)” runs in its host tool: Apply runs it and shows its result.")
     }
   }
 

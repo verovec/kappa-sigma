@@ -81,6 +81,22 @@
         }
       }
     },
+    "%@ is not installed at %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is not installed at %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ n’est pas installé à %@."
+          }
+        }
+      }
+    },
     "%@ trail mask: %@ trails on %@ of %@": {
       "localizations": {
         "en": {
@@ -109,6 +125,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ · référence"
+          }
+        }
+      }
+    },
+    "%@ — %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ — %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ — %@"
           }
         }
       }
@@ -317,6 +349,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Un script Siril a échoué (code de sortie %lld) : %@"
+          }
+        }
+      }
+    },
+    "A host tool is running: wait for it to finish.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A host tool is running: wait for it to finish."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un outil tourne : attendez qu’il ait fini."
           }
         }
       }
@@ -3617,6 +3665,22 @@
         }
       }
     },
+    "Running the tool…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Running the tool…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’outil tourne…"
+          }
+        }
+      }
+    },
     "Runs on linear data: undo the stretch first": {
       "localizations": {
         "en": {
@@ -3985,6 +4049,22 @@
         }
       }
     },
+    "Show the background model": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show the background model"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher le modèle de fond"
+          }
+        }
+      }
+    },
     "Show the reference while held": {
       "localizations": {
         "en": {
@@ -4109,6 +4189,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Siril s’est arrêté pendant « %@ » et a été relancé ; relancez l’étape."
+          }
+        }
+      }
+    },
+    "Siril's subsky only subtracts: dividing needs GraXpert.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril's subsky only subtracts: dividing needs GraXpert."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le subsky de Siril ne fait que soustraire : diviser demande GraXpert."
           }
         }
       }
@@ -4557,6 +4653,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le dossier %@ est illisible : vérifiez qu’il existe et qu’AstroStack peut l’ouvrir."
+          }
+        }
+      }
+    },
+    "The image changed while “%@” ran: its result was not recorded. Apply it again.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The image changed while “%@” ran: its result was not recorded. Apply it again."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’image a changé pendant que « %@ » tournait : son résultat n’a pas été enregistré. Appliquez-le de nouveau."
           }
         }
       }
@@ -5177,6 +5289,22 @@
         }
       }
     },
+    "a background model": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "a background model"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "un modèle de fond"
+          }
+        }
+      }
+    },
     "a colour layer": {
       "localizations": {
         "en": {
@@ -5709,6 +5837,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "« %@ » n’est pas un type de filtre : utilisez unknown, broadband ou dualband."
+          }
+        }
+      }
+    },
+    "“%@” runs in its host tool: Apply runs it and shows its result.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” runs in its host tool: Apply runs it and shows its result."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« %@ » s’exécute dans son outil : Appliquer le lance et en montre le résultat."
           }
         }
       }

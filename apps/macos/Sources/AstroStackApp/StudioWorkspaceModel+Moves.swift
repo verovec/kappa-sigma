@@ -32,12 +32,11 @@ extension StudioWorkspaceModel {
   /// Drops the region when the moved grid on screen changed, and publishes whether one is shown.
   ///
   /// A geometric preview other than the identity appeared, changed or went away: the region's
-  /// pixels are no longer under it, even at the same size. The compare normally stops earlier,
-  /// in `willShow`, before the moved image is drawn; this is the backstop for any other path.
+  /// pixels are no longer under it, even at the same size. The compare stops earlier, in
+  /// `willShow`, the one place a moved image is drawn from.
   func gridMoved(from old: (processID: String, params: ParamSet)?) {
     let now = movedGrid(shown.map { ($0.processID, $0.params) })
     if movedGrid(old) != now { viewer.model.clearRegion() }
-    if now != nil, comparing != nil { try? compare(toStep: nil) }
     if showsMovedGrid != (now != nil) { showsMovedGrid = now != nil }
   }
 

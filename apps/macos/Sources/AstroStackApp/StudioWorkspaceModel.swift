@@ -153,7 +153,7 @@ package final class StudioWorkspaceModel {
       previewFailed = true
       if isPreviewing {
         isPreviewing = false
-        try? show(studio.head)
+        try? show(studio.head, statistics: headStatistics)
       }
     }
   }
@@ -256,7 +256,7 @@ package final class StudioWorkspaceModel {
     shown = nil
     guard isPreviewing else { return }
     isPreviewing = false
-    try? show(studio.head, statistics: headStatistics)
+    try? show(studio.head)
   }
 
   private func headChanged() throws {

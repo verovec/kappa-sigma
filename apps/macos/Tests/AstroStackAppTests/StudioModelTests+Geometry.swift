@@ -158,6 +158,8 @@ extension StudioModelTests {
     await workspace.previewNow()
     #expect(workspace.comparing == nil, "a flipped preview, same size, no longer lies on step 1")
     #expect(throws: UserFacingError.movedPreview) { try workspace.compare(toStep: 0) }
+    workspace.toggleCompare(0)
+    #expect(workspace.failure == UserFacingError.movedPreview.message, "the click says why")
     #expect(workspace.regionUnavailable == .noRegion)
     viewer.drag(from: [1, 1], to: [4, 4], tool: .region)
     panel.set("flipV", .flag(false))

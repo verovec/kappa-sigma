@@ -3,6 +3,7 @@ import Foundation
 import Metal
 import ProcessKit
 import ProjectKit
+import RenderKit
 import TestSupport
 import Testing
 
@@ -156,5 +157,47 @@ struct PipelineSidebarModelTests {
       named: "edited", json: JSONSerialization.data(withJSONObject: object))
     sidebar.load("edited")
     #expect(sidebar.warnings == ["unknown key colour ignored"])
+  }
+}
+
+extension PipelineSidebarModelTests {
+  @Test(
+    "the column, the compare sheet and the replay chooser report their controls", .scratchDirectory)
+  func testViews() async throws {
+    let opened = try StudioModelTests.project()
+    defer { try? opened.package.close() }
+    let pipeline = Pipeline(
+      name: "p",
+      steps: [
+        try Self.step(ChannelCombinationProcess.self),
+        try Self.step(StretchProcess.self, [:], .stop, locked: true),
+        try Self.step(StarRecompositionProcess.self),
+      ])
+    let (_, sidebar) = try Self.sidebar(opened, pipeline)
+    await sidebar.run()
+    sidebar.save(as: "saved")
+    sidebar.setMode(.auto, of: 1)
+    for language in ["fr", "en"] {
+      let entries = AccessibilityAuditTests.entries(
+        PipelineSidebarView(model: sidebar), language: language)
+      let ids = Set(entries.map(\.id))
+      for id in ["run", "continue", "replay", "files", "step.1.mode", "step.2.lock"] {
+        #expect(ids.contains("fr.astrostack.stage.studio.pipeline.\(id)"), "\(id): \(ids)")
+      }
+      #expect(AccessibilityAudit.problems(entries) == [])
+      #expect(sidebar.stepProblems[2].count == 1, "star recomposition needs a starless layer")
+    }
+    #expect(try sidebar.differences(from: "saved").count == 1)
+    let window = ProjectWindowModel(
+      store: { opened.package.store }, planning: { _ in ImportPlanningStub.empty })
+    let chooser = AccessibilityAuditTests.entries(ReplayChooser(model: window))
+    #expect(chooser.map(\.id).contains("fr.astrostack.stage.studio.pipeline.replay.cancel"))
+    for saved in ["saved", "missing"] {
+      for language in ["fr", "en"] {
+        let sheet = AccessibilityAuditTests.entries(
+          PipelineDiffSheet(model: sidebar, savedName: saved) {}, language: language)
+        #expect(sheet.map(\.id) == ["fr.astrostack.stage.studio.pipeline.compare.close"])
+      }
+    }
   }
 }

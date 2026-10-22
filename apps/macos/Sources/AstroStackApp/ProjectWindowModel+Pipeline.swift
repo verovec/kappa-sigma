@@ -27,8 +27,10 @@ extension ProjectWindowModel {
         steps: workspace.studio.steps.map {
           PipelineStep(recipe: Recipe(processID: $0.processID, params: $0.params))
         })
-    return try PipelineSidebarModel(
+    let sidebar = try PipelineSidebarModel(
       workspace: workspace, pipeline: pipeline, store: store, base: roles)
+    sidebar.onReplay = { [weak self] in self?.isChoosingReplay = true }
+    return sidebar
   }
 
   /// The stacks the pipeline can be replayed on: the project's others, newest last.

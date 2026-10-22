@@ -37,6 +37,8 @@ package final class PipelineSidebarModel {
   package private(set) var isRunning = false
   /// Why the last action failed.
   package internal(set) var failure: LocalizedStringResource?
+  /// Opens the window's Replay chooser (the column's « Replay on… » button).
+  @ObservationIgnored package var onReplay: () -> Void = {}
   /// The last run on this stack: what a replay's locked steps may reuse.
   @ObservationIgnored package private(set) var lastRun: PipelineRun?
 

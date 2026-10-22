@@ -71,6 +71,8 @@ package struct StudioSideView: View {
           }
         }
         .buttonStyle(.plain)
+        // No step lies under a moved preview's pixels (card 0090).
+        .disabled(model.showsMovedGrid)
         .accessible(.studioStep(index), label: title)
       }
     }

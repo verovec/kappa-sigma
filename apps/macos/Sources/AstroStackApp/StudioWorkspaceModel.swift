@@ -53,6 +53,8 @@ package final class StudioWorkspaceModel {
   package private(set) var isPreviewing = false
   /// The step compare shows, if any.
   package private(set) var comparing: Int?
+  /// The viewer shows a geometric preview that moves the pixels (card 0090, `gridMoved`).
+  package internal(set) var showsMovedGrid = false
   /// Where the process may act (luminosity range, stars), applied by the kit after the
   /// process, to the preview and Apply alike; `nil`: everywhere.
   package var mask: Mask? {
@@ -74,7 +76,7 @@ package final class StudioWorkspaceModel {
   /// The head's display statistics: a preview is drawn through them, never a previous one's.
   @ObservationIgnored private var headStatistics: [STFMapping] = []
   /// The values and mask of the preview on screen (`nil`: none); see `gridMoved`.
-  private(set) var shown: (processID: String, params: ParamSet, mask: Mask?)? {
+  @ObservationIgnored private(set) var shown: (processID: String, params: ParamSet, mask: Mask?)? {
     didSet { gridMoved(from: oldValue.map { ($0.processID, $0.params) }) }
   }
   /// The failure shown is a preview's (the next preview clears it).
@@ -113,7 +115,8 @@ package final class StudioWorkspaceModel {
     refresh(panel)
     panel.onChange = { [weak self] in self?.panelChanged() }
     self.panel = panel
-    stopPreview()
+    // A moved preview leaves the screen at once; another stays until the new one replaces it.
+    if showsMovedGrid { stopPreview() } else { shown = nil }
     // The defaults are previewed at once: Apply never records what was not shown (R2).
     schedulePreview()
   }
@@ -129,8 +132,7 @@ package final class StudioWorkspaceModel {
     drawPreview()
   }
 
-  /// Draws the panel's values on the head now; a failure shows the head again (never an older
-  /// preview standing for the current values).
+  /// Draws the panel's values on the head now; a failure shows the head, never an older preview.
   private func drawPreview() {
     guard let panel else { return }
     do {
@@ -156,9 +158,7 @@ package final class StudioWorkspaceModel {
     }
   }
 
-  /// Applies the panel's values at full resolution: the head moves.
-  ///
-  /// A failure is shown in the panel.
+  /// Applies the panel's values at full resolution: the head moves (a failure is shown).
   package func apply() throws {
     guard let panel else { return }
     // Apply records what the viewer shows (R2): values not drawn yet (a value just typed, a
@@ -232,8 +232,7 @@ package final class StudioWorkspaceModel {
     schedulePreview()
   }
 
-  /// Compares with step `index`, or stops when it is the one compared; a step whose output
-  /// cannot be read is reported.
+  /// Compares with step `index`, or stops when it is the one compared; a failure is reported.
   package func toggleCompare(_ index: Int) {
     do {
       try compare(toStep: comparing == index ? nil : index)
@@ -257,7 +256,7 @@ package final class StudioWorkspaceModel {
     shown = nil
     guard isPreviewing else { return }
     isPreviewing = false
-    try? show(studio.head)
+    try? show(studio.head, statistics: headStatistics)
   }
 
   private func headChanged() throws {

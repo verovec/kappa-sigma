@@ -33,6 +33,11 @@ extension StudioViewsTests {
     }
     #expect(words(GeometryExtras.solution(.moved)) == "La solution astrométrique suit les pixels.")
     #expect(GeometryExtras.reason(.notGeometry) == nil)
+    let moved = "L’aperçu déplace les pixels : comparez une fois la géométrie appliquée"
+    #expect(words(UserFacingError.movedPreview.message) == moved + " ou remise à zéro.")
+    #expect(
+      words(UserFacingError(StudioError.otherSize(step: 1)).message)
+        == "L’étape 2 n’a pas la taille de l’image : elle ne peut pas être comparée.")
     #expect(
       try words(#require(GeometryExtras.reason(.noRegion)))
         == "Tracez d’abord une région dans le visualiseur.")

@@ -34,6 +34,10 @@ GRDB 7), and later `images/`, `recipes/`, `history/` (design §4.5). No UI, no A
 
 ## Stacks (card 0057)
 
+- Card 0095: `stacks.object` and `stacks.scope_json` (migration 0005) name what a run stacked —
+  `addStack(…, object:scopeJSON:)` — so the app's stack picker lists « object · date · n lights »
+  without decoding `params_json`; `columnNames(of:)` lets a migration test check a column round trip.
+
 - A finished run of the Stacking stage is `addStack(bundlePath: "stacks/<run_id>", …)`: the
   path is relative to the package, `params_json` is the `ImportRequest` it ran (legacy wire keys),
   and the sources are the nights it read. Each bundle layer is one `images` row (role = layer id:

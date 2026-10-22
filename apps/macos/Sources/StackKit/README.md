@@ -98,6 +98,21 @@ Re-recording is a contract change: the PR that commits new fixtures says why (`T
   HelpKit's `Help/<locale>/knobs.json` (`knob.<id>`, plus `knob.<id>.<option>` for a choice).
   `KnobSchemaTests` and `KnobPanelViewModelTests` fail on any one missing.
 
+## Run scope (card 0095)
+
+`Preprocess/RunScope.swift`: `RunScope(object:setIDs:lights:listed:)` names the light sets one run
+stacks, among those the scan `listed` for the object when they were chosen;
+`RunScope.scopes(of:)` gives one per object of a scan, `Inventory.scoped(_:)` keeps those light
+sets and every calibration set with the ids the scan gave (unlike `subset`, which regroups), and
+`Preprocessor.plan` refuses lights of several objects (`PreprocessError.mixedObjects`, an empty
+OBJECT being an object of its own) or none (`noLights`) — one object per run, never the legacy
+« dominant object ». `RunScope.unlistedSets(in:)` names the sets of the object a re-planned scan
+holds beyond what was listed, or chosen sets it lists no more (the app refuses the run with
+`scopeOutdated`); a set listed and left unchecked is a choice, not a change. A scoped inventory
+takes the colour model of the lights it keeps: a mixed scan names its colour lights `RGB`
+(`nameColorChannel`), so a mono object beside an OSC one stacks as two runs, while one object shot
+by both rigs is still refused as mixed. The app queues one run per checked object.
+
 ## How to extend
 
 - A port loads its case with `OracleCase.load` and compares: bytes for scripts and Siril masters,

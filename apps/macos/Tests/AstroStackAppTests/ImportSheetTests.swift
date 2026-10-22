@@ -109,7 +109,7 @@ struct ImportSheetTests {
     "StagePane", "DataStagePane", "DataIntegrationView", "DataCoverageView", "StackingStagePane",
     "StudioStagePane", "RunPanel", "RunOutcomeView", "RunSummary", "RunViewModel", "LayerList",
     "LayerDetail", "JournalView", "PreviewThumbnail", "KnobPanel", "KnobRow", "KnobPanelViewModel",
-    "CalibrationStagePane", "CoverageMatrix+Heading",
+    "CalibrationStagePane", "CoverageMatrix+Heading", "StackingStageModel", "StackingSeriesView",
     "ReviewStagePane", "FrameReviewView", "FrameTable", "FrameBlinkView", "FrameReviewViewModel",
   ]
 

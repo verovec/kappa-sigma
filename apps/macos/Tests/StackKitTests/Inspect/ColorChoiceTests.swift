@@ -97,6 +97,14 @@ struct ColorChoiceTests {
     }
   }
 
+  @Test("a mixed scan names its colour lights RGB; mono lights keep their filter")
+  func testNameColorChannel_mixed() {
+    let inventory = Self.seed([Self.mono, Self.color, Self.monoR])
+    #expect(inventory.colorModel == .mixed)
+    #expect(inventory.frames.map(\.filter) == ["L", "RGB", "R"])
+    #expect(Self.seed([Self.mono, Self.monoR]).frames.map(\.filter) == ["L", "R"])
+  }
+
   @Test("promoting a mixed scan to colour names the surviving colour lights RGB")
   func testColorChoice_namesColourChannel() throws {
     var inventory = Self.seed([Self.mono, Self.color])

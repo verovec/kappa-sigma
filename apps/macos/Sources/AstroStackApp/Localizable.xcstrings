@@ -241,6 +241,22 @@
         }
       }
     },
+    "%lld objects, one run each.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld objects, one run each."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld objets, un run chacun."
+          }
+        }
+      }
+    },
     "%lld to check": {
       "localizations": {
         "en": {
@@ -637,6 +653,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Canaux"
+          }
+        }
+      }
+    },
+    "Check at least one series to stack.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check at least one series to stack."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cochez au moins une série à empiler."
           }
         }
       }
@@ -2273,6 +2305,22 @@
         }
       }
     },
+    "No light set to stack: the capture holds none, or the series chosen are not in this scan.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No light set to stack: the capture holds none, or the series chosen are not in this scan."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune série de poses à empiler : la capture n’en contient pas, ou les séries cochées ne sont pas dans cette analyse."
+          }
+        }
+      }
+    },
     "No profile": {
       "localizations": {
         "en": {
@@ -2317,6 +2365,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aucun projet récent"
+          }
+        }
+      }
+    },
+    "No series checked.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No series checked."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune série cochée."
           }
         }
       }
@@ -2397,6 +2461,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Activé"
+          }
+        }
+      }
+    },
+    "One run of every checked set.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One run of every checked set."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un run de toutes les séries cochées."
           }
         }
       }
@@ -3025,6 +3105,22 @@
         }
       }
     },
+    "Rescan (Données › Rescan) to list the series; until then a run stacks every light.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rescan (Données › Rescan) to list the series; until then a run stacks every light."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Relisez (Données › Relire) pour lister les séries ; d’ici là un run empile toutes les poses."
+          }
+        }
+      }
+    },
     "Rescan reads the folders for their integration and calibration (~90 s a night).": {
       "localizations": {
         "en": {
@@ -3377,6 +3473,22 @@
         }
       }
     },
+    "Series": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Series"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Séries"
+          }
+        }
+      }
+    },
     "Settings": {
       "localizations": {
         "en": {
@@ -3405,6 +3517,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Réglages…"
+          }
+        }
+      }
+    },
+    "Several objects in the lights (%@): check one object's series on the Stacking stage.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Several objects in the lights (%@): check one object's series on the Stacking stage."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plusieurs objets dans les poses (%@) : cochez les séries d’un seul objet à l’étape Empilement."
+          }
+        }
+      }
+    },
+    "Several objects, some unnamed (%@): check one object's series on the Stacking stage.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Several objects, some unnamed (%@): check one object's series on the Stacking stage."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plusieurs objets, dont certains sans nom (%@) : cochez les séries d’un seul objet à l’étape Empilement."
           }
         }
       }
@@ -3613,6 +3757,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sources : %lld · Empilements : %lld"
+          }
+        }
+      }
+    },
+    "Stack": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stack"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Empilement"
+          }
+        }
+      }
+    },
+    "Stack %lld objects (%lld runs)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stack %lld objects (%lld runs)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Empiler %lld objets (%lld runs)"
           }
         }
       }
@@ -3953,6 +4129,46 @@
         }
       }
     },
+    "The scan moved since the series were chosen (%lld sets changed): rescan and pick again.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "The scan moved since the series were chosen (%lld set changed): rescan and pick again."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "The scan moved since the series were chosen (%lld sets changed): rescan and pick again."
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "L’analyse a changé depuis le choix des séries (%lld série modifiée) : relisez et choisissez à nouveau."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "L’analyse a changé depuis le choix des séries (%lld séries modifiées) : relisez et choisissez à nouveau."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "The stack %@ has no bundle.json: run it again.": {
       "localizations": {
         "en": {
@@ -4033,6 +4249,22 @@
         }
       }
     },
+    "This project stacks several objects: Rescan (Données › Rescan) to choose the series.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This project stacks several objects: Rescan (Données › Rescan) to choose the series."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce projet empile plusieurs objets : relisez (Données › Relire) pour choisir les séries."
+          }
+        }
+      }
+    },
     "To do": {
       "localizations": {
         "en": {
@@ -4109,6 +4341,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Annuler"
+          }
+        }
+      }
+    },
+    "Unnamed object": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unnamed object"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Objet sans nom"
           }
         }
       }
@@ -4485,6 +4733,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "exclu (proposé : %@)"
+          }
+        }
+      }
+    },
+    "g%lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "g%lld"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "g%lld"
           }
         }
       }

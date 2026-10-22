@@ -119,6 +119,7 @@ struct AccessibilityAuditTests {
     "RenderKit/DesignSystem/Components", "RenderKit/Viewer/STFControls.swift",
     "AstroStackApp/JourneySidebarRow.swift",
     "AstroStackApp/DataStagePane.swift", "AstroStackApp/StackingStagePane.swift",
+    "AstroStackApp/StackingSeriesView.swift", "AstroStackApp/StudioStagePane.swift",
     "AstroStackApp/CalibrationStagePane.swift",
     "AstroStackApp/KnobPanel.swift", "AstroStackApp/KnobRow.swift",
     "AstroStackApp/ShortcutsSheet.swift",

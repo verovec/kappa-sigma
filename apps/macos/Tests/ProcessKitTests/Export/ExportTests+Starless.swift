@@ -46,3 +46,18 @@ extension ExportTests {
     #expect(try JSONDecoder().decode(ExportSettings.self, from: data) == settings)
   }
 }
+
+extension ExportTests {
+  @Test("choosing a file or a format keeps the legacy order; unchoosing removes it")
+  func testChoose() {
+    var settings = ExportSettings()
+    settings.choose(.stars50, false)
+    settings.choose(.starless, false)
+    settings.choose(.starless, true)
+    #expect(settings.deliverables == [.final, .starless, .stars75, .stars25])
+    settings.choose(.fits32, true)
+    settings.choose(.png16, false)
+    settings.choose(.tiff16, true)
+    #expect(settings.formats == [.tiff16, .fits32])
+  }
+}

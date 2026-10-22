@@ -39,7 +39,7 @@ extension ProjectWindowModel {
 
   /// « Separate Stars » from the Studio: on the Export stage, whose sheet holds the window while
   /// StarNet runs (a step applied meanwhile would be overtaken by StarNet's).
-  func separateStarsFromStudio() {
+  package func separateStarsFromStudio() {
     guard let exportStage else { return }
     select(.export)
     exportStage.startSeparation()

@@ -22,7 +22,10 @@ struct ExportStagePaneTests {
 
   /// A project with stacks `runs` (each a written bundle), its window on the Export stage with
   /// StarNet missing.
-  static func open(_ runs: [String] = ["A"]) async throws -> Opened {
+  static func open(
+    _ runs: [String] = ["A"],
+    tools: HostTools = HostTools { _ in .missing(path: "/usr/local/bin/starnet2") }
+  ) async throws -> Opened {
     let scratch = try ScratchDirectory.url
     let project = try ProjectPackage.create(at: scratch.appendingPathComponent("M31.astrostack"))
     for run in runs {
@@ -34,7 +37,7 @@ struct ExportStagePaneTests {
     }
     let window = ProjectWindowModel(
       store: { project.store }, folder: { project.url },
-      exports: try ExportStageModelTests.services())
+      exports: try ExportStageModelTests.services(tools))
     window.select(.export)
     await window.openStudio()
     await ProjectWindowWorkspaceTests.settle { window.exportStage != nil || window.error != nil }

@@ -1,13 +1,18 @@
 internal import RenderKit
 internal import StackKit
-internal import SwiftUI
+package import SwiftUI
 
 /// Where the starless comes from: the state of the head's starless, « Separate stars », and
 /// StarNet's install card when this Mac has none it can run.
-struct StarSeparationSection: View {
+package struct StarSeparationSection: View {
   var model: ExportStageModel
 
-  var body: some View {
+  /// The stars section of `model`.
+  package init(model: ExportStageModel) {
+    self.model = model
+  }
+
+  package var body: some View {
     VStack(alignment: .leading, spacing: DesignMetrics.spacingS) {
       Text(.app("Stars")).font(.headline)
       if model.hasStarless {

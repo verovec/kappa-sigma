@@ -76,6 +76,18 @@ package struct ExportSettings: Codable, Equatable, Sendable {
   /// The legacy set: five PNGs, star colour 0.25, no crop or mirror.
   package init() {}
 
+  /// `deliverable` written (`on`) or not, the set kept in its legacy order.
+  package mutating func choose(_ deliverable: Deliverable, _ on: Bool) {
+    deliverables = Deliverable.allCases.filter {
+      $0 == deliverable ? on : deliverables.contains($0)
+    }
+  }
+
+  /// `format` written (`on`) or not, the formats kept in their order.
+  package mutating func choose(_ format: Format, _ on: Bool) {
+    formats = Format.allCases.filter { $0 == format ? on : formats.contains($0) }
+  }
+
   /// The file name of `deliverable` in `format`.
   package func fileName(_ deliverable: Deliverable, _ format: Format) -> String {
     nameTemplate.replacingOccurrences(of: "{name}", with: deliverable.rawValue) + "."

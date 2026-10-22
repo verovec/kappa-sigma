@@ -1,15 +1,20 @@
 internal import AppKit
-internal import ProcessKit
+package import ProcessKit
 internal import RenderKit
-internal import SwiftUI
+package import SwiftUI
 
 /// What the next export writes (`ExportSettings`): the files and formats, the star colour, the
 /// export-only crop and mirror, the file names and the folder — every value the one applied.
-struct ExportForm: View {
+package struct ExportForm: View {
   @Bindable var model: ExportStageModel
   @Environment(\.locale) private var locale
 
-  var body: some View {
+  /// The form of the next export of `model`.
+  package init(model: ExportStageModel) {
+    self.model = model
+  }
+
+  package var body: some View {
     VStack(alignment: .leading, spacing: DesignMetrics.spacingM) {
       files
       formats
@@ -86,21 +91,13 @@ struct ExportForm: View {
   private func chosen(_ deliverable: ExportSettings.Deliverable) -> Binding<Bool> {
     Binding(
       get: { model.effectiveDeliverables.contains(deliverable) },
-      set: { on in
-        model.settings.deliverables = ExportSettings.Deliverable.allCases.filter {
-          $0 == deliverable ? on : model.settings.deliverables.contains($0)
-        }
-      })
+      set: { model.settings.choose(deliverable, $0) })
   }
 
   private func chosen(_ format: ExportSettings.Format) -> Binding<Bool> {
     Binding(
       get: { model.settings.formats.contains(format) },
-      set: { on in
-        model.settings.formats = ExportSettings.Format.allCases.filter {
-          $0 == format ? on : model.settings.formats.contains($0)
-        }
-      })
+      set: { model.settings.choose(format, $0) })
   }
 
   private func number(
@@ -112,7 +109,7 @@ struct ExportForm: View {
       set: { model.settings[keyPath: path] = $0.value })
   }
 
-  static func title(_ deliverable: ExportSettings.Deliverable) -> LocalizedStringResource {
+  package static func title(_ deliverable: ExportSettings.Deliverable) -> LocalizedStringResource {
     switch deliverable {
     case .final: .app("Final image")
     case .starless: .app("Starless")
@@ -122,7 +119,7 @@ struct ExportForm: View {
     }
   }
 
-  static func title(_ format: ExportSettings.Format) -> LocalizedStringResource {
+  package static func title(_ format: ExportSettings.Format) -> LocalizedStringResource {
     switch format {
     case .png16: .app("PNG 16-bit")
     case .tiff16: .app("TIFF 16-bit")
@@ -130,7 +127,7 @@ struct ExportForm: View {
     }
   }
 
-  static func title(_ orientation: ExportSettings.Orientation) -> LocalizedStringResource {
+  package static func title(_ orientation: ExportSettings.Orientation) -> LocalizedStringResource {
     switch orientation {
     case .none: .app("None")
     case .hflip: .app("Left ↔ right")

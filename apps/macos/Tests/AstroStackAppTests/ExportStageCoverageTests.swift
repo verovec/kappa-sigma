@@ -152,3 +152,13 @@ struct ExportStageCoverageTests {
     #expect(revealed.all.first?.map(\.lastPathComponent) == record.files)
   }
 }
+
+extension ExportStageCoverageTests {
+  @Test("a window planning without master services has none, and previewing a master is nothing")
+  func testWindowWithoutMasterServices() {
+    let window = ProjectWindowModel(store: { nil }, planning: { _ in ImportPlanningStub.empty })
+    #expect(window.masters == nil)
+    window.previewMaster("/library/bias.fits")
+    #expect(window.masters == nil && window.error == nil)
+  }
+}

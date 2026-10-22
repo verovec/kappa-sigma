@@ -80,12 +80,22 @@ extension FITSHeader {
       || isMatrixKeyword(keyword) || isSIPTerm(keyword)
   }
 
+  /// Every card of a plate solution: the axis cards (`CTYPEn`, `CRPIXn`, `CDi_j`, `PVi_j`…),
+  /// the frame (`RADESYS`, `EQUINOX`), the solver's flag (`PLTSOLVD`) and the SIP terms.
   private static func isWCSKeyword(_ keyword: String) -> Bool {
     let named: Set<String> = [
-      "CTYPE1", "CTYPE2", "CUNIT1", "CUNIT2", "CRVAL1", "CRVAL2", "LONPOLE", "LATPOLE",
+      "WCSAXES", "LONPOLE", "LATPOLE", "RADESYS", "RADECSYS", "EQUINOX", "PLTSOLVD",
       "A_ORDER", "B_ORDER", "AP_ORDER", "BP_ORDER",
     ]
-    return named.contains(keyword) || isMovedKeyword(keyword)
+    if named.contains(keyword) || isMovedKeyword(keyword) { return true }
+    let axis = ["CTYPE", "CUNIT", "CRPIX", "CRVAL", "CDELT", "CROTA", "CNAME", "CRDER", "CSYER"]
+    if let prefix = axis.first(where: keyword.hasPrefix) {
+      return Int(keyword.dropFirst(prefix.count)) != nil
+    }
+    // CDi_j, PCi_j, PVi_j, PSi_j of any axes.
+    guard ["CD", "PC", "PV", "PS"].contains(where: keyword.hasPrefix) else { return false }
+    let indices = keyword.dropFirst(2).split(separator: "_", omittingEmptySubsequences: false)
+    return indices.count == 2 && indices.allSatisfy { Int($0) != nil }
   }
 
   private static func isMatrixKeyword(_ keyword: String) -> Bool {

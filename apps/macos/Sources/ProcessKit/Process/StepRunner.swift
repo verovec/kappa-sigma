@@ -38,8 +38,9 @@ package struct StepRunner {
 
   /// `process` of `input` (the head by default) at `scale` for `purpose`, under `mask`.
   ///
-  /// The preview and Apply both come from here. A geometric process's output carries the plate
-  /// solution moved with it (none after a fine angle).
+  /// The preview and Apply both come from here. A geometric process's output of the head carries
+  /// the plate solution moved with it (none after a fine angle); of another `input`, whose header
+  /// is not known here, none rather than the head's.
   package func render(
     _ process: any ImageProcess, on history: History, input: AstroImage? = nil,
     scale: Double = 1, purpose: RenderContext.Purpose = .apply, mask: AstroImage? = nil
@@ -53,8 +54,10 @@ package struct StepRunner {
       rowsBottomUp: source.metadata.rowOrder == .bottomUp)
     var metadata = source.metadata
     if let geometric = process as? any GeometricProcess {
-      metadata.wcs = try movedHeader(geometric, history: history, input: source)
-        .flatMap(WCS.init(header:))
+      metadata.wcs =
+        input == nil
+        ? try movedHeader(geometric, history: history, input: source).flatMap(WCS.init(header:))
+        : nil
     }
     return AstroImage(
       width: output.width, height: output.height, planes: output.read(), metadata: metadata)
@@ -70,7 +73,7 @@ package struct StepRunner {
     mask: AstroImage? = nil
   ) throws {
     let input = history.current
-    let result = try render(process, on: history, input: input, mask: mask)
+    let result = try render(process, on: history, mask: mask)
     guard let geometric = process as? any GeometricProcess else {
       try history.apply(processID: processID, params: params, result: result)
       return
@@ -132,24 +135,22 @@ package struct StepRunner {
       continuumReference: recorded.continuumReference)
   }
 
+  /// The head's header, read once per head file (a geometry preview frame asks for it).
+  private func headHeader(_ history: History) throws -> FITSHeader? {
+    let key = ContextCache.HeadKey(directory: history.directory, file: history.steps.last?.file)
+    if let cached = cache.head, cached.key == key { return cached.header }
+    let header = try history.headHeader()
+    cache.head = (key, header)
+    return header
+  }
+
   private func movedHeader(
     _ process: any GeometricProcess, history: History, input: AstroImage
   ) throws -> FITSHeader? {
-    try history.headHeader().map {
+    try headHeader(history).map {
       try process.header(
         $0, width: input.width, height: input.height,
         bottomUp: input.metadata.rowOrder == .bottomUp)
     }
   }
-}
-
-/// The last context `StepRunner` built, by the history folder and the files overlaid.
-private final class ContextCache {
-  /// What a context was built from.
-  struct Key: Equatable {
-    let directory: URL
-    let files: [String: String]
-  }
-
-  var entry: (key: Key, layers: [String: GPUImage], stats: [String: LayerStats])?
 }

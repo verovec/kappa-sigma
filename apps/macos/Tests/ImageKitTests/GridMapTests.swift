@@ -78,10 +78,12 @@ struct GridMapTests {
   func testDropping() {
     let header = WCSTests.header([
       ("CTYPE1", "'RA---ZEA'"), ("CRPIX1", "2"), ("CDELT1", "1E-4"), ("OBJECT", "'M31'"),
+      ("PLTSOLVD", "T"), ("RADESYS", "'ICRS'"), ("PV1_1", "0.0"), ("CD3_3", "1.0"),
+      ("WCSAXES", "2"), ("CDFORM", "'x'"),
     ])
     let moved = header.moved(by: GridMap.identity(width: 5, height: 3).flippedX())
     #expect(moved.string("CRPIX1") == nil && moved.string("CTYPE1") == nil)
     #expect(moved.string("OBJECT") == "M31")
-    #expect(header.droppingWCS().cards.map(\.keyword) == ["OBJECT"])
+    #expect(header.droppingWCS().cards.map(\.keyword) == ["OBJECT", "CDFORM"])
   }
 }

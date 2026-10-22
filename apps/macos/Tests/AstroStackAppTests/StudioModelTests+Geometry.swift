@@ -107,6 +107,8 @@ extension StudioModelTests {
     workspace.choose(GeometryProcess.id)
     try #require(workspace.panel).set("flipV", .flag(true))
     await workspace.previewNow()
+    #expect(viewer.frame.region == nil, "the flipped preview drops the head's region")
+    viewer.drag(from: [1, 1], to: [4, 4], tool: .region)
     #expect(workspace.regionUnavailable == .previewMoved, "a flip moves pixels at the same size")
     try workspace.apply()
     #expect(viewer.frame.region == nil, "the flip's head drops the region")
@@ -123,5 +125,37 @@ extension StudioModelTests {
     try workspace.apply()
     #expect(workspace.comparing == nil, "the compared step no longer fits the head")
     #expect(throws: StudioError.otherSize(step: 1)) { try workspace.compare(toStep: 1) }
+  }
+}
+
+extension StudioModelTests {
+  /// Second review of card 0090: a region drawn on the head survives opening geometry (its
+  /// identity preview); one drawn on a moved preview is dropped when the grid changes back; a
+  /// compare stops when a geometry preview changes the size shown.
+  @Test("previews that move the grid drop the region and stop a misfit compare", .scratchDirectory)
+  func testPreviewMovesDropRegionAndCompare() async throws {
+    let opened = try Self.project()
+    defer { try? opened.package.close() }
+    let workspace = try StudioWorkspaceModelTests.workspace(opened, bundle: Self.bundle())
+    let viewer = workspace.viewer.model
+    viewer.frame.transform = ViewTransform(scale: 1, origin: [0, 0])
+    viewer.drag(from: [1, 1], to: [4, 4], tool: .region)
+    workspace.choose(GeometryProcess.id)
+    await workspace.previewNow()
+    #expect(viewer.frame.region != nil, "the identity preview keeps the head's region")
+
+    let panel = try #require(workspace.panel)
+    panel.set("flipH", .flag(true))
+    await workspace.previewNow()
+    #expect(viewer.frame.region == nil, "the flipped preview moved the pixels under it")
+    viewer.drag(from: [1, 1], to: [4, 4], tool: .region)
+    panel.set("flipH", .flag(false))
+    await workspace.previewNow()
+    #expect(viewer.frame.region == nil, "back to the head's grid: the flipped region goes")
+
+    try workspace.compare(toStep: 0)
+    panel.set("cropTop", .number(3))
+    await workspace.previewNow()
+    #expect(workspace.comparing == nil, "a cropped preview no longer fits step 1")
   }
 }

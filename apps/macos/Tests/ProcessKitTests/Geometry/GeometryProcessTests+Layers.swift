@@ -73,3 +73,23 @@ extension GeometryProcessTests {
     "cropLeft": .number(1), "cropTop": .number(1), "rotation": .choice("90"),
   ]
 }
+
+extension GeometryProcessTests {
+  /// Second review of card 0090: rendering an image other than the head gives no plate solution
+  /// rather than the head's moved one.
+  @Test("an explicit input other than the head gets no WCS", .scratchDirectory)
+  func testExplicitInputHasNoWCS() throws {
+    let device = try #require(MTLCreateSystemDefaultDevice())
+    let header = try FITSFile.parse(Data(HistoryTests.solvedHeaderText.utf8)).header
+    let original = try HistoryTests.image([0, 1, 2, 3])
+    let history = try History(
+      directory: ScratchDirectory.url.appendingPathComponent("history"), original: original,
+      header: header)
+    let session = try StudioSession(
+      history: history, bundle: PipelineBundle(stats: LayerStats(channels: [])),
+      registry: ProcessRegistry([GeometryProcess.self]), device: device)
+    let params = try Self.params(["flipH": .flag(true)])
+    #expect(try session.render("geometry", params: params).metadata.wcs != nil)
+    #expect(try session.render("geometry", params: params, input: original).metadata.wcs == nil)
+  }
+}

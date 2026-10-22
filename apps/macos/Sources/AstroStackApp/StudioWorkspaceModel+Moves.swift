@@ -5,8 +5,9 @@ internal import RenderKit
 extension StudioWorkspaceModel {
   /// Whether the output of step `index` has the head's size (compare reads it pixel for pixel).
   func fitsHead(step index: Int) -> Bool {
-    guard let image = try? studio.session.history.output(ofStep: index) else { return false }
-    return image.width == studio.head.width && image.height == studio.head.height
+    // The header alone: decoding the step's pixels on every head change would be wasted.
+    guard let size = try? studio.session.history.size(ofStep: index) else { return false }
+    return size.width == studio.head.width && size.height == studio.head.height
   }
 
   /// Drops the viewer's region when a history move applied or took back a geometric step (card
@@ -20,5 +21,29 @@ extension StudioWorkspaceModel {
       registry.type(id: step.processID).map { $0 is any GeometricProcess.Type } ?? false
     }
     if moved { viewer.model.clearRegion() }
+  }
+
+  /// Before the viewer shows the preview of `values` (`nil`: the head): a change of the moved
+  /// grid (a geometric preview other than the identity) drops the region, whose pixels are no
+  /// longer under it even at the same size, and a compare whose step no longer has `size` stops.
+  func previewMoves(
+    to values: (processID: String, params: ParamSet)?, size: (width: Int, height: Int)
+  ) {
+    if movedGrid(shown.map { ($0.processID, $0.params) }) != movedGrid(values) {
+      viewer.model.clearRegion()
+    }
+    if let comparing, let step = try? studio.session.history.size(ofStep: comparing),
+      step != size
+    {
+      try? compare(toStep: nil)
+    }
+  }
+
+  /// The values of a preview that moves pixels, or `nil` for one that leaves them in place.
+  private func movedGrid(_ values: (processID: String, params: ParamSet)?) -> ParamSet? {
+    guard let values, let type = registry.type(id: values.processID),
+      type is any GeometricProcess.Type, !GeometryProcess.isIdentity(values.params)
+    else { return nil }
+    return values.params
   }
 }

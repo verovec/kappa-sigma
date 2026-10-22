@@ -75,7 +75,7 @@ package final class StudioWorkspaceModel {
   /// preview's.
   @ObservationIgnored private var headStatistics: [STFMapping] = []
   /// The values and mask the preview on screen was drawn with (`nil`: none on screen).
-  @ObservationIgnored private var shown: (processID: String, params: ParamSet, mask: Mask?)?
+  @ObservationIgnored private(set) var shown: (processID: String, params: ParamSet, mask: Mask?)?
   /// The failure shown is a preview's (the next preview clears it).
   @ObservationIgnored private var previewFailed = false
 
@@ -112,6 +112,7 @@ package final class StudioWorkspaceModel {
     refresh(panel)
     panel.onChange = { [weak self] in self?.panelChanged() }
     self.panel = panel
+    previewMoves(to: nil, size: (studio.head.width, studio.head.height))
     shown = nil
     // The defaults are previewed at once: Apply never records what was not shown (R2).
     schedulePreview()
@@ -136,6 +137,7 @@ package final class StudioWorkspaceModel {
       let preview = try studio.preview(panel.type.id, params: panel.params, mask: maskImage())
       // Through the head's display stretch: an auto-stretch fitted to the preview would hide
       // the very change the process makes (what is shown is what Apply records, R2).
+      previewMoves(to: (panel.type.id, panel.params), size: (preview.width, preview.height))
       let same = preview.planes.count == headStatistics.count
       try show(preview, statistics: same ? headStatistics : nil)
       isPreviewing = true
@@ -250,6 +252,7 @@ package final class StudioWorkspaceModel {
 
   private func stopPreview() {
     previewTask?.cancel()
+    previewMoves(to: nil, size: (studio.head.width, studio.head.height))
     shown = nil
     guard isPreviewing else { return }
     isPreviewing = false

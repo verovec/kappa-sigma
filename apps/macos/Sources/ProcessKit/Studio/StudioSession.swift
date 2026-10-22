@@ -13,7 +13,8 @@ package final class StudioSession {
   /// The stack's layers and statistics.
   package let bundle: PipelineBundle
   private let registry: ProcessRegistry
-  private let device: MTLDevice
+  /// The GPU it runs on (the viewer draws on the same one).
+  package let device: MTLDevice
   private let runner: ProcessRunner
   private let bundleLayers: [String: GPUImage]
 

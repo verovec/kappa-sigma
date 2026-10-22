@@ -96,8 +96,8 @@ package struct ImportProfileView: View {
     }
   }
 
-  /// Each value the profile sets, with its « ? »: the why on hover, the parameter's definition
-  /// and the why on click (card 0086).
+  /// Each value the profile sets, with its « ? » as on a knob: the parameter's definition on
+  /// hover, the definition and the why on click (card 0086).
   private func values(of profile: Profile) -> some View {
     let registry = try? ProcessRegistry.standard()
     return VStack(alignment: .leading, spacing: DesignMetrics.spacingXXS) {
@@ -107,12 +107,14 @@ package struct ImportProfileView: View {
             Text(verbatim: Self.line(step, id, registry: registry, locale: locale))
               .font(.caption.monospacedDigit())
             let why = step.why[id]?.text(language: language) ?? ""
-            HelpButton(
-              summary: .app("\(why)"), label: .whyThisValue,
-              key: .help("profile.\(offset).\(step.recipe.processID).\(id)")
-            ) {
-              HelpText(Self.valueHelp(step.recipe.processID, id, why: why, language: language))
-            }
+            let process = step.recipe.processID
+            let definition = AppGlossary.help.paramDoc(
+              process: process, param: id, locale: language)
+            KeyedHelp(
+              HelpContent(summary: .app("\(definition ?? why)")) {
+                HelpText(Self.valueHelp(process, id, why: why, language: language))
+              }, key: .help("profile.\(offset).\(process).\(id)"), label: .whyThisValue
+            ).button
           }
         }
       }

@@ -24,9 +24,10 @@ extension KnobPanelViewModelTests {
     // The why belongs to the profile's value, named with it: « <profile>, <value>: <why> ».
     let value = try #require(profile.preprocessing.knobs["trail_mask_k"])
     let words = KnobPanelViewModel.words(for: value, id: "trail_mask_k", locale: french)
-    #expect(
-      panel.help(for: "trail_mask_k", locale: french)
-        == definition + "\n" + profile.title.french + ", " + words + ": " + why.french)
+    let line = KnobPanelViewModel.profileLine(
+      profile.title.french, words, why.french, locale: french)
+    #expect(line.hasSuffix(" : " + why.french), "French spaces its colon: \(line)")
+    #expect(panel.help(for: "trail_mask_k", locale: french) == definition + "\n" + line)
     let english = panel.help(for: "trail_mask_k", locale: Locale(identifier: "en"))
     #expect(english.hasSuffix(why.english) && english.contains(profile.title.english))
     #expect(HelpMarkdown.parse(panel.help(for: "trail_mask_k", locale: french)).count == 2)

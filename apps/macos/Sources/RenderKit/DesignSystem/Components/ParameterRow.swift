@@ -68,11 +68,7 @@ package struct ParameterRow: View {
     HStack(spacing: DesignMetrics.spacingS) {
       Text(label)
       if let help {
-        HelpButton(
-          summary: help.summary, label: .whyThisValue, key: .parameter(key, .help)
-        ) {
-          help.content()
-        }
+        KeyedHelp(help, key: .parameter(key, .help), label: .whyThisValue).button
       }
       Spacer(minLength: DesignMetrics.spacingS)
       if let badge = Self.badge(for: parameter) {

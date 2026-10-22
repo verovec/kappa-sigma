@@ -194,8 +194,10 @@ package final class ProjectWindowModel {
       // Every night must have kept the same profile (a night without one counts): no guessing.
       let kept = Set(sources.map(\.profileID))
       let agreed = kept.count == 1 ? kept.first.flatMap { $0 } : nil
-      knobs.profile = agreed.flatMap { id in
-        ImportViewModel.profiles(store: store).profiles.first { $0.id == id }
+      if agreed != knobs.profile?.id {
+        knobs.profile = agreed.flatMap { id in
+          ImportViewModel.profiles(store: store).profiles.first { $0.id == id }
+        }
       }
       let summary = try store?.summary() ?? ProjectSummary()
       let running = run?.isRunning == true ? 1 : 0

@@ -55,16 +55,6 @@ struct KnobRow: View {
     }
   }
 
-  /// The « ? » of a flag or choice row (a number row's sits in its `ParameterRow`).
-  private func helpButton(_ term: Glossary.Term) -> some View {
-    let help = help(term)
-    return HelpButton(
-      summary: help.summary, label: .whyThisValue, key: .parameter(row.id, .help)
-    ) {
-      help.content()
-    }
-  }
-
   /// Back to the preset, shown once the value moved.
   @ViewBuilder private var reset: some View {
     if !row.isDefault {
@@ -77,6 +67,11 @@ struct KnobRow: View {
       .help(Text(.app("Back to the preset")))
       .accessible(.parameter(row.id, .reset), label: .app("Back to the preset"))
     }
+  }
+
+  /// The « ? » of a flag or choice row (a number row's sits in its `ParameterRow`).
+  private func helpButton(_ term: Glossary.Term) -> some View {
+    KeyedHelp(help(term), key: .parameter(row.id, .help), label: .whyThisValue).button
   }
 
   /// The identifier of a flag or choice knob: its term id under the stacking stage.

@@ -29,8 +29,9 @@ struct HelpPopoverRenderTests {
   func testRenders(language: String) throws {
     let locale = Locale(identifier: language)
     let panel = KnobPanelViewModel(mode: .deepsky)
-    panel.profile = try ProfileLibrary.builtins(registry: ProcessRegistry.standard())
-      .first { $0.preprocessing.why["trail_mask_k"] != nil }
+    panel.profile = try #require(
+      ProfileLibrary.builtins(registry: ProcessRegistry.standard())
+        .first { $0.preprocessing.why["trail_mask_k"] != nil })
     for knob in ["background_degree", "trail_mask_k"] {
       let text = panel.help(for: knob, locale: locale)
       #expect(!text.isEmpty)

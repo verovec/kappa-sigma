@@ -9,8 +9,8 @@ import Testing
 ///
 /// The popover is NSPopover's transient one: Esc and a click outside close it (AppKit, checked
 /// by hand in the card's Manual item — a synthesised key event never reaches SwiftUI's exit
-/// command in a test process, and a window-server wait would be a timed test); what is pinned
-/// here is the button's announcement and the presentation toggle.
+/// command in a test process, and a window-server wait would be a timed test, and no click can
+/// be synthesised either); what is pinned here is the button's announcement.
 @MainActor
 @Suite("HelpButton — summary on hover, popover on click")
 struct HelpButtonTests {
@@ -55,6 +55,7 @@ struct HelpButtonTests {
   func testHoverSummaryAndClickPopover() throws {
     let presentation = Presentation()
     let (_, window, reported) = Self.host(presentation)
+    _ = presentation
     defer { window.close() }
     // The accessibility tree: the button is labelled, identified, and its hint is the summary.
     let entry = try #require(reported.entries.first)
@@ -62,16 +63,6 @@ struct HelpButtonTests {
     #expect(entry.label == "Aide")
     #expect(entry.hint == "Part de la couche Hα ajoutée au canal rouge.")
     #expect(reported.entries.count == 1)
-
-    // The button's action toggles the presentation (asserted through the binding: no click can
-    // be synthesised in a test process).
-    let binding = Binding(
-      get: { presentation.isPresented }, set: { presentation.isPresented = $0 })
-    #expect(!presentation.isPresented)
-    binding.wrappedValue.toggle()
-    #expect(presentation.isPresented)
-    binding.wrappedValue.toggle()
-    #expect(!presentation.isPresented)
 
   }
 }

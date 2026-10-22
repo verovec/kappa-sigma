@@ -71,9 +71,20 @@ package final class KnobPanelViewModel {
     guard let profile, let why = profile.preprocessing.why[id] else { return definition }
     let language = AppLocale.language(of: locale)
     let value = profile.preprocessing.knobs[id].map { Self.words(for: $0, id: id, locale: locale) }
-    let sets = [profile.title.text(language: language), value].compactMap { $0 }
-      .joined(separator: ", ")
-    return definition + "\n" + sets + ": " + why.text(language: language)
+    return definition + "\n"
+      + Self.profileLine(
+        profile.title.text(language: language), value, why.text(language: language),
+        locale: locale)
+  }
+
+  /// « <profile>, <value>: <why> » with the locale's punctuation (French spaces its colon).
+  package nonisolated static func profileLine(
+    _ profile: String, _ value: String?, _ why: String, locale: Locale
+  ) -> String {
+    if let value {
+      return String(localized: .app("\(profile), \(value): \(why)", locale: locale))
+    }
+    return String(localized: .app("\(profile): \(why)", locale: locale))
   }
 
   /// A profile's value of knob `id` as the panel shows it: the user's number, the choice's

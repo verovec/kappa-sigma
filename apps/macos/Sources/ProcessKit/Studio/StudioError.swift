@@ -7,6 +7,4 @@ package enum StudioError: Error, Equatable, Sendable {
   /// The step's output has another size than the head (a crop or a quarter turn came after it):
   /// it cannot be compared pixel for pixel.
   case otherSize(step: Int)
-  /// The viewer shows a geometry preview that moves the pixels: no step lies under them.
-  case movedPreview
 }

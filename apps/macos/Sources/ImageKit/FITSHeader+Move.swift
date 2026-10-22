@@ -91,6 +91,10 @@ extension FITSHeader {
     "CTYPE", "CUNIT", "CRPIX", "CRVAL", "CDELT", "CROTA", "CNAME", "CRDER", "CSYER",
   ]
   private static let matrixPrefixes = ["CD", "PC", "PV", "PS"]
+  /// The named cards a solution letter may follow (`WCSAXESA`, `RADESYSB`…).
+  private static let alternateNamed: Set<String> = [
+    "WCSAXES", "WCSNAME", "LONPOLE", "LATPOLE", "RADESYS", "EQUINOX",
+  ]
 
   /// Every card of a plate solution, primary or alternate: the axis cards (`CTYPEn`, `CRPIXn`,
   /// `CDi_j`, `PVi_j`…), the frame (`RADESYS`, `EQUINOX`), the solver's flag (`PLTSOLVD`) and
@@ -103,12 +107,9 @@ extension FITSHeader {
   /// A card of an alternate solution: a primary WCS keyword followed by a letter A–Z
   /// (`CTYPE1A`, `CD1_1B`, `WCSNAMEA`; FITS WCS paper I §3.5).
   private static func isAlternateWCSKeyword(_ keyword: String) -> Bool {
-    guard let last = keyword.last, last.isUppercase, last.isLetter, keyword.count > 2 else {
-      return false
-    }
+    guard let last = keyword.last, ("A"..."Z").contains(last) else { return false }
     let base = String(keyword.dropLast())
-    return base == "WCSNAME" || base == "LONPOLE" || base == "LATPOLE" || base == "RADESYS"
-      || base == "EQUINOX" || isPrimaryAxisKeyword(base)
+    return alternateNamed.contains(base) || isPrimaryAxisKeyword(base)
   }
 
   /// `CTYPEn`…`CSYERn` and `CDi_j`, `PCi_j`, `PVi_j`, `PSi_j` of any axes.

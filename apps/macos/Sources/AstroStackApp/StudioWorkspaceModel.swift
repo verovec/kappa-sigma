@@ -71,11 +71,10 @@ package final class StudioWorkspaceModel {
   @ObservationIgnored package weak var undoManager: UndoManager?
   @ObservationIgnored private let base: Set<LayerRole>
   @ObservationIgnored private var previewTask: Task<Void, Never>?
-  /// The head's display statistics: a preview is drawn through them, never through a previous
-  /// preview's.
+  /// The head's display statistics: a preview is drawn through them, never a previous one's.
   @ObservationIgnored private var headStatistics: [STFMapping] = []
   /// The values and mask of the preview on screen (`nil`: none); see `gridMoved`.
-  @ObservationIgnored private(set) var shown: (processID: String, params: ParamSet, mask: Mask?)? {
+  private(set) var shown: (processID: String, params: ParamSet, mask: Mask?)? {
     didSet { gridMoved(from: oldValue.map { ($0.processID, $0.params) }) }
   }
   /// The failure shown is a preview's (the next preview clears it).
@@ -114,7 +113,7 @@ package final class StudioWorkspaceModel {
     refresh(panel)
     panel.onChange = { [weak self] in self?.panelChanged() }
     self.panel = panel
-    shown = nil
+    stopPreview()
     // The defaults are previewed at once: Apply never records what was not shown (R2).
     schedulePreview()
   }
@@ -139,6 +138,7 @@ package final class StudioWorkspaceModel {
       // Through the head's display stretch: an auto-stretch fitted to the preview would hide
       // the very change the process makes (what is shown is what Apply records, R2).
       let same = preview.planes.count == headStatistics.count
+      willShow(panel.type.id, panel.params)
       try show(preview, statistics: same ? headStatistics : nil)
       isPreviewing = true
       shown = (panel.type.id, panel.params, mask)
@@ -216,7 +216,7 @@ package final class StudioWorkspaceModel {
       return
     }
     // On a moved preview (a crop, a flip) the step's pixels are not under the ones shown.
-    guard !showsMovedGrid else { throw StudioError.movedPreview }
+    guard !showsMovedGrid else { throw UserFacingError.movedPreview }
     let image = try studio.session.history.output(ofStep: index)
     // A step of another size (before a crop or a quarter turn) does not lie on the head's grid.
     guard image.width == studio.head.width, image.height == studio.head.height else {

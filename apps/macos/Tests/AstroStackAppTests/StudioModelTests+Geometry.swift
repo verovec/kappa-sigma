@@ -157,11 +157,23 @@ extension StudioModelTests {
     panel.set("flipV", .flag(true))
     await workspace.previewNow()
     #expect(workspace.comparing == nil, "a flipped preview, same size, no longer lies on step 1")
-    #expect(throws: StudioError.movedPreview) { try workspace.compare(toStep: 0) }
+    #expect(throws: UserFacingError.movedPreview) { try workspace.compare(toStep: 0) }
     #expect(workspace.regionUnavailable == .noRegion)
     viewer.drag(from: [1, 1], to: [4, 4], tool: .region)
     panel.set("flipV", .flag(false))
     // Not drawn yet: Use region reads what is on screen, still the flipped preview.
     #expect(workspace.regionUnavailable == .previewMoved)
+    await workspace.previewNow()
+
+    // A crop changes the size shown: the compare stops before the smaller image is drawn.
+    try workspace.compare(toStep: 0)
+    panel.set("cropTop", .number(3))
+    await workspace.previewNow()
+    #expect(workspace.comparing == nil && workspace.viewer.reference == nil)
+    #expect(workspace.viewer.model.image.height == 5)
+
+    // Choosing another process takes the moved preview off screen at once.
+    workspace.choose(StretchProcess.id)
+    #expect(!workspace.showsMovedGrid && workspace.viewer.model.image.height == 8)
   }
 }

@@ -81,7 +81,7 @@ struct GridMapTests {
       ("CTYPE1", "'RA---ZEA'"), ("CRPIX1", "2"), ("CDELT1", "1E-4"), ("OBJECT", "'M31'"),
       ("PLTSOLVD", "T"), ("RADESYS", "'ICRS'"), ("PV1_1", "0.0"), ("CD3_3", "1.0"),
       ("WCSAXES", "2"), ("CDFORM", "'x'"), ("CTYPE1A", "'RA---TAN'"), ("CD1_1A", "1E-4"),
-      ("WCSNAMEA", "'alt'"), ("FILTERA", "'L'"),
+      ("WCSNAMEA", "'alt'"), ("FILTERA", "'L'"), ("WCSAXESA", "2"),
     ])
     let moved = header.moved(by: GridMap.identity(width: 5, height: 3).flippedX())
     #expect(moved.string("CRPIX1") == nil && moved.string("CTYPE1") == nil)

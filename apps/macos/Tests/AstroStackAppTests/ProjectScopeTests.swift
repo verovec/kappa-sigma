@@ -159,7 +159,7 @@ struct ProjectScopeTests {
   }
 
   @Test(
-    "a queue that stops after its first run shows the stack it recorded; nothing moves before",
+    "a queue that stops after its first run chooses the stack it recorded, the failure in view",
     .scratchDirectory)
   func testStoppedQueueShowsItsLastStack() async throws {
     // Plans: the scan, the first run's; the second run finds M 31 regrouped and is refused.

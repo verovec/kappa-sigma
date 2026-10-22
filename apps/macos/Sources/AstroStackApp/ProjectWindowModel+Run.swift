@@ -53,7 +53,7 @@ extension ProjectWindowModel {
   /// Each run plans the import again (scan + calibration plan, the overrides as left), scopes the
   /// inventory to its object's light sets (every calibration set travels), then StackKit runs it
   /// with the calibration choices the plan showed. A finished run becomes a stack with one image
-  /// per bundle layer; when the queue ends (drained, failed or cancelled) the Studio opens the last
+  /// per bundle layer; when the queue ends (drained, failed or cancelled) the Studio loads the last
   /// stack it recorded. A cancelled or failed run
   /// registers nothing, keeps its artifacts and drops the rest of the queue. A saved project only
   /// (an untitled package moves on Save and is deleted on Close).
@@ -209,7 +209,7 @@ extension ProjectWindowModel {
 
   /// Records a finished run as a stack of the nights it read, with its request as parameters,
   /// its object and scope, and one image per layer in one transaction; kept as the queue's last
-  /// stack, shown when the queue ends.
+  /// stack, chosen and loaded when the queue ends.
   ///
   /// The stack is opened first: a bundle the Studio cannot open is reported, not recorded.
   /// The package is read where it is now: a project renamed in the Finder after the run's last

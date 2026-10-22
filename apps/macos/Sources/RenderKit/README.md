@@ -89,8 +89,11 @@ Rules: `Sources/StringCatalog/README.md`.
   (`DesignTokensTests`). `DesignStatus` pairs each status with an SF Symbol: never colour alone.
   `DesignMetrics`: spacing, radii, `valueFont` (monospaced digits).
 - **Components** (`Components/`): `MetricValue` (label, formatted value, unit, delta, status),
-  `StatusBadge`, `ParameterRow` over a `ParameterValue` (slider + field in the user's notation,
-  reset, « Default » badge on the exact default, « why » on hover), `InstallCard` over an
+  `StatusBadge`, `HelpButton` (the « ? »: summary on hover and as the accessibility hint, a
+  transient popover with the caller's `HelpContent` on click, labelled by `HelpButtonLabel`;
+  `SectionHeader` and `EmptyState` take a `KeyedHelp` — card 0086), `ParameterRow` over a
+  `ParameterValue` (slider + field in the user's notation, reset, « Default » badge on the
+  exact default, `help:` the « ? »), `InstallCard` over an
   `InstallCardModel` (re-check asks the `locate` closure; never a fallback, R2), `EmptyState`,
   `SectionHeader`, `CurveEditor` over `CurveEditorPoints` (card 0053). Values arrive
   **formatted**: RenderKit never imports the app, so the caller passes `AstroFormat` strings or

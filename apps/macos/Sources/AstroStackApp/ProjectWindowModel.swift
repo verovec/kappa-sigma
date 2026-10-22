@@ -46,12 +46,16 @@ package final class ProjectWindowModel {
   /// A queue is going: from Run until its last run registered, failed or was cancelled — Run
   /// stays greyed in between two runs too.
   var queueActive = false
-  /// The last stack the queue recorded, opened: chosen and shown when the queue ends.
+  /// The last stack the queue recorded, opened: chosen and loaded in the Studio when the queue
+  /// ends (the Studio stage is selected only when it drained).
   var queueRecorded: (stack: ProjectStack, source: LegacyRunSource)?
-  /// The stack the Studio shows: the latest one, read-only.
+  /// The stack the Studio shows: the chosen one, else the latest, read-only.
   package internal(set) var studio: LegacyRunModel?
   /// The Stacking panel's preset and knob edits: what the next run applies (card 0070).
   package let knobs: KnobPanelViewModel
+  /// The profile id the knobs' help was last looked up for (`knobs.profile` is its result, nil
+  /// when it resolves to nothing); not state a view reads.
+  @ObservationIgnored private var profileLookupID: String?
   /// The last run's lanes read-only (this session's result, or the latest stack's `grades.json`),
   /// rebuilt by `refresh()` only when their source changes (card 0069).
   package internal(set) var lastReviewLanes: [FrameReviewViewModel] = []
@@ -258,6 +262,18 @@ package final class ProjectWindowModel {
       let store = store()
       needsSave = !isSaved()
       sources = try store?.sources() ?? []
+      // The profile kept at import (0060) words the knobs' help; it is applied by nothing here.
+      // Every night must have kept the same profile (a night without one counts, a legacy run
+      // does not): no guessing. Looked up once per agreed id (nothing saves a user copy from the
+      // app yet; the card that does invalidates this).
+      let kept = Set(sources.filter { $0.kind == .night }.map(\.profileID))
+      let agreed = kept.count == 1 ? kept.first.flatMap { $0 } : nil
+      if agreed != profileLookupID {
+        profileLookupID = agreed
+        knobs.profile = agreed.flatMap { id in
+          ImportViewModel.profiles(store: store).profiles.first { $0.id == id }
+        }
+      }
       let summary = try store?.summary() ?? ProjectSummary()
       // The stacks are read again only when their count moved: a refresh runs on every event.
       // A queue's stacks appear when it ends: until then the picker, Tri and « the latest » stay.

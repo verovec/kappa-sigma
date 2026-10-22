@@ -1,0 +1,4 @@
+{
+  "dummy-gain.gain": "Multiplies every pixel.",
+  "dummy-gain.shift": "Added to every pixel."
+}

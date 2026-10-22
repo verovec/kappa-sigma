@@ -2,8 +2,10 @@ package import Foundation
 
 /// The help cards on disk, in every locale the app ships.
 ///
-/// Cards are `<root>/<locale>/process/<process id>.md`. The coverage gate (`coverageProblems`) keeps every registered process documented and
-/// every card short; `HelpMarkdown` renders them (card 0061). The first-stack guide is
+/// Cards are `<root>/<locale>/process/<process id>.md` and, per journey stage,
+/// `<root>/<locale>/stage/<stage id>.md` (card 0086). The coverage gates (`coverageProblems`)
+/// keep every registered process and every stage documented and every card short;
+/// `HelpMarkdown` renders them (card 0061). The first-stack guide is
 /// `<root>/<locale>/guide/first-stack.md`, one step per line.
 package struct HelpIndex: Sendable {
   /// The locales every card must exist in.
@@ -17,37 +19,75 @@ package struct HelpIndex: Sendable {
 
   /// The folder holding the locale folders.
   package let root: URL
+  /// The parameter definitions under `root` (`params.json`, card 0086), read once.
+  private let params: ParamDocs
 
   /// The cards under `root`.
   package init(root: URL) {
     self.root = root
+    params = ParamDocs(root: root)
   }
 
   /// HelpKit's own cards in `bundle` (the packaged app passes its resolved resource bundle).
   package init(bundle: Bundle) {
-    root = bundle.resourceURL?.appendingPathComponent("Help") ?? bundle.bundleURL
+    self.init(root: bundle.resourceURL?.appendingPathComponent("Help") ?? bundle.bundleURL)
   }
 
   /// HelpKit's cards as SwiftPM builds them (tests, `swift run`).
-  package static var bundled: Self { Self(bundle: .module) }
+  package static let bundled = Self(bundle: .module)
 
   /// The card of process `id` in `locale`, or `nil`.
   package func card(process id: String, locale: String) -> String? {
-    let url = root.appendingPathComponent(locale).appendingPathComponent("process")
-      .appendingPathComponent(id + ".md")
-    return try? String(contentsOf: url, encoding: .utf8)
+    card(folder: "process", id: id, locale: locale)
+  }
+
+  /// The card of journey stage `id` (`data`, `calibration`, `review`, `stacking`, `studio`,
+  /// `export`) in `locale`, or `nil`: what the stage is for, what you do there, what « done »
+  /// means (card 0086).
+  package func stageCard(_ id: String, locale: String) -> String? {
+    card(folder: "stage", id: id, locale: locale)
   }
 
   /// One sentence per gate failure for `processIDs`: a missing locale, or a card too long.
   package func coverageProblems(processIDs: [String]) -> [String] {
-    processIDs.flatMap { id in
+    problems(folder: "process", ids: processIDs, kind: "card")
+  }
+
+  /// One sentence per gate failure for the stages `ids`: a missing locale, or a card too long.
+  package func coverageProblems(stages ids: [String]) -> [String] {
+    problems(folder: "stage", ids: ids, kind: "stage card")
+  }
+
+  private func card(folder: String, id: String, locale: String) -> String? {
+    let url = root.appendingPathComponent(locale).appendingPathComponent(folder)
+      .appendingPathComponent(id + ".md")
+    return try? String(contentsOf: url, encoding: .utf8)
+  }
+
+  private func problems(folder: String, ids: [String], kind: String) -> [String] {
+    ids.flatMap { id in
       Self.locales.flatMap { locale -> [String] in
-        guard let text = card(process: id, locale: locale) else {
-          return ["\(id): no \(locale) card"]
+        guard let text = card(folder: folder, id: id, locale: locale) else {
+          return ["\(id): no \(locale) \(kind)"]
         }
         return Self.cardProblems(text).map { "\(id) (\(locale)): \($0)" }
       }
     }
+  }
+
+  /// The one-line definition of `param` of process `process` in `locale`, or `nil`.
+  package func paramDoc(process: String, param: String, locale: String) -> String? {
+    params.definition("\(process).\(param)", locale: locale)
+  }
+
+  /// One sentence per gate failure for the parameter `ids` (`<process>.<param>`).
+  package func paramProblems(ids: [String]) -> [String] {
+    params.problems(ids: ids)
+  }
+
+  /// The documented parameter ids of `locale` that `ids` does not name.
+  package func paramStale(ids: [String], locale: String) -> [String] {
+    params.stale(ids: ids, locale: locale)
   }
 
   /// The first-stack guide's steps in `locale`, one per non-blank line; empty without the file.

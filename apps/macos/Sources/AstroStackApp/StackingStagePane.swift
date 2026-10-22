@@ -6,6 +6,7 @@ internal import SwiftUI
 /// and Cancel, and the run as it goes.
 struct StackingStagePane: View {
   var model: ProjectWindowModel
+  @Environment(\.locale) private var locale
 
   /// A run or a queue is going: the panel is frozen and Cancel offered until the last run ends.
   private var running: Bool { model.isStacking }
@@ -21,7 +22,8 @@ struct StackingStagePane: View {
       HStack(alignment: .firstTextBaseline, spacing: DesignMetrics.spacingM) {
         SectionHeader(
           .app("Stacking"),
-          detail: .app("Masters, stacks and the bundle are written inside the project."))
+          detail: .app("Masters, stacks and the bundle are written inside the project."),
+          help: StageHelp.help(.stacking, locale: locale))
         Spacer()
         controls
       }
@@ -32,11 +34,11 @@ struct StackingStagePane: View {
         ScrollView {
           VStack(alignment: .leading, spacing: DesignMetrics.spacingL) {
             StackingSeriesView(model: model.series).padding(DesignMetrics.spacingM)
-            KnobPanel(model: model.knobs)
+              .disabled(running)
+            KnobPanel(model: model.knobs, frozen: running)
           }
         }
         .frame(width: 300)
-        .disabled(running)
         Divider()
         if let run = model.run {
           RunPanel(run: run)

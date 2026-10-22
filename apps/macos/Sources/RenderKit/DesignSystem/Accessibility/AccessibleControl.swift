@@ -10,11 +10,14 @@ struct AccessibleControl: ViewModifier {
 
   let id: AccessibilityID?
   let label: Label
+  /// What VoiceOver reads after the label (a help button's summary), if any.
+  let hint: Label?
   @Environment(\.locale) private var locale
   @Environment(\.guideTarget) private var guideTarget
 
   func body(content: Content) -> some View {
-    let text = resolved
+    let text = resolve(label)
+    let hint = hint.map(resolve)
     let highlighted = id != nil && id == guideTarget
     return
       content
@@ -27,16 +30,17 @@ struct AccessibleControl: ViewModifier {
         }
       }
       .accessibilityLabel(Text(verbatim: text))
+      .accessibilityHint(ifPresent: hint)
       .accessibilityIdentifier(id?.rawValue ?? "")
       // Appended, never replacing: a control inside an announced container keeps its entry.
       .transformPreference(AccessibilityAudit.Key.self) {
         $0.append(
           AccessibilityAudit.Entry(
-            id: id?.rawValue ?? "", label: text, highlighted: highlighted))
+            id: id?.rawValue ?? "", label: text, highlighted: highlighted, hint: hint))
       }
   }
 
-  private var resolved: String {
+  private func resolve(_ label: Label) -> String {
     switch label {
     case .verbatim(let text):
       return text
@@ -44,5 +48,12 @@ struct AccessibleControl: ViewModifier {
       resource.locale = locale
       return String(localized: resource)
     }
+  }
+}
+
+extension View {
+  /// `accessibilityHint` only when there is one: a control's own hint is never blanked.
+  @ViewBuilder fileprivate func accessibilityHint(ifPresent hint: String?) -> some View {
+    if let hint { accessibilityHint(Text(verbatim: hint)) } else { self }
   }
 }

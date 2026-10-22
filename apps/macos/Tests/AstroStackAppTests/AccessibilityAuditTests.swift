@@ -40,9 +40,10 @@ struct AccessibilityAuditTests {
   func testEveryInteractiveElementHasLabelAndIdentifier(language: String) {
     let entries = Self.entries(ComponentGallery(), language: language)
     #expect(AccessibilityAudit.problems(entries) == [])
-    // 2 parameter rows × 3, 3 install cards × 2, 2 curve editors × 2, the stretch controls'
-    // 3 visible rows × 3 (the raw rows sit in a closed disclosure) and the histogram canvas.
-    #expect(entries.count == 26, "\(entries.map(\.id))")
+    // 2 parameter rows × 4 (help, slider, field, reset), 3 install cards × 2, 2 curve editors × 2,
+    // the stretch controls' 3 visible rows × 4 (the raw rows sit in a closed disclosure) and the
+    // histogram canvas.
+    #expect(entries.count == 31, "\(entries.map(\.id))")
     #expect(entries.contains { $0.id == "fr.astrostack.parameter.haBlend.slider" })
     #expect(entries.contains { $0.id == "fr.astrostack.parameter.gallery.shadowsSigma.slider" })
     #expect(entries.contains { $0.id == "fr.astrostack.histogram.gallery.canvas" })
@@ -57,7 +58,9 @@ struct AccessibilityAuditTests {
       store: { project.store }, planning: { _ in ImportPlanningStub.empty })
     model.select(.data)
     let window = Self.entries(ProjectWindowView(model: model))
-    #expect(window.map(\.id) == ["fr.astrostack.stage.data.import"])
+    // The stage's « ? » (card 0086) and its Import button.
+    #expect(
+      window.map(\.id) == ["fr.astrostack.help.stage.data", "fr.astrostack.stage.data.import"])
     // The sidebar's rows are table cells whose preferences stay in the List: each real row is
     // hosted on its own.
     let rows = JourneyStage.allCases.flatMap { stage in

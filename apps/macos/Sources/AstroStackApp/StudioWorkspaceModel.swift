@@ -232,8 +232,8 @@ package final class StudioWorkspaceModel {
   private func panelChanged() {
     if let panel { panel.suggestions = offers(for: panel.type, params: panel.params) }
     greyUnavailable()
-    // The preview of the new values replaces the model view (drawn next frame, no upload now).
-    batch.showsModel = false
+    // The head comes back now: a preview cancelled or refused would leave the model on screen.
+    hideModel()
     schedulePreview()
   }
 

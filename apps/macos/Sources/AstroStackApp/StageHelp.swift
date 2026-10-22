@@ -6,43 +6,52 @@ internal import SwiftUI
 /// A journey stage's help (card 0086): its card from HelpKit, read once per stage and language,
 /// the first line as the summary.
 package enum StageHelp {
-  /// Every stage card by stage, then language: a body never reads the disk.
-  nonisolated private static let cards: [JourneyStage: [String: String]] = {
-    var cards: [JourneyStage: [String: String]] = [:]
+  /// A stage card with its first paragraph as plain text.
+  private struct Card {
+    let text: String
+    let summary: String
+  }
+
+  /// Every stage card by stage, then language, parsed once: a body never reads the disk nor
+  /// the Markdown.
+  nonisolated private static let cards: [JourneyStage: [String: Card]] = {
+    var cards: [JourneyStage: [String: Card]] = [:]
     for stage in JourneyStage.allCases {
       for language in HelpIndex.locales {
-        if let card = AppGlossary.help.stageCard(stage.rawValue, locale: language) {
-          cards[stage, default: [:]][language] = card
-        }
+        guard let text = AppGlossary.help.stageCard(stage.rawValue, locale: language),
+          let first = HelpMarkdown.parse(text).first
+        else { continue }
+        cards[stage, default: [:]][language] = Card(
+          text: text, summary: first.runs.map(\.text).joined())
       }
     }
     return cards
   }()
 
-  /// The card of `stage` in the language of `locale`, or `nil` (the gate keeps it present).
-  package static func card(_ stage: JourneyStage, locale: Locale) -> String? {
+  private static func card(_ stage: JourneyStage, in locale: Locale) -> Card? {
     cards[stage]?[AppLocale.language(of: locale)]
   }
 
-  /// The card's first line: the tooltip of the stage's « ? » and of its sidebar row.
+  /// The card of `stage` in the language of `locale`, or `nil` (the gate keeps it present).
+  package static func card(_ stage: JourneyStage, locale: Locale) -> String? {
+    card(stage, in: locale)?.text
+  }
+
+  /// The card's first paragraph as plain text: the tooltip of the stage's « ? » and of its
+  /// sidebar row.
   package static func summary(_ stage: JourneyStage, locale: Locale) -> String? {
-    card(stage, locale: locale).flatMap(Self.firstLine)
+    card(stage, in: locale)?.summary
   }
 
   /// The « ? » of `stage`: the summary on hover, the whole card on click, under the stage's key.
   package static func help(_ stage: JourneyStage, locale: Locale) -> KeyedHelp? {
-    guard let card = card(stage, locale: locale), let summary = firstLine(card) else { return nil }
+    guard let card = card(stage, in: locale) else { return nil }
     return KeyedHelp(
-      HelpContent(summary: .app("\(summary)")) { HelpText(card) }, key: key(stage))
+      HelpContent(summary: .app("\(card.summary)")) { HelpText(card.text) }, key: key(stage))
   }
 
   /// The identifier of the stage's « ? ».
   package static func key(_ stage: JourneyStage) -> AccessibilityID {
     .help("stage." + stage.rawValue)
-  }
-
-  /// The first paragraph as plain text (markup read, not shown in a tooltip).
-  private static func firstLine(_ card: String) -> String? {
-    HelpMarkdown.parse(card).first.map { $0.runs.map(\.text).joined() }
   }
 }

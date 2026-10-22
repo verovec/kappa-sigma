@@ -64,6 +64,13 @@ package struct ParameterRow: View {
     // The slider and reset move the value while the field may have focus: always show it.
     .onChange(of: parameter.value) { text = format(parameter.value) }
     .onChange(of: editing) { if !editing { commit() } }
+    // A freeze (a run starting) shows the applied value, never a typed one nobody committed.
+    .onChange(of: frozen) {
+      if frozen {
+        editing = false
+        text = format(parameter.value)
+      }
+    }
   }
 
   /// The label, its « why », the default badge and reset.

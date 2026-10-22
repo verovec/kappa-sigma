@@ -93,12 +93,6 @@ package final class StudioSession {
 
   /// The layers a render reads: the bundle's, overlaid by the outputs of the applied steps.
   private func context() throws -> ([String: GPUImage], [String: LayerStats]) {
-    var layers = bundleLayers
-    var stats = bundle.layerStats
-    for (role, image) in try history.layers() {
-      layers[role.rawValue] = try GPUImage(device: device, image: image)
-      stats[role.rawValue] = LayerStats.measured(image)
-    }
-    return (layers, stats)
+    try history.context(over: bundleLayers, stats: bundle.layerStats, device: device)
   }
 }

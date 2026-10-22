@@ -57,6 +57,10 @@ package final class ProjectWindowModel {
   @ObservationIgnored var workspaceTask: Task<Void, Never>?
   /// The stack `workspace` (or its load) is of.
   @ObservationIgnored var workspaceStackID: Int64?
+  /// The Replay Pipeline chooser is open (card 0088).
+  package var isChoosingReplay = false
+  /// A pipeline to replay on a stack once its workspace is loaded (card 0088).
+  @ObservationIgnored var pendingReplay: PendingReplay?
   /// The Stacking panel's preset and knob edits: what the next run applies (card 0070).
   package let knobs: KnobPanelViewModel
   /// The profile id the knobs' help was last looked up for (`knobs.profile` is its result, nil
@@ -137,6 +141,8 @@ package final class ProjectWindowModel {
   package func selectStack(_ id: Int64?) {
     guard id == nil || stacks.contains(where: { $0.id == id }) else { return }
     guard id != selectedStackID || studio == nil else { return }
+    // A replay waits for the stack it was chosen for, never for one opened later.
+    if pendingReplay?.stackID != id { pendingReplay = nil }
     let shownAlready = studio != nil && (id ?? stacks.last?.id) == selectedStack?.id
     selectedStackID = id
     if !shownAlready {

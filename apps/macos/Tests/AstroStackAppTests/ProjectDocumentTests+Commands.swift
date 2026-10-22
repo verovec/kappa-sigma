@@ -31,3 +31,23 @@ extension ProjectDocumentTests {
     _ = document.validateUserInterfaceItem(save)
   }
 }
+
+extension ProjectDocumentTests {
+  /// Card 0088: without a window (no Studio, no pipeline) the pipeline commands are off and do
+  /// nothing.
+  @Test("pipeline commands without a window: no effect, menu items off", .scratchDirectory)
+  func testPipelineCommandsWithoutWindow() throws {
+    let document = try ProjectDocument(type: Self.type)
+    defer { document.close() }
+    document.runPipeline(nil)
+    document.continuePipeline(nil)
+    document.replayPipeline(nil)
+    for action in [
+      #selector(ProjectDocument.runPipeline(_:)), #selector(ProjectDocument.continuePipeline(_:)),
+      #selector(ProjectDocument.replayPipeline(_:)),
+    ] {
+      let item = NSMenuItem(title: "", action: action, keyEquivalent: "")
+      #expect(!document.validateUserInterfaceItem(item), "\(action)")
+    }
+  }
+}

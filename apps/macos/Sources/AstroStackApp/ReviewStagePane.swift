@@ -44,14 +44,22 @@ struct ReviewStagePane: View {
     return .app("Run a stack with the review on: each lane pauses here after grading.")
   }
 
-  /// The knob, worded by the knobs glossary, frozen while a run goes (R2: values shown = applied).
+  /// The knob, worded by the knobs glossary, frozen while a run goes (R2: values shown = applied);
+  /// its « ? » (definition, and the kept profile's why — card 0086) stays clickable.
   private var reviewToggle: some View {
-    let term = AppGlossary.term(
-      Knob.termID(KnobSchema.frameReviewID), locale: locale, in: AppGlossary.knobs)
-    return Toggle(isOn: frameReview) { Text(verbatim: term.label) }
-      .help(term.definition)
-      .disabled(model.run?.isRunning == true)
-      .accessible(.reviewToggle, verbatim: term.label)
+    let id = KnobSchema.frameReviewID
+    let term = AppGlossary.term(Knob.termID(id), locale: locale, in: AppGlossary.knobs)
+    return HStack(spacing: DesignMetrics.spacingXS) {
+      Toggle(isOn: frameReview) { Text(verbatim: term.label) }
+        .help(term.definition)
+        .disabled(model.run?.isRunning == true)
+        .accessible(.reviewToggle, verbatim: term.label)
+      KeyedHelp(
+        HelpContent(summary: .app("\(term.definition)")) {
+          HelpText(model.knobs.help(for: id, locale: locale))
+        }, key: .parameter(id, .help), label: .whyThisValue
+      ).button
+    }
   }
 
   private var frameReview: Binding<Bool> {

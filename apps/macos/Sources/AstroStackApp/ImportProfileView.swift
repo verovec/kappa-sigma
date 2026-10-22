@@ -117,8 +117,7 @@ package struct ImportProfileView: View {
               KeyedHelp(
                 HelpContent(summary: .app("\(summary)")) {
                   HelpText(Self.valueHelp(definition: definition, why: why))
-                }, key: .help("profile.\(offset).\(process).\(id)"),
-                label: why == nil ? .help : .whyThisValue
+                }, key: .help("profile.\(offset).\(process).\(id)")
               ).button
             }
           }

@@ -81,15 +81,17 @@ package struct LevelsProcess: ImageProcess {
     "the viewer's display stretch, made a real adjustment",
   ]
 
-  /// Siril's autostretch on the head's statistics (linked: the mean of the channels), c1 = 1;
-  /// none is applied by itself.
+  /// Siril's autostretch on the head's statistics (linked: the mean of the channels), c1 = 1,
+  /// with the channels linked so no per-channel triple adds to it; none is applied by itself.
   package func suggestions(stats: LayerStats) -> [Suggestion] {
     guard !stats.channels.isEmpty else { return [] }
     let mapping = STFMapping.linked(
       stats.channels.map { STFMapping(median: $0.median, madn: $0.madn) })[0]
     let stf = mapping.parameters(
       sigma: AutoSTF.shadowsClip, targetBackground: AutoSTF.targetBackground)
-    return Self.suggestions(stf, as: "rgb", reason: Self.suggestionReasons[0])
+    let reason = Self.suggestionReasons[0]
+    return [Suggestion(paramID: "linked", value: .flag(true), reason: reason)]
+      + Self.suggestions(stf, as: "rgb", reason: reason)
   }
 
   /// One suggestion per value of `stf` for `triple`, all with `reason` (taken together).

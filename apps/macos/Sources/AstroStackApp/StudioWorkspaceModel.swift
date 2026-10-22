@@ -90,6 +90,7 @@ package final class StudioWorkspaceModel {
       texture: try Self.texture(studio.head, device: studio.session.device))
     refreshCatalogue()
     headStatistics = viewer.model.statistics
+    watchDisplayStretch()
   }
 
   /// Marks this workspace replaced (a newer stack opened in the Studio).
@@ -263,11 +264,12 @@ package final class StudioWorkspaceModel {
   private func headChanged() throws {
     shown = nil
     defer { headStatistics = viewer.model.statistics }
-    if let panel { refresh(panel) }
     isPreviewing = false
     // A compared step that no longer exists (undone) stops the compare.
     if let comparing, comparing >= studio.steps.count { try compare(toStep: nil) }
     try show(studio.head)
+    // After the viewer shows the new head: the display stretch offered is the one on screen.
+    if let panel { refresh(panel) }
     refreshCatalogue()
     // The panel stays open on the new head: its values are previewed on it again (R2).
     if panel != nil { schedulePreview() }

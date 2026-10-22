@@ -19,9 +19,10 @@ extension LevelsProcess: HistogramHandled {
 
   /// The handle's value moves (`STFParameters.dragging`: c0 + range ≤ c1, m between them).
   package static func dragging(
-    _ handle: STFHandle, channel: Int, to position: Double, params: ParamSet, stats: LayerStats
+    _ handle: STFHandle, channel: Int, to position: Double, params: ParamSet, stats: LayerStats,
+    channels: Int
   ) throws -> ParamSet {
-    let triple = triple(channel: channel, params: params, channels: 3)
+    let triple = triple(channel: channel, params: params, channels: channels)
     let moved = stf(triple, of: params).dragging(handle, to: position, in: .linear)
     return try setting(moved, as: triple, on: params)
   }
@@ -45,12 +46,6 @@ extension LevelsProcess {
   package static func transfer(_ x: Double, channel: Int, channels: Int, params: ParamSet)
     -> Double
   {
-    var value = x
-    if !params.flag("linked"), channels == 3 {
-      let own = stf(triples[1 + min(channel, 2)], of: params)
-      if own != .identity { value = own.display(value) }
-    }
-    let rgb = stf("rgb", of: params)
-    return rgb == .identity ? value : rgb.display(value)
+    LevelsTransfer(params, channels: channels).apply(x, channel: channel)
   }
 }

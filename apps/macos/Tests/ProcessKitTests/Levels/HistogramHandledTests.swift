@@ -29,16 +29,16 @@ struct HistogramHandledTests {
     #expect(handles == [STFHandlePositions(shadows: 0.1, midtone: 0.5, highlights: 0.9)])
 
     let moved = try LevelsProcess.dragging(
-      .midtone, channel: 0, to: 0.3, params: params, stats: Self.stats)
+      .midtone, channel: 0, to: 0.3, params: params, stats: Self.stats, channels: 3)
     #expect(abs(moved.number("rgbMidtones") - 0.25) < 1e-12, "0.3 sits at a quarter of 0.1…0.9")
     for id in ["rgbShadows", "rgbHighlights", "rMidtones", "linked"] {
       #expect(moved[id] == params[id], "\(id) untouched")
     }
     let past = try LevelsProcess.dragging(
-      .midtone, channel: 0, to: 0.95, params: params, stats: Self.stats)
+      .midtone, channel: 0, to: 0.95, params: params, stats: Self.stats, channels: 3)
     #expect(past.number("rgbMidtones") == 1, "the mid handle stops at the white point")
     let crossed = try LevelsProcess.dragging(
-      .shadows, channel: 0, to: 0.95, params: params, stats: Self.stats)
+      .shadows, channel: 0, to: 0.95, params: params, stats: Self.stats, channels: 3)
     #expect(crossed.number("rgbShadows") == 0.9 - STFParameters.minimumRange)
   }
 
@@ -48,8 +48,12 @@ struct HistogramHandledTests {
     #expect(LevelsProcess.handles(params, stats: Self.stats, channels: 3).count == 3)
     #expect(LevelsProcess.handles(params, stats: Self.stats, channels: 1).count == 1)
     let moved = try LevelsProcess.dragging(
-      .shadows, channel: 1, to: 0.05, params: params, stats: Self.stats)
+      .shadows, channel: 1, to: 0.05, params: params, stats: Self.stats, channels: 3)
     #expect(moved.number("gShadows") == 0.05 && moved.number("rgbShadows") == 0)
+    // Mono: one set, the RGB/K triple, whatever the link.
+    let mono = try LevelsProcess.dragging(
+      .shadows, channel: 0, to: 0.05, params: params, stats: Self.stats, channels: 1)
+    #expect(mono.number("rgbShadows") == 0.05 && mono.number("rShadows") == 0)
   }
 
   @Test("the stretch's handles move its σ and target; the white point is not one of its values")
@@ -62,11 +66,11 @@ struct HistogramHandledTests {
     #expect(handles == [stf.handlePositions(in: .linear)])
 
     let shadows = try StretchProcess.dragging(
-      .shadows, channel: 0, to: 0.05, params: params, stats: Self.stats)
+      .shadows, channel: 0, to: 0.05, params: params, stats: Self.stats, channels: 3)
     #expect(abs(shadows.number("shadowsClip") - mapping.sigma(ofShadows: 0.05)) < 1e-12)
     #expect(shadows.number("targetBackground") == 0.25)
     let midtone = try StretchProcess.dragging(
-      .midtone, channel: 0, to: 0.2, params: params, stats: Self.stats)
+      .midtone, channel: 0, to: 0.2, params: params, stats: Self.stats, channels: 3)
     let dragged = stf.dragging(.midtone, to: 0.2, in: .linear)
     #expect(
       abs(
@@ -74,7 +78,7 @@ struct HistogramHandledTests {
           - mapping.targetBackground(ofMidtone: dragged.midtone, shadows: stf.shadows)) < 1e-12)
     #expect(
       try StretchProcess.dragging(
-        .highlights, channel: 0, to: 0.5, params: params, stats: Self.stats) == params)
+        .highlights, channel: 0, to: 0.5, params: params, stats: Self.stats, channels: 3) == params)
     var ghs = params
     try ghs.set("mode", .choice("ghs"))
     #expect(StretchProcess.handles(ghs, stats: Self.stats, channels: 3).isEmpty, "MTF only")

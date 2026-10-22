@@ -25,9 +25,10 @@ extension StretchProcess: HistogramHandled {
   /// The black point sets the σ of the shadows clip, the midtone the target background, as the
   /// viewer's controls read them (`STFMapping`); the white point is fixed at 1 (not a value).
   package static func dragging(
-    _ handle: STFHandle, channel: Int, to position: Double, params: ParamSet, stats: LayerStats
+    _ handle: STFHandle, channel: Int, to position: Double, params: ParamSet, stats: LayerStats,
+    channels: Int
   ) throws -> ParamSet {
-    let all = mappings(params, stats: stats, channels: stats.channels.count)
+    let all = mappings(params, stats: stats, channels: channels)
     guard params.choice("mode") == "mtf", handle != .highlights, all.indices.contains(channel)
     else { return params }
     let mapping = all[channel]

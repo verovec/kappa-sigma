@@ -31,7 +31,7 @@ struct ProcessHistogramExtras: View {
   private var format: AstroFormat { AstroFormat(locale: locale) }
 
   private func name(_ channel: Int) -> String {
-    guard model.clipping.count == 3 else {
+    guard sample.planes.count == 3 else {
       return String(localized: .app("Luminance", locale: locale))
     }
     return String(

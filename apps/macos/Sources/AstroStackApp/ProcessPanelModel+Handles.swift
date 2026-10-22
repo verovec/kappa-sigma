@@ -15,19 +15,19 @@ extension ProcessPanelModel {
   package func drag(_ handle: STFHandle, channel: Int, to position: Double) {
     guard let handled,
       let moved = try? handled.dragging(
-        handle, channel: channel, to: position, params: params, stats: headStats)
+        handle, channel: channel, to: position, params: params, stats: headStats,
+        channels: sample?.planes.count ?? headStats.channels.count)
     else { return }
     replace(moved)
   }
 
-  /// What the levels send to black and white on the head's sample, per channel (measured and
-  /// shown, never applied); none for another process.
-  package var clipping: [HeadSample.Clipping] {
-    guard type == LevelsProcess.self, let sample else { return [] }
-    let channels = sample.planes.count
-    let params = params
-    return sample.clipping { value, channel in
-      LevelsProcess.transfer(value, channel: channel, channels: channels, params: params)
+  /// Measures `clipping` for the current values on the current sample (the levels only).
+  func measureClipping() {
+    guard type == LevelsProcess.self, let sample else {
+      if !clipping.isEmpty { clipping = [] }
+      return
     }
+    let transfer = LevelsTransfer(params, channels: sample.planes.count)
+    clipping = sample.clipping { value, channel in transfer.apply(value, channel: channel) }
   }
 }

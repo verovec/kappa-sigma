@@ -24,7 +24,7 @@ package struct HeadSample: Equatable, Sendable {
   /// The sample of `image`.
   package init(_ image: AstroImage) {
     let count = image.planes.first?.count ?? 0
-    let stride = max(1, count / Self.limit)
+    let stride = max(1, (count + Self.limit - 1) / Self.limit)
     planes = image.planes.map { plane in
       Swift.stride(from: 0, to: plane.count, by: stride).map { plane[$0] }.filter(\.isFinite)
     }

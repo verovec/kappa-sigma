@@ -11,7 +11,9 @@ package final class ProcessPanelModel {
   /// The process.
   @ObservationIgnored package let type: any ImageProcess.Type
   /// The values the preview and Apply use.
-  package private(set) var params: ParamSet
+  package private(set) var params: ParamSet {
+    didSet { measureClipping() }
+  }
   /// The advanced parameters are shown.
   package var showsAdvanced = false
   /// What the process proposes from the statistics of the head (refreshed when it moves);
@@ -19,9 +21,14 @@ package final class ProcessPanelModel {
   package var suggestions: [Suggestion]
   /// The head's sample (card 0089): the input histogram the handles sit on, the clipping
   /// readouts; `nil` until measured.
-  package var sample: HeadSample?
+  package var sample: HeadSample? {
+    didSet { measureClipping() }
+  }
   /// The head's statistics (the stretch's handles read them).
   package var headStats = LayerStats(channels: [])
+  /// What the levels send to black and white on the head's sample, per channel (measured once
+  /// per change of the values or the sample, shown, never applied); none for another process.
+  package internal(set) var clipping: [HeadSample.Clipping] = []
   /// Called after every accepted change (the live preview).
   @ObservationIgnored package var onChange: () -> Void = {}
 
@@ -35,7 +42,10 @@ package final class ProcessPanelModel {
   /// The parameters the panel shows: simple ones, advanced ones once disclosed or promoted by
   /// the current values (the levels' per-channel rows once unlinked).
   package var visibleSpecs: [ParamSpec] {
-    type.schema.visible(disclosed: showsAdvanced, promoted: type.promoted(params))
+    // A mono head has no per-channel values to promote.
+    let colour = (sample?.planes.count ?? headStats.channels.count) == 3
+    return type.schema.visible(
+      disclosed: showsAdvanced, promoted: colour ? type.promoted(params) : [])
   }
 
   /// The arrow step of `id`, when the process gives one.

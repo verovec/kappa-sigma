@@ -156,7 +156,7 @@ struct LevelsProcessTests {
     #expect(linked == ColourFixtures.field())
   }
 
-  @Test("Siril's autostretch is a suggestion of the three RGB/K values, one reason")
+  @Test("Siril's autostretch is a suggestion of the RGB/K values, linked, one reason")
   func testAutostretchSuggestion() throws {
     let device = try #require(MTLCreateSystemDefaultDevice())
     let process = try LevelsProcess(params: try Self.params([:]), device: device)
@@ -170,8 +170,12 @@ struct LevelsProcessTests {
       stats.channels.map { STFMapping(median: $0.median, madn: $0.madn) })[0]
     let stf = mapping.parameters(sigma: -2.8, targetBackground: 0.25)
     let suggestions = process.suggestions(stats: stats)
-    #expect(suggestions.map(\.paramID) == ["rgbShadows", "rgbMidtones", "rgbHighlights"])
-    #expect(suggestions.map(\.value) == [.number(stf.shadows), .number(stf.midtone), .number(1)])
+    #expect(
+      suggestions.map(\.paramID) == ["linked", "rgbShadows", "rgbMidtones", "rgbHighlights"])
+    #expect(
+      suggestions.map(\.value) == [
+        .flag(true), .number(stf.shadows), .number(stf.midtone), .number(1),
+      ])
     #expect(Set(suggestions.map(\.reason)) == [LevelsProcess.suggestionReasons[0]])
     #expect(process.suggestions(stats: LayerStats(channels: [])).isEmpty)
   }

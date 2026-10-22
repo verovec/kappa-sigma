@@ -11,8 +11,10 @@ package protocol HistogramHandled: ImageProcess {
   static func handles(_ params: ParamSet, stats: LayerStats, channels: Int)
     -> [STFHandlePositions]
 
-  /// `params` after `handle` of `channel` is dropped at `position` (a value, 0…1).
+  /// `params` after `handle` of `channel` is dropped at `position` (a value, 0…1), on an image of
+  /// `channels` planes with `stats`.
   static func dragging(
-    _ handle: STFHandle, channel: Int, to position: Double, params: ParamSet, stats: LayerStats
+    _ handle: STFHandle, channel: Int, to position: Double, params: ParamSet, stats: LayerStats,
+    channels: Int
   ) throws -> ParamSet
 }

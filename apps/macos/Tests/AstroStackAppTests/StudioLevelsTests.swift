@@ -126,3 +126,23 @@ extension StudioLevelsTests {
     #expect(AstroFormat(locale: Locale(identifier: "fr")).share(0.125) == "12,50\u{a0}%")
   }
 }
+
+extension StudioLevelsTests {
+  @Test(
+    "the offered display stretch follows the viewer: a new manual stretch is offered",
+    .scratchDirectory)
+  func testDisplaySuggestionFollowsViewer() async throws {
+    let opened = try StudioModelTests.project()
+    defer { try? opened.package.close() }
+    let workspace = try StudioWorkspaceModelTests.workspace(
+      opened, bundle: StudioModelTests.bundle())
+    workspace.viewer.model.stretch = .manual
+    workspace.choose(LevelsProcess.id)
+    let panel = try #require(workspace.panel)
+    let moved = STFParameters(shadows: 0.03, midtone: 0.15, highlights: 0.9)
+    workspace.viewer.model.manualSTF = Array(repeating: moved, count: 3)
+    let expected = Suggestion(paramID: "rgbMidtones", value: .number(0.15), reason: Self.reason)
+    for _ in 0..<100 where !panel.suggestions.contains(expected) { await Task.yield() }
+    #expect(panel.suggestions.contains(expected), "\(panel.suggestions)")
+  }
+}

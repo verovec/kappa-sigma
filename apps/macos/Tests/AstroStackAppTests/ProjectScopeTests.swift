@@ -125,7 +125,10 @@ struct ProjectScopeTests {
     #expect(window.studio?.source.runID == "B", "nothing chosen: the latest")
     window.selectStack(stacks[1].id)
     #expect(window.studio?.source.runID == "B", "the stack shown, picked again: nothing reopens")
-    #expect(try store.setting("workspace.stack") == nil)
+    #expect(try store.setting("workspace.stack") == "\(stacks[1].id)", "but the pick is kept")
+    window.selectStack(nil)
+    #expect(window.selectedStackID == nil && window.studio?.source.runID == "B")
+    #expect(try store.setting("workspace.stack") == "", "back to « the latest »")
 
     window.selectStack(stacks[0].id)
     #expect(window.selectedStackID == stacks[0].id && window.studio == nil)
@@ -145,6 +148,7 @@ struct ProjectScopeTests {
       store: { store }, folder: { folder }, planning: { _ in ImportPlanningStub.empty })
     #expect(stale.selectedStackID == nil, "a deleted stack reads as no choice")
   }
+
   @Test(
     "a queue that stops after its first run, nothing chosen: the picker stays on the stack shown",
     .scratchDirectory)
@@ -171,7 +175,9 @@ struct ProjectScopeTests {
     #expect(window.stacks.count == 2, "the first run's stack is recorded")
     #expect(window.studio?.source.runID == "A")
     #expect(window.selectedStack?.id == shown.id, "the picker names the stack the Studio shows")
-    #expect(try project.store.setting("workspace.stack") == nil, "nothing persisted in silence")
+    #expect(
+      try project.store.setting("workspace.stack") == "\(shown.id)",
+      "the stack on screen is the one a reopen shows")
   }
 
   @Test(

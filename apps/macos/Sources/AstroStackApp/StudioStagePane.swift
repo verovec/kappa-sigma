@@ -51,8 +51,8 @@ struct StudioStagePane: View {
         message: .app("The stacked image and its finishing processes will appear here."),
         systemImage: "wand.and.stars"
       )
-      // Keyed on the choice: picking another stack while this one is empty opens it.
-      .task(id: model.selectedStackID) { await model.openStudio() }
+      // Keyed on the stack to show: another pick, or a new latest, opens it while this is empty.
+      .task(id: model.selectedStack?.id) { await model.openStudio() }
     }
   }
 }

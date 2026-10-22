@@ -119,13 +119,16 @@ package final class ProjectWindowModel {
     if case .failure(let failure) = settings { error = UserFacingError(failure) }
   }
 
-  /// Shows `id` in the Studio and remembers it; a stack the project does not have is not chosen.
+  /// Shows `id` in the Studio (`nil`: the latest) and remembers it; a stack the project does not
+  /// have is not chosen.
+  ///
+  /// A choice that names the stack already shown is remembered without reopening it.
   package func selectStack(_ id: Int64?) {
     guard id == nil || stacks.contains(where: { $0.id == id }) else { return }
-    // The stack already shown, picked again (« the latest » included): nothing reopens.
-    guard (id ?? stacks.last?.id) != selectedStack?.id || studio == nil else { return }
+    guard id != selectedStackID || studio == nil else { return }
+    let shownAlready = studio != nil && (id ?? stacks.last?.id) == selectedStack?.id
     selectedStackID = id
-    studio = nil
+    if !shownAlready { studio = nil }
     // Tri follows the stack the Studio shows; the refresh comes first so a failure to persist
     // the choice stays shown.
     refresh()

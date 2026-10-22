@@ -148,6 +148,7 @@ extension ProjectWindowModel {
     let reported = error
     queuedScopes = []
     queueActive = false
+    queueCancelled = false
     refresh()
     if error == nil { error = reported }
   }
@@ -229,15 +230,15 @@ extension ProjectWindowModel {
         bundlePath: "stacks/\(runID)", sourceIDs: read, paramsJSON: params,
         imageRoles: source.layers.map(\.id), object: object, scopeJSON: scopeJSON)
       knobs.clearIgnored()
-      // The new row is known before it is chosen; only the queue's last stack is chosen and
-      // opened (an intermediate one would be parsed and dropped).
-      // Nothing chosen means « the latest »: while the queue goes on, the picker stays on the
-      // stack the Studio shows (in memory; nothing persisted in silence).
-      if selectedStackID == nil, studio != nil, let shown = stacks.last {
-        selectedStackID = shown.id
+      // Only the queue's last stack is chosen and opened (an intermediate one would be parsed
+      // and dropped). Before an intermediate one becomes « the latest », the stack the Studio
+      // shows is chosen, so the picker, Tri and a reopen all name what is on screen.
+      let last = queuedScopes.isEmpty && !queueCancelled
+      if !last, selectedStackID == nil, studio != nil, let shown = stacks.last {
+        selectStack(shown.id)
       }
       stacks.append(stack)
-      if queuedScopes.isEmpty, !queueCancelled {
+      if last {
         selectStack(stack.id)
         studio = LegacyRunModel(source: source)
         select(.studio)

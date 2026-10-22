@@ -42,10 +42,10 @@ struct ReviewStagePane: View {
   private var emptyMessage: LocalizedStringResource {
     let settings = model.knobs.settings
     // The reference pause comes first in a run: it is the one to announce when both are on.
-    if model.run?.isRunning == true, settings.referenceBreakpoint {
+    if model.isStacking, settings.referenceBreakpoint {
       return .app("Measuring: each lane pauses here before its registration is applied.")
     }
-    if model.run?.isRunning == true, settings.frameReview {
+    if model.isStacking, settings.frameReview {
       return .app("Grading: each lane pauses here after its registration.")
     }
     return .app("Run a stack with the review on: each lane pauses here after grading.")

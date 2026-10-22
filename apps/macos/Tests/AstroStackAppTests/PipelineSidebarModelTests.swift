@@ -188,6 +188,14 @@ extension PipelineSidebarModelTests {
       #expect(sidebar.stepProblems[2].count == 1, "star recomposition needs a starless layer")
     }
     #expect(try sidebar.differences(from: "saved").count == 1)
+    sidebar.setLocked(false, of: 1)
+    var edited = sidebar.pipeline
+    edited.steps[1].recipe = try Self.step(StretchProcess.self, ["targetBackground": .number(0.2)])
+      .recipe
+    sidebar.show(edited)
+    let sheet = AccessibilityAuditTests.entries(
+      PipelineDiffSheet(model: sidebar, savedName: "saved") {}, language: "en")
+    #expect(!sheet.isEmpty)
     let window = ProjectWindowModel(
       store: { opened.package.store }, planning: { _ in ImportPlanningStub.empty })
     let chooser = AccessibilityAuditTests.entries(ReplayChooser(model: window))

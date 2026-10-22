@@ -55,7 +55,9 @@ package struct PipelineDiffSheet: View {
     let change: String
     switch entry.change {
     case .param(let id, let left, let right):
-      change = String(localized: .app("\(id): \(words(left)) to \(words(right))", locale: locale))
+      let name = parameterTitle(id, of: entry.processID)
+      change = String(
+        localized: .app("\(name): \(words(left)) to \(words(right))", locale: locale))
     case .mode(let left, let right):
       change = String(
         localized: .app("breakpoint: \(mode(left)) to \(mode(right))", locale: locale))
@@ -70,6 +72,14 @@ package struct PipelineDiffSheet: View {
       change = String(localized: .app("removed", locale: locale))
     }
     return "\(entry.step + 1). \(title): \(change)"
+  }
+
+  /// The parameter's panel title in the view's language (its id when the process is unknown).
+  private func parameterTitle(_ id: String, of processID: String) -> String {
+    guard let spec = model.workspace.registry.type(id: processID)?.schema.spec(id) else {
+      return id
+    }
+    return String(localized: ProcessKitResources.title(spec.title, locale: locale))
   }
 
   private func mode(_ mode: PipelineStep.Mode) -> String {

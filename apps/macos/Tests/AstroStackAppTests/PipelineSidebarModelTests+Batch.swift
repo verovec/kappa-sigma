@@ -72,3 +72,27 @@ extension PipelineSidebarModelTests {
       ])
   }
 }
+
+extension PipelineSidebarModelTests {
+  @Test("no step is removed while a tool Apply is going (card 0107)", .scratchDirectory)
+  func testRemove_DuringToolApply_Refused() async throws {
+    let opened = try StudioModelTests.project()
+    defer { try? opened.package.close() }
+    let (workspace, sidebar) = try Self.toolSidebar(
+      opened,
+      Pipeline(
+        name: "p",
+        steps: [
+          try Self.step(ChannelCombinationProcess.self), try Self.step(StretchProcess.self),
+        ]),
+      tool: BackgroundProcessTests.tool(during: BackgroundProcessTests.During()))
+    workspace.choose(BackgroundExtractionProcess.id)
+    let recorded = Recorded<Bool>()
+    workspace.startTool { recorded.append($0) }
+    #expect(
+      sidebar.editRefusal(of: 1) == .app("A tool is already running: wait for it, or stop it."))
+    sidebar.remove(at: 1)
+    #expect(sidebar.pipeline.steps.count == 2)
+    while recorded.all.isEmpty { await Task.yield() }
+  }
+}

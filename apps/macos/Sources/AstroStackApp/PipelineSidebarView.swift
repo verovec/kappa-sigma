@@ -72,28 +72,10 @@ package struct PipelineSidebarView: View {
       .accessible(.studioPipelineSaveAs, label: .app("Save pipeline as…"))
       let saved = model.savedNames
       if !saved.isEmpty {
-        Menu(.app("Load")) {
-          ForEach(Array(saved.enumerated()), id: \.offset) { offset, name in
-            Button {
-              model.load(name)
-            } label: {
-              Text(verbatim: name)
-            }
-            .accessible(.studioPipelineSaved(offset, compare: false), label: .app("Load"))
-          }
-        }
-        .accessible(.studioPipelineLoad, label: .app("Load"))
-        Menu(.app("Compare with")) {
-          ForEach(Array(saved.enumerated()), id: \.offset) { offset, name in
-            Button {
-              comparedWith = name
-            } label: {
-              Text(verbatim: name)
-            }
-            .accessible(.studioPipelineSaved(offset, compare: true), label: .app("Compare with"))
-          }
-        }
-        .accessible(.studioPipelineCompare, label: .app("Compare with"))
+        Menu(.app("Load")) { savedItems(saved, compare: false) }
+          .accessible(.studioPipelineLoad, label: .app("Load"))
+        Menu(.app("Compare with")) { savedItems(saved, compare: true) }
+          .accessible(.studioPipelineCompare, label: .app("Compare with"))
       }
     } label: {
       Image(systemName: "ellipsis.circle")
@@ -101,6 +83,20 @@ package struct PipelineSidebarView: View {
     .menuStyle(.borderlessButton)
     .fixedSize()
     .accessible(.studioPipelineFiles, label: .app("Pipeline files"))
+  }
+
+  /// The saved pipelines as menu items: loaded, or compared with the one shown.
+  private func savedItems(_ names: [String], compare: Bool) -> some View {
+    ForEach(Array(names.enumerated()), id: \.offset) { offset, name in
+      Button {
+        if compare { comparedWith = name } else { model.load(name) }
+      } label: {
+        Text(verbatim: name)
+      }
+      .accessible(
+        .studioPipelineSaved(offset, compare: compare),
+        label: compare ? .app("Compare with") : .app("Load"))
+    }
   }
 
   /// A saved pipeline the compare sheet shows.

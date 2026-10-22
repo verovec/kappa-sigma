@@ -49,6 +49,11 @@ extension ProjectDocumentTests {
     document.continuePipeline(nil)
     await ProjectWindowWorkspaceTests.settle { window.workspace?.studio.steps.count == 2 }
     #expect(window.workspace?.studio.steps.map(\.processID) == ["channel-combination", "stretch"])
+    window.workspace?.choose(SaturationProcess.id)
+    await window.workspace?.previewNow()
+    #expect(enabled(#selector(ProjectDocument.applyProcess(_:))), "a panel is open on the Studio")
+    document.applyProcess(nil)
+    #expect(window.workspace?.studio.steps.count == 3, "Edit › Apply Process records the panel")
     document.replayPipeline(nil)
     #expect(window.isChoosingReplay, "the chooser opens (no other stack: the item is off)")
     #expect(!enabled(#selector(ProjectDocument.replayPipeline(_:))))

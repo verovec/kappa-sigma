@@ -27,7 +27,9 @@ package struct HelpButton<Content: View>: View {
 
   package var body: some View {
     Button {
-      shown.toggle()
+      // Opens only: a click outside (the « ? » included) already closed the transient popover
+      // on mouse-down, a toggle here would reopen it on mouse-up.
+      shown = true
     } label: {
       Image(systemName: "questionmark.circle")
     }

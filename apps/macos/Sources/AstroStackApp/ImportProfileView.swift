@@ -6,7 +6,8 @@ package import SwiftUI
 /// The Import sheet's profile box (card 0060).
 ///
 /// The proposal with its reasons, the user's pick (another profile, or none), and the chosen
-/// profile's values with their « why » on hover. Nothing is applied here: Add records the choice.
+/// profile's values, each with its « ? » (definition on hover, definition and why on click).
+/// Nothing is applied here: Add records the choice.
 package struct ImportProfileView: View {
   let model: ImportViewModel
   @Environment(\.locale) private var locale

@@ -194,10 +194,11 @@ package final class ProjectWindowModel {
       sources = try store?.sources() ?? []
       // The profile kept at import (0060) words the knobs' help; it is applied by nothing here.
       // Every night must have kept the same profile (a night without one counts, a legacy run
-      // does not): no guessing. Looked up once per id (a copy that no longer resolves stays nil).
+      // does not): no guessing. Looked up once per id.
       let kept = Set(sources.filter { $0.kind == .night }.map(\.profileID))
       let agreed = kept.count == 1 ? kept.first.flatMap { $0 } : nil
-      if agreed != profileLookupID {
+      // An id that resolved to nothing is tried again (a user copy fixed or saved since).
+      if agreed != profileLookupID || (agreed != nil && knobs.profile == nil) {
         profileLookupID = agreed
         knobs.profile = agreed.flatMap { id in
           ImportViewModel.profiles(store: store).profiles.first { $0.id == id }

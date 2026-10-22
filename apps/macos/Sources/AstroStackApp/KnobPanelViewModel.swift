@@ -70,7 +70,9 @@ package final class KnobPanelViewModel {
       .definition
     guard let profile, let why = profile.preprocessing.why[id] else { return definition }
     let language = AppLocale.language(of: locale)
-    let value = profile.preprocessing.knobs[id].map { Self.words(for: $0, id: id, locale: locale) }
+    let value = profile.preprocessing.knobs[id].flatMap {
+      Self.words(for: $0, id: id, locale: locale)
+    }
     return definition + "\n"
       + Self.profileLine(
         profile.title.text(language: language), value, why.text(language: language),
@@ -88,9 +90,9 @@ package final class KnobPanelViewModel {
   }
 
   /// A profile's value of knob `id` as the panel shows it: the user's number, the choice's
-  /// glossary label, « On » / « Off ».
+  /// glossary label, « On » / « Off »; nil for a curve (no knob is one).
   package nonisolated static func words(for value: ParamValue, id: String, locale: Locale)
-    -> String
+    -> String?
   {
     switch value {
     case .number(let number): AstroFormat(locale: locale).parameter(number)
@@ -98,7 +100,7 @@ package final class KnobPanelViewModel {
       String(localized: flag ? .app("On", locale: locale) : .app("Off", locale: locale))
     case .choice(let option):
       AppGlossary.label(Knob.termID(id, option: option), locale: locale, in: AppGlossary.knobs)
-    case .points: ""
+    case .points: nil
     }
   }
 

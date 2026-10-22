@@ -47,5 +47,7 @@ extension KnobPanelViewModelTests {
     let words = KnobPanelViewModel.words(
       for: value, id: "stack_reject", locale: Locale(identifier: "fr"))
     #expect(words == expected)
+    let french = Locale(identifier: "fr")
+    #expect(KnobPanelViewModel.words(for: .points([]), id: "stack_reject", locale: french) == nil)
   }
 }

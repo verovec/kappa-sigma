@@ -18,7 +18,8 @@ struct StudioWorkspaceModelTests {
     throws -> StudioWorkspaceModel
   {
     let studio = try StudioModel(
-      store: opened.package.store, stackID: opened.stackID, stackFolder: opened.folder,
+      store: opened.package.store, stackID: opened.stackID, packageFolder: opened.package.url,
+      stackFolder: opened.folder,
       bundle: bundle)
     return try StudioWorkspaceModel(studio: studio, base: [.color])
   }

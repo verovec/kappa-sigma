@@ -1,5 +1,5 @@
 internal import Foundation
-internal import ImageKit
+package import ImageKit
 package import ProcessKit
 package import StackKit
 
@@ -9,14 +9,17 @@ package enum StudioBundle {
   /// The bundle of `source` and its roles, read off the main actor (hundreds of MB).
   @concurrent
   package nonisolated static func load(_ source: LegacyRunSource) async throws
-    -> (bundle: PipelineBundle, roles: Set<LayerRole>)
+    -> (bundle: PipelineBundle, roles: Set<LayerRole>, header: FITSHeader?)
   {
     var layers: [String: AstroImage] = [:]
     var stats: [String: LayerStats] = [:]
     var roles: Set<LayerRole> = []
+    var headers: [String: FITSHeader] = [:]
     for layer in source.layers {
       try Task.checkCancellation()
-      let image = try FITSFile.read(at: source.url(of: layer)).image()
+      let file = try FITSFile.read(at: source.url(of: layer))
+      let image = try file.image()
+      headers[layer.id] = file.header
       let fitted = source.bundle?.layers.first { $0.id == layer.id }
       let measured = StudioSession.stats(of: image)
       stats[layer.id] = LayerStats(
@@ -28,7 +31,9 @@ package enum StudioBundle {
     guard let base = StudioSession.baseLayerID(layers.keys), let baseStats = stats[base] else {
       throw StudioError.emptyBundle
     }
-    return (PipelineBundle(stats: baseStats, layers: layers, layerStats: stats), roles)
+    return (
+      PipelineBundle(stats: baseStats, layers: layers, layerStats: stats), roles, headers[base]
+    )
   }
 
   /// The Studio role of a bundle role: colour planes are the colour base, L the luminance, any

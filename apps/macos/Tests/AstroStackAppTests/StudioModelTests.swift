@@ -46,7 +46,8 @@ struct StudioModelTests {
 
   static func model(_ opened: Opened) throws -> StudioModel {
     try StudioModel(
-      store: opened.package.store, stackID: opened.stackID, stackFolder: opened.folder,
+      store: opened.package.store, stackID: opened.stackID, packageFolder: opened.package.url,
+      stackFolder: opened.folder,
       bundle: bundle())
   }
 

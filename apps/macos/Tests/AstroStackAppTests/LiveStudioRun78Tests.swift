@@ -58,7 +58,7 @@ struct LiveStudioRun78Tests {
     let stack = try package.store.addStack(
       bundlePath: "stacks/78", sourceIDs: [], paramsJSON: "{}", imageRoles: ["RGB", "Ha", "OIII"])
     let studio = try StudioModel(
-      store: package.store, stackID: stack.id,
+      store: package.store, stackID: stack.id, packageFolder: package.url,
       stackFolder: package.url.appendingPathComponent("stacks/78"), bundle: Self.bundle(root))
     let workspace = try StudioWorkspaceModel(studio: studio, base: [.color, .emission])
     try Self.render(workspace, "1-combination")

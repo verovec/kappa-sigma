@@ -1217,6 +1217,22 @@
         }
       }
     },
+    "Feather (px)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Feather (px)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adoucissement (px)"
+          }
+        }
+      }
+    },
     "File": {
       "localizations": {
         "en": {
@@ -2897,6 +2913,38 @@
         }
       }
     },
+    "Range end": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Range end"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fin de plage"
+          }
+        }
+      }
+    },
+    "Range start": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Range start"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Début de plage"
+          }
+        }
+      }
+    },
     "Re-check tools": {
       "localizations": {
         "en": {
@@ -3777,6 +3825,22 @@
         }
       }
     },
+    "Softness": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Softness"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Douceur"
+          }
+        }
+      }
+    },
     "Sorting the frames into sets…": {
       "localizations": {
         "en": {
@@ -3853,6 +3917,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Empilement"
+          }
+        }
+      }
+    },
+    "Star radius (px)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Star radius (px)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rayon des étoiles (px)"
+          }
+        }
+      }
+    },
+    "Star threshold": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Star threshold"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seuil des étoiles"
           }
         }
       }

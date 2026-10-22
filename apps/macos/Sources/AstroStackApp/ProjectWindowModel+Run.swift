@@ -107,7 +107,9 @@ extension ProjectWindowModel {
       guard let stack = try store()?.latestStack() else { return }
       let source = try await Self.openStack(
         folder.appendingPathComponent(stack.bundlePath), object: targetName)
-      studio = studio ?? LegacyRunModel(source: source)
+      // A run registered a newer stack while this one was read: that one stays in the Studio.
+      guard studio == nil else { return }
+      studio = LegacyRunModel(source: source)
       startWorkspace(source, stackID: stack.id, folder: folder, bundlePath: stack.bundlePath)
     } catch {
       self.error = UserFacingError(error)
@@ -138,15 +140,19 @@ extension ProjectWindowModel {
     _ source: LegacyRunSource, stackID: Int64, folder: URL, bundlePath: String
   ) async throws {
     guard let store = store() else { return }
-    let (bundle, roles) = try await StudioBundle.load(source)
+    let (bundle, roles, header) = try await StudioBundle.load(source)
     let combination = knobs.profile?.steps
       .first { $0.recipe.processID == ChannelCombinationProcess.id }
       .map { ParamSet.loading($0.recipe.params, onto: ChannelCombinationProcess.schema).params }
     try Task.checkCancellation()
     let studio = try StudioModel(
-      store: store, stackID: stackID, stackFolder: folder.appendingPathComponent(bundlePath),
-      bundle: bundle, combination: combination)
-    workspace = try StudioWorkspaceModel(studio: studio, base: roles)
+      store: store, stackID: stackID, packageFolder: folder,
+      stackFolder: folder.appendingPathComponent(bundlePath), bundle: bundle, header: header,
+      combination: combination)
+    let workspace = try StudioWorkspaceModel(studio: studio, base: roles)
+    // An undo from another stage brings the Studio into view before moving its history.
+    workspace.reveal = { [weak self] in self?.select(.studio) }
+    self.workspace = workspace
     refresh()
   }
 

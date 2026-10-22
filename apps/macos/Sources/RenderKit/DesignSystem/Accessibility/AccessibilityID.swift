@@ -180,6 +180,11 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
     stageControl("studio", "step." + String(index))
   }
 
+  /// The parameter key of the Studio mask's value `name` (`ParameterRow(…, key:)`, card 0087).
+  package static func studioMaskKey(_ name: String) -> String {
+    "studio.mask." + name
+  }
+
   /// The Studio's mask source menu (card 0087).
   package static let studioMaskSource = stageControl("studio", "mask.source")
 

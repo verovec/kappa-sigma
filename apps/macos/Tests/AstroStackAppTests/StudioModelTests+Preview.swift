@@ -33,7 +33,8 @@ extension StudioModelTests {
     let opened = try Self.project()
     defer { try? opened.package.close() }
     let model = try StudioModel(
-      store: opened.package.store, stackID: opened.stackID, stackFolder: opened.folder,
+      store: opened.package.store, stackID: opened.stackID, packageFolder: opened.package.url,
+      stackFolder: opened.folder,
       bundle: Self.fullBundle())
     let type = try #require(try ProcessRegistry.standard().type(id: processID))
     let params = ParamSet(schema: type.schema)

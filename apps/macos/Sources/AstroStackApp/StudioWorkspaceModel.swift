@@ -65,6 +65,10 @@ package final class StudioWorkspaceModel {
   @ObservationIgnored package let registry: ProcessRegistry
   /// Replaced by a newer stack's workspace: undo actions registered for it do nothing.
   @ObservationIgnored package private(set) var isRetired = false
+  /// Shows the Studio (an undo from another stage brings it into view first).
+  @ObservationIgnored package var reveal: () -> Void = {}
+  /// The undo manager its moves are registered on, cleared of them when it is retired.
+  @ObservationIgnored package weak var undoManager: UndoManager?
   @ObservationIgnored private let base: Set<LayerRole>
   @ObservationIgnored private var previewTask: Task<Void, Never>?
 
@@ -84,6 +88,7 @@ package final class StudioWorkspaceModel {
   package func retire() {
     isRetired = true
     previewTask?.cancel()
+    undoManager?.removeAllActions(withTarget: self)
   }
 
   /// The catalogue title of process `id` (ProcessKit's catalog key), or the id.
@@ -115,7 +120,8 @@ package final class StudioWorkspaceModel {
       let preview = try studio.preview(panel.type.id, params: panel.params, mask: maskImage())
       // Through the head's display stretch: an auto-stretch fitted to the preview would hide
       // the very change the process makes (what is shown is what Apply records, R2).
-      try show(preview, statistics: viewer.model.statistics)
+      let same = preview.planes.count == viewer.model.statistics.count
+      try show(preview, statistics: same ? viewer.model.statistics : nil)
       isPreviewing = true
       failure = nil
     } catch {

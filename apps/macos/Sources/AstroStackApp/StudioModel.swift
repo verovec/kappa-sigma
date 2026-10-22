@@ -25,25 +25,30 @@ package final class StudioModel {
   @ObservationIgnored private let imageID: Int64
   @ObservationIgnored private let packageRoot: URL
 
-  /// The Studio of stack `stackID` whose files are in `stackFolder`, over `bundle`; a fresh
-  /// history starts with the channel combination of `combination` (the kept profile's values),
-  /// else its defaults — a step like any other, never hidden (R2).
+  /// The Studio of stack `stackID` over `bundle`.
+  ///
+  /// Its files are in `stackFolder` inside the project package `packageFolder`; its outputs keep
+  /// `header`'s descriptive cards. A fresh history starts with the channel combination of
+  /// `combination` (the kept profile's values), else its defaults — a step like any other, never
+  /// hidden (R2).
   package init(
-    store: ProjectStore, stackID: Int64, stackFolder: URL, bundle: PipelineBundle,
-    combination: ParamSet? = nil, registry: ProcessRegistry? = nil
+    store: ProjectStore, stackID: Int64, packageFolder: URL, stackFolder: URL,
+    bundle: PipelineBundle, header: FITSHeader? = nil, combination: ParamSet? = nil,
+    registry: ProcessRegistry? = nil
   ) throws {
     guard let device = MTLCreateSystemDefaultDevice() else { throw RenderError.noDevice }
     let registry = try registry ?? ProcessRegistry.standard()
     guard let baseID = StudioSession.baseLayerID(bundle.layers.keys),
       let base = bundle.layers[baseID]
     else { throw StudioError.emptyBundle }
+    // Every step keeps the stack's descriptive cards (WCS, OBJECT…).
     let history = try History.reopen(
-      directory: stackFolder.appendingPathComponent("history"), original: base
+      directory: stackFolder.appendingPathComponent("history"), original: base, header: header
     ) { registry.type(id: $0)?.schema }
     session = try StudioSession(
       history: history, bundle: bundle, registry: registry, device: device)
     self.store = store
-    packageRoot = stackFolder.deletingLastPathComponent().deletingLastPathComponent()
+    packageRoot = packageFolder
     let images = try store.images(stackID: stackID)
     imageID =
       try images.first { $0.role == Self.imageRole }?.id

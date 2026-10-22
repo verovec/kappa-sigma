@@ -216,6 +216,7 @@ extension ProjectWindowModel {
         // stack dropped meanwhile reports nothing.
         guard self?.workspaceStackID == stackID else { return }
         self?.workspaceStackID = nil
+        self?.pendingReplay = nil
         self?.error = UserFacingError(error)
       }
     }

@@ -163,7 +163,7 @@ package final class StudioWorkspaceModel {
     guard isShowing(panel) else { return }
     try reported { try studio.apply(panel.type.id, params: panel.params, mask: maskImage()) }
     // The user's manual work becomes the recipe (R5): the pipeline records the step.
-    pipeline?.applied(panel.type.id, params: panel.params)
+    pipeline?.applied(panel.type.id, params: panel.params, masked: mask != nil)
   }
 
   /// Whether the viewer shows the current values and mask of `panel`.

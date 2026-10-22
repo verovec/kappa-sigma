@@ -15,20 +15,30 @@ struct PendingReplay {
 
 extension ProjectWindowModel {
   /// The pipeline column of `workspace` (stack `stackID`): the pipeline of the profile its
-  /// nights kept, else the steps its history already holds (the user's work as the recipe).
+  /// nights kept while the history follows it, else the steps its history already holds (the
+  /// user's work as the recipe), saying which profile it left.
   func sidebar(
     of workspace: StudioWorkspaceModel, stackID: Int64, store: ProjectStore,
     roles: Set<LayerRole>
   ) throws -> PipelineSidebarModel {
-    let pipeline =
-      keptProfile(of: stackID)?.pipeline
-      ?? Pipeline(
-        name: "Studio",
-        steps: workspace.studio.steps.map {
-          PipelineStep(recipe: Recipe(processID: $0.processID, params: $0.params))
-        })
+    let applied = workspace.studio.steps
+    let own = Pipeline(
+      name: "Studio",
+      steps: applied.map {
+        PipelineStep(recipe: Recipe(processID: $0.processID, params: $0.params))
+      })
+    var pipeline = own
+    var warnings: [String] = []
+    if let profile = keptProfile(of: stackID)?.pipeline {
+      let planned = profile.steps.prefix(applied.count).map(\.recipe.processID)
+      if applied.count <= profile.steps.count, applied.map(\.processID) == Array(planned) {
+        pipeline = profile
+      } else {
+        warnings.append("the history left the pipeline of profile \(profile.name): its own steps")
+      }
+    }
     let sidebar = try PipelineSidebarModel(
-      workspace: workspace, pipeline: pipeline, store: store, base: roles)
+      workspace: workspace, pipeline: pipeline, warnings: warnings, store: store, base: roles)
     sidebar.onReplay = { [weak self] in self?.isChoosingReplay = true }
     return sidebar
   }

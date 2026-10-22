@@ -203,16 +203,10 @@ package final class PipelineRunner {
     session.onEvent(.applied(index))
   }
 
-  /// The layers a step reads, as `StudioSession` gives them: the bundle's, overlaid by the
-  /// outputs of the steps applied so far (StarNet's starless…).
+  /// The layers a step reads, as `StudioSession` gives them (`History.context`).
   private func context(_ session: Session) throws -> ([String: GPUImage], [String: LayerStats]) {
-    var layers = session.layers
-    var stats = session.bundle.layerStats
-    for (role, image) in try session.history.layers() {
-      layers[role.rawValue] = try GPUImage(device: device, image: image)
-      stats[role.rawValue] = LayerStats.measured(image)
-    }
-    return (layers, stats)
+    try session.history.context(
+      over: session.layers, stats: session.bundle.layerStats, device: device)
   }
 
   /// The step's values on `schema`; a value the schema refuses stops the run with its name

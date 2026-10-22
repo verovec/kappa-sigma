@@ -12,7 +12,7 @@ extension PipelineSidebarModel {
       var named = pipeline
       named.name = name
       try store.savePipeline(named: name, json: named.json())
-      show(named, warnings: warnings)
+      rename(name)
     } catch {
       failure = UserFacingError(error).message
     }

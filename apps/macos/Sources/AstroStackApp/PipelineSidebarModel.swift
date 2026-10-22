@@ -1,3 +1,4 @@
+internal import AppKit
 package import Foundation
 internal import Observation
 package import ProcessKit
@@ -62,9 +63,12 @@ package final class PipelineSidebarModel {
     runner = try PipelineRunner(registry: session.registry, device: session.device)
   }
 
-  /// Whether Continue can run: halted at a breakpoint whose process the panel shows.
+  /// Whether Continue can run: halted at a breakpoint still on (the history holds exactly the
+  /// steps before it) whose process the panel shows.
   package var canContinue: Bool {
-    guard let index = stoppedAt, pipeline.steps.indices.contains(index) else { return false }
+    guard let index = stoppedAt, pipeline.steps.indices.contains(index),
+      pipeline.steps[index].mode == .stop, workspace.studio.steps.count == index
+    else { return false }
     return workspace.panel?.type.id == pipeline.steps[index].recipe.processID
   }
 
@@ -92,6 +96,11 @@ package final class PipelineSidebarModel {
     pipeline.steps[index].locked = locked
   }
 
+  /// Names the pipeline `name` (saved under it); where the run stands is kept.
+  func rename(_ name: String) {
+    pipeline.name = name
+  }
+
   /// Replaces the pipeline (loaded or replayed), with what its loading reported.
   package func show(_ pipeline: Pipeline, warnings: [String] = []) {
     self.pipeline = pipeline
@@ -99,8 +108,11 @@ package final class PipelineSidebarModel {
     stoppedAt = nil
   }
 
-  /// Runs the pipeline from where the history stands to its next breakpoint (`previous`: the
-  /// run whose locked steps may be reused — another stack's on a replay).
+  /// Runs the pipeline from where the history stands to its next breakpoint.
+  ///
+  /// `previous` is another stack's run whose locked steps may be reused (a replay; the runner
+  /// reuses one only for the same input). On this stack's own history nothing is reused: the
+  /// last run is that very history, never a copy of it.
   package func run(previous: PipelineRun? = nil) async {
     let start = workspace.studio.steps.count
     guard follows(upTo: start) else {
@@ -109,33 +121,44 @@ package final class PipelineSidebarModel {
     }
     await moving { [runner, pipeline] history, bundle, sink in
       try await runner.run(
-        pipeline, on: history, bundle: bundle, from: start, previous: previous ?? self.lastRun,
-        onEvent: sink)
+        pipeline, on: history, bundle: bundle, from: start, previous: previous, onEvent: sink)
     }
   }
 
   /// The user's « Continue » at the breakpoint: the step with the panel's values, then on to
   /// the next breakpoint; the pipeline keeps the values applied (R5).
   package func continueRun() async {
+    // A value typed and not confirmed is committed first: Continue never applies an older one.
+    NSApp?.keyWindow?.makeFirstResponder(nil)
     guard canContinue, let index = stoppedAt, let panel = workspace.panel else { return }
     let params = panel.params
-    pipeline.steps[index].recipe = Recipe(processID: panel.type.id, params: params)
-    await moving { [runner, pipeline, lastRun] history, bundle, sink in
+    let applied = await moving { [runner, pipeline] history, bundle, sink in
       try await runner.resume(
-        pipeline, at: index, on: history, bundle: bundle, params: params, previous: lastRun,
-        onEvent: sink)
+        pipeline, at: index, on: history, bundle: bundle, params: params, onEvent: sink)
+    }
+    // Recorded once applied: a refused Continue leaves the recipe as it was.
+    if applied, workspace.studio.steps.count > index {
+      pipeline.steps[index].recipe = Recipe(processID: panel.type.id, params: params)
     }
   }
 
-  /// A manual Apply of `processID` with `params`: at the breakpoint of the same process it is
-  /// that step done with these values; elsewhere a new `auto` step where the history put it.
-  func applied(_ processID: String, params: ParamSet) {
+  /// A manual Apply of `processID` with `params` (`masked`: under a mask).
+  ///
+  /// Where the pipeline plans the same process next, it is that step done with these values;
+  /// elsewhere a new `auto` step where the history put it. A recipe has no mask: a masked step
+  /// is recorded with a warning that a replay applies it to the whole image.
+  func applied(_ processID: String, params: ParamSet, masked: Bool = false) {
     let index = workspace.studio.steps.count - 1
     guard index >= 0 else { return }
     let recipe = Recipe(processID: processID, params: params)
-    if stoppedAt == index, pipeline.steps[index].recipe.processID == processID {
+    if masked {
+      warnings.append(
+        "step \(index + 1) (\(processID)) was applied under a mask; the pipeline replays it unmasked"
+      )
+    }
+    if pipeline.steps.indices.contains(index), pipeline.steps[index].recipe.processID == processID {
       pipeline.steps[index].recipe = recipe
-      stoppedAt = nil
+      if stoppedAt == index { stoppedAt = nil }
       return
     }
     pipeline.steps.insert(PipelineStep(recipe: recipe), at: min(index, pipeline.steps.count))
@@ -149,13 +172,15 @@ package final class PipelineSidebarModel {
     return applied.count <= pipeline.steps.count && Array(applied) == Array(planned)
   }
 
-  /// Runs `body` on the history, then shows the new head and loads the breakpoint's process.
+  /// Runs `body` on the history, then shows the new head and loads the breakpoint's process;
+  /// whether it ran without failing.
+  @discardableResult
   private func moving(
     _ body:
       @escaping (History, PipelineBundle, @escaping PipelineRunner.EventSink) async throws ->
       PipelineRunner.Outcome
-  ) async {
-    guard !isRunning else { return }
+  ) async -> Bool {
+    guard !isRunning else { return false }
     isRunning = true
     failure = nil
     events = []
@@ -178,9 +203,11 @@ package final class PipelineSidebarModel {
       lastRun = PipelineRun(history: studio.session.history, bundle: bundle)
       try workspace.headChanged()
       halted(outcome)
+      return true
     } catch {
       failure = UserFacingError(error).message
       try? workspace.headChanged()
+      return false
     }
   }
 

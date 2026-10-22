@@ -141,6 +141,8 @@ package final class ProjectWindowModel {
   package func selectStack(_ id: Int64?) {
     guard id == nil || stacks.contains(where: { $0.id == id }) else { return }
     guard id != selectedStackID || studio == nil else { return }
+    // A replay waits for the stack it was chosen for, never for one opened later.
+    if pendingReplay?.stackID != id { pendingReplay = nil }
     let shownAlready = studio != nil && (id ?? stacks.last?.id) == selectedStack?.id
     selectedStackID = id
     if !shownAlready {

@@ -38,11 +38,27 @@ package struct HelpButton<Content: View>: View {
     .help(Text(summary))
     .accessible(key, label: label.resource, hint: summary)
     .popover(isPresented: $shown, arrowEdge: .bottom) {
-      content()
-        .padding(DesignMetrics.spacingM)
-        .frame(width: 320, alignment: .leading)
-        // Esc inside the popover; a transient popover also closes on a click outside.
-        .onExitCommand { shown = false }
+      HelpPopover(close: { shown = false }, content: content)
     }
+  }
+}
+
+/// What a « ? » popover shows: the caller's content at the popover's width; Esc inside it
+/// closes it (a transient popover also closes on a click outside).
+package struct HelpPopover<Content: View>: View {
+  private let close: () -> Void
+  private let content: () -> Content
+
+  /// The popover around `content`, closed by `close`.
+  package init(close: @escaping () -> Void, @ViewBuilder content: @escaping () -> Content) {
+    self.close = close
+    self.content = content
+  }
+
+  package var body: some View {
+    content()
+      .padding(DesignMetrics.spacingM)
+      .frame(width: 320, alignment: .leading)
+      .onExitCommand(perform: close)
   }
 }

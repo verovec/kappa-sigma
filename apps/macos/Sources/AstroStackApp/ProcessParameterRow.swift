@@ -52,7 +52,15 @@ struct ProcessParameterRow: View {
     case .choice(_, let options):
       HStack {
         Picker(selection: choice) {
-          ForEach(options, id: \.self) { Text(verbatim: $0).tag($0) }
+          ForEach(options, id: \.self) { option in
+            if let reason = model.unavailableOptions[spec.id]?[option] {
+              // Greyed with why; a value already chosen stays chosen (R2).
+              Text(.app("\(option) — \(String(localized: reason))")).tag(option)
+                .selectionDisabled()
+            } else {
+              Text(verbatim: option).tag(option)
+            }
+          }
         } label: {
           Text(label)
         }

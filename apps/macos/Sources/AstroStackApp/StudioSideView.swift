@@ -19,7 +19,12 @@ package struct StudioSideView: View {
       VStack(alignment: .leading, spacing: DesignMetrics.spacingL) {
         if let panel = model.panel {
           ProcessPanel(model: panel)
-          StudioMaskRow(model: model)
+          // The extraction runs on the whole image and its layers: no mask, its own rows.
+          if panel.type.id == BackgroundExtractionProcess.id {
+            StudioBatchRows(model: model)
+          } else {
+            StudioMaskRow(model: model)
+          }
           HStack {
             Button(.app("Close")) { model.closePanel() }
               .accessible(.studioClosePanel, label: .app("Close"))

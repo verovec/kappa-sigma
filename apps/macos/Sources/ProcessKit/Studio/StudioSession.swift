@@ -85,12 +85,15 @@ package final class StudioSession {
     try history.apply(processID: processID, params: params, result: result)
   }
 
-  /// Records a step whose result was made elsewhere (a host tool), with the layers it wrote.
+  /// Records a step whose result was made elsewhere (a host tool), with the layers it wrote and
+  /// the bundle layers it rewrote (card 0092).
   package func apply(
     _ processID: String, params: ParamSet, result: AstroImage,
-    outputs: [LayerRole: AstroImage] = [:]
+    outputs: [LayerRole: AstroImage] = [:], replacing: [String: AstroImage] = [:]
   ) throws {
-    try history.apply(processID: processID, params: params, result: result, outputs: outputs)
+    try history.apply(
+      processID: processID, params: params, result: result, outputs: outputs,
+      replacing: replacing)
   }
 
   /// Runs the host tool `batch` as the step `id` with `params` on the head, its progress (0…1)
@@ -99,15 +102,16 @@ package final class StudioSession {
     _ batch: PipelineRunner.BatchProcess, id: String, params: ParamSet,
     onProgress: @escaping @Sendable (Double) -> Void
   ) async throws {
-    try await batch.record(id, params: params, in: history, onProgress: onProgress)
+    try await batch.record(
+      id, params: params, in: history, bundle: bundle, onProgress: onProgress)
   }
 
-  /// The layers a render reads: the bundle's, overlaid by the outputs of the applied steps.
+  /// The layers a render reads: the bundle's, overlaid by what the applied steps wrote.
   ///
   /// The overlay is read, measured and uploaded once per set of step files (a starless is
   /// ~260 MB at 22 Mpx), not at every preview.
   func context() throws -> ([String: GPUImage], [String: LayerStats]) {
-    let files = history.layerFiles
+    let files = history.writtenFiles
     if let overlay, overlay.files == files { return (overlay.layers, overlay.stats) }
     let (layers, stats) = try history.context(
       over: bundleLayers, stats: bundle.layerStats, device: device)
@@ -117,7 +121,7 @@ package final class StudioSession {
 
   /// The context of the step files `files`.
   private struct Overlay {
-    let files: [LayerRole: String]
+    let files: [String: String]
     let layers: [String: GPUImage]
     let stats: [String: LayerStats]
   }

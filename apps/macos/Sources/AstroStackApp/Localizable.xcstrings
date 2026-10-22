@@ -97,6 +97,22 @@
         }
       }
     },
+    "%@ is not installed at %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is not installed at %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ n’est pas installé à %@."
+          }
+        }
+      }
+    },
     "%@ trail mask: %@ trails on %@ of %@": {
       "localizations": {
         "en": {
@@ -125,6 +141,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ · référence"
+          }
+        }
+      }
+    },
+    "%@ — %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ — %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ — %@"
           }
         }
       }
@@ -413,6 +445,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Un rognage de %@ sur chaque bord ne laisse rien de l’image."
+          }
+        }
+      }
+    },
+    "A pipeline run is going on: wait for it, then apply.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A pipeline run is going on: wait for it, then apply."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une exécution du pipeline est en cours : attendez-la, puis appliquez."
           }
         }
       }
@@ -4753,6 +4801,22 @@
         }
       }
     },
+    "Show the background model": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show the background model"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher le modèle de fond"
+          }
+        }
+      }
+    },
     "Show the reference while held": {
       "localizations": {
         "en": {
@@ -4909,6 +4973,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Siril s’est arrêté pendant « %@ » et a été relancé ; relancez l’étape."
+          }
+        }
+      }
+    },
+    "Siril's subsky only subtracts: dividing needs GraXpert.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril's subsky only subtracts: dividing needs GraXpert."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le subsky de Siril ne fait que soustraire : diviser demande GraXpert."
           }
         }
       }
@@ -6517,6 +6597,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ajuster à la fenêtre"
+          }
+        }
+      }
+    },
+    "a background model": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "a background model"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "un modèle de fond"
           }
         }
       }

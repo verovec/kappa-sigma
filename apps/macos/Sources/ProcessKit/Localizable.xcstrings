@@ -1,6 +1,38 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "Apply to": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apply to"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appliquer à"
+          }
+        }
+      }
+    },
+    "Background extraction": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Background extraction"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Extraction de fond"
+          }
+        }
+      }
+    },
     "Band full": {
       "localizations": {
         "en": {
@@ -305,6 +337,22 @@
         }
       }
     },
+    "Correction": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correction"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correction"
+          }
+        }
+      }
+    },
     "Curves": {
       "localizations": {
         "en": {
@@ -337,6 +385,22 @@
         }
       }
     },
+    "Dither": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dither"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tramage"
+          }
+        }
+      }
+    },
     "Emission screens": {
       "localizations": {
         "en": {
@@ -349,6 +413,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Écrans d’émission"
+          }
+        }
+      }
+    },
+    "Engine": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Engine"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moteur"
           }
         }
       }
@@ -1137,6 +1217,22 @@
         }
       }
     },
+    "Polynomial degree": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Polynomial degree"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Degré du polynôme"
+          }
+        }
+      }
+    },
     "Protect sky and highlights": {
       "localizations": {
         "en": {
@@ -1149,6 +1245,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Protéger ciel et hautes lumières"
+          }
+        }
+      }
+    },
+    "RBF smoothing": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RBF smoothing"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lissage RBF"
           }
         }
       }
@@ -1345,6 +1457,38 @@
         }
       }
     },
+    "Sample tolerance": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sample tolerance"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tolérance des échantillons"
+          }
+        }
+      }
+    },
+    "Samples per line": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Samples per line"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échantillons par ligne"
+          }
+        }
+      }
+    },
     "Saturation": {
       "localizations": {
         "en": {
@@ -1485,6 +1629,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Échelle lisse σ"
+          }
+        }
+      }
+    },
+    "Smoothing": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Smoothing"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lissage"
           }
         }
       }

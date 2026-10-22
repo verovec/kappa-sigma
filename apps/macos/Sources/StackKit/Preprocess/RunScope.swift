@@ -36,13 +36,16 @@ package struct RunScope: Equatable, Sendable, Codable {
     return scopes.keys.sorted().compactMap { scopes[$0] }
   }
 
-  /// The light sets of this object `inventory` holds that the scope does not list: a scan that
-  /// moved since the series were chosen (a night added, a grouping changed), never stacked in
-  /// silence.
+  /// The light sets `inventory` and the scope disagree on: this object's sets the scope does not
+  /// list, and listed sets the scan no longer has — a scan that moved since the series were
+  /// chosen (a night added, a grouping changed), never stacked in part or in silence.
   package func unlistedSets(in inventory: Inventory) -> [String] {
     let listed = Set(setIDs)
-    return inventory.sets.filter { $0.key.type == .light && $0.key.object == object }
-      .map(\.key.id).filter { !listed.contains($0) }
+    let present = inventory.sets.filter { $0.key.type == .light && $0.key.object == object }
+      .map(\.key.id)
+    let added = present.filter { !listed.contains($0) }
+    let gone = setIDs.filter { !Set(present).contains($0) }
+    return added + gone
   }
 }
 
@@ -64,7 +67,8 @@ extension Inventory {
     var out = Inventory(root: root, frames: indices.map { frames[$0] })
     out.warnings = warnings
     out.channelDetection = channelDetection
-    out.colorModel = colorModel
+    // The kept lights decide: a mono object beside an OSC one is not a mixed run on its own.
+    out.colorModel = out.lightColorModel
     out.sets = kept.map { set in
       var set = set
       set.indices = set.indices.compactMap { position[$0] }

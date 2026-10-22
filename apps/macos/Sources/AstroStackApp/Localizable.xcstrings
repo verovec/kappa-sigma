@@ -3876,15 +3876,39 @@
     "The scan moved since the series were chosen (%lld new sets): rescan and pick again.": {
       "localizations": {
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The scan moved since the series were chosen (%lld new sets): rescan and pick again."
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "The scan moved since the series were chosen (%lld new set): rescan and pick again."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "The scan moved since the series were chosen (%lld new sets): rescan and pick again."
+                }
+              }
+            }
           }
         },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "L’analyse a changé depuis le choix des séries (%lld nouvelles séries) : relisez et choisissez à nouveau."
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "L’analyse a changé depuis le choix des séries (%lld nouvelle série) : relisez et choisissez à nouveau."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "L’analyse a changé depuis le choix des séries (%lld nouvelles séries) : relisez et choisissez à nouveau."
+                }
+              }
+            }
           }
         }
       }
@@ -3965,6 +3989,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ce projet n’est plus ouvert ; rouvrez-le et importez à nouveau."
+          }
+        }
+      }
+    },
+    "This project stacks several objects: Rescan (Données › Rescan) to choose the series.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This project stacks several objects: Rescan (Données › Rescan) to choose the series."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce projet empile plusieurs objets : relisez (Données › Relire) pour choisir les séries."
           }
         }
       }

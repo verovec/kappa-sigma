@@ -45,6 +45,8 @@ package final class StackingStageModel {
   /// One run per object with a checked set, in the table's order; empty without a scan.
   package private(set) var scopes: [RunScope] = []
   private var checked: Set<String> = []
+  /// Every set id a scan listed so far: a set seen before keeps its choice, a new one is checked.
+  private var seen: Set<String> = []
 
   /// The series of `inventory` (none for `nil`), every one checked.
   package init(inventory: Inventory?) {
@@ -53,11 +55,12 @@ package final class StackingStageModel {
 
   /// A new scan: the sets it still has keep their choice, the new ones are checked.
   package func replace(inventory: Inventory?) {
-    let known = Set(groups.flatMap(\.nights).flatMap(\.series).map(\.id))
     groups = inventory.map(Self.groups(of:)) ?? []
     let ids = Set(groups.flatMap(\.nights).flatMap(\.series).map(\.id))
-    // Kept: the choice on a set the new scan still has; new sets start checked.
-    checked = ids.filter { !known.contains($0) || checked.contains($0) }
+    // Kept: the choice on a set seen before (a dropped scan in between forgets nothing); new sets
+    // start checked. A choice on a set the scan no longer lists waits for it to come back.
+    checked.formUnion(ids.filter { !seen.contains($0) })
+    seen.formUnion(ids)
     rebuildScopes()
   }
 
@@ -91,11 +94,13 @@ package final class StackingStageModel {
   private static func groups(of inventory: Inventory) -> [Group] {
     let sets = Dictionary(
       inventory.sets.map { ($0.key.id, $0) }, uniquingKeysWith: { first, _ in first })
-    let split = FilterSetLanes.splits(inventory)
     return RunScope.scopes(of: inventory).map { scope in
+      // The lane as the scoped run will stack it: splitting is decided per run (R2).
+      let scoped = inventory.scoped(scope)
+      let split = FilterSetLanes.splits(scoped)
       var nights: [String: [Series]] = [:]
       for set in scope.setIDs.compactMap({ sets[$0] }) {
-        let lane = FilterSetLanes.lane(for: set, in: inventory, split: split)
+        let lane = FilterSetLanes.lane(for: set, in: scoped, split: split)
         nights[set.key.session, default: []].append(
           Series(
             id: set.key.id, object: set.key.object, night: set.key.session,

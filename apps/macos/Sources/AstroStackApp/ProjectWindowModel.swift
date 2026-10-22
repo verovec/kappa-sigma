@@ -29,7 +29,7 @@ package final class ProjectWindowModel {
   /// The series the next run stacks, from the last scan (card 0095): one run per checked object.
   package let series = StackingStageModel(inventory: nil)
   /// Every stack of the project, oldest first (read on refresh).
-  package private(set) var stacks: [ProjectStack] = []
+  package internal(set) var stacks: [ProjectStack] = []
   /// The stack the Studio shows (card 0095), persisted per project; `nil` = the latest.
   package private(set) var selectedStackID: Int64?
   /// The lights per filter × night of `scan`, computed once per scan.
@@ -106,6 +106,8 @@ package final class ProjectWindowModel {
       // A chosen stack that no longer exists reads as no choice: the latest is shown.
       let chosen = try store()?.setting(Self.stackSettingKey).flatMap(Int64.init)
       selectedStackID = chosen.flatMap { id in stacks.contains { $0.id == id } ? id : nil }
+      // Tri reads the chosen stack: derived again now that the choice is known.
+      if selectedStackID != nil { refresh() }
     } catch {
       self.error = UserFacingError(error)
     }
@@ -117,13 +119,14 @@ package final class ProjectWindowModel {
     guard id != selectedStackID || studio == nil else { return }
     selectedStackID = id
     studio = nil
+    // Tri follows the stack the Studio shows; the refresh comes first so a failure to persist
+    // the choice stays shown.
+    refresh()
     do {
       try store()?.setSetting(Self.stackSettingKey, to: id.map(String.init) ?? "")
     } catch {
       self.error = UserFacingError(error)
     }
-    // Tri follows the stack the Studio shows.
-    refresh()
   }
 
   /// The stack the Studio shows: the chosen one, else the latest.

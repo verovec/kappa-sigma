@@ -16,11 +16,19 @@ extension ProjectWindowModel {
     return request
   }
 
-  /// Run is offered: a capture night to stack, no run or queue going, and — once a scan lists
-  /// the series — at least one checked set.
+  /// Run is offered.
+  ///
+  /// A capture night to stack, no run or queue going, and — once a scan lists the series — at
+  /// least one checked set. Without a scan, a project whose stacks show several objects waits for
+  /// one (`needsSeries`): a run of every light would only fail after the plan.
   package var canRun: Bool {
     !queueActive && run?.isRunning != true && sources.contains { $0.kind == .night }
-      && (series.isEmpty || !series.scopes.isEmpty)
+      && (series.isEmpty ? !needsSeries : !series.scopes.isEmpty)
+  }
+
+  /// No scan lists the series yet, and the recorded stacks name several objects (card 0095).
+  package var needsSeries: Bool {
+    series.isEmpty && Set(stacks.map(\.object).filter { !$0.isEmpty }).count > 1
   }
 
   /// The `project_settings` key of the stack the Studio shows (card 0095).
@@ -213,7 +221,8 @@ extension ProjectWindowModel {
         bundlePath: "stacks/\(runID)", sourceIDs: read, paramsJSON: params,
         imageRoles: source.layers.map(\.id), object: object, scopeJSON: scopeJSON)
       knobs.clearIgnored()
-      refresh()
+      // The new row is known before it is chosen; selectStack refreshes once.
+      stacks.append(stack)
       selectStack(stack.id)
       if queuedScopes.isEmpty {
         studio = LegacyRunModel(source: source)

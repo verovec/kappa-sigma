@@ -116,6 +116,18 @@ struct RunScopeTests {
     #expect(unlisted.allSatisfy { $0.contains("|TESTFIELD|") && !testfield.setIDs.contains($0) })
     let other = try #require(RunScope.scopes(of: two).first { $0.object == "OTHER" })
     #expect(other.unlistedSets(in: moved).isEmpty, "the other object did not move")
+    // A listed set the scan no longer has counts too: never stacked on the remainder.
+    var shrunk = testfield
+    shrunk.setIDs.append("light|TESTFIELD|X|e1|g0o0b1|i0|t0|s:")
+    #expect(shrunk.unlistedSets(in: two) == ["light|TESTFIELD|X|e1|g0o0b1|i0|t0|s:"])
+    // A scope mixing a mono object with an OSC one is not a mixed run on its own.
+    var osc = two
+    for index in osc.frames.indices where osc.frames[index].object == "OTHER" {
+      osc.frames[index].channels = 3
+    }
+    osc.regroup()
+    osc.colorModel = .mixed
+    #expect(osc.scoped(testfield).colorModel == .mono)
   }
 
   @Test("a scope round-trips through JSON under its wire keys")

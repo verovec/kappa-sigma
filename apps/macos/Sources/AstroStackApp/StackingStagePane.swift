@@ -66,6 +66,10 @@ struct StackingStagePane: View {
       .padding(.trailing, DesignMetrics.spacingM)
     } else if !running && !model.series.isEmpty && model.series.scopes.isEmpty {
       notice(.app("Check at least one series to stack."))
+    } else if !running && model.needsSeries {
+      notice(
+        .app("This project stacks several objects: Rescan (Données › Rescan) to choose the series.")
+      )
     }
   }
 

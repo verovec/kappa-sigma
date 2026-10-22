@@ -122,5 +122,11 @@ struct StackingStageModelTests {
     #expect(model.scopes.map(\.lights) == [3, 6])
     model.replace(inventory: nil)
     #expect(model.isEmpty && model.scopes.isEmpty)
+    // A dropped scan in between (Import, then Rescan) forgets no choice.
+    model.replace(
+      inventory: Self.inventory(
+        objects: ["M 31", "NGC 7000"], nights: ["2026-09-21", "2026-09-22"]))
+    #expect(!model.isChecked(gone))
+    #expect(model.scopes.map(\.lights) == [3, 6])
   }
 }

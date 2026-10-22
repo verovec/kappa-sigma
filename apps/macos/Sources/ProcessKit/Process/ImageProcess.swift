@@ -57,6 +57,14 @@ package protocol ImageProcess {
   /// True when Apply runs a host tool (Siril…) the caller injects: `render` is only the preview,
   /// and recording it as the step is refused (`StudioError.needsTool`).
   static var hostTool: Bool { get }
+
+  /// Whether `params` make Apply run the host tool — the one predicate every caller asks (a
+  /// disabled step is the image itself, no tool needed: card 0094); `hostTool` by default.
+  static func runsTool(_ params: ParamSet) -> Bool
+
+  /// True when the process reads the image's plate solution (colour calibration): greyed until
+  /// the head carries one.
+  static var requiresSolution: Bool { get }
 }
 
 extension ImageProcess {
@@ -85,6 +93,12 @@ extension ImageProcess {
 
   /// A GPU process: `render` is the step.
   package static var hostTool: Bool { false }
+
+  /// A host-tool process always runs its tool.
+  package static func runsTool(_ params: ParamSet) -> Bool { hostTool }
+
+  /// No solution needed.
+  package static var requiresSolution: Bool { false }
 }
 
 /// Where a process belongs in a pipeline.

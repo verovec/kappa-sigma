@@ -16,10 +16,10 @@ struct ProfileLibraryTests {
     let registry = try ProcessRegistry.standard()
     var copy = try #require(
       try ProfileLibrary.builtins(registry: registry).first { $0.id == "emission-osc-dualband" })
-    try copy.set("oiiiOpacity", to: .number(0.6), inStep: 2)
-    #expect(copy.steps[2].why["oiiiOpacity"] == Profile.userValue)
+    try copy.set("oiiiOpacity", to: .number(0.6), inStep: 3)
+    #expect(copy.steps[3].why["oiiiOpacity"] == Profile.userValue)
     #expect(
-      try Profile.load(copy.json(), registry: registry).steps[2].values["oiiiOpacity"]
+      try Profile.load(copy.json(), registry: registry).steps[3].values["oiiiOpacity"]
         == .number(0.6))
     let stored = [
       "emission-osc-dualband": try copy.json(), "broken": Data("{}".utf8),
@@ -44,7 +44,7 @@ struct ProfileLibraryTests {
       try ProfileLibrary.builtins(registry: registry).first { $0.id == "emission-osc-dualband" })
 
     var mine = builtin
-    try mine.set("lumaDesat", to: .number(0.5), inStep: 3)
+    try mine.set("lumaDesat", to: .number(0.5), inStep: 4)
     var stored: [String: Data] = [:]
     let library = try ProfileLibrary(
       registry: registry, user: { stored }, save: { stored[$0] = $1 })
@@ -55,7 +55,7 @@ struct ProfileLibraryTests {
     let reloaded = try ProfileLibrary(
       registry: registry, user: { stored }, save: { stored[$0] = $1 })
     #expect(
-      reloaded.profile(id: "emission-osc-dualband")?.steps[3].values["lumaDesat"] == .number(0.5))
+      reloaded.profile(id: "emission-osc-dualband")?.steps[4].values["lumaDesat"] == .number(0.5))
     #expect(reloaded.profile(id: "emission-osc-dualband")?.isUserCopy == true)
     #expect(
       reloaded.builtin(id: "emission-osc-dualband") == builtin, "the builtin is still offered")

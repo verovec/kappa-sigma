@@ -27,10 +27,21 @@ package enum SirilOutput {
     let lower = line.lowercased()
     let prefixes = [
       "progress:", "reading sequence failed", "searching for sequences",
-      "finalizing sequence processing failed",
+      "finalizing sequence processing failed", "skipping hdu",
     ]
+    // A successful load's report (`Reading FITS: file x, 3 layer(s)…`, `HDU 1: type=0…`) is not
+    // a cause; a failed read (`Reading FITS file failed`) still is.
+    let loaded =
+      lower.range(of: #"^(reading fits: file |hdu \d+: type=)"#, options: .regularExpression) != nil
     return prefixes.contains { lower.hasPrefix($0) } || lower.contains("succeeded")
-      || lower.contains("script execution failed")
+      || lower.contains("script execution failed") || isCommandEcho(line) || loaded
+  }
+
+  /// Siril's own echo of a command (`Running command: spcc`, `1792…: running command spcc`).
+  package static func isCommandEcho(_ line: String) -> Bool {
+    let lower = line.lowercased()
+    return lower.hasPrefix("running command")
+      || lower.range(of: #"^\d+: running command"#, options: .regularExpression) != nil
   }
 
   private static func hintAtLocator(_ lines: [String]) -> String? {

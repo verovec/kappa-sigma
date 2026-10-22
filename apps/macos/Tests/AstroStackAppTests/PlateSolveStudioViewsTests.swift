@@ -94,7 +94,9 @@ struct PlateSolveToolWiringTests {
     let scratch = try ScratchDirectory.url
     #expect(StudioTool.standard(scratch: scratch, sirilInstalled: false).isEmpty)
     #expect(
-      StudioTool.standard(scratch: scratch, sirilInstalled: true).keys.sorted() == ["plate-solve"])
+      StudioTool.standard(scratch: scratch, sirilInstalled: true).keys.sorted() == [
+        "colour-calibration", "plate-solve",
+      ])
     let opened = try PlateSolveProcessTests.open(tools: [:])
     defer { try? opened.project.package.close() }
     let entry = opened.workspace.catalogue.flatMap(\.entries).first {

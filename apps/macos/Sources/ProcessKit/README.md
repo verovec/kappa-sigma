@@ -199,6 +199,12 @@ in en/fr; the English title is the key, resolved with `ProcessKitResources.title
   injects the tool (`StudioTool`, by id) into `StudioWorkspaceModel`: Apply runs it in the
   background (`startTool`, progress in `toolRun`, Stop = `cancelTool`), records the step only on
   the head it started from, and shows the tool's `toolReport`.
+- `ColourCalibrationProcess` (0094) is the second: `requiresSolution` greys it until the head
+  carries a WCS (`StudioUnavailable.unsolved`), and `runsTool(_ params)` makes an unticked step
+  (`enabled` off, what the dual-band profile ships with its why) the image itself, applied and
+  replayed without the tool (`Recipe.runsTool(as:)`). Its sensor / filter / white-reference
+  choices are Siril's own names (`SPCCNames`, pinned live against `spcc_list`) — a filter there
+  is a product on the camera, not a `Filter` band.
 - **WCS per step** (0093): `History` writes each step with the stack header's cards but the
   image's own solution (`FITSHeader.carrying(metadata.wcs)`; `WCS.cards` keeps the cards it was
   read from), so a solve survives later steps, undo, redo and reopen, and the readout follows. A

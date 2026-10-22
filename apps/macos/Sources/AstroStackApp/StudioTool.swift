@@ -74,6 +74,10 @@ package nonisolated struct StudioTool: Sendable {
     scratch: URL,
     sirilInstalled: Bool = FileManager.default.isExecutableFile(atPath: SirilTool.path())
   ) -> [String: Self] {
-    sirilInstalled ? [PlateSolveProcess.id: PlateSolveTool.live(scratch: scratch)] : [:]
+    guard sirilInstalled else { return [:] }
+    return [
+      PlateSolveProcess.id: PlateSolveTool.live(scratch: scratch),
+      ColourCalibrationProcess.id: ColourCalibrationTool.live(scratch: scratch),
+    ]
   }
 }

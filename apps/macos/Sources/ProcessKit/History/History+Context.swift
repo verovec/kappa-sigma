@@ -7,26 +7,26 @@ extension History {
   /// (`writtenLayers()`: StarNet's starless, a background-extracted Hα…), uploaded to `device`
   /// and measured. The Studio's renders and the pipeline runner read the same.
   ///
-  /// A layer last written by one of `moving` (geometric processes, card 0090) keeps the stack's
-  /// continuum fit: a crop or a turn moves its pixels, not the ratio fitted on them. A layer any
-  /// other step rewrote (a background extraction) has no fit until one is made on it.
+  /// A layer only ever written by `moving` steps (geometric processes, card 0090) keeps the
+  /// stack's continuum fit: a crop or a turn moves its pixels, not the ratio fitted on them. A
+  /// layer any other step rewrote (a background extraction), even if moved since, has none.
   package func context(
     over layers: [String: GPUImage], stats: [String: LayerStats], device: MTLDevice,
     moving: Set<String> = []
   ) throws -> ([String: GPUImage], [String: LayerStats]) {
     var layers = layers
     var stats = stats
-    var writers: [String: String] = [:]
+    // Whether every step that wrote each id only moved it, since the stack.
+    var onlyMoved: [String: Bool] = [:]
     for step in steps {
-      for file in step.outputs.values { writers[file] = step.processID }
-      for file in step.replaced.values { writers[file] = step.processID }
+      let ids = Array(step.replaced.keys) + step.outputs.keys.map(\.rawValue)
+      for id in ids { onlyMoved[id] = (onlyMoved[id] ?? true) && moving.contains(step.processID) }
     }
     for (id, file) in writtenFiles {
       let image = try layer(file: file)
       layers[id] = try GPUImage(device: device, image: image)
       let measured = LayerStats.measured(image)
-      stats[id] =
-        moving.contains(writers[file] ?? "") ? measured.keepingFit(of: stats[id]) : measured
+      stats[id] = onlyMoved[id] == true ? measured.keepingFit(of: stats[id]) : measured
     }
     return (layers, stats)
   }

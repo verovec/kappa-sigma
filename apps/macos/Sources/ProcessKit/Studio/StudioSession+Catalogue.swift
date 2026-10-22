@@ -7,6 +7,7 @@ extension StudioSession {
     let present = presentRoles(base: base)
     let missing = type.requires.filter { !present.contains($0) }
     if !missing.isEmpty { return .missing(missing) }
+    if type.requiresSolution, history.current.metadata.wcs == nil { return .unsolved }
     let stretched = history.steps.contains { step in
       registry.type(id: step.processID).map(Pipeline.leavesNonLinear) ?? false
     }

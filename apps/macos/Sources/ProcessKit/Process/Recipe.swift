@@ -122,3 +122,13 @@ package enum RecipeError: Error, Equatable, Sendable {
   /// No registered process has this id.
   case unknownProcess(String)
 }
+
+extension Recipe {
+  /// Whether this recipe runs the host tool of `type`, its values read on that schema.
+  ///
+  /// Card 0094: a disabled colour calibration is the image itself and needs no tool.
+  package func runsTool(as type: any ImageProcess.Type) -> Bool {
+    // A GPU process never does: its values need not be read.
+    type.hostTool && type.runsTool(ParamSet.loading(params, onto: type.schema).params)
+  }
+}

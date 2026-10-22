@@ -80,7 +80,7 @@ package final class StudioSession {
     guard let type = registry.type(id: processID) else {
       throw StudioError.unknownProcess(processID)
     }
-    if type.hostTool { throw StudioError.needsTool(processID) }
+    if type.runsTool(params) { throw StudioError.needsTool(processID) }
     let process = try type.init(params: params, device: device)
     let input = history.current
     let (layers, layerStats) = try context()

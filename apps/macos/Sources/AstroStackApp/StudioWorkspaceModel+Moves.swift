@@ -20,12 +20,28 @@ extension StudioWorkspaceModel {
   /// Drops the viewer's region when the head changed through a step that moved the pixels
   /// (applied, undone, redone, or run by the pipeline): its pixels belong to another part of the
   /// image even at the same size (a flip, a half turn).
-  func dropRegionIfMoved() {
+  /// Returns whether the pixels moved.
+  @discardableResult
+  func dropRegionIfMoved() -> Bool {
     let after = studio.steps
     let common = zip(headSteps, after).prefix { $0 == $1 }.count
     let changed = headSteps.dropFirst(common) + after.dropFirst(common)
-    if changed.contains(where: movesPixels) { viewer.model.clearRegion() }
     headSteps = after
+    guard changed.contains(where: movesPixels) else { return false }
+    viewer.model.clearRegion()
+    return true
+  }
+
+  /// After the pixels moved (an Apply, an undo or redo, a pipeline run), an open geometry panel
+  /// starts again from the identity: its crops, turns, flips and angle were relative to the image
+  /// they moved and would move the new head again. Its interpolation and canvas stay.
+  func resetMovingValues() {
+    guard let panel, panel.type == GeometryProcess.self else { return }
+    let identity = ParamSet(schema: GeometryProcess.schema)
+    let moving = ["cropLeft", "cropTop", "cropRight", "cropBottom", "rotation", "flipH", "flipV"]
+    for id in moving + ["angle"] {
+      if let value = identity[id], panel.params[id] != value { panel.set(id, value) }
+    }
   }
 
   /// Before the preview of `processID` with `params` replaces the image: a compare stops first

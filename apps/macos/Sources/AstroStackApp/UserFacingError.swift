@@ -28,6 +28,8 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
   case pipeline(PipelineError)
   /// Siril found no plate solution, or could not look (card 0093).
   case plateSolve(PlateSolveError)
+  /// SPCC / PCC gave nothing, or could not run (card 0094).
+  case colourCalibration(ColourCalibrationError)
   /// The plate-solve values Apply cannot solve with (card 0093).
   case plateSolveInput(PlateSolveTool.InputError)
   /// The document was closed under an open sheet.
@@ -62,6 +64,7 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     case let error as DeliverableExport.ExportError: self = .export(error)
     case let error as PipelineError: self = .pipeline(error)
     case let error as PlateSolveError: self = .plateSolve(error)
+    case let error as ColourCalibrationError: self = .colourCalibration(error)
     case let error as PlateSolveTool.InputError: self = .plateSolveInput(error)
     case let error as LocalizedError where error.errorDescription != nil:
       self = .other(error.errorDescription ?? "")
@@ -91,6 +94,7 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
       .app("\(path) already exists: choose another folder or file name.")
     case .pipeline(let error): Self.message(error)
     case .plateSolve(let error): Self.message(error)
+    case .colourCalibration(let error): Self.message(error)
     case .plateSolveInput(let error): Self.message(error)
     case .projectClosed: .app("This project is not open any more; reopen it and import again.")
     case .projectName: .app("Name the project after its target, for example M 31.")

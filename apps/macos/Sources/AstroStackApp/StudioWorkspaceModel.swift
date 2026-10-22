@@ -199,8 +199,6 @@ package final class StudioWorkspaceModel {
     }
     // The user's manual work becomes the recipe (R5): the pipeline records the step.
     pipeline?.applied(panel.type.id, params: panel.params, masked: used != nil)
-    // A geometry is relative to the image it moved: its values would move the new head again.
-    if panel.type is any GeometricProcess.Type { choose(panel.type.id) }
   }
 
   /// Whether the viewer shows the current values and mask of `panel`.
@@ -270,7 +268,7 @@ package final class StudioWorkspaceModel {
   /// The history moved (an Apply, an undo, a pipeline run): the viewer, the panel's inputs and
   /// the catalogue follow the new head.
   func headChanged() throws {
-    dropRegionIfMoved()
+    if dropRegionIfMoved() { resetMovingValues() }
     shown = nil
     // A report speaks of the head it was made on.
     toolReport = nil

@@ -165,11 +165,9 @@ package final class PipelineRunner {
     if let tool = batch[id] {
       let params = try Self.values(of: step, schema: tool.schema, at: index)
       let onEvent = session.onEvent
-      let input = try BatchInput(history: history, bundle: session.bundle)
-      let output = try await tool.step(input, params) { onEvent(.progress(index, $0)) }
-      try history.apply(
-        processID: id, params: params, result: output.result, outputs: output.outputs,
-        replacing: output.replaced)
+      try await tool.record(
+        id, params: params, in: history, bundle: session.bundle
+      ) { onEvent(.progress(index, $0)) }
     } else if let type = registry.type(id: id) {
       // A host-tool process's render is its preview only: without the tool, refuse.
       guard !type.hostTool else { throw PipelineError.toolMissing(id) }

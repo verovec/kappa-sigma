@@ -22,16 +22,39 @@ extension PipelineRunner {
       self.step = step
     }
 
-    /// A batch process of `schema` whose `run` makes the step's image alone.
+    /// A batch process of `schema` whose `run` makes one image: the step's new working image,
+    /// or the layer `writes` (StarNet's `starless`, card 0091) beside the unchanged one.
     package init(
-      schema: ParamSchema,
+      schema: ParamSchema, writes: LayerRole? = nil,
       run:
         @escaping @Sendable (AstroImage, ParamSet, @escaping @Sendable (Double) -> Void)
         async throws -> AstroImage
     ) {
       self.init(schema: schema) { input, params, progress in
-        BatchOutput(result: try await run(input.image, params, progress))
+        let output = try await run(input.image, params, progress)
+        guard let writes else { return BatchOutput(result: output) }
+        return BatchOutput(result: input.image, outputs: [writes: output])
       }
+    }
+
+    /// Runs the tool on the working image of `history` (and the layers of `bundle` as its steps
+    /// left them) and records the step `id` with `params`, its layers with it.
+    ///
+    /// A cancel that came after the tool ended still records nothing; a history that moved
+    /// meanwhile is refused (`HistoryError.movedDuring`): the step would overwrite the move.
+    package func record(
+      _ id: String, params: ParamSet, in history: History,
+      bundle: PipelineBundle = PipelineBundle(stats: LayerStats(channels: [])),
+      onProgress: @escaping @Sendable (Double) -> Void
+    ) async throws {
+      let before = history.steps
+      let input = try BatchInput(history: history, bundle: bundle)
+      let output = try await step(input, params, onProgress)
+      try Task.checkCancellation()
+      guard history.steps == before else { throw HistoryError.movedDuring(id) }
+      try history.apply(
+        processID: id, params: params, result: output.result, outputs: output.outputs,
+        replacing: output.replaced)
     }
   }
 

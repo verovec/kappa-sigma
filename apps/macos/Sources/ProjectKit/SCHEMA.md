@@ -1,7 +1,8 @@
 # project.db schema
 
-The schema of a `.astrostack` package's `project.db`, at migration **0005_stack_object_scope**
-(0001_init: card 0068; 0002: card 0047; 0003: card 0076; 0004: card 0060; 0005: card 0095).
+The schema of a `.astrostack` package's `project.db`, at migration **0006_exports**
+(0001_init: card 0068; 0002: card 0047; 0003: card 0076; 0004: card 0060; 0005: card 0095;
+0006: card 0091).
 Source of truth: `Migrations/NNNN_name.{up,down}.sql`; this page is the map. Every table has
 `id`, `created_at` and `updated_at`, the last two in int64 Unix milliseconds, except where noted.
 `ProjectStore` writes the timestamps.
@@ -19,6 +20,7 @@ Source of truth: `Migrations/NNNN_name.{up,down}.sql`; this page is the map. Eve
 | `pipelines` | pipeline (0059) | `name`, `body_json` | unique name |
 | `user_profiles` | user profile (0060) | `name`, `body_json` | unique name (the card's `profiles_user`, plural snake_case per the conventions) |
 | `calibration_masters` | master file of the calibration library (0047) | `path`, `type` (`BIAS`, `DARK`, `FLAT`, `DARKFLAT`), `filter`, `exposure_ms`, `gain`, `offset`, `bin`, `temp_milli_c`, `has_temp`, `session`, `recipe`, `frame_count`, `pool_hash`, `width`, `height`, `file_bytes`, `file_mtime_ms` | unique path; an index of `~/Documents/astro/library` (the folder is the truth, `CalibrationLibrary.reindex` rebuilds it); indexed on (type, gain, offset, bin) |
+| `exports` | « Export » of the Export stage (0091) | `stack_id`, `image_id`, `head_step_id`, `folder`, `settings_json`, `files_json` | cascades with its stack and image; `head_step_id` set to NULL if its step goes; `settings_json` = ProcessKit's `ExportSettings`, `files_json` = the file names written; the files live outside `stacks/` (deliverables are not state) |
 | `project_settings` | per-project value a window restores (0076) | `key`, `value` | unique key; UI state only (`workspace.stage`), never a processing parameter |
 
 Foreign keys are enforced (GRDB turns `PRAGMA foreign_keys` on) and every FK column is indexed.

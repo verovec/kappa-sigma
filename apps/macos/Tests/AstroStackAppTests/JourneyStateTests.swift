@@ -151,4 +151,25 @@ struct JourneyStateTests {
     #expect(model.statuses[.review] == .ready && model.statuses[.stacking] == .done)
     #expect(model.error == nil)
   }
+
+  @Test(
+    "a recorded export marks Export done through refresh(): facts.deliverables = exports",
+    .scratchDirectory)
+  func testRecordedExportMarksExportDone() throws {
+    let project = try ProjectPackage.create(
+      at: ScratchDirectory.url.appendingPathComponent("M31.astrostack"))
+    defer { try? project.close() }
+    let stack = try project.store.addStack(
+      bundlePath: "stacks/one", sourceIDs: [], paramsJSON: "{}", imageRoles: ["studio"])
+    let model = ProjectWindowModel(
+      store: { project.store }, planning: { _ in ImportPlanningStub.empty })
+    #expect(model.statuses[.export] == .ready)
+
+    let image = try #require(try project.store.images(stackID: stack.id).first)
+    try project.store.addExport(
+      stackID: stack.id, imageID: image.id, headStepID: nil, folder: "/tmp/exports",
+      settingsJSON: "{}", files: ["final.png"])
+    model.refresh()
+    #expect(model.statuses[.export] == .done)
+  }
 }

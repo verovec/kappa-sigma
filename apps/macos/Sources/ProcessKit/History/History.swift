@@ -251,6 +251,8 @@ package enum HistoryError: Error, Equatable, Sendable {
   case unknownSnapshot(String)
   /// A snapshot already has this name.
   case duplicateSnapshot(String)
+  /// The history moved while the host tool `processID` ran: its step would overwrite the move.
+  case movedDuring(String)
   /// The history's manifest cannot be read back: why.
   case unreadable(String)
 }

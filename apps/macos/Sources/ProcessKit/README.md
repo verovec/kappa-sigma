@@ -106,6 +106,9 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   rounding), hflip/vflip, `{name}` template (one file name containing `{name}`); everything is
   checked before a file is written. `ExportGuard` refuses a folder under
   `~/Documents/astro/{captures,runs,library,fixtures}` (links resolved, case ignored, R7).
+  Card 0091: `starless: nil` (never separated) writes `.final` only, the shaped original, and
+  refuses a star tier with `.needsStarless`; `ExportSettings` is `Codable` (the app's `exports`
+  record keeps it).
 - **Pipelines** (card 0059, `Pipeline/`): `Pipeline` = ordered `PipelineStep`s {recipe, mode
   `auto`|`stop`, `locked`}; `problems(registry:batch:present:)` names an unknown process, a missing
   layer or a linear step after a non-linear one (shown, never reordered). `PipelineRunner` applies
@@ -115,7 +118,9 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   the same step's output from `previous` (a `PipelineRun`: history + bundle) only when the input is
   the same (original image, bundle, every earlier step) — else it re-runs (`PipelineReuse`). Batch processes
   (host tools) are `BatchProcess` closures injected by id — ProcessKit never imports StackKit —
-  and report progress live as `.progress` events. The first step gets the bundle's stats, each
+  and report progress live as `.progress` events. A batch process with `writes: role` (StarNet's
+  `.starless`, card 0091) keeps the working image and records its image as that layer
+  (`BatchProcess.record`, shared with `StudioSession.apply(_:id:params:onProgress:)`). The first step gets the bundle's stats, each
   later one the stats of the image it receives (`LayerStats.measured`); layers reach every step.
   `PipelineDiff.entries` lists param / mode / lock / process / added / removed differences;
   `Pipeline.json()` / `Pipeline.load` are versioned, each step's recipe read by `Recipe.load` so

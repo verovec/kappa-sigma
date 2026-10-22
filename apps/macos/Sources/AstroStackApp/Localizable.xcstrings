@@ -33,6 +33,22 @@
         }
       }
     },
+    "%@ already exists: choose another folder or file name.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ already exists: choose another folder or file name."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ existe déjà : choisissez un autre dossier ou nom de fichier."
+          }
+        }
+      }
+    },
     "%@ holds no layer to show.": {
       "localizations": {
         "en": {
@@ -225,6 +241,22 @@
         }
       }
     },
+    "%lld files": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld files"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld fichiers"
+          }
+        }
+      }
+    },
     "%lld frames": {
       "localizations": {
         "en": {
@@ -337,6 +369,22 @@
         }
       }
     },
+    "%lld steps came after it: separate again to match.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld steps came after it: separate again to match."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld étapes l’ont suivie : séparez à nouveau pour qu’elle corresponde."
+          }
+        }
+      }
+    },
     "%lld to check": {
       "localizations": {
         "en": {
@@ -381,6 +429,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Un script Siril a échoué (code de sortie %lld) : %@"
+          }
+        }
+      }
+    },
+    "A crop of %@ on each edge leaves nothing of the image.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A crop of %@ on each edge leaves nothing of the image."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un rognage de %@ sur chaque bord ne laisse rien de l’image."
           }
         }
       }
@@ -557,6 +621,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Appliquer le traitement"
+          }
+        }
+      }
+    },
+    "AstroStack never writes into %@: it is a read-only source. Choose another folder.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AstroStack never writes into %@: it is a read-only source. Choose another folder."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AstroStack n’écrit jamais dans %@ : c’est une source en lecture seule. Choisissez un autre dossier."
           }
         }
       }
@@ -993,6 +1073,22 @@
         }
       }
     },
+    "Choose at least one file and one format to export.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose at least one file and one format to export."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez au moins un fichier et un format à exporter."
+          }
+        }
+      }
+    },
     "Choose the registration reference: frame %@ is elected": {
       "localizations": {
         "en": {
@@ -1005,6 +1101,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choisissez la référence d’alignement : la pose %@ est élue"
+          }
+        }
+      }
+    },
+    "Choose…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisir…"
           }
         }
       }
@@ -1217,6 +1329,22 @@
         }
       }
     },
+    "Crop on each edge": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crop on each edge"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rognage de chaque bord"
+          }
+        }
+      }
+    },
     "Cut": {
       "localizations": {
         "en": {
@@ -1329,6 +1457,22 @@
         }
       }
     },
+    "Each export is listed here with its files and folder.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Each export is listed here with its files and folder."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chaque export est listé ici avec ses fichiers et son dossier."
+          }
+        }
+      }
+    },
     "Edit": {
       "localizations": {
         "en": {
@@ -1425,6 +1569,38 @@
         }
       }
     },
+    "Exports": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exports"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exports"
+          }
+        }
+      }
+    },
+    "Export…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporter…"
+          }
+        }
+      }
+    },
     "Exposure": {
       "localizations": {
         "en": {
@@ -1453,6 +1629,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Extrait le fond de ciel et débruite."
+          }
+        }
+      }
+    },
+    "FITS 32-bit float": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FITS 32-bit float"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FITS 32 bits flottant"
           }
         }
       }
@@ -1501,6 +1693,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fichier"
+          }
+        }
+      }
+    },
+    "File name": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File name"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nom de fichier"
+          }
+        }
+      }
+    },
+    "Files": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Files"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fichiers"
           }
         }
       }
@@ -1569,6 +1793,22 @@
         }
       }
     },
+    "Final image": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Final image"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Image finale"
+          }
+        }
+      }
+    },
     "First-Stack Guide": {
       "localizations": {
         "en": {
@@ -1585,6 +1825,22 @@
         }
       }
     },
+    "Folder": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Folder"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dossier"
+          }
+        }
+      }
+    },
     "Force these masters even when they do not match": {
       "localizations": {
         "en": {
@@ -1597,6 +1853,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Forcer ces masters même s’ils ne correspondent pas"
+          }
+        }
+      }
+    },
+    "Formats": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formats"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formats"
           }
         }
       }
@@ -2241,6 +2513,22 @@
         }
       }
     },
+    "Left ↔ right": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Left ↔ right"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gauche ↔ droite"
+          }
+        }
+      }
+    },
     "Lets every mismatched master through, for all light sets": {
       "localizations": {
         "en": {
@@ -2529,6 +2817,22 @@
         }
       }
     },
+    "Mirror": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mirror"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Miroir"
+          }
+        }
+      }
+    },
     "Mono and colour lights are mixed: exclude one kind on the Import sheet, then rerun.": {
       "localizations": {
         "en": {
@@ -2669,6 +2973,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Requiert Siril, introuvable : installez-le, puis rouvrez le projet"
+          }
+        }
+      }
+    },
+    "Needs the starless: separate the stars first.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needs the starless: separate the stars first."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demande l’image sans étoiles : séparez d’abord les étoiles."
           }
         }
       }
@@ -2977,6 +3297,22 @@
         }
       }
     },
+    "None": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "None"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun"
+          }
+        }
+      }
+    },
     "Not applied, no longer valid settings: %@": {
       "localizations": {
         "en": {
@@ -3197,6 +3533,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choix manuels"
+          }
+        }
+      }
+    },
+    "PNG 16-bit": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PNG 16-bit"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PNG 16 bits"
           }
         }
       }
@@ -3889,6 +4241,22 @@
         }
       }
     },
+    "Reveal in Finder": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reveal in Finder"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher dans le Finder"
+          }
+        }
+      }
+    },
     "Roundness": {
       "localizations": {
         "en": {
@@ -4241,6 +4609,38 @@
         }
       }
     },
+    "Separate Stars": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Separate Stars"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Séparer les étoiles"
+          }
+        }
+      }
+    },
+    "Separate Stars Again": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Separate Stars Again"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Séparer à nouveau les étoiles"
+          }
+        }
+      }
+    },
     "Separates the stars from the nebula.": {
       "localizations": {
         "en": {
@@ -4253,6 +4653,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sépare les étoiles de la nébuleuse."
+          }
+        }
+      }
+    },
+    "Separating the stars with StarNet…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Separating the stars with StarNet…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Séparation des étoiles avec StarNet…"
           }
         }
       }
@@ -4721,6 +5137,22 @@
         }
       }
     },
+    "Star colour": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Star colour"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couleur des étoiles"
+          }
+        }
+      }
+    },
     "Star radius (px)": {
       "localizations": {
         "en": {
@@ -4733,6 +5165,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rayon des étoiles (px)"
+          }
+        }
+      }
+    },
+    "Star separation (StarNet)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Star separation (StarNet)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Séparation des étoiles (StarNet)"
           }
         }
       }
@@ -4753,6 +5201,86 @@
         }
       }
     },
+    "StarNet ended without writing %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "StarNet ended without writing %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "StarNet s’est terminé sans écrire %@."
+          }
+        }
+      }
+    },
+    "StarNet is not installed at %@. Install StarNet2, then re-check.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "StarNet is not installed at %@. Install StarNet2, then re-check."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "StarNet n’est pas installé à l’emplacement %@. Installez StarNet2, puis revérifiez."
+          }
+        }
+      }
+    },
+    "StarNet stopped with code %d: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "StarNet stopped with code %d: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "StarNet s’est arrêté avec le code %d : %@"
+          }
+        }
+      }
+    },
+    "Starless": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starless"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sans étoiles"
+          }
+        }
+      }
+    },
+    "Starless ready: the star blends can be written.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starless ready: the star blends can be written."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Image sans étoiles prête : les mélanges d’étoiles peuvent être écrits."
+          }
+        }
+      }
+    },
     "Stars": {
       "localizations": {
         "en": {
@@ -4765,6 +5293,54 @@
           "stringUnit": {
             "state": "translated",
             "value": "Étoiles"
+          }
+        }
+      }
+    },
+    "Stars at 25 %": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stars at 25 %"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Étoiles à 25 %"
+          }
+        }
+      }
+    },
+    "Stars at 50 %": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stars at 50 %"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Étoiles à 50 %"
+          }
+        }
+      }
+    },
+    "Stars at 75 %": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stars at 75 %"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Étoiles à 75 %"
           }
         }
       }
@@ -4961,6 +5537,22 @@
         }
       }
     },
+    "TIFF 16-bit": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TIFF 16-bit"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TIFF 16 bits"
+          }
+        }
+      }
+    },
     "Take together": {
       "localizations": {
         "en": {
@@ -5025,6 +5617,22 @@
         }
       }
     },
+    "The StarNet at %@ did not answer in time; its command line is unknown.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The StarNet at %@ did not answer in time; its command line is unknown."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le StarNet de %@ n’a pas répondu à temps ; sa ligne de commande est inconnue."
+          }
+        }
+      }
+    },
     "The Studio has no process “%@”.": {
       "localizations": {
         "en": {
@@ -5073,6 +5681,22 @@
         }
       }
     },
+    "The crop %@ is not a fraction of the image.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The crop %@ is not a fraction of the image."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le rognage %@ n’est pas une fraction de l’image."
+          }
+        }
+      }
+    },
     "The deliverables written from the finished image will appear here.": {
       "localizations": {
         "en": {
@@ -5085,6 +5709,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Les livrables écrits depuis l’image finie apparaîtront ici."
+          }
+        }
+      }
+    },
+    "The file name “%@” must be one name containing {name}.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The file name “%@” must be one name containing {name}."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le nom de fichier « %@ » doit être un seul nom contenant {name}."
           }
         }
       }
@@ -5133,6 +5773,54 @@
           "stringUnit": {
             "state": "translated",
             "value": "L’historique n’est pas au point d’arrêt de l’étape %lld : Continuer le mal placerait."
+          }
+        }
+      }
+    },
+    "The history moved while “%@” ran: its result was not recorded, run it again.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The history moved while “%@” ran: its result was not recorded, run it again."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’historique a bougé pendant « %@ » : son résultat n’a pas été enregistré, relancez-le."
+          }
+        }
+      }
+    },
+    "The image and its starless are not the same size: separate the stars again.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The image and its starless are not the same size: separate the stars again."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’image et son image sans étoiles n’ont pas la même taille : séparez à nouveau les étoiles."
+          }
+        }
+      }
+    },
+    "The image and its starless store their rows differently: separate the stars again.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The image and its starless store their rows differently: separate the stars again."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’image et son image sans étoiles ne rangent pas leurs lignes pareil : séparez à nouveau les étoiles."
           }
         }
       }
@@ -5401,6 +6089,22 @@
         }
       }
     },
+    "The star blends need the starless image: separate the stars first.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The star blends need the starless image: separate the stars first."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les mélanges d’étoiles demandent l’image sans étoiles : séparez d’abord les étoiles."
+          }
+        }
+      }
+    },
     "There is nothing to redo.": {
       "localizations": {
         "en": {
@@ -5429,6 +6133,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Il n’y a rien à annuler."
+          }
+        }
+      }
+    },
+    "This Mac cannot run the StarNet at %@: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This Mac cannot run the StarNet at %@: %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce Mac ne peut pas lancer le StarNet de %@ : %@."
           }
         }
       }
@@ -5541,6 +6261,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pour décocher, forcer ou reconstruire un master, passez par Importer des captures… sur cette nuit."
+          }
+        }
+      }
+    },
+    "Top ↔ bottom": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Top ↔ bottom"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Haut ↔ bas"
           }
         }
       }
@@ -5765,6 +6501,54 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fenêtre"
+          }
+        }
+      }
+    },
+    "Without a starless, only the final image is written.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Without a starless, only the final image is written."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sans image sans étoiles, seule l’image finale est écrite."
+          }
+        }
+      }
+    },
+    "Written": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Written"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Écrits"
+          }
+        }
+      }
+    },
+    "Written outside the stack; each export records what, where and from which step.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Written outside the stack; each export records what, where and from which step."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Écrit hors de l’empilement ; chaque export enregistre quoi, où et depuis quelle étape."
           }
         }
       }
@@ -6461,6 +7245,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "déverrouillé"
+          }
+        }
+      }
+    },
+    "{name} stands for final, final-starless, final-75-stars…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "{name} stands for final, final-starless, final-75-stars…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "{name} vaut final, final-starless, final-75-stars…"
           }
         }
       }

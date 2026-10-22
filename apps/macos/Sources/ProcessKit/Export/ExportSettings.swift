@@ -4,9 +4,9 @@ internal import Foundation
 ///
 /// Which deliverables, in which formats, cropped and oriented how, named how. Every value is the
 /// panel's; the defaults are the legacy deliverable set.
-package struct ExportSettings: Equatable, Sendable {
+package struct ExportSettings: Codable, Equatable, Sendable {
   /// One file of the deliverable set.
-  package enum Deliverable: String, CaseIterable, Sendable {
+  package enum Deliverable: String, CaseIterable, Codable, Sendable {
     /// The finished image: stars back at full presence, with the chosen star colour.
     case final = "final"
     /// StarNet's starless image.
@@ -31,7 +31,7 @@ package struct ExportSettings: Equatable, Sendable {
   }
 
   /// A file format.
-  package enum Format: String, CaseIterable, Sendable {
+  package enum Format: String, CaseIterable, Codable, Sendable {
     /// 16-bit PNG.
     case png16
     /// 16-bit TIFF.
@@ -51,7 +51,7 @@ package struct ExportSettings: Equatable, Sendable {
 
   /// A mirror applied at export (multi-night stacks come out mirrored: memory
   /// `multinight-parity-flip`), natively rather than through ffmpeg.
-  package enum Orientation: String, CaseIterable, Sendable {
+  package enum Orientation: String, CaseIterable, Codable, Sendable {
     /// As is.
     case none
     /// Left ↔ right.
@@ -75,6 +75,18 @@ package struct ExportSettings: Equatable, Sendable {
 
   /// The legacy set: five PNGs, star colour 0.25, no crop or mirror.
   package init() {}
+
+  /// `deliverable` written (`on`) or not, the set kept in its legacy order.
+  package mutating func choose(_ deliverable: Deliverable, _ on: Bool) {
+    deliverables = Deliverable.allCases.filter {
+      $0 == deliverable ? on : deliverables.contains($0)
+    }
+  }
+
+  /// `format` written (`on`) or not, the formats kept in their order.
+  package mutating func choose(_ format: Format, _ on: Bool) {
+    formats = Format.allCases.filter { $0 == format ? on : formats.contains($0) }
+  }
 
   /// The file name of `deliverable` in `format`.
   package func fileName(_ deliverable: Deliverable, _ format: Format) -> String {

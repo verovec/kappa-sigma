@@ -19,28 +19,8 @@ struct PipelineStepRow: View {
         Text(verbatim: "\(index + 1).")
         Text(title).lineLimit(1)
         Spacer()
-        Button {
-          model.setMode(step.mode == .stop ? .auto : .stop, of: index)
-        } label: {
-          if step.mode == .stop {
-            Image(systemName: "pause.circle.fill")
-          } else {
-            Image(systemName: "pause.circle")
-          }
-        }
-        .buttonStyle(.plain)
-        .accessible(.studioPipelineStep(index, lock: false), label: .app("Breakpoint"))
-        Button {
-          model.setLocked(!step.locked, of: index)
-        } label: {
-          if step.locked {
-            Image(systemName: "lock.fill")
-          } else {
-            Image(systemName: "lock.open")
-          }
-        }
-        .buttonStyle(.plain)
-        .accessible(.studioPipelineStep(index, lock: true), label: .app("Locked on replay"))
+        modeButton
+        lockButton
       }
       if let fraction = model.progress[index], model.isRunning {
         ProgressView(value: fraction)
@@ -50,6 +30,36 @@ struct PipelineStepRow: View {
       }
     }
     .opacity(problems.isEmpty ? 1 : 0.5)
+  }
+
+  /// Halts the run before this step, or not.
+  private var modeButton: some View {
+    Button {
+      model.setMode(step.mode == .stop ? .auto : .stop, of: index)
+    } label: {
+      if step.mode == .stop {
+        Image(systemName: "pause.circle.fill")
+      } else {
+        Image(systemName: "pause.circle")
+      }
+    }
+    .buttonStyle(.plain)
+    .accessible(.studioPipelineStep(index, lock: false), label: .app("Breakpoint"))
+  }
+
+  /// Keeps this step's output on replay, or not.
+  private var lockButton: some View {
+    Button {
+      model.setLocked(!step.locked, of: index)
+    } label: {
+      if step.locked {
+        Image(systemName: "lock.fill")
+      } else {
+        Image(systemName: "lock.open")
+      }
+    }
+    .buttonStyle(.plain)
+    .accessible(.studioPipelineStep(index, lock: true), label: .app("Locked on replay"))
   }
 
   private var title: LocalizedStringResource {

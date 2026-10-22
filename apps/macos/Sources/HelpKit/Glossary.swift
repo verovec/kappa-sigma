@@ -25,9 +25,7 @@ package struct Glossary: Sendable {
   /// A definition's limit: read at a glance, in a tooltip.
   package static let maxDefinitionWords = 24
 
-  private let terms: [String: [String: Term]]
-  /// The file the terms come from, named by the gate.
-  private let file: String
+  private let table: LocalizedTable<Term>
 
   /// The glossaries `<root>/<locale>/<file>`, one per `HelpIndex.locales`; a missing or malformed
   /// locale is an empty glossary that the gate reports.
@@ -35,14 +33,7 @@ package struct Glossary: Sendable {
   /// `glossary.json` holds the astronomy terms; `knobs.json` the preprocessing knobs and their
   /// choices (card 0070), so each vocabulary keeps its own gate.
   package init(root: URL, file: String = "glossary.json") {
-    var terms: [String: [String: Term]] = [:]
-    for locale in HelpIndex.locales {
-      let url = root.appendingPathComponent(locale).appendingPathComponent(file)
-      let data = try? Data(contentsOf: url)
-      terms[locale] = data.flatMap { try? JSONDecoder().decode([String: Term].self, from: $0) }
-    }
-    self.terms = terms
-    self.file = file
+    table = LocalizedTable(root: root, file: file)
   }
 
   /// HelpKit's glossary `file` in `bundle` (the packaged app passes its resolved resource bundle).
@@ -56,33 +47,31 @@ package struct Glossary: Sendable {
 
   /// The term `id` in `locale` (`fr`, `en`), or `nil`.
   package func term(_ id: String, locale: String) -> Term? {
-    terms[locale]?[id]
+    table.entry(id, locale: locale)
   }
 
   /// One sentence per gate failure: an unreadable locale, an id missing from a locale, an empty
   /// label, or a definition longer than a line.
   package func problems(ids: [String]) -> [String] {
-    HelpIndex.locales.flatMap { locale -> [String] in
-      guard let entries = terms[locale] else { return ["\(locale): no readable \(file)"] }
-      return ids.flatMap { id -> [String] in
-        guard let term = entries[id] else { return ["\(id): no \(locale) term"] }
-        return Self.problems(of: term).map { "\(id) (\(locale)): \($0)" }
-      }
-    }
+    table.problems(ids: ids, kind: "term", check: Self.problems(of:))
   }
 
   /// The ids of the `locale` file that `ids` does not name: words no catalog uses any more.
   package func stale(ids: [String], locale: String) -> [String] {
-    Set(terms[locale]?.keys.map { $0 } ?? []).subtracting(ids).sorted()
+    table.stale(ids: ids, locale: locale)
   }
 
   private static func problems(of term: Term) -> [String] {
     var problems: [String] = []
     if term.label.trimmingCharacters(in: .whitespaces).isEmpty { problems.append("empty label") }
-    let words = term.definition.split(whereSeparator: \.isWhitespace).count
-    if words == 0 || words > maxDefinitionWords || term.definition.contains("\n") {
-      problems.append("definition of \(words) words, one line of 1…\(maxDefinitionWords)")
-    }
-    return problems
+    return problems + definitionProblems(term.definition)
+  }
+
+  /// What makes `definition` more than a line: empty, over `maxDefinitionWords`, or a line
+  /// break (shared with `ParamDocs`).
+  package static func definitionProblems(_ definition: String) -> [String] {
+    let words = definition.split(whereSeparator: \.isWhitespace).count
+    guard words == 0 || words > maxDefinitionWords || definition.contains("\n") else { return [] }
+    return ["definition of \(words) words, one line of 1…\(maxDefinitionWords)"]
   }
 }

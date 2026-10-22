@@ -2,7 +2,7 @@ package import Foundation
 package import SwiftUI
 
 /// One parameter of a process or a preset: label, slider, a field in the user's notation, reset,
-/// the default badge, and the « why » of its value on hover.
+/// the default badge, and its help: the one-line « why » on hover, the card on click (0086).
 ///
 /// RenderKit never imports the app: the caller passes `format` and `parse` (the app's
 /// `AstroFormat.parameter` and `parameter(parsing:)`, which round-trip exactly). With a `step`,
@@ -17,7 +17,8 @@ package struct ParameterRow: View {
 
   private let label: LocalizedStringResource
   @Binding private var parameter: ParameterValue
-  private let why: LocalizedStringResource?
+  private let help: HelpContent?
+  private let frozen: Bool
   private let format: (Double) -> String
   private let parse: (String) -> Double?
   private let key: String
@@ -28,18 +29,20 @@ package struct ParameterRow: View {
   @State private var gearing: Gearing?
   @FocusState private var editing: Bool
 
-  /// A row editing `parameter`; `why` explains the default (shown on hover of the « ? »);
+  /// A row editing `parameter`; `help` is its « ? » (summary on hover, content on click);
   /// `key` (the parameter's stable id) identifies its controls (`AccessibilityID.parameter`);
-  /// `step` enables the keyboard and fine-drag steps.
+  /// `frozen` disables the value's controls but never the « ? »; `step` enables the keyboard
+  /// and fine-drag steps.
   package init(
     _ label: LocalizedStringResource, parameter: Binding<ParameterValue>,
-    why: LocalizedStringResource? = nil, key: String, step: ParameterStep? = nil,
+    help: HelpContent? = nil, key: String, frozen: Bool = false, step: ParameterStep? = nil,
     format: @escaping (Double) -> String, parse: @escaping (String) -> Double?
   ) {
     self.key = key
     self.label = label
     _parameter = parameter
-    self.why = why
+    self.help = help
+    self.frozen = frozen
     self.step = step
     self.format = format
     self.parse = parse
@@ -55,24 +58,28 @@ package struct ParameterRow: View {
   package var body: some View {
     VStack(alignment: .leading, spacing: DesignMetrics.spacingXS) {
       header
-      controls
+      controls.disabled(frozen)
     }
     .onAppear { text = format(parameter.value) }
     // The slider and reset move the value while the field may have focus: always show it.
     .onChange(of: parameter.value) { text = format(parameter.value) }
-    .onChange(of: editing) { if !editing { commit() } }
+    // A freeze takes the focus too: that loss of focus commits nothing (R2).
+    .onChange(of: editing) { if !editing && !frozen { commit() } }
+    // A freeze (a run starting) shows the applied value, never a typed one nobody committed.
+    .onChange(of: frozen) {
+      if frozen {
+        editing = false
+        text = format(parameter.value)
+      }
+    }
   }
 
   /// The label, its « why », the default badge and reset.
   private var header: some View {
     HStack(spacing: DesignMetrics.spacingS) {
       Text(label)
-      if let why {
-        Image(systemName: "questionmark.circle")
-          .foregroundStyle(DesignColor.textSecondary.color)
-          .help(Text(why))
-          .accessibilityLabel(Text(.renderKit("Why this value?")))
-          .accessibilityHint(Text(why))
+      if let help {
+        KeyedHelp(help, key: .parameter(key, .help), label: .whyThisValue).button
       }
       Spacer(minLength: DesignMetrics.spacingS)
       if let badge = Self.badge(for: parameter) {
@@ -89,7 +96,7 @@ package struct ParameterRow: View {
         Image(systemName: "arrow.counterclockwise")
       }
       .buttonStyle(.borderless)
-      .disabled(parameter.isDefault)
+      .disabled(parameter.isDefault || frozen)
       .help(Text(.renderKit("Reset to default")))
       .accessible(.parameter(key, .reset), label: .renderKit("Reset to default"))
     }

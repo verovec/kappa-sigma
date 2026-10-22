@@ -15,7 +15,8 @@ struct ReviewStagePane: View {
       HStack(alignment: .firstTextBaseline, spacing: DesignMetrics.spacingM) {
         SectionHeader(
           .app("Frame review"),
-          detail: .app("Every verdict of the grader, yours to veto before the stack."))
+          detail: .app("Every verdict of the grader, yours to veto before the stack."),
+          help: StageHelp.help(.review, locale: locale))
         Spacer()
         VStack(alignment: .trailing, spacing: DesignMetrics.spacingXS) {
           reviewToggle
@@ -51,14 +52,17 @@ struct ReviewStagePane: View {
     return .app("Run a stack with the review on: each lane pauses here after grading.")
   }
 
-  /// The knob, worded by the knobs glossary, frozen while a run goes (R2: values shown = applied).
+  /// The knob, worded by the knobs glossary, frozen while a run goes (R2: values shown = applied);
+  /// its « ? » (definition, and the kept profile's why — card 0086) stays clickable.
   private var reviewToggle: some View {
-    let term = AppGlossary.term(
-      Knob.termID(KnobSchema.frameReviewID), locale: locale, in: AppGlossary.knobs)
-    return Toggle(isOn: frameReview) { Text(verbatim: term.label) }
-      .help(term.definition)
-      .disabled(model.run?.isRunning == true)
-      .accessible(.reviewToggle, verbatim: term.label)
+    let id = KnobSchema.frameReviewID
+    let term = AppGlossary.term(Knob.termID(id), locale: locale, in: AppGlossary.knobs)
+    return HStack(spacing: DesignMetrics.spacingXS) {
+      Toggle(isOn: frameReview) { Text(verbatim: term.label) }
+        .disabled(model.run?.isRunning == true)
+        .accessible(.reviewToggle, verbatim: term.label)
+      KnobHelpButton(id: id, model: model.knobs)
+    }
   }
 
   private var frameReview: Binding<Bool> {

@@ -1,12 +1,16 @@
+internal import HelpKit
 internal import RenderKit
 internal import StackKit
 internal import SwiftUI
 
 /// One knob of the Stacking panel, worded by the knobs glossary: a number in a `ParameterRow`, a
-/// flag in a toggle, a choice in a menu; a moved value has its reset at hand.
+/// flag in a toggle, a choice in a menu; a moved value has its reset at hand, and every kind has
+/// its « ? » (the definition on hover, the definition and the profile's why on click — 0086).
 struct KnobRow: View {
   let row: KnobPanelViewModel.Row
   let model: KnobPanelViewModel
+  /// The value cannot move (a run is going); the « ? » still opens.
+  var frozen = false
   @Environment(\.locale) private var locale
 
   var body: some View {
@@ -15,17 +19,19 @@ struct KnobRow: View {
     case .number(let bounds, let integer):
       ParameterRow(
         .app("\(term.label)"), parameter: number(bounds, integer: integer),
-        why: .app("\(term.definition)"), key: row.id,
+        help: KnobHelpButton.content(row.id, model: model, locale: locale), key: row.id,
+        frozen: frozen,
         format: { AstroFormat(locale: locale).parameter($0) },
         parse: { AstroFormat(locale: locale).parameter(parsing: $0) })
     case .flag:
       HStack {
         Toggle(isOn: flag) { Text(verbatim: term.label) }
           .accessible(control, verbatim: term.label)
+          .disabled(frozen)
+        KnobHelpButton(id: row.id, model: model)
         Spacer()
         reset
       }
-      .help(term.definition)
     case .choice(let options):
       HStack {
         Picker(selection: choice) {
@@ -40,9 +46,10 @@ struct KnobRow: View {
           Text(verbatim: term.label)
         }
         .accessible(control, verbatim: term.label)
+        .disabled(frozen)
+        KnobHelpButton(id: row.id, model: model)
         reset
       }
-      .help(term.definition)
     }
   }
 
@@ -55,6 +62,7 @@ struct KnobRow: View {
         Image(systemName: "arrow.uturn.backward")
       }
       .buttonStyle(.borderless)
+      .disabled(frozen)
       .help(Text(.app("Back to the preset")))
       .accessible(.parameter(row.id, .reset), label: .app("Back to the preset"))
     }

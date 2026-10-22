@@ -23,8 +23,8 @@ package enum StagePane {
     case .studio:
       StudioStagePane(model: model)
     case .export:
-      EmptyState(
-        .app("Export"),
+      StagePlaceholder(
+        stage: .export, title: .app("Export"),
         message: .app("The deliverables written from the finished image will appear here."),
         systemImage: "square.and.arrow.up")
     }

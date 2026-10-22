@@ -1,4 +1,6 @@
+package import Foundation
 internal import Observation
+package import ProcessKit
 package import StackKit
 
 /// The Stacking panel's knobs (card 0070), rendered from `KnobSchema`: the preset of `mode`
@@ -32,6 +34,9 @@ package final class KnobPanelViewModel {
   package var mode: PreprocessRequest.Mode
   /// The advanced knobs are shown.
   package var showsAdvanced = false
+  /// The profile the stack's source kept (0060), whose « why » joins the help of each knob it
+  /// sets; nothing is applied from it here.
+  package var profile: Profile?
   /// Recorded edits the schema no longer accepts (a renamed knob, narrower bounds): dropped and
   /// shown, never applied silently (R2).
   package private(set) var ignored: [String]
@@ -55,6 +60,55 @@ package final class KnobPanelViewModel {
     }
     edits = accepted
     self.ignored = ignored + refused.sorted()
+  }
+
+  /// The help of knob `id` in `locale` (`HelpMarkdown`): its glossary definition and, when
+  /// `profile` sets the knob, a second paragraph naming the profile, the value it sets and its
+  /// why when it has one — the why belongs to that value, which may not be the one on screen
+  /// (R2, card 0086).
+  package func help(for id: String, locale: Locale) -> String {
+    let definition = AppGlossary.term(Knob.termID(id), locale: locale, in: AppGlossary.knobs)
+      .definition
+    guard let profile, let set = profile.preprocessing.knobs[id] else { return definition }
+    let language = AppLocale.language(of: locale)
+    let line = Self.profileLine(
+      profile.title.text(language: language), Self.words(for: set, id: id, locale: locale),
+      profile.preprocessing.why[id]?.text(language: language), locale: locale)
+    return [definition, line].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: "\n")
+  }
+
+  /// « Profile <profile>, <value>: <why> » with the locale's punctuation (French spaces its
+  /// colon); without a why, « Profile <profile>, <value> »; without a value, « Profile
+  /// <profile>: <why> »; nothing to say, nil.
+  package nonisolated static func profileLine(
+    _ profile: String, _ value: String?, _ why: String?, locale: Locale
+  ) -> String? {
+    // Keys with a word of their own: a bare "%@: %@" would be every "a: b" interpolation's key.
+    switch (value, why) {
+    case (let value?, let why?):
+      String(localized: .app("Profile \(profile), \(value): \(why)", locale: locale))
+    case (let value?, nil):
+      String(localized: .app("Profile \(profile), \(value)", locale: locale))
+    case (nil, let why?):
+      String(localized: .app("Profile \(profile): \(why)", locale: locale))
+    case (nil, nil):
+      nil
+    }
+  }
+
+  /// A profile's value of knob `id` as the panel shows it: the user's number, the choice's
+  /// glossary label, « On » / « Off »; nil for a curve (no knob is one).
+  package nonisolated static func words(for value: ParamValue, id: String, locale: Locale)
+    -> String?
+  {
+    switch value {
+    case .number(let number): AstroFormat(locale: locale).parameter(number)
+    case .flag(let flag):
+      String(localized: flag ? .app("On", locale: locale) : .app("Off", locale: locale))
+    case .choice(let option):
+      AppGlossary.label(Knob.termID(id, option: option), locale: locale, in: AppGlossary.knobs)
+    case .points: nil
+    }
   }
 
   /// What differs from the preset of `mode`: the patch the run applies and records.

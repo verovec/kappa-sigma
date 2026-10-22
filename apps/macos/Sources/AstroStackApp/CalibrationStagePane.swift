@@ -48,7 +48,8 @@ struct CalibrationStagePane: View {
   private var header: some View {
     HStack(alignment: .firstTextBaseline) {
       SectionHeader(
-        .app("Calibration masters"), detail: .app("What the next run applies to each light set."))
+        .app("Calibration masters"), detail: .app("What the next run applies to each light set."),
+        help: StageHelp.help(.calibration, locale: locale))
       Spacer()
       if model.isScanning {
         ProgressView().controlSize(.small)

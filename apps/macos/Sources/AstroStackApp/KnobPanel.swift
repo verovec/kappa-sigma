@@ -5,6 +5,8 @@ internal import SwiftUI
 /// disclosure, how many moved from the preset and a way back.
 struct KnobPanel: View {
   @Bindable var model: KnobPanelViewModel
+  /// A run is going: the values stay in view, frozen (R2); their « ? » stay clickable (R3).
+  var frozen = false
 
   var body: some View {
     ScrollView {
@@ -17,7 +19,7 @@ struct KnobPanel: View {
               : .app("\(model.changedCount) changed from the preset"))
           Spacer()
           Button(.app("Reset All")) { model.resetAll() }
-            .disabled(model.changedCount == 0)
+            .disabled(model.changedCount == 0 || frozen)
             .accessible(.stackingResetKnobs, label: .app("Reset All"))
         }
         if !model.ignored.isEmpty {
@@ -26,10 +28,10 @@ struct KnobPanel: View {
             .app(
               "Not applied, no longer valid settings: \(model.ignored.joined(separator: ", "))"))
         }
-        ForEach(model.simpleRows) { KnobRow(row: $0, model: model) }
+        ForEach(model.simpleRows) { KnobRow(row: $0, model: model, frozen: frozen) }
         DisclosureGroup(isExpanded: $model.showsAdvanced) {
           VStack(alignment: .leading, spacing: DesignMetrics.spacingM) {
-            ForEach(model.advancedRows) { KnobRow(row: $0, model: model) }
+            ForEach(model.advancedRows) { KnobRow(row: $0, model: model, frozen: frozen) }
           }
           .padding(.top, DesignMetrics.spacingS)
         } label: {

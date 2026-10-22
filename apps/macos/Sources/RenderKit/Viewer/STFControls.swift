@@ -59,7 +59,8 @@ package struct STFControls: View {
           edited[control] = value
           parameters = edited.parameters
         }),
-      why: Self.why(control), key: key + "." + Self.id(control),
+      help: HelpContent(summary: Self.why(control)) { Text(Self.why(control)) },
+      key: key + "." + Self.id(control),
       step: STFChannelControls.step(of: control),
       format: { Self.format($0, control: control, locale: locale) },
       parse: { Self.parse($0, locale: locale) }

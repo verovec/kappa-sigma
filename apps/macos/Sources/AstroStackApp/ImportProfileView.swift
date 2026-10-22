@@ -6,7 +6,8 @@ package import SwiftUI
 /// The Import sheet's profile box (card 0060).
 ///
 /// The proposal with its reasons, the user's pick (another profile, or none), and the chosen
-/// profile's values with their « why » on hover. Nothing is applied here: Add records the choice.
+/// profile's values, each with its « ? » (definition on hover, definition and why on click).
+/// Nothing is applied here: Add records the choice.
 package struct ImportProfileView: View {
   let model: ImportViewModel
   @Environment(\.locale) private var locale
@@ -96,18 +97,40 @@ package struct ImportProfileView: View {
     }
   }
 
-  /// Each value the profile sets, its « why » as the tooltip.
+  /// Each value the profile sets, with its « ? » as on a knob: the parameter's definition on
+  /// hover, the definition and the why on click (card 0086).
   private func values(of profile: Profile) -> some View {
     let registry = try? ProcessRegistry.standard()
     return VStack(alignment: .leading, spacing: DesignMetrics.spacingXXS) {
-      ForEach(Array(profile.steps.enumerated()), id: \.offset) { _, step in
+      ForEach(Array(profile.steps.enumerated()), id: \.offset) { offset, step in
         ForEach(step.values.keys.sorted(), id: \.self) { id in
-          Text(verbatim: Self.line(step, id, registry: registry, locale: locale))
-            .font(.caption.monospacedDigit())
-            .help(Text(verbatim: step.why[id]?.text(language: language) ?? ""))
+          HStack(spacing: DesignMetrics.spacingXS) {
+            Text(verbatim: Self.line(step, id, registry: registry, locale: locale))
+              .font(.caption.monospacedDigit())
+            let process = step.recipe.processID
+            let definition = AppGlossary.help.paramDoc(
+              process: process, param: id, locale: language)
+            let why = step.why[id].map { $0.text(language: language) }.flatMap {
+              $0.isEmpty ? nil : $0
+            }
+            // No words at all (a user copy's value with no why, an undocumented parameter): no
+            // « ? » rather than an empty one.
+            if let summary = definition ?? why {
+              KeyedHelp(
+                HelpContent(summary: .app("\(summary)")) {
+                  HelpText(Self.valueHelp(definition: definition, why: why))
+                }, key: .help("profile.\(offset).\(process).\(id)")
+              ).button
+            }
+          }
         }
       }
     }
+  }
+
+  /// The parameter's definition (HelpKit `params.json`) then the profile's why, one paragraph each.
+  package nonisolated static func valueHelp(definition: String?, why: String?) -> String {
+    [definition, why].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: "\n")
   }
 
   private var language: String { AppLocale.language(of: locale) }

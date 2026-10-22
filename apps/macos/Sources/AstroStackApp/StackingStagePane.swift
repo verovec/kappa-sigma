@@ -24,7 +24,7 @@ struct StackingStagePane: View {
       blocker
       HStack(spacing: 0) {
         // The values a run applies stay in view, frozen while it runs (R2).
-        KnobPanel(model: model.knobs).frame(width: 300).disabled(running)
+        KnobPanel(model: model.knobs, frozen: running).frame(width: 300)
         Divider()
         if let run = model.run {
           RunPanel(run: run)

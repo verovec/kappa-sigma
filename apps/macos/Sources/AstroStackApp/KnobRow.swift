@@ -9,6 +9,8 @@ internal import SwiftUI
 struct KnobRow: View {
   let row: KnobPanelViewModel.Row
   let model: KnobPanelViewModel
+  /// The value cannot move (a run is going); the « ? » still opens.
+  var frozen = false
   @Environment(\.locale) private var locale
 
   var body: some View {
@@ -17,13 +19,14 @@ struct KnobRow: View {
     case .number(let bounds, let integer):
       ParameterRow(
         .app("\(term.label)"), parameter: number(bounds, integer: integer),
-        help: help(term), key: row.id,
+        help: help(term), key: row.id, frozen: frozen,
         format: { AstroFormat(locale: locale).parameter($0) },
         parse: { AstroFormat(locale: locale).parameter(parsing: $0) })
     case .flag:
       HStack {
         Toggle(isOn: flag) { Text(verbatim: term.label) }
           .accessible(control, verbatim: term.label)
+          .disabled(frozen)
         helpButton(term)
         Spacer()
         reset
@@ -42,6 +45,7 @@ struct KnobRow: View {
           Text(verbatim: term.label)
         }
         .accessible(control, verbatim: term.label)
+        .disabled(frozen)
         helpButton(term)
         reset
       }
@@ -64,6 +68,7 @@ struct KnobRow: View {
         Image(systemName: "arrow.uturn.backward")
       }
       .buttonStyle(.borderless)
+      .disabled(frozen)
       .help(Text(.app("Back to the preset")))
       .accessible(.parameter(row.id, .reset), label: .app("Back to the preset"))
     }

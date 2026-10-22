@@ -18,6 +18,7 @@ package struct ParameterRow: View {
   private let label: LocalizedStringResource
   @Binding private var parameter: ParameterValue
   private let help: HelpContent?
+  private let frozen: Bool
   private let format: (Double) -> String
   private let parse: (String) -> Double?
   private let key: String
@@ -30,16 +31,18 @@ package struct ParameterRow: View {
 
   /// A row editing `parameter`; `help` is its « ? » (summary on hover, content on click);
   /// `key` (the parameter's stable id) identifies its controls (`AccessibilityID.parameter`);
-  /// `step` enables the keyboard and fine-drag steps.
+  /// `frozen` disables the value's controls but never the « ? »; `step` enables the keyboard
+  /// and fine-drag steps.
   package init(
     _ label: LocalizedStringResource, parameter: Binding<ParameterValue>,
-    help: HelpContent? = nil, key: String, step: ParameterStep? = nil,
+    help: HelpContent? = nil, key: String, frozen: Bool = false, step: ParameterStep? = nil,
     format: @escaping (Double) -> String, parse: @escaping (String) -> Double?
   ) {
     self.key = key
     self.label = label
     _parameter = parameter
     self.help = help
+    self.frozen = frozen
     self.step = step
     self.format = format
     self.parse = parse
@@ -55,7 +58,7 @@ package struct ParameterRow: View {
   package var body: some View {
     VStack(alignment: .leading, spacing: DesignMetrics.spacingXS) {
       header
-      controls
+      controls.disabled(frozen)
     }
     .onAppear { text = format(parameter.value) }
     // The slider and reset move the value while the field may have focus: always show it.
@@ -85,7 +88,7 @@ package struct ParameterRow: View {
         Image(systemName: "arrow.counterclockwise")
       }
       .buttonStyle(.borderless)
-      .disabled(parameter.isDefault)
+      .disabled(parameter.isDefault || frozen)
       .help(Text(.renderKit("Reset to default")))
       .accessible(.parameter(key, .reset), label: .renderKit("Reset to default"))
     }

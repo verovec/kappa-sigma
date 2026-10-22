@@ -1,4 +1,3 @@
-import AppKit
 import Foundation
 import RenderKit
 import SwiftUI
@@ -14,31 +13,19 @@ import Testing
 @MainActor
 @Suite("HelpButton — summary on hover, popover on click")
 struct HelpButtonTests {
-  final class Reported {
-    var entries: [AccessibilityAudit.Entry] = []
-  }
-
   @Test("testHoverSummaryAndClickPopover")
   func testHoverSummaryAndClickPopover() throws {
-    let reported = Reported()
-    let view = HelpButton(
-      summary: .renderKit("How much of the Hα layer is added to the red channel."),
-      key: .help("haBlend")
-    ) {
-      Text(verbatim: "Full card")
-    }
-    .environment(\.locale, Locale(identifier: "fr"))
-    .onPreferenceChange(AccessibilityAudit.Key.self) { reported.entries = $0 }
-    .frame(width: 200, height: 60)
-    let host = NSHostingView(rootView: AnyView(view))
-    host.frame = NSRect(x: 0, y: 0, width: 200, height: 60)
-    host.layoutSubtreeIfNeeded()
-    RunLoop.main.run(until: Date().addingTimeInterval(0.05))
-
-    let entry = try #require(reported.entries.first)
+    let entries = HostedEntries.entries(
+      of: HelpButton(
+        summary: .renderKit("How much of the Hα layer is added to the red channel."),
+        key: .help("haBlend")
+      ) {
+        Text(verbatim: "Full card")
+      }, width: 200, height: 60)
+    let entry = try #require(entries.first)
     #expect(entry.id == "fr.astrostack.help.haBlend")
     #expect(entry.label == "Aide")
     #expect(entry.hint == "Part de la couche Hα ajoutée au canal rouge.")
-    #expect(reported.entries.count == 1)
+    #expect(entries.count == 1)
   }
 }

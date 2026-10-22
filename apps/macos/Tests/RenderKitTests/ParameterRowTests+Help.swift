@@ -1,4 +1,3 @@
-import AppKit
 import Foundation
 import RenderKit
 import SwiftUI
@@ -10,20 +9,10 @@ extension ParameterRowTests {
   @MainActor
   @Test("testHelpReplacesWhy")
   func testHelpReplacesWhy() {
-    final class Reported {
-      var entries: [AccessibilityAudit.Entry] = []
-    }
-    let reported = Reported()
-    let host = NSHostingView(
-      rootView: ComponentGallery().environment(\.locale, Locale(identifier: "fr"))
-        .onPreferenceChange(AccessibilityAudit.Key.self) { reported.entries = $0 }
-        .frame(width: 900, height: 1800))
-    host.frame = NSRect(x: 0, y: 0, width: 900, height: 1800)
-    host.layoutSubtreeIfNeeded()
-    RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+    let reported = HostedEntries.entries(of: ComponentGallery())
     // Every parameter row of the gallery has its « ? »: the two Hα rows and the stretch controls'
     // three visible rows (card 0085).
-    let help = reported.entries.filter { $0.id.hasSuffix(".help") }
+    let help = reported.filter { $0.id.hasSuffix(".help") }
     #expect(
       help.map(\.id) == [
         "fr.astrostack.parameter.haBlend.help", "fr.astrostack.parameter.haCeiling.help",

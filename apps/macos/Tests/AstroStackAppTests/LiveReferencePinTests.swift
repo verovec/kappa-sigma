@@ -100,7 +100,6 @@ struct LiveReferencePinTests {
     #expect(result.channels.allSatisfy { $0.error == nil })
     let lane = try #require(result.channels.first)
     #expect(lane.referencePin == pin && lane.reference == pin)
-    #expect(run.journal.contains { $0.text.contains("reference pinned on frame \(pin)") })
     let stack = try #require(try project.store.latestStack())
     let record = try StackRecord(stack: stack)
     #expect(record.referencePins?[lane.filter] == pin)

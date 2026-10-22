@@ -132,6 +132,11 @@ package nonisolated struct AstroFormat: Sendable {
       + Self.space + "%"
   }
 
+  /// A share of 0…1 as a percentage with two decimals, never signed: `12,50 %`.
+  package func share(_ fraction: Double) -> String {
+    decimal(fraction * 100, maxFractionDigits: 2, minFractionDigits: 2) + Self.space + "%"
+  }
+
   /// A parameter as a field shows it: the shortest digits that read back as exactly `value`
   /// (R2: the value applied is the value shown), in the locale's decimal mark, never grouped.
   package func parameter(_ value: Double) -> String {

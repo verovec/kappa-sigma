@@ -3,18 +3,13 @@
 // then MTF, GHS or asinh. Every coefficient is computed on the CPU from the panel values and the
 // bundle statistics (StretchUniforms.swift); pinned against StretchOracle; fast-math off.
 #include <metal_stdlib>
+#include "STF.h"
 using namespace metal;
 
 // p[0] mode (0 MTF, 1 GHS, 2 asinh) · p[1] planes (1 or 3) · p[2] headroom ceiling · p[3] knee
 // p[4 + 3c] c0, p[5 + 3c] 1 / (1 − c0), p[6 + 3c] midtone m of plane c
 // p[13..23] GHS: b, D, LP, SP, HP, f(0), 1 / (f(1) − f(0)), T(SP−LP), T′(SP−LP), T(HP−SP), T′(HP−SP)
 // p[24..26] asinh: β, black point, 1 / asinh(β)
-
-static float mtf(float x, float m) {
-  if (x <= 0.0f) { return 0.0f; }
-  if (x >= 1.0f) { return 1.0f; }
-  return (m - 1.0f) * x / ((2.0f * m - 1.0f) * x - m);
-}
 
 static float luminance(float3 rgb, uint planes) {
   return planes == 3 ? 0.299f * rgb.r + 0.587f * rgb.g + 0.114f * rgb.b : rgb.r;
@@ -100,7 +95,7 @@ kernel void stretch(texture2d<float, access::read> inR [[texture(0)]],
   float3 out = rgb;
   if (p[0] == 0.0f) {
     for (uint c = 0; c < planes; ++c) {
-      out[c] = mtf((rgb[c] - p[4 + 3 * c]) * p[5 + 3 * c], p[6 + 3 * c]);
+      out[c] = mtf(p[6 + 3 * c], (rgb[c] - p[4 + 3 * c]) * p[5 + 3 * c]);
     }
   } else if (p[0] == 1.0f) {
     for (uint c = 0; c < planes; ++c) { out[c] = ghs(rgb[c], p + 13); }

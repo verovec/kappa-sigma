@@ -48,7 +48,23 @@ non-destructive history, recipes and the registry (design §2, §4.1).
 
   Every coefficient is computed on the CPU (`StretchUniforms`) from the panel values and the
   stats; "autostretch like Siril" and the deep-sky 0.90 headroom are suggestions, not defaults
-  hidden in the shader. No panel yet: the Studio renders the schema generically (0075/0076).
+  hidden in the shader. The Studio panel draws its MTF black point and midtone as handles on the
+  head's histogram (`HistogramHandled`): a drag sets `shadowsClip` and `targetBackground` through
+  RenderKit's `STFMapping`, as the viewer's σ controls read them.
+- **LevelsProcess** (card 0089, id `levels`, « Histogram transformation »): PixInsight's
+  HistogramTransformation / Siril `mtf low mid high`. A black point, a midtone balance and a white
+  point for RGB/K (`rgbShadows`, `rgbMidtones`, `rgbHighlights`), one triple per channel when
+  `linked` is off (`r…`, `g…`, `b…`, promoted out of the disclosure then), applied before the
+  RGB/K one, then the output range (`outputLow`, `outputHigh`). An identity triple is skipped, so
+  the defaults return the input bit for bit; c1 ≤ c0 is refused with the reason. Suggestions:
+  Siril's autostretch (−2.8σ, 0.25) and, added by the app, the viewer's display stretch (the
+  STF → HT handoff); several values of one reason are taken together. Pinned bit for bit against
+  a float mirror of `stf` (`LevelsProcessTests`) and against Siril `mtf` (mean |Δ| ≤ 1/65535,
+  `LiveSirilMTFParityTests`).
+- **One MTF.** `Stretch.metal`, `Screens.metal` and `Levels.metal` `#include "STF.h"`, RenderKit's
+  header of the display stretch, which `ProcessLibrary` inlines at compile time (the runtime
+  compiler has no include path). Its denominator is an explicit `fma`, so a float oracle mirrors
+  it exactly.
 - **EmissionScreensProcess** (card 0051, id `emission-screens`): astrocomp's HOO-over-broadband
   chain on a stretched RGB base. Per line (`EmissionLine`: Hα, [OIII], [SII]; params
   `<ha|oiii|sii><Enabled|Continuum|ContinuumK|Background|Black|Opacity|Tint|Boost>`) on its own
@@ -161,6 +177,10 @@ in en/fr; the English title is the key, resolved with `ProcessKitResources.title
   (`role.rawValue` ids), `unavailableReason` (the `Pipeline.problems` rule over the steps so far,
   shown never enforced), `suggestions`. The app wraps it in `StudioModel` (every step mirrored in
   ProjectKit) and `StudioWorkspaceModel` (catalogue, panel, live preview, compare, mask).
+- `ImageProcess.promoted(_:)` names advanced parameters the current values make relevant (shown
+  without the disclosure); `ImageProcess.steps` gives finer arrow steps (a tenth with ⇧ or ⌥).
+  `HistogramHandled` processes (levels, stretch) put their values as handles on the head's
+  histogram in the panel.
 - A host-tool step (StarNet 0091, background extraction 0092) records its result and the layers
   it wrote with `StudioSession.apply(_:params:result:outputs:)`.
 

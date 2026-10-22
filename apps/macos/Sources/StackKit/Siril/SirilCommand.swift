@@ -44,6 +44,8 @@ package enum SirilCommand: Equatable, Sendable {
   case autostretchLinked
   case autostretch(linked: Bool, target: Double)
   case satu(Double)
+  /// `mtf low mid high`: the histogram transformation of every channel (card 0089's parity).
+  case mtf(low: Double, mid: Double, high: Double)
   case platesolve(coords: String?, noFlip: Bool)
   case rgbcomp(r: String, g: String, b: String, lum: String?, out: String)
 
@@ -102,6 +104,8 @@ package enum SirilCommand: Equatable, Sendable {
       "autostretch" + (linked ? " -linked" : "") + " -2.8 "
         + GoFormat.fixed(target > 0 && target <= 0.5 ? target : 0.06, decimals: 3)
     case .satu(let amount): "satu \(GoFormat.fixed(amount, decimals: 2))"
+    case .mtf(let low, let mid, let high):
+      "mtf \(GoFormat.shortest(low)) \(GoFormat.shortest(mid)) \(GoFormat.shortest(high))"
     case .platesolve(let coords, let noFlip):
       "platesolve" + (coords.map { " \($0)" } ?? "") + (noFlip ? " -noflip" : "")
     case .rgbcomp(let r, let g, let b, let lum, let out):

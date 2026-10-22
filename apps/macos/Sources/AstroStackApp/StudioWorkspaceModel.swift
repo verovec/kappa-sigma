@@ -90,6 +90,7 @@ package final class StudioWorkspaceModel {
       texture: try Self.texture(studio.head, device: studio.session.device))
     refreshCatalogue()
     headStatistics = viewer.model.statistics
+    watchDisplayStretch()
   }
 
   /// Marks this workspace replaced (a newer stack opened in the Studio).
@@ -107,9 +108,8 @@ package final class StudioWorkspaceModel {
   /// Opens the panel of `processID` at its defaults, with its suggestions.
   package func choose(_ processID: String) {
     guard let type = registry.type(id: processID) else { return }
-    let params = ParamSet(schema: type.schema)
-    let suggestions = (try? studio.session.suggestions(for: type, params: params)) ?? []
-    let panel = ProcessPanelModel(type: type, params: params, suggestions: suggestions)
+    let panel = ProcessPanelModel(type: type, params: ParamSet(schema: type.schema))
+    refresh(panel)
     panel.onChange = { [weak self] in self?.panelChanged() }
     self.panel = panel
     shown = nil
@@ -229,10 +229,7 @@ package final class StudioWorkspaceModel {
 
   /// A value moved: the suggestions follow the values they depend on, the preview follows.
   private func panelChanged() {
-    if let panel {
-      panel.suggestions =
-        (try? studio.session.suggestions(for: panel.type, params: panel.params)) ?? []
-    }
+    if let panel { panel.suggestions = offers(for: panel.type, params: panel.params) }
     schedulePreview()
   }
 
@@ -267,14 +264,12 @@ package final class StudioWorkspaceModel {
   private func headChanged() throws {
     shown = nil
     defer { headStatistics = viewer.model.statistics }
-    if let panel {
-      panel.suggestions =
-        (try? studio.session.suggestions(for: panel.type, params: panel.params)) ?? []
-    }
     isPreviewing = false
     // A compared step that no longer exists (undone) stops the compare.
     if let comparing, comparing >= studio.steps.count { try compare(toStep: nil) }
     try show(studio.head)
+    // After the viewer shows the new head: the display stretch offered is the one on screen.
+    if let panel { refresh(panel) }
     refreshCatalogue()
     // The panel stays open on the new head: its values are previewed on it again (R2).
     if panel != nil { schedulePreview() }

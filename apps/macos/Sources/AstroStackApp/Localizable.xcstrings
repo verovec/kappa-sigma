@@ -129,6 +129,22 @@
         }
       }
     },
+    "%@: %@ to black, %@ to white": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@: %2$@ to black, %3$@ to white"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ : %2$@ au noir, %3$@ au blanc"
+          }
+        }
+      }
+    },
     "%@: not stacked — %@": {
       "localizations": {
         "en": {
@@ -493,6 +509,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fond"
+          }
+        }
+      }
+    },
+    "Blue": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blue"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bleu"
           }
         }
       }
@@ -1089,6 +1121,22 @@
         }
       }
     },
+    "Drag a handle to set the value it names": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag a handle to set the value it names"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Faites glisser une poignée pour régler sa valeur"
+          }
+        }
+      }
+    },
     "Drop every frame of this set from the stack": {
       "localizations": {
         "en": {
@@ -1489,6 +1537,22 @@
         }
       }
     },
+    "Green": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Green"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vert"
+          }
+        }
+      }
+    },
     "Help": {
       "localizations": {
         "en": {
@@ -1693,6 +1757,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Indexation de la bibliothèque de calibration…"
+          }
+        }
+      }
+    },
+    "Input histogram": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Input histogram"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Histogramme d’entrée"
           }
         }
       }
@@ -2077,6 +2157,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Inventaire des dossiers de la capture…"
+          }
+        }
+      }
+    },
+    "Luminance": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Luminance"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Luminance"
           }
         }
       }
@@ -3217,6 +3313,22 @@
         }
       }
     },
+    "Red": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Red"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rouge"
+          }
+        }
+      }
+    },
     "Redo": {
       "localizations": {
         "en": {
@@ -4301,6 +4413,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Système"
+          }
+        }
+      }
+    },
+    "Take together": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Take together"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tout prendre"
+          }
+        }
+      }
+    },
+    "Take together: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Take together: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tout prendre : %@"
           }
         }
       }

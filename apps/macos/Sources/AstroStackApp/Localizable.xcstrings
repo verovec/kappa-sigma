@@ -1505,6 +1505,22 @@
         }
       }
     },
+    "Draw a region in the viewer first.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Draw a region in the viewer first."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tracez d’abord une région dans le visualiseur."
+          }
+        }
+      }
+    },
     "Drop every frame of this set from the stack": {
       "localizations": {
         "en": {
@@ -3313,6 +3329,22 @@
         }
       }
     },
+    "No plate solution.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No plate solution."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas de solution astrométrique."
+          }
+        }
+      }
+    },
     "No profile": {
       "localizations": {
         "en": {
@@ -3613,6 +3645,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Autres masters pour ce rôle"
+          }
+        }
+      }
+    },
+    "Output: %@ × %@ px": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Output: %@ × %@ px"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sortie : %@ × %@ px"
           }
         }
       }
@@ -5601,6 +5649,22 @@
         }
       }
     },
+    "Step %lld is from before a crop, turn or flip: it cannot be compared.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Step %lld is from before a crop, turn or flip: it cannot be compared."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’étape %lld précède un rognage, une rotation ou un miroir : elle ne peut pas être comparée."
+          }
+        }
+      }
+    },
     "Step %lld of %lld": {
       "localizations": {
         "en": {
@@ -6161,6 +6225,38 @@
         }
       }
     },
+    "The plate solution is removed: a frame resampled at an angle needs a new solve.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The plate solution is removed: a frame resampled at an angle needs a new solve."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La solution astrométrique est retirée : une image rééchantillonnée en biais doit être résolue à nouveau."
+          }
+        }
+      }
+    },
+    "The plate solution moves with the pixels.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The plate solution moves with the pixels."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La solution astrométrique suit les pixels."
+          }
+        }
+      }
+    },
     "The preset, untouched.": {
       "localizations": {
         "en": {
@@ -6173,6 +6269,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le préréglage, intact."
+          }
+        }
+      }
+    },
+    "The preview moves the pixels: compare once the geometry is applied or reset.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The preview moves the pixels: compare once the geometry is applied or reset."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’aperçu déplace les pixels : comparez une fois la géométrie appliquée ou remise à zéro."
           }
         }
       }
@@ -6325,6 +6437,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Les mélanges d’étoiles demandent l’image sans étoiles : séparez d’abord les étoiles."
+          }
+        }
+      }
+    },
+    "The viewer shows the moved preview: draw the region with every value at zero.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The viewer shows the moved preview: draw the region with every value at zero."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le visualiseur montre l’aperçu déplacé : tracez la région avec toutes les valeurs à zéro."
           }
         }
       }
@@ -6581,6 +6709,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Forcer les correspondances"
+          }
+        }
+      }
+    },
+    "Use region": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use region"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utiliser la région"
           }
         }
       }

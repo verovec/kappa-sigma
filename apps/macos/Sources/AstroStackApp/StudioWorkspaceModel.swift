@@ -54,6 +54,10 @@ package final class StudioWorkspaceModel {
   package private(set) var isPreviewing = false
   /// The step compare shows, if any.
   package internal(set) var comparing: Int?
+  /// The viewer shows a geometric preview that moves the pixels (card 0090, `gridMoved`).
+  package internal(set) var showsMovedGrid = false
+  /// The steps the viewer's head was shown for (`dropRegionIfMoved`).
+  @ObservationIgnored var headSteps: [History.Step] = []
   /// Where the process may act (luminosity range, stars), applied by the kit after the
   /// process, to the preview and Apply alike; `nil`: everywhere.
   package var mask: Mask? {
@@ -90,8 +94,10 @@ package final class StudioWorkspaceModel {
   /// The head's display statistics: a preview is drawn through them, never through a previous
   /// preview's.
   @ObservationIgnored private var headStatistics: [STFMapping] = []
-  /// The values and mask the preview on screen was drawn with (`nil`: none on screen).
-  @ObservationIgnored private var shown: (processID: String, params: ParamSet, mask: Mask?)?
+  /// The values and mask of the preview on screen (`nil`: none); see `gridMoved`.
+  @ObservationIgnored private(set) var shown: (processID: String, params: ParamSet, mask: Mask?)? {
+    didSet { gridMoved(from: oldValue.map { ($0.processID, $0.params) }) }
+  }
   /// The failure shown is a preview's (the next preview clears it).
   @ObservationIgnored private var previewFailed = false
 
@@ -112,6 +118,7 @@ package final class StudioWorkspaceModel {
     refreshCatalogue()
     headStatistics = viewer.model.statistics
     watchDisplayStretch()
+    headSteps = studio.steps
   }
 
   /// Marks this workspace replaced (a newer stack opened in the Studio).
@@ -131,7 +138,8 @@ package final class StudioWorkspaceModel {
     hideModel()
     self.panel = panel
     toolReport = nil
-    shown = nil
+    // A moved preview leaves the screen at once; another stays until the new one replaces it.
+    if showsMovedGrid { stopPreview() } else { shown = nil }
     // The defaults are previewed at once: Apply never records what was not shown (R2).
     schedulePreview()
     toolsChosen()
@@ -150,8 +158,7 @@ package final class StudioWorkspaceModel {
     drawPreview()
   }
 
-  /// Draws the panel's values on the head now; a failure shows the head again (never an older
-  /// preview standing for the current values).
+  /// Draws the panel's values on the head now; a failure shows the head, never an older preview.
   private func drawPreview() {
     guard let panel else { return }
     do {
@@ -159,6 +166,7 @@ package final class StudioWorkspaceModel {
       // Through the head's display stretch: an auto-stretch fitted to the preview would hide
       // the very change the process makes (what is shown is what Apply records, R2).
       let same = preview.planes.count == headStatistics.count
+      willShow(panel.type.id, panel.params)
       try show(preview, statistics: same ? headStatistics : nil)
       isPreviewing = true
       shown = (panel.type.id, panel.params, mask)
@@ -176,9 +184,7 @@ package final class StudioWorkspaceModel {
     }
   }
 
-  /// Applies the panel's values at full resolution: the head moves.
-  ///
-  /// A failure is shown in the panel.
+  /// Applies the panel's values at full resolution: the head moves (a failure is shown).
   package func apply() throws {
     guard let panel else { return }
     // Apply records what the viewer shows (R2): values not drawn yet (a value just typed, a
@@ -186,9 +192,15 @@ package final class StudioWorkspaceModel {
     previewTask?.cancel()
     if !isShowing(panel) { drawPreview() }
     guard isShowing(panel) else { return }
-    try reported { try studio.apply(panel.type.id, params: panel.params, mask: maskImage()) }
+    // The values applied: a geometry panel is back at the identity once the pixels moved.
+    let (id, params) = (panel.type.id, panel.params)
+    var used: AstroImage?
+    try reported {
+      used = try maskImage()
+      try studio.apply(id, params: params, mask: used)
+    }
     // The user's manual work becomes the recipe (R5): the pipeline records the step.
-    pipeline?.applied(panel.type.id, params: panel.params, masked: mask != nil)
+    pipeline?.applied(id, params: params, masked: used != nil)
   }
 
   /// Whether the viewer shows the current values and mask of `panel`.
@@ -258,14 +270,20 @@ package final class StudioWorkspaceModel {
   /// The history moved (an Apply, an undo, a pipeline run): the viewer, the panel's inputs and
   /// the catalogue follow the new head.
   func headChanged() throws {
+    if dropRegionIfMoved() { resetMovingValues() }
     shown = nil
     // A report speaks of the head it was made on.
     toolReport = nil
     batch.showsModel = false
     defer { headStatistics = viewer.model.statistics }
     isPreviewing = false
-    // A compared step that no longer exists (undone) stops the compare.
-    if let comparing, comparing >= studio.steps.count { try compare(toStep: nil) }
+    // A compared step undone, or off the head's grid (a crop applied), stops the compare.
+    if let comparing,
+      !onHeadGrid(step: comparing) || viewer.reference?.width != studio.head.width
+        || viewer.reference?.height != studio.head.height
+    {
+      try compare(toStep: nil)
+    }
     try show(studio.head)
     // After the viewer shows the new head: the display stretch offered is the one on screen.
     if let panel { refresh(panel) }

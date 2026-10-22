@@ -53,11 +53,19 @@ package final class ExportStageModel {
     studio.steps.contains { $0.outputs[.starless] != nil }
       || studio.session.bundle.layers[LayerRole.starless.rawValue] != nil
   }
-  /// Steps applied after the last StarNet step: what the starless does not contain (shown, the
-  /// user decides whether to separate again).
+  /// Steps applied after the last StarNet step: what the starless does not contain.
+  ///
+  /// Shown, the user decides whether to separate again. A geometry step moves the starless with
+  /// the image (card 0090): it neither makes a new starless nor counts as missing from it.
   package var stepsAfterStarless: Int {
+    let moving = studio.session.registry.movingIDs
     let steps = studio.steps
-    return steps.lastIndex { $0.outputs[.starless] != nil }.map { steps.count - 1 - $0 } ?? 0
+    guard
+      let last = steps.lastIndex(where: {
+        $0.outputs[.starless] != nil && !moving.contains($0.processID)
+      })
+    else { return 0 }
+    return steps[(last + 1)...].filter { !moving.contains($0.processID) }.count
   }
 
   /// The Studio whose head is exported.

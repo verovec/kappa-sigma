@@ -43,3 +43,21 @@ struct ViewerModelReplaceTests {
     #expect(model.frame.stf?.count == 3)
   }
 }
+
+extension ViewerModelReplaceTests {
+  /// Card 0090: a region is in the pixels of the image it was drawn on; a head of another size
+  /// (a crop, a quarter turn) drops it rather than count pixels that are not there.
+  @Test("a head of the same size keeps the region, another size drops it")
+  func testReplaceDropsRegionOnResize() {
+    let model = ViewerModel(image: Self.image(0.1))
+    model.frame.transform = ViewTransform(scale: 1, origin: .zero)
+    model.drag(from: [1, 1], to: [5, 5], tool: .region)
+    model.replace(image: Self.image(0.2))
+    #expect(model.frame.region == PixelRegion(x: 1, y: 1, width: 4, height: 4))
+    model.replace(
+      image: AstroImage(
+        width: 4, height: 8, planes: [[Float](repeating: 0.1, count: 32)],
+        metadata: ImageMetadata(rowOrder: .topDown)))
+    #expect(model.frame.region == nil)
+  }
+}

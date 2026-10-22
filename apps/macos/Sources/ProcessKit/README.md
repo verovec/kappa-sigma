@@ -239,6 +239,27 @@ in en/fr; the English title is the key, resolved with `ProcessKitResources.title
 To give a host tool layers: return them in `StudioToolResult(…outputs:replaced:)` from a
 `StudioTool(step:)`; the Studio records them, the next steps read them.
 
+## Geometry (card 0090)
+
+- `GeometryProcess` (`geometry`, stage any): crops (`.px`, as shown: top = the displayed top),
+  clockwise quarter turns, then flips of the turned image — index copies through ImageKit's
+  `GridMap`, bit-exact — then a fine `angle` resampled by `Geometry.metal` (bilinear, Keys
+  bicubic, Lanczos-3; `canvas` keep or expand). `GeometryPlan` conjugates the display moves by
+  the bottom-up flip (`RenderContext.rowsBottomUp`), so recorded values mean what was shown.
+- A `GeometricProcess` sizes its own output (`outputSize`), refuses a mask (`ProcessRunner`) and
+  moves the header (`header(_:width:height:bottomUp:)`: TAN/SIP moved, dropped after an angle).
+- `ProcessRunner.image(_:input:…)` is the one way a step's image is made, for `StudioSession`
+  and `PipelineRunner` alike: the output has the size the process makes and carries the moved
+  plate solution (none after an angle, nothing moved at the identity values).
+  `ProcessRunner.movedLayers(…)` then moves every context layer of an applied geometric step
+  (a role output stays a role output, a bundle layer becomes one of the step's `replaced`),
+  recorded by `History.apply(…outputs:replacing:)` with the moved header; a moved bundle layer
+  is measured again but keeps the stack's continuum fit (`LayerStats.keepingFit(of:)`). Later
+  steps keep the head's header (`History.headHeader()`); a locked pipeline step reuses
+  everything its step wrote (`History.written(ofStep:)`).
+- No automatic crop of the stacking edges (R2): the app's « Use region » fills the crops from
+  the viewer's region.
+
 ## How to add a process
 
 1. A type conforming to `ImageProcess` in `ProcessKit/Processes/<Name>/`, its kernel in a
@@ -249,7 +270,10 @@ To give a host tool layers: return them in `StudioToolResult(…outputs:replaced
 4. Register it in `ProcessRegistry.standard`.
 5. Write `HelpKit/Help/{fr,en}/process/<id>.md`: ≤ 5 lines, ≤ 90 words each (gated).
 6. Add its title and every parameter title, en + fr, to `ProcessKit/Localizable.xcstrings` (gated).
-7. Tests: `ProcessContracts(...).violations(of:params:)` is empty, plus the kernel against a CPU
-   oracle with its tolerance stated.
+7. Tests: `ProcessContracts(...).violations(of:params:)` is empty (`pixelProbes:` when a `.px`
+   bound does not fit the test input), plus the kernel against a CPU oracle with its tolerance
+   stated.
+8. A process that moves pixels conforms to `GeometricProcess` instead: `ProcessRunner.image`
+   and `movedLayers` then move the header and the layers with it.
 
 Allowed dependencies: `ImageKit`, `RenderKit` (`Tests/TestSupport/BoundaryRules.swift`).

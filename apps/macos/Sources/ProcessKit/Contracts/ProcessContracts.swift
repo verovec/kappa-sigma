@@ -8,6 +8,9 @@ package import Metal
 /// - **NoHiddenState**: two renders with the same inputs are bit-identical.
 /// - **PxUnitsScale**: a `.px` value `v` at scale 2 renders exactly like `v / 2` at scale 1,
 ///   so `render` divides every pixel parameter by the scale and nothing else depends on it.
+///
+/// A `GeometricProcess` runs without the mask check (it refuses a mask: a moved grid has no
+/// input pixel under each output pixel).
 package struct ProcessContracts {
   /// One of the three contracts.
   package enum Contract: String, CaseIterable, Sendable {
@@ -55,7 +58,12 @@ package struct ProcessContracts {
   }
 
   /// Every contract `type` breaks with `params` (empty: it passes).
-  package func violations(of type: any ImageProcess.Type, params: ParamSet) throws -> [Violation] {
+  ///
+  /// The pixel-scale check sets each `.px` value to its upper bound, or to `pixelProbes[id]`
+  /// when the bound does not fit the test input (a crop of 100 000 px on a 32 px image).
+  package func violations(
+    of type: any ImageProcess.Type, params: ParamSet, pixelProbes: [String: Double] = [:]
+  ) throws -> [Violation] {
     var found: [Violation] = []
     let process = try type.init(params: params, device: device)
     let preview = try render(process, purpose: .preview)
@@ -63,14 +71,16 @@ package struct ProcessContracts {
     if !Self.identical(preview, apply) {
       found.append(Violation(contract: .previewEqualsApply, detail: "preview ≠ apply at 1:1"))
     }
-    if let detail = try maskedViolation(of: process) {
+    if !(process is any GeometricProcess), let detail = try maskedViolation(of: process) {
       found.append(Violation(contract: .previewEqualsApply, detail: detail))
     }
     if !Self.identical(apply, try render(process, purpose: .apply)) {
       found.append(Violation(contract: .noHiddenState, detail: "a second render differs"))
     }
     for id in type.schema.pixelParameters {
-      if let detail = try pixelScaleViolation(of: type, params: params, id: id) {
+      if let detail = try pixelScaleViolation(
+        of: type, params: params, id: id, probe: pixelProbes[id])
+      {
         found.append(Violation(contract: .pxUnitsScale, detail: detail))
       }
     }
@@ -94,13 +104,13 @@ package struct ProcessContracts {
     return nil
   }
 
-  /// `id` at its upper bound `v`, scale 2, against `v / 2` at scale 1, every other `.px` value
-  /// halved with it.
+  /// `id` at its upper bound (or `probe`) `v`, scale 2, against `v / 2` at scale 1, every other
+  /// `.px` value halved with it.
   private func pixelScaleViolation(
-    of type: any ImageProcess.Type, params: ParamSet, id: String
+    of type: any ImageProcess.Type, params: ParamSet, id: String, probe: Double?
   ) throws -> String? {
     guard case .number(_, let bounds)? = type.schema.spec(id)?.kind else { return nil }
-    let full = bounds.upperBound
+    let full = probe ?? bounds.upperBound
     let half = full / 2
     guard half >= bounds.lowerBound, full > 0 else {
       return "\(id): bounds \(bounds) leave no value v with v / 2 in bounds"

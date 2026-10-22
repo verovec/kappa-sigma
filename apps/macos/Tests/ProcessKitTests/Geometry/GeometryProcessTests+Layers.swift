@@ -1,0 +1,161 @@
+import Foundation
+import ImageKit
+import Metal
+import ProcessKit
+import TestSupport
+import Testing
+
+extension GeometryProcessTests {
+  static func image(_ width: Int, _ height: Int, planes: Int, seed: Float) -> AstroImage {
+    AstroImage(
+      width: width, height: height,
+      planes: (0..<planes).map { plane in
+        (0..<width * height).map { seed + Float(plane) * 100 + Float($0) }
+      },
+      metadata: ImageMetadata(rowOrder: .bottomUp))
+  }
+
+  /// Card 0090: an applied geometry step moves the image and every layer the next steps read —
+  /// the bundle's (`RGB`, `Ha`, `OIII`) as its bundle layers, an earlier step's `starless` as
+  /// its output of that role — to one size, and their statistics are measured again (Hα keeps
+  /// its recorded continuum fit).
+  @Test("testLayersFollow", .scratchDirectory)
+  func testLayersFollow() throws {
+    let device = try #require(MTLCreateSystemDefaultDevice())
+    let (width, height) = (6, 4)
+    let bundle = PipelineBundle(
+      stats: LayerStats(channels: []),
+      layers: [
+        "RGB": Self.image(width, height, planes: 3, seed: 0),
+        "Ha": Self.image(width, height, planes: 1, seed: 1000),
+        "OIII": Self.image(width, height, planes: 1, seed: 2000),
+      ],
+      layerStats: ["Ha": LayerStats(channels: [], continuumK: 0.42, continuumReference: "RGB.r")])
+    let history = try History(
+      directory: ScratchDirectory.url.appendingPathComponent("history"),
+      original: Self.image(width, height, planes: 3, seed: 0))
+    let session = try StudioSession(
+      history: history, bundle: bundle, registry: ProcessRegistry([GeometryProcess.self]),
+      device: device)
+    try session.apply(
+      "stars", params: ParamSet(schema: GeometryProcess.schema), result: history.current,
+      outputs: [.starless: Self.image(width, height, planes: 3, seed: 3000)])
+
+    try session.apply("geometry", params: Self.params(Self.layerValues))
+
+    let step = try #require(history.steps.last)
+    #expect(step.replaced.keys.sorted() == ["Ha", "OIII", "RGB"])
+    #expect(step.outputs.keys.map(\.rawValue) == ["starless"])
+    let head = history.current
+    #expect(head.width == 3 && head.height == 5)
+    let moved = try history.writtenLayers()
+    for (id, layer) in moved {
+      #expect(layer.width == head.width && layer.height == head.height, "\(id)")
+      let source =
+        id == "starless"
+        ? Self.image(width, height, planes: 3, seed: 3000) : try #require(bundle.layers[id])
+      // Bottom-up rows: the display oracle runs on the reversed rows.
+      for (plane, pixels) in source.planes.enumerated() {
+        let rows = (0..<height).map { Array(pixels[$0 * width..<($0 + 1) * width]) }.reversed()
+        let want = Self.expected(Array(rows), Self.layerValues)
+        #expect(layer.planes[plane] == Array(want.reversed().joined()), "\(id) plane \(plane)")
+      }
+    }
+    let stats = try session.layerStats()
+    #expect(stats["Ha"]?.channels == LayerStats.measured(try #require(moved["Ha"])).channels)
+    #expect(stats["Ha"]?.continuumK == 0.42 && stats["Ha"]?.continuumReference == "RGB.r")
+    #expect(stats["starless"] == LayerStats.measured(try #require(moved["starless"])))
+  }
+
+  static let layerValues: [String: ParamValue] = [
+    "cropLeft": .number(1), "cropTop": .number(1), "rotation": .choice("90"),
+  ]
+}
+
+extension GeometryProcessTests {
+  /// Card 0090: a geometric render moves the plate solution of the image it renders — the head
+  /// or an explicit input — with the pixels.
+  @Test(
+    "the rendered image's own WCS is moved, the head's or an explicit input's", .scratchDirectory)
+  func testRenderMovesTheInputsWCS() throws {
+    let device = try #require(MTLCreateSystemDefaultDevice())
+    let header = try FITSFile.parse(Data(HistoryTests.solvedHeaderText.utf8)).header
+    let original = try HistoryTests.image([0, 1, 2, 3])
+    original.metadata.wcs = WCS(header: header)
+    let history = try History(
+      directory: ScratchDirectory.url.appendingPathComponent("history"), original: original,
+      header: header)
+    let session = try StudioSession(
+      history: history, bundle: PipelineBundle(stats: LayerStats(channels: [])),
+      registry: ProcessRegistry([GeometryProcess.self]), device: device)
+    let params = try Self.params(["flipH": .flag(true)])
+    // The test image is stored top-down, so a display flip is a stored flip.
+    let want = WCS(header: header.moved(by: GridMap.identity(width: 2, height: 2).flippedX()))
+    #expect(try session.render("geometry", params: params).metadata.wcs == want)
+    let other = try HistoryTests.image([4, 5, 6, 7])
+    #expect(try session.render("geometry", params: params, input: other).metadata.wcs == nil)
+    other.metadata.wcs = WCS(header: header)
+    #expect(try session.render("geometry", params: params, input: other).metadata.wcs == want)
+  }
+}
+
+extension GeometryProcessTests {
+  /// Whole-branch review of card 0090: geometry at its defaults moves nothing, so it rewrites no
+  /// layer (untouched defaults stay byte-identical); a fraction of a pixel is refused.
+  @Test("identity geometry rewrites no layer and keeps the image", .scratchDirectory)
+  func testIdentityMovesNothing() throws {
+    let device = try #require(MTLCreateSystemDefaultDevice())
+    let bundle = PipelineBundle(
+      stats: LayerStats(channels: []), layers: ["Ha": Self.image(6, 4, planes: 1, seed: 9)])
+    let history = try History(
+      directory: ScratchDirectory.url.appendingPathComponent("history"),
+      original: Self.image(6, 4, planes: 3, seed: 0))
+    let session = try StudioSession(
+      history: history, bundle: bundle, registry: ProcessRegistry([GeometryProcess.self]),
+      device: device)
+    try session.apply("geometry", params: Self.params([:]))
+    #expect(history.steps.last?.replaced.isEmpty == true)
+    #expect(history.current.planes == Self.image(6, 4, planes: 3, seed: 0).planes)
+  }
+
+  @Test("a fractional crop is refused, never rounded")
+  func testFractionalCropRefused() throws {
+    #expect(throws: ProcessError.invalidParameter("cropLeft must be whole pixels")) {
+      try Self.run(
+        Self.params(["cropLeft": .number(1.5)]), plane: Array(repeating: 1, count: 15), width: 5,
+        height: 3, bottomUp: false)
+    }
+  }
+}
+
+extension GeometryProcessTests {
+  /// Card 0090: only a layer a geometry step moved keeps the stack's continuum fit; a layer
+  /// another step rewrote (a background extraction) has none until one is made on it.
+  @Test("only a geometry-moved layer keeps the continuum fit", .scratchDirectory)
+  func testOnlyMovedLayersKeepTheFit() throws {
+    let device = try #require(MTLCreateSystemDefaultDevice())
+    let history = try History(
+      directory: ScratchDirectory.url.appendingPathComponent("history"),
+      original: Self.image(6, 4, planes: 1, seed: 0))
+    let fit = ["Ha": LayerStats(channels: [], continuumK: 0.42, continuumReference: "RGB.r")]
+    let ha = Self.image(6, 4, planes: 1, seed: 7)
+    try history.apply(
+      processID: "background-extraction", params: Self.params([:]), result: history.current,
+      replacing: ["Ha": ha])
+    let extracted = try history.context(over: [:], stats: fit, device: device, moving: ["geometry"])
+    #expect(extracted.1["Ha"]?.continuumK == nil)
+    try history.apply(
+      processID: "geometry", params: Self.params([:]), result: history.current,
+      replacing: ["Ha": ha])
+    let moved = try history.context(over: [:], stats: fit, device: device, moving: ["geometry"])
+    #expect(moved.1["Ha"]?.continuumK == nil, "extracted, then moved: still no stack fit")
+    try history.undo()
+    try history.undo()
+    try history.apply(
+      processID: "geometry", params: Self.params([:]), result: history.current,
+      replacing: ["Ha": ha])
+    let onlyMoved = try history.context(
+      over: [:], stats: fit, device: device, moving: ["geometry"])
+    #expect(onlyMoved.1["Ha"]?.continuumK == 0.42, "only moved: the stack fit stays")
+  }
+}

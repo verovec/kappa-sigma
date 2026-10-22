@@ -27,7 +27,8 @@ package protocol ImageProcess {
   /// A process with `params`, its pipelines built on `device`.
   init(params: ParamSet, device: MTLDevice) throws
 
-  /// Encodes the process of `input` into `output` (same size) in `context.commands`. `.px`
+  /// Encodes the process of `input` into `output` (same size, but for a `GeometricProcess`) in
+  /// `context.commands`. `.px`
   /// parameters are divided by `context.scale`; nothing else depends on the purpose.
   func render(
     _ input: GPUImage, stats: LayerStats, into output: GPUImage, context: RenderContext) throws
@@ -132,18 +133,22 @@ package struct RenderContext {
   /// The bundle statistics of `layers`, by the same ids (R2: what a process reads instead of
   /// measuring a layer).
   package let layerStats: [String: LayerStats]
+  /// The input's rows are stored bottom-up (shown flipped): what a geometric process needs to
+  /// read « top » and « clockwise » as the image is shown.
+  package let rowsBottomUp: Bool
 
   /// A context encoding into `commands` at `scale` for `purpose`, with the bundle `layers` and
-  /// their `layerStats`.
+  /// their `layerStats`, over an input whose rows are stored bottom-up or not.
   package init(
     commands: MTLCommandBuffer, scale: Double, purpose: Purpose, layers: [String: GPUImage] = [:],
-    layerStats: [String: LayerStats] = [:]
+    layerStats: [String: LayerStats] = [:], rowsBottomUp: Bool = false
   ) {
     self.commands = commands
     self.scale = scale
     self.purpose = purpose
     self.layers = layers
     self.layerStats = layerStats
+    self.rowsBottomUp = rowsBottomUp
   }
 }
 

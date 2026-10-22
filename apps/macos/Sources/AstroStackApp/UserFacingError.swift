@@ -42,6 +42,9 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
   case projectUnsaved
   /// The run's stream ended without its result, and nobody cancelled it.
   case runIncomplete
+  /// The viewer shows a geometry preview that moves the pixels: no step lies under them, so
+  /// none can be compared (card 0090).
+  case movedPreview
   /// An error without a sentence of its own (SQLite, FITS, the file system): its description,
   /// which names the file or value it is about.
   case other(String)
@@ -100,6 +103,8 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     case .projectUnsaved: .app("Save the project first: its stacks are written inside it.")
     case .runIncomplete:
       .app("The run stopped without writing its bundle; its journal shows the last step.")
+    case .movedPreview:
+      .app("The preview moves the pixels: compare once the geometry is applied or reset.")
     case .other(let description): .app("\(description)")
     }
   }

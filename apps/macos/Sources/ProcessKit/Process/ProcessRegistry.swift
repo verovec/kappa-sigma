@@ -27,7 +27,13 @@ package struct ProcessRegistry {
       EmissionScreensProcess.self, ColourBalanceProcess.self, SkyDesatProcess.self,
       CurvesProcess.self, SaturationProcess.self, StarRecompositionProcess.self,
       PlateSolveProcess.self, ColourCalibrationProcess.self,
+      GeometryProcess.self,
     ])
+  }
+
+  /// The ids of the processes that move pixels (`GeometricProcess`, card 0090).
+  package var movingIDs: Set<String> {
+    Set(types.filter { $0 is any GeometricProcess.Type }.map { $0.id })
   }
 
   /// The ids, in menu order.

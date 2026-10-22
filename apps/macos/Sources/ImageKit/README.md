@@ -24,6 +24,11 @@ No UI, no Metal: RenderKit uploads what ImageKit produces.
 - `Pyramid`: 2×2 block means with vDSP (never stride sampling, so noise stays representative),
   halving until the long side is ≤ 512 px; `build` runs `@concurrent`. 22 Mpx × 3 planes: 0.04 s.
 - `ImageExport`: 16-bit TIFF/PNG via ImageIO for deliverables, top row first, values clamped.
+- `GridMap` (card 0090): crops, flips and quarter turns as one whole-pixel affine map in 1-based
+  FITS coordinates (`p' = M·p + t`, `M` a signed permutation); `FITSHeader.moved(by:)` moves a
+  TAN/TAN-SIP solution with it (`CRPIX`, `CD·M⁻¹`, SIP substituted), any other solution is
+  dropped; `droppingWCS()` for a resampled frame. Pinned by "every star keeps its RA/Dec".
+  `FITSHeader.Card(keyword:value:)` / `(keyword:number:)` build fixed-format cards.
 
 ## Oracles
 

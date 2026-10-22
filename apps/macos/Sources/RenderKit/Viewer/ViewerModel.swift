@@ -90,12 +90,17 @@ package final class ViewerModel {
     frame.flipRows = image.metadata.rowOrder == .bottomUp
   }
 
-  /// Shows `image` in place of the current one (the Studio's new head, card 0087): zoom, tool,
-  /// region, compare and the stretch mode stay; the autostretch follows the new image; manual
-  /// numbers stay unless the plane count changed.
+  /// Shows `image` in place of the current one (the Studio's new head, card 0087).
+  ///
+  /// Zoom, tool, region, compare and the stretch mode stay; the autostretch follows the new
+  /// image; manual numbers stay unless the plane count changed. A region does not survive
+  /// another size (a crop or a quarter turn, card 0090): its pixels are not the new image's.
   package func replace(image: AstroImage, statistics measured: [STFMapping]? = nil) {
     let statistics = measured ?? STFMapping.measure(planes: image.planes, linked: false)
     let samePlanes = statistics.count == self.statistics.count
+    if image.width != self.image.width || image.height != self.image.height {
+      frame.region = nil
+    }
     self.image = image
     self.statistics = statistics
     linkedStatistics = STFMapping.linked(statistics)

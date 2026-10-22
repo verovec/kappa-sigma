@@ -177,12 +177,14 @@ package final class PipelineRunner {
       let process = try type.init(params: params, device: device)
       let input = history.current
       let (layers, layerStats) = try context(session)
-      let output = try runner.run(
-        process, input: GPUImage(device: device, image: input), stats: session.stats,
-        layers: layers, layerStats: layerStats)
-      let result = AstroImage(
-        width: input.width, height: input.height, planes: output.read(), metadata: input.metadata)
-      try history.apply(processID: id, params: params, result: result)
+      let result = try runner.image(
+        process, input: input, stats: session.stats, layers: layers, layerStats: layerStats)
+      // A geometry step moves the layers with its image, as in the Studio (card 0090).
+      let moved = try runner.movedLayers(
+        process, layers: layers, input: input, result: result, roles: history.layerRoles)
+      try history.apply(
+        processID: id, params: params, result: result, outputs: moved.outputs,
+        replacing: moved.replacing)
     } else {
       throw PipelineError.unknownProcess(id)
     }
@@ -192,7 +194,8 @@ package final class PipelineRunner {
   /// The layers a step reads, as `StudioSession` gives them (`History.context`).
   private func context(_ session: Session) throws -> ([String: GPUImage], [String: LayerStats]) {
     try session.history.context(
-      over: session.layers, stats: session.bundle.layerStats, device: device)
+      over: session.layers, stats: session.bundle.layerStats, device: device,
+      moving: registry.movingIDs)
   }
 
   /// The step's values on `schema`; a value the schema refuses stops the run with its name

@@ -217,6 +217,8 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
   /// The Studio's « Redo » (card 0087).
   package static let studioRedo = stageControl("studio", "redo")
 
+  /// The geometry panel's « Use region » (card 0090).
+  package static let studioUseRegion = stageControl("studio", "geometry.useRegion")
   /// A control of the Studio's pipeline column (card 0088).
   private static func studioPipeline(_ name: String) -> Self {
     stageControl("studio", "pipeline." + name)

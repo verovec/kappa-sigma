@@ -67,24 +67,35 @@ package final class StudioSession {
     guard let type = registry.type(id: processID) else {
       throw StudioError.unknownProcess(processID)
     }
-    let source = input ?? history.current
     let (layers, layerStats) = try context()
-    let output = try runner.run(
-      type.init(params: params, device: device), input: GPUImage(device: device, image: source),
+    return try runner.image(
+      type.init(params: params, device: device), input: input ?? history.current,
       stats: stepStats, scale: scale, purpose: purpose, layers: layers, layerStats: layerStats,
-      mask: try mask.map { try GPUImage(device: device, image: $0) })
-    return AstroImage(
-      width: source.width, height: source.height, planes: output.read(),
-      metadata: source.metadata)
+      mask: mask)
   }
 
-  /// Applies `processID` with `params` at full resolution: the head moves to its result.
+  /// Applies `processID` with `params` at full resolution: the head moves to its result; a
+  /// geometry step moves every layer the next steps read with it (card 0090).
   package func apply(_ processID: String, params: ParamSet, mask: AstroImage? = nil) throws {
-    if let type = registry.type(id: processID), type.runsTool(params) {
-      throw StudioError.needsTool(processID)
+    guard let type = registry.type(id: processID) else {
+      throw StudioError.unknownProcess(processID)
     }
-    let result = try render(processID, params: params, mask: mask)
-    try history.apply(processID: processID, params: params, result: result)
+    if type.runsTool(params) { throw StudioError.needsTool(processID) }
+    let process = try type.init(params: params, device: device)
+    let input = history.current
+    let (layers, layerStats) = try context()
+    let result = try runner.image(
+      process, input: input, stats: stepStats, layers: layers, layerStats: layerStats, mask: mask)
+    let moved = try runner.movedLayers(
+      process, layers: layers, input: input, result: result, roles: history.layerRoles)
+    try history.apply(
+      processID: processID, params: params, result: result, outputs: moved.outputs,
+      replacing: moved.replacing)
+  }
+
+  /// The statistics of the layers the next step reads, by id.
+  package func layerStats() throws -> [String: LayerStats] {
+    try context().1
   }
 
   /// Records a step whose result was made elsewhere (a host tool), with the layers it wrote and
@@ -116,7 +127,7 @@ package final class StudioSession {
     let files = history.writtenFiles
     if let overlay, overlay.files == files { return (overlay.layers, overlay.stats) }
     let (layers, stats) = try history.context(
-      over: bundleLayers, stats: bundle.layerStats, device: device)
+      over: bundleLayers, stats: bundle.layerStats, device: device, moving: registry.movingIDs)
     overlay = Overlay(files: files, layers: layers, stats: stats)
     return (layers, stats)
   }

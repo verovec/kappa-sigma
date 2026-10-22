@@ -207,6 +207,8 @@ package final class ProjectDocument: NSDocument {
   override package func close() {
     windowModel?.cancelRun()
     windowModel?.cancelScan()
+    // A Studio load still running would write into a package being released (or deleted).
+    windowModel?.dropWorkspace()
     if let project { release(project) }
     project = nil
     super.close()

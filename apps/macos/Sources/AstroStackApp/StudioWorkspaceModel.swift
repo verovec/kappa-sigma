@@ -178,12 +178,20 @@ package final class StudioWorkspaceModel {
     do {
       try move()
       failure = nil
+      previewFailed = false
     } catch {
       failure = UserFacingError(error).message
+      previewFailed = false
       try? headChanged()
       throw error
     }
-    try headChanged()
+    do {
+      try headChanged()
+    } catch {
+      // The history moved but its head could not be shown: say so, never a silent stale view.
+      failure = UserFacingError(error).message
+      throw error
+    }
   }
 
   /// Compares the viewer's image with the output of step `index` (`nil`: no compare).

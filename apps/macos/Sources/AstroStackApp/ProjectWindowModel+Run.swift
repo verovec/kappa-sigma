@@ -236,9 +236,8 @@ extension ProjectWindowModel {
     guard let store = store(), let stack = stacks.first(where: { $0.id == stackID }) else {
       return nil
     }
-    let nights = sources.filter { stack.sourceIDs.contains($0.id) && $0.kind == .night }
-    let kept = Set(nights.map(\.profileID))
-    guard kept.count == 1, let id = kept.first.flatMap({ $0 }) else { return nil }
+    let stackSources = sources.filter { stack.sourceIDs.contains($0.id) }
+    guard let id = Self.agreedProfileID(stackSources) else { return nil }
     return ImportViewModel.profiles(store: store).profiles.first { $0.id == id }
   }
 

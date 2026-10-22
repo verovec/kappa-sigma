@@ -275,8 +275,7 @@ package final class ProjectWindowModel {
       // Every night must have kept the same profile (a night without one counts, a legacy run
       // does not): no guessing. Looked up once per agreed id (nothing saves a user copy from the
       // app yet; the card that does invalidates this).
-      let kept = Set(sources.filter { $0.kind == .night }.map(\.profileID))
-      let agreed = kept.count == 1 ? kept.first.flatMap { $0 } : nil
+      let agreed = Self.agreedProfileID(sources)
       if agreed != profileLookupID {
         profileLookupID = agreed
         knobs.profile = agreed.flatMap { id in
@@ -302,5 +301,12 @@ package final class ProjectWindowModel {
     } catch {
       self.error = UserFacingError(error)
     }
+  }
+
+  /// The profile every capture night of `sources` kept at import, or `nil` when they differ or
+  /// one kept none (a legacy run has no say): the knobs' help and the Studio's step 0 read it.
+  nonisolated static func agreedProfileID(_ sources: [ProjectSource]) -> String? {
+    let kept = Set(sources.filter { $0.kind == .night }.map(\.profileID))
+    return kept.count == 1 ? kept.first.flatMap { $0 } : nil
   }
 }

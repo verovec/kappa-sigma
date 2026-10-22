@@ -68,7 +68,7 @@ package final class StudioModel {
   package func apply(_ processID: String, params: ParamSet, mask: AstroImage? = nil) throws {
     defer { mirror() }
     try session.apply(processID, params: params, mask: mask)
-    try session.history.save()
+    cleanUp()
   }
 
   /// Records a step made elsewhere (a host tool) with the layers it wrote.
@@ -78,7 +78,7 @@ package final class StudioModel {
   ) throws {
     defer { mirror() }
     try session.apply(processID, params: params, result: result, outputs: outputs)
-    try session.history.save()
+    cleanUp()
   }
 
   /// What `processID` with `params` makes of the head at `scale` (the live preview; at scale 1
@@ -151,6 +151,16 @@ package final class StudioModel {
     return try store.appendHistoryStep(
       imageID: imageID, processID: step.processID, paramsJSON: json,
       output: HistoryStep.Output(path: path(of: step.file), bytes: Int64(bytes)), contentHash: nil)
+  }
+
+  /// Removes the outputs nothing refers to any more; the step is recorded whatever happens
+  /// here, so a failure is logged, never reported as a failed Apply.
+  private func cleanUp() {
+    do {
+      try session.history.save()
+    } catch {
+      Self.logger.error("history cleanup: \(String(describing: error), privacy: .public)")
+    }
   }
 
   private static let logger = Logger(subsystem: "fr.astrostack", category: "App/studio")

@@ -401,6 +401,22 @@
         }
       }
     },
+    "Apply Process": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apply Process"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appliquer le traitement"
+          }
+        }
+      }
+    },
     "Back": {
       "localizations": {
         "en": {
@@ -1681,6 +1697,22 @@
         }
       }
     },
+    "Invert": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invert"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inverser"
+          }
+        }
+      }
+    },
     "Keep": {
       "localizations": {
         "en": {
@@ -1985,6 +2017,22 @@
         }
       }
     },
+    "Luminosity": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Luminosity"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Luminosité"
+          }
+        }
+      }
+    },
     "Make frame %@ the reference": {
       "localizations": {
         "en": {
@@ -1997,6 +2045,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Faire de la pose %@ la référence"
+          }
+        }
+      }
+    },
+    "Mask": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mask"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masque"
           }
         }
       }
@@ -2349,6 +2413,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aucune brute ne correspond au modèle couleur %@ (%lld écartées) : choisissez-en un autre."
+          }
+        }
+      }
+    },
+    "No mask": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No mask"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun masque"
           }
         }
       }

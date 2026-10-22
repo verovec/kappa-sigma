@@ -14,6 +14,7 @@ struct StudioSideView: View {
       VStack(alignment: .leading, spacing: DesignMetrics.spacingL) {
         if let panel = model.panel {
           ProcessPanel(model: panel)
+          StudioMaskRow(model: model)
           HStack {
             Button(.app("Close")) { model.closePanel() }
               .accessible(.studioClosePanel, label: .app("Close"))

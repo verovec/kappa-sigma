@@ -110,6 +110,18 @@ package final class ProjectDocument: NSDocument {
     windowModel?.openGuide()
   }
 
+  // MARK: - The Studio's commands (card 0087)
+
+  /// Edit › Apply Process (⌘E): the open panel's values become a history step.
+  @objc package func applyProcess(_ sender: Any?) {
+    guard let workspace = windowModel?.workspace else { return }
+    do {
+      try workspace.apply()
+    } catch {
+      windowModel?.error = UserFacingError(error)
+    }
+  }
+
   // MARK: - The Tri stage's commands (card 0069)
 
   /// View › Previous Frame (⌘←): the blink panel one frame back.
@@ -143,6 +155,9 @@ package final class ProjectDocument: NSDocument {
   /// (⌘←, ⌘→, ⌘⌫, ⌘↩) stay with a text field being edited.
   override package func validateUserInterfaceItem(_ item: any NSValidatedUserInterfaceItem) -> Bool
   {
+    if item.action == #selector(applyProcess(_:)) {
+      return windowModel?.selection == .studio && windowModel?.workspace?.panel != nil
+    }
     guard let action = item.action, Self.reviewActions.contains(action) else {
       return super.validateUserInterfaceItem(item)
     }

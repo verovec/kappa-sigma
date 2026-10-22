@@ -57,6 +57,10 @@ nonisolated package enum CommandCatalog {
   private static let edit: [AppCommand] = [
     AppCommand("edit.undo", "Undo", menu: .edit, action: "undo:", key: "z"),
     AppCommand("edit.redo", "Redo", menu: .edit, action: "redo:", key: "Z"),
+    // The Studio's Apply (card 0087): greyed unless a process panel is open in the Studio.
+    AppCommand(
+      "studio.apply", "Apply Process", menu: .edit, action: "applyProcess:", key: "e",
+      stage: .studio),
     AppCommand("edit.cut", "Cut", menu: .edit, action: "cut:", key: "x", separatorBefore: true),
     AppCommand("edit.copy", "Copy", menu: .edit, action: "copy:", key: "c"),
     AppCommand("edit.paste", "Paste", menu: .edit, action: "paste:", key: "v"),

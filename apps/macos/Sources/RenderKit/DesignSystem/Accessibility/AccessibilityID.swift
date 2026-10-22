@@ -180,6 +180,12 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
     stageControl("studio", "step." + String(index))
   }
 
+  /// The Studio's mask source menu (card 0087).
+  package static let studioMaskSource = stageControl("studio", "mask.source")
+
+  /// The Studio's mask « Invert » (card 0087).
+  package static let studioMaskInvert = stageControl("studio", "mask.invert")
+
   /// The Studio's « Apply » (card 0087).
   package static let studioApply = stageControl("studio", "apply")
 

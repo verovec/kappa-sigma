@@ -67,3 +67,25 @@ struct StudioWorkspaceModelTests {
     #expect(workspace.viewer.reference == nil)
   }
 }
+
+extension StudioWorkspaceModelTests {
+  /// A mask zero everywhere (a full luminosity range, inverted) lets nothing through: the
+  /// preview and Apply both keep the head; without the mask the process shows.
+  @Test("a mask applies to the preview and to Apply alike", .scratchDirectory)
+  func testMask() async throws {
+    let opened = try StudioModelTests.project()
+    defer { try? opened.package.close() }
+    let workspace = try Self.workspace(opened, bundle: StudioModelTests.bundle())
+    let combined = workspace.viewer.model.image.planes
+    workspace.choose(StretchProcess.id)
+    workspace.mask = Mask(
+      source: .luminosityRange(low: 0, high: 1, softness: 0), inverted: true)
+    await workspace.previewNow()
+    #expect(workspace.viewer.model.image.planes == combined)
+    try workspace.apply()
+    #expect(workspace.studio.head.planes == combined)
+    workspace.mask = nil
+    try workspace.apply()
+    #expect(workspace.studio.head.planes != combined)
+  }
+}

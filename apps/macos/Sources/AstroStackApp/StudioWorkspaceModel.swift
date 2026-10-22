@@ -53,6 +53,11 @@ package final class StudioWorkspaceModel {
   package private(set) var isPreviewing = false
   /// The step compare shows, if any.
   package private(set) var comparing: Int?
+  /// Where the process may act (luminosity range, stars), applied by the kit after the
+  /// process, to the preview and Apply alike; `nil`: everywhere.
+  package var mask: Mask? {
+    didSet { if panel != nil { schedulePreview() } }
+  }
   /// Why the last action failed.
   package private(set) var failure: LocalizedStringResource?
 
@@ -93,7 +98,7 @@ package final class StudioWorkspaceModel {
   package func previewNow() async {
     guard let panel else { return }
     do {
-      let preview = try studio.preview(panel.type.id, params: panel.params)
+      let preview = try studio.preview(panel.type.id, params: panel.params, mask: maskImage())
       try show(preview)
       isPreviewing = true
       failure = nil
@@ -106,7 +111,7 @@ package final class StudioWorkspaceModel {
   package func apply() throws {
     guard let panel else { return }
     previewTask?.cancel()
-    try studio.apply(panel.type.id, params: panel.params)
+    try studio.apply(panel.type.id, params: panel.params, mask: maskImage())
     try headChanged()
   }
 
@@ -132,6 +137,17 @@ package final class StudioWorkspaceModel {
     let image = try studio.session.history.output(ofStep: index)
     viewer.reference = try Self.texture(image, device: studio.session.device)
     comparing = index
+  }
+
+  /// The mask of the head, one plane, or `nil` without a mask.
+  private func maskImage() throws -> AstroImage? {
+    guard let mask else { return nil }
+    let device = studio.session.device
+    let head = studio.head
+    let built = try MaskBuilder(device: device)
+      .build(mask, image: GPUImage(device: device, image: head), scale: 1)
+    return AstroImage(
+      width: head.width, height: head.height, planes: built.read(), metadata: head.metadata)
   }
 
   private func schedulePreview() {

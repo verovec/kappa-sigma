@@ -219,6 +219,18 @@ extension ProjectWindowModel {
     }
   }
 
+  /// The profile every night of stack `stackID` kept at import (a night without one counts),
+  /// whose channel combination is step 0 of a fresh history; `nil` when they differ.
+  func keptProfile(of stackID: Int64) -> Profile? {
+    guard let store = store(), let stack = stacks.first(where: { $0.id == stackID }) else {
+      return nil
+    }
+    let nights = sources.filter { stack.sourceIDs.contains($0.id) && $0.kind == .night }
+    let kept = Set(nights.map(\.profileID))
+    guard kept.count == 1, let id = kept.first.flatMap({ $0 }) else { return nil }
+    return ImportViewModel.profiles(store: store).profiles.first { $0.id == id }
+  }
+
   /// The workspace of another stack, or none: its load stops, its undo actions go.
   func dropWorkspace() {
     workspaceTask?.cancel()
@@ -235,7 +247,7 @@ extension ProjectWindowModel {
   ) async throws {
     guard let store = store() else { return }
     let (bundle, roles, header) = try await StudioBundle.load(source)
-    let combination = knobs.profile?.steps
+    let combination = keptProfile(of: stackID)?.steps
       .first { $0.recipe.processID == ChannelCombinationProcess.id }
       .map { ParamSet.loading($0.recipe.params, onto: ChannelCombinationProcess.schema).params }
     try Task.checkCancellation()

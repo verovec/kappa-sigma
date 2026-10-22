@@ -236,6 +236,8 @@ package final class StudioWorkspaceModel {
     if let comparing, comparing >= studio.steps.count { try compare(toStep: nil) }
     try show(studio.head)
     refreshCatalogue()
+    // The panel stays open on the new head: its values are previewed on it again (R2).
+    if panel != nil { schedulePreview() }
   }
 
   private func show(_ image: AstroImage, statistics: [STFMapping]? = nil) throws {

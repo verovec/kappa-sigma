@@ -141,8 +141,12 @@ package final class StudioModel {
   }
 
   private func appendRow(_ step: History.Step) throws -> HistoryStep {
-    let url = session.history.directory.appendingPathComponent(step.file)
-    let bytes = (try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int) ?? 0
+    // The step's image and the layers it wrote: what the disk budget counts.
+    let bytes = ([step.file] + step.outputs.values).reduce(0) { total, file in
+      let url = session.history.directory.appendingPathComponent(file)
+      let size = try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int
+      return total + (size ?? 0)
+    }
     let json = String(bytes: try JSONEncoder().encode(step.params), encoding: .utf8) ?? "[]"
     return try store.appendHistoryStep(
       imageID: imageID, processID: step.processID, paramsJSON: json,

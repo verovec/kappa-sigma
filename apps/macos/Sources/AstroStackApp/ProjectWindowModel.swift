@@ -36,6 +36,8 @@ package final class ProjectWindowModel {
   package internal(set) var run: RunViewModel?
   /// The stack the Studio shows: the latest one, read-only.
   package internal(set) var studio: LegacyRunModel?
+  /// The Studio's working image of the latest stack (card 0087), once its layers are read.
+  package internal(set) var workspace: StudioWorkspaceModel?
   /// The Stacking panel's preset and knob edits: what the next run applies (card 0070).
   package let knobs: KnobPanelViewModel
   /// The profile id the knobs' help was last looked up for (`knobs.profile` is its result, nil

@@ -31,7 +31,7 @@ package struct ProcessPanel: View {
       if model.type.schema.hasAdvanced {
         Toggle(isOn: $model.showsAdvanced) { Text(.app("Advanced")) }
           .toggleStyle(.switch)
-          .accessible(.parameter(model.type.id + ".advanced", .toggle), label: .app("Advanced"))
+          .accessible(.processAdvanced(model.type.id), label: .app("Advanced"))
       }
     }
   }

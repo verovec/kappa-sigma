@@ -1,4 +1,5 @@
 internal import Foundation
+internal import ProcessKit
 internal import ProjectKit
 package import StackKit
 
@@ -107,9 +108,28 @@ extension ProjectWindowModel {
       let source = try await Self.openStack(
         folder.appendingPathComponent(stack.bundlePath), object: targetName)
       studio = studio ?? LegacyRunModel(source: source)
+      try await openWorkspace(
+        source, stackID: stack.id, folder: folder, bundlePath: stack.bundlePath)
     } catch {
       self.error = UserFacingError(error)
     }
+  }
+
+  /// The Studio's working image of stack `stackID`: its layers read off the main actor, its
+  /// history opened (step 0 = the channel combination of the kept profile, else the defaults).
+  func openWorkspace(
+    _ source: LegacyRunSource, stackID: Int64, folder: URL, bundlePath: String
+  ) async throws {
+    guard let store = store() else { return }
+    let (bundle, roles) = try await StudioBundle.load(source)
+    let combination = knobs.profile?.steps
+      .first { $0.recipe.processID == ChannelCombinationProcess.id }
+      .map { ParamSet.loading($0.recipe.params, onto: ChannelCombinationProcess.schema).params }
+    let studio = try StudioModel(
+      store: store, stackID: stackID, stackFolder: folder.appendingPathComponent(bundlePath),
+      bundle: bundle, combination: combination)
+    workspace = try StudioWorkspaceModel(studio: studio, base: roles)
+    refresh()
   }
 
   @concurrent

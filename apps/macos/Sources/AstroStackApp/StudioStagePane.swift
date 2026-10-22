@@ -8,7 +8,13 @@ struct StudioStagePane: View {
   @Environment(\.locale) private var locale
 
   var body: some View {
-    if let studio = model.studio {
+    if let workspace = model.workspace {
+      VStack(alignment: .leading, spacing: 0) {
+        SectionHeader(.app("Studio"), help: StageHelp.help(.studio, locale: locale))
+          .padding(DesignMetrics.spacingM)
+        StudioWorkspaceView(model: workspace)
+      }
+    } else if let studio = model.studio {
       VStack(alignment: .leading, spacing: 0) {
         SectionHeader(.app("Studio"), help: StageHelp.help(.studio, locale: locale))
           .padding(DesignMetrics.spacingM)

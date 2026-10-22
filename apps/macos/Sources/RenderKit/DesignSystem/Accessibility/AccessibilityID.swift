@@ -165,6 +165,33 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
     stageControl("review", "reference.\(index)")
   }
 
+  /// A process panel's « Advanced » switch (card 0087).
+  package static func processAdvanced(_ processID: String) -> Self {
+    parameter(processID + ".advanced", .toggle)
+  }
+
+  /// A process of the Studio's catalogue (card 0087).
+  package static func studioProcess(_ processID: String) -> Self {
+    stageControl("studio", "process." + processID)
+  }
+
+  /// A step of the Studio's history list: compare to it (card 0087).
+  package static func studioStep(_ index: Int) -> Self {
+    stageControl("studio", "step." + String(index))
+  }
+
+  /// The Studio's « Apply » (card 0087).
+  package static let studioApply = stageControl("studio", "apply")
+
+  /// The Studio's « Undo » (card 0087).
+  package static let studioUndo = stageControl("studio", "undo")
+
+  /// The Studio's « Redo » (card 0087).
+  package static let studioRedo = stageControl("studio", "redo")
+
+  /// The Studio's « Close » of the process panel (card 0087).
+  package static let studioClosePanel = stageControl("studio", "closePanel")
+
   /// The Import sheet's profile picker (card 0060).
   package static let importProfile = Self("import", "profile")
 

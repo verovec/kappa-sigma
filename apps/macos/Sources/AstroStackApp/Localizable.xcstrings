@@ -385,6 +385,22 @@
         }
       }
     },
+    "Apply": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apply"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appliquer"
+          }
+        }
+      }
+    },
     "Back": {
       "localizations": {
         "en": {
@@ -733,6 +749,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choisissez une couche"
+          }
+        }
+      }
+    },
+    "Choose a process in the catalogue.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a process in the catalogue."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez un traitement dans le catalogue."
           }
         }
       }
@@ -1425,6 +1457,22 @@
         }
       }
     },
+    "History": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "History"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Historique"
+          }
+        }
+      }
+    },
     "Host tools": {
       "localizations": {
         "en": {
@@ -1885,6 +1933,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Brutes"
+          }
+        }
+      }
+    },
+    "Linear": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Linear"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Linéaire"
+          }
+        }
+      }
+    },
+    "Linear or stretched": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Linear or stretched"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Linéaire ou étiré"
           }
         }
       }
@@ -3709,6 +3789,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Étape %1$lld sur %2$lld"
+          }
+        }
+      }
+    },
+    "Stretched": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stretched"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Étiré"
           }
         }
       }

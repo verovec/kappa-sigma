@@ -40,6 +40,7 @@ extension KnobSchema {
 
   /// Which registered frames are stacked (`Grader.Options`).
   static let grading: [Knob] = [
+    .flag(frameReviewID, .simple, \.frameReview),
     .number("roundness_floor", .simple, 0.2...0.95, \.grading.roundnessFloor),
     .number("fwhm_sigma", .simple, 1...5, \.grading.fwhmSigma),
     .number("background_sigma", .simple, 1...5, \.grading.backgroundSigma),

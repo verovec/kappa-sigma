@@ -30,6 +30,12 @@ package struct ChannelOutcome: Equatable, Sendable {
   package var seamNoise: SeamNoiseEqualiser.Record?
   /// What the cross-frame pass cleaned (trails, saturated cores); nil when it changed nothing.
   package var trailMask: TrailMaskSummary?
+  /// Each graded frame's capture night (`CaptureFrame.session`), parallel to `grades`.
+  package var frameNights: [String] = []
+  /// The registration reference as `FrameGrade.index`, when Siril's sequence says.
+  package var reference: Int?
+  /// The user's decision at the review breakpoint (card 0069); nil when the lane was not reviewed.
+  package var frameDecision: FrameDecision?
 
   /// A channel about to be processed.
   package init(_ set: FrameSet, filter: String, selection: CalibrationSelection) {

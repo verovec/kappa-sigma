@@ -27,9 +27,12 @@ extension Preprocessor {
       "grading + stacking \(object) \(lane)" + (groups.count > 1 ? " (\(groups.count) groups)" : "")
     )
     // The stacker journals its own Siril lines and warnings.
-    let stacker = ChannelStacker(
+    var stacker = ChannelStacker(
       runner: tools.runner, settings: request.settings, trailProbe: tools.trailProbe
     ) { emitter.line($0) }
+    if request.settings.frameReview {
+      stacker.frameReview = frameReviewHook(work: request.work, emitter: emitter)
+    }
     let outcome: ChannelOutcome
     if plan.anchored {
       // Every channel of an anchored run lands on the anchor night's canvas, a one-night one too.

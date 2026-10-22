@@ -16,6 +16,9 @@ package struct StackRecord: Equatable, Sendable {
   package var knobs: KnobPatch
   /// A recorded preset this build does not know: read as deepsky, and shown.
   package var unknownMode: String?
+  /// The frame review's decisions per lane (card 0069, `frame_review`): one entry per lane the run
+  /// paused on, empty lists when the hand changed nothing; nil when the run never paused.
+  package var frameReview: [String: FrameDecision]?
 
   /// A record of `request` run with the preset of `mode` and `knobs`.
   package init(
@@ -33,6 +36,9 @@ extension StackRecord {
     unknownMode.map { ["mode=\($0)"] } ?? []
   }
 
+  /// The run paused at the frame review and the user answered (`ProjectFacts.framesReviewed`).
+  package var framesReviewed: Bool { frameReview != nil }
+
   /// The record `stack` holds in its `params_json`.
   package init(stack: ProjectStack) throws {
     self = try JSONDecoder().decode(Self.self, from: Data(stack.paramsJSON.utf8))
@@ -42,6 +48,7 @@ extension StackRecord {
 extension StackRecord: Codable {
   private enum Key: String, CodingKey {
     case mode, knobs
+    case frameReview = "frame_review"
   }
 
   package init(from decoder: any Decoder) throws {
@@ -51,6 +58,7 @@ extension StackRecord: Codable {
     mode = recorded.flatMap(PreprocessRequest.Mode.init(rawValue:)) ?? .deepsky
     unknownMode = mode.rawValue == recorded || recorded == nil ? nil : recorded
     knobs = try record.decodeIfPresent(KnobPatch.self, forKey: .knobs) ?? KnobPatch()
+    frameReview = try record.decodeIfPresent([String: FrameDecision].self, forKey: .frameReview)
   }
 
   package func encode(to encoder: any Encoder) throws {
@@ -58,5 +66,6 @@ extension StackRecord: Codable {
     var record = encoder.container(keyedBy: Key.self)
     try record.encode(mode, forKey: .mode)
     if !knobs.values.isEmpty { try record.encode(knobs, forKey: .knobs) }
+    try record.encodeIfPresent(frameReview, forKey: .frameReview)
   }
 }

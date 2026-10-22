@@ -4705,6 +4705,22 @@
         }
       }
     },
+    "Step %lld has values its process refuses: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Step %lld has values its process refuses: %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’étape %lld a des valeurs que son process refuse : %@."
+          }
+        }
+      }
+    },
     "Step %lld of %lld": {
       "localizations": {
         "en": {
@@ -4733,6 +4749,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "L’étape %lld de l’historique n’existe plus."
+          }
+        }
+      }
+    },
+    "Step “%@” runs a host tool: apply it in the Studio, then continue.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Step “%@” runs a host tool: apply it in the Studio, then continue."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’étape « %@ » lance un outil externe : appliquez-la dans le Studio, puis continuez."
           }
         }
       }
@@ -5009,6 +5041,22 @@
         }
       }
     },
+    "The history is not at step %lld's breakpoint: Continue would misplace it.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The history is not at step %lld's breakpoint: Continue would misplace it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’historique n’est pas au point d’arrêt de l’étape %lld : Continuer le mal placerait."
+          }
+        }
+      }
+    },
     "The image changed while the tool ran: nothing was recorded.": {
       "localizations": {
         "en": {
@@ -5085,6 +5133,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le seul profil pour ces captures"
+          }
+        }
+      }
+    },
+    "The pipeline has no step %lld.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The pipeline has no step %lld."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le pipeline n’a pas d’étape %lld."
+          }
+        }
+      }
+    },
+    "The pipeline names a process the Studio does not have: “%@”.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The pipeline names a process the Studio does not have: “%@”."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le pipeline nomme un process que le Studio n’a pas : « %@ »."
           }
         }
       }

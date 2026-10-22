@@ -60,6 +60,9 @@ struct PlateSolveStudioViewsTests {
       .plateSolve(.noSolution(path: "/x/solved.fits")),
       .plateSolveInput(.coordinatesMissing), .plateSolveInput(.unreadable("north")),
       .plateSolveInput(.opticsMissing), .studio(.needsTool("plate-solve")),
+      .pipeline(.unknownProcess("x")), .pipeline(.noStep(2)),
+      .pipeline(.notAtBreakpoint(step: 1, steps: 3)),
+      .pipeline(.invalidValues(step: 0, ids: ["gain"])), .pipeline(.toolMissing("plate-solve")),
     ])
   func testSentences(error: UserFacingError) {
     var english = error.message
@@ -76,6 +79,7 @@ struct PlateSolveStudioViewsTests {
       UserFacingError(PlateSolveError.noSolution(path: "p")) == .plateSolve(.noSolution(path: "p")))
     #expect(
       UserFacingError(PlateSolveTool.InputError.opticsMissing) == .plateSolveInput(.opticsMissing))
+    #expect(UserFacingError(PipelineError.noStep(1)) == .pipeline(.noStep(1)))
   }
 }
 

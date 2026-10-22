@@ -12,6 +12,23 @@ extension UserFacingError {
     }
   }
 
+  /// Why a pipeline run stopped (step numbers from 1, as the column shows them).
+  static func message(_ error: PipelineError) -> LocalizedStringResource {
+    switch error {
+    case .unknownProcess(let id):
+      .app("The pipeline names a process the Studio does not have: “\(id)”.")
+    case .noStep(let index): .app("The pipeline has no step \(index + 1).")
+    case .notAtBreakpoint(let step, _):
+      .app(
+        "The history is not at step \(step + 1)'s breakpoint: Continue would misplace it."
+      )
+    case .invalidValues(let step, let ids):
+      .app("Step \(step + 1) has values its process refuses: \(ids.joined(separator: ", ")).")
+    case .toolMissing(let id):
+      .app("Step “\(id)” runs a host tool: apply it in the Studio, then continue.")
+    }
+  }
+
   /// Why a plate solve gave nothing (card 0093).
   static func message(_ error: PlateSolveError) -> LocalizedStringResource {
     switch error {

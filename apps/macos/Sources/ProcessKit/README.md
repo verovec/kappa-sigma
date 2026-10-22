@@ -213,6 +213,32 @@ in en/fr; the English title is the key, resolved with `ProcessKitResources.title
 - `.text` parameters (`ParamSpec(id:title:level:text:maxLength:)`): free text, trimmed, empty by
   default — a coordinate the user types or takes from a suggestion; JSON stores a string.
 
+## Host-tool processes with layers (card 0092)
+
+- Background extraction is a host-tool process like plate solving (`hostTool = true`, card
+  0093): its `render` is the image itself, Apply runs the tool the app injects
+  (`StudioTool`), a pipeline without it names the step (`PipelineError.toolMissing`).
+- A host tool may read and write layers: `PipelineRunner.BatchInput` (the head and the bundle's
+  layers as the steps so far left them) → `BatchOutput` (the step's image, new layers by role in
+  `outputs`, bundle layers rewritten by id in `replaced`). `BatchProcess.init(schema:run:)`
+  still wraps a tool that only makes the image; a locked step reused on replay carries its
+  layers.
+- `History.apply(…outputs:replacing:)`: a rewritten bundle layer (`Ha` after an extraction) is
+  read by later steps under the bundle's id and adds no role; `writtenLayers()` (each file read
+  once, evicted when no step refers to it) is the overlay `History.context(over:stats:device:)`
+  uploads for the Studio and the pipeline runner alike.
+- **BackgroundExtractionProcess** (`background-extraction`, linear): `engine` graxpert /
+  siril-rbf / siril-polynomial (each engine's values advanced, promoted by the choice),
+  `correction`, `applyTo` rgb (the head) / lines (the Hα/OIII/SII layers, the head kept) / all
+  (the head and every bundle layer). `run(_:params:extract:)` runs the engine per target, head
+  first; the first target's model is the `backgroundModel` output. The app's
+  `BackgroundExtractionTool` wires `extract` to StackKit `BackgroundExtraction`; the workspace
+  greys an engine whose tool is missing (and divide with Siril, StackKit's
+  `BackgroundEngine.supports`) and refuses Apply with the reason — no other engine runs (R2).
+
+To give a host tool layers: return them in `StudioToolResult(…outputs:replaced:)` from a
+`StudioTool(step:)`; the Studio records them, the next steps read them.
+
 ## How to add a process
 
 1. A type conforming to `ImageProcess` in `ProcessKit/Processes/<Name>/`, its kernel in a

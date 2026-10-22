@@ -1,4 +1,13 @@
 {
+  "background-extraction.applyTo": "L'image de travail, les couches de raies (Hα, OIII, SII) ou l'image et toutes les couches de la pile.",
+  "background-extraction.correction": "Soustraire retire un gradient additif (pollution lumineuse) ; diviser en retire un multiplicatif (vignetage), GraXpert seul.",
+  "background-extraction.degree": "Degré du polynôme Siril, de 1 à 4 : 1 est un plan, plus haut épouse le gradient et peut manger un grand objet.",
+  "background-extraction.dither": "Tramage du modèle RBF de Siril, contre les bandes dans les gradients doux ; actif comme l'ancien moteur.",
+  "background-extraction.engine": "Quel outil modélise le fond : IA de GraXpert, RBF ou polynôme de Siril ; un outil absent grise son choix avec la raison.",
+  "background-extraction.rbfSmooth": "Lissage RBF de Siril, de 0 à 1 ; plus haut suit moins le gradient. 0,5 est la valeur de l'ancien moteur.",
+  "background-extraction.samples": "Échantillons de fond par ligne du RBF de Siril ; plus suit un gradient plus fin. 30 est la valeur de l'ancien moteur.",
+  "background-extraction.smoothing": "Lissage GraXpert du modèle, de 0 à 1 ; 0 garde le modèle tel que GraXpert le fait, l'augmenter quand il suit l'objet.",
+  "background-extraction.tolerance": "Rejet des échantillons du RBF de Siril, en σ au-dessus du fond : plus bas les écarte des objets faibles. 1,5 comme l'ancien moteur.",
   "channel-combination.bBlack": "Soustrait d'abord de la couche bleue, tronqué à zéro ; 0 la garde telle qu'empilée.",
   "channel-combination.bSource": "Quelle couche du bundle remplit le canal bleu ; une couche absente grise le choix, rien ne la remplace.",
   "channel-combination.bWeight": "Multiplie la couche bleue avant la combinaison ; 1 la garde telle qu'empilée.",

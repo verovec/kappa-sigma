@@ -11,52 +11,6 @@ package import Metal
 /// `Sendable`: a caller on the main actor hops off it around the whole run; the run checks for
 /// cancellation between steps.
 package final class PipelineRunner {
-  /// A batch process: a host tool run on the whole image (StarNet, GraXpert).
-  package struct BatchProcess: Sendable {
-    /// Its parameters (what its recipe's values are validated on).
-    package let schema: ParamSchema
-    /// The layer the tool's image is (StarNet's `starless`), the working image kept as it was;
-    /// `nil`: the tool's image is the new working image.
-    package let writes: LayerRole?
-    /// The image, its values and a progress callback (0…1) → the processed image.
-    package let run:
-      @Sendable (AstroImage, ParamSet, @escaping @Sendable (Double) -> Void) async throws
-        -> AstroImage
-
-    /// A batch process of `schema` running `run`, whose image is the layer `writes` if given.
-    package init(
-      schema: ParamSchema, writes: LayerRole? = nil,
-      run:
-        @escaping @Sendable (AstroImage, ParamSet, @escaping @Sendable (Double) -> Void)
-        async throws -> AstroImage
-    ) {
-      self.schema = schema
-      self.writes = writes
-      self.run = run
-    }
-
-    /// Runs the tool on the working image of `history` and records the step `id` with `params`.
-    ///
-    /// The tool's image is the new working image, or the layer it writes beside the unchanged
-    /// one.
-    package func record(
-      _ id: String, params: ParamSet, in history: History,
-      onProgress: @escaping @Sendable (Double) -> Void
-    ) async throws {
-      let (before, input) = (history.steps, history.current)
-      let output = try await run(input, params, onProgress)
-      // A cancel that came after the tool ended still records nothing; a history that moved
-      // meanwhile would be overwritten by `input`.
-      try Task.checkCancellation()
-      guard history.steps == before else { throw HistoryError.movedDuring(id) }
-      if let writes {
-        try history.apply(processID: id, params: params, result: input, outputs: [writes: output])
-      } else {
-        try history.apply(processID: id, params: params, result: output)
-      }
-    }
-  }
-
   /// What the run did, step by step (indexes in the pipeline).
   package enum Event: Equatable, Sendable {
     /// The step was applied.
@@ -200,17 +154,20 @@ package final class PipelineRunner {
       PipelineReuse.canReuse(
         step: index, of: previous, into: history, bundle: session.bundle, processID: id)
     {
+      let written = try previous.history.written(ofStep: index)
       try history.apply(
         processID: id, params: previous.history.steps[index].params,
-        result: previous.history.output(ofStep: index),
-        outputs: previous.history.outputs(ofStep: index))
+        result: previous.history.output(ofStep: index), outputs: written.outputs,
+        replacing: written.replaced)
       session.onEvent(.reused(index))
       return
     }
     if let tool = batch[id], registry.type(id: id).map({ step.recipe.runsTool(as: $0) }) ?? true {
       let params = try Self.values(of: step, schema: tool.schema, at: index)
       let onEvent = session.onEvent
-      try await tool.record(id, params: params, in: history) { onEvent(.progress(index, $0)) }
+      try await tool.record(
+        id, params: params, in: history, bundle: session.bundle
+      ) { onEvent(.progress(index, $0)) }
     } else if let type = registry.type(id: id) {
       // A host-tool process's render is its preview only: without the tool, refuse.
       guard !step.recipe.runsTool(as: type) else {

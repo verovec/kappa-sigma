@@ -81,10 +81,11 @@ package final class StudioModel {
   /// Records a step made elsewhere (a host tool) with the layers it wrote.
   package func apply(
     _ processID: String, params: ParamSet, result: AstroImage,
-    outputs: [LayerRole: AstroImage] = [:]
+    outputs: [LayerRole: AstroImage] = [:], replacing: [String: AstroImage] = [:]
   ) throws {
     defer { mirror() }
-    try session.apply(processID, params: params, result: result, outputs: outputs)
+    try session.apply(
+      processID, params: params, result: result, outputs: outputs, replacing: replacing)
     cleanUp()
   }
 
@@ -168,8 +169,9 @@ package final class StudioModel {
   }
 
   private func appendRow(_ step: History.Step) throws -> HistoryStep {
-    // The step's image and the layers it wrote: what the disk budget counts.
-    let bytes = ([step.file] + step.outputs.values).reduce(0) { total, file in
+    // The step's image and the layers it wrote or rewrote: what the disk budget counts.
+    let files = [step.file] + step.outputs.values + step.replaced.values
+    let bytes = files.reduce(0) { total, file in
       let url = session.history.directory.appendingPathComponent(file)
       let size = try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int
       return total + (size ?? 0)

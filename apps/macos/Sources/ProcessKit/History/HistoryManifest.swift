@@ -4,12 +4,14 @@ internal import Foundation
 /// and the snapshots, so a reopened project finds its history again. `<folder>.json` beside the
 /// folder (the folder holds the images only), rewritten after every change.
 struct HistoryManifest: Codable, Equatable {
-  /// One step: its process, its values, its image and its layer outputs (role → file).
+  /// One step: its process, its values, its image, its layer outputs (role → file) and the
+  /// bundle layers it rewrote (id → file; absent from manifests written before card 0092).
   struct Entry: Codable, Equatable {
     let processID: String
     let params: [ParamSet.Entry]
     let file: String
     let outputs: [String: String]
+    let replaced: [String: String]?
   }
 
   /// A named state.

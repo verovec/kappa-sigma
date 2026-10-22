@@ -77,20 +77,22 @@ package final class KnobPanelViewModel {
     return [definition, line].filter { !$0.isEmpty }.joined(separator: "\n")
   }
 
-  /// « <profile>, <value>: <why> » with the locale's punctuation (French spaces its colon);
-  /// without a why, « <profile>, <value> »; without a value, « <profile>: <why> ».
+  /// « Profile <profile>, <value>: <why> » with the locale's punctuation (French spaces its
+  /// colon); without a why, « Profile <profile>, <value> »; without a value, « Profile
+  /// <profile>: <why> ».
   package nonisolated static func profileLine(
     _ profile: String, _ value: String?, _ why: String?, locale: Locale
   ) -> String {
+    // Keys with a word of their own: a bare "%@: %@" would be every "a: b" interpolation's key.
     switch (value, why) {
     case (let value?, let why?):
-      String(localized: .app("\(profile), \(value): \(why)", locale: locale))
+      String(localized: .app("Profile \(profile), \(value): \(why)", locale: locale))
     case (let value?, nil):
-      String(localized: .app("\(profile), \(value)", locale: locale))
+      String(localized: .app("Profile \(profile), \(value)", locale: locale))
     case (nil, let why?):
-      String(localized: .app("\(profile): \(why)", locale: locale))
+      String(localized: .app("Profile \(profile): \(why)", locale: locale))
     case (nil, nil):
-      profile
+      String(localized: .app("Profile \(profile)", locale: locale))
     }
   }
 

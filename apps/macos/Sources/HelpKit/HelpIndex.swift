@@ -20,7 +20,7 @@ package struct HelpIndex: Sendable {
   /// The folder holding the locale folders.
   package let root: URL
   /// The parameter definitions under `root` (`params.json`, card 0086), read once.
-  package let params: ParamDocs
+  private let params: ParamDocs
 
   /// The cards under `root`.
   package init(root: URL) {
@@ -83,6 +83,11 @@ package struct HelpIndex: Sendable {
   /// One sentence per gate failure for the parameter `ids` (`<process>.<param>`).
   package func paramProblems(ids: [String]) -> [String] {
     params.problems(ids: ids)
+  }
+
+  /// The documented parameter ids of `locale` that `ids` does not name.
+  package func paramStale(ids: [String], locale: String) -> [String] {
+    params.stale(ids: ids, locale: locale)
   }
 
   /// The first-stack guide's steps in `locale`, one per non-blank line; empty without the file.

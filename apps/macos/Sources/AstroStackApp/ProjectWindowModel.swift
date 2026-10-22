@@ -38,11 +38,9 @@ package final class ProjectWindowModel {
   package internal(set) var studio: LegacyRunModel?
   /// The Stacking panel's preset and knob edits: what the next run applies (card 0070).
   package let knobs: KnobPanelViewModel
-  /// The Import sheet closed since the kept profile was looked up.
-  ///
-  /// User copies are saved there, so the next refresh reads the profile again; not state a view
-  /// reads.
-  @ObservationIgnored private var profileMayHaveChanged = false
+  /// The profile id the knobs' help was last looked up for (`knobs.profile` is its result, nil
+  /// when it resolves to nothing); not state a view reads.
+  @ObservationIgnored private var profileLookupID: String?
   /// The last run's lanes read-only (this session's result, or the latest stack's `grades.json`),
   /// rebuilt by `refresh()` only when their source changes (card 0069).
   package internal(set) var lastReviewLanes: [FrameReviewViewModel] = []
@@ -153,8 +151,6 @@ package final class ProjectWindowModel {
   package func closeImport() {
     importing?.cancel()
     importing = nil
-    // The sheet saves user copies: the kept profile is looked up afresh at the next refresh.
-    profileMayHaveChanged = true
   }
 
   /// Records the imported folders as read-only sources of the project and closes the sheet; the
@@ -204,11 +200,12 @@ package final class ProjectWindowModel {
       sources = try store?.sources() ?? []
       // The profile kept at import (0060) words the knobs' help; it is applied by nothing here.
       // Every night must have kept the same profile (a night without one counts, a legacy run
-      // does not): no guessing. Looked up when the agreed id changes or the sheet closed.
+      // does not): no guessing. Looked up once per agreed id (nothing saves a user copy from the
+      // app yet; the card that does invalidates this).
       let kept = Set(sources.filter { $0.kind == .night }.map(\.profileID))
       let agreed = kept.count == 1 ? kept.first.flatMap { $0 } : nil
-      if profileMayHaveChanged || agreed != knobs.profile?.id {
-        profileMayHaveChanged = false
+      if agreed != profileLookupID {
+        profileLookupID = agreed
         knobs.profile = agreed.flatMap { id in
           ImportViewModel.profiles(store: store).profiles.first { $0.id == id }
         }

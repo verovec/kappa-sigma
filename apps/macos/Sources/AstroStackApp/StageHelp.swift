@@ -41,7 +41,8 @@ package enum StageHelp {
     .help("stage." + stage.rawValue)
   }
 
+  /// The first paragraph as plain text (markup read, not shown in a tooltip).
   private static func firstLine(_ card: String) -> String? {
-    card.split(whereSeparator: \.isNewline).first.map(String.init)
+    HelpMarkdown.parse(card).first.map { $0.runs.map(\.text).joined() }
   }
 }

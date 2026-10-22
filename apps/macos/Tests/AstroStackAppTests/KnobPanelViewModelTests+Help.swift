@@ -54,10 +54,11 @@ extension KnobPanelViewModelTests {
   @Test("the profile line without a why or without a value keeps its shape")
   func testProfileLineShapes() {
     let french = Locale(identifier: "fr")
-    #expect(KnobPanelViewModel.profileLine("P", "3,5", nil, locale: french) == "P, 3,5")
-    #expect(KnobPanelViewModel.profileLine("P", nil, "why", locale: french) == "P : why")
-    #expect(KnobPanelViewModel.profileLine("P", nil, nil, locale: french) == "P")
+    #expect(KnobPanelViewModel.profileLine("P", "3,5", nil, locale: french) == "Profil P, 3,5")
+    #expect(KnobPanelViewModel.profileLine("P", nil, "why", locale: french) == "Profil P : why")
+    #expect(KnobPanelViewModel.profileLine("P", nil, nil, locale: french) == "Profil P")
     let english = Locale(identifier: "en")
-    #expect(KnobPanelViewModel.profileLine("P", "3.5", "why", locale: english) == "P, 3.5: why")
+    #expect(
+      KnobPanelViewModel.profileLine("P", "3.5", "why", locale: english) == "Profile P, 3.5: why")
   }
 }

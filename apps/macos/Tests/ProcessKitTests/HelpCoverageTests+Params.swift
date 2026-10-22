@@ -31,7 +31,7 @@ extension HelpCoverageTests {
     let help = HelpIndex.bundled
     #expect(help.paramProblems(ids: ids) == [])
     for locale in HelpIndex.locales {
-      #expect(help.params.stale(ids: ids, locale: locale) == [])
+      #expect(help.paramStale(ids: ids, locale: locale) == [])
       let doc = try #require(
         help.paramDoc(process: "stretch", param: "targetBackground", locale: locale))
       #expect(!doc.isEmpty)

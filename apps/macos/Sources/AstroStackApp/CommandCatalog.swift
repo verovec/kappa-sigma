@@ -40,7 +40,8 @@ nonisolated package enum CommandCatalog {
   ]
 
   private static let file: [AppCommand] = [
-    AppCommand("file.newProject", "New Project", menu: .file, action: "newDocument:", key: "n"),
+    // A project is named after its target: ⌘N raises the welcome window's naming sheet.
+    AppCommand("file.newProject", "New Project…", menu: .file, action: "newProject:", key: "n"),
     AppCommand("file.open", "Open…", menu: .file, action: "openDocument:", key: "o"),
     AppCommand("file.openImage", "Open Image…", menu: .file, action: "openImage:", key: "O"),
     AppCommand("file.openRun", "Open Run…", menu: .file, action: "openRun:", key: "r"),
@@ -69,12 +70,30 @@ nonisolated package enum CommandCatalog {
     AppCommand(
       "view.actualPixels", "Actual Pixels", menu: .view, action: "zoomToActualSize:", key: "1",
       stage: .studio),
+    // The Tri stage's blink and verdicts (card 0069): greyed unless a run waits at the review.
+    AppCommand(
+      "review.blinkPrevious", "Previous Frame", menu: .view, action: "blinkPrevious:",
+      key: "\u{F702}", stage: .review, separatorBefore: true),
+    AppCommand(
+      "review.blinkNext", "Next Frame", menu: .view, action: "blinkNext:", key: "\u{F703}",
+      stage: .review),
+    AppCommand(
+      "review.keep", "Keep Frame", menu: .view, action: "keepFrame:", key: "k", stage: .review),
+    AppCommand(
+      "review.reject", "Reject Frame", menu: .view, action: "rejectFrame:", key: "\u{8}",
+      stage: .review),
+    AppCommand(
+      "review.continue", "Continue Stacking", menu: .view, action: "continueStacking:", key: "\r",
+      stage: .review),
   ]
 
   private static let window: [AppCommand] = [
     AppCommand(
       "window.minimize", "Minimize", menu: .window, action: "performMiniaturize:", key: "m"),
     AppCommand("window.zoom", "Zoom", menu: .window, action: "performZoom:"),
+    AppCommand(
+      "window.welcome", "Welcome Window", menu: .window, action: "showWelcome:",
+      separatorBefore: true),
     AppCommand(
       "window.bringAllToFront", "Bring All to Front", menu: .window, action: "arrangeInFront:",
       separatorBefore: true),

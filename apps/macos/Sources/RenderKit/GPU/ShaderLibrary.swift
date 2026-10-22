@@ -8,8 +8,10 @@ package import Metal
 /// Tools. Both use the same sources and fast-math off (oracle-pinned
 /// kernels must match their CPU references).
 package enum ShaderLibrary {
-  /// The shader sources, in compile order (each includes `ShaderTypes.h`).
+  /// The shader sources, in compile order (each includes the `headerFiles` it needs).
   package static let sourceFiles = ["Display.metal", "Histogram.metal"]
+  /// The headers the sources include: the uniform structs and the shared STF functions.
+  package static let headerFiles = ["ShaderTypes.h", "STF.h"]
   /// Every kernel the library must expose.
   package static let kernelNames: Set<String> = ["display", "histogram", "shaderLayout"]
 
@@ -23,18 +25,22 @@ package enum ShaderLibrary {
     return try compileSources(device: device)
   }
 
-  /// Compiles the bundled sources with `makeLibrary(source:)`; `#include "ShaderTypes.h"` is
-  /// inlined because the runtime compiler has no include path.
+  /// Compiles the bundled sources with `makeLibrary(source:)`; the `headerFiles` are inlined
+  /// once ahead of the sources because the runtime compiler has no include path.
   package static func compileSources(device: MTLDevice) throws -> MTLLibrary {
     let folder = try sourceFolder()
-    let header = try String(
-      contentsOf: folder.appendingPathComponent("ShaderTypes.h"), encoding: .utf8)
-    let source = try sourceFiles.map { name in
+    let headers = try headerFiles.map { name in
       try String(contentsOf: folder.appendingPathComponent(name), encoding: .utf8)
-        .replacingOccurrences(of: "#include \"ShaderTypes.h\"", with: "")
+    }
+    let source = try sourceFiles.map { name in
+      var text = try String(contentsOf: folder.appendingPathComponent(name), encoding: .utf8)
+      for header in headerFiles {
+        text = text.replacingOccurrences(of: "#include \"\(header)\"", with: "")
+      }
+      return text
     }
     return try device.makeLibrary(
-      source: header + "\n" + source.joined(separator: "\n"), options: compileOptions)
+      source: (headers + source).joined(separator: "\n"), options: compileOptions)
   }
 
   /// Metal 3, IEEE-correct math: fast-math off for oracle-pinned kernels.

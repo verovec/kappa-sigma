@@ -69,6 +69,27 @@ public final class ProjectPackage {
     }
   }
 
+  /// The counts of the package at `url`, read without opening it: a read-only connection that
+  /// neither migrates, checkpoints nor removes the WAL, so a project open elsewhere is untouched.
+  package static func readSummary(at url: URL) throws -> ProjectSummary {
+    let database = databaseURL(in: url)
+    guard FileManager.default.fileExists(atPath: database.path) else {
+      throw ProjectPackageError.missingDatabase(path: url.path)
+    }
+    guard try applicationID(of: database) == applicationID else {
+      throw ProjectPackageError.foreignDatabase(path: url.path)
+    }
+    var configuration = Configuration()
+    configuration.readonly = true
+    // A closed package has no -wal/-shm, and SQLite cannot open a WAL database read-only without
+    // creating them: it is then read as immutable. An open one keeps its own and is read live.
+    let wal = FileManager.default.fileExists(atPath: database.path + "-wal")
+    let path = wal ? database.path : database.absoluteString + "?immutable=1"
+    let queue = try DatabaseQueue(path: path, configuration: configuration)
+    defer { try? queue.close() }
+    return try queue.read(ProjectStore.summary(in:))
+  }
+
   /// The application id in the SQLite file header, or 0 for an empty or non-SQLite file.
   ///
   /// Bytes 68–71, big-endian. Read from the bytes because any SQLite connection could change a

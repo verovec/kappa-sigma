@@ -1,0 +1,95 @@
+package import AppKit
+internal import OSLog
+package import ProjectKit
+package import StackKit
+internal import SwiftUI
+
+/// The welcome window: one window, reused, that closes once a project opens.
+///
+/// Shown at launch when no project is restored, from the Dock with no window open, and from
+/// Window › Welcome Window and File › New Project.
+package enum WelcomeWindow {
+  private static var window: NSWindow?
+  /// The live host-tool client.
+  package static let hostTools = HostTools.live()
+  /// The recent projects and tool statuses, shared with Settings › Tools.
+  package static let model = WelcomeModel(
+    recentURLs: { NSDocumentController.shared.recentDocumentURLs }, tools: hostTools,
+    openProjects: openProjects)
+
+  /// Shows the window with the recent projects re-read and the tools re-checked.
+  @discardableResult
+  package static func show() -> NSWindow {
+    let window = window ?? make()
+    Self.window = window
+    Task { await model.reload() }
+    // Tools are probed once; afterwards only « Re-check » runs siril-cli again.
+    if model.tools.isEmpty { Task { await model.recheckTools() } }
+    window.makeKeyAndOrderFront(nil)
+    return window
+  }
+
+  /// Shows the window with the « New Project… » sheet up.
+  @discardableResult
+  package static func showNewProject() -> NSWindow {
+    let window = show()
+    model.isNaming = true
+    return window
+  }
+
+  /// Closes the window if it is up: a project window just opened.
+  package static func dismiss() {
+    model.isNaming = false
+    window?.close()
+  }
+
+  /// Whether the window is on screen.
+  package static var isVisible: Bool { window?.isVisible ?? false }
+
+  private static func make() -> NSWindow {
+    let actions = WelcomeView.Actions(
+      open: { url in Task { await open(url) } }, choose: choose,
+      create: { try NewProject.create(target: $0) })
+    let window = NSWindow(
+      contentViewController: NSHostingController(
+        rootView: WelcomeView(model: model, actions: actions).interfaceLocale()))
+    window.title = String(localized: .app("Welcome to AstroStack"))
+    window.styleMask = [.titled, .closable, .miniaturizable]
+    window.isReleasedWhenClosed = false
+    window.center()
+    return window
+  }
+
+  /// The counts of every project open in a document, keyed like `WelcomeModel` looks them up.
+  package static func openProjects() -> [String: ProjectSummary?] {
+    var open: [String: ProjectSummary?] = [:]
+    for case let document as ProjectDocument in NSDocumentController.shared.documents {
+      guard let url = document.packageURL else { continue }
+      open[WelcomeModel.key(url)] = document.projectSummary()
+    }
+    return open
+  }
+
+  /// Open…: the projects picked in the Open panel, opened like a recent one.
+  private static func choose() {
+    let urls = NSDocumentController.shared.urlsFromRunningOpenPanel() ?? []
+    Task { for url in urls { await open(url) } }
+  }
+
+  /// Opens the project at `url` and dismisses this window; a failure goes to `report`, never
+  /// swallowed.
+  package static func open(
+    _ url: URL, report: (any Error) -> Void = { NSAlert(error: $0).runModal() }
+  ) async {
+    do {
+      _ = try await NSDocumentController.shared.openDocument(withContentsOf: url, display: true)
+      // An already open project only comes forward: its window was made long ago.
+      dismiss()
+    } catch {
+      logger.error("cannot open \(url.path, privacy: .public): \(error, privacy: .public)")
+      report(error)
+    }
+  }
+
+  private static let logger = Logger(subsystem: "fr.astrostack", category: "App/welcome")
+}

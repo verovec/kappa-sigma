@@ -110,6 +110,60 @@ package final class ProjectDocument: NSDocument {
     windowModel?.openGuide()
   }
 
+  // MARK: - The Tri stage's commands (card 0069)
+
+  /// View › Previous Frame (⌘←): the blink panel one frame back.
+  @objc package func blinkPrevious(_ sender: Any?) {
+    windowModel?.run?.paused?.blinkPrevious()
+  }
+
+  /// View › Next Frame (⌘→).
+  @objc package func blinkNext(_ sender: Any?) {
+    windowModel?.run?.paused?.blinkNext()
+  }
+
+  /// View › Keep Frame (⌘K): the frame shown stays in the stack.
+  @objc package func keepFrame(_ sender: Any?) {
+    guard let review = windowModel?.run?.paused, let current = review.current else { return }
+    review.keep(current)
+  }
+
+  /// View › Reject Frame (⌘⌫): the frame shown leaves the stack.
+  @objc package func rejectFrame(_ sender: Any?) {
+    guard let review = windowModel?.run?.paused, let current = review.current else { return }
+    review.reject(current)
+  }
+
+  /// View › Continue Stacking (⌘↩): the run goes on with the frames kept.
+  @objc package func continueStacking(_ sender: Any?) {
+    windowModel?.run?.paused?.continueStacking()
+  }
+
+  /// The review commands are greyed unless a run waits at the review on this window; the keys
+  /// (⌘←, ⌘→, ⌘⌫, ⌘↩) stay with a text field being edited.
+  override package func validateUserInterfaceItem(_ item: any NSValidatedUserInterfaceItem) -> Bool
+  {
+    guard let action = item.action, Self.reviewActions.contains(action) else {
+      return super.validateUserInterfaceItem(item)
+    }
+    // Only on the Tri stage: a verdict changed from another pane would be a hidden one (R2).
+    guard let windowModel, windowModel.selection == .review,
+      let review = windowModel.run?.paused, review.isLive,
+      !(NSApp.keyWindow?.firstResponder is NSText)
+    else { return false }
+    switch action {
+    case #selector(continueStacking(_:)): return review.canContinue
+    case #selector(keepFrame(_:)), #selector(rejectFrame(_:)):
+      return review.currentRow?.isRegistered == true
+    default: return true
+    }
+  }
+
+  private static let reviewActions: [Selector] = [
+    #selector(blinkPrevious(_:)), #selector(blinkNext(_:)), #selector(keepFrame(_:)),
+    #selector(rejectFrame(_:)), #selector(continueStacking(_:)),
+  ]
+
   /// Records a legacy run opened from this project: its path only, read-only (R7).
   @discardableResult
   package func importLegacyRun(_ source: LegacyRunSource) throws -> ProjectSource {
@@ -129,6 +183,11 @@ package final class ProjectDocument: NSDocument {
   /// The sources the project records; `nil` without an open package.
   package func projectSources() throws -> [ProjectSource]? {
     try project?.store.sources()
+  }
+
+  /// The project's counts through its own pool; `nil` without an open package or when unreadable.
+  package func projectSummary() -> ProjectSummary? {
+    try? project?.store.summary()
   }
 
   /// Closes the package (deleting an unsaved untitled one) before closing the document.
@@ -207,6 +266,8 @@ package final class ProjectDocument: NSDocument {
     window.contentView = content
     window.center()
     addWindowController(NSWindowController(window: window))
+    // A project is open, however it was opened (welcome, ⌘O, Open Recent, Finder, -openRun).
+    WelcomeWindow.dismiss()
     Self.logger.info("project window opened: \(window.title, privacy: .public)")
   }
 

@@ -54,7 +54,7 @@ package enum MainMenu {
   }
 
   /// The menu item of `command`, its key equivalent as AppKit expects it.
-  static func item(_ command: AppCommand, locale: Locale?) -> NSMenuItem {
+  package static func item(_ command: AppCommand, locale: Locale?) -> NSMenuItem {
     let item = NSMenuItem(
       title: String(localized: command.title(locale: locale)),
       action: command.action.map(NSSelectorFromString),

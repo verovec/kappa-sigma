@@ -5,6 +5,10 @@
 package struct PreprocessSettings: Equatable, Sendable {
   /// The frame-rejection rules.
   package var grading = Grader.Options()
+  /// Pause each lane after grading so the user can veto the verdicts (card 0069, `frame_review`).
+  ///
+  /// Off, the run never waits and its scripts stay byte-identical.
+  package var frameReview = false
   /// Drop a run's first frame when the filter wheel was still moving (`DropFilterWheelTransition`).
   package var dropWheelTransition = true
   /// Siril's two-pass registration elects the reference instead of frame 1 (`Register2Pass`).

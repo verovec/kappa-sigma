@@ -44,6 +44,8 @@ struct KnobSchemaTests {
         "stack_reject", "stack_reject_low", "stack_reject_high", "stack_weight", "register_2pass",
         "edge_crop", "coverage_crop", "roundness_floor", "fwhm_sigma", "background_sigma",
         "star_count_frac", "trail_mask_k",
+        // Card 0069: the review breakpoint is a simple knob (R2: the veto is in plain view).
+        "frame_review",
       ])
   }
 

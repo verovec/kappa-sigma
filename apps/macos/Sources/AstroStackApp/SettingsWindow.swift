@@ -7,8 +7,10 @@ package enum SettingsWindow {
   /// Shows the Settings window, creating it the first time.
   @discardableResult
   package static func show() -> NSWindow {
-    UtilityWindow.show("settings", title: .app("Settings"), resizable: false) {
-      SettingsView(setting: LanguageSetting(), relaunch: relaunch)
+    // The tools are probed once; afterwards only « Re-check » runs siril-cli again.
+    if WelcomeWindow.model.tools.isEmpty { Task { await WelcomeWindow.model.recheckTools() } }
+    return UtilityWindow.show("settings", title: .app("Settings"), resizable: false) {
+      SettingsView(setting: LanguageSetting(), relaunch: relaunch, tools: WelcomeWindow.model)
     }
   }
 

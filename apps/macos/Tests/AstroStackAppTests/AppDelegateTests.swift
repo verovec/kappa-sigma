@@ -21,8 +21,16 @@ struct AppDelegateTests {
     #expect(!FileManager.default.fileExists(atPath: untitled.path))
   }
 
-  @Test("an app launched without a file opens an untitled project")
-  func testAppDelegate_opensUntitledAtLaunch() {
-    #expect(AppDelegate().applicationShouldOpenUntitledFile(NSApplication.shared))
+  @Test("an app launched without a file shows the welcome window, not an untitled project")
+  func testLaunchShowsWelcomeNotUntitled() {
+    let delegate = AppDelegate()
+    let before = NSDocumentController.shared.documents.count
+
+    #expect(delegate.applicationShouldOpenUntitledFile(NSApplication.shared))
+    #expect(delegate.applicationOpenUntitledFile(NSApplication.shared))
+
+    #expect(WelcomeWindow.isVisible)
+    #expect(NSDocumentController.shared.documents.count == before)
+    WelcomeWindow.show().close()
   }
 }

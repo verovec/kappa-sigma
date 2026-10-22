@@ -1,22 +1,10 @@
-// Display: linear float planes → displayed colour. The STF is a display transform only (R2):
-// the planes are never modified. Same arithmetic as the CPU oracle (STFParameters.display),
+// Display: linear float planes → displayed colour. The STF (STF.h) is a display transform only
+// (R2): the planes are never modified. Same arithmetic as the CPU oracle (STFParameters.display),
 // compiled with fast-math off.
 #include <metal_stdlib>
 #include "ShaderTypes.h"
+#include "STF.h"
 using namespace metal;
-
-static float mtf(float m, float x) {
-  if (x <= 0.0f) { return 0.0f; }
-  if (x >= 1.0f) { return 1.0f; }
-  if (x == m) { return 0.5f; }
-  return ((m - 1.0f) * x) / ((2.0f * m - 1.0f) * x - m);
-}
-
-static float stf(float x, float c0, float m, float c1) {
-  float range = c1 - c0;
-  if (range <= 0.0f) { return x >= c1 ? 1.0f : 0.0f; }
-  return mtf(m, clamp((x - c0) / range, 0.0f, 1.0f));
-}
 
 static float3 fetch(texture2d<float> r, texture2d<float> g, texture2d<float> b, float2 uv,
                     float lod, uint channels) {
@@ -89,12 +77,16 @@ kernel void shaderLayout(constant DisplayUniforms &d [[buffer(0)]],
   out[i++] = d.flipRows;
   out[i++] = d.maskOverlay;
   out[i++] = as_type<uint>(d.canvasGrey);
+  for (uint k = 0; k < 4; ++k) { out[i++] = as_type<uint>(h.shadows[k]); }
+  for (uint k = 0; k < 4; ++k) { out[i++] = as_type<uint>(h.midtone[k]); }
+  for (uint k = 0; k < 4; ++k) { out[i++] = as_type<uint>(h.highlights[k]); }
   out[i++] = h.channels;
   out[i++] = h.stride;
   out[i++] = h.originX;
   out[i++] = h.originY;
   out[i++] = h.width;
   out[i++] = h.height;
+  out[i++] = h.stfEnabled;
   out[i++] = sizeof(DisplayUniforms);
   out[i++] = sizeof(HistogramUniforms);
 }

@@ -62,7 +62,7 @@ struct HostToolsTests {
   func testStatus(_ testCase: Case) async {
     let probe = HostTools.Probe(
       isExecutable: { testCase.executables.contains($0) },
-      isDirectory: { testCase.folders.contains($0) },
+      isApp: { testCase.folders.contains($0) },
       sirilVersion: { _ in try testCase.sirilVersion.get() })
     let tools = HostTools.live(environment: testCase.environment, probe: probe)
 
@@ -80,5 +80,22 @@ struct HostToolsTests {
   func testStatusAccessors(_ status: ToolStatus, _ expected: (usable: Bool, path: String)) {
     #expect(status.isUsable == expected.usable)
     #expect(status.path == expected.path)
+  }
+
+  @Test("a Siril whose --version hangs counts as unusable once the timeout passes")
+  func testHangingVersionTimesOut() async {
+    let probe = HostTools.Probe(
+      isExecutable: { _ in true }, isApp: { _ in false },
+      sirilVersion: { _ in
+        // Never answers: the stream yields nothing and only ends when the probe is cancelled.
+        let (silence, continuation) = AsyncStream<Never>.makeStream()
+        defer { continuation.finish() }
+        for await _ in silence {}
+        try Task.checkCancellation()
+        return "1.4.4"
+      })
+    let tools = HostTools.live(environment: [:], probe: probe, timeout: .milliseconds(50))
+
+    #expect(await tools.locate(.siril) == .missing(path: Self.siril))
   }
 }

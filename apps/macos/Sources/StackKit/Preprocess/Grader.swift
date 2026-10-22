@@ -29,7 +29,7 @@ package enum Grader {
   /// The cloud rule needs a median of at least this many stars.
   static let minStarsForRule = 8.0
   /// `stack -filter-incl` needs two frames.
-  static let stackMinimum = 2
+  package static let stackMinimum = 2
   /// The reason prefix of a frame restored for the stack minimum.
   package static let keptStackMinimumPrefix = "kept (stack minimum) — was: "
 

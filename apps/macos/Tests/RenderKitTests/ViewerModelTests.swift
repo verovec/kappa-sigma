@@ -89,6 +89,71 @@ struct ViewerModelTests {
       model.frame.storedRegion(imageHeight: 4) == PixelRegion(x: 0, y: 3, width: 2, height: 1))
   }
 
+  @Test(
+    "a handle drag in Auto goes Manual from the auto values, moves one parameter; Reset → Auto"
+  )
+  func testHandleDragEditsManualSTF() throws {
+    let model = try Self.model()
+    let auto = model.autoParameters
+    #expect(model.stretch == .auto)
+
+    // Linear domain: the midtone handle lands on the linear value it is dropped at.
+    model.dragHandle(.midtone, channel: 1, to: 0.3)
+    #expect(model.stretch == .manual)
+    #expect(model.manualSTF[0] == auto[0] && model.manualSTF[2] == auto[2])
+    let edited = model.manualSTF[1]
+    #expect(edited.shadows == auto[1].shadows && edited.highlights == auto[1].highlights)
+    #expect(abs(edited.midtoneValue - 0.3) < 1e-12)
+    #expect(model.frame.stf == model.manualSTF, "the frame shows the manual numbers")
+    model.endHandleDrag()
+
+    // Display domain: the pixel value shown at the drop position becomes the new black point.
+    model.frame.histogramDomain = .display
+    let before = model.manualSTF[1]
+    model.dragHandle(.shadows, channel: 1, to: 0.2)
+    let after = model.manualSTF[1]
+    #expect(abs(after.shadows - before.linearValue(atPosition: 0.2, in: .display)) < 1e-12)
+    #expect(after.midtone == before.midtone && after.highlights == before.highlights)
+
+    // Every event of one drag maps from the stretch at press time: dropping twice at the same
+    // position gives the same stretch, it never compounds; the next drag starts from the result.
+    let once = model.manualSTF[1]
+    model.dragHandle(.shadows, channel: 1, to: 0.2)
+    #expect(model.manualSTF[1] == once)
+    model.endHandleDrag()
+    model.dragHandle(.shadows, channel: 1, to: 0.2)
+    #expect(model.manualSTF[1].shadows > once.shadows)
+    model.endHandleDrag()
+
+    model.resetToAuto()
+    #expect(model.stretch == .auto)
+    #expect(model.frame.stf == auto)
+
+    // Off has no handles to drag: nothing changes.
+    model.stretch = .off
+    model.dragHandle(.highlights, channel: 0, to: 0.5)
+    #expect(model.stretch == .off && model.frame.stf == nil)
+  }
+
+  @Test("the statistics behind the controls are measured once and follow the linked toggle")
+  func testStatisticsFollowLinking() throws {
+    let model = try Self.model()
+    let measured = STFMapping.measure(planes: model.image.planes, linked: false)
+    #expect(model.statistics == measured)
+    #expect(model.mapping(for: 1) == measured[1])
+    #expect(
+      model.mapping(for: 1).parameters(sigma: -2.8, targetBackground: 0.25)
+        == model.autoParameters[1])
+    model.linked = true
+    let linked = STFMapping.measure(planes: model.image.planes, linked: true)
+    #expect(model.mapping(for: 2) == linked[2])
+    #expect(model.autoParameters == AutoSTF.compute(planes: model.image.planes, linked: true))
+    // A model built from precomputed statistics (the app measures off the main actor) is the same.
+    let precomputed = ViewerModel(image: model.image, statistics: measured)
+    #expect(
+      precomputed.autoParameters == AutoSTF.compute(planes: model.image.planes, linked: false))
+  }
+
   @Test("hovering reads the pixel under the cursor; outside the image reads nothing")
   func testHoverReadout() throws {
     let model = try Self.model()

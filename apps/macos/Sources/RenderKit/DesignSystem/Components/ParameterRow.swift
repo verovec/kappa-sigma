@@ -5,28 +5,42 @@ package import SwiftUI
 /// the default badge, and the « why » of its value on hover.
 ///
 /// RenderKit never imports the app: the caller passes `format` and `parse` (the app's
-/// `AstroFormat.parameter` and `parameter(parsing:)`, which round-trip exactly).
+/// `AstroFormat.parameter` and `parameter(parsing:)`, which round-trip exactly). With a `step`,
+/// the focused slider moves one step per arrow, a tenth with ⇧ or ⌥, and an ⌥-drag runs at a
+/// tenth of the pointer's travel (card 0085); without one the row is the plain slider it was.
 package struct ParameterRow: View {
+  /// Where an ⌥-drag's gearing began: the value and the pointer then.
+  private struct Gearing: Equatable {
+    let anchor: Double
+    let start: Double
+  }
+
   private let label: LocalizedStringResource
   @Binding private var parameter: ParameterValue
   private let why: LocalizedStringResource?
   private let format: (Double) -> String
   private let parse: (String) -> Double?
   private let key: String
+  private let step: ParameterStep?
   @State private var text = ""
+  @State private var dragging = false
+  @State private var fineHeld = false
+  @State private var gearing: Gearing?
   @FocusState private var editing: Bool
 
   /// A row editing `parameter`; `why` explains the default (shown on hover of the « ? »);
-  /// `key` (the parameter's stable id) identifies its controls (`AccessibilityID.parameter`).
+  /// `key` (the parameter's stable id) identifies its controls (`AccessibilityID.parameter`);
+  /// `step` enables the keyboard and fine-drag steps.
   package init(
     _ label: LocalizedStringResource, parameter: Binding<ParameterValue>,
-    why: LocalizedStringResource? = nil, key: String, format: @escaping (Double) -> String,
-    parse: @escaping (String) -> Double?
+    why: LocalizedStringResource? = nil, key: String, step: ParameterStep? = nil,
+    format: @escaping (Double) -> String, parse: @escaping (String) -> Double?
   ) {
     self.key = key
     self.label = label
     _parameter = parameter
     self.why = why
+    self.step = step
     self.format = format
     self.parse = parse
   }
@@ -84,13 +98,17 @@ package struct ParameterRow: View {
   /// The slider and the typed field, the same value.
   private var controls: some View {
     HStack(spacing: DesignMetrics.spacingS) {
-      Slider(
-        value: Binding(get: { parameter.value }, set: { parameter.set($0) }),
-        in: parameter.range
-      ) {
-        Text(label)
-      }
-      .labelsHidden()
+      stepped(
+        Slider(
+          value: Binding(get: { parameter.value }, set: { slide(to: $0) }),
+          in: parameter.range, label: { Text(label) },
+          onEditingChanged: { active in
+            dragging = active
+            gearing = nil
+          }
+        )
+        .labelsHidden()
+      )
       .accessible(.parameter(key, .slider), label: label)
       TextField(text: $text) { Text(label) }
         .labelsHidden()
@@ -101,6 +119,38 @@ package struct ParameterRow: View {
         .focused($editing)
         .onSubmit(commit)
     }
+  }
+
+  /// With a step: the slider takes focus, arrows move it, ⌥ is tracked for the drag gearing.
+  @ViewBuilder private func stepped<Content: View>(_ slider: Content) -> some View {
+    if let step {
+      slider
+        .focusable()
+        .onKeyPress(keys: [.leftArrow, .rightArrow]) { press in
+          let fine = !press.modifiers.isDisjoint(with: [.shift, .option])
+          parameter.set(
+            parameter.value + step.delta(forward: press.key == .rightArrow, fine: fine))
+          return .handled
+        }
+        .onModifierKeysChanged(mask: .option) { _, held in fineHeld = !held.isEmpty }
+    } else {
+      slider
+    }
+  }
+
+  /// The slider's value: as dragged, or geared down to a tenth of the travel while ⌥ is held.
+  ///
+  /// The gearing re-anchors where ⌥ was pressed or released, so the value never jumps.
+  private func slide(to pointer: Double) {
+    guard let step, dragging, fineHeld else {
+      gearing = nil
+      parameter.set(pointer)
+      return
+    }
+    let gearing = self.gearing ?? Gearing(anchor: parameter.value, start: pointer)
+    self.gearing = gearing
+    parameter.set(
+      step.fineDragValue(anchor: gearing.anchor, start: gearing.start, pointer: pointer))
   }
 
   /// The field's text applied, then shown as the value it became (clamped, or unchanged).

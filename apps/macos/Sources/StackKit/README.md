@@ -15,6 +15,26 @@ reads the TIFF back (`ImageImport`). `StarNetCLI` probes `--machine-info` for th
 CLI (`-i/-o`) vs StarNet++ positional; `StarNetProgress` reads every `N.N%` in the unbroken
 `Working: 8.3%Working: 16.7%…` stream. No starless cache yet (legacy `starlessTIFF` reuse).
 
+**Background extraction** (card 0072, `Background/` + `GraXpert/`): the engine behind the
+Studio's process (0092 is the panel). `BackgroundExtraction(graxpert:siril:)` — or
+`.located(by: HostTools, siril:)` — runs `run(image:engine:correction:scratch:onProgress:)` and
+returns `BackgroundResult` (`corrected`, `model`, `reused`): the model is `input − corrected`
+(subtract) or `input ÷ corrected` (divide), computed in ImageKit so every engine returns the same
+pair. Engines (`BackgroundEngine`): `.graxpert(smoothing:)` through `GraXpertRunner`
+(`GRAXPERT_APP`, else `/Applications/GraXpert.app`; `<file> -cli -cmd background-extraction
+-output … -correction … -smoothing …`; a missing app is `GraXpertError.missing`, never a Siril
+engine instead — R2; a run past `timeout` is torn down), `.sirilRBF(…)` and
+`.sirilPolynomial(degree:)` through `SirilScripts.backgroundExtraction` (`load` → `subsky` →
+`save`; `SirilCommand.subskyRBF` carries the legacy `SubskyRBFCmd` flags). The Siril engines only
+subtract (`unsupportedCorrection`); every value is validated against the tool's range
+(`outOfRange`), never clamped. `BackgroundCache` under `<scratch>/background/<sha256>/` keys the
+pair on the input pixels + engine + correction: the same request again makes no tool call.
+Progress lines of both tools arrive as `ToolProgress` (`ProgressPercent`: the legacy `N%` rule);
+Siril's script mode and GraXpert run through one `ToolProcess.runLines` (swift-subprocess,
+teardown on cancellation, `LineSplitter`). GraXpert 3.0 appends the input's extension to
+`-output` (the stem is passed) and logs a fatal AI failure as `Critical error` while exiting 0
+(`GraXpertError.reportedError`, the legacy `firstErrorLine`).
+
 ## Oracle cases
 
 A case is one run of the legacy engine recorded by `../stacking-astro/cmd/oraclerec`, with the

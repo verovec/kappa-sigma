@@ -10,6 +10,9 @@ package enum KnobSchema {
   /// The knobs, in panel order.
   package static let knobs: [Knob] = stack + grading + run
 
+  /// The id of the frame-review breakpoint knob (card 0069): the Tri stage toggles it too.
+  package static let frameReviewID = "frame_review"
+
   /// The knob `id`, or `nil`.
   package static func knob(_ id: String) -> Knob? {
     knobs.first { $0.id == id }

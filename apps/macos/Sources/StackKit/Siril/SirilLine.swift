@@ -26,19 +26,12 @@ package struct SirilLine: Equatable, Sendable {
   package init(parsing raw: String) {
     let text = raw.replacingOccurrences(of: #"^log:\s?"#, with: "", options: .regularExpression)
     self.text = text
-    self.percent = Self.percent(in: text)
+    self.percent = ProgressPercent.first(in: text)
     if raw.hasPrefix("status:") {
       let word = raw.dropFirst("status:".count).split(separator: " ").first.map(String.init)
       self.status = word.flatMap(Status.init(rawValue:))
     } else {
       self.status = nil
     }
-  }
-
-  private static func percent(in text: String) -> Int? {
-    guard let range = text.range(of: #"(\d+)\s?%"#, options: .regularExpression) else { return nil }
-    let digits = text[range].prefix { $0.isNumber }
-    guard let value = Int(digits), value <= 100 else { return nil }
-    return value
   }
 }

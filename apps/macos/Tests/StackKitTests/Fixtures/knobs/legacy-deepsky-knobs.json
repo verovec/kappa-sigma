@@ -93,6 +93,7 @@
     "drop_wheel_transition",
     "edge_crop",
     "flatten_background",
+    "frame_review",
     "photometric_normalisation",
     "register_2pass",
     "reject_trails",

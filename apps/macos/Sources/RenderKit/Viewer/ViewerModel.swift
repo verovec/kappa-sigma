@@ -67,14 +67,23 @@ package final class ViewerModel {
   /// Called when `frame` changes (the Metal view redraws on demand).
   @ObservationIgnored package var redraw: (@MainActor () -> Void)?
 
+  /// Each channel's median and MADN, measured once: the autostretch and the σ controls read them.
+  package let statistics: [STFMapping]
+  private let linkedStatistics: [STFMapping]
   private var split: Double?
   private var autoSTF: [STFParameters]
+  /// The stretch a histogram drag started from: every event of the drag maps from it, so a
+  /// display-domain drag never compounds on its own result.
+  private var dragOrigin: [STFParameters]?
 
-  /// A viewer of `image`, autostretched (`autoSTF` when the caller computed it off the main
+  /// A viewer of `image`, autostretched (`statistics` when the caller measured them off the main
   /// actor), at 1:1 until the view has a size (then `zoomToFit`).
-  package init(image: AstroImage, autoSTF precomputed: [STFParameters]? = nil) {
+  package init(image: AstroImage, statistics measured: [STFMapping]? = nil) {
     self.image = image
-    let auto = precomputed ?? AutoSTF.compute(planes: image.planes, linked: false)
+    let statistics = measured ?? STFMapping.measure(planes: image.planes, linked: false)
+    self.statistics = statistics
+    linkedStatistics = STFMapping.linked(statistics)
+    let auto = Self.autostretch(statistics)
     autoSTF = auto
     manualSTF = auto
     frame = ViewerFrame(transform: ViewTransform(scale: 1, origin: .zero), stf: auto)
@@ -83,6 +92,41 @@ package final class ViewerModel {
 
   /// The autostretch currently offered.
   package var autoParameters: [STFParameters] { autoSTF }
+
+  /// The statistics behind the stretch of `channel`: its own, or the mean over the channels when
+  /// linked.
+  package func mapping(for channel: Int) -> STFMapping {
+    (linked ? linkedStatistics : statistics)[channel]
+  }
+
+  /// Back to the autostretch (the « Reset to auto » button).
+  package func resetToAuto() {
+    stretch = .auto
+  }
+
+  /// A histogram handle of `channel` dropped at `position` (0…1 of the axis, in the frame's
+  /// histogram domain).
+  ///
+  /// From Auto, Manual starts from the auto values; only that parameter moves. Off has no
+  /// handles: nothing changes.
+  package func dragHandle(_ handle: STFHandle, channel: Int, to position: Double) {
+    guard stretch != .off, manualSTF.indices.contains(channel) else { return }
+    if stretch == .auto { stretch = .manual }
+    let origin = dragOrigin ?? manualSTF
+    dragOrigin = origin
+    manualSTF[channel] = origin[channel].dragging(handle, to: position, in: frame.histogramDomain)
+  }
+
+  /// The drag ended: the next one starts from the stretch it finds.
+  package func endHandleDrag() {
+    dragOrigin = nil
+  }
+
+  private static func autostretch(_ statistics: [STFMapping]) -> [STFParameters] {
+    statistics.map {
+      $0.parameters(sigma: AutoSTF.shadowsClip, targetBackground: AutoSTF.targetBackground)
+    }
+  }
 
   /// The whole image in the view (⌘0).
   package func zoomToFit() {
@@ -144,7 +188,7 @@ package final class ViewerModel {
   private func applyStretch() {
     switch stretch {
     case .auto:
-      autoSTF = AutoSTF.compute(planes: image.planes, linked: linked)
+      autoSTF = Self.autostretch(linked ? linkedStatistics : statistics)
       frame.stf = autoSTF
     case .manual:
       frame.stf = manualSTF

@@ -34,6 +34,20 @@
     {
       "locked": false,
       "mode": "auto",
+      "process": "colour-calibration",
+      "values": {
+        "enabled": false
+      },
+      "why": {
+        "enabled": {
+          "en": "Off on dual-band: SPCC and PCC fit a broadband white to star colours, and two emission lines have no white to fit (Hα and OIII only).",
+          "fr": "Désactivée en bi-bande : SPCC et PCC ajustent un blanc large bande sur la couleur des étoiles, et deux raies d'émission n'ont pas de blanc (Hα et OIII seulement)."
+        }
+      }
+    },
+    {
+      "locked": false,
+      "mode": "auto",
       "process": "stretch",
       "values": {
         "linked": false

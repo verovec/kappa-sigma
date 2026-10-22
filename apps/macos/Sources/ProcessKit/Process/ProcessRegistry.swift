@@ -25,7 +25,7 @@ package struct ProcessRegistry {
       ChannelCombinationProcess.self, StretchProcess.self, LevelsProcess.self, HDRProcess.self,
       EmissionScreensProcess.self, ColourBalanceProcess.self, SkyDesatProcess.self,
       CurvesProcess.self, SaturationProcess.self, StarRecompositionProcess.self,
-      PlateSolveProcess.self,
+      PlateSolveProcess.self, ColourCalibrationProcess.self,
     ])
   }
 

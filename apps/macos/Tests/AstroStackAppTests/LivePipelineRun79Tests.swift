@@ -77,7 +77,7 @@ struct LivePipelineRun79Tests {
 
     await sidebar.run()
     #expect(sidebar.failure == nil)
-    #expect(sidebar.stoppedAt == 2 && workspace.panel?.type.id == EmissionScreensProcess.id)
+    #expect(sidebar.stoppedAt == 3 && workspace.panel?.type.id == EmissionScreensProcess.id)
     let panel = try #require(workspace.panel)
     #expect(panel.params.number("haBlack") == 0.126, "the profile's value is in the panel")
     try Self.render(StudioWorkspaceView(model: workspace), "1-stopped-at-screens")
@@ -87,14 +87,17 @@ struct LivePipelineRun79Tests {
     #expect(sidebar.failure == nil && sidebar.stoppedAt == nil)
     #expect(
       studio.steps.map(\.processID)
-        == ["channel-combination", "stretch", "emission-screens", "saturation"])
+        == [
+          "channel-combination", "colour-calibration", "stretch", "emission-screens",
+          "saturation",
+        ])
     try Self.render(StudioWorkspaceView(model: workspace), "2-continued")
 
     let differences = try sidebar.differences(from: "IC 1848 doux")
     #expect(
       differences == [
         PipelineDiff.Entry(
-          step: 2, processID: "emission-screens",
+          step: 3, processID: "emission-screens",
           change: .param("haBlack", .number(0.126), .number(0.1)))
       ])
     try Self.render(

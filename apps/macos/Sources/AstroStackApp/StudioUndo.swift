@@ -20,7 +20,7 @@ package enum StudioUndo {
     NSApp?.keyWindow?.makeFirstResponder(nil)
     let before = model.studio.steps.count
     // A host tool (plate solving) runs in the background; its step is registered when recorded.
-    if model.panel?.type.hostTool == true {
+    if let panel = model.panel, panel.type.runsTool(panel.params) {
       model.startTool { [weak model, weak undoManager] recorded in
         defer { done() }
         // Only the tool's own step: another Apply made meanwhile registered its own undo.

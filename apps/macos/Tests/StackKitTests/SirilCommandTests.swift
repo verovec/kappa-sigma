@@ -10,7 +10,7 @@ struct SirilCommandTests {
       "link", "convert", "calibrate", "register", "select", "unselect", "stack", "setref",
       "seqapplyreg", "seqsubsky", "load", "save", "savepng", "savetif", "mirrorx", "subsky",
       "rmgreen", "autostretch", "satu", "platesolve", "rgbcomp", "fmul", "calibrate_single",
-      "setfindstar",
+      "setfindstar", "spcc", "pcc", "spcc_list",
     ]
     #expect(verbs.isSubset(of: sampledVerbs))
     #expect(sampledVerbs.subtracting(verbs) == ["requires", "setext", "set32bits"])

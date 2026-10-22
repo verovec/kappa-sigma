@@ -1,0 +1,64 @@
+Siril is started as macOS application
+log: Reading configuration file <WORK>/siril.ini
+log: Welcome to siril 1.4.4 for macos (aarch64) - CLI
+log: Supported file types: BMP images, PIC images (IRIS), PGM and PPM binary images, RAW images, FITS-CFA images, Films, SER sequences, TIFF images, XISF images, JPG images, JPEG XL images, PNG images, HEIF images, AVIF images.
+log: Setting CWD (Current Working Directory) to '<WORK>/work'
+log: Parallel processing enabled: using 18 logical processors.
+log: Color management active.
+log: JPEG ICC profiles supported.
+log: Running command: requires
+1792680355: running command requires
+log: OK! This script is compatible with this version of Siril.
+log: Running command: setext
+1792680355: running command setext
+log: Running command: set32bits
+1792680355: running command set32bits
+log: 32-bit per channel in processed images mode is active
+log: Running command: load
+1792680355: running command load
+HDU 1: type=0, EXTNAME=
+HDU 2: type=0, EXTNAME=ICCProfile
+Skipping HDU 2 with EXTNAME=ICCProfile
+log: Reading FITS: file solved.fits, 3 layer(s), 1024x768 pixels, 32 bits
+log: Running command: spcc
+1792680355: running command spcc
+log: SPCC will use OSC sensor "Sony IMX571" and filter "UV/IR Block"
+log: Findstar: processing for channel 0...
+log: Findstar: processing for channel 2...
+log: Findstar: processing for channel 1...
+log: Getting stars from local catalogue Gaia DR3 xp_sampled for SPCC, with a radius of 1.11 degrees and limit magnitude 17.00
+log: Computing background reference with tolerance +2.00σ / -2.80σ.
+log: Photometry radii set to 7.0 for inner and 17.0 for outer
+progress: Photometric color calibration in progress..., 0.00%
+log: Applying aperture photometry to 646 stars.
+log: 327 stars excluded from the calculation
+log: Distribution of errors: 319 no error, 294 not in area, 33 inner radius too small
+log: SPCC Linear Fits
+log: Image R/G = 0.765478 + 1.869944 * Catalog R/G (sigma: 0.166057)
+log: Image B/G = 0.433131 + 0.331031 * Catalog B/G (sigma: 0.135576)
+log: Found a solution for color calibration using 319 stars. Factors:
+log: K0: 0.758
+log: K1: 0.929
+log: K2: 1.000
+log: The photometric color calibration seems to have found an imprecise solution, consider correcting the image gradient first
+log: After renormalization, the following coefficients are applied
+log: White balance factors:
+log: K0: 0.758
+log: K1: 0.929
+log: K2: 1.000
+log: Background reference:
+log: B0: +3.20423e-03
+log: B1: +9.56828e-04
+log: B2: +5.58095e-05
+progress: , 0.00%
+log: Spectrophotometric Color Calibration succeeded.
+log: Running command: save
+1792680356: running command save
+log: Saving FITS: file spcc.fits, 3 layer(s), 1024x768 pixels, 32 bits
+log: Setting CWD (Current Working Directory) to '<WORK>/work'
+log: Script execution finished successfully.
+log: Total execution time: 558.41 ms
+closing pipes
+real 0.62
+user 0.98
+sys 0.10

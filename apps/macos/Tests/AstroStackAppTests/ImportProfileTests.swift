@@ -129,7 +129,7 @@ struct ImportProfileTests {
     defer { try? project.close() }
     var copy = try #require(
       ImportViewModel.shippedProfiles.first { $0.id == "emission-osc-dualband" })
-    try copy.set("lumaDesat", to: .number(0.5), inStep: 3)
+    try copy.set("lumaDesat", to: .number(0.5), inStep: 4)
     try project.store.saveUserProfile(id: copy.id, json: copy.json())
     try project.store.saveUserProfile(id: "broken", json: Data("{}".utf8))
     let loaded = ImportViewModel.profiles(store: project.store)

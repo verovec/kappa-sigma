@@ -34,6 +34,12 @@ extension StudioWorkspaceModel {
       if let panel { failure = UserFacingError(StudioError.needsTool(panel.type.id)).message }
       return false
     }
+    // A host tool works on the whole image: under a mask, what is applied would not be what the
+    // mask shows (R2).
+    guard mask == nil else {
+      failure = .app("A host tool works on the whole image: clear the mask first.")
+      return false
+    }
     var recorded = false
     toolRunNumber += 1
     let number = toolRunNumber
@@ -61,6 +67,8 @@ extension StudioWorkspaceModel {
       }
       try reported { try studio.apply(id, params: params, result: result.image) }
       recorded = true
+      // Not added to the pipeline: the sidebar runs no host tool yet, so the recipe could not
+      // replay the step (0093's follow-up).
       // The report belongs to the panel that asked for it (not one reopened meanwhile).
       if self.panel === panel { toolReport = result.report }
     } catch {

@@ -1,0 +1,30 @@
+Siril is started as macOS application
+log: Reading configuration file <WORK>/siril.ini
+log: Welcome to siril 1.4.4 for macos (aarch64) - CLI
+log: Supported file types: BMP images, PIC images (IRIS), PGM and PPM binary images, RAW images, FITS-CFA images, Films, SER sequences, TIFF images, XISF images, JPG images, JPEG XL images, PNG images, HEIF images, AVIF images.
+log: Setting CWD (Current Working Directory) to '<WORK>/work'
+log: Parallel processing enabled: using 18 logical processors.
+log: Color management active.
+log: JPEG ICC profiles supported.
+log: Running command: requires
+1792680371: running command requires
+log: OK! This script is compatible with this version of Siril.
+log: Running command: setext
+1792680371: running command setext
+log: Running command: set32bits
+1792680371: running command set32bits
+log: 32-bit per channel in processed images mode is active
+log: Running command: load
+1792680371: running command load
+HDU 1: type=0, EXTNAME=
+HDU 2: type=0, EXTNAME=ICCProfile
+Skipping HDU 2 with EXTNAME=ICCProfile
+log: Reading FITS: file bare.fits, 3 layer(s), 1024x768 pixels, 32 bits
+log: Running command: spcc
+1792680371: running command spcc
+log: This command only works on plate solved images
+log: Error in line 5 ('spcc'): command is only for plate solved images.
+log: Exiting batch processing.
+log: Setting CWD (Current Working Directory) to '<WORK>/work'
+log: Script execution failed.
+progress: Script execution failed., 100.00%

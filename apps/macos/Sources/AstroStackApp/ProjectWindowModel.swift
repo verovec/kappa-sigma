@@ -46,8 +46,8 @@ package final class ProjectWindowModel {
   /// A queue is going: from Run until its last run registered, failed or was cancelled — Run
   /// stays greyed in between two runs too.
   var queueActive = false
-  /// Cancel was pressed during the queue: a run finishing meanwhile is recorded, not shown.
-  var queueCancelled = false
+  /// The last stack the queue recorded, opened: chosen and shown when the queue ends.
+  var queueRecorded: (stack: ProjectStack, source: LegacyRunSource)?
   /// The stack the Studio shows: the latest one, read-only.
   package internal(set) var studio: LegacyRunModel?
   /// The Stacking panel's preset and knob edits: what the next run applies (card 0070).
@@ -260,7 +260,8 @@ package final class ProjectWindowModel {
       sources = try store?.sources() ?? []
       let summary = try store?.summary() ?? ProjectSummary()
       // The stacks are read again only when their count moved: a refresh runs on every event.
-      if summary.stacks != stacks.count { stacks = try store?.stacks() ?? [] }
+      // A queue's stacks appear when it ends: until then the picker, Tri and « the latest » stay.
+      if !queueActive, summary.stacks != stacks.count { stacks = try store?.stacks() ?? [] }
       let running = isStacking ? 1 : 0
       var facts = ProjectFacts(summary: summary, coverage: coverage, stacksRunning: running)
       // Tri is done when the stack the Studio shows (the chosen one, else the latest; 0095) went

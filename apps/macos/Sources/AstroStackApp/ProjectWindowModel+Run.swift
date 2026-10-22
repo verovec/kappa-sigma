@@ -53,7 +53,8 @@ extension ProjectWindowModel {
   /// Each run plans the import again (scan + calibration plan, the overrides as left), scopes the
   /// inventory to its object's light sets (every calibration set travels), then StackKit runs it
   /// with the calibration choices the plan showed. A finished run becomes a stack with one image
-  /// per bundle layer; the Studio opens the last stack of the queue. A cancelled or failed run
+  /// per bundle layer; when the queue ends (drained, failed or cancelled) the Studio opens the last
+  /// stack it recorded. A cancelled or failed run
   /// registers nothing, keeps its artifacts and drops the rest of the queue. A saved project only
   /// (an untitled package moves on Save and is deleted on Close).
   ///
@@ -70,7 +71,6 @@ extension ProjectWindowModel {
     let preset = mode ?? knobs.mode
     queuedScopes = Array(scopes.dropFirst())
     queueActive = true
-    queueCancelled = false
     launch(scope: scopes.first, mode: preset, patch: knobs.patch(for: preset))
   }
 
@@ -142,14 +142,20 @@ extension ProjectWindowModel {
     }
   }
 
-  /// The queue is over (drained, cancelled or failed): Run is offered again; an error reported
-  /// on the way stays shown (a refresh clears none).
+  /// The queue is over (drained, cancelled or failed): Run is offered again, its stacks are
+  /// listed and the last one it recorded is chosen and shown in the Studio; an error reported on
+  /// the way stays shown (a refresh clears none).
   private func endQueue() {
     let reported = error
     queuedScopes = []
     queueActive = false
-    queueCancelled = false
     refresh()
+    if let recorded = queueRecorded {
+      queueRecorded = nil
+      selectStack(recorded.stack.id)
+      studio = LegacyRunModel(source: recorded.source)
+      select(.studio)
+    }
     if error == nil { error = reported }
   }
 
@@ -163,11 +169,8 @@ extension ProjectWindowModel {
   }
 
   /// Cancels the running run and the rest of the queue; its finished masters stay in its folder.
-  ///
-  /// A run that had just finished still records its stack, but the Studio does not take over.
   package func cancelRun() {
     queuedScopes = []
-    queueCancelled = true
     run?.cancel()
   }
 
@@ -201,8 +204,8 @@ extension ProjectWindowModel {
   }
 
   /// Records a finished run as a stack of the nights it read, with its request as parameters,
-  /// its object and scope, and one image per layer in one transaction; the last stack of the
-  /// queue is chosen and shown in the Studio.
+  /// its object and scope, and one image per layer in one transaction; kept as the queue's last
+  /// stack, shown when the queue ends.
   ///
   /// The stack is opened first: a bundle the Studio cannot open is reported, not recorded.
   /// The package is read where it is now: a project renamed in the Finder after the run's last
@@ -230,18 +233,8 @@ extension ProjectWindowModel {
         bundlePath: "stacks/\(runID)", sourceIDs: read, paramsJSON: params,
         imageRoles: source.layers.map(\.id), object: object, scopeJSON: scopeJSON)
       knobs.clearIgnored()
-      // Only the queue's last stack is chosen and opened. An intermediate one is recorded; when
-      // nothing is chosen it is « the latest », so the stack shown closes and the Studio opens
-      // the new one when it is on screen — what is shown is always what the picker names.
-      stacks.append(stack)
-      if queuedScopes.isEmpty, !queueCancelled {
-        selectStack(stack.id)
-        studio = LegacyRunModel(source: source)
-        select(.studio)
-      } else {
-        if selectedStackID == nil { studio = nil }
-        refresh()
-      }
+      // Shown when the queue ends, whether it drains, fails or is cancelled (`endQueue`).
+      queueRecorded = (stack, source)
     } catch {
       queuedScopes = []
       refresh()

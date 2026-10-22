@@ -12,9 +12,12 @@ import Testing
 @MainActor
 @Suite("Project runs — one run per object, the chosen stack")
 struct ProjectScopeTests {
-  /// The queue runs until no run is going (a finished run starts the next scope).
+  /// The queue runs until it ended (a finished run starts the next scope; the last one's
+  /// completion ends the queue).
   static func queueSettled(_ window: ProjectWindowModel) async {
-    while let run = window.run, run.isRunning { await run.settled() }
+    while window.isStacking {
+      if let run = window.run, run.isRunning { await run.settled() } else { await Task.yield() }
+    }
   }
 
   /// A saved project whose planner scans M 31 and IC 1848 together, scanned once; from plan
@@ -150,9 +153,9 @@ struct ProjectScopeTests {
   }
 
   @Test(
-    "a queue that stops after its first run, nothing chosen: the Studio follows the latest",
+    "a queue that stops after its first run shows the stack it recorded; nothing moves before",
     .scratchDirectory)
-  func testStoppedQueueKeepsTheShownStack() async throws {
+  func testStoppedQueueShowsItsLastStack() async throws {
     // Plans: the scan, the first run's; the second run finds M 31 regrouped and is refused.
     let (project, window, ran) = try await Self.twoObjects(movedAfter: 2)
     defer { try? project.close() }
@@ -166,19 +169,18 @@ struct ProjectScopeTests {
     #expect(window.selectedStackID == nil && window.studio?.source.runID == "A")
 
     window.startRun()
+    #expect(window.stacks.map(\.id) == [shown.id] && window.studio?.source.runID == "A")
     await Self.queueSettled(window)
     #expect(ran.all.count == 1, "the second run is refused before it starts")
     guard case .failed = window.run?.phase else {
       Issue.record("the second run fails: the scan moved")
       return
     }
-    #expect(window.stacks.count == 2, "the first run's stack is recorded")
-    #expect(Set(window.stacks.map(\.id)).count == 2, "recorded once")
-    #expect(window.studio == nil, "the stack shown is no longer « the latest »: it closes")
-    #expect(window.selectedStack?.id != shown.id)
-    await window.openStudio()
-    #expect(window.studio?.source.runID == ProjectTests.runID, "the first run's stack opens")
-    #expect(try project.store.setting("workspace.stack") == nil, "nothing persisted in silence")
+    let recorded = try #require(window.stacks.last)
+    #expect(window.stacks.map(\.id) == [shown.id, recorded.id], "the first run's stack, once")
+    #expect(window.selectedStackID == recorded.id, "the queue's last stack is chosen")
+    #expect(window.studio?.source.runID == ProjectTests.runID && window.selection == .studio)
+    #expect(try project.store.setting("workspace.stack") == "\(recorded.id)")
   }
 
   @Test(

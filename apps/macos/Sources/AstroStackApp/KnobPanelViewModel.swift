@@ -63,12 +63,32 @@ package final class KnobPanelViewModel {
   }
 
   /// The help of knob `id` in `locale` (`HelpMarkdown`): its glossary definition and, when
-  /// `profile` sets the knob, the profile's « why » as a second paragraph (card 0086).
+  /// `profile` sets the knob, a second paragraph naming the profile, the value it sets and why —
+  /// the why belongs to that value, which may not be the one on screen (R2, card 0086).
   package func help(for id: String, locale: Locale) -> String {
     let definition = AppGlossary.term(Knob.termID(id), locale: locale, in: AppGlossary.knobs)
       .definition
-    guard let why = profile?.preprocessing.why[id] else { return definition }
-    return definition + "\n" + why.text(language: AppLocale.language(of: locale))
+    guard let profile, let why = profile.preprocessing.why[id] else { return definition }
+    let language = AppLocale.language(of: locale)
+    let value = profile.preprocessing.knobs[id].map { Self.words(for: $0, id: id, locale: locale) }
+    let sets = [profile.title.text(language: language), value].compactMap { $0 }
+      .joined(separator: ", ")
+    return definition + "\n" + sets + ": " + why.text(language: language)
+  }
+
+  /// A profile's value of knob `id` as the panel shows it: the user's number, the choice's
+  /// glossary label, « On » / « Off ».
+  package nonisolated static func words(for value: ParamValue, id: String, locale: Locale)
+    -> String
+  {
+    switch value {
+    case .number(let number): AstroFormat(locale: locale).parameter(number)
+    case .flag(let flag):
+      String(localized: flag ? .app("On", locale: locale) : .app("Off", locale: locale))
+    case .choice(let option):
+      AppGlossary.label(Knob.termID(id, option: option), locale: locale, in: AppGlossary.knobs)
+    case .points: ""
+    }
   }
 
   /// What differs from the preset of `mode`: the patch the run applies and records.

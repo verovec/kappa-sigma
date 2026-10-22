@@ -21,14 +21,19 @@ package struct JourneySidebarRow: View {
       Spacer(minLength: DesignMetrics.spacingXS)
       indicator
     }
-    // The stage card's first line (card 0086); its state is the accessibility value.
-    .help(
-      StageHelp.summary(stage, locale: locale).map { Text(verbatim: $0) }
-        ?? Text(StagePane.words(for: status))
-    )
+    // The stage card's first line (card 0086), then its state (also the accessibility value).
+    .help(Text(verbatim: tooltip))
     .accessibilityElement(children: .combine)
     .accessible(.journeyStage(stage.rawValue), verbatim: term)
     .accessibilityValue(Text(StagePane.words(for: status)))
+  }
+
+  /// The stage's summary and its state, one line each.
+  private var tooltip: String {
+    [
+      StageHelp.summary(stage, locale: locale),
+      String(localized: StagePane.words(for: status, locale: locale)),
+    ].compactMap { $0 }.joined(separator: "\n")
   }
 
   @ViewBuilder private var indicator: some View {

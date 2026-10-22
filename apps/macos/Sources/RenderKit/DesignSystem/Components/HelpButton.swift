@@ -41,13 +41,11 @@ package struct HelpButton<Content: View>: View {
     .foregroundStyle(DesignColor.textSecondary.color)
     .help(Text(summary))
     .accessible(key, label: label.resource, hint: summary)
-    // Esc closes the popover from the button or from inside it (a transient popover also closes
-    // on a click outside).
-    .onExitCommand { presentation.wrappedValue = false }
     .popover(isPresented: presentation, arrowEdge: .bottom) {
       content()
         .padding(DesignMetrics.spacingM)
         .frame(width: 320, alignment: .leading)
+        // Esc inside the popover; a transient popover also closes on a click outside.
         .onExitCommand { presentation.wrappedValue = false }
     }
   }

@@ -10,23 +10,13 @@ struct DataStagePane: View {
   var body: some View {
     if model.sources.isEmpty {
       // The stage's « ? » is there before the first night too.
-      VStack(alignment: .leading, spacing: 0) {
-        SectionHeader(
-          .app("Capture nights"), help: StageHelp.help(.data, locale: locale)
-        )
-        .padding(DesignMetrics.spacingM)
-        ContentUnavailableView {
-          Label {
-            Text(.app("Empty project"))
-          } icon: {
-            Image(systemName: "sparkles")
-          }
-        } description: {
-          Text(.app("Import a capture night to see how it will be calibrated and stacked."))
-        } actions: {
-          Button(.app("Import Captures…")) { model.startImport() }
-            .accessible(.importCaptures, label: .app("Import Captures…"))
-        }
+      EmptyState(
+        .app("Empty project"),
+        message: .app("Import a capture night to see how it will be calibrated and stacked."),
+        systemImage: "sparkles", help: StageHelp.help(.data, locale: locale)
+      ) {
+        Button(.app("Import Captures…")) { model.startImport() }
+          .accessible(.importCaptures, label: .app("Import Captures…"))
       }
     } else {
       ScrollView {

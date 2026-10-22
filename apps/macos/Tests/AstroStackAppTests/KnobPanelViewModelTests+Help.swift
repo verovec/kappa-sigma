@@ -21,13 +21,30 @@ extension KnobPanelViewModelTests {
     let profile = try #require(profiles.first { $0.preprocessing.why["trail_mask_k"] != nil })
     let why = try #require(profile.preprocessing.why["trail_mask_k"])
     panel.profile = profile
-    #expect(panel.help(for: "trail_mask_k", locale: french) == definition + "\n" + why.french)
+    // The why belongs to the profile's value, named with it: « <profile>, <value>: <why> ».
+    let value = try #require(profile.preprocessing.knobs["trail_mask_k"])
+    let words = KnobPanelViewModel.words(for: value, id: "trail_mask_k", locale: french)
+    #expect(
+      panel.help(for: "trail_mask_k", locale: french)
+        == definition + "\n" + profile.title.french + ", " + words + ": " + why.french)
     let english = panel.help(for: "trail_mask_k", locale: Locale(identifier: "en"))
-    #expect(english.hasSuffix(why.english))
+    #expect(english.hasSuffix(why.english) && english.contains(profile.title.english))
     #expect(HelpMarkdown.parse(panel.help(for: "trail_mask_k", locale: french)).count == 2)
 
     // A knob the profile does not set keeps the definition only.
     let other = AppGlossary.term(Knob.termID("fwhm_sigma"), locale: french, in: AppGlossary.knobs)
     #expect(panel.help(for: "fwhm_sigma", locale: french) == other.definition)
+  }
+
+  @Test(
+    "a profile's value is worded as the panel shows it",
+    arguments: [
+      (ParamValue.number(3.5), "3,5"), (.flag(true), "Activé"), (.flag(false), "Désactivé"),
+      (.choice("sigma"), "Écrêtage sigma"),
+    ])
+  func testProfileValueWords(value: ParamValue, expected: String) {
+    let words = KnobPanelViewModel.words(
+      for: value, id: "stack_reject", locale: Locale(identifier: "fr"))
+    #expect(words == expected)
   }
 }

@@ -17,8 +17,8 @@ package enum StagePane {
     case .calibration:
       CalibrationStagePane(model: model)
     case .review:
-      placeholder(
-        .review, .app("Frame review"),
+      StagePlaceholder(
+        stage: .review, title: .app("Frame review"),
         message: .app("Per-frame metrics, blink and keep or reject will appear here."),
         systemImage: "rectangle.grid.3x2")
     case .stacking:
@@ -26,19 +26,11 @@ package enum StagePane {
     case .studio:
       StudioStagePane(model: model)
     case .export:
-      placeholder(
-        .export, .app("Export"),
+      StagePlaceholder(
+        stage: .export, title: .app("Export"),
         message: .app("The deliverables written from the finished image will appear here."),
         systemImage: "square.and.arrow.up")
     }
-  }
-
-  /// A stage whose pane has not landed: its header with its « ? », then the empty state.
-  private static func placeholder(
-    _ stage: JourneyStage, _ title: LocalizedStringResource, message: LocalizedStringResource,
-    systemImage: String
-  ) -> some View {
-    StagePlaceholder(stage: stage, title: title, message: message, systemImage: systemImage)
   }
 
   /// The sidebar badge of `status`; `nil` where the stage name says enough.

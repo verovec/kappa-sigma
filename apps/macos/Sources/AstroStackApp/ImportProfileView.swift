@@ -101,7 +101,7 @@ package struct ImportProfileView: View {
   private func values(of profile: Profile) -> some View {
     let registry = try? ProcessRegistry.standard()
     return VStack(alignment: .leading, spacing: DesignMetrics.spacingXXS) {
-      ForEach(Array(profile.steps.enumerated()), id: \.offset) { _, step in
+      ForEach(Array(profile.steps.enumerated()), id: \.offset) { offset, step in
         ForEach(step.values.keys.sorted(), id: \.self) { id in
           HStack(spacing: DesignMetrics.spacingXS) {
             Text(verbatim: Self.line(step, id, registry: registry, locale: locale))
@@ -109,7 +109,7 @@ package struct ImportProfileView: View {
             let why = step.why[id]?.text(language: language) ?? ""
             HelpButton(
               summary: .app("\(why)"), label: .whyThisValue,
-              key: .help("profile.\(step.recipe.processID).\(id)")
+              key: .help("profile.\(offset).\(step.recipe.processID).\(id)")
             ) {
               HelpText(Self.valueHelp(step.recipe.processID, id, why: why, language: language))
             }

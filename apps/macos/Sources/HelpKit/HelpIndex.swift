@@ -34,7 +34,7 @@ package struct HelpIndex: Sendable {
   }
 
   /// HelpKit's cards as SwiftPM builds them (tests, `swift run`).
-  package static var bundled: Self { Self(bundle: .module) }
+  package static let bundled = Self(bundle: .module)
 
   /// The card of process `id` in `locale`, or `nil`.
   package func card(process id: String, locale: String) -> String? {

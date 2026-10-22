@@ -38,8 +38,6 @@ package final class ProjectWindowModel {
   package internal(set) var studio: LegacyRunModel?
   /// The Stacking panel's preset and knob edits: what the next run applies (card 0070).
   package let knobs: KnobPanelViewModel
-  /// The profile ids the sources kept at the last refresh (the lookup runs on a change only).
-  private var keptProfileIDs: Set<String> = []
   /// This session's imports, in order: the next run applies all their overrides.
   var imports: [ImportRequest] = []
   @ObservationIgnored private var masterServices: MasterServices?
@@ -193,13 +191,11 @@ package final class ProjectWindowModel {
       needsSave = !isSaved()
       sources = try store?.sources() ?? []
       // The profile kept at import (0060) words the knobs' help; it is applied by nothing here.
-      // Nights that kept different profiles word nothing: no guessing which one.
-      let kept = Set(sources.compactMap(\.profileID))
-      if kept != keptProfileIDs {
-        keptProfileIDs = kept
-        knobs.profile =
-          kept.count == 1
-          ? ImportViewModel.profiles(store: store).profiles.first { kept.contains($0.id) } : nil
+      // Every night must have kept the same profile (a night without one counts): no guessing.
+      let kept = Set(sources.map(\.profileID))
+      let agreed = kept.count == 1 ? kept.first.flatMap { $0 } : nil
+      knobs.profile = agreed.flatMap { id in
+        ImportViewModel.profiles(store: store).profiles.first { $0.id == id }
       }
       let summary = try store?.summary() ?? ProjectSummary()
       let running = run?.isRunning == true ? 1 : 0

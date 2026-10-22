@@ -9,8 +9,8 @@ import Testing
 ///
 /// The popover is NSPopover's transient one: Esc and a click outside close it (AppKit, checked
 /// by hand in the card's Manual item — a synthesised key event never reaches SwiftUI's exit
-/// command in a test process); what is pinned here is the button's announcement, the click
-/// toggle and the popover window following the presentation.
+/// command in a test process, and a window-server wait would be a timed test); what is pinned
+/// here is the button's announcement and the presentation toggle.
 @MainActor
 @Suite("HelpButton — summary on hover, popover on click")
 struct HelpButtonTests {
@@ -54,7 +54,7 @@ struct HelpButtonTests {
   @Test("testHoverSummaryAndClickPopover")
   func testHoverSummaryAndClickPopover() throws {
     let presentation = Presentation()
-    let (host, window, reported) = Self.host(presentation)
+    let (_, window, reported) = Self.host(presentation)
     defer { window.close() }
     // The accessibility tree: the button is labelled, identified, and its hint is the summary.
     let entry = try #require(reported.entries.first)
@@ -73,28 +73,5 @@ struct HelpButtonTests {
     binding.wrappedValue.toggle()
     #expect(!presentation.isPresented)
 
-    // Shown in an on-screen window, the presentation opens a popover window attached to that
-    // window (other tests' windows are not counted); closing it takes the popover down.
-    window.makeKeyAndOrderFront(nil)
-    RunLoop.main.run(until: Date().addingTimeInterval(0.1))
-    presentation.isPresented = true
-    let popovers = {
-      NSApp.windows.filter {
-        $0.className.contains("Popover") && $0.parent === window && $0.isVisible
-      }
-    }
-    var deadline = Date().addingTimeInterval(3)
-    while popovers().isEmpty && Date() < deadline {
-      RunLoop.main.run(until: Date().addingTimeInterval(0.05))
-    }
-    let windows = NSApp.windows.map { "\($0.className) parent=\(String(describing: $0.parent))" }
-    #expect(popovers().count == 1, "\(windows)")
-    presentation.isPresented = false
-    deadline = Date().addingTimeInterval(3)
-    while !popovers().isEmpty && Date() < deadline {
-      RunLoop.main.run(until: Date().addingTimeInterval(0.05))
-    }
-    #expect(popovers().isEmpty)
-    _ = host
   }
 }

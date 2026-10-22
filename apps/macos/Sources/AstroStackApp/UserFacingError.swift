@@ -1,4 +1,5 @@
 package import Foundation
+package import ProcessKit
 package import StackKit
 
 /// An error as the user reads it: one catalog sentence naming what to act on (the path, the
@@ -9,6 +10,10 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
   case calibration(CalibrationError)
   case preprocess(PreprocessError)
   case legacyRun(LegacyRunError)
+  /// The Studio could not do what was asked (card 0087).
+  case studio(StudioError)
+  /// The Studio's history refused a move or could not be read back (card 0087).
+  case history(HistoryError)
   /// The document was closed under an open sheet.
   case projectClosed
   /// A new project's name has nothing left once cleaned for the file system.
@@ -32,6 +37,8 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     case let error as CalibrationError: self = .calibration(error)
     case let error as PreprocessError: self = .preprocess(error)
     case let error as LegacyRunError: self = .legacyRun(error)
+    case let error as StudioError: self = .studio(error)
+    case let error as HistoryError: self = .history(error)
     case let error as LocalizedError where error.errorDescription != nil:
       self = .other(error.errorDescription ?? "")
     // A system error has a sentence of its own; a Swift error without one would read
@@ -49,6 +56,8 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     case .calibration(let error): Self.message(error)
     case .preprocess(let error): Self.message(error)
     case .legacyRun(let error): Self.message(error)
+    case .studio(let error): Self.message(error)
+    case .history(let error): Self.message(error)
     case .projectClosed: .app("This project is not open any more; reopen it and import again.")
     case .projectName: .app("Name the project after its target, for example M 31.")
     case .documentsAccess(let path):

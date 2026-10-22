@@ -75,7 +75,7 @@ package final class StudioWorkspaceModel {
   /// preview's.
   @ObservationIgnored private var headStatistics: [STFMapping] = []
   /// The values and mask the preview on screen was drawn with (`nil`: none on screen).
-  @ObservationIgnored private var shown: (params: ParamSet, mask: Mask?)?
+  @ObservationIgnored private var shown: (processID: String, params: ParamSet, mask: Mask?)?
   /// The failure shown is a preview's (the next preview clears it).
   @ObservationIgnored private var previewFailed = false
 
@@ -112,6 +112,7 @@ package final class StudioWorkspaceModel {
     let panel = ProcessPanelModel(type: type, params: params, suggestions: suggestions)
     panel.onChange = { [weak self] in self?.panelChanged() }
     self.panel = panel
+    shown = nil
     // The defaults are previewed at once: Apply never records what was not shown (R2).
     schedulePreview()
   }
@@ -132,7 +133,7 @@ package final class StudioWorkspaceModel {
       let same = preview.planes.count == headStatistics.count
       try show(preview, statistics: same ? headStatistics : nil)
       isPreviewing = true
-      shown = (panel.params, mask)
+      shown = (panel.type.id, panel.params, mask)
       // A preview clears only a preview's failure: an Apply or Undo failure stays in view.
       if previewFailed { failure = nil }
       previewFailed = false
@@ -150,7 +151,9 @@ package final class StudioWorkspaceModel {
     guard let panel else { return }
     // Apply records what the viewer shows (R2): values not drawn yet are drawn first, and the
     // user applies once they show.
-    guard let shown, shown.params == panel.params, shown.mask == mask else {
+    guard let shown, shown.processID == panel.type.id, shown.params == panel.params,
+      shown.mask == mask
+    else {
       failure = .app("The preview is being drawn: apply again once it shows.")
       previewFailed = true
       schedulePreview()

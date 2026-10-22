@@ -305,6 +305,22 @@
         }
       }
     },
+    "A snapshot is already named “%@”.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A snapshot is already named “%@”."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un instantané s’appelle déjà « %@ »."
+          }
+        }
+      }
+    },
     "About AstroStack": {
       "localizations": {
         "en": {
@@ -2577,6 +2593,22 @@
         }
       }
     },
+    "No snapshot is named “%@”.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No snapshot is named “%@”."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun instantané ne s’appelle « %@ »."
+          }
+        }
+      }
+    },
     "Not applied, no longer valid settings: %@": {
       "localizations": {
         "en": {
@@ -4177,6 +4209,22 @@
         }
       }
     },
+    "Step %lld of the history no longer exists.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Step %lld of the history no longer exists."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’étape %lld de l’historique n’existe plus."
+          }
+        }
+      }
+    },
     "Stretched": {
       "localizations": {
         "en": {
@@ -4285,6 +4333,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Temp."
+          }
+        }
+      }
+    },
+    "The Studio has no process “%@”.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Studio has no process “%@”."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le Studio n’a pas de traitement « %@ »."
           }
         }
       }
@@ -4569,6 +4633,38 @@
         }
       }
     },
+    "There is nothing to redo.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There is nothing to redo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il n’y a rien à rétablir."
+          }
+        }
+      }
+    },
+    "There is nothing to undo.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There is nothing to undo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il n’y a rien à annuler."
+          }
+        }
+      }
+    },
     "This filter may come from the filter map: exclude the set before mapping it": {
       "localizations": {
         "en": {
@@ -4613,6 +4709,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ce projet empile plusieurs objets : relisez (Données › Relire) pour choisir les séries."
+          }
+        }
+      }
+    },
+    "This stack has no layer to start the Studio from.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This stack has no layer to start the Studio from."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet empilement n’a aucune couche d’où partir dans le Studio."
+          }
+        }
+      }
+    },
+    "This stack's Studio history cannot be read back: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This stack's Studio history cannot be read back: %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’historique Studio de cet empilement ne peut pas être relu : %@."
           }
         }
       }

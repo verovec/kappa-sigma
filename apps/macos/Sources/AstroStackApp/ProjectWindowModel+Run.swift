@@ -212,8 +212,10 @@ extension ProjectWindowModel {
       } catch is CancellationError {
         return
       } catch {
-        // Not loaded: the same stack may be tried again (its pane reopens it).
-        if self?.workspaceStackID == stackID { self?.workspaceStackID = nil }
+        // Not loaded: the same stack may be tried again (showing the Studio retries it); a
+        // stack dropped meanwhile reports nothing.
+        guard self?.workspaceStackID == stackID else { return }
+        self?.workspaceStackID = nil
         self?.error = UserFacingError(error)
       }
     }
@@ -254,7 +256,10 @@ extension ProjectWindowModel {
   func openWorkspace(
     _ source: LegacyRunSource, stackID: Int64, folder: URL, bundlePath: String
   ) async throws {
-    guard let store = store() else { return }
+    guard let store = store() else {
+      if workspaceStackID == stackID { workspaceStackID = nil }
+      return
+    }
     let (bundle, roles, header) = try await StudioBundle.load(source)
     let combination = keptProfile(of: stackID)?.steps
       .first { $0.recipe.processID == ChannelCombinationProcess.id }
@@ -268,7 +273,10 @@ extension ProjectWindowModel {
     // An undo from another stage brings the Studio into view before moving its history.
     workspace.reveal = { [weak self] in self?.select(.studio) }
     self.workspace = workspace
+    // The Studio's stage state follows; an error the window shows stays (a refresh clears it).
+    let reported = error
     refresh()
+    if error == nil { error = reported }
   }
 
   @concurrent

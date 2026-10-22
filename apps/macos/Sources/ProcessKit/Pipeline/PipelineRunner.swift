@@ -11,27 +11,6 @@ package import Metal
 /// `Sendable`: a caller on the main actor hops off it around the whole run; the run checks for
 /// cancellation between steps.
 package final class PipelineRunner {
-  /// A batch process: a host tool run on the whole image (StarNet, GraXpert).
-  package struct BatchProcess: Sendable {
-    /// Its parameters (what its recipe's values are validated on).
-    package let schema: ParamSchema
-    /// The image, its values and a progress callback (0…1) → the processed image.
-    package let run:
-      @Sendable (AstroImage, ParamSet, @escaping @Sendable (Double) -> Void) async throws
-        -> AstroImage
-
-    /// A batch process of `schema` running `run`.
-    package init(
-      schema: ParamSchema,
-      run:
-        @escaping @Sendable (AstroImage, ParamSet, @escaping @Sendable (Double) -> Void)
-        async throws -> AstroImage
-    ) {
-      self.schema = schema
-      self.run = run
-    }
-  }
-
   /// What the run did, step by step (indexes in the pipeline).
   package enum Event: Equatable, Sendable {
     /// The step was applied.
@@ -65,6 +44,7 @@ package final class PipelineRunner {
 
   private let registry: ProcessRegistry
   private let device: MTLDevice
+  private let runner: ProcessRunner
   private let batch: [String: BatchProcess]
 
   /// A runner of the processes of `registry` on `device`, and of the `batch` tools by id.
@@ -73,6 +53,7 @@ package final class PipelineRunner {
   ) throws {
     self.registry = registry
     self.device = device
+    runner = try ProcessRunner(device: device)
     self.batch = batch
   }
 
@@ -130,7 +111,7 @@ package final class PipelineRunner {
   private struct Session {
     let history: History
     let bundle: PipelineBundle
-    let steps: StepRunner
+    let layers: [String: GPUImage]
     let previous: PipelineRun?
     let onEvent: EventSink
 
@@ -140,14 +121,16 @@ package final class PipelineRunner {
     ) throws {
       self.history = history
       self.bundle = bundle
-      steps = try StepRunner(device: device, bundle: bundle)
+      layers = try bundle.layers.mapValues { try GPUImage(device: device, image: $0) }
       self.previous = previous
       self.onEvent = onEvent
     }
 
     /// The statistics a step gets: the bundle's for the original image, else those of the image
     /// the step receives (as the Studio shows for it).
-    var stats: LayerStats { steps.stepStats(history) }
+    var stats: LayerStats {
+      history.steps.isEmpty ? bundle.stats : LayerStats.measured(history.current)
+    }
   }
 
   private func steps(of pipeline: Pipeline, from start: Int, in session: Session) async throws
@@ -171,29 +154,45 @@ package final class PipelineRunner {
       PipelineReuse.canReuse(
         step: index, of: previous, into: history, bundle: session.bundle, processID: id)
     {
-      // Everything the step wrote: a reused geometry step brings its moved layers too.
-      let recorded = try previous.history.recorded(ofStep: index)
+      let written = try previous.history.written(ofStep: index)
       try history.apply(
-        processID: id, params: previous.history.steps[index].params, result: recorded.result,
-        outputs: recorded.outputs, bundleLayers: recorded.bundleLayers)
+        processID: id, params: previous.history.steps[index].params,
+        result: previous.history.output(ofStep: index), outputs: written.outputs,
+        replacing: written.replaced)
       session.onEvent(.reused(index))
       return
     }
     if let tool = batch[id] {
       let params = try Self.values(of: step, schema: tool.schema, at: index)
       let onEvent = session.onEvent
-      let result = try await tool.run(history.current, params) { onEvent(.progress(index, $0)) }
-      try history.apply(processID: id, params: params, result: result)
+      try await tool.record(
+        id, params: params, in: history, bundle: session.bundle
+      ) { onEvent(.progress(index, $0)) }
     } else if let type = registry.type(id: id) {
       // A host-tool process's render is its preview only: without the tool, refuse.
       guard !type.hostTool else { throw PipelineError.toolMissing(id) }
       let params = try Self.values(of: step, schema: type.schema, at: index)
-      try session.steps.apply(
-        type.init(params: params, device: device), processID: id, params: params, to: history)
+      let process = try type.init(params: params, device: device)
+      let input = history.current
+      let (layers, layerStats) = try context(session)
+      let result = try runner.image(
+        process, input: input, stats: session.stats, layers: layers, layerStats: layerStats)
+      // A geometry step moves the layers with its image, as in the Studio (card 0090).
+      let moved = try runner.movedLayers(
+        process, layers: layers, input: input, result: result, roles: history.layerRoles)
+      try history.apply(
+        processID: id, params: params, result: result, outputs: moved.outputs,
+        replacing: moved.replacing)
     } else {
       throw PipelineError.unknownProcess(id)
     }
     session.onEvent(.applied(index))
+  }
+
+  /// The layers a step reads, as `StudioSession` gives them (`History.context`).
+  private func context(_ session: Session) throws -> ([String: GPUImage], [String: LayerStats]) {
+    try session.history.context(
+      over: session.layers, stats: session.bundle.layerStats, device: device)
   }
 
   /// The step's values on `schema`; a value the schema refuses stops the run with its name

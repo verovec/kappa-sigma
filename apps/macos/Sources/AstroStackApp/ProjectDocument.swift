@@ -110,6 +110,11 @@ package final class ProjectDocument: NSDocument {
     windowModel?.openGuide()
   }
 
+  /// File › Export… (⇧⌘E): the Export stage, its form and the exports of the stack (card 0091).
+  @objc package func showExport(_ sender: Any?) {
+    windowModel?.select(.export)
+  }
+
   // MARK: - The Studio's commands (card 0087)
 
   /// Edit › Apply Process (⌘E): the open panel's values become a history step.
@@ -155,6 +160,11 @@ package final class ProjectDocument: NSDocument {
   {
     if item.action == #selector(applyProcess(_:)) {
       return windowModel?.selection == .studio && windowModel?.workspace?.panel != nil
+    }
+    if item.action == #selector(showExport(_:)) {
+      guard let status = windowModel?.statuses[.export] else { return false }
+      if case .unavailable = status { return false }
+      return true
     }
     if let action = item.action, Self.pipelineActions.contains(action) {
       return Self.pipelineEnabled(action, in: windowModel)

@@ -29,6 +29,9 @@ package final class ProcessPanelModel {
   /// What the levels send to black and white on the head's sample, per channel (measured once
   /// per change of the values or the sample, shown, never applied); none for another process.
   package internal(set) var clipping: [HeadSample.Clipping] = []
+  /// Choice options that cannot run, by parameter then option, with the reason (an engine
+  /// whose tool is missing, card 0092): shown greyed, never switched away from (R2).
+  package var unavailableOptions: [String: [String: LocalizedStringResource]] = [:]
   /// Called after every accepted change (the live preview).
   @ObservationIgnored package var onChange: () -> Void = {}
 

@@ -17,4 +17,15 @@ extension LayerStats {
           maximum: Double(finite.max() ?? 0))
       })
   }
+
+  /// These statistics with the continuum fit (`continuum_k`, its reference) of `recorded`: a
+  /// layer measured again after a step keeps the fit made on the stack (card 0090).
+  package func keepingFit(of recorded: LayerStats?) -> LayerStats {
+    guard let recorded, recorded.continuumK != nil || recorded.continuumReference != nil else {
+      return self
+    }
+    return LayerStats(
+      channels: channels, continuumK: recorded.continuumK,
+      continuumReference: recorded.continuumReference)
+  }
 }

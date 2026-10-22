@@ -41,12 +41,15 @@ extension ProjectStore {
   }
 
   /// The counts as `db` holds them; shared by an open store and a read-only peek.
+  ///
+  /// The peek never migrates, so a table a newer migration adds counts 0 in an older package.
   static func summary(in db: Database) throws -> ProjectSummary {
     func count(_ table: String) throws -> Int {
-      try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM \(table)") ?? 0
+      guard try db.tableExists(table) else { return 0 }
+      return try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM \(table)") ?? 0
     }
     return ProjectSummary(
       sources: try count("sources"), stacks: try count("stacks"), images: try count("images"),
-      historySteps: try count("history_steps"))
+      historySteps: try count("history_steps"), exports: try count("exports"))
   }
 }

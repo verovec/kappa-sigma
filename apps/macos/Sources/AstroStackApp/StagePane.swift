@@ -4,9 +4,9 @@ internal import SwiftUI
 
 /// The one place that maps a journey stage to its pane and its state's badge and words.
 ///
-/// A stage whose card has not landed shows an empty state naming what will appear there — no fake
-/// controls. A card that builds a stage's pane replaces its case here (0071/0078 calibration,
-/// 0069 review, E12 studio processes, 0091 export).
+/// Every stage has its pane (0071/0078 calibration, 0069 review, 0087 studio, 0091 export); a
+/// pane without content yet shows an empty state naming what will appear there — no fake
+/// controls.
 package enum StagePane {
   /// The pane of `stage`.
   @ViewBuilder
@@ -23,10 +23,7 @@ package enum StagePane {
     case .studio:
       StudioStagePane(model: model)
     case .export:
-      StagePlaceholder(
-        stage: .export, title: .app("Export"),
-        message: .app("The deliverables written from the finished image will appear here."),
-        systemImage: "square.and.arrow.up")
+      ExportStagePane(model: model)
     }
   }
 

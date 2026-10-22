@@ -24,12 +24,10 @@ extension History {
         }
         outputs[role] = file
       }
-      var step = Step(
+      return Step(
         processID: entry.processID,
         params: ParamSet.loading(entry.params, onto: schema).params, file: entry.file,
-        outputs: outputs)
-      step.bundleLayers = entry.bundleLayers ?? [:]
-      return step
+        outputs: outputs, replaced: entry.replaced ?? [:])
     }
     try history.restore(
       steps: manifest.steps.map(step), undone: manifest.undone.map(step),
@@ -50,14 +48,10 @@ extension History {
       HistoryManifest.Entry(
         processID: step.processID, params: step.params.entries, file: step.file,
         outputs: Dictionary(uniqueKeysWithValues: step.outputs.map { ($0.key.rawValue, $0.value) }),
-        bundleLayers: step.bundleLayers.isEmpty ? nil : step.bundleLayers)
+        replaced: step.replaced.isEmpty ? nil : step.replaced)
     }
-    // Version 2 only when a step carries bundle layers: other histories stay readable by older
-    // builds, which would drop those layers silently.
-    let moved = (steps + undone).contains { !$0.bundleLayers.isEmpty }
     return HistoryManifest(
-      version: moved ? HistoryManifest.version : 1, nextNumber: nextStepNumber,
-      steps: steps.map(entry),
+      version: HistoryManifest.version, nextNumber: nextStepNumber, steps: steps.map(entry),
       undone: undone.map(entry),
       snapshots: snapshots.map { HistoryManifest.Snapshot(name: $0.name, file: $0.file) })
   }

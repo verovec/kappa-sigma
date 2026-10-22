@@ -6,7 +6,7 @@ package import Metal
 /// `render` and `MaskBlend` into its own frame. A mask is applied after the process — never
 /// inside it.
 package struct ProcessRunner {
-  private let device: MTLDevice
+  let device: MTLDevice
   private let queue: MTLCommandQueue
   private let blend: MaskBlend
 

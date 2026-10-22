@@ -22,6 +22,19 @@ struct ProjectPackageSummaryTests {
     try ProjectPackageTests.expectOnlyDatabase(in: url)
   }
 
+  @Test("a package written before the exports table (0006) reads zero exports", .scratchDirectory)
+  func testOlderSchemaReadsZeroExports() throws {
+    let url = try ScratchDirectory.url.appendingPathComponent("M 45.astrostack")
+    let package = try ProjectPackage.create(at: url)
+    _ = try package.store.addSource(kind: .night, path: "/captures/M45/2026-09-22")
+    try package.store.migrate(to: 5)
+    try package.close()
+
+    let summary = try ProjectPackage.readSummary(at: url)
+
+    #expect(summary == ProjectSummary(sources: 1))
+  }
+
   @Test("a package open elsewhere is counted without touching its WAL", .scratchDirectory)
   func testOpenPackageKeepsItsWAL() throws {
     let url = try ScratchDirectory.url.appendingPathComponent("IC 1848.astrostack")

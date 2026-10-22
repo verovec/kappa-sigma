@@ -55,6 +55,8 @@ package enum LayerRole: String, Codable, CaseIterable, Sendable {
   case stars
   /// A mask.
   case mask
+  /// The background model a background extraction removed (card 0092).
+  case backgroundModel
 
   /// Why a process needing `requires` cannot run with only `present` (`nil`: it can).
   ///

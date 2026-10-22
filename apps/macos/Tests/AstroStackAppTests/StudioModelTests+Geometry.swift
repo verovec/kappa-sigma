@@ -58,7 +58,7 @@ extension StudioModelTests {
     try workspace.apply()
     #expect(workspace.studio.steps.map(\.processID) == ["channel-combination", "geometry"])
     #expect(workspace.studio.head.width == width && workspace.studio.head.height == height)
-    let rgb = try #require(try workspace.studio.session.history.bundleLayers()["RGB"])
+    let rgb = try #require(try workspace.studio.session.history.writtenLayer("RGB"))
     #expect(rgb.width == width && rgb.height == height, "the bundle layer follows")
   }
 

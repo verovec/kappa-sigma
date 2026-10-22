@@ -46,6 +46,7 @@ package struct StudioCatalogueView: View {
     case .starless: .app("a starless layer", locale: locale)
     case .stars: .app("a stars layer", locale: locale)
     case .mask: .app("a mask layer", locale: locale)
+    case .backgroundModel: .app("a background model", locale: locale)
     }
   }
 

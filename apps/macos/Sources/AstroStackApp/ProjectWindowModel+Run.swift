@@ -256,6 +256,7 @@ extension ProjectWindowModel {
     workspace?.retire()
     workspace = nil
     workspaceStackID = nil
+    dropExport()
   }
 
   /// The Studio's working image of stack `stackID`: its layers read off the main actor, its
@@ -276,16 +277,18 @@ extension ProjectWindowModel {
       store: store, stackID: stackID, packageFolder: folder,
       stackFolder: folder.appendingPathComponent(bundlePath), bundle: bundle, header: header,
       combination: combination)
-    let workspace = try StudioWorkspaceModel(
-      studio: studio, base: roles,
-      // Host tools work outside the document package: a crash never leaves files inside it.
-      tools: StudioTool.standard(
-        scratch: FileManager.default.temporaryDirectory.appendingPathComponent(
-          "AstroStack/Work", isDirectory: true)))
+    // Host tools work outside the document package: a crash never leaves files inside it.
+    let scratch = FileManager.default.temporaryDirectory.appendingPathComponent(
+      "AstroStack/Work", isDirectory: true)
+    // Background extraction is always offered: each engine names its own missing tool (0092).
+    var tools = StudioTool.standard(scratch: scratch)
+    tools[BackgroundExtractionProcess.id] = BackgroundExtractionTool.live(scratch: scratch)
+    let workspace = try StudioWorkspaceModel(studio: studio, base: roles, tools: tools)
     // An undo from another stage brings the Studio into view before moving its history.
     workspace.reveal = { [weak self] in self?.select(.studio) }
     workspace.pipeline = try sidebar(of: workspace, stackID: stackID, store: store, roles: roles)
     self.workspace = workspace
+    showExport(of: studio, stackID: stackID, folder: folder)
     // The Studio's stage state follows; an error the window shows stays (a refresh clears it).
     let reported = error
     refresh()

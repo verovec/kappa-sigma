@@ -45,7 +45,7 @@ package final class StudioWorkspaceModel {
   /// The history and its mirror.
   @ObservationIgnored package let studio: StudioModel
   /// The viewer.
-  package private(set) var viewer: Viewer
+  package internal(set) var viewer: Viewer
   /// The registry by stage.
   package private(set) var catalogue: [Group] = []
   /// The chosen process's panel.
@@ -53,7 +53,7 @@ package final class StudioWorkspaceModel {
   /// The viewer shows the preview of the panel's values, not the head.
   package private(set) var isPreviewing = false
   /// The step compare shows, if any.
-  package private(set) var comparing: Int?
+  package internal(set) var comparing: Int?
   /// The viewer shows a geometric preview that moves the pixels (card 0090, `gridMoved`).
   package internal(set) var showsMovedGrid = false
   /// The steps the viewer's head was shown for (`dropRegionIfMoved`).
@@ -76,6 +76,10 @@ package final class StudioWorkspaceModel {
   @ObservationIgnored var toolTask: Task<Void, Never>?
   /// Numbers the tool runs, so a late progress line finds its own run or none.
   @ObservationIgnored var toolRunNumber = 0
+  /// Where each host tool stands and the model view (card 0092).
+  package internal(set) var batch = BatchState()
+  /// Probes a host tool: an engine whose tool is missing is greyed with the reason (card 0092).
+  @ObservationIgnored package let locate: @Sendable (HostTool) async -> ToolStatus
 
   /// The processes it offers.
   @ObservationIgnored package let registry: ProcessRegistry
@@ -86,8 +90,9 @@ package final class StudioWorkspaceModel {
   /// The undo manager its moves are registered on, cleared of them when it is retired.
   @ObservationIgnored package weak var undoManager: UndoManager?
   @ObservationIgnored private let base: Set<LayerRole>
-  @ObservationIgnored private var previewTask: Task<Void, Never>?
-  /// The head's display statistics: a preview is drawn through them, never a previous one's.
+  @ObservationIgnored var previewTask: Task<Void, Never>?
+  /// The head's display statistics: a preview is drawn through them, never through a previous
+  /// preview's.
   @ObservationIgnored private var headStatistics: [STFMapping] = []
   /// The values and mask of the preview on screen (`nil`: none); see `gridMoved`.
   @ObservationIgnored private(set) var shown: (processID: String, params: ParamSet, mask: Mask?)? {
@@ -98,10 +103,12 @@ package final class StudioWorkspaceModel {
 
   /// The workspace of `studio` whose bundle holds the layer roles `base`.
   package init(
-    studio: StudioModel, base: Set<LayerRole>, tools: [String: StudioTool] = [:]
+    studio: StudioModel, base: Set<LayerRole>, tools: [String: StudioTool] = [:],
+    locate: @escaping @Sendable (HostTool) async -> ToolStatus = HostTools.live().locate
   ) throws {
     self.studio = studio
     self.tools = tools
+    self.locate = locate
     self.base = base
     registry = studio.session.registry
     let renderer = try ViewerRenderer(device: studio.session.device)
@@ -128,17 +135,20 @@ package final class StudioWorkspaceModel {
     let panel = ProcessPanelModel(type: type, params: params ?? ParamSet(schema: type.schema))
     refresh(panel)
     panel.onChange = { [weak self] in self?.panelChanged() }
+    hideModel()
     self.panel = panel
     toolReport = nil
     // A moved preview leaves the screen at once; another stays until the new one replaces it.
     if showsMovedGrid { stopPreview() } else { shown = nil }
     // The defaults are previewed at once: Apply never records what was not shown (R2).
     schedulePreview()
+    toolsChosen()
   }
 
   /// Closes the panel: the viewer shows the head again.
   package func closePanel() {
     panel = nil
+    hideModel()
     toolReport = nil
     stopPreview()
   }
@@ -228,40 +238,13 @@ package final class StudioWorkspaceModel {
     }
   }
 
-  /// Compares the viewer's image with the output of step `index` (`nil`: no compare).
-  package func compare(toStep index: Int?) throws {
-    guard let index else {
-      viewer.reference = nil
-      comparing = nil
-      return
-    }
-    // On a moved preview (a crop, a flip) the step's pixels are not under the ones shown.
-    guard !showsMovedGrid else { throw UserFacingError.movedPreview }
-    guard studio.steps.indices.contains(index) else { throw HistoryError.noStep(index) }
-    // A step before a crop, turn or flip is not on the head's grid (decided before any read).
-    guard onHeadGrid(step: index) else { throw StudioError.otherGrid(step: index) }
-    let image = try studio.session.history.output(ofStep: index)
-    // A step of another size (a host tool trimmed it) does not lie on the grid either.
-    guard image.width == studio.head.width, image.height == studio.head.height else {
-      throw StudioError.otherGrid(step: index)
-    }
-    viewer.reference = try Self.texture(image, device: studio.session.device)
-    comparing = index
-  }
-
   /// A value moved: the suggestions follow the values they depend on, the preview follows.
   private func panelChanged() {
     if let panel { panel.suggestions = offers(for: panel.type, params: panel.params) }
+    greyUnavailable()
+    // The head comes back now: a preview cancelled or refused would leave the model on screen.
+    hideModel()
     schedulePreview()
-  }
-
-  /// Compares with step `index`, or stops when it is the one compared; a failure is reported.
-  package func toggleCompare(_ index: Int) {
-    do {
-      try compare(toStep: comparing == index ? nil : index)
-    } catch {
-      failure = UserFacingError(error).message
-    }
   }
 
   private func schedulePreview() {
@@ -289,6 +272,7 @@ package final class StudioWorkspaceModel {
     shown = nil
     // A report speaks of the head it was made on.
     toolReport = nil
+    batch.showsModel = false
     defer { headStatistics = viewer.model.statistics }
     isPreviewing = false
     // A compared step undone, or off the head's grid (a crop applied), stops the compare.
@@ -303,7 +287,7 @@ package final class StudioWorkspaceModel {
     if panel != nil { schedulePreview() }
   }
 
-  private func show(_ image: AstroImage, statistics: [STFMapping]? = nil) throws {
+  func show(_ image: AstroImage, statistics: [STFMapping]? = nil) throws {
     viewer.texture = try Self.texture(image, device: studio.session.device)
     viewer.model.replace(image: image, statistics: statistics)
   }
@@ -322,7 +306,7 @@ package final class StudioWorkspaceModel {
     catalogue = groups
   }
 
-  private static func texture(_ image: AstroImage, device: MTLDevice) throws -> ImageTexture {
+  static func texture(_ image: AstroImage, device: MTLDevice) throws -> ImageTexture {
     try ImageTexture(device: device, width: image.width, height: image.height, planes: image.planes)
   }
 }

@@ -24,7 +24,8 @@ package final class StudioModel {
   @ObservationIgnored package let header: FITSHeader?
 
   @ObservationIgnored private let store: ProjectStore
-  @ObservationIgnored private let imageID: Int64
+  /// The project image (role `studio`) the history is mirrored on.
+  @ObservationIgnored package let imageID: Int64
   @ObservationIgnored private let packageRoot: URL
 
   /// The Studio of stack `stackID` over `bundle`.
@@ -46,7 +47,7 @@ package final class StudioModel {
     // Every step keeps the stack's descriptive cards (WCS, OBJECT…).
     let history = try History.reopen(
       directory: stackFolder.appendingPathComponent("history"), original: base, header: header
-    ) { registry.type(id: $0)?.schema }
+    ) { registry.type(id: $0)?.schema ?? Self.batchSchemas[$0] }
     session = try StudioSession(
       history: history, bundle: bundle, registry: registry, device: device)
     self.store = store
@@ -67,6 +68,9 @@ package final class StudioModel {
   /// The project image the Studio's history is mirrored on.
   package static let imageRole = "studio"
 
+  /// The schemas of the host-tool steps a history may hold (not in the registry: no shader).
+  package static let batchSchemas = [StarSeparation.id: StarSeparation.schema]
+
   /// Applies `processID` with `params` (under `mask`) to the head.
   package func apply(_ processID: String, params: ParamSet, mask: AstroImage? = nil) throws {
     defer { mirror() }
@@ -77,10 +81,22 @@ package final class StudioModel {
   /// Records a step made elsewhere (a host tool) with the layers it wrote.
   package func apply(
     _ processID: String, params: ParamSet, result: AstroImage,
-    outputs: [LayerRole: AstroImage] = [:]
+    outputs: [LayerRole: AstroImage] = [:], replacing: [String: AstroImage] = [:]
   ) throws {
     defer { mirror() }
-    try session.apply(processID, params: params, result: result, outputs: outputs)
+    try session.apply(
+      processID, params: params, result: result, outputs: outputs, replacing: replacing)
+    cleanUp()
+  }
+
+  /// Runs the host tool `batch` as the step `id` on the head, its progress (0…1) to
+  /// `onProgress`; nothing is recorded when it fails or is cancelled.
+  package func apply(
+    _ batch: PipelineRunner.BatchProcess, id: String, params: ParamSet,
+    onProgress: @escaping @Sendable (Double) -> Void
+  ) async throws {
+    defer { mirror() }
+    try await session.apply(batch, id: id, params: params, onProgress: onProgress)
     cleanUp()
   }
 
@@ -153,8 +169,8 @@ package final class StudioModel {
   }
 
   private func appendRow(_ step: History.Step) throws -> HistoryStep {
-    // The step's image and the layers it wrote: what the disk budget counts.
-    let files = [step.file] + step.outputs.values + step.bundleLayers.values
+    // The step's image and the layers it wrote or rewrote: what the disk budget counts.
+    let files = [step.file] + step.outputs.values + step.replaced.values
     let bytes = files.reduce(0) { total, file in
       let url = session.history.directory.appendingPathComponent(file)
       let size = try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int

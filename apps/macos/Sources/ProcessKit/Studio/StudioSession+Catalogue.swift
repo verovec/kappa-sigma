@@ -18,7 +18,8 @@ extension StudioSession {
   package func suggestions(for type: any ImageProcess.Type, params: ParamSet) throws
     -> [Suggestion]
   {
+    let layers = try context().1
     let process = try type.init(params: params, device: device)
-    return process.suggestions(stats: stepStats, layers: try layerStats())
+    return process.suggestions(stats: stepStats, layers: layers)
   }
 }

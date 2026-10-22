@@ -5,7 +5,7 @@ package import StackKit
 /// outside the database.
 ///
 /// The fields beyond `summary` stay at their « unknown » value until a card fills them: the
-/// calibration gaps from the plan (0078), the running stacks (0057), the deliverables (0055), the frame review (0069).
+/// calibration gaps from the plan (0078), the running stacks (0057), the deliverables (0091: the exports recorded), the frame review (0069).
 nonisolated package struct ProjectFacts: Equatable, Sendable {
   /// Sources, stacks, images, history steps (`ProjectStore.summary`).
   package var summary: ProjectSummary
@@ -14,7 +14,7 @@ nonisolated package struct ProjectFacts: Equatable, Sendable {
   package var calibrationGaps: Int?
   /// Stacks being run now.
   package var stacksRunning: Int
-  /// Deliverables written by an export.
+  /// Exports recorded (`ProjectSummary.exports`, card 0091).
   package var deliverables: Int
   /// The frames were reviewed (0069); a stack alone says nothing about Tri.
   package var framesReviewed: Bool
@@ -32,9 +32,10 @@ nonisolated package struct ProjectFacts: Equatable, Sendable {
   }
 
   /// The facts of `summary` with the gaps of the last scan's `coverage` (0078; `nil` before a
-  /// scan or for a scan without lights) and the stacks running.
+  /// scan or for a scan without lights), the stacks running and the exports recorded (0091).
   package init(summary: ProjectSummary, coverage: CoverageMatrix?, stacksRunning: Int = 0) {
     self.init(
-      summary: summary, calibrationGaps: coverage?.gaps ?? nil, stacksRunning: stacksRunning)
+      summary: summary, calibrationGaps: coverage?.gaps ?? nil, stacksRunning: stacksRunning,
+      deliverables: summary.exports)
   }
 }

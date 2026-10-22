@@ -1,50 +1,75 @@
-internal import Foundation
+package import Foundation
 package import ImageKit
 
+// MARK: - Step layers (cards 0091, 0092)
+
 extension History {
-  /// The files of the layers the applied steps wrote over the bundle, by layer id.
+  /// The layers the next step reads: `bundle` by id, overlaid by `writtenLayers()`.
+  package func context(over bundle: [String: AstroImage]) throws -> [String: AstroImage] {
+    try bundle.merging(writtenLayers()) { _, written in written }
+  }
+
+  /// The layers the applied steps wrote, by context id, the latest of each id winning.
   ///
-  /// The latest bundle layer of each id, then the latest output of each role (by its raw
-  /// value): what `StepRunner` caches its uploaded context on.
-  package var overlayFiles: [String: String] {
-    var files: [String: String] = [:]
-    for step in steps { files.merge(step.bundleLayers) { _, newer in newer } }
-    for step in steps {
-      for (role, file) in step.outputs { files[role.rawValue] = file }
-    }
-    return files
+  /// The bundle layers they rewrote are under the bundle's id, their role outputs under
+  /// `role.rawValue`. Each file is read from disk once (every live preview asks), handed out as
+  /// a copy.
+  package func writtenLayers() throws -> [String: AstroImage] {
+    try writtenFiles.mapValues(layer(file:))
   }
 
-  /// The bundle layers the applied steps rewrote, the latest of each id winning (read from
-  /// disk): they overlay the bundle's layers, under the role outputs, for the next step.
-  package func bundleLayers() throws -> [String: AstroImage] {
+  /// The layer the applied steps last wrote under `id` (a role's raw value or a bundle id), or
+  /// `nil`: one file read, not the whole overlay.
+  package func writtenLayer(_ id: String) throws -> AstroImage? {
+    try writtenFiles[id].map(layer(file:))
+  }
+
+  /// The file each written layer id last went to, without reading it: the one overlay rule,
+  /// and the key of a cached overlay.
+  package var writtenFiles: [String: String] {
     var latest: [String: String] = [:]
-    for step in steps { latest.merge(step.bundleLayers) { _, newer in newer } }
-    return try latest.mapValues {
-      try FITSFile.read(at: directory.appendingPathComponent($0)).image()
+    for step in steps {
+      latest.merge(step.replaced) { _, newer in newer }
+      latest.merge(step.outputs.map { ($0.key.rawValue, $0.value) }) { _, newer in newer }
     }
+    return latest
   }
 
-  /// Everything one step wrote, read back (a locked pipeline step reuses it all).
-  package struct Recorded {
-    /// Its image.
-    package let result: AstroImage
-    /// The layers it wrote, by role.
-    package let outputs: [LayerRole: AstroImage]
-    /// The bundle layers it rewrote, by id.
-    package let bundleLayers: [String: AstroImage]
+  /// The file of the latest layer of each role the applied steps wrote (`writtenFiles` of the
+  /// role outputs).
+  package var layerFiles: [LayerRole: String] {
+    var roles: [LayerRole: String] = [:]
+    for (id, file) in writtenFiles {
+      if let role = LayerRole(rawValue: id) { roles[role] = file }
+    }
+    return roles
   }
 
-  /// Everything applied step `index` wrote, read back: its image and its layers (each with the
-  /// plate solution its file carries).
-  package func recorded(ofStep index: Int) throws -> Recorded {
+  /// The file of the latest layer of `role` the applied steps wrote, or `nil`: read where the
+  /// caller wants (a 22 Mpx layer is ~260 MB to decode).
+  package func layerFile(_ role: LayerRole) -> URL? {
+    layerFiles[role].map(directory.appendingPathComponent)
+  }
+
+  /// What applied step `index` wrote besides its image: its role outputs and the bundle layers
+  /// it rewrote (a locked pipeline step reused on replay carries them over).
+  package func written(ofStep index: Int) throws
+    -> (outputs: [LayerRole: AstroImage], replaced: [String: AstroImage])
+  {
     guard steps.indices.contains(index) else { throw HistoryError.noStep(index) }
     let step = steps[index]
-    let read = { (file: String) in
-      try FITSFile.read(at: self.directory.appendingPathComponent(file)).image()
-    }
-    return Recorded(
-      result: try read(step.file), outputs: try step.outputs.mapValues(read),
-      bundleLayers: try step.bundleLayers.mapValues(read))
+    return (try step.outputs.mapValues(layer(file:)), try step.replaced.mapValues(layer(file:)))
+  }
+
+  /// The layers step `index` wrote by role, read from disk.
+  package func outputs(ofStep index: Int) throws -> [LayerRole: AstroImage] {
+    try written(ofStep: index).outputs
+  }
+
+  func layer(file: String) throws -> AstroImage {
+    if let cached = layerCache[file] { return Self.copy(cached) }
+    let image = try FITSFile.read(at: directory.appendingPathComponent(file)).image()
+    layerCache[file] = image
+    return Self.copy(image)
   }
 }

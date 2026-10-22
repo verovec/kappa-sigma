@@ -17,11 +17,11 @@ extension HistoryTests {
     return text
   }()
 
-  /// Card 0090: a geometry step rewrites bundle layers (`RGB`, `Ha`…) besides its image; they
+  /// Card 0090: a geometry step replaces bundle layers (`RGB`, `Ha`…) besides its image; they
   /// overlay the bundle until undone and survive a reopen. Its moved plate solution travels in
   /// the image's metadata: written in its files, carried by the steps after it (0093's rule).
-  @Test("testBundleLayersAndMovedWCSFollowTheStep", .scratchDirectory)
-  func testBundleLayersAndMovedWCSFollowTheStep() throws {
+  @Test("testReplacedLayersAndMovedWCSFollowTheStep", .scratchDirectory)
+  func testReplacedLayersAndMovedWCSFollowTheStep() throws {
     let directory = try ScratchDirectory.url.appendingPathComponent("history")
     let header = try FITSFile.parse(Data(Self.solvedHeaderText.utf8)).header
     let original = try Self.image([0, 1, 2, 3])
@@ -37,9 +37,9 @@ extension HistoryTests {
     flipped.metadata.wcs = moved
     try history.apply(
       processID: "geometry", params: Self.params, result: flipped,
-      bundleLayers: ["Ha": try Self.image([7, 7, 7, 7])])
-    #expect(history.steps.last?.bundleLayers.keys.sorted() == ["Ha"])
-    #expect(try history.bundleLayers()["Ha"]?.planes == [[7, 7, 7, 7]])
+      replacing: ["Ha": try Self.image([7, 7, 7, 7])])
+    #expect(history.steps.last?.replaced.keys.sorted() == ["Ha"])
+    #expect(try history.writtenLayers()["Ha"]?.planes == [[7, 7, 7, 7]])
     #expect(try cd11(0) == 2.0e-4, "the step's file carries the moved solution")
     #expect(history.current.metadata.wcs == moved)
 
@@ -51,10 +51,10 @@ extension HistoryTests {
       directory: directory, original: original, header: header
     ) { _ in Self.gainSchema }
     #expect(reopened.steps == history.steps)
-    #expect(try reopened.bundleLayers()["Ha"]?.planes == [[7, 7, 7, 7]])
+    #expect(try reopened.writtenLayers()["Ha"]?.planes == [[7, 7, 7, 7]])
     #expect(reopened.referencedFiles.contains { $0.hasSuffix("-Ha.fits") })
     try reopened.undo()
     try reopened.undo()
-    #expect(try reopened.bundleLayers().isEmpty)
+    #expect(try reopened.writtenLayers().isEmpty)
   }
 }

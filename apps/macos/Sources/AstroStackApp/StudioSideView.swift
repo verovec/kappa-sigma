@@ -19,13 +19,7 @@ package struct StudioSideView: View {
       VStack(alignment: .leading, spacing: DesignMetrics.spacingL) {
         if let panel = model.panel {
           ProcessPanel(model: panel)
-          if panel.type is any GeometricProcess.Type {
-            // Geometry moves the whole grid: no mask, the output's size and solution instead
-            // (none while the values leave no pixel: the panel shows that failure).
-            if let output = model.geometryOutput { GeometryExtras(model: model, output: output) }
-          } else {
-            StudioMaskRow(model: model)
-          }
+          rows(under: panel)
           HStack {
             Button(.app("Close")) { model.closePanel() }
               .accessible(.studioClosePanel, label: .app("Close"))
@@ -47,6 +41,21 @@ package struct StudioSideView: View {
     }
   }
 
+  /// What the panel's process asks for below its parameters: the mask row, or its own rows.
+  @ViewBuilder
+  private func rows(under panel: ProcessPanelModel) -> some View {
+    if panel.type is any GeometricProcess.Type {
+      // Geometry moves the whole grid: no mask, the output's size and solution instead
+      // (none while the values leave no pixel: the panel shows that failure).
+      if let output = model.geometryOutput { GeometryExtras(model: model, output: output) }
+    } else if panel.type.id == BackgroundExtractionProcess.id {
+      // The extraction runs on the whole image and its layers: no mask, its own rows.
+      StudioBatchRows(model: model)
+    } else {
+      StudioMaskRow(model: model)
+    }
+  }
+
   private var history: some View {
     VStack(alignment: .leading, spacing: DesignMetrics.spacingXS) {
       HStack {
@@ -60,27 +69,32 @@ package struct StudioSideView: View {
           .accessible(.studioRedo, label: .app("Redo"))
       }
       ForEach(Array(model.studio.steps.enumerated()), id: \.offset) { index, step in
-        let title = ProcessKitResources.title(
-          model.title(of: step.processID), locale: locale)
-        Button {
-          model.toggleCompare(index)
-        } label: {
-          HStack {
-            Text(verbatim: "\(index + 1).")
-            Text(title)
-            Spacer()
-            if model.comparing == index { Image(systemName: "rectangle.split.2x1") }
-          }
-        }
-        .buttonStyle(.plain)
-        // No step lies under a moved preview's pixels: the row says why it is greyed (R2).
-        .disabled(model.showsMovedGrid)
-        .help(
-          model.showsMovedGrid ? Text(UserFacingError.movedPreview.message) : Text(verbatim: "")
-        )
-        .accessible(.studioStep(index), label: title)
+        stepRow(index, step)
       }
     }
+  }
+
+  /// One applied step: its number and title, a click compares the viewer with its output.
+  private func stepRow(_ index: Int, _ step: History.Step) -> some View {
+    // A host-tool step has no ProcessKit title: its own, in the view's language.
+    let title =
+      StarSeparation.title(of: step.processID, locale: locale)
+      ?? ProcessKitResources.title(model.title(of: step.processID), locale: locale)
+    return Button {
+      model.toggleCompare(index)
+    } label: {
+      HStack {
+        Text(verbatim: "\(index + 1).")
+        Text(title)
+        Spacer()
+        if model.comparing == index { Image(systemName: "rectangle.split.2x1") }
+      }
+    }
+    .buttonStyle(.plain)
+    // No step lies under a moved preview's pixels: the row says why it is greyed (R2).
+    .disabled(model.showsMovedGrid)
+    .help(model.showsMovedGrid ? Text(UserFacingError.movedPreview.message) : Text(verbatim: ""))
+    .accessible(.studioStep(index), label: title)
   }
 
   /// Applies the panel and records the step with the window's undo manager, so ⌘Z / ⇧⌘Z reach

@@ -30,6 +30,11 @@ package enum BackgroundEngine: Hashable, Sendable {
     return false
   }
 
+  /// Whether the engine applies `correction`: Siril's `subsky` only subtracts.
+  package func supports(_ correction: BackgroundCorrection) -> Bool {
+    usesGraXpert || correction == .subtract
+  }
+
   /// The Siril command of a Siril engine; nil for GraXpert.
   package var sirilSubsky: SirilCommand? {
     if case .siril(let command) = tool { return command }

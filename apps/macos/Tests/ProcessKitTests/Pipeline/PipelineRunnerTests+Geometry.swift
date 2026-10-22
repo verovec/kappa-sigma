@@ -27,7 +27,7 @@ extension PipelineRunnerTests {
     let history = try History(directory: try Self.folder("first"), original: Self.image(0.1))
     #expect(try await runner.run(pipeline, on: history, bundle: bundle) == .finished)
     #expect(history.current.width == 2 && history.current.height == 3)
-    let layers = try history.bundleLayers()
+    let layers = try history.writtenLayers()
     #expect(layers.keys.sorted() == ["Ha", "RGB"])
     #expect(layers.values.allSatisfy { $0.width == 2 && $0.height == 3 })
 
@@ -36,6 +36,6 @@ extension PipelineRunnerTests {
       pipeline, on: Self.image(0.1), in: try Self.folder("again"), bundle: bundle,
       previous: PipelineRun(history: history, bundle: bundle), onEvent: log.sink)
     #expect(log.events == [.reused(0), .applied(1)])
-    #expect(try replay.history.bundleLayers().mapValues(\.planes) == layers.mapValues(\.planes))
+    #expect(try replay.history.writtenLayers().mapValues(\.planes) == layers.mapValues(\.planes))
   }
 }

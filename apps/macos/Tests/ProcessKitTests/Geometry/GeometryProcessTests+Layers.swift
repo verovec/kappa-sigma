@@ -44,13 +44,11 @@ extension GeometryProcessTests {
     try session.apply("geometry", params: Self.params(Self.layerValues))
 
     let step = try #require(history.steps.last)
-    #expect(step.bundleLayers.keys.sorted() == ["Ha", "OIII", "RGB"])
+    #expect(step.replaced.keys.sorted() == ["Ha", "OIII", "RGB"])
     #expect(step.outputs.keys.map(\.rawValue) == ["starless"])
     let head = history.current
     #expect(head.width == 3 && head.height == 5)
-    let moved = try history.bundleLayers().merging(
-      history.layers().map { ($0.key.rawValue, $0.value) }
-    ) { $1 }
+    let moved = try history.writtenLayers()
     for (id, layer) in moved {
       #expect(layer.width == head.width && layer.height == head.height, "\(id)")
       let source =
@@ -116,7 +114,7 @@ extension GeometryProcessTests {
       history: history, bundle: bundle, registry: ProcessRegistry([GeometryProcess.self]),
       device: device)
     try session.apply("geometry", params: Self.params([:]))
-    #expect(history.steps.last?.bundleLayers.isEmpty == true)
+    #expect(history.steps.last?.replaced.isEmpty == true)
     #expect(history.current.planes == Self.image(6, 4, planes: 3, seed: 0).planes)
   }
 

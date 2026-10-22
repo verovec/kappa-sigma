@@ -4,14 +4,14 @@ internal import Foundation
 /// and the snapshots, so a reopened project finds its history again. `<folder>.json` beside the
 /// folder (the folder holds the images only), rewritten after every change.
 struct HistoryManifest: Codable, Equatable {
-  /// One step: its process, its values, its image and its layer outputs (role → file).
+  /// One step: its process, its values, its image, its layer outputs (role → file) and the
+  /// bundle layers it rewrote (id → file; absent from manifests written before card 0092).
   struct Entry: Codable, Equatable {
     let processID: String
     let params: [ParamSet.Entry]
     let file: String
     let outputs: [String: String]
-    /// The bundle layers a geometry step rewrote (id → file); absent before card 0090.
-    var bundleLayers: [String: String]?
+    let replaced: [String: String]?
   }
 
   /// A named state.
@@ -20,9 +20,8 @@ struct HistoryManifest: Codable, Equatable {
     let file: String?
   }
 
-  /// The newest format this code reads and writes; 2: steps may carry `bundleLayers` (card
-  /// 0090), which an older build would drop silently.
-  static let version = 2
+  /// The format this code writes.
+  static let version = 1
   /// The manifest of the history in `directory`: `<directory>.json`, beside it.
   static func url(of directory: URL) -> URL {
     directory.deletingLastPathComponent()

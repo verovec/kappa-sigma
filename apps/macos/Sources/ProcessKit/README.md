@@ -106,6 +106,9 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   rounding), hflip/vflip, `{name}` template (one file name containing `{name}`); everything is
   checked before a file is written. `ExportGuard` refuses a folder under
   `~/Documents/astro/{captures,runs,library,fixtures}` (links resolved, case ignored, R7).
+  Card 0091: `starless: nil` (never separated) writes `.final` only, the shaped original, and
+  refuses a star tier with `.needsStarless`; `ExportSettings` is `Codable` (the app's `exports`
+  record keeps it).
 - **Pipelines** (card 0059, `Pipeline/`): `Pipeline` = ordered `PipelineStep`s {recipe, mode
   `auto`|`stop`, `locked`}; `problems(registry:batch:present:)` names an unknown process, a missing
   layer or a linear step after a non-linear one (shown, never reordered). `PipelineRunner` applies
@@ -115,7 +118,9 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   the same step's output from `previous` (a `PipelineRun`: history + bundle) only when the input is
   the same (original image, bundle, every earlier step) — else it re-runs (`PipelineReuse`). Batch processes
   (host tools) are `BatchProcess` closures injected by id — ProcessKit never imports StackKit —
-  and report progress live as `.progress` events. The first step gets the bundle's stats, each
+  and report progress live as `.progress` events. A batch process with `writes: role` (StarNet's
+  `.starless`, card 0091) keeps the working image and records its image as that layer
+  (`BatchProcess.record`, shared with `StudioSession.apply(_:id:params:onProgress:)`). The first step gets the bundle's stats, each
   later one the stats of the image it receives (`LayerStats.measured`); layers reach every step.
   `PipelineDiff.entries` lists param / mode / lock / process / added / removed differences;
   `Pipeline.json()` / `Pipeline.load` are versioned, each step's recipe read by `Recipe.load` so
@@ -202,6 +207,32 @@ in en/fr; the English title is the key, resolved with `ProcessKitResources.title
 - `.text` parameters (`ParamSpec(id:title:level:text:maxLength:)`): free text, trimmed, empty by
   default — a coordinate the user types or takes from a suggestion; JSON stores a string.
 
+## Host-tool processes with layers (card 0092)
+
+- Background extraction is a host-tool process like plate solving (`hostTool = true`, card
+  0093): its `render` is the image itself, Apply runs the tool the app injects
+  (`StudioTool`), a pipeline without it names the step (`PipelineError.toolMissing`).
+- A host tool may read and write layers: `PipelineRunner.BatchInput` (the head and the bundle's
+  layers as the steps so far left them) → `BatchOutput` (the step's image, new layers by role in
+  `outputs`, bundle layers rewritten by id in `replaced`). `BatchProcess.init(schema:run:)`
+  still wraps a tool that only makes the image; a locked step reused on replay carries its
+  layers.
+- `History.apply(…outputs:replacing:)`: a rewritten bundle layer (`Ha` after an extraction) is
+  read by later steps under the bundle's id and adds no role; `writtenLayers()` (each file read
+  once, evicted when no step refers to it) is the overlay `History.context(over:stats:device:)`
+  uploads for the Studio and the pipeline runner alike.
+- **BackgroundExtractionProcess** (`background-extraction`, linear): `engine` graxpert /
+  siril-rbf / siril-polynomial (each engine's values advanced, promoted by the choice),
+  `correction`, `applyTo` rgb (the head) / lines (the Hα/OIII/SII layers, the head kept) / all
+  (the head and every bundle layer). `run(_:params:extract:)` runs the engine per target, head
+  first; the first target's model is the `backgroundModel` output. The app's
+  `BackgroundExtractionTool` wires `extract` to StackKit `BackgroundExtraction`; the workspace
+  greys an engine whose tool is missing (and divide with Siril, StackKit's
+  `BackgroundEngine.supports`) and refuses Apply with the reason — no other engine runs (R2).
+
+To give a host tool layers: return them in `StudioToolResult(…outputs:replaced:)` from a
+`StudioTool(step:)`; the Studio records them, the next steps read them.
+
 ## Geometry (card 0090)
 
 - `GeometryProcess` (`geometry`, stage any): crops (`.px`, as shown: top = the displayed top),
@@ -211,12 +242,15 @@ in en/fr; the English title is the key, resolved with `ProcessKitResources.title
   the bottom-up flip (`RenderContext.rowsBottomUp`), so recorded values mean what was shown.
 - A `GeometricProcess` sizes its own output (`outputSize`), refuses a mask (`ProcessRunner`) and
   moves the header (`header(_:width:height:bottomUp:)`: TAN/SIP moved, dropped after an angle).
-- `StepRunner` is the one place a process runs on a history's head, for `StudioSession` and
-  `PipelineRunner` alike: the context is the bundle overlaid by the steps' `bundleLayers`, then
-  their role outputs; an applied geometric step moves every one of those layers (a role output
-  stays a role output, a bundle layer becomes one of the step's `bundleLayers`) and writes its
-  files with the moved header; later steps keep the head's header (`History.headHeader()`). A
-  locked pipeline step reuses everything its step wrote (`History.recorded(ofStep:)`).
+- `ProcessRunner.image(_:input:…)` is the one way a step's image is made, for `StudioSession`
+  and `PipelineRunner` alike: the output has the size the process makes and carries the moved
+  plate solution (none after an angle, nothing moved at the identity values).
+  `ProcessRunner.movedLayers(…)` then moves every context layer of an applied geometric step
+  (a role output stays a role output, a bundle layer becomes one of the step's `replaced`),
+  recorded by `History.apply(…outputs:replacing:)` with the moved header; a moved bundle layer
+  is measured again but keeps the stack's continuum fit (`LayerStats.keepingFit(of:)`). Later
+  steps keep the head's header (`History.headHeader()`); a locked pipeline step reuses
+  everything its step wrote (`History.written(ofStep:)`).
 - No automatic crop of the stacking edges (R2): the app's « Use region » fills the crops from
   the viewer's region.
 
@@ -233,7 +267,7 @@ in en/fr; the English title is the key, resolved with `ProcessKitResources.title
 7. Tests: `ProcessContracts(...).violations(of:params:)` is empty (`pixelProbes:` when a `.px`
    bound does not fit the test input), plus the kernel against a CPU oracle with its tolerance
    stated.
-8. A process that moves pixels conforms to `GeometricProcess` instead: `StepRunner` then moves
-   the layers and the header with it.
+8. A process that moves pixels conforms to `GeometricProcess` instead: `ProcessRunner.image`
+   and `movedLayers` then move the header and the layers with it.
 
 Allowed dependencies: `ImageKit`, `RenderKit` (`Tests/TestSupport/BoundaryRules.swift`).

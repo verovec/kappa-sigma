@@ -16,7 +16,9 @@ package final class StudioSession {
   package let registry: ProcessRegistry
   /// The GPU it runs on (the viewer draws on the same one).
   package let device: MTLDevice
-  private let steps: StepRunner
+  private let runner: ProcessRunner
+  private let bundleLayers: [String: GPUImage]
+  private var overlay: Overlay?
 
   /// A session over `history` and `bundle`, running the processes of `registry` on `device`.
   package init(
@@ -26,7 +28,8 @@ package final class StudioSession {
     self.bundle = bundle
     self.registry = registry
     self.device = device
-    steps = try StepRunner(device: device, bundle: bundle)
+    runner = try ProcessRunner(device: device)
+    bundleLayers = try bundle.layers.mapValues { try GPUImage(device: device, image: $0) }
   }
 
   /// The statistics of `image` as a layer's (a bundle built from files, a step's output).
@@ -51,12 +54,8 @@ package final class StudioSession {
   }
 
   /// The statistics the next step gets.
-  package var stepStats: LayerStats { steps.stepStats(history) }
-
-  /// The statistics of the layers the next step reads, by id (the bundle's, and those of the
-  /// layers the steps wrote or moved).
-  package func layerStats() throws -> [String: LayerStats] {
-    try steps.layerStats(history)
+  package var stepStats: LayerStats {
+    history.steps.isEmpty ? bundle.stats : LayerStats.measured(history.current)
   }
 
   /// `processID` with `params` on `input` (the head by default) at `scale` for `purpose`,
@@ -65,33 +64,78 @@ package final class StudioSession {
     _ processID: String, params: ParamSet, input: AstroImage? = nil, scale: Double = 1,
     purpose: RenderContext.Purpose = .apply, mask: AstroImage? = nil
   ) throws -> AstroImage {
-    try steps.render(
-      process(processID, params: params), on: history, input: input, scale: scale,
-      purpose: purpose, mask: mask)
-  }
-
-  /// Applies `processID` with `params` at full resolution: the head moves to its result (a
-  /// geometry step moves every layer with it, card 0090).
-  package func apply(_ processID: String, params: ParamSet, mask: AstroImage? = nil) throws {
-    // A host-tool process's render is its preview only: it applies through its tool.
-    if registry.type(id: processID)?.hostTool == true { throw StudioError.needsTool(processID) }
-    try steps.apply(
-      process(processID, params: params), processID: processID, params: params, to: history,
-      mask: mask)
-  }
-
-  /// Records a step whose result was made elsewhere (a host tool), with the layers it wrote.
-  package func apply(
-    _ processID: String, params: ParamSet, result: AstroImage,
-    outputs: [LayerRole: AstroImage] = [:]
-  ) throws {
-    try history.apply(processID: processID, params: params, result: result, outputs: outputs)
-  }
-
-  private func process(_ processID: String, params: ParamSet) throws -> any ImageProcess {
     guard let type = registry.type(id: processID) else {
       throw StudioError.unknownProcess(processID)
     }
-    return try type.init(params: params, device: device)
+    let (layers, layerStats) = try context()
+    return try runner.image(
+      type.init(params: params, device: device), input: input ?? history.current,
+      stats: stepStats, scale: scale, purpose: purpose, layers: layers, layerStats: layerStats,
+      mask: mask)
+  }
+
+  /// Applies `processID` with `params` at full resolution: the head moves to its result; a
+  /// geometry step moves every layer the next steps read with it (card 0090).
+  package func apply(_ processID: String, params: ParamSet, mask: AstroImage? = nil) throws {
+    guard let type = registry.type(id: processID) else {
+      throw StudioError.unknownProcess(processID)
+    }
+    if type.hostTool { throw StudioError.needsTool(processID) }
+    let process = try type.init(params: params, device: device)
+    let input = history.current
+    let (layers, layerStats) = try context()
+    let result = try runner.image(
+      process, input: input, stats: stepStats, layers: layers, layerStats: layerStats, mask: mask)
+    let moved = try runner.movedLayers(
+      process, layers: layers, input: input, result: result, roles: history.layerRoles)
+    try history.apply(
+      processID: processID, params: params, result: result, outputs: moved.outputs,
+      replacing: moved.replacing)
+  }
+
+  /// The statistics of the layers the next step reads, by id.
+  package func layerStats() throws -> [String: LayerStats] {
+    try context().1
+  }
+
+  /// Records a step whose result was made elsewhere (a host tool), with the layers it wrote and
+  /// the bundle layers it rewrote (card 0092).
+  package func apply(
+    _ processID: String, params: ParamSet, result: AstroImage,
+    outputs: [LayerRole: AstroImage] = [:], replacing: [String: AstroImage] = [:]
+  ) throws {
+    try history.apply(
+      processID: processID, params: params, result: result, outputs: outputs,
+      replacing: replacing)
+  }
+
+  /// Runs the host tool `batch` as the step `id` with `params` on the head, its progress (0…1)
+  /// handed to `onProgress`: the layer it writes overlays the bundle for the steps after it.
+  package func apply(
+    _ batch: PipelineRunner.BatchProcess, id: String, params: ParamSet,
+    onProgress: @escaping @Sendable (Double) -> Void
+  ) async throws {
+    try await batch.record(
+      id, params: params, in: history, bundle: bundle, onProgress: onProgress)
+  }
+
+  /// The layers a render reads: the bundle's, overlaid by what the applied steps wrote.
+  ///
+  /// The overlay is read, measured and uploaded once per set of step files (a starless is
+  /// ~260 MB at 22 Mpx), not at every preview.
+  func context() throws -> ([String: GPUImage], [String: LayerStats]) {
+    let files = history.writtenFiles
+    if let overlay, overlay.files == files { return (overlay.layers, overlay.stats) }
+    let (layers, stats) = try history.context(
+      over: bundleLayers, stats: bundle.layerStats, device: device)
+    overlay = Overlay(files: files, layers: layers, stats: stats)
+    return (layers, stats)
+  }
+
+  /// The context of the step files `files`.
+  private struct Overlay {
+    let files: [String: String]
+    let layers: [String: GPUImage]
+    let stats: [String: LayerStats]
   }
 }

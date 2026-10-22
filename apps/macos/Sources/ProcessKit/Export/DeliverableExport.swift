@@ -21,6 +21,8 @@ package struct DeliverableExport {
     case invalidCrop(Double)
     /// A name template that is not one file name containing `{name}`.
     case invalidTemplate(String)
+    /// These deliverables are made from the starless image, and there is none.
+    case needsStarless([ExportSettings.Deliverable])
   }
 
   private let device: MTLDevice
@@ -36,15 +38,19 @@ package struct DeliverableExport {
   ///
   /// They come from `original` (with stars) and its `starless`. Everything is checked before a
   /// file is written: a folder under the read-only sources of `home`, a crop or a name template
-  /// that cannot work, two images that do not pair pixel for pixel.
+  /// that cannot work, two images that do not pair pixel for pixel. Without a starless (never
+  /// separated) only `.final` can be written: the original itself, shaped.
   package func write(
-    original: AstroImage, starless: AstroImage, settings: ExportSettings, to folder: URL,
+    original: AstroImage, starless: AstroImage?, settings: ExportSettings, to folder: URL,
     home: URL = FileManager.default.homeDirectoryForCurrentUser
   ) throws -> [URL] {
     if let reason = ExportGuard.refusal(for: folder, home: home) {
       throw ExportError.readOnlyTarget(reason)
     }
     try Self.validate(settings)
+    guard let starless else {
+      return try writeUnseparated(original, settings: settings, to: folder)
+    }
     guard original.planes.count == 3, starless.planes.count == 3,
       original.width == starless.width, original.height == starless.height
     else { throw ExportError.sizeMismatch }
@@ -69,15 +75,38 @@ package struct DeliverableExport {
         } ?? shapedStarless
       for format in settings.formats {
         let url = folder.appendingPathComponent(settings.fileName(deliverable, format))
-        switch format {
-        case .png16: try ImageExport.write(image, to: url, format: .png16)
-        case .tiff16: try ImageExport.write(image, to: url, format: .tiff16)
-        case .fits32: try FITSFile.create(image, keeping: nil, at: url)
-        }
+        try Self.write(image, format: format, to: url)
         written.append(url)
       }
     }
     return written
+  }
+
+  /// The original as `.final`, the only deliverable that needs no starless.
+  private func writeUnseparated(_ original: AstroImage, settings: ExportSettings, to folder: URL)
+    throws -> [URL]
+  {
+    let starred = settings.deliverables.filter { $0 != .final }
+    guard starred.isEmpty else { throw ExportError.needsStarless(starred) }
+    let shaped = try Self.shape(original, settings: settings)
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    return try settings.deliverables.flatMap { deliverable in
+      try settings.formats.map { format in
+        let url = folder.appendingPathComponent(settings.fileName(deliverable, format))
+        try Self.write(shaped, format: format, to: url)
+        return url
+      }
+    }
+  }
+
+  private static func write(_ image: AstroImage, format: ExportSettings.Format, to url: URL)
+    throws
+  {
+    switch format {
+    case .png16: try ImageExport.write(image, to: url, format: .png16)
+    case .tiff16: try ImageExport.write(image, to: url, format: .tiff16)
+    case .fits32: try FITSFile.create(image, keeping: nil, at: url)
+    }
   }
 
   /// The stars put back at `presence` with the export's star colour.

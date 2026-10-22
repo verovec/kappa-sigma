@@ -61,3 +61,24 @@ extension ViewerModelReplaceTests {
     #expect(model.frame.region == nil)
   }
 }
+
+extension ViewerModelReplaceTests {
+  /// Card 0109: the old zoom is in the pixels of the old image; a head of another size is fitted
+  /// to the view, a head of the same size keeps where the user looks.
+  @Test("a head of another size is fitted to the view; the same size keeps the zoom")
+  func testReplaceRefitsOnResize() {
+    let model = ViewerModel(image: Self.image(0.1))
+    model.viewSize = SIMD2(200, 100)
+    let zoomed = ViewTransform(scale: 0.5, origin: SIMD2(3, 2))
+    model.frame.transform = zoomed
+    model.replace(image: Self.image(0.2))
+    #expect(model.frame.transform == zoomed)
+
+    model.replace(
+      image: AstroImage(
+        width: 4, height: 8, planes: [[Float](repeating: 0.1, count: 32)],
+        metadata: ImageMetadata(rowOrder: .topDown)))
+    #expect(
+      model.frame.transform == .fit(imageWidth: 4, imageHeight: 8, viewWidth: 200, viewHeight: 100))
+  }
+}

@@ -86,7 +86,7 @@ package final class StudioWorkspaceModel {
   /// The undo manager its moves are registered on, cleared of them when it is retired.
   @ObservationIgnored package weak var undoManager: UndoManager?
   @ObservationIgnored private let base: Set<LayerRole>
-  @ObservationIgnored private var previewTask: Task<Void, Never>?
+  @ObservationIgnored var previewTask: Task<Void, Never>?
   /// The head's display statistics: a preview is drawn through them, never through a previous
   /// preview's.
   @ObservationIgnored private var headStatistics: [STFMapping] = []
@@ -232,8 +232,8 @@ package final class StudioWorkspaceModel {
   private func panelChanged() {
     if let panel { panel.suggestions = offers(for: panel.type, params: panel.params) }
     greyUnavailable()
-    // The preview of the new values replaces the model view.
-    hideModel()
+    // The preview of the new values replaces the model view (drawn next frame, no upload now).
+    batch.showsModel = false
     schedulePreview()
   }
 

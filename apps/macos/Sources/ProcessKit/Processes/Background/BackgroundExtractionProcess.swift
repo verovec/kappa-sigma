@@ -99,7 +99,10 @@ package struct BackgroundExtractionProcess: ImageProcess {
     switch params["applyTo"] {
     case .choice("lines"):
       return Targets(head: false, layers: layerIDs.filter(lines.contains).sorted())
-    case .choice("all"): return Targets(head: true, layers: layerIDs.sorted())
+    case .choice("all"):
+      // Image layers only: a layer named as a step role (a bundled `starless`) is not one.
+      let images = layerIDs.filter { LayerRole(rawValue: $0) == nil }
+      return Targets(head: true, layers: images.sorted())
     default: return Targets(head: true, layers: [])
     }
   }

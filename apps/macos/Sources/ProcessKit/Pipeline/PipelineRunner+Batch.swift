@@ -74,8 +74,12 @@ extension PipelineRunner {
 
     /// The head of `history` and the layers of `bundle` as its steps left them.
     package init(history: History, bundle: PipelineBundle) throws {
-      let context = try history.context(over: bundle.layers)
-      self.init(image: history.current, layers: context.filter { bundle.layers[$0.key] != nil })
+      // Only the bundle's ids are read (a step's starless or model is not decoded for nothing).
+      var layers = bundle.layers
+      for id in bundle.layers.keys {
+        if let written = try history.writtenLayer(id) { layers[id] = written }
+      }
+      self.init(image: history.current, layers: layers)
     }
   }
 

@@ -14,15 +14,10 @@ package nonisolated enum BackgroundExtractionTool {
     StudioTool { input, params, onProgress in
       let folder = scratch.appendingPathComponent(UUID().uuidString, isDirectory: true)
       defer { try? FileManager.default.removeItem(at: folder) }
-      // One bar for the whole run: each target's lines rescaled into its share of it.
-      let targets = BackgroundExtractionProcess.targets(params, layerIDs: input.layers.keys)
-      let count = max((targets.head ? 1 : 0) + targets.layers.count, 1)
-      let next = Mutex(0)
-      let extract: BackgroundExtractionProcess.Extract = { image, params, _ in
-        let index = next.withLock { value in
-          defer { value += 1 }
-          return value
-        }
+      // One bar for the whole run: `run` maps each target's fraction into its share; the
+      // tool's last line goes with it.
+      let lastLine = Mutex("")
+      let extract: BackgroundExtractionProcess.Extract = { image, params, fraction in
         // A copy of its own: the engine works on it off the main actor.
         let copy = AstroImage(
           width: image.width, height: image.height, planes: image.planes,
@@ -31,14 +26,20 @@ package nonisolated enum BackgroundExtractionTool {
           image: copy, engine: BackgroundEngine(params: params),
           correction: BackgroundCorrection(params: params), scratch: folder
         ) { line in
-          onProgress(
-            ToolProgress(
-              line: line.line, percent: line.percent.map { (index * 100 + $0) / count }))
+          lastLine.withLock { $0 = line.line }
+          if let percent = line.percent {
+            fraction(Double(percent) / 100)
+          } else {
+            onProgress(ToolProgress(line: line.line, percent: nil))
+          }
         }
         return (result.corrected, result.model)
       }
       let output = try await BackgroundExtractionProcess.run(
-        input, params: params, extract: extract)
+        input, params: params, extract: extract
+      ) { total in
+        onProgress(ToolProgress(line: lastLine.withLock { $0 }, percent: Int(total * 100)))
+      }
       return StudioToolResult(
         image: output.result, report: nil, outputs: output.outputs, replaced: output.replaced)
     }

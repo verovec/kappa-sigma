@@ -106,6 +106,8 @@ extension StudioWorkspaceModel {
     guard
       let model = try studio.session.history.writtenLayer(LayerRole.backgroundModel.rawValue)
     else { return }
+    // A preview scheduled a frame ago would draw over the model while the toggle says model.
+    previewTask?.cancel()
     try show(model)
     batch.showsModel = true
   }
@@ -114,6 +116,7 @@ extension StudioWorkspaceModel {
   package func toggleModelReported() {
     do {
       try toggleModel()
+      failure = nil
     } catch {
       failure = UserFacingError(error).message
     }

@@ -94,6 +94,7 @@ struct BackgroundExtractionProcessTests {
       TargetCase(
         applyTo: "all", ids: ["RGB", "L", "SII", "Ha"], head: true,
         layers: ["Ha", "L", "RGB", "SII"]),
+      TargetCase(applyTo: "all", ids: ["RGB", "starless"], head: true, layers: ["RGB"]),
     ])
   func testTargets(row: TargetCase) throws {
     let params = try Self.params(["applyTo": .choice(row.applyTo)])

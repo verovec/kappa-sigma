@@ -75,6 +75,7 @@ struct LiveStudioRun78Tests {
     workspace.choose(CurvesProcess.id)
     let curves = try #require(workspace.panel)
     curves.set("rgb", .points([CurvePoint(0, 0), CurvePoint(0.5, 0.6), CurvePoint(1, 1)]))
+    await workspace.previewNow()
     try workspace.apply()
     #expect(studio.steps.map(\.processID) == ["channel-combination", "stretch", "curves"])
     try workspace.compare(toStep: 0)

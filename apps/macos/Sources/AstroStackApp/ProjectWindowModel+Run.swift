@@ -219,6 +219,15 @@ extension ProjectWindowModel {
     }
   }
 
+  /// Opens the workspace of the stack the Studio shows when none is loaded or loading (a failed
+  /// load retried when the Studio is shown again).
+  package func retryWorkspace() {
+    guard workspace == nil, workspaceStackID == nil, let studio, let stack = selectedStack else {
+      return
+    }
+    showWorkspace(of: stack, source: studio.source)
+  }
+
   /// The profile every night of stack `stackID` kept at import (a night without one counts),
   /// whose channel combination is step 0 of a fresh history; `nil` when they differ.
   func keptProfile(of stackID: Int64) -> Profile? {

@@ -14,7 +14,7 @@ struct ProcessParameterRow: View {
   var body: some View {
     VStack(alignment: .leading, spacing: DesignMetrics.spacingXS) {
       control
-      ForEach(Array(suggestions.enumerated()), id: \.offset) { _, suggestion in
+      ForEach(Array(suggestions.enumerated()), id: \.offset) { offset, suggestion in
         Button {
           model.take(suggestion)
         } label: {
@@ -22,7 +22,7 @@ struct ProcessParameterRow: View {
             .font(.caption)
         }
         .buttonStyle(.link)
-        .accessible(.parameter(key, .suggestion), label: .app("Suggested value"))
+        .accessible(.suggestion(key, offset), label: .app("Suggested value"))
       }
     }
   }

@@ -1,3 +1,4 @@
+internal import AppKit
 package import Foundation
 
 /// The Studio's moves on the window's undo manager (card 0087): an Apply — from the button or
@@ -13,6 +14,8 @@ package enum StudioUndo {
   /// Applies the panel of `model` and registers the move with `undoManager` when a step was
   /// added.
   package static func apply(_ model: StudioWorkspaceModel, undoManager: UndoManager?) {
+    // A value typed and not confirmed is committed first: Apply never records an older one.
+    NSApp?.keyWindow?.makeFirstResponder(nil)
     let before = model.studio.steps.count
     try? model.apply()
     guard model.studio.steps.count > before else { return }

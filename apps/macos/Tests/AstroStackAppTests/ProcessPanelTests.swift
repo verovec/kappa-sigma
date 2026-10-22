@@ -45,7 +45,7 @@ struct ProcessPanelTests {
       }
     }
     if let suggested {
-      #expect(closed.contains("fr.astrostack.parameter.\(processID).\(suggested.id).suggestion"))
+      #expect(closed.contains("fr.astrostack.parameter.\(processID).\(suggested.id).0.suggestion"))
     }
     #expect(model.params == defaults, "nothing was applied by showing a suggestion")
     #expect(model.card(locale: Locale(identifier: "fr")) != nil, "the process card")

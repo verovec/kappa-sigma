@@ -172,6 +172,11 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
     stageControl("review", "reference.\(index)")
   }
 
+  /// Suggestion `offset` of the parameter `key` (card 0087).
+  package static func suggestion(_ key: String, _ offset: Int) -> Self {
+    parameter(key + "." + String(offset), .suggestion)
+  }
+
   /// A process panel's « Advanced » switch (card 0087).
   package static func processAdvanced(_ processID: String) -> Self {
     parameter(processID + ".advanced", .toggle)

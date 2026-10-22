@@ -4433,6 +4433,22 @@
         }
       }
     },
+    "The preview is being drawn: apply again once it shows.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The preview is being drawn: apply again once it shows."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’aperçu est en cours de tracé : appliquez de nouveau une fois affiché."
+          }
+        }
+      }
+    },
     "The program at the Siril path is not Siril (it answered: %@).": {
       "localizations": {
         "en": {

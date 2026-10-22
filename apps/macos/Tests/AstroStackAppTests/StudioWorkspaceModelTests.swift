@@ -97,7 +97,11 @@ extension StudioWorkspaceModelTests {
     #expect(workspace.studio.head.planes == combined)
     workspace.mask = nil
     try workspace.apply()
-    #expect(workspace.studio.head.planes != combined)
+    #expect(workspace.studio.steps.count == 2, "values never shown are not applied (R2)")
+    #expect(workspace.failure != nil)
+    await workspace.previewNow()
+    try workspace.apply()
+    #expect(workspace.studio.head.planes != combined && workspace.studio.steps.count == 3)
   }
 }
 
@@ -105,13 +109,14 @@ extension StudioWorkspaceModelTests {
   /// ⌘Z only undoes the step it recorded: after the history's own Undo button moved the
   /// history, the registered undo does nothing (it never takes the channel combination away).
   @Test("a registered undo acts only on the step it recorded", .scratchDirectory)
-  func testRegisteredUndoChecksTheStep() throws {
+  func testRegisteredUndoChecksTheStep() async throws {
     let opened = try StudioModelTests.project()
     defer { try? opened.package.close() }
     let workspace = try Self.workspace(opened, bundle: StudioModelTests.bundle())
     let undoManager = UndoManager()
     undoManager.groupsByEvent = false
     workspace.choose(StretchProcess.id)
+    await workspace.previewNow()
     undoManager.beginUndoGrouping()
     StudioUndo.apply(workspace, undoManager: undoManager)
     undoManager.endUndoGrouping()
@@ -126,6 +131,7 @@ extension StudioWorkspaceModelTests {
     undoManager.removeAllActions()
     undoManager.beginUndoGrouping()
     workspace.choose(CurvesProcess.id)
+    await workspace.previewNow()
     StudioUndo.apply(workspace, undoManager: undoManager)
     undoManager.endUndoGrouping()
     undoManager.undo()

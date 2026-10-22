@@ -54,6 +54,8 @@ struct StudioStagePane: View {
         }
         .id(studio.source.runID)
       }
+      // The workspace of the shown stack failed or is loading: coming back retries it.
+      .task(id: model.selectedStack?.id) { model.retryWorkspace() }
     } else {
       EmptyState(
         .app("Studio"),

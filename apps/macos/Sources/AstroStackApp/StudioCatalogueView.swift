@@ -13,32 +13,13 @@ package struct StudioCatalogueView: View {
     List {
       ForEach(model.catalogue) { group in
         Section {
-          ForEach(group.entries) { entry in row(entry) }
+          ForEach(group.entries) { entry in StudioCatalogueRow(entry: entry, model: model) }
         } header: {
           Text(Self.stageTitle(group.stage))
         }
       }
     }
     .listStyle(.sidebar)
-  }
-
-  private func row(_ entry: StudioWorkspaceModel.Entry) -> some View {
-    let title = ProcessKitResources.title(entry.title, locale: locale)
-    return Button {
-      model.choose(entry.id)
-    } label: {
-      VStack(alignment: .leading, spacing: DesignMetrics.spacingXXS) {
-        Text(title)
-        if let unavailable = entry.unavailable {
-          Text(verbatim: Self.reason(unavailable, locale: locale))
-            .font(.caption).foregroundStyle(DesignColor.textSecondary.color)
-        }
-      }
-      .frame(maxWidth: .infinity, alignment: .leading)
-    }
-    .buttonStyle(.plain)
-    .opacity(entry.unavailable == nil ? 1 : 0.5)
-    .accessible(.studioProcess(entry.id), label: title)
   }
 
   /// Why a process is greyed, worded for `locale`.

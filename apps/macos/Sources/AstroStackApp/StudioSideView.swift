@@ -1,15 +1,20 @@
 internal import ProcessKit
 internal import RenderKit
-internal import SwiftUI
+package import SwiftUI
 
 /// The Studio's right column (card 0087): the chosen process's panel with Apply, then the
 /// history — each step comparable, Undo and Redo.
-struct StudioSideView: View {
+package struct StudioSideView: View {
   let model: StudioWorkspaceModel
   @Environment(\.undoManager) private var undoManager
   @Environment(\.locale) private var locale
 
-  var body: some View {
+  /// The side column of `model`.
+  package init(model: StudioWorkspaceModel) {
+    self.model = model
+  }
+
+  package var body: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: DesignMetrics.spacingL) {
         if let panel = model.panel {

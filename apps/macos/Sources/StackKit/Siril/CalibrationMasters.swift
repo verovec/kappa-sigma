@@ -36,7 +36,8 @@ package struct CalibrationMasters: Equatable, Sendable {
     if let flat { args.append("-flat=\(flat)") }
     if let bias, dark == nil || darkOptimize { args.append("-bias=\(bias)") }
     if let badPixelMap {
-      args.append("-cc=bpm \(badPixelMap)")
+      // Two Siril words: the map path is quoted on its own when it has a space (card 0112).
+      args += ["-cc=bpm", badPixelMap]
     } else if dark != nil {
       args.append("-cc=dark")
     }

@@ -49,4 +49,37 @@ struct LiveSirilTests {
     #expect(silent.isEmpty, "no status lines for: \(silent)")
     #expect(rejected.isEmpty, "rejected in pipe mode: \(rejected)")
   }
+
+  @Test(
+    "calibrate and stack in folders whose names have a space (card 0112: « M_31 2.astrostack »)",
+    .scratchDirectory)
+  func testStackIntoPathWithSpace() async throws {
+    let work = try ScratchDirectory.url.appendingPathComponent("M_31 2.astrostack/work")
+    for index in 1...3 {
+      try TestFITS.write(
+        String(format: "light_%05d.fit", index), in: work, pixel: UInt16(400 + index), cards: [:])
+    }
+    let out = work.deletingLastPathComponent().appendingPathComponent("stacks/run 1/master_RGB")
+    try FileManager.default.createDirectory(
+      at: out.deletingLastPathComponent(), withIntermediateDirectories: true)
+    let dark = try TestFITS.write(
+      "my darks/dark.fit", in: try ScratchDirectory.url, pixel: 100, cards: [:])
+    let session = SirilSession(binary: try SirilTool.locate(), workDirectory: work)
+    try await session.start()
+    do {
+      _ = try await session.exec(SirilCommand.link(seq: "light").line)
+      let masters = CalibrationMasters(dark: dark.path)
+      _ = try await session.exec(
+        SirilCommand.calibrate(seq: "light_", arguments: masters.arguments).line)
+      _ = try await session.exec(
+        SirilCommand.stack(seq: "pp_light_", clause: "sum", filterIncluded: false, out: out.path)
+          .line)
+    } catch {
+      await session.stop()
+      throw error
+    }
+    await session.stop()
+    let written = ["fit", "fits"].map { out.appendingPathExtension($0) }
+    #expect(written.contains { FileManager.default.fileExists(atPath: $0.path) })
+  }
 }

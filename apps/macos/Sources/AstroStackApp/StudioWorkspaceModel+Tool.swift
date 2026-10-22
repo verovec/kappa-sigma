@@ -43,9 +43,9 @@ extension StudioWorkspaceModel {
   /// it was.
   @discardableResult
   package func runTool() async -> Bool {
-    guard let panel, let tool = tools[panel.type.id], refusal() == nil else {
-      failure =
-        refusal() ?? panel.map { UserFacingError(StudioError.needsTool($0.type.id)).message }
+    guard let panel else { return false }
+    guard let tool = tools[panel.type.id], refusal() == nil else {
+      failure = refusal() ?? UserFacingError(StudioError.needsTool(panel.type.id)).message
       return false
     }
     var recorded = false
@@ -55,7 +55,8 @@ extension StudioWorkspaceModel {
     toolRun = ToolProgress(line: "", percent: nil)
     defer { toolRun = nil }
     // Refused before the tool runs (an engine's tool missing, card 0092): nothing else runs.
-    if let reason = await preflight(id, params: params) {
+    // A mask or a pipeline run started while the probe ran is refused too.
+    if let reason = await preflight(id, params: params) ?? refusal() {
       failure = reason
       return false
     }
@@ -76,8 +77,12 @@ extension StudioWorkspaceModel {
         }
       }
       try Task.checkCancellation()
-      guard studio.steps.last?.file == head else {
-        failure = .app("The image changed while the tool ran: nothing was recorded.")
+      // Another head, or a mask drawn while the tool ran: its result is not what is shown.
+      let moved: LocalizedStringResource? =
+        studio.steps.last?.file == head
+        ? nil : .app("The image changed while the tool ran: nothing was recorded.")
+      if let reason = moved ?? refusal() {
+        failure = reason
         return false
       }
       try reported {

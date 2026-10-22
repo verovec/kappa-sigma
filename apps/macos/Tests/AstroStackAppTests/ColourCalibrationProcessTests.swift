@@ -256,3 +256,33 @@ extension ColourCalibrationProcessTests {
     #expect(workspace.studio.steps.count == steps && opened.siril.calls.isEmpty)
   }
 }
+
+extension ColourCalibrationProcessTests {
+  @Test("a mask drawn while the tool runs: nothing recorded", .scratchDirectory)
+  func testMaskDrawnDuringRun() async throws {
+    let gate = AsyncStream<Void>.makeStream()
+    let tool = StudioTool { image, _, _ in
+      for await _ in gate.stream { break }
+      return StudioToolResult(image: image, report: nil)
+    }
+    let project = try StudioModelTests.project()
+    defer { try? project.package.close() }
+    let studio = try StudioModel(
+      store: project.package.store, stackID: project.stackID, packageFolder: project.package.url,
+      stackFolder: project.folder, bundle: StudioModelTests.bundle())
+    let workspace = try StudioWorkspaceModel(
+      studio: studio, base: [.color], tools: [PlateSolveProcess.id: tool])
+    workspace.choose(PlateSolveProcess.id)
+    let steps = workspace.studio.steps.count
+    await withCheckedContinuation { done in
+      workspace.startTool { _ in done.resume() }
+      Task { @MainActor in
+        workspace.mask = Mask(source: .luminosityRange(low: 0.2, high: 1, softness: 0.1))
+        gate.continuation.yield()
+      }
+    }
+    #expect(workspace.studio.steps.count == steps)
+    #expect(
+      workspace.failure == .app("A host tool works on the whole image: clear the mask first."))
+  }
+}

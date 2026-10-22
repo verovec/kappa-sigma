@@ -34,6 +34,12 @@ struct AstroFormatTests {
       name: "45 s integration", text: { $0.integration(seconds: 45) }, french: "45 s",
       english: "45 s"),
     Row(
+      name: "59.5 s in ms rounds up", text: { $0.integration(ms: 59_500) }, french: "1 min",
+      english: "1 min"),
+    Row(
+      name: "1.4 s in ms rounds down", text: { $0.integration(ms: 1400) }, french: "1 s",
+      english: "1 s"),
+    Row(
       name: "−20 °C", text: { $0.temperature(celsius: -20) }, french: "−20 °C", english: "−20 °C"),
     Row(name: "0.115", text: { $0.parameter(0.115) }, french: "0,115", english: "0.115"),
     Row(name: "1 400 ADU", text: { $0.adu(1400) }, french: "1 400 ADU", english: "1,400 ADU"),

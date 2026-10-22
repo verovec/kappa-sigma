@@ -112,16 +112,18 @@ extension IntegrationSummary {
   ///
   /// `dualband` for the run's dual-band lane, `unknown` for the plain one: the table never
   /// splits lights the run stacks together, nor names a clip filter the run does not stack under.
-  fileprivate struct Lanes {
+  package struct Lanes {
     let inventory: Inventory
     let split: Bool
 
-    init(_ inventory: Inventory) {
+    /// The lanes of `inventory`, split or not as the run decides.
+    package init(_ inventory: Inventory) {
       self.inventory = inventory
       split = FilterSetLanes.splits(inventory)
     }
 
-    func filterSet(of set: FrameSet) -> FilterSet {
+    /// The clip filter a row shows for `set`.
+    package func filterSet(of set: FrameSet) -> FilterSet {
       let lane = FilterSetLanes.lane(for: set, in: inventory, split: split)
       return FilterSetLanes.baseFilter(of: lane) == lane ? .unknown : .dualband
     }

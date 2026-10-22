@@ -111,7 +111,7 @@ struct ImportSheetTests {
     "LayerDetail", "JournalView", "PreviewThumbnail", "KnobPanel", "KnobRow", "KnobPanelViewModel",
     "StudioCatalogueView", "StudioSideView",
     "StudioWorkspaceView", "ProcessPanel", "ProcessParameterRow", "StudioMaskRow",
-    "CalibrationStagePane", "CoverageMatrix+Heading",
+    "CalibrationStagePane", "CoverageMatrix+Heading", "StackingStageModel", "StackingSeriesView",
     "ReviewStagePane", "FrameReviewView", "FrameTable", "FrameBlinkView", "FrameReviewViewModel",
   ]
 

@@ -43,23 +43,23 @@ struct ReviewStagePane: View {
   private var emptyMessage: LocalizedStringResource {
     let settings = model.knobs.settings
     // The reference pause comes first in a run: it is the one to announce when both are on.
-    if model.run?.isRunning == true, settings.referenceBreakpoint {
+    if model.isStacking, settings.referenceBreakpoint {
       return .app("Measuring: each lane pauses here before its registration is applied.")
     }
-    if model.run?.isRunning == true, settings.frameReview {
+    if model.isStacking, settings.frameReview {
       return .app("Grading: each lane pauses here after its registration.")
     }
     return .app("Run a stack with the review on: each lane pauses here after grading.")
   }
 
-  /// The knob, worded by the knobs glossary, frozen while a run goes (R2: values shown = applied);
-  /// its « ? » (definition, and the kept profile's why — card 0086) stays clickable.
+  /// The knob, worded by the knobs glossary, frozen while a run or a queue goes (R2: values
+  /// shown = applied); its « ? » (definition, and the kept profile's why — card 0086) stays clickable.
   private var reviewToggle: some View {
     let id = KnobSchema.frameReviewID
     let term = AppGlossary.term(Knob.termID(id), locale: locale, in: AppGlossary.knobs)
     return HStack(spacing: DesignMetrics.spacingXS) {
       Toggle(isOn: frameReview) { Text(verbatim: term.label) }
-        .disabled(model.run?.isRunning == true)
+        .disabled(model.isStacking)
         .accessible(.reviewToggle, verbatim: term.label)
       KnobHelpButton(id: id, model: model.knobs)
     }
@@ -71,13 +71,14 @@ struct ReviewStagePane: View {
       set: { model.knobs.set(KnobSchema.frameReviewID, to: .flag($0)) })
   }
 
-  /// The reference-pin knob (card 0096), worded by the knobs glossary, frozen while a run goes.
+  /// The reference-pin knob (card 0096), worded by the knobs glossary, frozen while a run or a
+  /// queue goes.
   private var referenceToggle: some View {
     let term = AppGlossary.term(
       Knob.termID(KnobSchema.referenceBreakpointID), locale: locale, in: AppGlossary.knobs)
     return Toggle(isOn: referenceBreakpoint) { Text(verbatim: term.label) }
       .help(term.definition)
-      .disabled(model.run?.isRunning == true)
+      .disabled(model.isStacking)
       .accessible(.referenceToggle, verbatim: term.label)
   }
 

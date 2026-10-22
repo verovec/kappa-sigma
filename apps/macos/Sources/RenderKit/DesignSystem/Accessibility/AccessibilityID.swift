@@ -124,6 +124,13 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
   /// The Stacking panel's Reset All (card 0070).
   package static let stackingResetKnobs = stageControl("stacking", "resetKnobs")
 
+  /// A series checkbox of the Stacking stage, by its light-set id (card 0095).
+  package static func stackingSeries(_ setID: String) -> Self {
+    stageControl("stacking", "series." + setID)
+  }
+
+  /// The Studio stage's stack picker (card 0095).
+  package static let studioStack = stageControl("studio", "stack")
   /// The Tri stage's « Review frames before stacking » toggle (card 0069).
   package static let reviewToggle = stageControl("review", "toggle")
 

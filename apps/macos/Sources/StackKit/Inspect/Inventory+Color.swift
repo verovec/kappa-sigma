@@ -66,12 +66,14 @@ extension Inventory {
     return (cleared, declined)
   }
 
-  /// Names unlabeled colour lights `RGB` in an OSC scan, so every channel has a name
+  /// Names unlabeled colour lights `RGB` in an OSC or mixed scan, so every channel has a name
   /// (`nameColorChannel`).
   ///
-  /// A mixed scan keeps them unnamed: no single run should stack them.
+  /// A mixed scan names them too (card 0095): a mono object beside an OSC one stacks as two runs,
+  /// each scoped to one colour kind, and the OSC run needs its lane named. A mixed run is still
+  /// refused by `Preprocessor.plan`. Mono lights are never colour: they keep their filter.
   package mutating func nameColorChannel() {
-    guard colorModel == .osc else { return }
+    guard colorModel != .mono else { return }
     for index in frames.indices
     where frames[index].type == .light && frames[index].isColor && frames[index].filter.isEmpty {
       frames[index].filter = Filter.color

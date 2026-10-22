@@ -97,12 +97,20 @@ package actor Preprocessor {
 
   /// Which nights feed which channel (lane).
   ///
-  /// A capture measured both broadband and dual-band stacks two lanes. A mono + colour mix is
-  /// refused before anything runs.
+  /// A capture measured both broadband and dual-band stacks two lanes. A mono + colour mix, or
+  /// lights of several objects (card 0095: one object per run, scoped by `RunScope`), is refused
+  /// before anything runs.
   package static func plan(_ inventory: Inventory) throws -> NightPlan {
+    let lights = inventory.sets.filter { $0.key.type == .light }
+    guard !lights.isEmpty else { throw PreprocessError.noLights }
+    // An unnamed OBJECT is an object of its own: never merged into a named one in silence. The
+    // objects are checked before the colour model: two rigs on two objects are two runs, not a
+    // colour kind to exclude.
+    let objects = Set(lights.map(\.key.object))
+    guard objects.count <= 1 else { throw PreprocessError.mixedObjects(objects.sorted()) }
     guard inventory.colorModel != .mixed else { throw PreprocessError.mixedColorModel }
     let split = FilterSetLanes.splits(inventory)
-    return NightPlan(inventory.sets.filter { $0.key.type == .light }) {
+    return NightPlan(lights) {
       FilterSetLanes.lane(for: $0, in: inventory, split: split)
     }
   }

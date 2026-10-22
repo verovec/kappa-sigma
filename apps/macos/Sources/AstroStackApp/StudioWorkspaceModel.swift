@@ -71,6 +71,9 @@ package final class StudioWorkspaceModel {
   @ObservationIgnored package weak var undoManager: UndoManager?
   @ObservationIgnored private let base: Set<LayerRole>
   @ObservationIgnored private var previewTask: Task<Void, Never>?
+  /// The head's display statistics: a preview is drawn through them, never through a previous
+  /// preview's.
+  @ObservationIgnored private var headStatistics: [STFMapping] = []
 
   /// The workspace of `studio` whose bundle holds the layer roles `base`.
   package init(studio: StudioModel, base: Set<LayerRole>) throws {
@@ -82,6 +85,7 @@ package final class StudioWorkspaceModel {
       model: ViewerModel(image: studio.head), renderer: renderer,
       texture: try Self.texture(studio.head, device: studio.session.device))
     refreshCatalogue()
+    headStatistics = viewer.model.statistics
   }
 
   /// Marks this workspace replaced (a newer stack opened in the Studio).
@@ -102,9 +106,10 @@ package final class StudioWorkspaceModel {
     let params = ParamSet(schema: type.schema)
     let suggestions = (try? studio.session.suggestions(for: type, params: params)) ?? []
     let panel = ProcessPanelModel(type: type, params: params, suggestions: suggestions)
-    panel.onChange = { [weak self] in self?.schedulePreview() }
+    panel.onChange = { [weak self] in self?.panelChanged() }
     self.panel = panel
-    stopPreview()
+    // The defaults are previewed at once: Apply never records what was not shown (R2).
+    schedulePreview()
   }
 
   /// Closes the panel: the viewer shows the head again.
@@ -120,8 +125,8 @@ package final class StudioWorkspaceModel {
       let preview = try studio.preview(panel.type.id, params: panel.params, mask: maskImage())
       // Through the head's display stretch: an auto-stretch fitted to the preview would hide
       // the very change the process makes (what is shown is what Apply records, R2).
-      let same = preview.planes.count == viewer.model.statistics.count
-      try show(preview, statistics: same ? viewer.model.statistics : nil)
+      let same = preview.planes.count == headStatistics.count
+      try show(preview, statistics: same ? headStatistics : nil)
       isPreviewing = true
       failure = nil
     } catch {
@@ -184,6 +189,15 @@ package final class StudioWorkspaceModel {
       width: head.width, height: head.height, planes: built.read(), metadata: head.metadata)
   }
 
+  /// A value moved: the suggestions follow the values they depend on, the preview follows.
+  private func panelChanged() {
+    if let panel {
+      panel.suggestions =
+        (try? studio.session.suggestions(for: panel.type, params: panel.params)) ?? []
+    }
+    schedulePreview()
+  }
+
   private func schedulePreview() {
     previewTask?.cancel()
     previewTask = Task { [weak self] in
@@ -202,6 +216,7 @@ package final class StudioWorkspaceModel {
   }
 
   private func headChanged() throws {
+    defer { headStatistics = viewer.model.statistics }
     if let panel {
       panel.suggestions =
         (try? studio.session.suggestions(for: panel.type, params: panel.params)) ?? []

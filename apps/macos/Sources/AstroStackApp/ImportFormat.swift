@@ -12,6 +12,11 @@ package nonisolated enum ImportFormat {
     key.type.usesTemperature ? format.temperature(celsius: key.tempBucketC) : "—"
   }
 
+  /// The gain alone, as masters name it (`g100`).
+  package static func gain(_ gain: Int, locale: Locale) -> String {
+    String(localized: .app("g\(gain)", locale: locale))
+  }
+
   /// Gain, offset and binning, as masters name them.
   package static func sensor(_ key: SetKey) -> String {
     "g\(key.gain) o\(key.offset) b\(key.bin)"

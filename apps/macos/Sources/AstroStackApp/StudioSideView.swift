@@ -71,21 +71,13 @@ struct StudioSideView: View {
     StudioUndo.apply(model, undoManager: undoManager)
   }
 
-  /// One step back: through the undo manager when it holds the step, else on the history
-  /// itself (a reopened project's steps were applied in an earlier session).
+  /// One step back on the history itself (the window's undo manager may hold unrelated typing
+  /// on top; ⌘Z reaches the Studio's own registered moves).
   private func undo() {
-    if let undoManager, undoManager.canUndo {
-      undoManager.undo()
-    } else {
-      try? model.undo()
-    }
+    try? model.undo()
   }
 
   private func redo() {
-    if let undoManager, undoManager.canRedo {
-      undoManager.redo()
-    } else {
-      try? model.redo()
-    }
+    try? model.redo()
   }
 }

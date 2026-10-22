@@ -37,8 +37,6 @@ extension StudioWorkspaceModel {
   func gridMoved(from old: (processID: String, params: ParamSet)?) {
     let now = movedGrid(shown.map { ($0.processID, $0.params) })
     if movedGrid(old) != now { viewer.model.clearRegion() }
-    // A compare refused on the moved preview is no longer refused once it is gone.
-    if now == nil, showsMovedGrid, compareRefused { clearCompareRefusal() }
     if showsMovedGrid != (now != nil) { showsMovedGrid = now != nil }
   }
 
@@ -48,22 +46,5 @@ extension StudioWorkspaceModel {
       type is any GeometricProcess.Type, !GeometryProcess.isIdentity(values.params)
     else { return nil }
     return values.params
-  }
-
-  /// Compares with step `index`, or stops when it is the one compared; a refusal is shown until
-  /// a compare succeeds or the moved preview that caused it is gone.
-  package func toggleCompare(_ index: Int) {
-    do {
-      try compare(toStep: comparing == index ? nil : index)
-      if compareRefused { clearCompareRefusal() }
-    } catch {
-      failure = UserFacingError(error).message
-      compareRefused = true
-    }
-  }
-
-  private func clearCompareRefusal() {
-    failure = nil
-    compareRefused = false
   }
 }

@@ -71,6 +71,9 @@ package struct StudioSideView: View {
           }
         }
         .buttonStyle(.plain)
+        // No step lies under a moved preview's pixels: the row says why it is greyed (R2).
+        .disabled(model.showsMovedGrid)
+        .help(model.showsMovedGrid ? Text(UserFacingError.movedPreview.message) : Text(verbatim: ""))
         .accessible(.studioStep(index), label: title)
       }
     }

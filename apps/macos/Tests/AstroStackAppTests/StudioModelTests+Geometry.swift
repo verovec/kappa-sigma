@@ -177,38 +177,3 @@ extension StudioModelTests {
     #expect(!workspace.showsMovedGrid && workspace.viewer.model.image.height == 8)
   }
 }
-
-extension StudioModelTests {
-  /// Review of card 0090: a compare clicked on a moved preview says why it is refused, and the
-  /// reason goes once the preview no longer moves the pixels.
-  @Test("a refused compare click explains itself, then clears", .scratchDirectory)
-  func testRefusedCompareClears() async throws {
-    let opened = try Self.project()
-    defer { try? opened.package.close() }
-    let workspace = try StudioWorkspaceModelTests.workspace(opened, bundle: Self.bundle())
-    workspace.choose(GeometryProcess.id)
-    let panel = try #require(workspace.panel)
-    panel.set("flipH", .flag(true))
-    await workspace.previewNow()
-
-    workspace.toggleCompare(0)
-    #expect(workspace.comparing == nil)
-    #expect(workspace.failure == UserFacingError.movedPreview.message)
-    panel.set("flipH", .flag(false))
-    await workspace.previewNow()
-    #expect(workspace.failure == nil, "the identity preview clears the refusal")
-
-    // Closing the panel takes the moved preview away: the refusal goes with it.
-    panel.set("flipH", .flag(true))
-    await workspace.previewNow()
-    workspace.toggleCompare(0)
-    #expect(workspace.failure != nil)
-    workspace.closePanel()
-    #expect(workspace.failure == nil && !workspace.showsMovedGrid)
-    // A refusal of another kind goes once a compare succeeds.
-    workspace.toggleCompare(5)
-    #expect(workspace.failure != nil && workspace.comparing == nil)
-    workspace.toggleCompare(0)
-    #expect(workspace.failure == nil && workspace.comparing == 0)
-  }
-}

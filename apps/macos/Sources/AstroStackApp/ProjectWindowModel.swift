@@ -31,7 +31,7 @@ package final class ProjectWindowModel {
   /// Every stack of the project, oldest first (read on refresh).
   package internal(set) var stacks: [ProjectStack] = []
   /// The stack the Studio shows (card 0095), persisted per project; `nil` = the latest.
-  package private(set) var selectedStackID: Int64?
+  package internal(set) var selectedStackID: Int64?
   /// The lights per filter × night of `scan`, computed once per scan.
   package private(set) var integration: IntegrationSummary?
   /// The calibration coverage of `scan`, the matcher's verdict as is.
@@ -46,6 +46,8 @@ package final class ProjectWindowModel {
   /// A queue is going: from Run until its last run registered, failed or was cancelled — Run
   /// stays greyed in between two runs too.
   var queueActive = false
+  /// Cancel was pressed during the queue: a run finishing meanwhile is recorded, not shown.
+  var queueCancelled = false
   /// The stack the Studio shows: the latest one, read-only.
   package internal(set) var studio: LegacyRunModel?
   /// The Stacking panel's preset and knob edits: what the next run applies (card 0070).
@@ -120,7 +122,8 @@ package final class ProjectWindowModel {
   /// Shows `id` in the Studio and remembers it; a stack the project does not have is not chosen.
   package func selectStack(_ id: Int64?) {
     guard id == nil || stacks.contains(where: { $0.id == id }) else { return }
-    guard id != selectedStackID || studio == nil else { return }
+    // The stack already shown, picked again (« the latest » included): nothing reopens.
+    guard (id ?? stacks.last?.id) != selectedStack?.id || studio == nil else { return }
     selectedStackID = id
     studio = nil
     // Tri follows the stack the Studio shows; the refresh comes first so a failure to persist
@@ -254,7 +257,7 @@ package final class ProjectWindowModel {
       let summary = try store?.summary() ?? ProjectSummary()
       // The stacks are read again only when their count moved: a refresh runs on every event.
       if summary.stacks != stacks.count { stacks = try store?.stacks() ?? [] }
-      let running = run?.isRunning == true || queueActive ? 1 : 0
+      let running = isStacking ? 1 : 0
       var facts = ProjectFacts(summary: summary, coverage: coverage, stacksRunning: running)
       // Tri is done when the stack the Studio shows (the chosen one, else the latest; 0095) went
       // through the review (card 0069). A record that no longer decodes was reported where it is

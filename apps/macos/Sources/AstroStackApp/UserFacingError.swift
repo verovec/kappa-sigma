@@ -136,10 +136,17 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
   }
 
   /// One run stacks one object (card 0095): the series table is where the user picks.
+  ///
+  /// Lights without an OBJECT are named by a sentence of their own (never an English token).
   private static func mixedObjects(_ objects: [String]) -> LocalizedStringResource {
-    let names = PreprocessError.names(objects)
+    let names = objects.filter { !$0.isEmpty }.joined(separator: ", ")
+    guard objects.contains("") else {
+      return .app(
+        "Several objects in the lights (\(names)): check one object's series on the Stacking stage."
+      )
+    }
     return .app(
-      "Several objects in the lights (\(names)): check one object's series on the Stacking stage."
+      "Several objects, some unnamed (\(names)): check one object's series on the Stacking stage."
     )
   }
 

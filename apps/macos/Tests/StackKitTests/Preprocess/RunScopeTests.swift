@@ -27,6 +27,20 @@ struct RunScopeTests {
     return inventory
   }
 
+  /// `twoObjects` with OTHER shot by a colour camera (3 channels, no filter), the verdict and the
+  /// channel names derived from the frames as the scan derives them.
+  static func twoRigs() throws -> Inventory {
+    var inventory = try twoObjects()
+    for index in inventory.frames.indices where inventory.frames[index].object == "OTHER" {
+      inventory.frames[index].channels = 3
+      inventory.frames[index].filter = ""
+    }
+    inventory.colorModel = inventory.lightColorModel
+    inventory.nameColorChannel()
+    inventory.regroup()
+    return inventory
+  }
+
   static func single() throws -> Inventory {
     let root = try InventoryBuilderFallbackTests.folder("scan")
     return try MasterBuilderTests.scan("golden-single-night", under: root)
@@ -120,15 +134,37 @@ struct RunScopeTests {
     var shrunk = testfield
     shrunk.setIDs.append("light|TESTFIELD|X|e1|g0o0b1|i0|t0|s:")
     #expect(shrunk.unlistedSets(in: two) == ["light|TESTFIELD|X|e1|g0o0b1|i0|t0|s:"])
-    // A mono object beside an OSC one: the scan's mixed verdict travels (its colour lights were
-    // never named), so the scoped run is refused as mixed rather than stacked on an unnamed lane.
-    var osc = two
-    for index in osc.frames.indices where osc.frames[index].object == "OTHER" {
-      osc.frames[index].channels = 3
+    // A set left unchecked is not a moved scan: the scope remembers what the scan listed.
+    let kept = Array(testfield.setIDs.dropFirst())
+    let partial = RunScope(
+      object: "TESTFIELD", setIDs: kept, lights: 0, listed: testfield.setIDs)
+    #expect(partial.unlistedSets(in: two).isEmpty, "an unchecked set runs as chosen")
+    #expect(partial.unlistedSets(in: moved).contains { !testfield.setIDs.contains($0) })
+  }
+
+  @Test(
+    "a mono object beside an OSC one: each scope is its own colour kind and plans",
+    .scratchDirectory)
+  func testScopesSplitTwoRigs() throws {
+    let rigs = try Self.twoRigs()
+    #expect(rigs.colorModel == .mixed, "the scan saw both kinds")
+    let scopes = RunScope.scopes(of: rigs)
+    let other = try #require(scopes.first { $0.object == "OTHER" })
+    let testfield = try #require(scopes.first { $0.object == "TESTFIELD" })
+    #expect(rigs.scoped(testfield).colorModel == .mono)
+    #expect(rigs.scoped(other).colorModel == .osc)
+    #expect(
+      try Preprocessor.plan(rigs.scoped(testfield)).channels.keys.sorted() == ["B", "G", "L", "R"])
+    #expect(try Preprocessor.plan(rigs.scoped(other)).channels.keys.sorted() == ["RGB"])
+    // One object shot by both rigs is still a mixed run: refused, never one kind dropped in silence.
+    var both = rigs
+    for index in both.frames.indices where both.frames[index].object == "OTHER" {
+      both.frames[index].object = "TESTFIELD"
     }
-    osc.regroup()
-    osc.colorModel = .mixed
-    #expect(osc.scoped(testfield).colorModel == .mixed)
+    both.regroup()
+    let all = try #require(RunScope.scopes(of: both).first)
+    #expect(both.scoped(all).colorModel == .mixed)
+    #expect(throws: PreprocessError.mixedColorModel) { try Preprocessor.plan(both.scoped(all)) }
   }
 
   @Test("a scope round-trips through JSON under its wire keys")
@@ -139,5 +175,12 @@ struct RunScopeTests {
     let json = try #require(String(bytes: try encoder.encode(scope), encoding: .utf8))
     #expect(json == #"{"lights":77,"object":"M 31","set_ids":["a","b"]}"#)
     #expect(try JSONDecoder().decode(RunScope.self, from: Data(json.utf8)) == scope)
+    // A partial scope carries the sets the scan listed; a record without them lists its own.
+    let partial = RunScope(object: "M 31", setIDs: ["b"], lights: 3, listed: ["a", "b"])
+    let partialJSON = try #require(String(bytes: try encoder.encode(partial), encoding: .utf8))
+    #expect(
+      partialJSON == #"{"lights":3,"listed_set_ids":["a","b"],"object":"M 31","set_ids":["b"]}"#)
+    #expect(try JSONDecoder().decode(RunScope.self, from: Data(partialJSON.utf8)) == partial)
+    #expect(scope.listed == scope.setIDs)
   }
 }

@@ -3457,6 +3457,22 @@
         }
       }
     },
+    "Several objects, some unnamed (%@): check one object's series on the Stacking stage.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Several objects, some unnamed (%@): check one object's series on the Stacking stage."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plusieurs objets, dont certains sans nom (%@) : cochez les séries d’un seul objet à l’étape Empilement."
+          }
+        }
+      }
+    },
     "Shared calibration and undated frames": {
       "localizations": {
         "en": {

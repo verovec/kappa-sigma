@@ -51,13 +51,13 @@ struct ReviewStagePane: View {
     return .app("Run a stack with the review on: each lane pauses here after grading.")
   }
 
-  /// The knob, worded by the knobs glossary, frozen while a run goes (R2: values shown = applied).
+  /// The knob, worded by the knobs glossary, frozen while a run or a queue goes (R2: values shown = applied).
   private var reviewToggle: some View {
     let term = AppGlossary.term(
       Knob.termID(KnobSchema.frameReviewID), locale: locale, in: AppGlossary.knobs)
     return Toggle(isOn: frameReview) { Text(verbatim: term.label) }
       .help(term.definition)
-      .disabled(model.run?.isRunning == true)
+      .disabled(model.isStacking)
       .accessible(.reviewToggle, verbatim: term.label)
   }
 
@@ -67,13 +67,13 @@ struct ReviewStagePane: View {
       set: { model.knobs.set(KnobSchema.frameReviewID, to: .flag($0)) })
   }
 
-  /// The reference-pin knob (card 0096), worded by the knobs glossary, frozen while a run goes.
+  /// The reference-pin knob (card 0096), worded by the knobs glossary, frozen while a run or a queue goes.
   private var referenceToggle: some View {
     let term = AppGlossary.term(
       Knob.termID(KnobSchema.referenceBreakpointID), locale: locale, in: AppGlossary.knobs)
     return Toggle(isOn: referenceBreakpoint) { Text(verbatim: term.label) }
       .help(term.definition)
-      .disabled(model.run?.isRunning == true)
+      .disabled(model.isStacking)
       .accessible(.referenceToggle, verbatim: term.label)
   }
 

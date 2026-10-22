@@ -100,6 +100,7 @@ struct StackingStageModelTests {
     let m31Scope = try #require(scopes.last)
     #expect(m31Scope.setIDs.allSatisfy { $0.hasSuffix("s:2026-09-22") })
     #expect(m31Scope.lights == 3)
+    #expect(m31Scope.unlistedSets(in: inventory).isEmpty, "a deselected night is no outdated scope")
     #expect(scopes.first?.lights == 6, "the other object keeps both nights")
 
     for series in m31.nights.flatMap(\.series) { model.set(series.id, checked: false) }

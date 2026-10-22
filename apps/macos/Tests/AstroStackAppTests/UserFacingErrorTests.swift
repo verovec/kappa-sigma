@@ -108,6 +108,12 @@ struct UserFacingErrorTests {
         + "check one object's series on the Stacking stage."
     ),
     Case(
+      error: PreprocessError.mixedObjects(["", "M 31"]), names: "M 31",
+      english:
+        "Several objects, some unnamed (M 31): "
+        + "check one object's series on the Stacking stage."
+    ),
+    Case(
       error: PreprocessError.noLights, names: "",
       english:
         "No light set to stack: the capture holds none, or the series chosen are not in this scan."

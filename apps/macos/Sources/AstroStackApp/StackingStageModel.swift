@@ -39,6 +39,7 @@ package final class StackingStageModel {
     package let night: String
     /// Its sets, in the scan's order.
     package let series: [Series]
+    /// Unique in the table: the object, then the night.
     package var id: String { object + "|" + night }
   }
 
@@ -48,6 +49,7 @@ package final class StackingStageModel {
     package let object: String
     /// Its nights, undated last.
     package let nights: [Night]
+    /// One group per object.
     package var id: String { object }
   }
 
@@ -94,10 +96,12 @@ package final class StackingStageModel {
 
   private func rebuildScopes() {
     scopes = groups.compactMap { group in
-      let series = group.nights.flatMap(\.series).filter { checked.contains($0.id) }
+      let listed = group.nights.flatMap(\.series)
+      let series = listed.filter { checked.contains($0.id) }
       guard !series.isEmpty else { return nil }
       return RunScope(
-        object: group.object, setIDs: series.map(\.id), lights: series.map(\.frames).reduce(0, +))
+        object: group.object, setIDs: series.map(\.id), lights: series.map(\.frames).reduce(0, +),
+        listed: listed.map(\.id))
     }
   }
 

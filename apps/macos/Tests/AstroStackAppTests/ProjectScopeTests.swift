@@ -17,19 +17,28 @@ struct ProjectScopeTests {
     while let run = window.run, run.isRunning { await run.settled() }
   }
 
-  /// A saved project whose planner scans M 31 and IC 1848 together, scanned once.
-  static func twoObjects() async throws -> (
+  /// A saved project whose planner scans M 31 and IC 1848 together, scanned once; from plan
+  /// `movedAfter + 1` on, M 31's lights are regrouped (a scan that moved since the choice).
+  static func twoObjects(movedAfter: Int? = nil) async throws -> (
     project: ProjectPackage, window: ProjectWindowModel, ran: Recorded<PreprocessRequest>
   ) {
     let scratch = try ScratchDirectory.url
     let project = try ProjectPackage.create(at: scratch.appendingPathComponent("M31.astrostack"))
     let ran = Recorded<PreprocessRequest>()
+    let planned = Recorded<ImportRequest>()
     let inventory = StackingStageModelTests.inventory(objects: ["M 31", "IC 1848"])
+    var moved = inventory
+    for index in moved.frames.indices where moved.frames[index].object == "M 31" {
+      moved.frames[index].exposureMs += 1000
+    }
+    moved.regroup()
     let window = ProjectWindowModel(
       store: { project.store }, folder: { project.url },
-      services: { _ in
+      services: { [moved] _ in
         ImportServices(planning: { request in
-          ImportPlan(inventory: inventory, library: [], request: request)
+          planned.append(request)
+          let hasMoved = movedAfter.map { planned.all.count > $0 } ?? false
+          return ImportPlan(inventory: hasMoved ? moved : inventory, library: [], request: request)
         })
       },
       runs: RunServices(
@@ -52,7 +61,9 @@ struct ProjectScopeTests {
 
     window.startRun()
     #expect(window.statuses[.stacking] == .running)
+    #expect(window.isStacking, "the knobs and the review toggles are frozen for the whole queue")
     await Self.queueSettled(window)
+    #expect(!window.isStacking)
 
     #expect(ran.all.count == 2, "one run per object, in order")
     let lights = ran.all.map { Set($0.inventory.frames.filter { $0.type == .light }.map(\.object)) }
@@ -112,6 +123,9 @@ struct ProjectScopeTests {
     #expect(window.selectedStackID == nil)
     await window.openStudio()
     #expect(window.studio?.source.runID == "B", "nothing chosen: the latest")
+    window.selectStack(stacks[1].id)
+    #expect(window.studio?.source.runID == "B", "the stack shown, picked again: nothing reopens")
+    #expect(try store.setting("workspace.stack") == nil)
 
     window.selectStack(stacks[0].id)
     #expect(window.selectedStackID == stacks[0].id && window.studio == nil)
@@ -131,6 +145,35 @@ struct ProjectScopeTests {
       store: { store }, folder: { folder }, planning: { _ in ImportPlanningStub.empty })
     #expect(stale.selectedStackID == nil, "a deleted stack reads as no choice")
   }
+  @Test(
+    "a queue that stops after its first run, nothing chosen: the picker stays on the stack shown",
+    .scratchDirectory)
+  func testStoppedQueueKeepsTheShownStack() async throws {
+    // Plans: the scan, the first run's; the second run finds M 31 regrouped and is refused.
+    let (project, window, ran) = try await Self.twoObjects(movedAfter: 2)
+    defer { try? project.close() }
+    let output = project.url.appendingPathComponent("stacks/A")
+    try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+    _ = try ProjectTests.writeBundle(in: output, runID: "A")
+    let shown = try project.store.addStack(
+      bundlePath: "stacks/A", sourceIDs: [], paramsJSON: "{}", object: "M 31", scopeJSON: nil)
+    window.refresh()
+    await window.openStudio()
+    #expect(window.selectedStackID == nil && window.studio?.source.runID == "A")
+
+    window.startRun()
+    await Self.queueSettled(window)
+    #expect(ran.all.count == 1, "the second run is refused before it starts")
+    guard case .failed = window.run?.phase else {
+      Issue.record("the second run fails: the scan moved")
+      return
+    }
+    #expect(window.stacks.count == 2, "the first run's stack is recorded")
+    #expect(window.studio?.source.runID == "A")
+    #expect(window.selectedStack?.id == shown.id, "the picker names the stack the Studio shows")
+    #expect(try project.store.setting("workspace.stack") == nil, "nothing persisted in silence")
+  }
+
   @Test(
     "the Stacking stage lists a checkbox per series; the Studio offers the stack picker",
     .scratchDirectory)

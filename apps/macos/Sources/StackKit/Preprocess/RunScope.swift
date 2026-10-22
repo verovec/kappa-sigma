@@ -10,17 +10,42 @@ package struct RunScope: Equatable, Sendable, Codable {
   package var setIDs: [String]
   /// How many lights those sets hold when the scope was made (the picker's « n lights »).
   package var lights: Int
+  /// Every light set of the object the scan listed when the series were chosen — the checked
+  /// ones and those left out — so a set left unchecked is never mistaken for a moved scan.
+  package var listed: [String]
 
-  /// A scope of `object` over `setIDs` holding `lights` frames.
-  package init(object: String, setIDs: [String], lights: Int) {
+  /// A scope of `object` over `setIDs` holding `lights` frames, chosen among `listed` (default:
+  /// `setIDs`, every set of the object).
+  package init(object: String, setIDs: [String], lights: Int, listed: [String]? = nil) {
     self.object = object
     self.setIDs = setIDs
     self.lights = lights
+    self.listed = listed ?? setIDs
   }
 
   private enum CodingKeys: String, CodingKey {
     case object, lights
     case setIDs = "set_ids"
+    case listed = "listed_set_ids"
+  }
+
+  /// A record without `listed_set_ids` (a full scope, or one written before) lists its own sets.
+  package init(from decoder: any Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    self.init(
+      object: try container.decode(String.self, forKey: .object),
+      setIDs: try container.decode([String].self, forKey: .setIDs),
+      lights: try container.decode(Int.self, forKey: .lights),
+      listed: try container.decodeIfPresent([String].self, forKey: .listed))
+  }
+
+  /// `listed_set_ids` is written only when some set was left out: a full scope keeps its wire form.
+  package func encode(to encoder: any Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+    try container.encode(object, forKey: .object)
+    try container.encode(setIDs, forKey: .setIDs)
+    try container.encode(lights, forKey: .lights)
+    if listed != setIDs { try container.encode(listed, forKey: .listed) }
   }
 
   /// One scope per object of `inventory`, objects in name order, each with every light set of
@@ -30,21 +55,24 @@ package struct RunScope: Equatable, Sendable, Codable {
     for set in inventory.sets where set.key.type == .light {
       var scope = scopes[set.key.object] ?? Self(object: set.key.object, setIDs: [], lights: 0)
       scope.setIDs.append(set.key.id)
+      scope.listed.append(set.key.id)
       scope.lights += set.count
       scopes[set.key.object] = scope
     }
     return scopes.keys.sorted().compactMap { scopes[$0] }
   }
 
-  /// The light sets `inventory` and the scope disagree on: this object's sets the scope does not
-  /// list, and listed sets the scan no longer has — a scan that moved since the series were
-  /// chosen (a night added, a grouping changed), never stacked in part or in silence.
+  /// The light sets `inventory` and the scope disagree on.
+  ///
+  /// This object's sets the scan did not list when the series were chosen, and chosen sets the
+  /// scan no longer has — a scan that moved (a night added, a grouping changed), never stacked in
+  /// part or in silence. A set listed and left unchecked is a choice, not a change.
   package func unlistedSets(in inventory: Inventory) -> [String] {
-    let listed = Set(setIDs)
+    let known = Set(listed).union(setIDs)
     let present = inventory.sets.filter { $0.key.type == .light && $0.key.object == object }
       .map(\.key.id)
     let presentIDs = Set(present)
-    let added = present.filter { !listed.contains($0) }
+    let added = present.filter { !known.contains($0) }
     let gone = setIDs.filter { !presentIDs.contains($0) }
     return added + gone
   }
@@ -68,9 +96,9 @@ extension Inventory {
     var out = Inventory(root: root, frames: indices.map { frames[$0] })
     out.warnings = warnings
     out.channelDetection = channelDetection
-    // The scan's verdict stays: a mixed scan never named its colour lights (`nameColorChannel`),
-    // so a mono object beside an OSC one is refused as mixed, never stacked on an unnamed lane.
-    out.colorModel = colorModel
+    // The kept lights decide: a mono object beside an OSC one is not a mixed run on its own (a
+    // mixed scan named its colour lights, `nameColorChannel`); one object shot by both rigs is.
+    out.colorModel = out.lightColorModel
     out.sets = kept.map { set in
       var set = set
       set.indices = set.indices.compactMap { position[$0] }

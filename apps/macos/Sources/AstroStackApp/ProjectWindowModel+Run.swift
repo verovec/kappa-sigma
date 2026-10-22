@@ -22,9 +22,13 @@ extension ProjectWindowModel {
   /// least one checked set. Without a scan, a project whose stacks show several objects waits for
   /// one (`needsSeries`): a run of every light would only fail after the plan.
   package var canRun: Bool {
-    !queueActive && run?.isRunning != true && sources.contains { $0.kind == .night }
+    !isStacking && sources.contains { $0.kind == .night }
       && (series.isEmpty ? !needsSeries : !series.scopes.isEmpty)
   }
+
+  /// A run or a queue is going: the knobs, the series and the review toggles are frozen until
+  /// it ends, between two queued runs too (R2: the values shown are the values applied).
+  package var isStacking: Bool { queueActive || run?.isRunning == true }
 
   /// No scan lists the series yet, and the recorded stacks name several objects (card 0095).
   package var needsSeries: Bool {
@@ -66,6 +70,7 @@ extension ProjectWindowModel {
     let preset = mode ?? knobs.mode
     queuedScopes = Array(scopes.dropFirst())
     queueActive = true
+    queueCancelled = false
     launch(scope: scopes.first, mode: preset, patch: knobs.patch(for: preset))
   }
 
@@ -157,8 +162,11 @@ extension ProjectWindowModel {
   }
 
   /// Cancels the running run and the rest of the queue; its finished masters stay in its folder.
+  ///
+  /// A run that had just finished still records its stack, but the Studio does not take over.
   package func cancelRun() {
     queuedScopes = []
+    queueCancelled = true
     run?.cancel()
   }
 
@@ -166,15 +174,14 @@ extension ProjectWindowModel {
   /// headers); a choice made meanwhile wins over the stack this call opened.
   package func openStudio() async {
     guard studio == nil, let folder = folder() else { return }
-    let chosen = selectedStackID
+    guard let stack = selectedStack else { return }
     do {
-      guard let stack = selectedStack else { return }
       let source = try await Self.openStack(
         folder.appendingPathComponent(stack.bundlePath), object: studioObject(stack.object))
-      guard chosen == selectedStackID else { return }
+      guard stack.id == selectedStack?.id else { return }
       studio = studio ?? LegacyRunModel(source: source)
     } catch {
-      guard chosen == selectedStackID else { return }
+      guard stack.id == selectedStack?.id else { return }
       self.error = UserFacingError(error)
     }
   }
@@ -224,8 +231,13 @@ extension ProjectWindowModel {
       knobs.clearIgnored()
       // The new row is known before it is chosen; only the queue's last stack is chosen and
       // opened (an intermediate one would be parsed and dropped).
+      // Nothing chosen means « the latest »: while the queue goes on, the picker stays on the
+      // stack the Studio shows (in memory; nothing persisted in silence).
+      if selectedStackID == nil, studio != nil, let shown = stacks.last {
+        selectedStackID = shown.id
+      }
       stacks.append(stack)
-      if queuedScopes.isEmpty {
+      if queuedScopes.isEmpty, !queueCancelled {
         selectStack(stack.id)
         studio = LegacyRunModel(source: source)
         select(.studio)

@@ -1,13 +1,18 @@
 internal import Foundation
 internal import RenderKit
-internal import SwiftUI
+package import SwiftUI
 
 /// The scratch line of the Stacking stage (card 0098): what the next run needs where, the room
 /// left there, and what to do when it does not fit — shown, never decided for the user (R2).
-struct ScratchBudgetLine: View {
+package struct ScratchBudgetLine: View {
   let budget: ScratchBudget
 
-  var body: some View {
+  /// The line of `budget`.
+  package init(budget: ScratchBudget) {
+    self.budget = budget
+  }
+
+  package var body: some View {
     Label {
       Text(text)
     } icon: {
@@ -20,7 +25,8 @@ struct ScratchBudgetLine: View {
     .frame(maxWidth: .infinity, alignment: .leading)
   }
 
-  private var text: LocalizedStringResource {
+  /// The sentence: the need and the room, or what to do when the run does not fit.
+  package var text: LocalizedStringResource {
     let need = ScratchBudget.gigabytesUp(budget.neededBytes)
     let path = (budget.folder.path as NSString).abbreviatingWithTildeInPath
     guard let room = budget.roomBytes.map(ScratchBudget.gigabytesDown) else {

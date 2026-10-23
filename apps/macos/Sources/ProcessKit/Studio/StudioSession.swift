@@ -92,13 +92,22 @@ package final class StudioSession {
       process, input: input, stats: stepStats, layers: layers, layerStats: layerStats, mask: mask)
     let moved = try runner.movedLayers(
       process, layers: layers, input: input, result: result, roles: history.layerRoles)
+    lastApplyChangedNothing = false
     let unchanged =
       result.width == input.width && result.height == input.height
-      && result.metadata == input.metadata && result.planes == input.planes
+      && result.metadata == input.metadata && Self.samePixels(result.planes, input.planes)
     try history.apply(
       processID: processID, params: params, result: result, outputs: moved.outputs,
       replacing: moved.replacing)
     lastApplyChangedNothing = unchanged && moved.outputs.isEmpty && moved.replacing.isEmpty
+  }
+
+  /// Whether `one` and `two` hold the same bits: a NaN equals itself.
+  package static func samePixels(_ one: [[Float]], _ two: [[Float]]) -> Bool {
+    one.count == two.count
+      && zip(one, two).allSatisfy { first, second in
+        first.elementsEqual(second) { $0.bitPattern == $1.bitPattern }
+      }
   }
 
   /// The statistics of the layers the next step reads, by id.
@@ -112,6 +121,7 @@ package final class StudioSession {
     _ processID: String, params: ParamSet, result: AstroImage,
     outputs: [LayerRole: AstroImage] = [:], replacing: [String: AstroImage] = [:]
   ) throws {
+    lastApplyChangedNothing = false
     try history.apply(
       processID: processID, params: params, result: result, outputs: outputs,
       replacing: replacing)

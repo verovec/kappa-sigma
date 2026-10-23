@@ -144,6 +144,7 @@ package final class StudioWorkspaceModel {
     hideModel()
     self.panel = panel
     toolReport = nil
+    appliedNothing = false
     // A moved preview leaves the screen at once; another stays until the new one replaces it.
     if showsMovedGrid { stopPreview() } else { shown = nil }
     // The defaults are previewed at once: Apply never records what was not shown (R2).
@@ -154,6 +155,7 @@ package final class StudioWorkspaceModel {
   /// Closes the panel: the viewer shows the head again.
   package func closePanel() {
     panel = nil
+    appliedNothing = false
     isPreviewSuspended = false
     hideModel()
     toolReport = nil
@@ -262,6 +264,8 @@ package final class StudioWorkspaceModel {
 
   /// A value moved: the suggestions follow the values they depend on, the preview follows.
   private func panelChanged() {
+    // The notice spoke of the values applied, not of these.
+    appliedNothing = false
     if let panel { panel.suggestions = offers(for: panel.type, params: panel.params) }
     greyUnavailable()
     // The head comes back now: a preview cancelled or refused would leave the model on screen.

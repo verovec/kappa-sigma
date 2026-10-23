@@ -1,3 +1,5 @@
+internal import ImageKit
+
 /// The robust statistics of the noise tools (`noise/stats.go`, `sigma.go`).
 ///
 /// 64-px tiles, MAD sigmas, bilinear grid sampling; the medians and percentiles are the ones in
@@ -37,7 +39,7 @@ enum NoiseStats {
       for tileX in 0..<gridWidth {
         grid.append(
           robustSigma(tile(detail, width: width, height: height, x: tileX, y: tileY))
-            / Starlet.whiteNoiseSigma[0])
+            / StarletNoise.whiteNoiseSigma[0])
       }
     }
     let sorted = grid.sorted()

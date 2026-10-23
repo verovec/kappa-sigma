@@ -141,7 +141,7 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   `previewExactOnlyAt1to1`, a default outside its bounds or options, infinite bounds);
   `standard()` is validated like any registry and lists the shipped processes (today:
   `channel-combination`, `stretch`, `hdr`, `emission-screens`, `colour-balance`, `sky-desat`,
-  `curves`, `saturation`, `star-recomposition`; pipeline order is E15's — `stage` documents it).
+  `curves`, `saturation`, `star-recomposition`, `denoise`; pipeline order is E15's — `stage` documents it).
 - **Colour processes** (card 0053), `Processes/Colour/`, kernels in `Colour.metal` (they share the
   HSL helpers; a runtime-compiled source has no `#include`) and `SkyDesat.metal`; every default is
   the identity, bit for bit:
@@ -163,6 +163,19 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   - `saturation` (non-linear): astrocomp's `-sat -sat-masked` (HSL S through the
     `saturationMaskLUT` band on the HSL lightness), the compose star-core desaturation
     (`starDesatMaskLUT` on the luminance) and the `desat` tool's luma blend `k`; the PO's values are suggestions.
+
+## Denoise (card 0115)
+
+- `DenoiseProcess` (`denoise`, linear, `previewExactOnlyAt1to1`): the starlet (à-trous B3) of
+  StackKit's `Starlet` in `Denoise.metal` — four detail scales (1, 2, 4, 8 px) soft-thresholded at
+  `scale1…4` × σⱼ × σ, σⱼ the white-noise sigma of the scale (`ImageKit.StarletNoise`, shared with
+  StackKit) and σ the plane's MADN from the stats the step receives (never measured, R2); the
+  coarse residual kept. `protectStars` keeps a share from StackKit's band (5 → 10 σ of the scale-2
+  smooth above the median); the denoised planes' luminance (mean of the planes) and colour changes
+  are put back at `amount × luminance` and `amount × chrominance`. Amount 0 (the default) blits
+  the input. Pinned against `DenoiseOracle` (StackKit's `Starlet` + `StarletDenoiser.shrink`,
+  mean |Δ| ≤ 1e-5, max ≤ 1e-4). The app measures the head's noise (`StarletDenoiser.measure`, off
+  the main actor) and offers `scale1` at 3 σ of it (`DenoiseProcess.suggestions(noise:stats:)`).
 
 ## Strings (card 0073)
 

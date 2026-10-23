@@ -1,6 +1,38 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "3 σ of the noise measured on the finest scale (the image's MADN also counts its signal)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3 σ of the noise measured on the finest scale (the image's MADN also counts its signal)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3 σ du bruit mesuré à l’échelle la plus fine (la MADN de l’image compte aussi son signal)"
+          }
+        }
+      }
+    },
+    "Amount": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Amount"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quantité"
+          }
+        }
+      }
+    },
     "Angle": {
       "localizations": {
         "en": {
@@ -369,6 +401,22 @@
         }
       }
     },
+    "Colour amount": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Colour amount"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quantité en couleur"
+          }
+        }
+      }
+    },
     "Colour balance": {
       "localizations": {
         "en": {
@@ -541,6 +589,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Déclinaison"
+          }
+        }
+      }
+    },
+    "Denoise": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Denoise"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Débruitage"
           }
         }
       }
@@ -1329,6 +1393,22 @@
         }
       }
     },
+    "Luminance amount": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Luminance amount"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quantité en luminance"
+          }
+        }
+      }
+    },
     "Method": {
       "localizations": {
         "en": {
@@ -1501,6 +1581,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Protéger ciel et hautes lumières"
+          }
+        }
+      }
+    },
+    "Protect stars": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Protect stars"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Protéger les étoiles"
           }
         }
       }
@@ -1789,6 +1885,70 @@
           "stringUnit": {
             "state": "translated",
             "value": "Renfort de saturation"
+          }
+        }
+      }
+    },
+    "Scale 1 strength": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scale 1 strength"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Force de l’échelle 1"
+          }
+        }
+      }
+    },
+    "Scale 2 strength": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scale 2 strength"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Force de l’échelle 2"
+          }
+        }
+      }
+    },
+    "Scale 3 strength": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scale 3 strength"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Force de l’échelle 3"
+          }
+        }
+      }
+    },
+    "Scale 4 strength": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scale 4 strength"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Force de l’échelle 4"
           }
         }
       }

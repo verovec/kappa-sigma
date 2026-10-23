@@ -72,7 +72,7 @@ package struct ToolStrip: View {
     }
     return switch row.tool {
     case .siril: .app("Calibrates, registers and stacks the captures.")
-    case .graxpert: .app("Extracts the background and denoises.")
+    case .graxpert: .app("Extracts the background.")
     case .starnet: .app("Separates the stars from the nebula.")
     }
   }

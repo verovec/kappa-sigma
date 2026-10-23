@@ -82,6 +82,8 @@ package final class StudioWorkspaceModel {
   @ObservationIgnored var toolTask: Task<Void, Never>?
   /// Numbers the tool runs, so a late progress line finds its own run or none.
   @ObservationIgnored var toolRunNumber = 0
+  /// The head's measured noise, for the denoise's suggestion.
+  @ObservationIgnored let headNoise = HeadNoise()
   /// Where each host tool stands and the model view (card 0092).
   package internal(set) var batch = BatchState()
   /// Probes a host tool: an engine whose tool is missing is greyed with the reason (card 0092).

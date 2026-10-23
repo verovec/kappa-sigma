@@ -7888,6 +7888,134 @@
           }
         }
       }
+    },
+    "Needs ~%lld GB of scratch in %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needs ~%lld GB of scratch in %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demande ~%lld Go d’espace de travail dans %@."
+          }
+        }
+      }
+    },
+    "Needs ~%lld GB of scratch in %@, %lld GB free.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needs ~%lld GB of scratch in %@, %lld GB free."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demande ~%lld Go d’espace de travail dans %@, %lld Go libres."
+          }
+        }
+      }
+    },
+    "Scratch folder": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scratch folder"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dossier de travail"
+          }
+        }
+      }
+    },
+    "Siril's work files during a run: tens of GB per night, removed when it ends.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril's work files during a run: tens of GB per night, removed when it ends."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les fichiers de travail de Siril pendant un traitement : des dizaines de Go par nuit, supprimés à la fin."
+          }
+        }
+      }
+    },
+    "Default": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Par défaut"
+          }
+        }
+      }
+    },
+    "AstroStack never writes under ~/Documents/astro: choose a folder outside it.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AstroStack never writes under ~/Documents/astro: choose a folder outside it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AstroStack n’écrit jamais sous ~/Documents/astro : choisissez un dossier en dehors."
+          }
+        }
+      }
+    },
+    "Needs ~%lld GB of scratch in %@, %lld GB free: see Settings › Scratch folder.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needs ~%lld GB of scratch in %@, %lld GB free: see Settings › Scratch folder."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demande ~%lld Go d’espace de travail dans %@, %lld Go libres : voir Réglages › Dossier de travail."
+          }
+        }
+      }
+    },
+    "Too little scratch: ~%lld GB in %@, %lld GB free (Settings › Scratch folder).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Too little scratch: ~%lld GB in %@, %lld GB free (Settings › Scratch folder)."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Espace de travail insuffisant : ~%lld Go dans %@, %lld Go libres (Réglages › Dossier de travail)."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

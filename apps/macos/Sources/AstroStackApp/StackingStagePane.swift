@@ -28,7 +28,7 @@ struct StackingStagePane: View {
         controls
       }
       .padding(DesignMetrics.spacingM)
-      blocker
+      notices
       HStack(spacing: 0) {
         // The values a run applies stay in view, frozen while it runs (R2).
         ScrollView {
@@ -51,6 +51,12 @@ struct StackingStagePane: View {
         }
       }
     }
+  }
+
+  /// Why Run is greyed, then the scratch the run needs (card 0098); nothing while a run goes.
+  @ViewBuilder private var notices: some View {
+    blocker
+    if !running, let budget = model.scratchBudget { ScratchBudgetLine(budget: budget) }
   }
 
   /// Why Run is greyed, with the one action that ungreys it; nothing while a run goes.

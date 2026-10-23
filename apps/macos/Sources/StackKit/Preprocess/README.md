@@ -31,6 +31,17 @@ the project's `stacks/<run_id>/`, with `work/` in a temporary `run_<id>` folder 
 when the run ends. `Progress` and `Preview` have package inits, so app tests can replay a
 recorded stream.
 
+**Scratch budget (card 0098).** `ScratchEstimate(inventory, settings:)` is the peak the work
+folder reaches: lanes run one after another and each removes its folders, so the largest lane
+sets it, at one 32-bit copy of each light per Siril step that writes one (`pp_`, `r_`, plus
+`flat_` when a multi-night lane flattens), colour lights debayered (three planes). It is pinned
+against 0058's measured peaks (M 31 80.6 GB, IC 1848 106 GB) within 10 %. A Siril step that
+writes another per-frame copy must add it here, with its test row. `ScratchSpace.available(at:)`
+reads the room left on the scratch volume. The app checks both before Siril starts
+(`check(room:folder:)` throws `scratchFull`) and shows them on the Stacking stage. The scratch
+folder is the Settings choice (`ScratchSetting`, always an app-owned `AstroStack/Work` subfolder),
+read by `RunServices` at each run.
+
 Layout, as the legacy engine had it: `work/` holds `masters/`, `light_<lane>/` (removed once
 stacked), `04_aligned/` and `pair_<lane>/`. `output/` holds `master_<tag>.fits`,
 `aligned_<tag>.fits`, `trim_<tag>.fits`, a split capture's `syn_Ha.fits` / `syn_OIII.fits`,

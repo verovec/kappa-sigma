@@ -91,10 +91,9 @@ struct LivePauseResumeM31Tests {
   ) throws -> ([String: Double], [String]) {
     // The step titles, not the journal: it keeps the last lines only, and Siril's thousands of
     // the lanes left push the early « reusing » line out.
-    let laneLines =
-      resumed.steps.map(\.title).filter {
-        $0.hasPrefix("reusing ") || $0.hasPrefix("grading + stacking ")
-      } + resumed.journal.map(\.text).filter { $0.contains(" re-runs: ") }
+    let laneLines = resumed.steps.map(\.title).filter {
+      $0.hasPrefix("reusing ") || $0.hasPrefix("grading + stacking ")
+    }
     for (lane, sha) in kept {
       #expect(
         laneLines.contains { $0.hasPrefix("reusing ") && $0.hasSuffix(" \(lane)") }, "\(laneLines)")

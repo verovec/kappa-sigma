@@ -44,7 +44,8 @@ extension Preprocessor {
   /// What a resume does with a lane: reuse its record, or stack it again for a reason.
   enum Reuse {
     case reused(ChannelOutcome)
-    case rerun(String)
+    /// Stacked again, with the reason; nil for a lane that never ran (nothing to say).
+    case rerun(String?)
   }
 
   /// The recorded outcome of `lane` when its record still matches `request` (card 0097), else
@@ -56,7 +57,7 @@ extension Preprocessor {
     do {
       record = try LaneRecord.read(lane: lane, from: request.output)
     } catch CocoaError.fileReadNoSuchFile {
-      return .rerun("no record")
+      return .rerun(nil)
     } catch {
       return .rerun("its record is unreadable (\(error.localizedDescription))")
     }

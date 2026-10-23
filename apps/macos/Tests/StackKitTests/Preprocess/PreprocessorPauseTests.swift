@@ -216,6 +216,28 @@ struct PreprocessorPauseTests {
     #expect(!FileManager.default.fileExists(atPath: lanes.path))
   }
 
+  @Test(
+    "an unreadable record re-runs its lane, saying so under that lane's step", .scratchDirectory)
+  func testUnreadableRecordSaidUnderItsLane() async throws {
+    let request = try Self.request("unreadable")
+    try await Self.runPausingInL(request)
+    let record = request.output.appendingPathComponent("\(LaneRecord.folderName)/L.json")
+    try Data("{".utf8).write(to: record)
+    let resumed = Self.siril()
+    let (events, error) = await PreprocessorTests.collect(
+      Preprocessor(tools: PreprocessorTests.tools(resumed)).run(Self.resuming(request)))
+    #expect(error == nil)
+    #expect(!Self.laneCalls(resumed, "L").isEmpty)
+    let notes = events.compactMap { event -> PreprocessEvent.Progress? in
+      if case .progress(let progress) = event, progress.line.contains(" re-runs: ") {
+        return progress
+      }
+      return nil
+    }
+    #expect(notes.map(\.title) == ["grading + stacking TESTFIELD L"], "\(notes)")
+    #expect(notes.first?.line.hasPrefix("L re-runs: its record is unreadable (") == true)
+  }
+
   static func journal(_ events: [PreprocessEvent]) -> [String] {
     events.compactMap { event in
       if case .progress(let progress) = event { return progress.line }

@@ -7,13 +7,13 @@ extension ProjectDocument {
   /// breakpoint.
   @objc package func runPipeline(_ sender: Any?) {
     guard let pipeline = windowModel?.workspace?.pipeline else { return }
-    Task { await pipeline.run() }
+    Task { [undoManager] in await pipeline.run(undoManager: undoManager) }
   }
 
   /// Edit › Continue Pipeline (⌥⌘↩): the breakpoint's step with the panel's values, then on.
   @objc package func continuePipeline(_ sender: Any?) {
     guard let pipeline = windowModel?.workspace?.pipeline else { return }
-    Task { await pipeline.continueRun() }
+    Task { [undoManager] in await pipeline.continueRun(undoManager: undoManager) }
   }
 
   /// Edit › Replay Pipeline…: the stack chooser.

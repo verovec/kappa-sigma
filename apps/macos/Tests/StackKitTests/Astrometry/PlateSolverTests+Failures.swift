@@ -8,21 +8,30 @@ import Testing
 /// lines), the file, or the solution in it — never one message for all three.
 extension PlateSolverTests {
   static func transcript(_ name: String) throws -> [String] {
-    let url = try #require(
-      Bundle.module.url(
-        forResource: name, withExtension: "log", subdirectory: "Fixtures/platesolve"))
-    return try String(contentsOf: url, encoding: .utf8).split(separator: "\n")
+    try Replay(name, succeeds: true).transcript.split(separator: "\n")
       .map { SirilLine(parsing: String($0)).text }
   }
 
-  @Test("no report in the log: its last three lines are said", .scratchDirectory)
+  @Test("no report in the log: the last lines platesolve printed are said", .scratchDirectory)
   func testSolved_NoReport() throws {
     let file = (try ScratchDirectory.url).appendingPathComponent("solved.fits")
-    let log = ["Running command: platesolve", "", "Saving FITS: file solved.fits", "  done  "]
+    let log = [
+      "Running command: load", "Running command: platesolve", "Using provided focal length",
+      "", "Findstar: processing", "Siril solve succeeded.", "Running command: save",
+      "Script execution finished successfully.", "closing pipes",
+    ]
     #expect(
       throws: PlateSolveError.noReport(
-        lastLines: "Running command: platesolve · Saving FITS: file solved.fits · done")
+        lastLines: "Using provided focal length · Findstar: processing · Siril solve succeeded.")
     ) { try PlateSolver.solved(log: log, file: file) }
+  }
+
+  @Test("no line at all is said « — », never an empty quote", .scratchDirectory)
+  func testSolved_NoReport_Silent() throws {
+    let file = (try ScratchDirectory.url).appendingPathComponent("solved.fits")
+    #expect(throws: PlateSolveError.noReport(lastLines: "—")) {
+      try PlateSolver.solved(log: ["", "  "], file: file)
+    }
   }
 
   @Test("a report without the file names the file", .scratchDirectory)
@@ -47,5 +56,20 @@ extension PlateSolverTests {
     let solved = try PlateSolver.solved(
       log: log, file: scratch.appendingPathComponent("solved.fits"))
     #expect(solved.solution.scaleArcsecPerPx == 3.117)
+  }
+}
+
+extension PlateSolverTests {
+  @Test("Siril's whole output is kept beside its settings, success or failure", .scratchDirectory)
+  func testLogKept() async throws {
+    let scratch = try ScratchDirectory.url
+    let replay = try Replay("m31-crop-failed", succeeds: false)
+    let solver = PlateSolver(
+      siril: replay.runner, support: scratch.appendingPathComponent("Support"),
+      catalogues: try Self.catalogues())
+    _ = try? await solver.solve(Self.image(), request: Self.request, scratch: scratch) { _ in }
+    let kept = try String(contentsOf: solver.logFile, encoding: .utf8)
+    #expect(solver.logFile.lastPathComponent == "siril-platesolve.log")
+    #expect(kept.contains("Plate solving failed"))
   }
 }

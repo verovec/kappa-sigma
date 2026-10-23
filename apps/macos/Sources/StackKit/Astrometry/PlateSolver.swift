@@ -1,7 +1,6 @@
 package import Foundation
 package import ImageKit
 internal import Synchronization
-internal import os
 
 /// Plate solving with Siril (card 0093): the image as is, the values the user confirmed, and
 /// Siril's solution back as WCS cards — the pixels are never Siril's.
@@ -25,6 +24,9 @@ package struct PlateSolver: Sendable {
   package let configFile: URL
   /// The folder holding the local Gaia catalogue.
   package let catalogues: URL
+  /// Siril's whole output of the last solve, kept beside its settings once the scratch folder
+  /// is gone: a solve that failed once can still be explained.
+  package var logFile: URL { configFile.deletingPathExtension().appendingPathExtension("log") }
 
   /// A solver over `siril`, its settings in `support`, the local catalogue in `catalogues`.
   package init(siril: SirilRunner, support: URL, catalogues: URL) {
@@ -66,6 +68,7 @@ package struct PlateSolver: Sendable {
       .load("input"), .platesolveForced(request.arguments), .save("solved"),
     ])
     let lines = Mutex<[String]>([])
+    defer { try? Data(lines.withLock { $0 }.joined(separator: "\n").utf8).write(to: logFile) }
     do {
       _ = try await siril.run(script, folder) { line in
         lines.withLock { $0.append(line.text) }
@@ -77,32 +80,36 @@ package struct PlateSolver: Sendable {
       throw Self.failure(error, lines: lines.withLock { $0 })
     }
     try Task.checkCancellation()
-    let log = lines.withLock { $0 }
-    do {
-      return try Self.solved(log: log, file: folder.appendingPathComponent("solved.fits"))
-    } catch {
-      // The folder is removed on return: Siril's whole log stays in the system log.
-      Self.logger.error(
-        "plate solve read nothing: \(log.joined(separator: "\n"), privacy: .public)")
-      throw error
-    }
+    return try Self.solved(
+      log: lines.withLock { $0 }, file: folder.appendingPathComponent("solved.fits"))
   }
 
-  private static let logger = Logger(subsystem: "fr.astrostack", category: "StackKit/platesolve")
-
-  /// The solution Siril's `log` reports and `file` carries, or which of the two is missing.
+  /// The solution Siril's `log` reports and `file` carries, or which of the two is missing; a
+  /// file that cannot be read throws its own error.
   package static func solved(log: [String], file: URL) throws -> Solved {
     guard let solution = PlateSolution(lines: log) else {
-      let said = log.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
-      throw PlateSolveError.noReport(lastLines: said.suffix(3).joined(separator: " · "))
+      throw PlateSolveError.noReport(lastLines: platesolveTail(log))
     }
     guard FileManager.default.fileExists(atPath: file.path) else {
       throw PlateSolveError.noFile(path: file.path)
     }
-    guard let wcs = (try? FITSFile.read(at: file)).flatMap({ WCS(header: $0.header) }) else {
+    guard let wcs = WCS(header: try FITSFile.read(at: file).header) else {
       throw PlateSolveError.noSolution(path: file.path)
     }
     return Solved(solution: solution, wcs: wcs)
+  }
+
+  /// The last three lines `platesolve` printed (the whole log's when it never ran), « — » when
+  /// there are none: never the script's closing lines, which say nothing of the solve.
+  static func platesolveTail(_ log: [String]) -> String {
+    let said = log.map { $0.trimmingCharacters(in: .whitespaces) }
+    let start = said.lastIndex { $0.hasPrefix("Running command: platesolve") }
+    let end = start.flatMap { first in
+      said[(first + 1)...].firstIndex { $0.hasPrefix("Running command:") }
+    }
+    let solve = start.map { said[($0 + 1)..<(end ?? said.endIndex)] } ?? said[...]
+    let words = solve.filter { !$0.isEmpty }.suffix(3)
+    return words.isEmpty ? "—" : words.joined(separator: " · ")
   }
 
   /// Siril's own reason: its `Plate solving failed: …` line, else the script's hint.

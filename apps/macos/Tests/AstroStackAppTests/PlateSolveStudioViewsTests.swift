@@ -58,6 +58,8 @@ struct PlateSolveStudioViewsTests {
       UserFacingError.plateSolve(.failed(reason: "no stars")),
       .plateSolve(.catalogueMissing(path: "/x/cat.dat")),
       .plateSolve(.noSolution(path: "/x/solved.fits")),
+      .plateSolve(.noReport(lastLines: "Findstar: processing")),
+      .plateSolve(.noFile(path: "/x/solved.fits")),
       .plateSolveInput(.coordinatesMissing), .plateSolveInput(.unreadable("north")),
       .plateSolveInput(.opticsMissing), .studio(.needsTool("plate-solve")),
       .pipeline(.unknownProcess("x")), .pipeline(.noStep(2)),

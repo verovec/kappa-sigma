@@ -317,7 +317,8 @@ package final class StudioWorkspaceModel {
   /// move (a refused move) previews again; a host tool has no preview.
   private func suspendPreview(moved: Bool) {
     guard moved else {
-      if panel != nil { schedulePreview() }
+      // Nothing changed: a suspended panel stays so, a previewing one previews again.
+      if panel != nil, !isPreviewSuspended { schedulePreview() }
       return
     }
     previewTask?.cancel()

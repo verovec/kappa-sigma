@@ -16,8 +16,16 @@ package enum StudioUndo {
   package static func apply(
     _ model: StudioWorkspaceModel, undoManager: UndoManager?, then done: @escaping () -> Void = {}
   ) {
+    // Read before the commit below, whose value change ends the suspension: a press that reads
+    // « Preview » previews, whatever was typed.
+    let previews = model.isPreviewSuspended
     // A value typed and not confirmed is committed first: Apply never records an older one.
     NSApp?.keyWindow?.makeFirstResponder(nil)
+    if previews {
+      model.resumePreview()
+      done()
+      return
+    }
     let before = model.studio.steps.count
     // A host tool (plate solving) runs in the background; its step is registered when recorded.
     if let panel = model.panel, panel.type.runsTool(panel.params) {

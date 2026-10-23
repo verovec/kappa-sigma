@@ -65,6 +65,26 @@ extension StudioWorkspaceModelTests {
     #expect(workspace.studio.steps.count == 3 && workspace.studio.head.planes == shown)
   }
 
+  @Test("a refused move leaves a suspended panel suspended", .scratchDirectory)
+  func testSuspendedPreview_RefusedMove_StaysSuspended() async throws {
+    let opened = try StudioModelTests.project()
+    defer { try? opened.package.close() }
+    let workspace = try await Self.stretched(opened)
+    #expect(throws: HistoryError.nothingToRedo) { try workspace.redo() }
+    await workspace.settlePreview()
+    #expect(workspace.isPreviewSuspended && !workspace.isPreviewing)
+  }
+
+  @Test("an Apply pressed while suspended previews, whatever value it commits", .scratchDirectory)
+  func testSuspendedPreview_RecordedApplyPreviews() async throws {
+    let opened = try StudioModelTests.project()
+    defer { try? opened.package.close() }
+    let workspace = try await Self.stretched(opened)
+    let undoManager = UndoManager()
+    StudioUndo.apply(workspace, undoManager: undoManager)
+    #expect(workspace.studio.steps.count == 2 && workspace.isPreviewing)
+  }
+
   @Test("a value moved, or Preview, shows the panel's values again", .scratchDirectory)
   func testSuspendedPreview_Resumes() async throws {
     let opened = try StudioModelTests.project()

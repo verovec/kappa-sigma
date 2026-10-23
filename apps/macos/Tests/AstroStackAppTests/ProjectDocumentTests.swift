@@ -33,7 +33,10 @@ struct ProjectDocumentTests {
     let folder = untitled.deletingLastPathComponent()
     #expect(folder.deletingLastPathComponent().lastPathComponent == "Untitled")
     #expect(ScratchOwner.read(folder)?.owner.pid == getpid(), "a crash leaves it to the sweep")
-    #expect(!FileManager.default.fileExists(atPath: untitled.appendingPathComponent(ScratchOwner.fileName).path), "never inside the package a Save copies")
+    #expect(
+      !FileManager.default.fileExists(
+        atPath: untitled.appendingPathComponent(ScratchOwner.fileName).path),
+      "never inside the package a Save copies")
 
     document.close()
 

@@ -161,12 +161,12 @@
         }
       }
     },
-    "%@ — %@ kept: no stack records it (a run that did not finish).": {
+    "%@ — %@ kept: no stack records it (an unfinished run).": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ — %@ kept: no stack records it (a run that did not finish)."
+            "value": "%@ — %@ kept: no stack records it (an unfinished run)."
           }
         },
         "fr": {

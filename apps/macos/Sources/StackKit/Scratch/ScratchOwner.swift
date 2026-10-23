@@ -1,8 +1,10 @@
 package import Foundation
 
-/// The marker (`owner.json`) a scratch folder carries: the process that created it and the
-/// Siril it launched there, if any. A folder whose owner no longer runs is a leftover the
-/// sweep may take (`LeftoverSweep`); one whose owner runs is never touched.
+/// The marker (`owner.json`) a scratch folder carries.
+///
+/// It names the process that created the folder and the Siril it launched there, if any. A
+/// folder whose owner no longer runs is a leftover the sweep may take (`LeftoverSweep`); one
+/// whose owner runs is never touched.
 package struct ScratchOwner: Codable, Equatable, Sendable {
   /// The marker's file name inside the folder it marks.
   package static let fileName = "owner.json"
@@ -50,10 +52,5 @@ package struct ScratchOwner: Codable, Equatable, Sendable {
   package static func read(_ folder: URL) -> Self? {
     let url = folder.appendingPathComponent(fileName)
     return (try? Data(contentsOf: url)).flatMap { try? JSONDecoder().decode(Self.self, from: $0) }
-  }
-
-  /// Whether the owner of `folder` runs; `nil` when the folder has no marker.
-  package static func isAlive(_ folder: URL, table: ProcessTable = .live) -> Bool? {
-    read(folder)?.isAlive(in: table)
   }
 }

@@ -19,15 +19,7 @@ struct StackingStagePane: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
-      HStack(alignment: .firstTextBaseline, spacing: DesignMetrics.spacingM) {
-        SectionHeader(
-          .app("Stacking"),
-          detail: .app("Masters, stacks and the bundle are written inside the project."),
-          help: StageHelp.help(.stacking, locale: locale))
-        Spacer()
-        controls
-      }
-      .padding(DesignMetrics.spacingM)
+      header
       blocker
       if !running && !model.leftoverStacks.isEmpty { StackLeftoversView(model: model) }
       HStack(spacing: 0) {
@@ -52,6 +44,19 @@ struct StackingStagePane: View {
         }
       }
     }
+  }
+
+  /// The stage's title and help, the preset and Run.
+  private var header: some View {
+    HStack(alignment: .firstTextBaseline, spacing: DesignMetrics.spacingM) {
+      SectionHeader(
+        .app("Stacking"),
+        detail: .app("Masters, stacks and the bundle are written inside the project."),
+        help: StageHelp.help(.stacking, locale: locale))
+      Spacer()
+      controls
+    }
+    .padding(DesignMetrics.spacingM)
   }
 
   /// Why Run is greyed, with the one action that ungreys it; nothing while a run goes.

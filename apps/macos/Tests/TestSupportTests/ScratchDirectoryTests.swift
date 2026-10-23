@@ -60,7 +60,7 @@ struct ScratchDirectoryTests {
       let owned = url.deletingLastPathComponent()
       #expect(owned.deletingLastPathComponent() == ScratchDirectory.root)
       #expect(ScratchOwner.read(owned)?.owner.pid == getpid())
-      #expect(ScratchOwner.isAlive(owned) == true)
+      #expect(ScratchOwner.read(owned)?.isAlive(in: .live) == true)
     }
   }
 

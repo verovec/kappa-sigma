@@ -53,7 +53,8 @@ package enum StackLeftovers {
         isFolder.boolValue
       else { continue }
       if holdsFiles(folder) {
-        listed.append(LeftoverStack(path: "stacks/\(name)", bytes: LeftoverSweep.allocatedBytes(folder)))
+        listed.append(
+          LeftoverStack(path: "stacks/\(name)", bytes: LeftoverSweep.allocatedBytes(folder)))
       } else {
         remove(folder)
       }
@@ -88,7 +89,8 @@ package enum StackLeftovers {
   /// Any regular file, at any depth.
   private static func holdsFiles(_ folder: URL) -> Bool {
     let key = URLResourceKey.isRegularFileKey
-    guard let entries = FileManager.default.enumerator(at: folder, includingPropertiesForKeys: [key])
+    guard
+      let entries = FileManager.default.enumerator(at: folder, includingPropertiesForKeys: [key])
     else { return false }
     for case let entry as URL in entries
     where (try? entry.resourceValues(forKeys: [key]).isRegularFile) == true {

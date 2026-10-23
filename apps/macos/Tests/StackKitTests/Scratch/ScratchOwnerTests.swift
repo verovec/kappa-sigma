@@ -39,12 +39,12 @@ struct ScratchOwnerTests {
     let marker = try #require(ScratchOwner.read(folder))
     #expect(marker.owner.pid == getpid())
     #expect(marker.siril == nil)
-    #expect(ScratchOwner.isAlive(folder) == true)
+    #expect(marker.isAlive(in: .live))
   }
 
   @Test("a folder without a marker has no owner to ask", .scratchDirectory)
   func testUnmarkedFolder() throws {
-    #expect(ScratchOwner.isAlive(try ScratchDirectory.url) == nil)
+    #expect(ScratchOwner.read(try ScratchDirectory.url) == nil)
   }
 
   @Test("the Siril it launched is recorded next to the owner", .scratchDirectory)

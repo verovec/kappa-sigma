@@ -14,7 +14,7 @@ struct StackLeftoversView: View {
       ForEach(model.leftoverStacks, id: \.path) { leftover in
         HStack(alignment: .firstTextBaseline) {
           Label {
-            Text(.app("\(leftover.path) — \(size(leftover)) kept: no stack records it (a run that did not finish)."))
+            Text(notice(leftover))
           } icon: {
             Image(systemName: "externaldrive.badge.exclamationmark")
           }
@@ -34,8 +34,15 @@ struct StackLeftoversView: View {
       Button(.app("Delete"), role: .destructive) { model.deleteLeftoverStack(leftover) }
       Button(.app("Cancel"), role: .cancel) {}
     } message: { leftover in
-      Text(.app("Its \(size(leftover)) of masters and previews leave the project; this cannot be undone."))
+      Text(
+        .app(
+          "Its \(size(leftover)) of masters and previews leave the project; this cannot be undone.")
+      )
     }
+  }
+
+  private func notice(_ leftover: LeftoverStack) -> LocalizedStringResource {
+    .app("\(leftover.path) — \(size(leftover)) kept: no stack records it (an unfinished run).")
   }
 
   private func size(_ leftover: LeftoverStack) -> String {

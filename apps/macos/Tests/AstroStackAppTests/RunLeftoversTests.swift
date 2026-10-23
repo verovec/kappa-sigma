@@ -49,7 +49,9 @@ struct RunLeftoversTests {
     #expect(fixture.window.leftoverStacks.isEmpty)
   }
 
-  @Test("a cancelled run keeps its finished masters, shown as a stack folder to delete", .scratchDirectory)
+  @Test(
+    "a cancelled run keeps its finished masters, shown as a stack folder to delete",
+    .scratchDirectory)
   func testCancelledRunKeepsMastersListed() async throws {
     let fixture = try ProjectTests.fixture(
       run: Self.failingRun(writing: ["master_R.fits"], error: CancellationError()))
@@ -58,7 +60,9 @@ struct RunLeftoversTests {
     fixture.window.startRun()
     await fixture.window.run?.settled()
 
-    #expect(FileManager.default.fileExists(atPath: try output.appendingPathComponent("master_R.fits").path))
+    #expect(
+      FileManager.default.fileExists(
+        atPath: try output.appendingPathComponent("master_R.fits").path))
     let leftover = try #require(fixture.window.leftoverStacks.first)
     #expect(leftover.path == "stacks/\(ProjectTests.runID)")
 
@@ -68,7 +72,9 @@ struct RunLeftoversTests {
     #expect(fixture.window.leftoverStacks.isEmpty)
   }
 
-  @Test("opening a project lists its unrecorded stack folders and removes the empty ones", .scratchDirectory)
+  @Test(
+    "opening a project lists its unrecorded stack folders and removes the empty ones",
+    .scratchDirectory)
   func testOrphanStackFolderListedAtOpen() async throws {
     let scratch = try ScratchDirectory.url
     let project = try ProjectPackage.create(at: scratch.appendingPathComponent("M31.astrostack"))

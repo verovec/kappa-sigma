@@ -1,8 +1,10 @@
 internal import Darwin
 internal import Foundation
 
-/// What the sweep may ask of the system's processes: who runs under a pid, which program it
-/// is, and stopping it. Tests substitute a table of their own; nothing is ever signalled there.
+/// What the sweep may ask of the system's processes.
+///
+/// Who runs under a pid, which program it is, and stopping it. Tests substitute a table of
+/// their own; nothing is ever signalled there.
 package struct ProcessTable: Sendable {
   /// The process running under `pid`, or `nil` when none does.
   package var identity: @Sendable (Int32) -> ProcessIdentity?
@@ -53,6 +55,7 @@ package struct ProcessTable: Sendable {
     var buffer = [CChar](repeating: 0, count: Int(MAXPATHLEN) * 4)
     let length = proc_pidpath(pid, &buffer, UInt32(buffer.count))
     guard length > 0 else { return nil }
-    return String(decoding: buffer.prefix(Int(length)).map { UInt8(bitPattern: $0) }, as: UTF8.self)
+    return String(
+      validating: buffer.prefix(Int(length)).map { UInt8(bitPattern: $0) }, as: UTF8.self)
   }
 }

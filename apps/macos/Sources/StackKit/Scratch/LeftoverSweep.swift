@@ -6,8 +6,9 @@ internal import OSLog
 /// Each root names a folder and the prefix of the entries it may take (`run_`, `siril-`…). An
 /// entry with a marker (`ScratchOwner`) goes once its owner no longer runs, after its recorded
 /// Siril is stopped (only when that pid still runs a `siril-cli` started when recorded); an
-/// entry without one goes once untouched for `unmarkedAge` (a day). A root inside or around the astro data
-/// folder (captures, library, runs: read-only, R7) is refused whatever the caller passed.
+/// entry without one goes once untouched for `unmarkedAge` (a day). A root inside or around the
+/// astro data folder (captures, library, runs: read-only, R7) is refused whatever the caller
+/// passed.
 package struct LeftoverSweep: Sendable {
   /// A folder whose entries starting with `prefix` the sweep may take (`""`: every entry).
   package struct Root: Sendable {
@@ -75,7 +76,8 @@ package struct LeftoverSweep: Sendable {
   private func sweep(_ root: Root) -> [Removal] {
     let manager = FileManager.default
     let keys: [URLResourceKey] = [.isDirectoryKey, .isSymbolicLinkKey, .contentModificationDateKey]
-    let entries = (try? manager.contentsOfDirectory(at: root.folder, includingPropertiesForKeys: keys)) ?? []
+    let entries =
+      (try? manager.contentsOfDirectory(at: root.folder, includingPropertiesForKeys: keys)) ?? []
     var removed: [Removal] = []
     for entry in entries where entry.lastPathComponent.hasPrefix(root.prefix) {
       guard let values = try? entry.resourceValues(forKeys: Set(keys)),
@@ -94,6 +96,8 @@ package struct LeftoverSweep: Sendable {
     return removed
   }
 
+  /// True when `entry` is left over.
+  ///
   /// Marked: its owner no longer runs. Unmarked: untouched for `unmarkedAge`.
   private func isLeftover(_ entry: URL, _ values: URLResourceValues) -> Bool {
     if let marker = ScratchOwner.read(entry) { return !marker.isAlive(in: table) }

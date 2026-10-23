@@ -1,7 +1,7 @@
 /// One stacked channel (`ChannelResult`): its selection, grades and master, or why it failed.
 ///
 /// A failed channel is reported and the run continues without it.
-package struct ChannelOutcome: Equatable, Sendable {
+package struct ChannelOutcome: Codable, Equatable, Sendable {
   package var object: String
   /// The channel's filter (lane).
   package var filter: String

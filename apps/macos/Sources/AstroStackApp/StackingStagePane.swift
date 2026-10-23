@@ -20,8 +20,7 @@ struct StackingStagePane: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
       header
-      blocker
-      if !running && !model.leftoverStacks.isEmpty { StackLeftoversView(model: model) }
+      notices
       HStack(spacing: 0) {
         // The values a run applies stay in view, frozen while it runs (R2).
         ScrollView {
@@ -57,6 +56,13 @@ struct StackingStagePane: View {
       controls
     }
     .padding(DesignMetrics.spacingM)
+  }
+
+  /// Why Run is greyed, then the paused runs to continue (card 0097); nothing while a run goes.
+  @ViewBuilder private var notices: some View {
+    blocker
+    if !running && !model.pausedRuns.isEmpty { PausedRunsView(model: model) }
+    if !running && !model.leftoverStacks.isEmpty { StackLeftoversView(model: model) }
   }
 
   /// Why Run is greyed, with the one action that ungreys it; nothing while a run goes.
@@ -103,6 +109,14 @@ struct StackingStagePane: View {
     .disabled(running)
     .accessible(.stackingPreset, label: .app("Preset"))
     if running {
+      if model.run?.pauseRequested == true {
+        Text(.app("Pausing after the current lane…")).foregroundStyle(.secondary)
+      } else {
+        // A lane is never cut: the run stops once its current master is written (card 0097).
+        Button(.app("Pause")) { model.pauseRun() }
+          .disabled(model.run?.canPause != true)
+          .accessible(.stackingPause, label: .app("Pause"))
+      }
       Button(.app("Cancel"), role: .cancel) { model.cancelRun() }
         .accessible(.stackingCancel, label: .app("Cancel"))
     } else {

@@ -44,6 +44,12 @@ GRDB 7), and later `images/`, `recipes/`, `history/` (design §4.5). No UI, no A
   `RGB`, `Ha`, `OIII`…), which is what makes the Studio stage ready.
 - `stacks()` lists them oldest first. The Studio shows the last one, and the next run reuses its
   `params_json` overrides when the session has no newer import.
+- Card 0097: `stacks.status` (`done` | `paused`) and `stacks.checkpoint_json` (migration 0007). A
+  run paused after a lane is `addStack(…, status: .paused, checkpointJSON:)` with no images;
+  `stacks()`, `latestStack()` and `summary().stacks` count finished stacks only, `pausedStacks()`
+  lists the others. Continue ends in `completeStack(id:paramsJSON:imageRoles:)` (the same row,
+  done), a second pause in `updatePausedStack`, Discard in `deletePausedStack` (a finished stack
+  is refused: `notPaused`).
 
 ## Exports (card 0091)
 

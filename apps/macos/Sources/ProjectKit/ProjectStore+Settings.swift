@@ -48,8 +48,15 @@ extension ProjectStore {
       guard try db.tableExists(table) else { return 0 }
       return try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM \(table)") ?? 0
     }
+    // A paused run (0007) is not a stack yet; an older package has no status column.
+    func finishedStacks() throws -> Int {
+      guard try db.columns(in: "stacks").contains(where: { $0.name == "status" }) else {
+        return try count("stacks")
+      }
+      return try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM stacks WHERE status = 'done'") ?? 0
+    }
     return ProjectSummary(
-      sources: try count("sources"), stacks: try count("stacks"), images: try count("images"),
+      sources: try count("sources"), stacks: try finishedStacks(), images: try count("images"),
       historySteps: try count("history_steps"), exports: try count("exports"))
   }
 }

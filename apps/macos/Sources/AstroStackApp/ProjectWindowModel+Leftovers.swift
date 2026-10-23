@@ -6,14 +6,16 @@ package import StackKit
 extension ProjectWindowModel {
   /// Lists the package's stack folders no stack records; the empty ones are removed on the way.
   ///
-  /// Stacks that cannot be read list nothing and remove nothing: every registered stack would
-  /// otherwise read as a leftover offered for deletion.
+  /// A paused run's row names its folder too (its checkpoint, card 0097). Stacks that cannot be
+  /// read list nothing and remove nothing: every registered stack would otherwise read as a
+  /// leftover offered for deletion.
   func listLeftoverStacks() {
     leftoverStacks = []
     guard !isStacking, let folder = folder(), let store = store(),
-      let recorded = try? store.stacks().map(\.bundlePath)
+      let done = try? store.stacks(), let paused = try? store.pausedStacks()
     else { return }
-    leftoverStacks = StackLeftovers.orphans(in: folder, recorded: Set(recorded))
+    let recorded = Set((done + paused).map(\.bundlePath))
+    leftoverStacks = StackLeftovers.orphans(in: folder, recorded: recorded)
   }
 
   /// Deletes `leftover` from the package; a failure is shown.

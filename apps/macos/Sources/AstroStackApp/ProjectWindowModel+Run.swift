@@ -75,26 +75,35 @@ extension ProjectWindowModel {
     launch(scope: scopes.first, mode: preset, patch: knobs.patch(for: preset))
   }
 
-  /// Starts one run of `scope` (every light when `nil`) with `patch` on the preset of `mode`.
-  private func launch(scope: RunScope?, mode: PreprocessRequest.Mode, patch: KnobPatch) {
+  /// Starts one run of `scope` (every light when `nil`) with `patch` on the preset of `mode` — or,
+  /// given a paused run's row (card 0097), continues it: its own record, run id and folder, the
+  /// lanes its checkpoint matches reused.
+  func launch(
+    scope: RunScope?, mode: PreprocessRequest.Mode, patch: KnobPatch, resume: ProjectStack? = nil
+  ) {
     guard let store = store(), let folder = folder() else {
       endQueue(drained: false)
       error = .projectClosed
       return
     }
-    guard let (record, settings) = prepare(scope: scope, mode: mode, patch: patch) else {
+    guard let (record, settings) = prepare(scope: scope, mode: mode, patch: patch, resume: resume)
+    else {
       endQueue(drained: false)
       return
     }
+    let scope = resume == nil ? scope : record.scope
     // The run plans the same folders again: a Rescan still reading them only competes for disk.
     cancelScan()
-    let runID = Self.unusedRunID(runs.nextRunID, in: folder)
+    let runID =
+      resume.map { URL(fileURLWithPath: $0.bundlePath).lastPathComponent }
+      ?? Self.unusedRunID(runs.nextRunID, in: folder)
     let output = folder.appendingPathComponent("stacks/\(runID)", isDirectory: true)
     let work = runs.scratch.appendingPathComponent("run_\(runID)", isDirectory: true)
     // The run re-plans the import silently: its own progress is the run's journal.
     let planning = ImportViewModel.silent(services(store).planning)
     let start = runs.run
     let model = RunViewModel(runID: runID, output: output)
+    let gate = model.gate
     run = model
     refresh()
     model.start(
@@ -106,36 +115,60 @@ extension ProjectWindowModel {
           guard unlisted.isEmpty else { throw PreprocessError.scopeOutdated(unlisted) }
         }
         let inventory = scope.map { plan.inventory.scoped($0) } ?? plan.inventory
-        return start(
-          PreprocessRequest(
-            inventory: inventory, output: output, work: work, runID: runID, mode: record.mode,
-            settings: settings, library: plan.library))
+        var request = PreprocessRequest(
+          inventory: inventory, output: output, work: work, runID: runID, mode: record.mode,
+          settings: settings, library: plan.library)
+        request.pause = gate
+        request.resuming = resume != nil
+        return start(request)
       },
       completion: { [weak self] outcome in
         await Self.remove(work)
-        guard case .success = outcome else {
-          // Finished masters stay (README); a folder with none would only pile up `_2`, `_3`.
-          await Self.removeUnfinished(output)
-          self?.endQueue(drained: false)
-          return
-        }
-        guard let self else { return }
-        await register(record, runID: runID)
-        if let next = queuedScopes.first, error == nil {
-          queuedScopes.removeFirst()
-          launch(scope: next, mode: mode, patch: patch)
-        } else {
-          endQueue(drained: error == nil)
-        }
+        await self?.ended(
+          outcome, record: record, runID: runID, output: output, resume: resume, mode: mode,
+          patch: patch)
       })
+  }
+
+  /// A run of the queue ended: a finished run is registered (a continued one completes its
+  /// paused row) and the next scope starts; a paused one is recorded; any other end stops the
+  /// queue.
+  private func ended(
+    _ outcome: Result<PreprocessResult, any Error>, record: StackRecord, runID: String,
+    output: URL, resume: ProjectStack?, mode: PreprocessRequest.Mode, patch: KnobPatch
+  ) async {
+    guard case .success = outcome else {
+      if case .failure(let failure) = outcome, let paused = failure as? RunPaused {
+        recordPause(record, runID: runID, checkpoint: paused.checkpoint, replacing: resume)
+      } else if resume == nil {
+        // Finished masters stay (README); a folder with none would only pile up `_2`, `_3`. A
+        // resumed run's folder is its paused stack's checkpoint: never removed here.
+        await Self.removeUnfinished(output)
+      }
+      endQueue(drained: false)
+      return
+    }
+    await register(record, runID: runID, completing: resume?.id)
+    // A Pause asked during the run's last lane finds nothing left to pause in it: the queue stops
+    // here instead, as asked, and its next scopes are run again with Run.
+    if let next = queuedScopes.first, error == nil, run?.pauseRequested != true {
+      queuedScopes.removeFirst()
+      launch(scope: next, mode: mode, patch: patch)
+    } else {
+      endQueue(drained: error == nil)
+    }
   }
 
   /// The record and settings of a run of `scope` with `patch` on the preset of `mode`; `nil`
   /// (reported when it is an error) when nothing can run.
-  private func prepare(scope: RunScope?, mode: PreprocessRequest.Mode, patch: KnobPatch) -> (
-    StackRecord, PreprocessSettings
-  )? {
+  private func prepare(
+    scope: RunScope?, mode: PreprocessRequest.Mode, patch: KnobPatch, resume: ProjectStack?
+  ) -> (StackRecord, PreprocessSettings)? {
     do {
+      if let resume {
+        let record = try StackRecord(stack: resume)
+        return (record, try Self.runSettings(record))
+      }
       guard let request = try runRequest() else { return nil }
       let record = StackRecord(request: request, mode: mode, knobs: patch, scope: scope)
       return (record, try Self.runSettings(record))
@@ -149,7 +182,7 @@ extension ProjectWindowModel {
   /// listed and the last one it recorded is chosen and loaded in the Studio — shown only when
   /// the queue `drained`, so a failed run stays in view; an error reported on the way stays
   /// shown (a refresh clears none).
-  private func endQueue(drained: Bool) {
+  func endQueue(drained: Bool) {
     let reported = error
     queuedScopes = []
     queueActive = false
@@ -308,7 +341,7 @@ extension ProjectWindowModel {
 
   /// Siril's work files: tens of GB per night, never reused (job-scratch lesson).
   @concurrent
-  private nonisolated static func remove(_ work: URL) async {
+  nonisolated static func remove(_ work: URL) async {
     try? FileManager.default.removeItem(at: work)
   }
 
@@ -318,8 +351,8 @@ extension ProjectWindowModel {
   ///
   /// The stack is opened first: a bundle the Studio cannot open is reported, not recorded.
   /// The package is read where it is now: a project renamed in the Finder after the run's last
-  /// write still records its stack.
-  private func register(_ record: StackRecord, runID: String) async {
+  /// write still records its stack. A continued run (card 0097) completes its paused row.
+  private func register(_ record: StackRecord, runID: String, completing paused: Int64?) async {
     do {
       guard let store = store(), let folder = folder() else {
         throw UserFacingError.projectClosed
@@ -327,20 +360,15 @@ extension ProjectWindowModel {
       let object = record.scope?.object ?? ""
       let source = try await Self.openStack(
         folder.appendingPathComponent("stacks/\(runID)"), object: studioObject(object))
-      var record = record
-      // The hand the user gave at the review travels with the stack (card 0069).
-      if let run, run.runID == runID, run.wasReviewed { record.frameReview = run.decisions }
-      if let run, run.runID == runID, !run.pins.isEmpty { record.referencePins = run.pins }
-      let encoder = JSONEncoder()
-      encoder.outputFormatting = [.sortedKeys]
-      let params = String(bytes: try encoder.encode(record), encoding: .utf8) ?? "{}"
-      let scopeJSON = try record.scope.map {
-        String(bytes: try encoder.encode($0), encoding: .utf8) ?? "{}"
-      }
-      let read = sources.filter { record.request.paths.contains($0.path) }.map(\.id)
-      let stack = try store.addStack(
-        bundlePath: "stacks/\(runID)", sourceIDs: read, paramsJSON: params,
-        imageRoles: source.layers.map(\.id), object: object, scopeJSON: scopeJSON)
+      let row = try rowFields(record, runID: runID)
+      let roles = source.layers.map(\.id)
+      let stack =
+        try paused.map {
+          try store.completeStack(id: $0, paramsJSON: row.params, imageRoles: roles)
+        }
+        ?? store.addStack(
+          bundlePath: "stacks/\(runID)", sourceIDs: row.sourceIDs, paramsJSON: row.params,
+          imageRoles: roles, object: object, scopeJSON: row.scope)
       knobs.clearIgnored()
       // Shown when the queue ends, whether it drains, fails or is cancelled (`endQueue`).
       queueRecorded = (stack, source)

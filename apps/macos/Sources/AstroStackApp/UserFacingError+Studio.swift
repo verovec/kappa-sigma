@@ -38,7 +38,15 @@ extension UserFacingError {
       .app("Siril found no solution: \(reason). Check the centre, focal length and pixel size.")
     case .catalogueMissing(let path):
       .app("No local star catalogue at \(path): run just download-catalogues, or go online.")
-    case .noSolution(let path): .app("Siril reported a solution but wrote none in \(path).")
+    case .noReport(let lines, let log):
+      .app("Siril ended without a solution. Its last lines: \(lines). Its log: \(log)")
+    case .reportUnread(let log):
+      .app("Siril says it solved, but its centre, scale or rotation could not be read: \(log)")
+    case .noFile(let log): .app("Siril reported a solution but wrote no file. Its log: \(log)")
+    case .unreadableFile(let log):
+      .app("Siril wrote a solution file that cannot be read. Its log: \(log)")
+    case .noSolution(let log):
+      .app("Siril wrote a file without a readable plate solution. Its log: \(log)")
     }
   }
 

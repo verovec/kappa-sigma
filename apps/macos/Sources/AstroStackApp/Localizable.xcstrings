@@ -5153,6 +5153,22 @@
         }
       }
     },
+    "Siril ended without a solution. Its last lines: %@. Its log: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril ended without a solution. Its last lines: %1$@. Its log: %2$@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril s’est arrêté sans solution. Ses dernières lignes : %1$@. Son journal : %2$@"
+          }
+        }
+      }
+    },
     "Siril found no solution: %@. Check the centre, focal length and pixel size.": {
       "localizations": {
         "en": {
@@ -5233,18 +5249,34 @@
         }
       }
     },
-    "Siril reported a solution but wrote none in %@.": {
+    "Siril reported a solution but wrote no file. Its log: %@": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Siril reported a solution but wrote none in %@."
+            "value": "Siril reported a solution but wrote no file. Its log: %@"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Siril a annoncé une solution mais n’en a écrit aucune dans %@."
+            "value": "Siril a annoncé une solution mais n’a écrit aucun fichier. Son journal : %@"
+          }
+        }
+      }
+    },
+    "Siril says it solved, but its centre, scale or rotation could not be read: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril says it solved, but its centre, scale or rotation could not be read: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril dit avoir résolu, mais son centre, son échantillonnage ou sa rotation n’ont pu être lus : %@"
           }
         }
       }
@@ -5261,6 +5293,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Siril s’est arrêté pendant « %@ » et a été relancé ; relancez l’étape."
+          }
+        }
+      }
+    },
+    "Siril wrote a file without a readable plate solution. Its log: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril wrote a file without a readable plate solution. Its log: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril a écrit un fichier sans solution astrométrique lisible. Son journal : %@"
+          }
+        }
+      }
+    },
+    "Siril wrote a solution file that cannot be read. Its log: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril wrote a solution file that cannot be read. Its log: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril a écrit un fichier de solution illisible. Son journal : %@"
           }
         }
       }

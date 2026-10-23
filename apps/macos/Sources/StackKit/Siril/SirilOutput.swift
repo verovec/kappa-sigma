@@ -23,7 +23,8 @@ package enum SirilOutput {
     line.range(of: #"^error in line \d+"#, options: [.regularExpression, .caseInsensitive]) != nil
   }
 
-  private static func isNoise(_ line: String) -> Bool {
+  /// A line that says nothing of a cause (progress, a sequence search, a successful read).
+  package static func isNoise(_ line: String) -> Bool {
     let lower = line.lowercased()
     let prefixes = [
       "progress:", "reading sequence failed", "searching for sequences",

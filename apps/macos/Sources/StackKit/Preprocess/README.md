@@ -31,7 +31,11 @@ frames + every calibration frame + the library, and a digest of the settings as 
 `resuming` request into the same output folder reuses each lane whose record still matches — no
 Siril call for it, « `<lane>`: reusing master_… » on the journal — and stacks the others,
 saying why (« `<lane>` re-runs: the frames changed / the settings changed / its master is gone /
-it failed »). Calibration masters are built only when a lane has to be stacked. The bundle and
+it failed / no record / its record is unreadable », under that lane's own step). Records are
+written by `RecordCoding`, shared with `grades.json`: NaN and ±∞ (a frame Siril could not
+measure) are the strings `"nan"`, `"+inf"`, `"-inf"` — read them back with
+`RecordCoding.decoder()`, as `GradesRecord.read` and `LaneRecord.read` do. Calibration masters
+are built only when a lane has to be stacked. The bundle and
 `grades.json` of a resumed run are byte-identical to an uninterrupted one
 (`PreprocessorPauseTests`). A Siril step is never interrupted: it has no checkpoint. To extend:
 a new knob changes `settingsDigest` by itself (`String(reflecting:)` of the settings); a new

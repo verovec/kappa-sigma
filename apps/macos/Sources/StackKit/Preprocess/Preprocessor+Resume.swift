@@ -16,9 +16,12 @@ extension Preprocessor {
     journal: inout PreprocessJournal, result: inout PreprocessResult
   ) async throws -> ChannelOutcome {
     let (plan, request, emitter) = (run.plan, run.request, run.emitter)
-    if request.resuming, let reused = reusable(lane, plan: plan, request: request, emitter: emitter)
-    {
-      return reused
+    var rerun: String?
+    if request.resuming {
+      switch reusable(lane, plan: plan, request: request, emitter: emitter) {
+      case .reused(let outcome): return outcome
+      case .rerun(let reason): rerun = reason
+      }
     }
     let masters: [CalibrationMaster]
     if let pool {
@@ -28,7 +31,8 @@ extension Preprocessor {
       pool = masters
     }
     let outcome = try await stackChannel(
-      lane, plan: plan, request: request, pool: masters, parity: run.parity, emitter: emitter)
+      lane, plan: plan, request: request, pool: masters, parity: run.parity, emitter: emitter,
+      note: rerun.map { "\(lane) re-runs: \($0)" })
     // Only a run that can pause or resumes leaves checkpoints: a run without a gate keeps the
     // output folder it always wrote.
     if request.pause != nil || request.resuming {
@@ -37,29 +41,33 @@ extension Preprocessor {
     return outcome
   }
 
-  /// The recorded outcome of `lane` when its record still matches `request` (card 0097); nil,
-  /// with the reason on the journal, when the lane must run.
+  /// What a resume does with a lane: reuse its record, or stack it again for a reason.
+  enum Reuse {
+    case reused(ChannelOutcome)
+    case rerun(String)
+  }
+
+  /// The recorded outcome of `lane` when its record still matches `request` (card 0097), else
+  /// why the lane must run — journalled under the lane's own step once it begins.
   func reusable(_ lane: String, plan: NightPlan, request: PreprocessRequest, emitter: RunEmitter)
-    -> ChannelOutcome?
+    -> Reuse
   {
     let record: LaneRecord
     do {
       record = try LaneRecord.read(lane: lane, from: request.output)
     } catch CocoaError.fileReadNoSuchFile {
-      return nil
+      return .rerun("no record")
     } catch {
-      emitter.line("\(lane) re-runs: its record is unreadable")
-      return nil
+      return .rerun("its record is unreadable (\(error.localizedDescription))")
     }
     if let reason = record.staleReason(lane: lane, plan: plan, request: request) {
-      emitter.line("\(lane) re-runs: \(reason)")
-      return nil
+      return .rerun(reason)
     }
     let outcome = record.outcome(in: request.output)
     let master = outcome.masterPath.map { URL(fileURLWithPath: $0).lastPathComponent }
     emitter.begin("reusing \(outcome.object) \(lane)")
     emitter.line("\(lane): reusing \(master ?? "its record") — same frames, same settings")
-    return outcome
+    return .reused(outcome)
   }
 
   /// Keeps `outcome` as the checkpoint of `lane`.

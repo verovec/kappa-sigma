@@ -60,13 +60,27 @@ package struct LaneRecord: Codable, Equatable, Sendable {
     try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+    encoder.nonConformingFloatEncodingStrategy = Self.nonFinite
     try encoder.encode(self).write(to: Self.url(outcome.filter, in: output), options: .atomic)
   }
 
   /// The record of `lane` in `output`.
   package static func read(lane: String, from output: URL) throws -> Self {
-    try JSONDecoder().decode(Self.self, from: Data(contentsOf: url(lane, in: output)))
+    let decoder = JSONDecoder()
+    decoder.nonConformingFloatDecodingStrategy = .convertFromString(
+      positiveInfinity: "+inf", negativeInfinity: "-inf", nan: "nan")
+    return try decoder.decode(Self.self, from: Data(contentsOf: url(lane, in: output)))
   }
+
+  /// A record of `lane` is in `output`, readable or not.
+  package static func exists(lane: String, in output: URL) -> Bool {
+    FileManager.default.fileExists(atPath: url(lane, in: output).path)
+  }
+
+  /// Real measurements hold NaN and ±∞ (a frame Siril could not measure): JSON has no number for
+  /// them, so they are written as strings — a record must never fail on the data it keeps.
+  private static let nonFinite = JSONEncoder.NonConformingFloatEncodingStrategy.convertToString(
+    positiveInfinity: "+inf", negativeInfinity: "-inf", nan: "nan")
 
   private static func url(_ lane: String, in output: URL) -> URL {
     output.appendingPathComponent(folderName, isDirectory: true).appendingPathComponent(

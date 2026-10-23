@@ -55,6 +55,35 @@ struct StackStatusStoreTests {
   }
 
   @Test(
+    "a paused stack paused again keeps its row with the new checkpoint; a done one is refused",
+    .scratchDirectory)
+  func testPausedStackUpdated() throws {
+    let package = try ProjectStoreTests.newPackage()
+    defer { try? package.close() }
+    let store = package.store
+    let paused = try store.addStack(
+      bundlePath: "stacks/B", sourceIDs: [], paramsJSON: "{}", status: .paused,
+      checkpointJSON: Self.checkpoint)
+    let later = #"{"lanes_done":["RGB","RGB-dualband"],"lanes_left":["L"],"run_id":"R1"}"#
+    try store.updatePausedStack(id: paused.id, paramsJSON: #"{"a":1}"#, checkpointJSON: later)
+    let updated = try #require(try store.pausedStacks().first)
+    #expect(updated.id == paused.id && updated.checkpointJSON == later)
+    #expect(updated.paramsJSON == #"{"a":1}"#)
+
+    let done = try store.addStack(bundlePath: "stacks/A", sourceIDs: [], paramsJSON: "{}")
+    #expect(throws: ProjectStoreError.notPaused(stackID: done.id)) {
+      try store.updatePausedStack(id: done.id, paramsJSON: "{}", checkpointJSON: later)
+    }
+    #expect(throws: ProjectStoreError.notPaused(stackID: done.id)) {
+      try store.completeStack(id: done.id, paramsJSON: "{}", imageRoles: ["RGB"])
+    }
+    #expect(throws: ProjectStoreError.notPaused(stackID: 999)) {
+      try store.deletePausedStack(id: 999)
+    }
+    #expect(try store.images(stackID: done.id).isEmpty, "a refused completion adds no image")
+  }
+
+  @Test(
     "down to 0006 drops the columns and the paused rows; up again reads every row done",
     .scratchDirectory)
   func testStackStatusUpDown() throws {

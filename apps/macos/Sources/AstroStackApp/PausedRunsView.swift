@@ -1,23 +1,24 @@
-internal import Foundation
-internal import ProjectKit
+package import Foundation
+package import ProjectKit
 internal import RenderKit
 internal import StackKit
-internal import SwiftUI
+package import SwiftUI
 
 /// The runs paused after a lane (card 0097), each with Continue and Discard.
 ///
 /// What each stacked and what is left; Continue runs the same run, its lanes done reused, and
 /// Discard deletes its row and kept masters, asked first. Never continued on its own.
-struct PausedRunsView: View {
+package struct PausedRunsView: View {
   var model: ProjectWindowModel
   @State private var discarding: ProjectStack?
+  @Environment(\.locale) private var locale
 
-  var body: some View {
+  package var body: some View {
     VStack(alignment: .leading, spacing: DesignMetrics.spacingS) {
       ForEach(model.pausedRuns) { paused in
         HStack(alignment: .firstTextBaseline, spacing: DesignMetrics.spacingM) {
           Label {
-            Text(Self.words(paused))
+            Text(Self.words(paused, locale: locale))
           } icon: {
             Image(systemName: "pause.circle")
           }
@@ -47,13 +48,16 @@ struct PausedRunsView: View {
   }
 
   /// « Paused run 20261021_210000 — stacked: RGB · left: RGB-dualband ».
-  static func words(_ paused: ProjectStack) -> LocalizedStringResource {
+  package static func words(_ paused: ProjectStack, locale: Locale) -> LocalizedStringResource {
     let runID = URL(fileURLWithPath: paused.bundlePath).lastPathComponent
     let checkpoint = paused.checkpointJSON.flatMap {
       try? JSONDecoder().decode(PreprocessCheckpoint.self, from: Data($0.utf8))
     }
     let done = checkpoint?.lanesDone.joined(separator: ", ") ?? ""
     let left = checkpoint?.lanesLeft.joined(separator: ", ") ?? ""
-    return .app("Paused run \(runID) — stacked: \(done) · left: \(left)")
+    var words = LocalizedStringResource.app(
+      "Paused run \(runID) — stacked: \(done) · left: \(left)")
+    words.locale = locale
+    return words
   }
 }

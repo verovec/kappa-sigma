@@ -1,7 +1,9 @@
+import AppKit
 import AstroStackApp
 import Foundation
 import ProjectKit
 import StackKit
+import SwiftUI
 import TestSupport
 import Testing
 
@@ -19,12 +21,12 @@ struct RunPauseTests {
   /// was requested — or, resuming, writes the bundle and finishes.
   static func pausingRun(
     _ seen: Recorded<PreprocessRequest>, started: AsyncStream<Void>.Continuation,
-    release: AsyncStream<Void>
+    release: AsyncStream<Void>, pausesAgain: Bool = false
   ) -> RunServices.Run {
     let finish = ProjectTests.fakeRun(Recorded<PreprocessRequest>())
     return { request in
       seen.append(request)
-      if request.resuming { return finish(request) }
+      if request.resuming && !pausesAgain { return finish(request) }
       return AsyncThrowingStream(PreprocessEvent.self) { continuation in
         let task = Task {
           do {
@@ -204,6 +206,63 @@ struct RunPauseTests {
     #expect(fixture.window.knobs.mode == .nebula, "the panel shows what the run applies")
     await fixture.window.run?.settled()
     #expect(harness.seen.all.last?.mode == .nebula)
+  }
+
+  @Test(
+    "the Stacking pane lists a paused run with Continue and Discard, in fr and en",
+    .scratchDirectory, arguments: ["en", "fr"])
+  func testPausedRunsLayOut(_ language: String) async throws {
+    let harness = try Self.harness()
+    let fixture = harness.fixture
+    defer { try? fixture.project.close() }
+    _ = try await Self.pausedRun(harness)
+    let window = fixture.window
+    window.select(.stacking)
+    let host = ImportSheetTests.host(
+      ProjectWindowView(model: window).environment(\.locale, Locale(identifier: language))
+        .background(Color(nsColor: .windowBackgroundColor)))
+    host.appearance = NSAppearance(named: .aqua)
+    host.layoutSubtreeIfNeeded()
+    #expect(host.fittingSize.width >= 640 && host.fittingSize.height >= 400)
+    host.sizingOptions = [.minSize]
+    host.layoutSubtreeIfNeeded()
+    if language == "en" { try RunPanelTests.attach(host, "run-paused.png") }
+    let paused = try #require(window.pausedRuns.first)
+    let words = String(
+      localized: PausedRunsView.words(paused, locale: Locale(identifier: language)))
+    #expect(
+      words
+        == (language == "en"
+          ? "Paused run \(ProjectTests.runID) — stacked: RGB · left: RGB-dualband"
+          : "Empilement \(ProjectTests.runID) en pause — empilés : RGB · restants : RGB-dualband"))
+  }
+
+  @Test(
+    "a Continue that pauses again keeps the same row with its new checkpoint",
+    .scratchDirectory)
+  func testContinuePausedAgain() async throws {
+    let harness = try Self.harness()
+    let fixture = harness.fixture
+    defer { try? fixture.project.close() }
+    _ = try await Self.pausedRun(harness)
+    let paused = try #require(fixture.window.pausedRuns.first)
+    let (started, starting) = AsyncStream.makeStream(of: Void.self)
+    let (release, releasing) = AsyncStream.makeStream(of: Void.self)
+    let reopened = ProjectWindowModel(
+      store: { fixture.project.store }, folder: { fixture.project.url },
+      services: { _ in ImportServices(planning: { try await ImportPlanningStub.empty($0) }) },
+      runs: RunServices(
+        run: Self.pausingRun(harness.seen, started: starting, release: release, pausesAgain: true),
+        now: { ProjectTests.start }, scratch: fixture.work, timeZone: .gmt))
+    reopened.continueRun(paused.id)
+    for await _ in started { break }
+    reopened.pauseRun()
+    releasing.yield()
+    await reopened.run?.settled()
+    let rows = try fixture.project.store.pausedStacks()
+    #expect(rows.map(\.id) == [paused.id], "the same row, never a second one")
+    #expect(try fixture.project.store.stacks().isEmpty)
+    #expect(reopened.pausedRuns.map(\.id) == [paused.id])
   }
 
   @Test("a finished run offers no Pause and ignores a late one")

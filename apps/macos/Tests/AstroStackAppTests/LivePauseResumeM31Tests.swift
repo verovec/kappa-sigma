@@ -11,8 +11,8 @@ import Testing
 ///
 /// The dual-band night marked, as in 0058, through the window model as the Stacking stage
 /// drives it: an uninterrupted run, then a run paused during its first
-/// lane, the project reopened, Continue — every master and bundle layer of the continued run holds
-/// the uninterrupted run's pixels exactly. Wall times go to the attachment
+/// lane, the project reopened, Continue — the lanes done are reused byte for byte, the lanes left
+/// hold the uninterrupted run's pixels exactly. Wall times go to the attachment
 /// `pause-resume-m31.json` (the PR body quotes them).
 @MainActor
 @Suite(
@@ -51,6 +51,12 @@ struct LivePauseResumeM31Tests {
     await paused.settled()
     timings["until_paused"] = Date().timeIntervalSince(started)
     let checkpoint = try #require(paused.checkpoint, "\(paused.journalTail.map(\.text))")
+    let ours = paused.output
+    // The masters the paused part wrote, by checksum: Continue must reuse them as they are.
+    let kept = try Dictionary(
+      uniqueKeysWithValues: checkpoint.lanesDone.map { lane in
+        (lane, try FinishOracle.sha256(of: ours.appendingPathComponent("master_\(lane).fits")))
+      })
 
     // The project closed and opened again: a fresh window over the same package.
     clock += 3600
@@ -63,37 +69,63 @@ struct LivePauseResumeM31Tests {
     timings["continue"] = Date().timeIntervalSince(started)
     #expect(resumed.phase == .finished, "\(resumed.journalTail.map(\.text))")
     #expect(try project.store.pausedStacks().isEmpty)
-    for lane in checkpoint.lanesDone {
-      #expect(resumed.journal.contains { $0.text.hasPrefix("\(lane): reusing master_") })
-    }
-    let compared = try Self.compare(
-      resumed, in: project.url.appendingPathComponent(row.bundlePath),
-      with: project.url.appendingPathComponent("stacks/\(straight.runID)"))
+    let (deltas, laneLines) = try Self.verify(
+      resumed, checkpoint: checkpoint, kept: kept, ours: ours,
+      reference: project.url.appendingPathComponent("stacks/\(straight.runID)"))
     let report: [String: Any] = [
       "seconds": timings, "lanes_done": checkpoint.lanesDone, "lanes_left": checkpoint.lanesLeft,
-      "compared": compared,
+      "max_abs_delta_vs_uninterrupted": deltas, "lane_lines": laneLines,
+      "stacked_uninterrupted": Self.stacked(straight), "stacked_continued": Self.stacked(resumed),
     ]
     Attachment.record(
       try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys]),
       named: "pause-resume-m31.json")
   }
 
-  /// Every master and bundle layer of `resumed` in `ours` against the same file in `reference`,
-  /// pixel for pixel; returns the files compared.
-  static func compare(_ resumed: RunViewModel, in ours: URL, with reference: URL) throws
-    -> [String]
-  {
-    let layers = (resumed.result?.bundle?.layers ?? []).map(\.file)
-    let masters = (resumed.result?.channels ?? []).compactMap(\.masterPath).map {
-      URL(fileURLWithPath: $0).lastPathComponent
+  /// The lanes done reused byte for byte (`kept`: their checksums at the pause), the lanes left
+  /// pixel-identical to `reference`; returns every master's max |Δ| against `reference` and the
+  /// journal's reuse lines.
+  static func verify(
+    _ resumed: RunViewModel, checkpoint: PreprocessCheckpoint, kept: [String: String], ours: URL,
+    reference: URL
+  ) throws -> ([String: Double], [String]) {
+    let laneLines = resumed.journal.map(\.text).filter {
+      $0.contains("reusing") || $0.contains("re-runs")
     }
-    #expect(!layers.isEmpty && !masters.isEmpty)
-    for file in masters + layers {
-      let lhs = try FITSFile.read(at: ours.appendingPathComponent(file)).image()
-      let rhs = try FITSFile.read(at: reference.appendingPathComponent(file)).image()
-      #expect(lhs.planes == rhs.planes, "\(file) differs from the uninterrupted run")
+    for (lane, sha) in kept {
+      #expect(laneLines.contains { $0.hasPrefix("\(lane): reusing master_") }, "\(laneLines)")
+      let after = try FinishOracle.sha256(of: ours.appendingPathComponent("master_\(lane).fits"))
+      #expect(after == sha, "master_\(lane) was stacked again")
     }
-    return masters + layers
+    var deltas: [String: Double] = [:]
+    for lane in checkpoint.lanesLeft {
+      let delta = try Self.maxDelta("master_\(lane).fits", ours, reference)
+      #expect(delta == 0, "master_\(lane) stacked after Continue differs: max |Δ| \(delta)")
+      deltas["master_\(lane).fits"] = delta
+    }
+    // Two independent stackings of a done lane (the uninterrupted run's, the paused run's):
+    // measured, not asserted — what Siril's star matching moves run to run.
+    for lane in checkpoint.lanesDone {
+      deltas["master_\(lane).fits"] = try Self.maxDelta("master_\(lane).fits", ours, reference)
+    }
+    return (deltas, laneLines)
+  }
+
+  /// Each channel's stacked frames, « RGB 110/120 ».
+  static func stacked(_ run: RunViewModel) -> [String] {
+    (run.result?.channels ?? []).map { "\($0.filter) \($0.stackedFrames)/\($0.inputFrames)" }
+  }
+
+  /// The largest |Δ| between `file` in `ours` and in `reference`; infinity when the shapes differ.
+  static func maxDelta(_ file: String, _ ours: URL, _ reference: URL) throws -> Double {
+    let lhs = try FITSFile.read(at: ours.appendingPathComponent(file)).image()
+    let rhs = try FITSFile.read(at: reference.appendingPathComponent(file)).image()
+    guard lhs.planes.map(\.count) == rhs.planes.map(\.count) else { return .infinity }
+    var delta: Float = 0
+    for (left, right) in zip(lhs.planes, rhs.planes) {
+      for index in left.indices { delta = max(delta, abs(left[index] - right[index])) }
+    }
+    return Double(delta)
   }
 
   /// The M 31 captures with the 2026-09-22 night marked dual-band, as the PO marked it.

@@ -25,11 +25,15 @@ package struct StudioSideView: View {
               .accessible(.studioClosePanel, label: .app("Close"))
             Spacer()
             // No default-button Return: Return confirms a typed value (Edit › Apply Process ⌘E).
-            Button(.app("Apply")) { applyRecorded() }
+            // On a new head Apply previews first, and says so.
+            let title: LocalizedStringResource =
+              model.isPreviewSuspended ? .app("Preview") : .app("Apply")
+            Button(title) { applyRecorded() }
               .disabled(model.toolRun != nil)
-              .accessible(.studioApply, label: .app("Apply"))
+              .accessible(.studioApply, label: title)
           }
           StudioToolRow(model: model)
+          if model.isPreviewSuspended { suspended }
         } else {
           Text(.app("Choose a process in the catalogue."))
             .foregroundStyle(DesignColor.textSecondary.color)
@@ -54,6 +58,12 @@ package struct StudioSideView: View {
     } else {
       StudioMaskRow(model: model)
     }
+  }
+
+  /// The history moved under the panel: the viewer shows the image, not these values.
+  private var suspended: some View {
+    StatusBadge(
+      .attention, .app("The image is shown as applied: Preview shows these values on it."))
   }
 
   private var history: some View {

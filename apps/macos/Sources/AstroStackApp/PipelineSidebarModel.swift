@@ -128,9 +128,16 @@ package final class PipelineSidebarModel {
   /// The user's « Continue » at the breakpoint: the step with the panel's values, then on to
   /// the next breakpoint; the pipeline keeps the values applied (R5).
   package func continueRun() async {
+    // Read before the commit, whose value change ends the suspension: on a new head the values
+    // are shown first, as Apply does, never applied unseen (R2).
+    let previews = workspace.isPreviewSuspended
     // A value typed and not confirmed is committed first: Continue never applies an older one.
     NSApp?.keyWindow?.makeFirstResponder(nil)
     guard canContinue, let index = stoppedAt, let panel = workspace.panel else { return }
+    if previews {
+      workspace.resumePreview()
+      return
+    }
     let params = panel.params
     let applied = await moving { [runner, pipeline] history, bundle, sink in
       try await runner.resume(

@@ -52,6 +52,9 @@ package final class StudioWorkspaceModel {
   package private(set) var panel: ProcessPanelModel?
   /// The viewer shows the preview of the panel's values, not the head.
   package private(set) var isPreviewing = false
+  /// The history moved under the open panel: the viewer shows the head, not the panel's values,
+  /// until a value moves or Preview is pressed; Apply shows them before it records (R2).
+  package private(set) var isPreviewSuspended = false
   /// The step compare shows, if any.
   package internal(set) var comparing: Int?
   /// The viewer shows a geometric preview that moves the pixels (card 0090, `gridMoved`).
@@ -148,6 +151,7 @@ package final class StudioWorkspaceModel {
   /// Closes the panel: the viewer shows the head again.
   package func closePanel() {
     panel = nil
+    isPreviewSuspended = false
     hideModel()
     toolReport = nil
     stopPreview()
@@ -190,6 +194,11 @@ package final class StudioWorkspaceModel {
     // Apply records what the viewer shows (R2): values not drawn yet (a value just typed, a
     // drag within the frame) are drawn first, and what was drawn is what is recorded.
     previewTask?.cancel()
+    // On a new head the values are shown first: this Apply previews, the next one records.
+    if isPreviewSuspended {
+      resumePreview()
+      return
+    }
     if !isShowing(panel) { drawPreview() }
     guard isShowing(panel) else { return }
     // The values applied: a geometry panel is back at the identity once the pixels moved.
@@ -217,6 +226,13 @@ package final class StudioWorkspaceModel {
   /// Forward one undone step.
   package func redo() throws {
     try reported { try studio.redo() }
+  }
+
+  /// Shows the panel's values on the head again, after the history moved under it.
+  package func resumePreview() {
+    guard panel != nil else { return }
+    isPreviewSuspended = false
+    drawPreview()
   }
 
   /// Runs a history move, then shows the head; a failure is shown in the panel and rethrown.
@@ -250,6 +266,7 @@ package final class StudioWorkspaceModel {
   }
 
   private func schedulePreview() {
+    isPreviewSuspended = false
     previewTask?.cancel()
     previewTask = Task { [weak self] in
       // One frame: a slider drag renders its last position, not every intermediate one.
@@ -270,6 +287,9 @@ package final class StudioWorkspaceModel {
   /// The history moved (an Apply, an undo, a pipeline run): the viewer, the panel's inputs and
   /// the catalogue follow the new head.
   func headChanged() throws {
+    // Even when showing the head fails, no preview scheduled meanwhile outlives the move.
+    let moved = headSteps != studio.steps
+    defer { suspendPreview(moved: moved) }
     if dropRegionIfMoved() { resetMovingValues() }
     shown = nil
     // A report speaks of the head it was made on.
@@ -288,8 +308,28 @@ package final class StudioWorkspaceModel {
     // After the viewer shows the new head: the display stretch offered is the one on screen.
     if let panel { refresh(panel) }
     refreshCatalogue()
-    // The panel stays open on the new head: its values are previewed on it again (R2).
-    if panel != nil { schedulePreview() }
+  }
+
+  /// Suspends the panel's preview once the history moved under it.
+  ///
+  /// The viewer stays on the new head: previewing the values again would show an Apply twice and
+  /// an Undo as nothing, so the panel says so and Apply reads Preview. A history that did not
+  /// move (a refused move) previews again; a host tool has no preview.
+  private func suspendPreview(moved: Bool) {
+    guard moved else {
+      // Nothing changed: a suspended panel stays so, a previewing one previews again.
+      if panel != nil, !isPreviewSuspended { schedulePreview() }
+      return
+    }
+    previewTask?.cancel()
+    previewTask = nil
+    isPreviewSuspended = panel.map { !$0.type.runsTool($0.params) } ?? false
+  }
+
+  /// Waits for the preview scheduled by the last change, if any: a test sees a preview the
+  /// debounce would draw later, without sleeping.
+  package func settlePreview() async {
+    await previewTask?.value
   }
 
   func show(_ image: AstroImage, statistics: [STFMapping]? = nil) throws {

@@ -226,10 +226,10 @@ struct RunPauseTests {
     #expect(host.fittingSize.width >= 640 && host.fittingSize.height >= 400)
     host.sizingOptions = [.minSize]
     host.layoutSubtreeIfNeeded()
-    if language == "en" { try RunPanelTests.attach(host, "run-paused.png") }
+    try RunPanelTests.attach(host, "run-paused-\(language).png")
     let paused = try #require(window.pausedRuns.first)
     let words = String(
-      localized: PausedRunsView.words(paused, locale: Locale(identifier: language)))
+      localized: PausedRunText.words(paused, locale: Locale(identifier: language)))
     #expect(
       words
         == (language == "en"

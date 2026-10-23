@@ -89,11 +89,14 @@ struct LivePauseResumeM31Tests {
     _ resumed: RunViewModel, checkpoint: PreprocessCheckpoint, kept: [String: String], ours: URL,
     reference: URL
   ) throws -> ([String: Double], [String]) {
-    let laneLines = resumed.journal.map(\.text).filter {
-      $0.contains("reusing") || $0.contains("re-runs")
+    // The step titles, not the journal: it keeps the last lines only, and Siril's thousands of
+    // the lanes left push the early « reusing » line out.
+    let laneLines = resumed.steps.map(\.title).filter {
+      $0.hasPrefix("reusing ") || $0.hasPrefix("grading + stacking ")
     }
     for (lane, sha) in kept {
-      #expect(laneLines.contains { $0.hasPrefix("\(lane): reusing master_") }, "\(laneLines)")
+      #expect(
+        laneLines.contains { $0.hasPrefix("reusing ") && $0.hasSuffix(" \(lane)") }, "\(laneLines)")
       let after = try FinishOracle.sha256(of: ours.appendingPathComponent("master_\(lane).fits"))
       #expect(after == sha, "master_\(lane) was stacked again")
     }
@@ -108,6 +111,13 @@ struct LivePauseResumeM31Tests {
     for lane in checkpoint.lanesDone {
       deltas["master_\(lane).fits"] = try Self.maxDelta("master_\(lane).fits", ours, reference)
     }
+    // The continued run's bundle names the same layers, in the same order, each file present.
+    let layers = (resumed.result?.bundle?.layers ?? []).map(\.file)
+    let expected = try BundleWriter.read(from: reference).layers.map(\.file)
+    #expect(!layers.isEmpty && layers == expected)
+    for file in layers {
+      #expect(FileManager.default.fileExists(atPath: ours.appendingPathComponent(file).path))
+    }
     return (deltas, laneLines)
   }
 
@@ -116,16 +126,24 @@ struct LivePauseResumeM31Tests {
     (run.result?.channels ?? []).map { "\($0.filter) \($0.stackedFrames)/\($0.inputFrames)" }
   }
 
-  /// The largest |Δ| between `file` in `ours` and in `reference`; infinity when the shapes differ.
+  /// The largest |Δ| between `file` in `ours` and in `reference`; infinity when the geometry
+  /// differs or a pixel is NaN on one side only (NaN on both counts as equal).
   static func maxDelta(_ file: String, _ ours: URL, _ reference: URL) throws -> Double {
     let lhs = try FITSFile.read(at: ours.appendingPathComponent(file)).image()
     let rhs = try FITSFile.read(at: reference.appendingPathComponent(file)).image()
-    guard lhs.planes.map(\.count) == rhs.planes.map(\.count) else { return .infinity }
-    var delta: Float = 0
+    guard (lhs.width, lhs.height, lhs.planes.count) == (rhs.width, rhs.height, rhs.planes.count)
+    else { return .infinity }
+    var delta = 0.0
     for (left, right) in zip(lhs.planes, rhs.planes) {
-      for index in left.indices { delta = max(delta, abs(left[index] - right[index])) }
+      for index in left.indices where left[index] != right[index] {
+        guard !left[index].isNaN, !right[index].isNaN else {
+          if left[index].isNaN != right[index].isNaN { return .infinity }
+          continue
+        }
+        delta = max(delta, Double(abs(left[index] - right[index])))
+      }
     }
-    return Double(delta)
+    return delta
   }
 
   /// The M 31 captures with the 2026-09-22 night marked dual-band, as the PO marked it.

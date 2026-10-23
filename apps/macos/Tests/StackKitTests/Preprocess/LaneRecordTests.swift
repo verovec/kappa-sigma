@@ -29,4 +29,32 @@ struct LaneRecordTests {
     #expect(grade.fwhm == .infinity && grade.quality.isNaN)
     #expect(read.outcome.filter == "RGB")
   }
+
+  @Test("grades.json keeps the same non-finite measurements", .scratchDirectory)
+  func testGradesNonFinite() throws {
+    let folder = try ScratchDirectory.url.appendingPathComponent("out")
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    var result = PreprocessResult(runID: "R")
+    var outcome = try Self.outcome()
+    outcome.grades[0].background = -.infinity
+    result.channels = [outcome]
+    try GradesRecord(result: result).write(to: folder)
+    let grade = try #require(try GradesRecord.read(from: folder).lanes.first?.grades.first)
+    #expect(grade.fwhm == .infinity && grade.quality.isNaN && grade.background == -.infinity)
+  }
+
+  /// An RGB lane with one frame Siril could not measure.
+  static func outcome() throws -> ChannelOutcome {
+    let key = SetKey(
+      type: .light, object: "M 31", filter: "RGB", exposureMs: 300_000, gain: 100, offset: 50,
+      tempBucketC: -10, bin: 1, session: "2026-09-22")
+    var outcome = ChannelOutcome(
+      FrameSet(key: key, frames: [], indices: []), filter: "RGB",
+      selection: CalibrationSelection())
+    var unmeasured = FrameGrade(index: 1, path: "/c/light_1.fits")
+    unmeasured.fwhm = .infinity
+    unmeasured.quality = .nan
+    outcome.grades = [unmeasured]
+    return outcome
+  }
 }

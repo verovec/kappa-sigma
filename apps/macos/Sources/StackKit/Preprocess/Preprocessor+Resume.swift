@@ -42,12 +42,13 @@ extension Preprocessor {
   func reusable(_ lane: String, plan: NightPlan, request: PreprocessRequest, emitter: RunEmitter)
     -> ChannelOutcome?
   {
-    guard LaneRecord.exists(lane: lane, in: request.output) else { return nil }
     let record: LaneRecord
     do {
       record = try LaneRecord.read(lane: lane, from: request.output)
+    } catch CocoaError.fileReadNoSuchFile {
+      return nil
     } catch {
-      emitter.line("\(lane) re-runs: its record is unreadable (\(error))")
+      emitter.line("\(lane) re-runs: its record is unreadable")
       return nil
     }
     if let reason = record.staleReason(lane: lane, plan: plan, request: request) {

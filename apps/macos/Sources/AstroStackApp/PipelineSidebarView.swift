@@ -7,6 +7,7 @@ package import SwiftUI
 package struct PipelineSidebarView: View {
   let model: PipelineSidebarModel
   @Environment(\.locale) private var locale
+  @Environment(\.undoManager) private var undoManager
   @State private var naming = false
   @State private var name = ""
   @State private var comparedWith: String?
@@ -50,15 +51,17 @@ package struct PipelineSidebarView: View {
 
   private var controls: some View {
     HStack {
-      Button(.app("Run")) { Task { await model.run() } }
+      Button(.app("Run")) { Task { await model.run(undoManager: undoManager) } }
         .disabled(model.isRunning)
         .accessible(.studioPipelineRun, label: .app("Run Pipeline"))
       // On a new head Continue previews the breakpoint's values first, and says so.
       let previews = model.workspace.isPreviewSuspended
-      Button(previews ? .app("Preview") : .app("Continue")) { Task { await model.continueRun() } }
-        .disabled(model.isRunning || !model.canContinue)
-        .accessible(
-          .studioPipelineContinue, label: previews ? .app("Preview") : .app("Continue Pipeline"))
+      Button(previews ? .app("Preview") : .app("Continue")) {
+        Task { await model.continueRun(undoManager: undoManager) }
+      }
+      .disabled(model.isRunning || !model.canContinue)
+      .accessible(
+        .studioPipelineContinue, label: previews ? .app("Preview") : .app("Continue Pipeline"))
       Spacer()
       Button(.app("Replay on…")) { model.onReplay() }
         .disabled(model.isRunning)

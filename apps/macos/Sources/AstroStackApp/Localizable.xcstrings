@@ -5889,6 +5889,22 @@
         }
       }
     },
+    "Studio Step": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Studio Step"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "étape du Studio"
+          }
+        }
+      }
+    },
     "Suggested value": {
       "localizations": {
         "en": {

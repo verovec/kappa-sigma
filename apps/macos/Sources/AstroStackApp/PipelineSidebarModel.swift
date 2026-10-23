@@ -112,22 +112,23 @@ package final class PipelineSidebarModel {
   ///
   /// `previous` is another stack's run whose locked steps may be reused (a replay; the runner
   /// reuses one only for the same input). On this stack's own history nothing is reused: the
-  /// last run is that very history, never a copy of it.
-  package func run(previous: PipelineRun? = nil) async {
+  /// last run is that very history, never a copy of it. The steps it adds are undone together on
+  /// `undoManager`.
+  package func run(previous: PipelineRun? = nil, undoManager: UndoManager? = nil) async {
     let start = workspace.studio.steps.count
     guard follows(upTo: start) else {
       failure = .app("The history does not follow the pipeline: undo to a step it shares")
       return
     }
-    await moving { [runner, pipeline] history, bundle, sink in
+    await moving(on: undoManager) { [runner, pipeline] history, bundle, sink in
       try await runner.run(
         pipeline, on: history, bundle: bundle, from: start, previous: previous, onEvent: sink)
     }
   }
 
   /// The user's « Continue » at the breakpoint: the step with the panel's values, then on to
-  /// the next breakpoint; the pipeline keeps the values applied (R5).
-  package func continueRun() async {
+  /// the next breakpoint; the pipeline keeps the values applied (R5), undone on `undoManager`.
+  package func continueRun(undoManager: UndoManager? = nil) async {
     // Read before the commit, whose value change ends the suspension: on a new head the values
     // are shown first, as Apply does, never applied unseen (R2).
     let previews = workspace.isPreviewSuspended
@@ -139,7 +140,7 @@ package final class PipelineSidebarModel {
       return
     }
     let params = panel.params
-    let applied = await moving { [runner, pipeline] history, bundle, sink in
+    let applied = await moving(on: undoManager) { [runner, pipeline] history, bundle, sink in
       try await runner.resume(
         pipeline, at: index, on: history, bundle: bundle, params: params, onEvent: sink)
     }
@@ -181,8 +182,11 @@ package final class PipelineSidebarModel {
 
   /// Runs `body` on the history, then shows the new head and loads the breakpoint's process;
   /// whether it ran without failing.
+  ///
+  /// The steps added are registered on `undoManager`.
   @discardableResult
   private func moving(
+    on undoManager: UndoManager?,
     _ body:
       @escaping (History, PipelineBundle, @escaping PipelineRunner.EventSink) async throws ->
       PipelineRunner.Outcome
@@ -200,6 +204,9 @@ package final class PipelineSidebarModel {
     defer { isRunning = false }
     let studio = workspace.studio
     let bundle = studio.session.bundle
+    let before = studio.steps.count
+    // Even a run that stops on a failure keeps the steps it applied: they are undoable too.
+    defer { StudioUndo.recordRun(workspace, from: before, on: undoManager) }
     // Events come from the run's task or a batch tool's: kept under a lock, shown after the run;
     // a batch step's progress is shown as it goes.
     let log = OSAllocatedUnfairLock(initialState: [PipelineRunner.Event]())

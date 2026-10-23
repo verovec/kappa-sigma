@@ -103,13 +103,12 @@ package struct StudioSideView: View {
     StudioUndo.apply(model, undoManager: undoManager)
   }
 
-  /// One step back on the history itself (the window's undo manager may hold unrelated typing
-  /// on top; ⌘Z reaches the Studio's own registered moves).
+  /// One step back: ⌘Z when the last action is a Studio move, so the menu follows the button.
   private func undo() {
-    try? model.undo()
+    StudioUndo.undo(model, undoManager: undoManager)
   }
 
   private func redo() {
-    try? model.redo()
+    StudioUndo.redo(model, undoManager: undoManager)
   }
 }

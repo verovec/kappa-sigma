@@ -30,8 +30,9 @@ extension DenoiseProcess {
     try dispatch(protect, [scaleTwo, mask], &values, size: mask, commands: commands)
   }
 
-  /// The shares of the luminance and colour changes put back on an image of `planes` planes: a
-  /// mono plane has no colour. What the blend reads and what decides a render is a copy.
+  /// The shares of the luminance and colour changes put back on an image of `planes` planes.
+  ///
+  /// A mono plane has no colour. What the blend reads and what decides a render is a copy.
   func blendWeights(planes: Int) -> (luminance: Double, colour: Double) {
     let amount = params.number("amount")
     let colour = planes == 3 ? amount * params.number("chrominance") : 0

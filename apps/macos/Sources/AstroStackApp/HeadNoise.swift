@@ -43,9 +43,10 @@ final class HeadNoise {
     measuring = nil
   }
 
-  /// StackKit's starlet noise of each plane, the median tile σ of its finest scale; nil once
-  /// cancelled. One plane at a time on purpose: a cancel lands between planes (each about a
-  /// second on a full frame) and a single plane's buffers are alive at once.
+  /// StackKit's starlet noise of each plane, the median tile σ of its finest scale.
+  ///
+  /// Nil once cancelled. One plane at a time on purpose: a cancel lands between planes (each
+  /// about a second on a full frame) and a single plane's buffers are alive at once.
   @concurrent
   private nonisolated static func measure(_ planes: [[Float]], width: Int, height: Int) async
     -> [Double]?

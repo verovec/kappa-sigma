@@ -49,6 +49,12 @@ extension PlateSolverTests {
     }
   }
 
+  @Test("without a platesolve echo, the script's closing lines are still left out")
+  func testTail_NoEcho_SkipsClosingLines() {
+    let log = ["Findstar: processing", "Script execution finished successfully.", "closing pipes"]
+    #expect(PlateSolver.platesolveTail(log) == "Findstar: processing")
+  }
+
   @Test("no line at all is said « — », never an empty quote", .scratchDirectory)
   func testSolved_NoReport_Silent() throws {
     let file = (try ScratchDirectory.url).appendingPathComponent("solved.fits")
@@ -83,7 +89,9 @@ extension PlateSolverTests {
 }
 
 extension PlateSolverTests {
-  @Test("a failed solve's log is kept apart: the retry that succeeds keeps it", .scratchDirectory)
+  @Test(
+    "a failed solve's log is kept apart: neither a successful nor a silent retry replaces it",
+    .scratchDirectory)
   func testLogKept() async throws {
     let scratch = try ScratchDirectory.url
     let support = scratch.appendingPathComponent("Support")
@@ -96,6 +104,10 @@ extension PlateSolverTests {
       siril: try Replay("m31-crop-solved", succeeds: true).runner, support: support,
       catalogues: catalogues)
     _ = try await solving.solve(Self.image(), request: Self.request, scratch: scratch) { _ in }
+    let silent = PlateSolver(
+      siril: SirilRunner { _, _, _ in throw SirilError.scriptFailed(exitCode: 1, hint: "") },
+      support: support, catalogues: catalogues)
+    _ = try? await silent.solve(Self.image(), request: Self.request, scratch: scratch) { _ in }
 
     let last = try String(contentsOf: solving.logFile, encoding: .utf8)
     let failed = try String(contentsOf: solving.failedLogFile, encoding: .utf8)

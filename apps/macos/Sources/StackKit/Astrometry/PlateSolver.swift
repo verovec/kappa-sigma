@@ -92,8 +92,10 @@ package struct PlateSolver: Sendable {
     return solved
   }
 
-  /// Writes Siril's `lines` to `logFile`, and to `failedLogFile` when the solve `failed`.
+  /// Writes Siril's `lines` to `logFile`, and to `failedLogFile` when the solve `failed`: never
+  /// a stopped solve's or an empty one, which would replace the log an earlier failure named.
   private func keep(_ lines: [String], failed: Bool) {
+    guard !lines.isEmpty, !Task.isCancelled else { return }
     let data = Data(lines.joined(separator: "\n").utf8)
     try? data.write(to: logFile, options: .atomic)
     if failed { try? data.write(to: failedLogFile, options: .atomic) }
@@ -122,13 +124,16 @@ package struct PlateSolver: Sendable {
   /// The last three lines `platesolve` printed (the whole log's when it never ran), « — » when
   /// there are none: never the script's closing lines, command echoes or progress, which say
   /// nothing of the solve.
-  static func platesolveTail(_ log: [String]) -> String {
+  package static func platesolveTail(_ log: [String]) -> String {
     let said = log.map { $0.trimmingCharacters(in: .whitespaces) }
     let echo = SirilOutput.isCommandEcho
     let start = said.lastIndex { echo($0) && $0.hasSuffix("platesolve") }
     let end = start.flatMap { first in said[(first + 1)...].firstIndex(where: echo) }
     let solve = start.map { said[($0 + 1)..<(end ?? said.endIndex)] } ?? said[...]
-    let words = solve.filter { !$0.isEmpty && !SirilOutput.isNoise($0) }.suffix(3)
+    let closing = ["Script execution", "Total execution time", "closing pipes"]
+    let words = solve.filter { line in
+      !line.isEmpty && !SirilOutput.isNoise(line) && !closing.contains { line.hasPrefix($0) }
+    }.suffix(3)
     return words.isEmpty ? "—" : words.joined(separator: " · ")
   }
 

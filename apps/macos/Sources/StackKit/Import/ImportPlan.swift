@@ -9,8 +9,11 @@ package struct ImportPlan: Equatable, Sendable {
     package var count: Int
     /// The clip filter of a colour light set (`unknown` elsewhere, or undecided).
     package var filterSet: FilterSet
-    /// The set id overrides are stored under.
+    /// The set id exclusions are stored under.
     package var id: String { key.id }
+    /// The id its clip-filter override is stored under: the id with the night
+    /// (`FrameSet.overrideID`), so a night marked while imported alone stays marked.
+    package var overrideID: String
     package var type: FrameType { key.type }
     package var filter: String { key.filter }
 
@@ -19,6 +22,7 @@ package struct ImportPlan: Equatable, Sendable {
       key = set.key
       count = set.count
       filterSet = set.filterSet
+      overrideID = set.overrideID
     }
   }
 

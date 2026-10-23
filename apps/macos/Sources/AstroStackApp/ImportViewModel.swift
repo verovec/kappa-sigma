@@ -108,7 +108,7 @@ package final class ImportViewModel {
 
   /// Asserts the clip filter of a colour light set; `unknown` hands it back to the pixels.
   package func setFilterSet(_ value: FilterSet, for row: ImportPlan.SetRow) {
-    request.filterSets[row.id] = value.isKnown ? value : nil
+    request.filterSets[row.overrideID] = value.isKnown ? value : nil
     refresh()
   }
 

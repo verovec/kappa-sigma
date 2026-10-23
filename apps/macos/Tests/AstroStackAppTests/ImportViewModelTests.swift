@@ -80,7 +80,7 @@ struct ImportViewModelTests {
     await model.settled()
 
     var expected = ImportRequest(paths: ["/c/M31-DB"])
-    expected.filterSets = [rows[0].id: .dualband]
+    expected.filterSets = [rows[0].overrideID: .dualband]
     expected.filterMap = ["Ha": "ignore"]
     expected.colorModel = .osc
     expected.forceCalibration = true

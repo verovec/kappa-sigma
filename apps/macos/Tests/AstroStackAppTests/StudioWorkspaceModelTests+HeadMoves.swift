@@ -35,8 +35,20 @@ extension StudioWorkspaceModelTests {
     let workspace = try await Self.stretched(opened)
     try workspace.undo()
     await workspace.settlePreview()
-    #expect(!workspace.isPreviewing)
+    #expect(!workspace.isPreviewing && workspace.isPreviewSuspended && workspace.panel != nil)
     #expect(workspace.viewer.model.image.planes == workspace.studio.head.planes)
+  }
+
+  @Test("a refused history move keeps the panel's values on screen", .scratchDirectory)
+  func testHeadChanged_RefusedMove_PreviewsAgain() async throws {
+    let opened = try StudioModelTests.project()
+    defer { try? opened.package.close() }
+    let workspace = try Self.workspace(opened, bundle: StudioModelTests.bundle())
+    workspace.choose(StretchProcess.id)
+    await workspace.previewNow()
+    #expect(throws: HistoryError.nothingToRedo) { try workspace.redo() }
+    await workspace.settlePreview()
+    #expect(workspace.isPreviewing && !workspace.isPreviewSuspended)
   }
 
   @Test(

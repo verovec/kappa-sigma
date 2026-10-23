@@ -26,9 +26,11 @@ package struct StudioSideView: View {
             Spacer()
             // No default-button Return: Return confirms a typed value (Edit › Apply Process ⌘E).
             // On a new head Apply previews first, and says so.
-            Button(model.isPreviewSuspended ? .app("Preview") : .app("Apply")) { applyRecorded() }
+            let title: LocalizedStringResource =
+              model.isPreviewSuspended ? .app("Preview") : .app("Apply")
+            Button(title) { applyRecorded() }
               .disabled(model.toolRun != nil)
-              .accessible(.studioApply, label: .app("Apply"))
+              .accessible(.studioApply, label: title)
           }
           StudioToolRow(model: model)
           if model.isPreviewSuspended { suspended }

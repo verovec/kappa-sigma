@@ -232,7 +232,6 @@ package final class StudioWorkspaceModel {
   package func resumePreview() {
     guard panel != nil else { return }
     isPreviewSuspended = false
-    previewTask?.cancel()
     drawPreview()
   }
 
@@ -288,6 +287,9 @@ package final class StudioWorkspaceModel {
   /// The history moved (an Apply, an undo, a pipeline run): the viewer, the panel's inputs and
   /// the catalogue follow the new head.
   func headChanged() throws {
+    // Even when showing the head fails, no preview scheduled meanwhile outlives the move.
+    let moved = headSteps != studio.steps
+    defer { suspendPreview(moved: moved) }
     if dropRegionIfMoved() { resetMovingValues() }
     shown = nil
     // A report speaks of the head it was made on.
@@ -306,11 +308,21 @@ package final class StudioWorkspaceModel {
     // After the viewer shows the new head: the display stretch offered is the one on screen.
     if let panel { refresh(panel) }
     refreshCatalogue()
-    // The panel stays open, the viewer on the new head: previewing its values again would show
-    // an Apply twice and an Undo as nothing. The panel says so and offers Preview.
+  }
+
+  /// Suspends the panel's preview once the history moved under it.
+  ///
+  /// The viewer stays on the new head: previewing the values again would show an Apply twice and
+  /// an Undo as nothing, so the panel says so and Apply reads Preview. A history that did not
+  /// move (a refused move) previews again; a host tool has no preview.
+  private func suspendPreview(moved: Bool) {
+    guard moved else {
+      if panel != nil { schedulePreview() }
+      return
+    }
     previewTask?.cancel()
     previewTask = nil
-    isPreviewSuspended = panel != nil
+    isPreviewSuspended = panel.map { !$0.type.runsTool($0.params) } ?? false
   }
 
   /// Waits for the preview scheduled by the last change, if any: a test sees a preview the

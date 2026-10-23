@@ -53,9 +53,12 @@ package struct PipelineSidebarView: View {
       Button(.app("Run")) { Task { await model.run() } }
         .disabled(model.isRunning)
         .accessible(.studioPipelineRun, label: .app("Run Pipeline"))
-      Button(.app("Continue")) { Task { await model.continueRun() } }
+      // On a new head Continue previews the breakpoint's values first, and says so.
+      let previews = model.workspace.isPreviewSuspended
+      Button(previews ? .app("Preview") : .app("Continue")) { Task { await model.continueRun() } }
         .disabled(model.isRunning || !model.canContinue)
-        .accessible(.studioPipelineContinue, label: .app("Continue Pipeline"))
+        .accessible(
+          .studioPipelineContinue, label: previews ? .app("Preview") : .app("Continue Pipeline"))
       Spacer()
       Button(.app("Replay on…")) { model.onReplay() }
         .disabled(model.isRunning)

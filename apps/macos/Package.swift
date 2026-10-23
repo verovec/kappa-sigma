@@ -70,10 +70,10 @@ let package = Package(
       exclude: ["Localizable.xcstrings"], swiftSettings: app, plugins: ["CatalogPlugin"]),
 
     .target(
-      name: "TestSupport", dependencies: [],
+      name: "TestSupport", dependencies: ["StackKit"],
       path: "Tests/TestSupport", resources: [.copy("Fixtures")], swiftSettings: common),
     .testTarget(
-      name: "TestSupportTests", dependencies: ["TestSupport"],
+      name: "TestSupportTests", dependencies: ["TestSupport", "StackKit"],
       resources: [.copy("Fixtures")], swiftSettings: common),
     .testTarget(
       name: "StringCatalogTests", dependencies: ["StringCatalog", "TestSupport"],

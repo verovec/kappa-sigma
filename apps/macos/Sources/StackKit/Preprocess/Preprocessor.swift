@@ -69,6 +69,8 @@ package actor Preprocessor {
     for folder in [request.output, request.work] {
       try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
     }
+    // Tens of GB of Siril files: a killed app's are swept at the next launch (LeftoverSweep).
+    try ScratchOwner.mark(request.work)
     var result = PreprocessResult(runID: request.runID)
     let pool = try await buildMasters(request, emitter: emitter, into: &result)
     let parity = ParityCache(runner: tools.runner, coordinates: request.settings.solveCoordinates)

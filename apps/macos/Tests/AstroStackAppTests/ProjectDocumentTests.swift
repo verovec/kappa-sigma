@@ -2,6 +2,7 @@ import AppKit
 import AstroStackApp
 import Foundation
 import ProjectKit
+import StackKit
 import TestSupport
 import Testing
 
@@ -23,6 +24,20 @@ struct ProjectDocumentTests {
     #expect(!FileManager.default.fileExists(atPath: untitled.path))
     document.close()
     #expect(try ProjectPackage.open(at: target).url == target)
+  }
+
+  @Test("an untitled package sits in a folder this process marks; closing removes both")
+  func testProjectDocument_untitled_markedAndRemoved() throws {
+    let document = try ProjectDocument(type: Self.type)
+    let untitled = try #require(document.packageURL)
+    let folder = untitled.deletingLastPathComponent()
+    #expect(folder.deletingLastPathComponent().lastPathComponent == "Untitled")
+    #expect(ScratchOwner.read(folder)?.owner.pid == getpid(), "a crash leaves it to the sweep")
+    #expect(!FileManager.default.fileExists(atPath: untitled.appendingPathComponent(ScratchOwner.fileName).path), "never inside the package a Save copies")
+
+    document.close()
+
+    #expect(!FileManager.default.fileExists(atPath: folder.path))
   }
 
   @Test("saving onto its own file saves in place; reopening works", .scratchDirectory)

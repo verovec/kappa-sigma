@@ -26,12 +26,15 @@ package final class ProjectDocument: NSDocument {
   package convenience init(type typeName: String) throws {
     self.init()
     fileType = typeName
+    // A folder of its own, marked by this process: a crash leaves it to the next launch's sweep
+    // (LeftoverSweep), and the marker stays out of the package a Save copies.
+    let id = UUID().uuidString
     let folder = FileManager.default.temporaryDirectory
-      .appendingPathComponent("AstroStack/Untitled", isDirectory: true)
+      .appendingPathComponent("AstroStack/Untitled/\(id)", isDirectory: true)
     try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    try ScratchOwner.mark(folder)
     project = try ProjectPackage.create(
-      at: folder.appendingPathComponent(UUID().uuidString)
-        .appendingPathExtension(ProjectPackage.fileExtension))
+      at: folder.appendingPathComponent(id).appendingPathExtension(ProjectPackage.fileExtension))
     isTemporary = true
   }
 
@@ -269,9 +272,19 @@ package final class ProjectDocument: NSDocument {
     guard wasTemporary else { return }
     do {
       try FileManager.default.removeItem(at: project.url)
+      try Self.removeUntitledFolder(project.url.deletingLastPathComponent())
     } catch {
       Self.logger.error("deleting \(project.url.path) failed: \(error)")
     }
+  }
+
+  /// Removes the untitled package's marked folder once only its marker is left.
+  private static func removeUntitledFolder(_ folder: URL) throws {
+    let manager = FileManager.default
+    guard try manager.contentsOfDirectory(atPath: folder.path) == [ScratchOwner.fileName] else {
+      return
+    }
+    try manager.removeItem(at: folder)
   }
 
   // MARK: - Window

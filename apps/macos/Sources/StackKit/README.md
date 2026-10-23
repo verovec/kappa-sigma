@@ -144,6 +144,28 @@ takes the colour model of the lights it keeps: a mixed scan names its colour lig
 (`nameColorChannel`), so a mono object beside an OSC one stacks as two runs, while one object shot
 by both rigs is still refused as mixed. The app queues one run per checked object.
 
+## Scratch owners and the leftover sweep (card 0113)
+
+Every scratch folder the app or a test creates carries `owner.json` (`ScratchOwner`): the pid and
+start time of the process that made it, and the Siril it launched there. Today: Siril's FIFO
+folders (`$TMPDIR/AstroStack/siril-*`, `SirilPipeInstance`), each run's work folder
+(`Preprocessor.perform` marks `request.work`), an untitled project's folder
+(`AstroStack/Untitled/<UUID>/`, the marker beside the package, never in it) and each test's
+scratch folder (`TestSupport/ScratchDirectory`, the marker one level above the test's directory).
+
+`LeftoverSweep` runs at app launch (`AppDelegate.sweepLeftovers`) and once per test process. Per
+root it takes only entries with the root's prefix: a marked one whose owner no longer runs (after
+stopping its recorded Siril, only while that pid still runs a `siril-cli` started when recorded),
+an unmarked one untouched for a day. A root inside or around `~/Documents/astro` is refused (R7).
+`ProcessTable` is the only door to the process table; tests pass a fake one.
+
+Stack folders (`StackLeftovers`): a failed or cancelled run's `stacks/<id>/` goes unless it holds a
+finished `master_*.fits`; at project open and when a queue ends, folders no stack row names are
+removed when empty and listed in the Stacking stage otherwise, deleted only by the user (R2).
+
+To add a scratch folder: create it, `ScratchOwner.mark` it, and give its parent a `Root` in
+`LeftoverSweep.appRoots` with a prefix that names only such folders.
+
 ## How to extend
 
 - A port loads its case with `OracleCase.load` and compares: bytes for scripts and Siril masters,

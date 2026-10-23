@@ -29,6 +29,7 @@ struct StackingStagePane: View {
       }
       .padding(DesignMetrics.spacingM)
       blocker
+      if !running && !model.leftoverStacks.isEmpty { StackLeftoversView(model: model) }
       HStack(spacing: 0) {
         // The values a run applies stay in view, frozen while it runs (R2).
         ScrollView {

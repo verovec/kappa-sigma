@@ -113,11 +113,13 @@ extension ProjectWindowModel {
       },
       completion: { [weak self] outcome in
         await Self.remove(work)
-        guard let self else { return }
         guard case .success = outcome else {
-          endQueue(drained: false)
+          // Finished masters stay (README); a folder with none would only pile up `_2`, `_3`.
+          await Self.removeUnfinished(output)
+          self?.endQueue(drained: false)
           return
         }
+        guard let self else { return }
         await register(record, runID: runID)
         if let next = queuedScopes.first, error == nil {
           queuedScopes.removeFirst()
@@ -152,6 +154,7 @@ extension ProjectWindowModel {
     queuedScopes = []
     queueActive = false
     refresh()
+    listLeftoverStacks()
     if let recorded = queueRecorded {
       queueRecorded = nil
       selectStack(recorded.stack.id)

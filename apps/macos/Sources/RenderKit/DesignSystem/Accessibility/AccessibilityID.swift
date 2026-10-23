@@ -120,6 +120,10 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
 
   /// The Empilement stage's « Cancel ».
   package static let stackingCancel = stageControl("stacking", "cancel")
+  /// The « Delete… » of a stack folder no stack records, by its folder name (card 0113).
+  package static func stackingDeleteLeftover(_ name: String) -> Self {
+    stageControl("stacking", "deleteLeftover." + name)
+  }
   /// A flag or choice knob of the Stacking panel, by its glossary term id (card 0070).
   package static func stackingKnob(_ termID: String) -> Self { stageControl("stacking", termID) }
 

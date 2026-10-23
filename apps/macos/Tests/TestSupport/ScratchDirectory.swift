@@ -1,4 +1,5 @@
 package import Foundation
+internal import StackKit
 package import Testing
 
 /// A fresh, empty directory per test, created before the test runs (clean state at the start,
@@ -16,13 +17,19 @@ package struct ScratchDirectory: TestTrait, TestScoping {
   package static let root = FileManager.default.temporaryDirectory
     .appendingPathComponent("AstroStackTests", isDirectory: true)
 
-  /// Leftovers older than this belong to no running test: a killed run never reached its cleanup.
-  package static let staleAge: TimeInterval = 24 * 3600
+  /// Unmarked leftovers older than this belong to no running test: a killed run never reached
+  /// its cleanup. A marked one goes as soon as the test process that made it is gone.
+  package static let staleAge: TimeInterval = LeftoverSweep.staleAge
 
   // Live preprocessing tests write tens of GB each, so a directory left behind fills the disk
   // within a day. Removing it at the end is cleanup, not reset: every test still starts empty.
-  // Other worktrees and the CI runner share the folder, so the sweep only takes stale entries.
-  private static let sweep: Void = removeStale(in: root, olderThan: staleAge, now: Date())
+  // Other worktrees and the CI runner share the folder, so the sweep only takes entries whose
+  // test process is gone (each directory carries its marker), and what a killed test's Siril
+  // or untitled project left in the app's scratch folders.
+  private static let sweep: Void = {
+    removeStale(in: root, olderThan: staleAge, now: Date())
+    LeftoverSweep(roots: LeftoverSweep.appRoots()).run()
+  }()
 
   /// Creates the directory under the temporary folder, runs the test with it, then removes it.
   @concurrent
@@ -31,23 +38,19 @@ package struct ScratchDirectory: TestTrait, TestScoping {
     performing function: @concurrent @Sendable () async throws -> Void
   ) async throws {
     Self.sweep
-    let directory = Self.root.appendingPathComponent(UUID().uuidString, isDirectory: true)
+    // The marker sits beside the test's directory, never in it: the test starts empty.
+    let owned = Self.root.appendingPathComponent(UUID().uuidString, isDirectory: true)
+    let directory = owned.appendingPathComponent("test", isDirectory: true)
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-    defer { try? FileManager.default.removeItem(at: directory) }
+    try ScratchOwner.mark(owned)
+    defer { try? FileManager.default.removeItem(at: owned) }
     try await Self.$current.withValue(directory) { try await function() }
   }
 
-  /// Removes the entries of `folder` last modified more than `age` seconds before `now`.
+  /// Removes the entries of `folder` whose test process is gone, and the unmarked ones last
+  /// modified more than `age` seconds before `now`.
   package static func removeStale(in folder: URL, olderThan age: TimeInterval, now: Date) {
-    let manager = FileManager.default
-    let entries =
-      (try? manager.contentsOfDirectory(
-        at: folder, includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
-    for entry in entries {
-      let modified = try? entry.resourceValues(forKeys: [.contentModificationDateKey])
-        .contentModificationDate
-      if let modified, now.timeIntervalSince(modified) > age { try? manager.removeItem(at: entry) }
-    }
+    LeftoverSweep(roots: [.init(folder: folder, prefix: "")], now: now, unmarkedAge: age).run()
   }
 }
 

@@ -53,6 +53,32 @@ struct FilterSetOverrideNightTests {
       &joint, overrides: [undated: .dualband], pixels: FilterSetScanTests.reader([:]))
     #expect(try Self.dualbandSet(joint).filterSet == .dualband)
     #expect(joint.sets.filter { $0.filterSet == .dualband }.count == 1)
+    #expect(
+      joint.warnings == [
+        "filter set override dualband for \(undated) was recorded without its night — applied to "
+          + "2026-09-22, the only night it can mean"
+      ])
+  }
+
+  @Test("an undated frame in a night does not hide the night its override is stored under")
+  func testOverrideID_undatedStrayKeepsTheNight() throws {
+    var stray = Self.dualband
+    stray.path = "stray.fits"
+    stray.session = ""
+    let alone = FilterSetScanTests.inventory([Self.dualband, stray])
+    let set = try #require(alone.sets.first { $0.key.type == .light })
+    #expect(set.overrideID.hasSuffix("|s:2026-09-22"))
+  }
+
+  @Test("a dated override supersedes the undated one recorded for the same night, silently")
+  func testAnnotate_datedOverrideSupersedesUndated() throws {
+    let alone = try Self.dualbandSet(FilterSetScanTests.inventory([Self.dualband]))
+    var joint = FilterSetScanTests.inventory([Self.broadband, Self.dualband])
+    FilterSetClassifier.annotate(
+      &joint, overrides: [alone.key.id: .broadband, alone.overrideID: .dualband],
+      pixels: FilterSetScanTests.reader([:]))
+    #expect(try Self.dualbandSet(joint).filterSet == .dualband)
+    #expect(joint.warnings.isEmpty)
   }
 
   @Test("an undated override two nights could mean applies to neither and says so")

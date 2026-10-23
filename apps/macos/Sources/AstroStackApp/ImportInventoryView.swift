@@ -62,7 +62,7 @@ struct ImportInventoryView: View {
     if row.type == .light && row.key.color {
       Picker(
         selection: Binding(
-          get: { model.filterSetOverride(row) ?? row.filterSet },
+          get: { model.request.filterSets[row.overrideID] ?? row.filterSet },
           set: { model.setFilterSet($0, for: row) })
       ) {
         ForEach(FilterSet.allCases, id: \.self) {
@@ -74,7 +74,7 @@ struct ImportInventoryView: View {
       .labelsHidden()
       .fixedSize()
       .help(
-        model.filterSetOverride(row) == nil
+        model.request.filterSets[row.overrideID] == nil
           ? Text(.app("Measured from the pixels"))
           : Text(.app("Your override; set unknown to measure again")))
     } else {

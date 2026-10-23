@@ -106,16 +106,8 @@ package final class ImportViewModel {
     refresh()
   }
 
-  /// The user's clip-filter override of `row`, under its dated id or the id it was stored under
-  /// before `overrideID`.
-  package func filterSetOverride(_ row: ImportPlan.SetRow) -> FilterSet? {
-    request.filterSets[row.overrideID] ?? request.filterSets[row.id]
-  }
-
   /// Asserts the clip filter of a colour light set; `unknown` hands it back to the pixels.
   package func setFilterSet(_ value: FilterSet, for row: ImportPlan.SetRow) {
-    // An override stored before `overrideID` goes: the dated one replaces it.
-    request.filterSets[row.id] = nil
     request.filterSets[row.overrideID] = value.isKnown ? value : nil
     refresh()
   }

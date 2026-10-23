@@ -5153,6 +5153,22 @@
         }
       }
     },
+    "Siril ended without a solution (centre, scale, rotation). Its last lines: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril ended without a solution (centre, scale, rotation). Its last lines: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril s’est arrêté sans solution (centre, échantillonnage, rotation). Ses dernières lignes : %@"
+          }
+        }
+      }
+    },
     "Siril found no solution: %@. Check the centre, focal length and pixel size.": {
       "localizations": {
         "en": {
@@ -5233,18 +5249,18 @@
         }
       }
     },
-    "Siril reported a solution but wrote none in %@.": {
+    "Siril reported a solution but wrote no file at %@.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Siril reported a solution but wrote none in %@."
+            "value": "Siril reported a solution but wrote no file at %@."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Siril a annoncé une solution mais n’en a écrit aucune dans %@."
+            "value": "Siril a annoncé une solution mais n’a écrit aucun fichier en %@."
           }
         }
       }
@@ -5261,6 +5277,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Siril s’est arrêté pendant « %@ » et a été relancé ; relancez l’étape."
+          }
+        }
+      }
+    },
+    "Siril wrote %@ without a readable plate solution (TAN projection, scale).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril wrote %@ without a readable plate solution (TAN projection, scale)."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril a écrit %@ sans solution astrométrique lisible (projection TAN, échelle)."
           }
         }
       }

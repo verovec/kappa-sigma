@@ -1,6 +1,7 @@
 package import Foundation
 package import ImageKit
 internal import Synchronization
+internal import os
 
 /// Plate solving with Siril (card 0093): the image as is, the values the user confirmed, and
 /// Siril's solution back as WCS cards — the pixels are never Siril's.
@@ -76,10 +77,31 @@ package struct PlateSolver: Sendable {
       throw Self.failure(error, lines: lines.withLock { $0 })
     }
     try Task.checkCancellation()
-    let solved = folder.appendingPathComponent("solved.fits")
-    guard let solution = PlateSolution(lines: lines.withLock { $0 }),
-      let wcs = (try? FITSFile.read(at: solved)).flatMap({ WCS(header: $0.header) })
-    else { throw PlateSolveError.noSolution(path: solved.path) }
+    let log = lines.withLock { $0 }
+    do {
+      return try Self.solved(log: log, file: folder.appendingPathComponent("solved.fits"))
+    } catch {
+      // The folder is removed on return: Siril's whole log stays in the system log.
+      Self.logger.error(
+        "plate solve read nothing: \(log.joined(separator: "\n"), privacy: .public)")
+      throw error
+    }
+  }
+
+  private static let logger = Logger(subsystem: "fr.astrostack", category: "StackKit/platesolve")
+
+  /// The solution Siril's `log` reports and `file` carries, or which of the two is missing.
+  package static func solved(log: [String], file: URL) throws -> Solved {
+    guard let solution = PlateSolution(lines: log) else {
+      let said = log.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+      throw PlateSolveError.noReport(lastLines: said.suffix(3).joined(separator: " · "))
+    }
+    guard FileManager.default.fileExists(atPath: file.path) else {
+      throw PlateSolveError.noFile(path: file.path)
+    }
+    guard let wcs = (try? FITSFile.read(at: file)).flatMap({ WCS(header: $0.header) }) else {
+      throw PlateSolveError.noSolution(path: file.path)
+    }
     return Solved(solution: solution, wcs: wcs)
   }
 

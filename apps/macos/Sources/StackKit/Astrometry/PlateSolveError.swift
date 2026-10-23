@@ -4,6 +4,10 @@ package enum PlateSolveError: Error, Equatable, Sendable {
   case failed(reason: String)
   /// The local catalogue is not on disk (`just download-catalogues`); nothing went online.
   case catalogueMissing(path: String)
-  /// Siril said it solved but wrote no readable TAN solution.
+  /// Siril ended without the lines of a solution (centre, scale, rotation): its last lines.
+  case noReport(lastLines: String)
+  /// Siril reported a solution but wrote no file.
+  case noFile(path: String)
+  /// Siril wrote the file without a readable TAN solution.
   case noSolution(path: String)
 }

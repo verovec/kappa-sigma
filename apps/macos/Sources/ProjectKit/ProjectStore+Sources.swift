@@ -50,22 +50,28 @@ extension ProjectStore {
       createdAt: row["created_at"], updatedAt: row["updated_at"])
   }
 
-  /// Records a stack, the sources it was built from and one image per `imageRoles`, in one
-  /// transaction: a failure leaves no half-recorded stack. `object` and `scopeJSON` (card 0095)
-  /// name what the run stacked; a stack of every light of its sources leaves them empty.
+  /// Records a stack, the sources it was built from and one image per `imageRoles`.
+  ///
+  /// One transaction: a failure leaves no half-recorded stack. `object` and `scopeJSON` (card
+  /// 0095) name what the run stacked; a stack of every light of its sources leaves them empty. A
+  /// paused run (card 0097) is recorded with `status: .paused` and its checkpoint, without images.
   @discardableResult
   package func addStack(
     bundlePath: String, sourceIDs: [Int64], paramsJSON: String, imageRoles: [String] = [],
-    object: String = "", scopeJSON: String? = nil
+    object: String = "", scopeJSON: String? = nil, status: ProjectStack.Status = .done,
+    checkpointJSON: String? = nil
   ) throws -> ProjectStack {
     let stamp = now()
     return try pool.write { db in
       try db.execute(
         sql: """
-          INSERT INTO stacks (bundle_path, params_json, object, scope_json, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?)
+          INSERT INTO stacks (bundle_path, params_json, object, scope_json, status,
+            checkpoint_json, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
           """,
-        arguments: [bundlePath, paramsJSON, object, scopeJSON, stamp, stamp])
+        arguments: [
+          bundlePath, paramsJSON, object, scopeJSON, status.rawValue, checkpointJSON, stamp, stamp,
+        ])
       let id = db.lastInsertedRowID
       for source in Set(sourceIDs) {
         try db.execute(
@@ -82,8 +88,8 @@ extension ProjectStore {
       }
       return ProjectStack(
         id: id, bundlePath: bundlePath, sourceIDs: Set(sourceIDs).sorted(),
-        paramsJSON: paramsJSON, object: object, scopeJSON: scopeJSON, createdAt: stamp,
-        updatedAt: stamp)
+        paramsJSON: paramsJSON, object: object, scopeJSON: scopeJSON, status: status,
+        checkpointJSON: checkpointJSON, createdAt: stamp, updatedAt: stamp)
     }
   }
 
@@ -95,23 +101,24 @@ extension ProjectStore {
     }
   }
 
-  /// The newest stack, or `nil`.
+  /// The newest finished stack, or `nil`.
   package func latestStack() throws -> ProjectStack? {
     try pool.read { db in
-      try Row.fetchOne(db, sql: "SELECT * FROM stacks ORDER BY id DESC LIMIT 1")
-        .map { try Self.stack($0, in: db) }
+      try Row.fetchOne(
+        db, sql: "SELECT * FROM stacks WHERE status = 'done' ORDER BY id DESC LIMIT 1"
+      ).map { try Self.stack($0, in: db) }
     }
   }
 
-  /// Every stack, oldest first.
+  /// Every finished stack, oldest first (a paused run is listed by `pausedStacks()`).
   package func stacks() throws -> [ProjectStack] {
     try pool.read { db in
-      try Row.fetchAll(db, sql: "SELECT * FROM stacks ORDER BY id")
+      try Row.fetchAll(db, sql: "SELECT * FROM stacks WHERE status = 'done' ORDER BY id")
         .map { try Self.stack($0, in: db) }
     }
   }
 
-  private static func stack(_ row: Row, in db: Database) throws -> ProjectStack {
+  static func stack(_ row: Row, in db: Database) throws -> ProjectStack {
     let id: Int64 = row["id"]
     let sources = try Int64.fetchAll(
       db, sql: "SELECT source_id FROM stack_sources WHERE stack_id = ? ORDER BY source_id",
@@ -119,6 +126,8 @@ extension ProjectStore {
     return ProjectStack(
       id: id, bundlePath: row["bundle_path"], sourceIDs: sources,
       paramsJSON: row["params_json"], object: row["object"] ?? "", scopeJSON: row["scope_json"],
-      createdAt: row["created_at"], updatedAt: row["updated_at"])
+      status: (row["status"] as String?).flatMap(ProjectStack.Status.init(rawValue:)) ?? .done,
+      checkpointJSON: row["checkpoint_json"], createdAt: row["created_at"],
+      updatedAt: row["updated_at"])
   }
 }

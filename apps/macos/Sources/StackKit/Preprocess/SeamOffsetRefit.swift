@@ -9,7 +9,7 @@ internal import ImageKit
 /// into straight seams. Offset only; every guard is a reason, recorded.
 package enum SeamOffsetRefit {
   /// One night's outcome (`SeamOffset`).
-  package struct Record: Equatable, Sendable {
+  package struct Record: Codable, Equatable, Sendable {
     package var session: String
     package var delta = 0.0
     package var applied = false

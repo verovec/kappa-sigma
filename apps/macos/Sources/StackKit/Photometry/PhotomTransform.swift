@@ -2,7 +2,7 @@
 /// established and the flags a run records.
 package struct PhotomTransform: Equatable, Sendable {
   /// Which evidence set the scale (the legacy ladder, most authoritative first).
-  package enum Method: String, CaseIterable, Sendable {
+  package enum Method: String, CaseIterable, Codable, Sendable {
     /// Theil–Sen fit over signal-bearing curves.
     case measured
     /// The exposure/gain prediction (flat curves).

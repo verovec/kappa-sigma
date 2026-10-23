@@ -1,6 +1,6 @@
 /// The masters chosen for one light set, with the notes that explain every gap and fallback
 /// (`calib.Selection`).
-package struct CalibrationSelection: Equatable, Sendable {
+package struct CalibrationSelection: Codable, Equatable, Sendable {
   package var dark: CalibrationMaster?
   package var flat: CalibrationMaster?
   package var bias: CalibrationMaster?

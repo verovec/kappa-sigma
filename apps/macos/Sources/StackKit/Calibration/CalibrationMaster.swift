@@ -1,5 +1,5 @@
 /// A built or library master calibration frame (`calib.Master`).
-package struct CalibrationMaster: Equatable, Sendable {
+package struct CalibrationMaster: Codable, Equatable, Sendable {
   package var type: MasterType
   /// Flats only: the filter the flat set was shot through (`""` for a shared or colour flat).
   package var filter = ""

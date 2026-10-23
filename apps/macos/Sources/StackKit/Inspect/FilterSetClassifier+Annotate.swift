@@ -5,7 +5,8 @@ extension FilterSetClassifier {
   /// of frames per set, the scan's own bias pedestal subtracted.
   ///
   /// Without a bias or dark there is no honest answer. Overrides win outright, even where nothing
-  /// was measured.
+  /// was measured; each names its set by night (`FilterSetOverrides`), and one naming none is a
+  /// warning.
   package static func annotate(
     _ inventory: inout Inventory, overrides: [String: FilterSet], pixels: PixelReader
   ) {
@@ -17,7 +18,9 @@ extension FilterSetClassifier {
         if verdict.isKnown { verdicts[set.key.id] = verdict }
       }
     }
-    for (id, verdict) in overrides where verdict.isKnown { verdicts[id] = verdict }
+    let asserted = FilterSetOverrides.resolve(overrides, sets: inventory.sets)
+    verdicts.merge(asserted.verdicts) { _, override in override }
+    inventory.warnings += asserted.warnings
     inventory.filterSets = verdicts
     inventory.applyFilterSets()
   }

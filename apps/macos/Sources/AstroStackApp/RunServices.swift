@@ -23,13 +23,15 @@ package nonisolated struct RunServices: Sendable {
   /// Services from their parts.
   package init(
     run: @escaping Run, now: @escaping @Sendable () -> Date = { Date() },
-    scratch: @autoclosure @escaping @Sendable () -> URL = ScratchSetting.defaultFolder,
+    scratch: URL = ScratchSetting.defaultFolder,
     timeZone: TimeZone = .current,
-    room: @escaping @Sendable (URL) -> Int64? = ScratchSpace.available(at:)
+    room: @escaping @Sendable (URL) -> Int64? = ScratchSpace.available(at:),
+    scratchFolder: (@Sendable () -> URL)? = nil
   ) {
     self.run = run
     self.now = now
-    scratchFolder = scratch
+    // A fixed folder unless a reader is given (the live services read Settings at each run).
+    self.scratchFolder = scratchFolder ?? { scratch }
     self.room = room
     self.timeZone = timeZone
   }
@@ -45,7 +47,7 @@ package nonisolated struct RunServices: Sendable {
       } catch {
         return AsyncThrowingStream { $0.finish(throwing: error) }
       }
-    }, scratch: ScratchSetting().folder)
+    }, scratchFolder: { ScratchSetting().folder })
 
   /// The id of a run started at `date`: the legacy `yyyyMMdd_HHmmss`, so a stack folder reads
   /// like a legacy run's.

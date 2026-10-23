@@ -53,7 +53,7 @@ struct ScratchSettingTests {
     defer { defaults.removePersistentDomain(forName: name) }
     nonisolated(unsafe) let setting = ScratchSetting(defaults: defaults)
     let services = RunServices(
-      run: { _ in AsyncThrowingStream { $0.finish() } }, scratch: setting.folder)
+      run: { _ in AsyncThrowingStream { $0.finish() } }, scratchFolder: { setting.folder })
     #expect(services.scratch == ScratchSetting.defaultFolder)
     setting.choose(URL(fileURLWithPath: "/Volumes/SSD"))
     #expect(services.scratch.path == "/Volumes/SSD/AstroStack/Work")

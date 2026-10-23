@@ -171,7 +171,8 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   `scale1…4` × σⱼ × `noise`, σⱼ the white-noise sigma of the scale (`ImageKit.StarletNoise`,
   shared with StackKit) and `noise` the image's noise σ, a parameter the panel shows (not the
   MADN: on an extended nebula it counts the signal several times over); the coarse residual kept.
-  `protectStars` keeps a share from StackKit's band (5 → 10 `noise` of the scale-2 smooth above
+  `protectStars` keeps a share from the band StackKit shares (`ImageKit.StarletNoise.protection`,
+  5 → 10 `noise` of the scale-2 smooth above
   the plane's median, the only value read from the stats); the denoised planes' luminance (mean
   of the planes) and colour changes are put back at `amount × luminance` and
   `amount × chrominance`. Amount 0 (the default) blits the input; noise 0 thresholds nothing; 1 or

@@ -9,8 +9,9 @@ package import Metal
 /// (`StarletNoise`) and `noise` the image's noise σ, a value the panel shows (R2: the process
 /// never measures it; the app offers the measured one). The luminance and the colour of the
 /// result are put back at their own amounts; `protectStars` keeps what stands 5 to 10 `noise`
-/// above the plane's median (StackKit's `StarletDenoiser` band). Amount 0 (the default), noise 0
-/// or every strength 0 returns the input bit for bit.
+/// above the plane's median (`StarletNoise.protection`, StackKit's band). Amount 0 (the
+/// default), noise 0, every strength 0 or nothing kept (luminance and colour amounts 0) returns
+/// the input bit for bit.
 package struct DenoiseProcess: ImageProcess {
   package static let id = "denoise"
   package static let title = "Denoise"
@@ -19,8 +20,6 @@ package struct DenoiseProcess: ImageProcess {
   package static let previewExactOnlyAt1to1 = true
   /// The strengths of scales 1…4 (1, 2, 4 and 8 px): StackKit's deep-sky preset.
   package static let presetStrengths = [3.0, 2.5, 1.8, 1.0]
-  /// The SNR band (σ above the median) over which a protected pixel goes from denoised to kept.
-  static let protection: (low: Float, high: Float) = (5, 10)
 
   package static let schema = ParamSchema(
     [
@@ -89,9 +88,12 @@ package struct DenoiseProcess: ImageProcess {
       output.width == input.width, output.height == input.height
     else { throw ProcessError.sizeMismatch }
     let amount = params.number("amount")
-    // Nothing to threshold is the input bit for bit, not a recomposition rounded in float.
+    // Nothing to threshold or nothing kept of the result is the input bit for bit, not a
+    // recomposition rounded in float.
     let thresholds = (1...4).contains { params.number("scale\($0)") > 0 }
-    guard amount > 0, params.number("noise") > 0, thresholds else {
+    let colour = input.planes.count == 3 && params.number("chrominance") > 0
+    let kept = params.number("luminance") > 0 || colour
+    guard amount > 0, params.number("noise") > 0, thresholds, kept else {
       return try copy(input, into: output, commands: context.commands)
     }
     let protects = params.flag("protectStars")

@@ -1,3 +1,5 @@
+internal import ImageKit
+
 /// The scale-adaptive, SNR-protected starlet denoiser (`noise.DenoiseWeighted`), weighted per
 /// pixel.
 ///
@@ -6,10 +8,6 @@
 package enum StarletDenoiser {
   /// The deep-sky preset (`DefaultOptions`).
   static let thresholds = [3.0, 2.5, 1.8, 1.0, 0.0]
-  /// The SNR band (in σ above the background) over which a pixel goes from denoised to kept.
-  package static let protectLow = 5.0
-  /// The top of that band.
-  package static let protectHigh = 10.0
 
   /// Denoises `planes` in place with `weights` (one per pixel).
   package static func denoise(_ planes: inout [[Float]], width: Int, height: Int, weights: [Float])
@@ -53,10 +51,10 @@ package enum StarletDenoiser {
     for index in plane.indices where weights[index] > 0 { plane[index] = smooth[index] }
   }
 
-  /// The share of a pixel `snr` σ above the background that is kept as it is (0 below
-  /// `protectLow`, 1 above `protectHigh`, a smoothstep between).
+  /// The share of a pixel `snr` σ above the background that is kept as it is (0 below the
+  /// `StarletNoise.protection` band, 1 above it, a smoothstep between).
   package static func protection(snr: Double) -> Double {
-    NoiseStats.smoothstep(protectLow, protectHigh, snr)
+    NoiseStats.smoothstep(StarletNoise.protection.low, StarletNoise.protection.high, snr)
   }
 
   /// One detail plane soft-thresholded by `threshold(index)`, a `protect(index)` share of each

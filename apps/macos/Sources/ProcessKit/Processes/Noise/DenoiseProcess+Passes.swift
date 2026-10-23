@@ -1,3 +1,4 @@
+internal import ImageKit
 internal import Metal
 
 extension DenoiseProcess {
@@ -24,7 +25,8 @@ extension DenoiseProcess {
     _ scaleTwo: MTLTexture, into mask: MTLTexture, median: Double, sigma: Double,
     commands: MTLCommandBuffer
   ) throws {
-    var values = [Float(median), Float(sigma), Self.protection.low, Self.protection.high]
+    let band = StarletNoise.protection
+    var values = [Float(median), Float(sigma), Float(band.low), Float(band.high)]
     try dispatch(protect, [scaleTwo, mask], &values, size: mask, commands: commands)
   }
 

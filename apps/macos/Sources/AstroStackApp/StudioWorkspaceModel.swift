@@ -134,6 +134,7 @@ package final class StudioWorkspaceModel {
     isRetired = true
     previewTask?.cancel()
     toolTask?.cancel()
+    headNoise.stop()
     undoManager?.removeAllActions(withTarget: self)
   }
 

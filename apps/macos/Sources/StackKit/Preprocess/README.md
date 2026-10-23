@@ -23,6 +23,20 @@ Siril commands. Finished masters stay, and the bundle, written last, never appea
 on the same output folder throws `targetBusy` (`TargetLock`). Mono + colour mixes
 (`mixedColorModel`) are refused before anything runs.
 
+**Pause and resume (card 0097).** A request carrying a `PauseGate` (`request.pause`) is read after
+each lane: once requested, the run ends after the lane it is in with `.paused(PreprocessCheckpoint)`
+(lanes done, lanes left) instead of `.finished`; the last lane never pauses. Every stacked lane
+writes `output/lanes/<lane>.json` (`LaneRecord`: its `ChannelOutcome`, a digest of its light
+frames + every calibration frame + the library, and a digest of the settings as applied). A
+`resuming` request into the same output folder reuses each lane whose record still matches — no
+Siril call for it, « `<lane>`: reusing master_… » on the journal — and stacks the others,
+saying why (« `<lane>` re-runs: the frames changed / the settings changed / its master is gone /
+it failed »). Calibration masters are built only when a lane has to be stacked. The bundle and
+`grades.json` of a resumed run are byte-identical to an uninterrupted one
+(`PreprocessorPauseTests`). A Siril step is never interrupted: it has no checkpoint. To extend:
+a new knob changes `settingsDigest` by itself (`String(reflecting:)` of the settings); a new
+lane input belongs in `LaneRecord.framesDigest`.
+
 The app consumes the stream in `RunViewModel` (card 0057, Stacking stage). Each step becomes a row
 (pending → running → done, failed or cancelled), the last percentage of the current step is a bar,
 previews form a strip that replaces by stage, and every non-empty `line` goes into a filterable

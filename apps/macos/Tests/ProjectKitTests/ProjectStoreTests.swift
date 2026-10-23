@@ -26,11 +26,11 @@ struct ProjectStoreTests {
 
     #expect(try store.tableNames() == (Self.applicationTables + ["schema_migrations"]).sorted())
     let applied = try store.appliedMigrations()
-    #expect(applied.map(\.version) == [1, 2, 3, 4, 5, 6])
+    #expect(applied.map(\.version) == [1, 2, 3, 4, 5, 6, 7])
     #expect(
       applied.map(\.name) == [
         "init", "calibration_masters", "project_settings", "source_profile", "stack_object_scope",
-        "exports",
+        "exports", "stack_status",
       ])
 
     try store.migrate(to: 0)
@@ -68,10 +68,11 @@ struct ProjectStoreTests {
       try store.columnNames(of: "stacks") == [
         "bundle_path", "created_at", "id", "params_json", "updated_at",
       ])
-    try store.migrate(to: nil)
+    try store.migrate(to: 5)
     #expect(
       try store.columnNames(of: "stacks")
         == ["bundle_path", "created_at", "id", "object", "params_json", "scope_json", "updated_at"])
+    try store.migrate(to: nil)
     // The rows survived the round trip, unscoped now.
     #expect(try store.stacks().map(\.bundlePath) == ["stacks/A", "stacks/B"])
     #expect(try store.stacks().allSatisfy { $0.object == "" && $0.scopeJSON == nil })
@@ -256,7 +257,7 @@ struct ProjectStoreTests {
     try package.close()
 
     let reopened = try ProjectPackage.open(at: package.url)
-    #expect(try reopened.store.appliedMigrations().map(\.version) == [1, 2, 3, 4, 5, 6])
+    #expect(try reopened.store.appliedMigrations().map(\.version) == [1, 2, 3, 4, 5, 6, 7])
     #expect(try reopened.store.sources().count == 1)
     try reopened.close()
     let items = try FileManager.default.contentsOfDirectory(atPath: package.url.path)

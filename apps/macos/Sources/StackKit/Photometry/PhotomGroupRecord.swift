@@ -1,5 +1,5 @@
 /// What normalisation did to one group (`photom.GroupRecord`), as the run records it.
-package struct PhotomGroupRecord: Equatable, Sendable {
+package struct PhotomGroupRecord: Codable, Equatable, Sendable {
   package var sessionID: Int
   package var session: String
   package var label: String

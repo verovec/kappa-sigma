@@ -160,6 +160,15 @@ package final class KnobPanelViewModel {
     edits[id] = value
   }
 
+  /// The panel as a recorded run left it (a paused run's Continue, card 0097): its preset and
+  /// its edits replace the panel's, so the frozen panel shows what the run applies (R2).
+  package func load(mode: PreprocessRequest.Mode, patch: KnobPatch) {
+    let recorded = Self(mode: mode, patch: patch)
+    self.mode = mode
+    edits = recorded.edits
+    ignored = recorded.ignored
+  }
+
   /// The record the ignored values came from was replaced by a run's clean one.
   package func clearIgnored() {
     ignored = []

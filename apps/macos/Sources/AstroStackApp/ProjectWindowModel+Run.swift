@@ -98,7 +98,9 @@ extension ProjectWindowModel {
       resume.map { URL(fileURLWithPath: $0.bundlePath).lastPathComponent }
       ?? Self.unusedRunID(runs.nextRunID, in: folder)
     let output = folder.appendingPathComponent("stacks/\(runID)", isDirectory: true)
-    let work = runs.scratch.appendingPathComponent("run_\(runID)", isDirectory: true)
+    let scratch = runs.scratch
+    let work = scratch.appendingPathComponent("run_\(runID)", isDirectory: true)
+    let room = runs.room
     // The run re-plans the import silently: its own progress is the run's journal.
     let planning = ImportViewModel.silent(services(store).planning)
     let start = runs.run
@@ -115,6 +117,8 @@ extension ProjectWindowModel {
           guard unlisted.isEmpty else { throw PreprocessError.scopeOutdated(unlisted) }
         }
         let inventory = scope.map { plan.inventory.scoped($0) } ?? plan.inventory
+        // Refused before Siril starts, never left to fail mid-run on a full disk (card 0098).
+        try Self.checkScratch(inventory, settings: settings, folder: scratch, room: room)
         var request = PreprocessRequest(
           inventory: inventory, output: output, work: work, runID: runID, mode: record.mode,
           settings: settings, library: plan.library)

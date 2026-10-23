@@ -174,7 +174,20 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
       .app(
         "No light set to stack: the capture holds none, or the series chosen are not in this scan.")
     case .scopeOutdated(let sets): scopeOutdated(sets.count)
+    case .scratchFull(let needed, let room, let folder):
+      scratchFull(
+        ScratchBudget.gigabytesUp(needed), room: ScratchBudget.gigabytesDown(room),
+        folder: (folder as NSString).abbreviatingWithTildeInPath)
     }
+  }
+
+  /// The run would fill the scratch volume (card 0098): the need, the room, where to act.
+  private static func scratchFull(_ needed: Int, room: Int, folder: String)
+    -> LocalizedStringResource
+  {
+    .app(
+      "Needs ~\(needed) GB of scratch in \(folder), \(room) GB free: see Settings › Scratch folder."
+    )
   }
 
   /// The scan moved since the series were chosen (card 0095): a rescan lists what is there now.

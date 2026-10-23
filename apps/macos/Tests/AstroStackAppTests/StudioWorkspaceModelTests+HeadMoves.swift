@@ -129,6 +129,28 @@ extension StudioWorkspaceModelTests {
     #expect(
       workspace.studio.steps.map(\.processID) == ["channel-combination", "stretch", "curves"])
   }
+
+  @Test("a stale ⌘Z entry never swallows the history's Undo button", .scratchDirectory)
+  func testHistoryButtons_StaleEntry_StillUndo() async throws {
+    let opened = try StudioModelTests.project()
+    defer { try? opened.package.close() }
+    let workspace = try Self.workspace(opened, bundle: StudioModelTests.bundle())
+    let undoManager = Self.undoManager()
+    workspace.choose(StretchProcess.id)
+    await workspace.previewNow()
+    undoManager.beginUndoGrouping()
+    StudioUndo.apply(workspace, undoManager: undoManager)
+    undoManager.endUndoGrouping()
+    // The head moves without ⌘Z: the Studio entry on top now names a step that is gone.
+    try workspace.undo()
+    workspace.choose(CurvesProcess.id)
+    await workspace.previewNow()
+    try workspace.apply()
+    #expect(workspace.studio.steps.map(\.processID) == ["channel-combination", "curves"])
+
+    StudioUndo.undo(workspace, undoManager: undoManager)
+    #expect(workspace.studio.steps.map(\.processID) == ["channel-combination"])
+  }
 }
 
 extension PipelineSidebarModelTests {
@@ -165,5 +187,19 @@ extension PipelineSidebarModelTests {
     #expect(workspace.studio.steps.map(\.processID) == ["channel-combination"])
     undoManager.redo()
     #expect(workspace.studio.steps.map(\.processID) == done)
+  }
+
+  @Test("a run ended after its workspace was retired registers no ⌘Z", .scratchDirectory)
+  func testRun_RetiredWorkspace_RegistersNothing() async throws {
+    let opened = try StudioModelTests.project()
+    defer { try? opened.package.close() }
+    let (workspace, sidebar) = try Self.sidebar(opened, try Self.fourSteps())
+    await sidebar.run()
+    let undoManager = StudioWorkspaceModelTests.undoManager()
+    workspace.retire()
+    undoManager.beginUndoGrouping()
+    StudioUndo.recordRun(workspace, from: 1, on: undoManager)
+    undoManager.endUndoGrouping()
+    #expect(undoManager.undoActionName.isEmpty, "no Studio Step on the stack")
   }
 }

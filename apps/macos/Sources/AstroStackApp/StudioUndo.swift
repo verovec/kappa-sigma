@@ -47,33 +47,46 @@ package enum StudioUndo {
   }
 
   /// The steps a pipeline run added after the history's first `count`: one ⌘Z takes them back.
+  ///
+  /// A workspace retired while its run went on registers nothing: its moves were removed.
   package static func recordRun(
     _ model: StudioWorkspaceModel, from count: Int, on undoManager: UndoManager?
   ) {
     let steps = model.studio.steps
-    guard let undoManager, steps.count > count else { return }
+    guard let undoManager, !model.isRetired, steps.count > count else { return }
     model.undoManager = undoManager
     // Oldest first: the group undoes the last step first, which leaves the head on the one before.
     for step in steps[count...] { record(model, undoing: true, head: step.file, on: undoManager) }
   }
 
   /// The history's Undo button: ⌘Z itself when the window's last action is a Studio move, else
-  /// one step back on the history.
+  /// one step back on the history — also when that move went stale (the head moved since), so
+  /// the button never does nothing.
   package static func undo(_ model: StudioWorkspaceModel, undoManager: UndoManager?) {
-    if let undoManager, undoManager.canUndo, undoManager.undoActionName == actionName {
-      undoManager.undo()
-    } else {
-      try? model.undo()
+    if let undoManager, undoManager.canUndo, undoManager.undoActionName == actionName,
+      moves(model, by: undoManager.undo)
+    {
+      return
     }
+    try? model.undo()
   }
 
-  /// The history's Redo button: ⇧⌘Z itself when the window's last undo was a Studio move.
+  /// The history's Redo button: ⇧⌘Z itself when the window's last undo was a Studio move, else
+  /// one step forward on the history.
   package static func redo(_ model: StudioWorkspaceModel, undoManager: UndoManager?) {
-    if let undoManager, undoManager.canRedo, undoManager.redoActionName == actionName {
-      undoManager.redo()
-    } else {
-      try? model.redo()
+    if let undoManager, undoManager.canRedo, undoManager.redoActionName == actionName,
+      moves(model, by: undoManager.redo)
+    {
+      return
     }
+    try? model.redo()
+  }
+
+  /// Whether `move` changed the history's head.
+  private static func moves(_ model: StudioWorkspaceModel, by move: () -> Void) -> Bool {
+    let head = model.studio.steps.map(\.file)
+    move()
+    return model.studio.steps.map(\.file) != head
   }
 
   /// What Edit › Undo says of a Studio move, and how the history's buttons recognise one.

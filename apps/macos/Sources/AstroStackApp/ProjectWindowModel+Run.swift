@@ -125,8 +125,7 @@ extension ProjectWindowModel {
       completion: { [weak self] outcome in
         await Self.remove(work)
         await self?.ended(
-          outcome, record: record, runID: runID, output: output, resume: resume, mode: mode,
-          patch: patch)
+          outcome, record: record, runID: runID, resume: resume, mode: mode, patch: patch)
       })
   }
 
@@ -135,15 +134,15 @@ extension ProjectWindowModel {
   /// queue.
   private func ended(
     _ outcome: Result<PreprocessResult, any Error>, record: StackRecord, runID: String,
-    output: URL, resume: ProjectStack?, mode: PreprocessRequest.Mode, patch: KnobPatch
+    resume: ProjectStack?, mode: PreprocessRequest.Mode, patch: KnobPatch
   ) async {
     guard case .success = outcome else {
       if case .failure(let failure) = outcome, let paused = failure as? RunPaused {
         recordPause(record, runID: runID, checkpoint: paused.checkpoint, replacing: resume)
-      } else if resume == nil {
+      } else if resume == nil, let run, run.runID == runID {
         // Finished masters stay (README); a folder with none would only pile up `_2`, `_3`. A
         // resumed run's folder is its paused stack's checkpoint: never removed here.
-        await Self.removeUnfinished(output)
+        await Self.removeUnfinished(run.output)
       }
       endQueue(drained: false)
       return

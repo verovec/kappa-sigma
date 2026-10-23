@@ -6553,6 +6553,22 @@
         }
       }
     },
+    "These values changed nothing: Undo takes the step back.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "These values changed nothing: Undo takes the step back."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ces valeurs n’ont rien changé : Annuler retire l’étape."
+          }
+        }
+      }
+    },
     "This Mac cannot run the StarNet at %@: %@.": {
       "localizations": {
         "en": {

@@ -39,6 +39,9 @@ package struct StudioSideView: View {
             .foregroundStyle(DesignColor.textSecondary.color)
         }
         if let failure = model.failure { StatusBadge(.error, failure) }
+        if model.appliedNothing {
+          StatusBadge(.attention, .app("These values changed nothing: Undo takes the step back."))
+        }
         history
       }
       .padding(DesignMetrics.spacingM)

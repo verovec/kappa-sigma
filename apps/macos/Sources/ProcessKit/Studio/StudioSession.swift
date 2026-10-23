@@ -18,6 +18,10 @@ package final class StudioSession {
   package let device: MTLDevice
   private let runner: ProcessRunner
   private let bundleLayers: [String: GPUImage]
+  /// The last manual Apply left the image, its solution and its layers as they were (an
+  /// amount at 0, a process switched off, a mask letting nothing through): recorded all the
+  /// same — the pipeline keeps its steps — but worth saying, since undoing it shows nothing.
+  package private(set) var lastApplyChangedNothing = false
   private var overlay: Overlay?
 
   /// A session over `history` and `bundle`, running the processes of `registry` on `device`.
@@ -88,9 +92,13 @@ package final class StudioSession {
       process, input: input, stats: stepStats, layers: layers, layerStats: layerStats, mask: mask)
     let moved = try runner.movedLayers(
       process, layers: layers, input: input, result: result, roles: history.layerRoles)
+    let unchanged =
+      result.width == input.width && result.height == input.height
+      && result.metadata == input.metadata && result.planes == input.planes
     try history.apply(
       processID: processID, params: params, result: result, outputs: moved.outputs,
       replacing: moved.replacing)
+    lastApplyChangedNothing = unchanged && moved.outputs.isEmpty && moved.replacing.isEmpty
   }
 
   /// The statistics of the layers the next step reads, by id.

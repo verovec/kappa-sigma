@@ -70,6 +70,9 @@ package final class StudioWorkspaceModel {
   package var pipeline: PipelineSidebarModel?
   /// Why the last action failed.
   package internal(set) var failure: LocalizedStringResource?
+  /// The last Apply recorded a step that changed nothing: said, so an Undo showing nothing is
+  /// understood.
+  package private(set) var appliedNothing = false
   /// The host tool running for the panel (card 0093), with its last line.
   package internal(set) var toolRun: ToolProgress?
   /// What the last host tool reported (a plate solution), in a locale.
@@ -210,6 +213,7 @@ package final class StudioWorkspaceModel {
     }
     // The user's manual work becomes the recipe (R5): the pipeline records the step.
     pipeline?.applied(id, params: params, masked: used != nil)
+    appliedNothing = studio.session.lastApplyChangedNothing
   }
 
   /// Whether the viewer shows the current values and mask of `panel`.
@@ -294,6 +298,7 @@ package final class StudioWorkspaceModel {
     shown = nil
     // A report speaks of the head it was made on.
     toolReport = nil
+    appliedNothing = false
     batch.showsModel = false
     defer { headStatistics = viewer.model.statistics }
     isPreviewing = false

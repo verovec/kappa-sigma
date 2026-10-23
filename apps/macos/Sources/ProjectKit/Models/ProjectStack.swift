@@ -1,5 +1,13 @@
 /// A bundle produced by preprocessing (0057) or read from a legacy run (0043).
 package struct ProjectStack: Equatable, Sendable, Identifiable {
+  /// Where the run behind a stack stands (card 0097).
+  package enum Status: String, Sendable {
+    /// The run finished: the bundle is there.
+    case done
+    /// The run paused after a lane: no bundle yet, `checkpointJSON` says what is left.
+    case paused
+  }
+
   /// Row id.
   package let id: Int64
   /// The bundle folder, relative to the package.
@@ -12,6 +20,10 @@ package struct ProjectStack: Equatable, Sendable, Identifiable {
   package let object: String
   /// The run scope as JSON (the app's `RunScope`); `nil` for a stack recorded before 0095.
   package let scopeJSON: String?
+  /// `.paused` for a run stopped after a lane (card 0097); `.done` otherwise.
+  package let status: Status
+  /// A paused run's checkpoint (StackKit's `PreprocessCheckpoint`) as JSON; nil once done.
+  package let checkpointJSON: String?
   /// Creation time, Unix milliseconds.
   package let createdAt: Int64
   /// Last update time, Unix milliseconds.
@@ -20,7 +32,8 @@ package struct ProjectStack: Equatable, Sendable, Identifiable {
   /// A stack row.
   package init(
     id: Int64, bundlePath: String, sourceIDs: [Int64], paramsJSON: String, object: String = "",
-    scopeJSON: String? = nil, createdAt: Int64, updatedAt: Int64
+    scopeJSON: String? = nil, status: Status = .done, checkpointJSON: String? = nil,
+    createdAt: Int64, updatedAt: Int64
   ) {
     self.id = id
     self.bundlePath = bundlePath
@@ -28,6 +41,8 @@ package struct ProjectStack: Equatable, Sendable, Identifiable {
     self.paramsJSON = paramsJSON
     self.object = object
     self.scopeJSON = scopeJSON
+    self.status = status
+    self.checkpointJSON = checkpointJSON
     self.createdAt = createdAt
     self.updatedAt = updatedAt
   }

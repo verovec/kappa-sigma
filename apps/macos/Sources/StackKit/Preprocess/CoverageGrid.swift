@@ -1,6 +1,6 @@
 /// How many stacked frames cover each 8-px cell of the anchor canvas (`coverageGrid`): what the
 /// seam noise weights, the seam offset overlap and the combine crop are built on.
-package struct CoverageGrid: Equatable, Sendable {
+package struct CoverageGrid: Codable, Equatable, Sendable {
   /// Cell size in canvas pixels (±8 px precision).
   package static let cellSize = 8
 

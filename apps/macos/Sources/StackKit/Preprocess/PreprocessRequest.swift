@@ -19,6 +19,10 @@ package struct PreprocessRequest: Sendable {
   /// Scratch for sequences and the run's own calibration masters.
   package var work: URL
   package var runID: String
+  /// Asks the run to stop after the lane it is in (card 0097); nil: the run never pauses.
+  package var pause: PauseGate?
+  /// Continue of a paused run: every lane whose `LaneRecord` still matches is reused.
+  package var resuming = false
 
   /// A request; without `settings`, the preset of `mode`.
   package init(

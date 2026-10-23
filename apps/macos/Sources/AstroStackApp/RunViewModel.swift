@@ -44,6 +44,8 @@ package final class RunViewModel {
   /// Where the run stands.
   package enum Phase: Equatable, Sendable {
     case running, finished, cancelled
+    /// Stopped after a lane at the user's Pause (card 0097): Continue stacks the lanes left.
+    case paused(PreprocessCheckpoint)
     case failed(UserFacingError)
   }
 
@@ -83,6 +85,12 @@ package final class RunViewModel {
   }
   /// The run paused at least once: its stack records the review (`StackRecord.frameReview`).
   package var wasReviewed: Bool { !decisions.isEmpty }
+  /// Asked by Pause (card 0097).
+  ///
+  /// It travels in the request; the run reads it after each lane.
+  package let gate = PauseGate()
+  /// Pause was asked: the run stops once its current lane has written its master.
+  package private(set) var pauseRequested = false
   /// Text the journal is filtered on; empty shows every line.
   package var journalFilter = ""
   @ObservationIgnored private var task: Task<Void, Never>?
@@ -95,6 +103,15 @@ package final class RunViewModel {
   }
 
   package var isRunning: Bool { phase == .running }
+
+  /// Pause is offered: the run goes and nobody asked yet.
+  package var canPause: Bool { isRunning && !pauseRequested }
+
+  /// The checkpoint of a run that paused; nil otherwise.
+  package var checkpoint: PreprocessCheckpoint? {
+    if case .paused(let checkpoint) = phase { return checkpoint }
+    return nil
+  }
 
   /// The journal lines containing `journalFilter`, ignoring case.
   package var shownJournal: [Line] {
@@ -143,6 +160,12 @@ package final class RunViewModel {
       for index in steps.indices { steps[index].state = .done }
       percent = nil
       phase = .finished
+    case .paused(let checkpoint):
+      for index in steps.indices where steps[index].state == .running {
+        steps[index].state = .done
+      }
+      percent = nil
+      phase = .paused(checkpoint)
     }
   }
 
@@ -187,6 +210,7 @@ package final class RunViewModel {
       let outcome: Result<PreprocessResult, any Error>
       do {
         for try await event in try await events() { reduce(event) }
+        if let checkpoint { throw RunPaused(checkpoint: checkpoint) }
         guard let result else {
           try Task.checkCancellation()
           throw UserFacingError.runIncomplete
@@ -195,6 +219,9 @@ package final class RunViewModel {
       } catch {
         if let result {
           outcome = .success(result)
+        } else if error is RunPaused {
+          outcome = .failure(error)
+          listKept()
         } else {
           outcome = .failure(error)
           stop(Task.isCancelled || error is CancellationError ? nil : error)
@@ -202,6 +229,13 @@ package final class RunViewModel {
       }
       await completion(outcome)
     }
+  }
+
+  /// Asks the run to pause after its current lane (card 0097): the lane is never interrupted.
+  package func pause() {
+    guard canPause else { return }
+    pauseRequested = true
+    gate.request()
   }
 
   /// Cancels the run: StackKit stops Siril, the finished masters stay, no bundle is written.
@@ -214,6 +248,12 @@ package final class RunViewModel {
     await task?.value
   }
 
+  /// Lists what a paused run keeps in its folder.
+  private func listKept() {
+    let names = (try? FileManager.default.contentsOfDirectory(atPath: output.path)) ?? []
+    kept = names.filter { !$0.hasPrefix(".") }.sorted()
+  }
+
   /// Marks the running step and lists what the run left behind; `error` nil means cancelled.
   private func stop(_ error: (any Error)?) {
     for index in steps.indices where steps[index].state == .running {
@@ -223,7 +263,11 @@ package final class RunViewModel {
     phase = error.map { .failed(UserFacingError($0)) } ?? .cancelled
     // A lane waiting at the review belongs to a run that is over: nothing to answer any more.
     paused = nil
-    let names = (try? FileManager.default.contentsOfDirectory(atPath: output.path)) ?? []
-    kept = names.filter { !$0.hasPrefix(".") }.sorted()
+    listKept()
   }
+}
+
+/// How `RunViewModel.start` reports a run that paused (card 0097): no result, not a failure.
+package struct RunPaused: Error, Equatable {
+  package var checkpoint: PreprocessCheckpoint
 }

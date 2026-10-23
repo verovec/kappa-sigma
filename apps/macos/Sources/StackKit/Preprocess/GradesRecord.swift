@@ -63,15 +63,13 @@ package struct GradesRecord: Codable, Equatable, Sendable {
 
   /// Writes `folder/grades.json`, replaced atomically; snake_case keys, as the legacy records.
   package func write(to folder: URL) throws {
-    let encoder = JSONEncoder()
-    encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-    try encoder.encode(self).write(
+    try RecordCoding.encoder().encode(self).write(
       to: folder.appendingPathComponent(Self.fileName), options: .atomic)
   }
 
   /// The record in `folder`.
   package static func read(from folder: URL) throws -> Self {
-    try JSONDecoder().decode(
+    try RecordCoding.decoder().decode(
       Self.self, from: Data(contentsOf: folder.appendingPathComponent(fileName)))
   }
 }

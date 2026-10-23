@@ -30,6 +30,8 @@ package final class ProjectWindowModel {
   package let series = StackingStageModel(inventory: nil)
   /// Every stack of the project, oldest first (read on refresh).
   package internal(set) var stacks: [ProjectStack] = []
+  /// The runs paused after a lane (card 0097), oldest first: Continue or Discard each.
+  package internal(set) var pausedRuns: [ProjectStack] = []
   /// The stack the Studio shows (card 0095), persisted per project; `nil` = the latest.
   package internal(set) var selectedStackID: Int64?
   /// The lights per filter × night of `scan`, computed once per scan.
@@ -298,6 +300,12 @@ package final class ProjectWindowModel {
       // The stacks are read again only when their count moved: a refresh runs on every event.
       // A queue's stacks appear when it ends: until then the picker, Tri and « the latest » stay.
       if !queueActive, summary.stacks != stacks.count { stacks = try store?.stacks() ?? [] }
+      // Paused runs change only between runs (a pause recorded, a Continue, a Discard), and the
+      // list is hidden while one goes: no read per run event.
+      if !isStacking {
+        let paused = try store?.pausedStacks() ?? []
+        if paused != pausedRuns { pausedRuns = paused }
+      }
       let running = isStacking ? 1 : 0
       var facts = ProjectFacts(summary: summary, coverage: coverage, stacksRunning: running)
       // Tri is done when the stack the Studio shows (the chosen one, else the latest; 0095) went

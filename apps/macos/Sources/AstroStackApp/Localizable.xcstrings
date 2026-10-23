@@ -1473,6 +1473,54 @@
         }
       }
     },
+    "Discard": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discard"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abandonner"
+          }
+        }
+      }
+    },
+    "Discard this paused run?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discard this paused run?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abandonner cet empilement en pause ?"
+          }
+        }
+      }
+    },
+    "Discard…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discard…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abandonner…"
+          }
+        }
+      }
+    },
     "Done": {
       "localizations": {
         "en": {
@@ -3757,6 +3805,70 @@
           "stringUnit": {
             "state": "translated",
             "value": "Coller"
+          }
+        }
+      }
+    },
+    "Pause": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pause"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pause"
+          }
+        }
+      }
+    },
+    "Paused": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paused"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En pause"
+          }
+        }
+      }
+    },
+    "Paused run %@ — stacked: %@ · left: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paused run %@ — stacked: %@ · left: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Empilement %@ en pause — empilés : %@ · restants : %@"
+          }
+        }
+      }
+    },
+    "Pausing after the current lane…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pausing after the current lane…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pause après le canal en cours…"
           }
         }
       }
@@ -6285,6 +6397,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le master %@ ne peut pas être mesuré."
+          }
+        }
+      }
+    },
+    "The masters it kept are deleted from the project.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The masters it kept are deleted from the project."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les masters qu'il a gardés sont supprimés du projet."
           }
         }
       }

@@ -37,16 +37,27 @@ package actor Preprocessor {
     self.tools = tools
   }
 
-  /// Starts `request`; the stream ends with `.finished`, or throws the run's error (a
-  /// `CancellationError` when the consumer cancelled).
+  /// How a run ended: with its result, or paused after a lane (card 0097).
+  package enum Ending: Equatable, Sendable {
+    case finished(PreprocessResult)
+    case paused(PreprocessCheckpoint)
+  }
+
+  /// Starts `request`.
+  ///
+  /// The stream ends with `.finished`, or `.paused` once its `pause` gate was requested with lanes
+  /// left, or throws the run's error (a `CancellationError` when the consumer cancelled). A
+  /// `resuming` request reuses every lane whose `LaneRecord` still matches.
   package nonisolated func run(_ request: PreprocessRequest) -> AsyncThrowingStream<
     PreprocessEvent, any Error
   > {
     AsyncThrowingStream { continuation in
       let task = Task {
         do {
-          let result = try await self.perform(request) { continuation.yield($0) }
-          continuation.yield(.finished(result))
+          switch try await self.execute(request, sink: { continuation.yield($0) }) {
+          case .finished(let result): continuation.yield(.finished(result))
+          case .paused(let checkpoint): continuation.yield(.paused(checkpoint))
+          }
           continuation.finish()
         } catch {
           continuation.finish(throwing: error)
@@ -56,10 +67,26 @@ package actor Preprocessor {
     }
   }
 
-  /// The run itself; `sink` receives every event but the last.
+  /// The run to its result.
+  ///
+  /// `sink` receives every event but the last. A run that paused (its request carried a gate)
+  /// ends without one: `CancellationError`.
   package func perform(
     _ request: PreprocessRequest, sink: @escaping @Sendable (PreprocessEvent) -> Void
   ) async throws -> PreprocessResult {
+    switch try await execute(request, sink: sink) {
+    case .finished(let result): return result
+    case .paused: throw CancellationError()
+    }
+  }
+
+  /// The run, to its result or its pause.
+  ///
+  /// `sink` receives every event but the last. A lane is the unit: a pause asked during a lane
+  /// ends the run once that lane's master and record are written, unless it was the last.
+  package func execute(
+    _ request: PreprocessRequest, sink: @escaping @Sendable (PreprocessEvent) -> Void
+  ) async throws -> Ending {
     try TargetLock.acquire(request.output)
     defer { TargetLock.release(request.output) }
     let plan = try Self.plan(request.inventory)
@@ -70,17 +97,28 @@ package actor Preprocessor {
       try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
     }
     var result = PreprocessResult(runID: request.runID)
-    let pool = try await buildMasters(request, emitter: emitter, into: &result)
-    let parity = ParityCache(runner: tools.runner, coordinates: request.settings.solveCoordinates)
-    for lane in lanes {
+    // Built when a lane first needs them: a resume whose lanes are all reused calls no Siril.
+    var pool: [CalibrationMaster]?
+    let run = LaneRun(
+      plan: plan, request: request,
+      parity: ParityCache(runner: tools.runner, coordinates: request.settings.solveCoordinates),
+      emitter: emitter)
+    for (index, lane) in lanes.enumerated() {
       try Task.checkCancellation()
-      let outcome = try await stackChannel(
-        lane, plan: plan, request: request, pool: pool, parity: parity, emitter: emitter)
+      let outcome = try await laneOutcome(
+        lane, of: run, pool: &pool, journal: &journal, result: &result)
       if let error = outcome.error {
         journal.warn("channel \(outcome.filter) failed — continuing without it: \(error)")
       }
       result.warnings += outcome.warnings
       result.channels.append(outcome)
+      let left = Array(lanes[(index + 1)...])
+      if request.pause?.isRequested == true, !left.isEmpty {
+        journal.line("paused after \(lane) — Continue stacks \(left.joined(separator: ", "))")
+        return .paused(
+          PreprocessCheckpoint(
+            runID: request.runID, lanesDone: Array(lanes[...index]), lanesLeft: left))
+      }
     }
     // The verdicts outlive the work folder: the Tri stage reads them back (card 0069). A record
     // that cannot be written is a warning, never the end of a run whose lanes are all stacked.
@@ -92,7 +130,7 @@ package actor Preprocessor {
     }
     try await assemble(request, emitter: emitter, journal: &journal, into: &result)
     result.warnings += journal.warnings
-    return result
+    return .finished(result)
   }
 
   /// Which nights feed which channel (lane).

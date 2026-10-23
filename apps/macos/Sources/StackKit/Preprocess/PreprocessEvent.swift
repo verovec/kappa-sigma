@@ -11,6 +11,8 @@ package enum PreprocessEvent: Equatable, Sendable {
   case reference(Reference)
   /// The run finished; the last event.
   case finished(PreprocessResult)
+  /// The run paused after a lane (card 0097); the last event. Continue resumes the checkpoint.
+  case paused(PreprocessCheckpoint)
 
   /// A lane paused before its registration is applied: every frame as Siril measured it (not
   /// graded), its night and parity, the frame the port elected, and the gate that resumes the

@@ -6,4 +6,6 @@ package enum ProjectStoreError: Error, Equatable, Sendable {
   case notText
   /// The step is not one of the image's (card 0087: an image's head is its own step).
   case notImageStep(imageID: Int64, stepID: Int64)
+  /// The stack is not a paused run (card 0097): only a paused run is completed or discarded.
+  case notPaused(stackID: Int64)
 }

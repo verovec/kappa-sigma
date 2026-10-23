@@ -120,6 +120,19 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
 
   /// The Empilement stage's « Cancel ».
   package static let stackingCancel = stageControl("stacking", "cancel")
+
+  /// The Empilement stage's « Pause » of a running run (card 0097).
+  package static let stackingPause = stageControl("stacking", "pause")
+
+  /// « Continue » of a paused run, by its stack row id (card 0097).
+  package static func stackingContinue(_ id: Int64) -> Self {
+    stageControl("stacking", "continue-\(id)")
+  }
+
+  /// « Discard » of a paused run, by its stack row id (card 0097).
+  package static func stackingDiscard(_ id: Int64) -> Self {
+    stageControl("stacking", "discard-\(id)")
+  }
   /// A flag or choice knob of the Stacking panel, by its glossary term id (card 0070).
   package static func stackingKnob(_ termID: String) -> Self { stageControl("stacking", termID) }
 

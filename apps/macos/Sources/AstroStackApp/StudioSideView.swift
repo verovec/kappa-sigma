@@ -25,7 +25,8 @@ package struct StudioSideView: View {
               .accessible(.studioClosePanel, label: .app("Close"))
             Spacer()
             // No default-button Return: Return confirms a typed value (Edit › Apply Process ⌘E).
-            Button(.app("Apply")) { applyRecorded() }
+            // On a new head Apply previews first, and says so.
+            Button(model.isPreviewSuspended ? .app("Preview") : .app("Apply")) { applyRecorded() }
               .disabled(model.toolRun != nil)
               .accessible(.studioApply, label: .app("Apply"))
           }
@@ -59,12 +60,8 @@ package struct StudioSideView: View {
 
   /// The history moved under the panel: the viewer shows the image, not these values.
   private var suspended: some View {
-    HStack {
-      StatusBadge(.attention, .app("The image is shown as it is now, not these values."))
-      Spacer()
-      Button(.app("Preview")) { model.resumePreview() }
-        .accessible(.studioPreview, label: .app("Preview"))
-    }
+    StatusBadge(
+      .attention, .app("The image is shown as applied: Preview shows these values on it."))
   }
 
   private var history: some View {

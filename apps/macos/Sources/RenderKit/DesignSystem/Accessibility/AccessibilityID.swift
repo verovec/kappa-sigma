@@ -208,9 +208,6 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
   /// The Studio's « Apply » (card 0087).
   package static let studioApply = stageControl("studio", "apply")
 
-  /// The Studio's « Preview » once the history moved under the panel.
-  package static let studioPreview = stageControl("studio", "preview")
-
   /// The Studio's « Stop » of a running host tool (card 0093).
   package static let studioToolStop = stageControl("studio", "tool.stop")
 

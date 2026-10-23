@@ -7,13 +7,6 @@ import Testing
 /// shown twice, an Undo never hidden under the same values previewed again, and nothing is
 /// recorded that was not on screen (R2).
 extension StudioWorkspaceModelTests {
-  /// An undo manager driven by explicit groups, as a test needs it.
-  static func undoManager() -> UndoManager {
-    let undoManager = UndoManager()
-    undoManager.groupsByEvent = false
-    return undoManager
-  }
-
   /// The workspace with the stretch applied once, its panel still open.
   static func stretched(_ opened: StudioModelTests.Opened) async throws -> StudioWorkspaceModel {
     let workspace = try Self.workspace(opened, bundle: StudioModelTests.bundle())
@@ -75,35 +68,20 @@ extension StudioWorkspaceModelTests {
 }
 
 extension PipelineSidebarModelTests {
-  @Test("one ⌘Z takes a whole pipeline run back, one ⇧⌘Z runs it again", .scratchDirectory)
-  func testRun_IsUndoneAtOnce() async throws {
+  @Test("at a breakpoint on a new head, Continue shows the values first", .scratchDirectory)
+  func testContinue_SuspendedPreview_ShowsFirst() async throws {
     let opened = try StudioModelTests.project()
     defer { try? opened.package.close() }
-    let (workspace, sidebar) = try Self.sidebar(opened, try Self.fourSteps())
-    let undoManager = StudioWorkspaceModelTests.undoManager()
-    undoManager.beginUndoGrouping()
-    await sidebar.run(undoManager: undoManager)
-    undoManager.endUndoGrouping()
-    let done = workspace.studio.steps.map(\.processID)
-    #expect(done == ["channel-combination", "stretch", "curves", "saturation"])
+    let (workspace, sidebar) = try Self.sidebar(opened, try Self.fourSteps(stop: true))
+    await sidebar.run()
+    try workspace.undo()
+    try workspace.redo()
+    #expect(workspace.isPreviewSuspended && sidebar.canContinue)
 
-    undoManager.undo()
-    #expect(workspace.studio.steps.map(\.processID) == ["channel-combination"])
-    undoManager.redo()
-    #expect(workspace.studio.steps.map(\.processID) == done)
-  }
-
-  @Test("a run's ⌘Z does nothing once the history moved past its last step", .scratchDirectory)
-  func testRun_Undo_ChecksTheHead() async throws {
-    let opened = try StudioModelTests.project()
-    defer { try? opened.package.close() }
-    let (workspace, sidebar) = try Self.sidebar(opened, try Self.fourSteps())
-    let undoManager = StudioWorkspaceModelTests.undoManager()
-    undoManager.beginUndoGrouping()
-    await sidebar.run(undoManager: undoManager)
-    undoManager.endUndoGrouping()
-    try workspace.undo()  // the history's own button
-    undoManager.undo()
-    #expect(workspace.studio.steps.count == 3, "never part of a run")
+    await sidebar.continueRun()
+    #expect(workspace.studio.steps.count == 2, "nothing applied unseen")
+    #expect(workspace.isPreviewing && !workspace.isPreviewSuspended)
+    await sidebar.continueRun()
+    #expect(workspace.studio.steps.count == 4)
   }
 }

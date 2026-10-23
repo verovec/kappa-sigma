@@ -228,16 +228,6 @@ package final class StudioWorkspaceModel {
     try reported { try studio.redo() }
   }
 
-  /// Back to the history's first `count` steps, the head shown once (a pipeline run's undo).
-  package func undo(to count: Int) throws {
-    try reported { while studio.steps.count > count { try studio.undo() } }
-  }
-
-  /// Forward `count` undone steps, the head shown once (a pipeline run's redo).
-  package func redo(steps count: Int) throws {
-    try reported { for _ in 0..<count { try studio.redo() } }
-  }
-
   /// Shows the panel's values on the head again, after the history moved under it.
   package func resumePreview() {
     guard panel != nil else { return }

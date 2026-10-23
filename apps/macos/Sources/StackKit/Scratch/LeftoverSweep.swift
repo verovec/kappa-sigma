@@ -5,14 +5,17 @@ internal import OSLog
 ///
 /// Each root names a folder and the prefix of the entries it may take (`run_`, `siril-`…). An
 /// entry with a marker (`ScratchOwner`) goes once its owner no longer runs, after its recorded
-/// Siril is stopped (only when that pid still runs a `siril-cli` started when recorded); an
-/// entry without one goes once untouched for `unmarkedAge` (a day). A root inside or around the
+/// Siril is stopped (only when that pid still runs a `siril-cli` started when recorded; a Siril
+/// that keeps running keeps its folder); an entry without one, folder or file, goes once
+/// untouched for `unmarkedAge` (a day). A root inside or around the
 /// astro data folder (captures, library, runs: read-only, R7) is refused whatever the caller
 /// passed.
 package struct LeftoverSweep: Sendable {
   /// A folder whose entries starting with `prefix` the sweep may take (`""`: every entry).
   package struct Root: Sendable {
+    /// The folder whose entries are swept (never the folder itself).
     package var folder: URL
+    /// The start of the entry names the sweep may take.
     package var prefix: String
 
     /// A root from its parts.
@@ -24,7 +27,9 @@ package struct LeftoverSweep: Sendable {
 
   /// One folder removed, and the bytes it held.
   package struct Removal: Equatable, Sendable {
+    /// The folder or file removed.
     package var path: URL
+    /// The bytes it took on disk.
     package var bytes: Int64
   }
 
@@ -35,9 +40,13 @@ package struct LeftoverSweep: Sendable {
   package static let dataFolder = FileManager.default.homeDirectoryForCurrentUser
     .appendingPathComponent("Documents/astro", isDirectory: true)
 
+  /// The folders swept.
   package var roots: [Root]
+  /// Who runs: the host's processes, or a test's table.
   package var table: ProcessTable
+  /// The moment unmarked entries are aged against.
   package var now: Date
+  /// Folders no root may be inside or around.
   package var protected: [URL]
   /// How long an unmarked entry stays untouched before it goes.
   package var unmarkedAge: TimeInterval
@@ -81,9 +90,15 @@ package struct LeftoverSweep: Sendable {
     var removed: [Removal] = []
     for entry in entries where entry.lastPathComponent.hasPrefix(root.prefix) {
       guard let values = try? entry.resourceValues(forKeys: Set(keys)),
-        values.isDirectory == true, values.isSymbolicLink != true, isLeftover(entry, values)
+        values.isSymbolicLink != true
       else { continue }
-      if let siril = ScratchOwner.read(entry)?.siril { stop(siril) }
+      let marker = values.isDirectory == true ? ScratchOwner.read(entry) : nil
+      guard isLeftover(marker, values) else { continue }
+      // A Siril that keeps running keeps its folder: removed, nothing would point to it any more.
+      if let siril = marker?.siril, !stop(siril) {
+        Self.logger.error("kept \(entry.path): its Siril \(siril.pid) still runs")
+        continue
+      }
       let bytes = Self.allocatedBytes(entry)
       do {
         try manager.removeItem(at: entry)
@@ -98,21 +113,24 @@ package struct LeftoverSweep: Sendable {
 
   /// True when `entry` is left over.
   ///
-  /// Marked: its owner no longer runs. Unmarked: untouched for `unmarkedAge`.
-  private func isLeftover(_ entry: URL, _ values: URLResourceValues) -> Bool {
-    if let marker = ScratchOwner.read(entry) { return !marker.isAlive(in: table) }
+  /// Marked: its owner no longer runs. Unmarked (a folder without a marker, or a file):
+  /// untouched for `unmarkedAge`.
+  private func isLeftover(_ marker: ScratchOwner?, _ values: URLResourceValues) -> Bool {
+    if let marker { return !marker.isAlive(in: table) }
     guard let modified = values.contentModificationDate else { return false }
     return now.timeIntervalSince(modified) > unmarkedAge
   }
 
-  /// Stops the recorded Siril, only while its pid still runs the `siril-cli` recorded.
-  private func stop(_ siril: ProcessIdentity) {
-    guard table.identity(siril.pid) == siril,
-      let path = table.executable(siril.pid),
+  /// Stops the recorded Siril, only while its pid still runs the `siril-cli` recorded; true
+  /// once it no longer runs.
+  private func stop(_ siril: ProcessIdentity) -> Bool {
+    guard table.identity(siril.pid) == siril else { return true }
+    guard let path = table.executable(siril.pid),
       URL(fileURLWithPath: path).lastPathComponent == "siril-cli"
-    else { return }
+    else { return false }
     Self.logger.notice("stopping orphan siril-cli \(siril.pid)")
     table.terminate(siril.pid)
+    return table.identity(siril.pid) != siril
   }
 
   /// Neither inside nor around a protected folder.

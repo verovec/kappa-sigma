@@ -100,7 +100,27 @@ struct LeftoverSweepTests {
     ).run()
 
     #expect(processes.terminatedPIDs == (signalled ? [Self.siril.pid] : []))
-    #expect(!Self.exists(fifo), "the dead owner's folder goes either way")
+    #expect(Self.exists(fifo) == !signalled, "a Siril left running keeps its folder")
+  }
+
+  @Test("a plain file left in a root goes after a day like an unmarked folder", .scratchDirectory)
+  func testStaleFilesSwept() throws {
+    let root = try ScratchDirectory.url
+    let (old, recent) = (
+      root.appendingPathComponent("old.fit"), root.appendingPathComponent("new.fit")
+    )
+    for (file, age) in [(old, LeftoverSweep.staleAge + 60), (recent, 60)] {
+      try Data(count: 16).write(to: file)
+      try FileManager.default.setAttributes(
+        [.modificationDate: Self.now.addingTimeInterval(-age)], ofItemAtPath: file.path)
+    }
+
+    _ = LeftoverSweep(
+      roots: [.init(folder: root, prefix: "")], table: FakeProcessTable(running: []).table,
+      now: Self.now
+    ).run()
+
+    #expect(!Self.exists(old) && Self.exists(recent))
   }
 
   @Test("a recorded Siril pid reused by a later Siril is never signalled", .scratchDirectory)
@@ -116,5 +136,6 @@ struct LeftoverSweepTests {
     ).run()
 
     #expect(processes.terminatedPIDs.isEmpty)
+    #expect(!Self.exists(root.appendingPathComponent("siril-ABC")), "that Siril is not ours")
   }
 }

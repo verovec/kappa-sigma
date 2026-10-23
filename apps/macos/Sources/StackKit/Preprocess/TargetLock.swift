@@ -12,6 +12,12 @@ package enum TargetLock {
     guard taken else { throw PreprocessError.targetBusy(key) }
   }
 
+  /// True while a run holds `folder`.
+  package static func isHeld(_ folder: URL) -> Bool {
+    let key = folder.standardizedFileURL.path
+    return held.withLock { $0.contains(key) }
+  }
+
   /// Releases `folder`.
   package static func release(_ folder: URL) {
     let key = folder.standardizedFileURL.path

@@ -5,6 +5,7 @@ internal import OSLog
 package struct LeftoverStack: Equatable, Hashable, Sendable {
   /// Its path in the package (`stacks/<run id>`), as a stack's `bundlePath` reads.
   package var path: String
+  /// The bytes its files take on disk.
   package var bytes: Int64
 
   /// A leftover from its parts.
@@ -22,6 +23,7 @@ package struct LeftoverStack: Equatable, Hashable, Sendable {
 package enum StackLeftovers {
   /// A removal refused: the path is not a stack folder of the package.
   package struct Refusal: Error, Equatable {
+    /// The path refused.
     package var path: String
   }
 
@@ -32,8 +34,22 @@ package enum StackLeftovers {
   }
 
   /// Removes the folder of a run that did not finish unless it holds a finished master.
+  ///
+  /// A cancelled run's stream ends before its task does: Siril may still be saving a master
+  /// there. The folder is judged only once no run holds it (`TargetLock`); one still held after
+  /// `wait` (another run's, or a teardown that hangs) is kept, and listed at the next open.
   @discardableResult
-  package static func removeUnfinished(_ folder: URL) -> LeftoverSweep.Removal? {
+  package static func removeUnfinished(_ folder: URL, wait: Duration = .seconds(10)) async
+    -> LeftoverSweep.Removal?
+  {
+    let clock = ContinuousClock()
+    let deadline = clock.now.advanced(by: wait)
+    while TargetLock.isHeld(folder) {
+      guard clock.now < deadline, (try? await Task.sleep(for: .milliseconds(50))) != nil else {
+        logger.notice("kept \(folder.path): a run still holds it")
+        return nil
+      }
+    }
     guard FileManager.default.fileExists(atPath: folder.path), !holdsMaster(folder) else {
       return nil
     }
@@ -99,5 +115,5 @@ package enum StackLeftovers {
     return false
   }
 
-  private static let logger = Logger(subsystem: "fr.astrostack", category: "StackKit/sweep")
+  private static let logger = Logger(subsystem: "fr.astrostack", category: "StackKit/stackfolders")
 }

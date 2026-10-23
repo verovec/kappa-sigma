@@ -32,7 +32,12 @@ package final class ProjectDocument: NSDocument {
     let folder = FileManager.default.temporaryDirectory
       .appendingPathComponent("AstroStack/Untitled/\(id)", isDirectory: true)
     try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-    try ScratchOwner.mark(folder)
+    // Best effort: without it the folder is swept a day later, never a project that cannot start.
+    do {
+      try ScratchOwner.mark(folder)
+    } catch {
+      Self.logger.error("marking \(folder.path) failed: \(error)")
+    }
     project = try ProjectPackage.create(
       at: folder.appendingPathComponent(id).appendingPathExtension(ProjectPackage.fileExtension))
     isTemporary = true
@@ -272,9 +277,15 @@ package final class ProjectDocument: NSDocument {
     guard wasTemporary else { return }
     do {
       try FileManager.default.removeItem(at: project.url)
-      try Self.removeUntitledFolder(project.url.deletingLastPathComponent())
     } catch {
       Self.logger.error("deleting \(project.url.path) failed: \(error)")
+      return
+    }
+    let folder = project.url.deletingLastPathComponent()
+    do {
+      try Self.removeUntitledFolder(folder)
+    } catch {
+      Self.logger.error("deleting \(folder.path) failed: \(error)")
     }
   }
 

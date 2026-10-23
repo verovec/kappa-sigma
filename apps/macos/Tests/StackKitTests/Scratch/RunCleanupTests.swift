@@ -23,10 +23,10 @@ struct RunCleanupTests {
       (["master_L_preview.png", "grades.json"], false),
       (["master_L.fits", "master_L_preview.png"], true),
     ])
-  func testFailedRunRemovesEmptyBundle(_ files: [String], kept: Bool) throws {
+  func testFailedRunRemovesEmptyBundle(_ files: [String], kept: Bool) async throws {
     let folder = try Self.stack("20261023_210000", in: try ScratchDirectory.url, files: files)
 
-    let removal = StackLeftovers.removeUnfinished(folder)
+    let removal = await StackLeftovers.removeUnfinished(folder)
 
     #expect(Self.exists(folder) == kept)
     #expect((removal == nil) == kept)
@@ -51,6 +51,21 @@ struct RunCleanupTests {
 
     try StackLeftovers.remove(try #require(orphans.first), in: package)
     #expect(!Self.exists(failed))
+  }
+
+  @Test("a folder a run still holds is judged once the run lets go, else kept", .scratchDirectory)
+  func testWaitsForTheRunToLetGo() async throws {
+    let folder = try Self.stack("20261023_220000", in: try ScratchDirectory.url, files: [])
+    try TargetLock.acquire(folder)
+
+    #expect(await StackLeftovers.removeUnfinished(folder, wait: .milliseconds(100)) == nil)
+    #expect(Self.exists(folder), "another run's folder, or a teardown still writing, stays")
+
+    let late = Task { await StackLeftovers.removeUnfinished(folder, wait: .seconds(30)) }
+    // The run lets go before or while the removal waits: either way the folder is judged then.
+    TargetLock.release(folder)
+    #expect(await late.value != nil)
+    #expect(!Self.exists(folder))
   }
 
   @Test("a package without stacks has no leftovers", .scratchDirectory)

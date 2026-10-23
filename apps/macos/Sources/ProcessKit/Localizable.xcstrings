@@ -1,22 +1,6 @@
 {
   "sourceLanguage": "en",
   "strings": {
-    "3 σ of the noise measured on the finest scale (the image's MADN also counts its signal)": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "3 σ of the noise measured on the finest scale (the image's MADN also counts its signal)"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "3 σ du bruit mesuré à l’échelle la plus fine (la MADN de l’image compte aussi son signal)"
-          }
-        }
-      }
-    },
     "Amount": {
       "localizations": {
         "en": {
@@ -1489,6 +1473,22 @@
         }
       }
     },
+    "Noise level": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noise level"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Niveau de bruit"
+          }
+        }
+      }
+    },
     "Output high": {
       "localizations": {
         "en": {
@@ -2877,6 +2877,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "le préréglage ciel profond plafonne les cœurs linéaires à 0,90 pour que les étoiles gardent leur couleur"
+          }
+        }
+      }
+    },
+    "the noise measured on the image's finest starlet scale (median of its planes)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the noise measured on the image's finest starlet scale (median of its planes)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "le bruit mesuré à l’échelle starlet la plus fine de l’image (médiane de ses plans)"
           }
         }
       }

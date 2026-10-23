@@ -8,6 +8,7 @@ enum DenoiseOracle {
   struct Values {
     var strengths = [3.0, 2.5, 1.8, 1.0]
     var amount = 1.0
+    var noise = 0.01
     var luminance = 1.0
     var chrominance = 1.0
     var protectStars = false
@@ -17,9 +18,11 @@ enum DenoiseOracle {
     _ planes: [[Float]], width: Int, height: Int, stats: LayerStats, values: Values
   ) -> [[Float]] {
     let denoised = planes.indices.map { channel in
-      let plane = stats.channels[min(channel, stats.channels.count - 1)]
+      let median =
+        stats.channels.isEmpty
+        ? 0 : stats.channels[min(channel, stats.channels.count - 1)].median
       return denoisePlane(
-        planes[channel], width: width, height: height, median: plane.median, sigma: plane.madn,
+        planes[channel], width: width, height: height, median: median, sigma: values.noise,
         values: values)
     }
     let lum = values.amount * values.luminance

@@ -17,7 +17,7 @@ extension StudioWorkspaceModel {
     return suggestions + Self.displaySuggestions(viewer.model.frame.stf)
   }
 
-  /// The denoise's scale-1 strength from the head's measured noise, once measured: the panel's
+  /// The denoise's noise level from the head's measured noise, once measured: the panel's
   /// suggestions are rebuilt when the measurement ends.
   private func denoiseOffers() -> [Suggestion] {
     let head = studio.steps.last?.file ?? ""
@@ -26,8 +26,7 @@ extension StudioWorkspaceModel {
       else { return }
       panel.suggestions = self.offers(for: panel.type, params: panel.params)
     }
-    guard let sigma else { return [] }
-    return DenoiseProcess.suggestions(noise: sigma, stats: studio.session.stepStats)
+    return sigma.map { DenoiseProcess.suggestions(measured: $0) } ?? []
   }
 
   /// Waits for the head's noise measurement under way, if any: a test sees the denoise's

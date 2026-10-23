@@ -35,6 +35,7 @@ struct DenoiseProcessTests {
       try params.set("scale\(scale + 1)", .number(strength))
     }
     try params.set("amount", .number(values.amount))
+    try params.set("noise", .number(values.noise))
     try params.set("luminance", .number(values.luminance))
     try params.set("chrominance", .number(values.chrominance))
     try params.set("protectStars", .flag(values.protectStars))
@@ -130,33 +131,63 @@ struct DenoiseProcessTests {
     #expect(DenoiseProcess.stage == .linear && DenoiseProcess.previewExactOnlyAt1to1)
   }
 
-  @Test("without the image's noise statistics it refuses, unless the amount is 0")
-  func testNeedsNoiseStats() throws {
+  @Test("only the star protection reads the stats (the median); without it none are needed")
+  func testStats_OnlyTheProtectionNeedsThem() throws {
     let planes = Self.field(channels: 1)
+    let none = LayerStats(channels: [])
     #expect(throws: ProcessError.self) {
-      try Self.render(planes, values: DenoiseOracle.Values(), stats: LayerStats(channels: []))
+      try Self.render(planes, values: DenoiseOracle.Values(protectStars: true), stats: none)
     }
-    let identity = DenoiseOracle.Values(amount: 0)
-    #expect(try Self.render(planes, values: identity, stats: LayerStats(channels: [])) == planes)
+    #expect(try Self.render(planes, values: DenoiseOracle.Values(), stats: none) != planes)
+    #expect(
+      try Self.render(planes, values: DenoiseOracle.Values(amount: 0), stats: none) == planes)
+  }
+
+  @Test("the thresholds follow the noise level shown, never the image's MADN")
+  func testThresholds_FollowTheNoiseLevel() throws {
+    let planes = Self.field()
+    let wide = LayerStats(
+      channels: Self.stats.channels.map {
+        ChannelStats(median: $0.median, madn: 0.2, minimum: 0, maximum: 1)
+      })
+    let values = DenoiseOracle.Values()
+    #expect(
+      try Self.render(planes, values: values, stats: wide) == Self.render(planes, values: values))
+    #expect(
+      try Self.render(planes, values: DenoiseOracle.Values(noise: 0)) == planes,
+      "a noise level of 0 thresholds nothing")
+  }
+
+  @Test("an image of 2 planes is refused, not half blended")
+  func testPlanes_OneOrThree() throws {
+    let device = try #require(MTLCreateSystemDefaultDevice())
+    let planes = Array(Self.field().prefix(2))
+    let input = try GPUImage(device: device, width: Self.width, height: Self.height, planes: planes)
+    let process = try DenoiseProcess(params: Self.params(DenoiseOracle.Values()), device: device)
+    #expect(throws: ProcessError.sizeMismatch) {
+      try ProcessRunner(device: device).run(process, input: input, stats: Self.stats)
+    }
   }
 }
 
 extension DenoiseProcessTests {
-  @Test("the measured noise suggests the scale-1 strength at 3 σ of it, never applies it")
+  @Test("the measured noise is offered as the noise level (median of the planes), never applied")
   func testSuggestion_MeasuredNoise() throws {
-    let stats = LayerStats(channels: [
-      ChannelStats(median: 0.1, madn: 0.02, minimum: 0, maximum: 1)
-    ])
+    let reason = DenoiseProcess.suggestionReasons[0]
     #expect(
-      DenoiseProcess.suggestions(noise: 0.005, stats: stats) == [
-        Suggestion(
-          paramID: "scale1", value: .number(0.75), reason: DenoiseProcess.suggestionReasons[0])
+      DenoiseProcess.suggestions(measured: [0.004, 0.0123456, 0.005]) == [
+        Suggestion(paramID: "noise", value: .number(0.005), reason: reason)
       ])
-    #expect(DenoiseProcess.suggestions(noise: 0, stats: stats).isEmpty)
-    #expect(DenoiseProcess.suggestions(noise: 0.005, stats: LayerStats(channels: [])).isEmpty)
+    #expect(
+      DenoiseProcess.suggestions(measured: [0.0123456]) == [
+        Suggestion(paramID: "noise", value: .number(0.01235), reason: reason)
+      ])
+    #expect(DenoiseProcess.suggestions(measured: [0, .nan]).isEmpty)
+    #expect(DenoiseProcess.suggestions(measured: []).isEmpty)
     let device = try #require(MTLCreateSystemDefaultDevice())
     let params = ParamSet(schema: DenoiseProcess.schema)
     let process = try DenoiseProcess(params: params, device: device)
-    #expect(process.suggestions(stats: stats).isEmpty, "nothing measured from the stats alone")
+    #expect(process.suggestions(stats: Self.stats).isEmpty, "nothing measured from the stats")
+    #expect(params.number("noise") == 0, "no noise level until the user sets or takes one")
   }
 }

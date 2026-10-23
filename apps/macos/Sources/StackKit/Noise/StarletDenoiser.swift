@@ -116,7 +116,8 @@ package enum StarletDenoiser {
   /// (`noise.Measure(...).Sigma`).
   package static func measure(_ plane: [Float], width: Int, height: Int) -> Double {
     guard width > 0, height > 0, !plane.isEmpty else { return 0 }
-    let (_, details) = Starlet.decompose(plane, width: width, height: height, scales: 4)
+    // The first detail plane (c₀ − c₁) is the same whatever the depth: one scale is enough.
+    let (_, details) = Starlet.decompose(plane, width: width, height: height, scales: 1)
     return NoiseStats.tileSigmas(details[0], width: width, height: height).sigma
   }
 }

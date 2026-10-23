@@ -19,14 +19,12 @@ extension DenoiseProcess {
     }
   }
 
-  /// The share of each pixel kept, from the scale-2 smooth and the plane's median and MADN.
+  /// The share of each pixel kept, from the scale-2 smooth, the plane's median and the noise σ.
   func encodeProtection(
-    _ scaleTwo: MTLTexture, into mask: MTLTexture, noise: ChannelStats,
+    _ scaleTwo: MTLTexture, into mask: MTLTexture, median: Double, sigma: Double,
     commands: MTLCommandBuffer
   ) throws {
-    var values = [
-      Float(noise.median), Float(noise.madn), Self.protection.low, Self.protection.high,
-    ]
+    var values = [Float(median), Float(sigma), Self.protection.low, Self.protection.high]
     try dispatch(protect, [scaleTwo, mask], &values, size: mask, commands: commands)
   }
 

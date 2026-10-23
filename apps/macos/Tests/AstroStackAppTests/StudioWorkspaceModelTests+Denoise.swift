@@ -6,7 +6,7 @@ import Testing
 
 extension StudioWorkspaceModelTests {
   @Test(
-    "the denoise panel offers the scale-1 strength from the head's measured noise (card 0115)",
+    "the denoise panel offers the head's measured noise as its noise level (card 0115)",
     .scratchDirectory)
   func testDenoise_OffersMeasuredNoise() async throws {
     let opened = try StudioModelTests.project()
@@ -17,11 +17,12 @@ extension StudioWorkspaceModelTests {
     await workspace.settleNoise()
 
     let head = workspace.studio.head
-    let noise = StarletDenoiser.measure(head.planes[0], width: head.width, height: head.height)
-    let stats = workspace.studio.session.stepStats
-    let expected = DenoiseProcess.suggestions(noise: noise, stats: stats)
+    let measured = head.planes.map {
+      StarletDenoiser.measure($0, width: head.width, height: head.height)
+    }
+    let expected = DenoiseProcess.suggestions(measured: measured)
     #expect(!expected.isEmpty)
     #expect(panel.suggestions == expected)
-    #expect(panel.params.number("scale1") == DenoiseProcess.presetStrengths[0], "never applied")
+    #expect(panel.params.number("noise") == 0, "offered, never applied")
   }
 }

@@ -5,21 +5,25 @@ internal import StackKit
 ///
 /// What the denoise's suggestion reads (card 0115); the process itself never measures (R2).
 final class HeadNoise {
-  /// The last head measured (its output file, `""` for the original) and its noise σ.
-  private(set) var measured: (head: String, sigma: Double)?
+  /// The last head measured (its output file, `""` for the original) and each plane's noise σ.
+  private(set) var measured: (head: String, sigma: [Double])?
   private var measuring: String?
   private var task: Task<Void, Never>?
 
-  /// The noise of `head` when known; else measures `image` and calls `done` once it is.
-  func sigma(of head: String, image: AstroImage, then done: @escaping () -> Void) -> Double? {
-    if let measured, measured.head == head { return measured.sigma }
-    guard measuring != head, let plane = image.planes.first else { return nil }
+  /// Each plane's noise of `head` when known; else measures `image` and calls `done` once it is.
+  func sigma(of head: String, image: AstroImage, then done: @escaping () -> Void) -> [Double]? {
+    if let measured, measured.head == head {
+      // Back on a head already measured: a measurement of another one is no longer wanted.
+      stop()
+      return measured.sigma
+    }
+    guard measuring != head else { return nil }
+    stop()
     measuring = head
-    task?.cancel()
-    let (width, height) = (image.width, image.height)
+    let (planes, width, height) = (image.planes, image.width, image.height)
     task = Task { [weak self] in
-      let sigma = await Self.measure(plane, width: width, height: height)
-      guard let self, !Task.isCancelled, self.measuring == head else { return }
+      let sigma = await Self.measure(planes, width: width, height: height)
+      guard let self, let sigma, self.measuring == head else { return }
       self.measured = (head, sigma)
       self.measuring = nil
       done()
@@ -32,11 +36,23 @@ final class HeadNoise {
     await task?.value
   }
 
-  /// StackKit's starlet noise of plane 0, the median tile σ of its finest scale.
+  private func stop() {
+    task?.cancel()
+    task = nil
+    measuring = nil
+  }
+
+  /// StackKit's starlet noise of each plane, the median tile σ of its finest scale; nil once
+  /// cancelled (checked between planes, each about a second on a full frame).
   @concurrent
-  private nonisolated static func measure(_ plane: [Float], width: Int, height: Int) async
-    -> Double
+  private nonisolated static func measure(_ planes: [[Float]], width: Int, height: Int) async
+    -> [Double]?
   {
-    StarletDenoiser.measure(plane, width: width, height: height)
+    var sigma: [Double] = []
+    for plane in planes {
+      guard !Task.isCancelled else { return nil }
+      sigma.append(StarletDenoiser.measure(plane, width: width, height: height))
+    }
+    return sigma
   }
 }

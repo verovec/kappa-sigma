@@ -18,7 +18,7 @@ struct StudioBatchRows: View {
         InstallCard(
           tool: missing.tool.productName,
           reason: StudioWorkspaceModel.reason(missing.tool, missing.status)
-            ?? .app("Extracts the background and denoises."),
+            ?? .app("Extracts the background."),
           installURL: missing.tool.installURL, model: card)
       }
       Toggle(

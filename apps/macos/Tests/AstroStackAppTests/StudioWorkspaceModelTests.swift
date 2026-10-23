@@ -35,6 +35,8 @@ struct StudioWorkspaceModelTests {
     #expect(stars.unavailable == .missing([.starless]))
     let stretch = try #require(entries.first { $0.id == StretchProcess.id })
     #expect(stretch.unavailable == nil)
+    let linear = try #require(workspace.catalogue.first { $0.stage == .linear })
+    #expect(linear.entries.contains { $0.id == DenoiseProcess.id && $0.unavailable == nil })
     #expect(
       StudioCatalogueView.reason(.missing([.starless]), locale: Locale(identifier: "fr"))
         == "Il faut une couche sans étoiles")

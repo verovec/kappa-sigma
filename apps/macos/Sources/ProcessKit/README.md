@@ -141,7 +141,7 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   `previewExactOnlyAt1to1`, a default outside its bounds or options, infinite bounds);
   `standard()` is validated like any registry and lists the shipped processes (today:
   `channel-combination`, `stretch`, `hdr`, `emission-screens`, `colour-balance`, `sky-desat`,
-  `curves`, `saturation`, `star-recomposition`; pipeline order is E15's — `stage` documents it).
+  `curves`, `saturation`, `star-recomposition`, `denoise`; pipeline order is E15's — `stage` documents it).
 - **Colour processes** (card 0053), `Processes/Colour/`, kernels in `Colour.metal` (they share the
   HSL helpers; a runtime-compiled source has no `#include`) and `SkyDesat.metal`; every default is
   the identity, bit for bit:
@@ -163,6 +163,23 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   - `saturation` (non-linear): astrocomp's `-sat -sat-masked` (HSL S through the
     `saturationMaskLUT` band on the HSL lightness), the compose star-core desaturation
     (`starDesatMaskLUT` on the luminance) and the `desat` tool's luma blend `k`; the PO's values are suggestions.
+
+## Denoise (card 0115)
+
+- `DenoiseProcess` (`denoise`, linear, `previewExactOnlyAt1to1`): the starlet (à-trous B3) of
+  StackKit's `Starlet` in `Denoise.metal` — four detail scales (1, 2, 4, 8 px) soft-thresholded at
+  `scale1…4` × σⱼ × `noise`, σⱼ the white-noise sigma of the scale (`ImageKit.StarletNoise`,
+  shared with StackKit) and `noise` the image's noise σ, a parameter the panel shows (not the
+  MADN: on an extended nebula it counts the signal several times over); the coarse residual kept.
+  `protectStars` keeps a share from the band StackKit shares (`ImageKit.StarletNoise.protection`,
+  5 → 10 `noise` of the scale-2 smooth above
+  the plane's median, the only value read from the stats); the denoised planes' luminance (mean
+  of the planes) and colour changes are put back at `amount × luminance` and
+  `amount × chrominance`. Amount 0 (the default) blits the input; noise 0 thresholds nothing; 1 or
+  3 planes only. Pinned against `DenoiseOracle` (StackKit's `Starlet` + `StarletDenoiser.shrink`,
+  mean |Δ| ≤ 1e-5, max ≤ 1e-4). The app measures each plane's noise of the head
+  (`StarletDenoiser.measure`, off the main actor, once per head) and offers their median as
+  `noise` (`DenoiseProcess.suggestions(measured:)`), never applied (R2).
 
 ## Strings (card 0073)
 

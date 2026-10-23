@@ -63,6 +63,14 @@ struct WelcomeViewTests {
     #expect(Set(reasons).count == HostTool.allCases.count)
   }
 
+  @Test(
+    "GraXpert is said to extract the background, never to denoise (card 0115)",
+    arguments: [("en", "denois"), ("fr", "débruit")])
+  func testGraXpertWords(_ language: String, _ denoise: String) {
+    let graxpert = ToolStrip.reason(.init(tool: .graxpert, status: .missing(path: "/x")))
+    #expect(!graxpert.text(language).lowercased().contains(denoise))
+  }
+
   @Test("each tool links to where the user installs it; nothing is downloaded for them")
   func testInstallURLs() {
     #expect(HostTool.allCases.allSatisfy { $0.installURL.scheme == "https" })

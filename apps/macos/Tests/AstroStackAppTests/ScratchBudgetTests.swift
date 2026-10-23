@@ -1,8 +1,10 @@
+import AppKit
 import AstroStackApp
 import Foundation
 import ProjectKit
 import StackKit
 import TestSupport
+import SwiftUI
 import Testing
 
 /// Card 0098 through the window model: the Stacking stage shows what the next run needs against
@@ -92,5 +94,42 @@ struct ScratchBudgetTests {
     #expect(ScratchBudget.gigabytesUp(80_400_000_001) == 81)
     #expect(ScratchBudget.gigabytesUp(81_000_000_000) == 81)
     #expect(ScratchBudget.gigabytesDown(40_999_999_999) == 40)
+  }
+
+  @Test("the refusal is one sentence in each language: the need, the room, the folder, Settings")
+  func testRefusalSentence() {
+    let home = NSHomeDirectory()
+    let error = UserFacingError.preprocess(
+      .scratchFull(
+        neededBytes: 80_400_000_001, availableBytes: 40_999_999_999,
+        folder: home + "/Scratch/AstroStack/Work"))
+    #expect(
+      error.message.text("en")
+        == "Needs ~81 GB of scratch in ~/Scratch/AstroStack/Work, 40 GB free: see Settings › "
+        + "Scratch folder.")
+    let french = error.message.text("fr")
+    #expect(french.contains("~81 Go") && french.contains("40 Go"), "\(french)")
+    #expect(french.contains("~/Scratch/AstroStack/Work") && french.contains("Réglages"))
+  }
+
+  @Test("the app's run services read the Settings folder at each run")
+  func testRunServicesScratchFollowsSettings() {
+    #expect(RunServices.live.scratch == ScratchSetting().folder)
+  }
+
+  @Test(
+    "the Stacking stage shows the line before Run, fitting or not, in fr and en",
+    .scratchDirectory,
+    arguments: [("en", Int64?.some(needed)), ("fr", needed - 1)])
+  func testStageShowsTheLine(language: String, room: Int64?) async throws {
+    let fixture = try await Self.fixture(room: room)
+    defer { try? fixture.project.close() }
+    let window = fixture.window
+    window.select(.stacking)
+    #expect(window.scratchBudget != nil)
+    let host = ImportSheetTests.host(
+      ProjectWindowView(model: window).environment(\.locale, Locale(identifier: language)))
+    host.layoutSubtreeIfNeeded()
+    #expect(host.fittingSize.width >= 640)
   }
 }

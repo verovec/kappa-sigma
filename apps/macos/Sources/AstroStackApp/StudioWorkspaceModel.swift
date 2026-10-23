@@ -288,8 +288,15 @@ package final class StudioWorkspaceModel {
     // After the viewer shows the new head: the display stretch offered is the one on screen.
     if let panel { refresh(panel) }
     refreshCatalogue()
-    // The panel stays open on the new head: its values are previewed on it again (R2).
-    if panel != nil { schedulePreview() }
+    // The panel stays open, the viewer on the new head: previewing its values again would show
+    // an Apply twice and an Undo as nothing. The next value moved previews again.
+    previewTask?.cancel()
+    previewTask = nil
+  }
+
+  /// Waits for the preview scheduled by the last change, if any (tests; no sleeps).
+  package func settlePreview() async {
+    await previewTask?.value
   }
 
   func show(_ image: AstroImage, statistics: [STFMapping]? = nil) throws {

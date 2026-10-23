@@ -2,7 +2,8 @@ internal import AppKit
 package import Foundation
 
 /// The Studio's moves on the window's undo manager (card 0087): an Apply — from the button or
-/// Edit › Apply Process — registers its undo, which registers the redo, and so on.
+/// Edit › Apply Process — or a pipeline run registers its undo, which registers the redo, and so
+/// on.
 ///
 /// Each registered move acts only if the history's head is still the step it recorded (its
 /// output file; the history buttons move it directly), so ⌘Z never undoes another step than the
@@ -35,6 +36,17 @@ package enum StudioUndo {
     guard model.studio.steps.count > before else { return }
     model.undoManager = undoManager
     record(model, undoing: true, head: model.studio.steps.last?.file, on: undoManager)
+  }
+
+  /// The steps a pipeline run added after the history's first `count`: one ⌘Z takes them back.
+  package static func recordRun(
+    _ model: StudioWorkspaceModel, from count: Int, on undoManager: UndoManager?
+  ) {
+    let steps = model.studio.steps
+    guard let undoManager, steps.count > count else { return }
+    model.undoManager = undoManager
+    // Oldest first: the group undoes the last step first, which leaves the head on the one before.
+    for step in steps[count...] { record(model, undoing: true, head: step.file, on: undoManager) }
   }
 
   /// Registers the inverse of the last move, valid while the history's head is the step whose

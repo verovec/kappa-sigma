@@ -7,6 +7,7 @@ package import SwiftUI
 package struct PipelineSidebarView: View {
   let model: PipelineSidebarModel
   @Environment(\.locale) private var locale
+  @Environment(\.undoManager) private var undoManager
   @State private var naming = false
   @State private var name = ""
   @State private var comparedWith: String?
@@ -50,10 +51,10 @@ package struct PipelineSidebarView: View {
 
   private var controls: some View {
     HStack {
-      Button(.app("Run")) { Task { await model.run() } }
+      Button(.app("Run")) { Task { await model.run(undoManager: undoManager) } }
         .disabled(model.isRunning)
         .accessible(.studioPipelineRun, label: .app("Run Pipeline"))
-      Button(.app("Continue")) { Task { await model.continueRun() } }
+      Button(.app("Continue")) { Task { await model.continueRun(undoManager: undoManager) } }
         .disabled(model.isRunning || !model.canContinue)
         .accessible(.studioPipelineContinue, label: .app("Continue Pipeline"))
       Spacer()

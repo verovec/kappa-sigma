@@ -2,8 +2,8 @@ import AstroStackApp
 import Foundation
 import ProjectKit
 import RenderKit
-import SwiftUI
 import StackKit
+import SwiftUI
 import TestSupport
 import Testing
 
@@ -28,7 +28,7 @@ struct ProjectScopeTests {
 
   /// A saved project whose planner scans M 31 and IC 1848 together, scanned once; from plan
   /// `movedAfter + 1` on, M 31's lights are regrouped (a scan that moved since the choice).
-  static func twoObjects(movedAfter: Int? = nil) async throws -> (
+  static func twoObjects(movedAfter: Int? = nil, run: RunServices.Run? = nil) async throws -> (
     project: ProjectPackage, window: ProjectWindowModel, ran: Recorded<PreprocessRequest>
   ) {
     let scratch = try ScratchDirectory.url
@@ -51,7 +51,7 @@ struct ProjectScopeTests {
         })
       },
       runs: RunServices(
-        run: ProjectTests.fakeRun(ran), now: { ProjectTests.start },
+        run: run ?? ProjectTests.fakeRun(ran), now: { ProjectTests.start },
         scratch: scratch.appendingPathComponent("work"),
         timeZone: .gmt))
     window.add(ImportRequest(paths: ["/c/M 31", "/c/IC 1848"]))

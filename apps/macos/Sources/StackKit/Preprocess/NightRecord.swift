@@ -1,6 +1,6 @@
 /// One night inside a multi-night channel (`GroupResult`): its geometry against the anchor night
 /// and what it contributed to the stack.
-package struct NightRecord: Equatable, Sendable {
+package struct NightRecord: Codable, Equatable, Sendable {
   package var session: String
   package var frames: Int
   package var stacked = 0

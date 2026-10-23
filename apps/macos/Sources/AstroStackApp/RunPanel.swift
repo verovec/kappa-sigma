@@ -41,6 +41,7 @@ struct RunPanel: View {
       }
     case .finished: StatusBadge(.ok, .app("Stacked"))
     case .cancelled: StatusBadge(.unavailable, .app("Cancelled"))
+    case .paused: StatusBadge(.attention, .app("Paused"))
     case .failed(let error): StatusBadge(.error, error.message)
     }
   }

@@ -33,7 +33,7 @@ struct ExportsStoreTests {
     try store.migrate(to: 5)
     #expect(try !store.tableNames().contains("exports"))
     try store.migrate(to: nil)
-    #expect(try store.appliedMigrations().last?.name == "exports")
+    #expect(try store.appliedMigrations().map(\.name).contains("exports"))
     #expect(
       try store.columnNames(of: "exports") == [
         "created_at", "files_json", "folder", "head_step_id", "id", "image_id", "settings_json",

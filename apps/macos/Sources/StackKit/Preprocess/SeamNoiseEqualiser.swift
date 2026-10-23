@@ -6,7 +6,7 @@ internal import ImageKit
 /// the coverage — zero, byte for byte, in the full-depth core.
 package enum SeamNoiseEqualiser {
   /// What the pass did (`SeamNoiseEq`).
-  package struct Record: Equatable, Sendable {
+  package struct Record: Codable, Equatable, Sendable {
     package var depthMin = 0
     package var depthMax = 0
     package var weightMax = 0.0

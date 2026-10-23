@@ -38,15 +38,49 @@ package enum StudioUndo {
     record(model, undoing: true, head: model.studio.steps.last?.file, on: undoManager)
   }
 
-  /// The steps a pipeline run added after the history's first `count`: one ⌘Z takes them back.
+  /// The steps a pipeline run added after the history's first `count`: one ⌘Z takes them all
+  /// back, one ⇧⌘Z runs them again.
   package static func recordRun(
     _ model: StudioWorkspaceModel, from count: Int, on undoManager: UndoManager?
   ) {
-    let steps = model.studio.steps
-    guard let undoManager, steps.count > count else { return }
+    let added = model.studio.steps.count - count
+    guard let undoManager, added > 0 else { return }
     model.undoManager = undoManager
-    // Oldest first: the group undoes the last step first, which leaves the head on the one before.
-    for step in steps[count...] { record(model, undoing: true, head: step.file, on: undoManager) }
+    let run = Run(count: count, added: added)
+    record(model, run: run, undoing: true, head: model.studio.steps.last?.file, on: undoManager)
+  }
+
+  /// A run's steps: the history's first `count` stay, `added` follow.
+  private struct Run {
+    let count: Int
+    let added: Int
+  }
+
+  /// Registers the inverse of a run's move, valid while the head is `head`: one action for all
+  /// its steps, so a ⌘Z never takes part of a run and the head is shown once.
+  private static func record(
+    _ model: StudioWorkspaceModel, run: Run, undoing: Bool, head: String?,
+    on undoManager: UndoManager
+  ) {
+    undoManager.registerUndo(withTarget: model) { [weak undoManager] target in
+      MainActor.assumeIsolated {
+        guard let undoManager, movable(target, head: head) else { return }
+        target.reveal()
+        do {
+          if undoing { try target.undo(to: run.count) } else { try target.redo(steps: run.added) }
+        } catch { return }
+        let now = target.studio.steps.last?.file
+        record(target, run: run, undoing: !undoing, head: now, on: undoManager)
+      }
+    }
+    undoManager.setActionIsDiscardable(true)
+    undoManager.setActionName(String(localized: .app("Run Pipeline")))
+  }
+
+  /// Whether a registered move may act on `model`: not replaced, no run moving the history, and
+  /// the head still the step it recorded.
+  private static func movable(_ model: StudioWorkspaceModel, head: String?) -> Bool {
+    !model.isRetired && model.pipeline?.isRunning != true && model.studio.steps.last?.file == head
   }
 
   /// Registers the inverse of the last move, valid while the history's head is the step whose
@@ -57,7 +91,7 @@ package enum StudioUndo {
   ) {
     undoManager?.registerUndo(withTarget: model) { [weak undoManager] target in
       MainActor.assumeIsolated {
-        guard !target.isRetired, target.studio.steps.last?.file == head else { return }
+        guard movable(target, head: head) else { return }
         target.reveal()
         guard (try? undoing ? target.undo() : target.redo()) != nil else { return }
         record(target, undoing: !undoing, head: target.studio.steps.last?.file, on: undoManager)

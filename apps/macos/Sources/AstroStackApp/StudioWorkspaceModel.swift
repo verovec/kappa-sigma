@@ -52,6 +52,9 @@ package final class StudioWorkspaceModel {
   package private(set) var panel: ProcessPanelModel?
   /// The viewer shows the preview of the panel's values, not the head.
   package private(set) var isPreviewing = false
+  /// The history moved under the open panel: the viewer shows the head, not the panel's values,
+  /// until a value moves or Preview is pressed; Apply shows them before it records (R2).
+  package private(set) var isPreviewSuspended = false
   /// The step compare shows, if any.
   package internal(set) var comparing: Int?
   /// The viewer shows a geometric preview that moves the pixels (card 0090, `gridMoved`).
@@ -148,6 +151,7 @@ package final class StudioWorkspaceModel {
   /// Closes the panel: the viewer shows the head again.
   package func closePanel() {
     panel = nil
+    isPreviewSuspended = false
     hideModel()
     toolReport = nil
     stopPreview()
@@ -190,6 +194,11 @@ package final class StudioWorkspaceModel {
     // Apply records what the viewer shows (R2): values not drawn yet (a value just typed, a
     // drag within the frame) are drawn first, and what was drawn is what is recorded.
     previewTask?.cancel()
+    // On a new head the values are shown first: this Apply previews, the next one records.
+    if isPreviewSuspended {
+      resumePreview()
+      return
+    }
     if !isShowing(panel) { drawPreview() }
     guard isShowing(panel) else { return }
     // The values applied: a geometry panel is back at the identity once the pixels moved.
@@ -217,6 +226,24 @@ package final class StudioWorkspaceModel {
   /// Forward one undone step.
   package func redo() throws {
     try reported { try studio.redo() }
+  }
+
+  /// Back to the history's first `count` steps, the head shown once (a pipeline run's undo).
+  package func undo(to count: Int) throws {
+    try reported { while studio.steps.count > count { try studio.undo() } }
+  }
+
+  /// Forward `count` undone steps, the head shown once (a pipeline run's redo).
+  package func redo(steps count: Int) throws {
+    try reported { for _ in 0..<count { try studio.redo() } }
+  }
+
+  /// Shows the panel's values on the head again, after the history moved under it.
+  package func resumePreview() {
+    guard panel != nil else { return }
+    isPreviewSuspended = false
+    previewTask?.cancel()
+    drawPreview()
   }
 
   /// Runs a history move, then shows the head; a failure is shown in the panel and rethrown.
@@ -250,6 +277,7 @@ package final class StudioWorkspaceModel {
   }
 
   private func schedulePreview() {
+    isPreviewSuspended = false
     previewTask?.cancel()
     previewTask = Task { [weak self] in
       // One frame: a slider drag renders its last position, not every intermediate one.
@@ -289,12 +317,14 @@ package final class StudioWorkspaceModel {
     if let panel { refresh(panel) }
     refreshCatalogue()
     // The panel stays open, the viewer on the new head: previewing its values again would show
-    // an Apply twice and an Undo as nothing. The next value moved previews again.
+    // an Apply twice and an Undo as nothing. The panel says so and offers Preview.
     previewTask?.cancel()
     previewTask = nil
+    isPreviewSuspended = panel != nil
   }
 
-  /// Waits for the preview scheduled by the last change, if any (tests; no sleeps).
+  /// Waits for the preview scheduled by the last change, if any: a test sees a preview the
+  /// debounce would draw later, without sleeping.
   package func settlePreview() async {
     await previewTask?.value
   }

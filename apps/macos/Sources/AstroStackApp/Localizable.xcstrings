@@ -6177,6 +6177,22 @@
         }
       }
     },
+    "The image is shown as it is now, not these values.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The image is shown as it is now, not these values."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’image est montrée telle qu’elle est, pas avec ces valeurs."
+          }
+        }
+      }
+    },
     "The master %@ cannot be measured.": {
       "localizations": {
         "en": {

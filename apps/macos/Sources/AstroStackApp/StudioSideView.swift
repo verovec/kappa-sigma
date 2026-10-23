@@ -30,6 +30,7 @@ package struct StudioSideView: View {
               .accessible(.studioApply, label: .app("Apply"))
           }
           StudioToolRow(model: model)
+          if model.isPreviewSuspended { suspended }
         } else {
           Text(.app("Choose a process in the catalogue."))
             .foregroundStyle(DesignColor.textSecondary.color)
@@ -53,6 +54,16 @@ package struct StudioSideView: View {
       StudioBatchRows(model: model)
     } else {
       StudioMaskRow(model: model)
+    }
+  }
+
+  /// The history moved under the panel: the viewer shows the image, not these values.
+  private var suspended: some View {
+    HStack {
+      StatusBadge(.attention, .app("The image is shown as it is now, not these values."))
+      Spacer()
+      Button(.app("Preview")) { model.resumePreview() }
+        .accessible(.studioPreview, label: .app("Preview"))
     }
   }
 

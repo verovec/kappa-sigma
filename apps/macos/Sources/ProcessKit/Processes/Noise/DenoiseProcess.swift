@@ -87,13 +87,12 @@ package struct DenoiseProcess: ImageProcess {
     guard [1, 3].contains(input.planes.count), output.planes.count == input.planes.count,
       output.width == input.width, output.height == input.height
     else { throw ProcessError.sizeMismatch }
-    let amount = params.number("amount")
     // Nothing to threshold or nothing kept of the result is the input bit for bit, not a
     // recomposition rounded in float.
     let thresholds = (1...4).contains { params.number("scale\($0)") > 0 }
-    let colour = input.planes.count == 3 && params.number("chrominance") > 0
-    let kept = params.number("luminance") > 0 || colour
-    guard amount > 0, params.number("noise") > 0, thresholds, kept else {
+    let weights = blendWeights(planes: input.planes.count)
+    let kept = weights.luminance > 0 || weights.colour > 0
+    guard params.number("noise") > 0, thresholds, kept else {
       return try copy(input, into: output, commands: context.commands)
     }
     let protects = params.flag("protectStars")
@@ -112,7 +111,7 @@ package struct DenoiseProcess: ImageProcess {
         plane, into: output.planes[channel], median: median, scratch: scratch,
         commands: context.commands)
     }
-    try encodeBlend(input, into: output, amount: amount, commands: context.commands)
+    try encodeBlend(input, into: output, commands: context.commands)
   }
 
   /// The denoised `plane` into `target`: c₀ → c₁ → c₂ (the protection's smooth) → c₃ → c₄, each

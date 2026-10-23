@@ -161,18 +161,14 @@ struct DenoiseProcessTests {
   @Test(
     "nothing to threshold or nothing kept copies the input bit for bit",
     arguments: [
-      DenoiseOracle.Values(strengths: [0, 0, 0, 0]),
-      DenoiseOracle.Values(luminance: 0, chrominance: 0),
+      (3, DenoiseOracle.Values(strengths: [0, 0, 0, 0])),
+      (1, DenoiseOracle.Values(strengths: [0, 0, 0, 0])),
+      (3, DenoiseOracle.Values(luminance: 0, chrominance: 0)),
+      (1, DenoiseOracle.Values(luminance: 0, chrominance: 1)),
     ])
-  func testIdentity_NothingToDo(values: DenoiseOracle.Values) throws {
-    let planes = Self.field()
+  func testIdentity_NothingToDo(channels: Int, values: DenoiseOracle.Values) throws {
+    let planes = Self.field(channels: channels)
     #expect(try Self.render(planes, values: values) == planes)
-    var mono = values
-    mono.chrominance = 1
-    if values.luminance == 0 {
-      let plane = Self.field(channels: 1)
-      #expect(try Self.render(plane, values: mono) == plane, "mono reads the luminance only")
-    }
   }
 
   @Test("an image of 2 planes is refused, not half blended")

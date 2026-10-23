@@ -43,25 +43,18 @@ final class HeadNoise {
     measuring = nil
   }
 
-  /// StackKit's starlet noise of each plane, the median tile σ of its finest scale, the planes
-  /// measured side by side; nil once cancelled (each plane is about a second on a full frame).
+  /// StackKit's starlet noise of each plane, the median tile σ of its finest scale; nil once
+  /// cancelled. One plane at a time on purpose: a cancel lands between planes (each about a
+  /// second on a full frame) and a single plane's buffers are alive at once.
   @concurrent
   private nonisolated static func measure(_ planes: [[Float]], width: Int, height: Int) async
     -> [Double]?
   {
-    let sigma = await withTaskGroup(of: (Int, Double?).self) { group in
-      for (index, plane) in planes.enumerated() {
-        group.addTask {
-          guard !Task.isCancelled else { return (index, nil) }
-          return (index, StarletDenoiser.measure(plane, width: width, height: height))
-        }
-      }
-      var sigma = [Double?](repeating: nil, count: planes.count)
-      for await (index, value) in group { sigma[index] = value }
-      return sigma
+    var sigma: [Double] = []
+    for plane in planes {
+      guard !Task.isCancelled else { return nil }
+      sigma.append(StarletDenoiser.measure(plane, width: width, height: height))
     }
-    guard !Task.isCancelled else { return nil }
-    let measured = sigma.compactMap(\.self)
-    return measured.count == planes.count ? measured : nil
+    return Task.isCancelled ? nil : sigma
   }
 }

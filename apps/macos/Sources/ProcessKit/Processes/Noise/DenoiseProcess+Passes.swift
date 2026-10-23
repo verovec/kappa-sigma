@@ -30,15 +30,19 @@ extension DenoiseProcess {
     try dispatch(protect, [scaleTwo, mask], &values, size: mask, commands: commands)
   }
 
-  /// The denoised planes in `output` moved back toward `input` by the amounts.
-  func encodeBlend(
-    _ input: GPUImage, into output: GPUImage, amount: Double, commands: MTLCommandBuffer
-  ) throws {
+  /// The shares of the luminance and colour changes put back on an image of `planes` planes: a
+  /// mono plane has no colour. What the blend reads and what decides a render is a copy.
+  func blendWeights(planes: Int) -> (luminance: Double, colour: Double) {
+    let amount = params.number("amount")
+    let colour = planes == 3 ? amount * params.number("chrominance") : 0
+    return (amount * params.number("luminance"), colour)
+  }
+
+  /// The denoised planes in `output` moved back toward `input` by `blendWeights`.
+  func encodeBlend(_ input: GPUImage, into output: GPUImage, commands: MTLCommandBuffer) throws {
     let planes = (0..<3).map { min($0, input.planes.count - 1) }
-    var values = [
-      Float(amount * params.number("luminance")), Float(amount * params.number("chrominance")),
-      Float(input.planes.count),
-    ]
+    let weights = blendWeights(planes: input.planes.count)
+    var values = [Float(weights.luminance), Float(weights.colour), Float(input.planes.count)]
     try dispatch(
       blend, planes.map { input.planes[$0] } + planes.map { output.planes[$0] }, &values,
       size: output.planes[0], commands: commands)

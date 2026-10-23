@@ -20,8 +20,6 @@ extension StudioWorkspaceModel {
   /// The denoise's noise level from the head's measured noise, once measured: the panel's
   /// suggestions are rebuilt when the measurement ends.
   private func denoiseOffers() -> [Suggestion] {
-    // A retired workspace starts no measurement nobody will see.
-    guard !isRetired else { return [] }
     let head = studio.steps.last?.file ?? ""
     let sigma = headNoise.sigma(of: head, image: studio.head) { [weak self] in
       guard let self, !self.isRetired, let panel = self.panel, panel.type == DenoiseProcess.self

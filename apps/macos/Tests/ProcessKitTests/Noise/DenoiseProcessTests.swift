@@ -171,6 +171,17 @@ struct DenoiseProcessTests {
     #expect(try Self.render(planes, values: values) == planes)
   }
 
+  @Test("a colour image with the luminance amount 0 still denoises its colour")
+  func testColourOnly_StillDenoises() throws {
+    let planes = Self.field()
+    let values = DenoiseOracle.Values(luminance: 0, chrominance: 1)
+    let out = try Self.render(planes, values: values)
+    #expect(out != planes)
+    let luma = { (image: [[Float]], index: Int) in (0..<3).map { image[$0][index] }.reduce(0, +) }
+    let index = 7 * Self.width + 9
+    #expect(abs(luma(out, index) - luma(planes, index)) <= 1e-5, "the luminance is kept")
+  }
+
   @Test("an image of 2 planes is refused, not half blended")
   func testPlanes_OneOrThree() throws {
     let device = try #require(MTLCreateSystemDefaultDevice())

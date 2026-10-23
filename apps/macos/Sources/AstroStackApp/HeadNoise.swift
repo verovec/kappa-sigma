@@ -9,9 +9,13 @@ final class HeadNoise {
   private(set) var measured: (head: String, sigma: [Double])?
   private var measuring: String?
   private var task: Task<Void, Never>?
+  private var closed = false
 
   /// Each plane's noise of `head` when known; else measures `image` and calls `done` once it is.
+  ///
+  /// Once `close`d, nothing is measured any more.
   func sigma(of head: String, image: AstroImage, then done: @escaping () -> Void) -> [Double]? {
+    guard !closed else { return nil }
     if let measured, measured.head == head {
       // Back on a head already measured: a measurement of another one is no longer wanted.
       stop()
@@ -36,8 +40,14 @@ final class HeadNoise {
     await task?.value
   }
 
-  /// Drops the measurement under way (another head, or the workspace retired).
-  func stop() {
+  /// Drops the measurement under way and measures nothing more (the workspace retired).
+  func close() {
+    closed = true
+    stop()
+  }
+
+  /// Drops the measurement under way (another head).
+  private func stop() {
     task?.cancel()
     task = nil
     measuring = nil
@@ -45,8 +55,9 @@ final class HeadNoise {
 
   /// StackKit's starlet noise of each plane, the median tile σ of its finest scale.
   ///
-  /// Nil once cancelled. One plane at a time on purpose: a cancel lands between planes (each
-  /// about a second on a full frame) and a single plane's buffers are alive at once.
+  /// Nil once cancelled. One plane at a time on purpose (about 1 s each on a full frame): a
+  /// cancel lands between planes, and one plane's decomposition buffers exist at once instead of
+  /// three — the suggestion appears after ~3 s on a colour head rather than ~1 s.
   @concurrent
   private nonisolated static func measure(_ planes: [[Float]], width: Int, height: Int) async
     -> [Double]?

@@ -32,7 +32,8 @@ extension DenoiseProcess {
 
   /// The shares of the luminance and colour changes put back on an image of `planes` planes.
   ///
-  /// A mono plane has no colour. What the blend reads and what decides a render is a copy.
+  /// A mono plane has no colour. The one rule for both the blend's weights and `render`'s
+  /// decision to copy the input when neither is positive.
   func blendWeights(planes: Int) -> (luminance: Double, colour: Double) {
     let amount = params.number("amount")
     let colour = planes == 3 ? amount * params.number("chrominance") : 0

@@ -10,8 +10,8 @@ package import Metal
 /// never measures it; the app offers the measured one). The luminance and the colour of the
 /// result are put back at their own amounts; `protectStars` keeps what stands 5 to 10 `noise`
 /// above the plane's median (`StarletNoise.protection`, StackKit's band). Amount 0 (the
-/// default), noise 0, every strength 0 or nothing kept (luminance and colour amounts 0) returns
-/// the input bit for bit.
+/// default), noise 0, every strength 0 or nothing kept of the result (`blendWeights` both 0: the
+/// luminance amount alone on a mono plane) returns the input bit for bit.
 package struct DenoiseProcess: ImageProcess {
   package static let id = "denoise"
   package static let title = "Denoise"

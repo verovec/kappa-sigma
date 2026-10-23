@@ -49,7 +49,7 @@
   "denoise.protectStars": "Garde tel quel ce qui dépasse la médiane du plan de 5 à 10 niveaux de bruit (étoiles, cœurs brillants).",
   "denoise.scale1": "Seuil à 1 px (le grain), en σ du bruit tel qu’il apparaît à cette échelle ; 0 le garde.",
   "denoise.scale2": "Seuil à 2 px, en σ du bruit tel qu’il apparaît à cette échelle ; 0 la garde.",
-  "denoise.scale3": "Seuil à 4 px (les taches), en σ du bruit tel qu’il apparaît à cette échelle ; 0 la garde.",
+  "denoise.scale3": "Seuil à 4 px (les taches), en σ du bruit tel qu’il apparaît à cette échelle ; 0 les garde.",
   "denoise.scale4": "Seuil à 8 px (la marbrure), en σ du bruit tel qu’il apparaît à cette échelle ; 0 la garde.",
   "emission-screens.haBackground": "Où la médiane de la couche Hα arrive après son étirement ; plus bas garde le ciel sombre.",
   "emission-screens.haBlack": "Le point noir de la couche Hα après son étirement : ce qui est dessous est caché.",

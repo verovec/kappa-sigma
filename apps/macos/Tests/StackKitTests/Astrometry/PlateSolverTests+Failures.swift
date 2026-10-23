@@ -5,8 +5,10 @@ import TestSupport
 import Testing
 
 /// A solve that reads nothing says which part is missing — Siril's report (with its last
-/// lines), the file, or the solution in it — never one message for all three.
+/// lines), a report this reader missed, the file, or the solution in it — and where the log is.
 extension PlateSolverTests {
+  static let kept = URL(fileURLWithPath: "/support/siril-platesolve.failed.log")
+
   static func transcript(_ name: String) throws -> [String] {
     try Replay(name, succeeds: true).transcript.split(separator: "\n")
       .map { SirilLine(parsing: String($0)).text }
@@ -17,20 +19,41 @@ extension PlateSolverTests {
     let file = (try ScratchDirectory.url).appendingPathComponent("solved.fits")
     let log = [
       "Running command: load", "Running command: platesolve", "Using provided focal length",
-      "", "Findstar: processing", "Siril solve succeeded.", "Running command: save",
-      "Script execution finished successfully.", "closing pipes",
+      "", "Findstar: processing", "Fetched 0 stars", "progress: , 0.00%",
+      "1792673991: running command save", "Script execution finished successfully.",
+      "closing pipes",
     ]
     #expect(
       throws: PlateSolveError.noReport(
-        lastLines: "Using provided focal length · Findstar: processing · Siril solve succeeded.")
-    ) { try PlateSolver.solved(log: log, file: file) }
+        lastLines: "Using provided focal length · Findstar: processing · Fetched 0 stars",
+        log: Self.kept.path)
+    ) { try PlateSolver.solved(log: log, file: file, kept: Self.kept) }
+  }
+
+  @Test("Siril saying it solved, its report unread, is this reader's miss", .scratchDirectory)
+  func testSolved_ReportUnread() throws {
+    let file = (try ScratchDirectory.url).appendingPathComponent("solved.fits")
+    let log = ["Running command: platesolve", "Image centre: 00 42 44", "Siril solve succeeded."]
+    #expect(throws: PlateSolveError.reportUnread(log: Self.kept.path)) {
+      try PlateSolver.solved(log: log, file: file, kept: Self.kept)
+    }
+  }
+
+  @Test("a file that cannot be read is said unreadable", .scratchDirectory)
+  func testSolved_UnreadableFile() throws {
+    let file = (try ScratchDirectory.url).appendingPathComponent("solved.fits")
+    try Data("not a FITS file".utf8).write(to: file)
+    #expect(throws: PlateSolveError.unreadableFile(log: Self.kept.path)) {
+      try PlateSolver.solved(
+        log: try Self.transcript("m31-crop-solved"), file: file, kept: Self.kept)
+    }
   }
 
   @Test("no line at all is said « — », never an empty quote", .scratchDirectory)
   func testSolved_NoReport_Silent() throws {
     let file = (try ScratchDirectory.url).appendingPathComponent("solved.fits")
-    #expect(throws: PlateSolveError.noReport(lastLines: "—")) {
-      try PlateSolver.solved(log: ["", "  "], file: file)
+    #expect(throws: PlateSolveError.noReport(lastLines: "—", log: Self.kept.path)) {
+      try PlateSolver.solved(log: ["", "  "], file: file, kept: Self.kept)
     }
   }
 
@@ -38,8 +61,8 @@ extension PlateSolverTests {
   func testSolved_NoFile() throws {
     let file = (try ScratchDirectory.url).appendingPathComponent("solved.fits")
     let log = try Self.transcript("m31-crop-solved")
-    #expect(throws: PlateSolveError.noFile(path: file.path)) {
-      try PlateSolver.solved(log: log, file: file)
+    #expect(throws: PlateSolveError.noFile(log: Self.kept.path)) {
+      try PlateSolver.solved(log: log, file: file, kept: Self.kept)
     }
   }
 
@@ -49,27 +72,34 @@ extension PlateSolverTests {
     let log = try Self.transcript("m31-crop-solved")
     try TestFITS.write("bare.fits", in: scratch, width: 4, height: 3, cards: [:])
     let bare = scratch.appendingPathComponent("bare.fits")
-    #expect(throws: PlateSolveError.noSolution(path: bare.path)) {
-      try PlateSolver.solved(log: log, file: bare)
+    #expect(throws: PlateSolveError.noSolution(log: Self.kept.path)) {
+      try PlateSolver.solved(log: log, file: bare, kept: Self.kept)
     }
     try Self.solvedFile(in: scratch)
     let solved = try PlateSolver.solved(
-      log: log, file: scratch.appendingPathComponent("solved.fits"))
+      log: log, file: scratch.appendingPathComponent("solved.fits"), kept: Self.kept)
     #expect(solved.solution.scaleArcsecPerPx == 3.117)
   }
 }
 
 extension PlateSolverTests {
-  @Test("Siril's whole output is kept beside its settings, success or failure", .scratchDirectory)
+  @Test("a failed solve's log is kept apart: the retry that succeeds keeps it", .scratchDirectory)
   func testLogKept() async throws {
     let scratch = try ScratchDirectory.url
-    let replay = try Replay("m31-crop-failed", succeeds: false)
-    let solver = PlateSolver(
-      siril: replay.runner, support: scratch.appendingPathComponent("Support"),
-      catalogues: try Self.catalogues())
-    _ = try? await solver.solve(Self.image(), request: Self.request, scratch: scratch) { _ in }
-    let kept = try String(contentsOf: solver.logFile, encoding: .utf8)
-    #expect(solver.logFile.lastPathComponent == "siril-platesolve.log")
-    #expect(kept.contains("Plate solving failed"))
+    let support = scratch.appendingPathComponent("Support")
+    let catalogues = try Self.catalogues()
+    let failing = PlateSolver(
+      siril: try Replay("m31-crop-failed", succeeds: false).runner, support: support,
+      catalogues: catalogues)
+    _ = try? await failing.solve(Self.image(), request: Self.request, scratch: scratch) { _ in }
+    let solving = PlateSolver(
+      siril: try Replay("m31-crop-solved", succeeds: true).runner, support: support,
+      catalogues: catalogues)
+    _ = try await solving.solve(Self.image(), request: Self.request, scratch: scratch) { _ in }
+
+    let last = try String(contentsOf: solving.logFile, encoding: .utf8)
+    let failed = try String(contentsOf: solving.failedLogFile, encoding: .utf8)
+    #expect(last.contains("Siril solve succeeded") && failed.contains("Plate solving failed"))
+    #expect(solving.failedLogFile.lastPathComponent == "siril-platesolve.failed.log")
   }
 }

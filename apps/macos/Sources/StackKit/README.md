@@ -110,10 +110,12 @@ under `catalogues`, `update_default_scale=false`), never on the user's, which a 
 (`docs/design/validation-e17.md`). Local Gaia without `siril_cat_healpix8_astro.dat` is
 `PlateSolveError.catalogueMissing` before Siril runs; no solution is `.failed(reason:)` with
 Siril's `Plate solving failed: …` line, never retried with other settings. A run that ends
-without a solution says which part is missing: `.noReport(lastLines:)` (no centre, scale or
-rotation in the log; the last lines `platesolve` printed), `.noFile(path:)` (no `solved.fits`),
-`.noSolution(path:)` (a file without a readable TAN solution). Siril's whole output of the last
-solve is kept in `<support>/siril-platesolve.log`, success or failure. Transcripts recorded
+without a solution says which part is missing: `.noReport` (no centre, scale or rotation in the
+log; the last lines `platesolve` printed), `.reportUnread` (Siril said it solved; this reader
+missed its lines), `.noFile`, `.unreadableFile`, `.noSolution` (a file without a readable TAN
+solution) — each naming the kept log. Siril's whole output of the last solve is kept in
+`<support>/siril-platesolve.log`, and that of the last failed one in
+`<support>/siril-platesolve.failed.log`, which a successful retry keeps. Transcripts recorded
 on run #78's crop are in `Tests/StackKitTests/Fixtures/platesolve/` (0.6 s wall live).
 
 **Colour calibration** (card 0094, `Colour/`): `ColourCalibrator(siril:support:catalogues:)` —

@@ -57,9 +57,10 @@ struct PlateSolveStudioViewsTests {
     arguments: [
       UserFacingError.plateSolve(.failed(reason: "no stars")),
       .plateSolve(.catalogueMissing(path: "/x/cat.dat")),
-      .plateSolve(.noSolution(path: "/x/solved.fits")),
-      .plateSolve(.noReport(lastLines: "Findstar: processing")),
-      .plateSolve(.noFile(path: "/x/solved.fits")),
+      .plateSolve(.noSolution(log: "/x/s.log")),
+      .plateSolve(.noReport(lastLines: "Findstar: processing", log: "/x/s.log")),
+      .plateSolve(.reportUnread(log: "/x/s.log")), .plateSolve(.noFile(log: "/x/s.log")),
+      .plateSolve(.unreadableFile(log: "/x/s.log")),
       .plateSolveInput(.coordinatesMissing), .plateSolveInput(.unreadable("north")),
       .plateSolveInput(.opticsMissing), .studio(.needsTool("plate-solve")),
       .pipeline(.unknownProcess("x")), .pipeline(.noStep(2)),
@@ -78,7 +79,7 @@ struct PlateSolveStudioViewsTests {
   @Test("the kit errors map to their sentences")
   func testMapping() {
     #expect(
-      UserFacingError(PlateSolveError.noSolution(path: "p")) == .plateSolve(.noSolution(path: "p")))
+      UserFacingError(PlateSolveError.noSolution(log: "p")) == .plateSolve(.noSolution(log: "p")))
     #expect(
       UserFacingError(PlateSolveTool.InputError.opticsMissing) == .plateSolveInput(.opticsMissing))
     #expect(UserFacingError(PipelineError.noStep(1)) == .pipeline(.noStep(1)))

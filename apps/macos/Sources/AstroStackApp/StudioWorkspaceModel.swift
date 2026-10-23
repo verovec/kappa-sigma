@@ -70,6 +70,9 @@ package final class StudioWorkspaceModel {
   package var pipeline: PipelineSidebarModel?
   /// Why the last action failed.
   package internal(set) var failure: LocalizedStringResource?
+  /// The last Apply recorded a step that changed nothing: said, so an Undo showing nothing is
+  /// understood.
+  package private(set) var appliedNothing = false
   /// The host tool running for the panel (card 0093), with its last line.
   package internal(set) var toolRun: ToolProgress?
   /// What the last host tool reported (a plate solution), in a locale.
@@ -141,6 +144,7 @@ package final class StudioWorkspaceModel {
     hideModel()
     self.panel = panel
     toolReport = nil
+    appliedNothing = false
     // A moved preview leaves the screen at once; another stays until the new one replaces it.
     if showsMovedGrid { stopPreview() } else { shown = nil }
     // The defaults are previewed at once: Apply never records what was not shown (R2).
@@ -151,6 +155,7 @@ package final class StudioWorkspaceModel {
   /// Closes the panel: the viewer shows the head again.
   package func closePanel() {
     panel = nil
+    appliedNothing = false
     isPreviewSuspended = false
     hideModel()
     toolReport = nil
@@ -210,6 +215,7 @@ package final class StudioWorkspaceModel {
     }
     // The user's manual work becomes the recipe (R5): the pipeline records the step.
     pipeline?.applied(id, params: params, masked: used != nil)
+    appliedNothing = studio.session.lastApplyChangedNothing
   }
 
   /// Whether the viewer shows the current values and mask of `panel`.
@@ -258,6 +264,8 @@ package final class StudioWorkspaceModel {
 
   /// A value moved: the suggestions follow the values they depend on, the preview follows.
   private func panelChanged() {
+    // The notice spoke of the values applied, not of these.
+    appliedNothing = false
     if let panel { panel.suggestions = offers(for: panel.type, params: panel.params) }
     greyUnavailable()
     // The head comes back now: a preview cancelled or refused would leave the model on screen.
@@ -294,6 +302,7 @@ package final class StudioWorkspaceModel {
     shown = nil
     // A report speaks of the head it was made on.
     toolReport = nil
+    appliedNothing = false
     batch.showsModel = false
     defer { headStatistics = viewer.model.statistics }
     isPreviewing = false

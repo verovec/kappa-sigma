@@ -289,12 +289,13 @@ package final class ProjectDocument: NSDocument {
     }
   }
 
-  /// Removes the untitled package's marked folder once only its marker is left.
+  /// Removes the untitled package's folder once only its marker (and the Finder's files) is
+  /// left: a package written there by someone else stays.
   private static func removeUntitledFolder(_ folder: URL) throws {
     let manager = FileManager.default
-    guard try manager.contentsOfDirectory(atPath: folder.path) == [ScratchOwner.fileName] else {
-      return
-    }
+    let left = Set(try manager.contentsOfDirectory(atPath: folder.path))
+      .subtracting(StackLeftovers.finderFiles).subtracting([ScratchOwner.fileName])
+    guard left.isEmpty else { return }
     try manager.removeItem(at: folder)
   }
 

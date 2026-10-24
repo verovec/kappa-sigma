@@ -3,13 +3,13 @@ internal import OSLog
 
 /// Removes what a dead run, Siril session, untitled project or test left in the scratch folders.
 ///
-/// Each root names a folder and the prefix of the entries it may take (`run_`, `siril-`…). An
-/// entry with a marker (`ScratchOwner`) goes once its owner no longer runs, after its recorded
-/// Siril is stopped (only when that pid still runs a `siril-cli` started when recorded; a Siril
-/// that keeps running keeps its folder); an entry without one, folder or file, goes once
-/// untouched for `unmarkedAge` (a day). A root inside or around the
-/// astro data folder (captures, library, runs: read-only, R7) is refused whatever the caller
-/// passed.
+/// Each root names a folder and the prefix of the entries it may take (`run_`, `siril-`…). Only
+/// a folder with a marker (`ScratchOwner`) is ever taken, once its owner no longer runs and after
+/// its recorded Siril is stopped (only while that pid still runs the `siril-cli` started when
+/// recorded; a Siril that keeps running keeps its folder). An entry without a marker, a file or
+/// a symbolic link is never touched, whatever its age: nothing proves the app made it. A root
+/// that is `/`, inside or around the astro data folder (captures, library, runs: read-only, R7)
+/// is refused whatever the caller passed.
 package struct LeftoverSweep: Sendable {
   /// A folder whose entries starting with `prefix` the sweep may take (`""`: every entry).
   package struct Root: Sendable {
@@ -33,9 +33,6 @@ package struct LeftoverSweep: Sendable {
     package var bytes: Int64
   }
 
-  /// An unmarked entry untouched this long belongs to no running process.
-  package static let staleAge: TimeInterval = 24 * 3600
-
   /// The astro data folder (`~/Documents/astro`): never swept.
   package static let dataFolder = FileManager.default.homeDirectoryForCurrentUser
     .appendingPathComponent("Documents/astro", isDirectory: true)
@@ -44,23 +41,14 @@ package struct LeftoverSweep: Sendable {
   package var roots: [Root]
   /// Who runs: the host's processes, or a test's table.
   package var table: ProcessTable
-  /// The moment unmarked entries are aged against.
-  package var now: Date
   /// Folders no root may be inside or around.
   package var protected: [URL]
-  /// How long an unmarked entry stays untouched before it goes.
-  package var unmarkedAge: TimeInterval
 
-  /// A sweep of `roots`, asking `table` who runs, at `now`.
-  package init(
-    roots: [Root], table: ProcessTable = .live, now: Date = Date(),
-    protected: [URL] = [Self.dataFolder], unmarkedAge: TimeInterval = Self.staleAge
-  ) {
+  /// A sweep of `roots`, asking `table` who runs.
+  package init(roots: [Root], table: ProcessTable = .live, protected: [URL] = [Self.dataFolder]) {
     self.roots = roots
     self.table = table
-    self.now = now
     self.protected = protected
-    self.unmarkedAge = unmarkedAge
   }
 
   /// The app's scratch roots under `temporary`: Siril's FIFO folders, the runs' work folders
@@ -79,23 +67,22 @@ package struct LeftoverSweep: Sendable {
   /// Sweeps every root; returns what it removed, each removal logged.
   @discardableResult
   package func run() -> [Removal] {
-    roots.filter(isAllowed).flatMap(sweep)
+    roots.filter(allows).flatMap(sweep)
   }
 
   private func sweep(_ root: Root) -> [Removal] {
     let manager = FileManager.default
-    let keys: [URLResourceKey] = [.isDirectoryKey, .isSymbolicLinkKey, .contentModificationDateKey]
+    let keys: [URLResourceKey] = [.isDirectoryKey, .isSymbolicLinkKey]
     let entries =
       (try? manager.contentsOfDirectory(at: root.folder, includingPropertiesForKeys: keys)) ?? []
     var removed: [Removal] = []
     for entry in entries where entry.lastPathComponent.hasPrefix(root.prefix) {
       guard let values = try? entry.resourceValues(forKeys: Set(keys)),
-        values.isSymbolicLink != true
+        values.isDirectory == true, values.isSymbolicLink != true,
+        let marker = ScratchOwner.read(entry), !marker.isAlive(in: table)
       else { continue }
-      let marker = values.isDirectory == true ? ScratchOwner.read(entry) : nil
-      guard isLeftover(marker, values) else { continue }
       // A Siril that keeps running keeps its folder: removed, nothing would point to it any more.
-      if let siril = marker?.siril, !stop(siril) {
+      if let siril = marker.siril, !stop(siril) {
         Self.logger.error("kept \(entry.path): its Siril \(siril.pid) still runs")
         continue
       }
@@ -111,16 +98,6 @@ package struct LeftoverSweep: Sendable {
     return removed
   }
 
-  /// True when `entry` is left over.
-  ///
-  /// Marked: its owner no longer runs. Unmarked (a folder without a marker, or a file):
-  /// untouched for `unmarkedAge`.
-  private func isLeftover(_ marker: ScratchOwner?, _ values: URLResourceValues) -> Bool {
-    if let marker { return !marker.isAlive(in: table) }
-    guard let modified = values.contentModificationDate else { return false }
-    return now.timeIntervalSince(modified) > unmarkedAge
-  }
-
   /// Stops the recorded Siril, only while its pid still runs the `siril-cli` recorded; true
   /// once it no longer runs.
   private func stop(_ siril: ProcessIdentity) -> Bool {
@@ -133,15 +110,17 @@ package struct LeftoverSweep: Sendable {
     return table.identity(siril.pid) != siril
   }
 
-  /// Neither inside nor around a protected folder.
-  private func isAllowed(_ root: Root) -> Bool {
+  /// True when the sweep may look into `root`: not `/`, neither inside nor around a protected
+  /// folder.
+  package func allows(_ root: Root) -> Bool {
     let path = Self.canonical(root.folder)
-    for folder in protected.map(Self.canonical)
-    where path == folder || path.hasPrefix(folder + "/") || folder.hasPrefix(path + "/") {
-      Self.logger.error("refused to sweep \(root.folder.path): the astro data stays read-only")
-      return false
-    }
-    return true
+    let refused =
+      path == "/"
+      || protected.map(Self.canonical).contains { folder in
+        path == folder || path.hasPrefix(folder + "/") || folder.hasPrefix(path + "/")
+      }
+    if refused { Self.logger.error("refused to sweep \(root.folder.path): not a scratch folder") }
+    return !refused
   }
 
   private static func canonical(_ url: URL) -> String {

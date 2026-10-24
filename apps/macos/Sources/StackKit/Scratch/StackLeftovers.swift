@@ -39,6 +39,7 @@ package enum StackLeftovers {
   /// there. The folder is judged only once no run holds it (`TargetLock`); one still held after
   /// `wait` (another run's, or a teardown that hangs) is kept, and listed at the next open.
   @discardableResult
+  @concurrent
   package static func removeUnfinished(_ folder: URL, wait: Duration = .seconds(10)) async
     -> LeftoverSweep.Removal?
   {
@@ -102,14 +103,19 @@ package enum StackLeftovers {
     return LeftoverSweep.Removal(path: folder, bytes: bytes)
   }
 
-  /// Any regular file, at any depth.
+  /// Files the Finder leaves in a folder it showed: they hold nothing of a run.
+  package static let finderFiles: Set<String> = [".DS_Store"]
+
+  /// Any regular file but the Finder's, at any depth.
   private static func holdsFiles(_ folder: URL) -> Bool {
     let key = URLResourceKey.isRegularFileKey
     guard
       let entries = FileManager.default.enumerator(at: folder, includingPropertiesForKeys: [key])
     else { return false }
     for case let entry as URL in entries
-    where (try? entry.resourceValues(forKeys: [key]).isRegularFile) == true {
+    where (try? entry.resourceValues(forKeys: [key]).isRegularFile) == true
+      && !finderFiles.contains(entry.lastPathComponent)
+    {
       return true
     }
     return false

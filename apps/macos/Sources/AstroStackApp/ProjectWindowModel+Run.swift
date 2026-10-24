@@ -142,7 +142,7 @@ extension ProjectWindowModel {
       } else if resume == nil, let run, run.runID == runID {
         // Finished masters stay (README); a folder with none would only pile up `_2`, `_3`. A
         // resumed run's folder is its paused stack's checkpoint: never removed here.
-        await Self.removeUnfinished(run.output)
+        await StackLeftovers.removeUnfinished(run.output)
       }
       endQueue(drained: false)
       return

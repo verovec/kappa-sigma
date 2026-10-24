@@ -68,6 +68,15 @@ struct RunCleanupTests {
     #expect(!Self.exists(folder))
   }
 
+  @Test("a folder holding only the Finder's .DS_Store counts as empty", .scratchDirectory)
+  func testFinderFilesAreEmpty() throws {
+    let package = try ScratchDirectory.url.appendingPathComponent("M31.astrostack")
+    let browsed = try Self.stack("20261022_230000", in: package, files: [".DS_Store"])
+
+    #expect(StackLeftovers.orphans(in: package, recorded: []).isEmpty)
+    #expect(!Self.exists(browsed))
+  }
+
   @Test("a package without stacks has no leftovers", .scratchDirectory)
   func testNoStacksFolder() throws {
     #expect(StackLeftovers.orphans(in: try ScratchDirectory.url, recorded: []).isEmpty)

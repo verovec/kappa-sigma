@@ -35,7 +35,10 @@ package struct ProcessTable: Sendable {
         guard let now = liveIdentity(pid), now == started else { return }
         usleep(100_000)
       }
-      if let now = liveIdentity(pid), now == started { kill(pid, SIGKILL) }
+      guard let now = liveIdentity(pid), now == started else { return }
+      kill(pid, SIGKILL)
+      // The kernel takes a moment to retire it: the caller checks it is gone right after.
+      for _ in 0..<10 where liveIdentity(pid) == started { usleep(50_000) }
     })
 
   /// This process.

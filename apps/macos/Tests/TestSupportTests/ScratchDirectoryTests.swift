@@ -65,7 +65,7 @@ struct ScratchDirectoryTests {
   }
 
   @Test("the sweep takes a killed test's directory at once, however recent", .scratchDirectory)
-  func testScratchDirectory_removeStale_takesDeadOwners() throws {
+  func testScratchDirectory_removeDead_takesDeadOwners() throws {
     let folder = try ScratchDirectory.url
     let killed = folder.appendingPathComponent("killed", isDirectory: true)
     try FileManager.default.createDirectory(at: killed, withIntermediateDirectories: true)
@@ -73,9 +73,13 @@ struct ScratchDirectoryTests {
     try ScratchOwner(owner: ProcessIdentity(pid: 0, startSeconds: 1, startMicroseconds: 0))
       .write(to: killed)
 
-    ScratchDirectory.removeStale(in: folder, olderThan: ScratchDirectory.staleAge, now: Date())
+    let unmarked = folder.appendingPathComponent("unmarked", isDirectory: true)
+    try FileManager.default.createDirectory(at: unmarked, withIntermediateDirectories: true)
+
+    ScratchDirectory.removeDead(in: folder)
 
     #expect(!FileManager.default.fileExists(atPath: killed.path))
+    #expect(FileManager.default.fileExists(atPath: unmarked.path), "no marker: left to its age")
   }
 }
 

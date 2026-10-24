@@ -28,11 +28,4 @@ extension ProjectWindowModel {
     }
     listLeftoverStacks()
   }
-
-  /// Removes the folder of a run that did not finish unless a finished master is in it, once
-  /// the run's task let go of it.
-  @concurrent
-  nonisolated static func removeUnfinished(_ output: URL) async {
-    await StackLeftovers.removeUnfinished(output)
-  }
 }

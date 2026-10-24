@@ -154,10 +154,13 @@ folders (`$TMPDIR/AstroStack/siril-*`, `SirilPipeInstance`), each run's work fol
 scratch folder (`TestSupport/ScratchDirectory`, the marker one level above the test's directory).
 
 `LeftoverSweep` runs at app launch (`AppDelegate.sweepLeftovers`) and once per test process. Per
-root it takes only entries with the root's prefix: a marked one whose owner no longer runs (after
-stopping its recorded Siril, only while that pid still runs a `siril-cli` started when recorded),
-an unmarked one untouched for a day. A root inside or around `~/Documents/astro` is refused (R7).
-`ProcessTable` is the only door to the process table; tests pass a fake one.
+root it takes only the folders with the root's prefix **and a marker** whose owner no longer runs
+(after stopping its recorded Siril, only while that pid still runs a `siril-cli` started when
+recorded; a Siril left running keeps its folder). An unmarked entry, a file or a symbolic link is
+never taken, whatever its age: nothing proves the app made it (24/10: an age rule run on a wrong
+root deleted most of /opt/homebrew). A root that is `/`, inside or around `~/Documents/astro` is
+refused (R7); tests check that with `allows`, never by sweeping a real path. `ProcessTable` is the
+only door to the process table; tests pass a fake one.
 
 Stack folders (`StackLeftovers`): a failed or cancelled run's `stacks/<id>/` goes unless it holds a
 finished `master_*.fits`; at project open and when a queue ends, folders no stack row names are

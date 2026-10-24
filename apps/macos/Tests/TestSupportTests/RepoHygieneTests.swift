@@ -156,8 +156,9 @@ struct RepoHygieneTests {
     try Self.git(["checkout", "-q", "-"], in: tree)
     try (Self.french + "deux\n").write(to: page, atomically: true, encoding: .utf8)
     try Self.git(commit, in: tree)
-    let merge = try Self.run("/usr/bin/git", ["merge", "-q", "other"], in: tree)
-    try #require(merge.status != 0, "the merge conflicts")
+    _ = try Self.run("/usr/bin/git", ["merge", "-q", "other"], in: tree)
+    let unmerged = try Self.run("/usr/bin/git", ["ls-files", "-u"], in: tree)
+    try #require(unmerged.output.contains("README.fr.md"), "the merge conflicts on the page")
     let gate = try Self.run("/bin/bash", ["scripts/hygiene.sh"], in: tree)
     #expect(gate.status == 1)
     #expect(gate.output.contains("cannot be read from the index"), "\(gate.output)")
@@ -229,7 +230,7 @@ struct RepoHygieneTests {
 
   /// Runs `executable` in `directory` and returns its status with stdout and stderr together.
   /// In a fixture tree (`isolated`) the GIT_* variables a hook exports (GIT_DIR, GIT_INDEX_FILE…)
-  /// are dropped, or git would act on the real repository; on the real one they are kept, so the
+  /// are dropped, or git would act on the real repository, and the global config is ignored; on the real one they are kept, so the
   /// gate judges the index being committed.
   static func run(
     _ executable: String, _ arguments: [String], in directory: URL, isolated: Bool = true
@@ -242,7 +243,11 @@ struct RepoHygieneTests {
     process.arguments = arguments
     process.currentDirectoryURL = directory
     if isolated {
-      process.environment = ProcessInfo.processInfo.environment.filter { !$0.key.hasPrefix("GIT_") }
+      var environment = ProcessInfo.processInfo.environment.filter { !$0.key.hasPrefix("GIT_") }
+      // Nor the machine's git config: signing, hooks or merge.ff=only would change the fixture.
+      environment["GIT_CONFIG_GLOBAL"] = "/dev/null"
+      environment["GIT_CONFIG_NOSYSTEM"] = "1"
+      process.environment = environment
     }
     process.standardOutput = pipe
     process.standardError = pipe

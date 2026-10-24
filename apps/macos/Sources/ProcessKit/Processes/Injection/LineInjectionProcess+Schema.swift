@@ -97,7 +97,7 @@ extension LineInjectionProcess {
     guard let median = layers[line.layerID]?.channels.first?.median else { return nil }
     var sky = median
     if Self.subtracts(line, params: params) {
-      guard let token = line.continuumFit(in: layers)?.reference,
+      guard let token = layers[line.layerID]?.continuumReference,
         let reference = LayerPlane(token).stats(in: layers)
       else { return nil }
       sky -= params.number(line.id("ContinuumK")) * reference.median

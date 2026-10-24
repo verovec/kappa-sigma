@@ -12,6 +12,8 @@ internal import System
 final class SirilPipeInstance {
   /// Stops Siril and removes the FIFOs; safe to call more than once, from any thread.
   let terminate: @Sendable () -> Void
+  /// The FIFOs' folder, marked by its owner (`ScratchOwner`) and removed by `terminate`.
+  let folder: URL
   private let commands: FileHandle
   private var lines: AsyncStream<String>.Iterator
 
@@ -20,6 +22,10 @@ final class SirilPipeInstance {
       .appendingPathComponent("AstroStack/siril-\(UUID().uuidString)", isDirectory: true)
     try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
     do {
+      // A killed app leaves Siril running here, reparented to launchd: the marker names both, so
+      // the next launch's sweep stops that Siril and removes the folder (LeftoverSweep).
+      // Best effort: an unmarked folder is only never swept, never a session that cannot start.
+      try? ScratchOwner.mark(folder)
       let input = folder.appendingPathComponent("command.in").path
       let output = folder.appendingPathComponent("command.out").path
       for path in [input, output] where mkfifo(path, 0o600) != 0 {
@@ -34,9 +40,11 @@ final class SirilPipeInstance {
       replies.readabilityHandler = { handle in
         for line in splitter.append(handle.availableData) { continuation.yield(line) }
       }
-      let process = Self.launch(binary, input: input, output: output, in: workDirectory) {
-        continuation.finish()
-      }
+      let process = Self.launch(
+        binary, input: input, output: output, in: workDirectory,
+        onLaunch: { try? ScratchOwner.recordSiril(pid: $0, in: folder) },
+        onExit: { continuation.finish() })
+      self.folder = folder
       self.commands = commands
       self.lines = stream.makeAsyncIterator()
       // Called by the session and by deinit, possibly at once: the closes must happen exactly
@@ -70,7 +78,7 @@ final class SirilPipeInstance {
   /// Runs Siril until it exits or the task is cancelled (SIGTERM, then SIGKILL after 2 s).
   private static func launch(
     _ binary: String, input: String, output: String, in workDirectory: URL,
-    onExit: @escaping @Sendable () -> Void
+    onLaunch: @escaping @Sendable (Int32) -> Void, onExit: @escaping @Sendable () -> Void
   ) -> Task<Void, Never> {
     var options = PlatformOptions()
     options.teardownSequence = [.gracefulShutDown(allowedDurationToNextStep: .seconds(2))]
@@ -78,7 +86,8 @@ final class SirilPipeInstance {
     return Task {
       _ = try? await Subprocess.run(
         .path(FilePath(binary)), arguments: arguments, platformOptions: options,
-        output: .discarded, error: .discarded)
+        input: .none, output: .discarded, error: .discarded
+      ) { execution in onLaunch(execution.processIdentifier.value) }
       onExit()
     }
   }

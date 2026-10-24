@@ -26,12 +26,20 @@ package final class ProjectDocument: NSDocument {
   package convenience init(type typeName: String) throws {
     self.init()
     fileType = typeName
+    // A folder of its own, marked by this process: a crash leaves it to the next launch's sweep
+    // (LeftoverSweep), and the marker stays out of the package a Save copies.
+    let id = UUID().uuidString
     let folder = FileManager.default.temporaryDirectory
-      .appendingPathComponent("AstroStack/Untitled", isDirectory: true)
+      .appendingPathComponent("AstroStack/Untitled/\(id)", isDirectory: true)
     try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    // Best effort: without it the folder is swept a day later, never a project that cannot start.
+    do {
+      try ScratchOwner.mark(folder)
+    } catch {
+      Self.logger.error("marking \(folder.path) failed: \(error)")
+    }
     project = try ProjectPackage.create(
-      at: folder.appendingPathComponent(UUID().uuidString)
-        .appendingPathExtension(ProjectPackage.fileExtension))
+      at: folder.appendingPathComponent(id).appendingPathExtension(ProjectPackage.fileExtension))
     isTemporary = true
   }
 
@@ -271,7 +279,24 @@ package final class ProjectDocument: NSDocument {
       try FileManager.default.removeItem(at: project.url)
     } catch {
       Self.logger.error("deleting \(project.url.path) failed: \(error)")
+      return
     }
+    let folder = project.url.deletingLastPathComponent()
+    do {
+      try Self.removeUntitledFolder(folder)
+    } catch {
+      Self.logger.error("deleting \(folder.path) failed: \(error)")
+    }
+  }
+
+  /// Removes the untitled package's folder once only its marker (and the Finder's files) is
+  /// left: a package written there by someone else stays.
+  private static func removeUntitledFolder(_ folder: URL) throws {
+    let manager = FileManager.default
+    let left = Set(try manager.contentsOfDirectory(atPath: folder.path))
+      .subtracting(StackLeftovers.finderFiles).subtracting([ScratchOwner.fileName])
+    guard left.isEmpty else { return }
+    try manager.removeItem(at: folder)
   }
 
   // MARK: - Window

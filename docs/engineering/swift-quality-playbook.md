@@ -223,7 +223,7 @@ https://github.com/JuliaGPU/Metal.jl/pull/789
 | Hygiène dépôt (pas de Go/Python/Docker/pixels/symlinks) | `scripts/hygiene.sh` (préfigure le test de 0064) | `just hygiene`, CI |
 | Tests unitaires + oracles committés | `swift test` | `just test`, CI |
 | Tests live (outils hôte + fixtures) | mêmes suites, préfixe `Live`, auto-skip | `just check` local avant PR |
-| Couverture | `swift test --enable-code-coverage` + `llvm-cov` | `just coverage` ; **ratchet** (ne jamais baisser) plutôt que seuil fixe |
+| Couverture | `swift test --enable-code-coverage` + `llvm-cov` | `just coverage` ; **seuil fixe 95 %** (`.coverage-floor`), décision PO du 24/10 (remplace le ratchet) ; seul le PO le change |
 | API publique des kits | `swift package diagnose-api-breaking-changes origin/main` | à ajouter en CI dès qu'un kit est `public` (0049) |
 | Code mort | Periphery 3.7.4 (dernière version MIT ; projet passé commercial 08/2026) | nightly local, pas en PR |
 | Pré-push | `scripts/git-hooks/pre-push` → `just check` (installé par `just hooks`) | local |

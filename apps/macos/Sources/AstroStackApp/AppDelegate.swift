@@ -1,4 +1,5 @@
 package import AppKit
+package import StackKit
 
 /// Shows the welcome window when the app starts without a document (or is reopened from the Dock
 /// with no window): a project is named after its target there, never « Untitled ».
@@ -25,6 +26,26 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
   /// legacy run into the open project, or an untitled one so the run is still recorded.
   package func applicationDidFinishLaunching(_ notification: Notification) {
     Task { await Self.openLaunchArguments(UserDefaults.standard) }
+    Task { await Self.sweepLeftovers() }
+  }
+
+  /// What a killed run left (its Siril, its tens of GB of work files, an untitled project) goes
+  /// at launch, off the main actor; a folder whose owner still runs is never touched (0113).
+  @concurrent
+  package nonisolated static func sweepLeftovers(roots: [LeftoverSweep.Root]? = nil) async {
+    LeftoverSweep(roots: roots ?? leftoverRoots(work: RunServices.live.scratch)).run()
+  }
+
+  /// The app's scratch roots with the runs' work folder `work` (Settings, card 0098); the default
+  /// one too when another was chosen, where the runs before the choice worked.
+  package nonisolated static func leftoverRoots(
+    work: URL, defaultWork: URL = ScratchSetting.defaultFolder
+  ) -> [LeftoverSweep.Root] {
+    var roots = LeftoverSweep.appRoots(work: work)
+    if work.standardizedFileURL != defaultWork.standardizedFileURL {
+      roots.append(LeftoverSweep.Root(folder: defaultWork, prefix: "run_"))
+    }
+    return roots
   }
 
   /// Opens what `-openImage` / `-openRun` name in `defaults` (the command line's arguments).

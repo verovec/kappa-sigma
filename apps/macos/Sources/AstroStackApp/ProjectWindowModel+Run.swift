@@ -143,6 +143,10 @@ extension ProjectWindowModel {
     guard case .success = outcome else {
       if case .failure(let failure) = outcome, let paused = failure as? RunPaused {
         recordPause(record, runID: runID, checkpoint: paused.checkpoint, replacing: resume)
+      } else if resume == nil, let run, run.runID == runID {
+        // Finished masters stay (README); a folder with none would only pile up `_2`, `_3`. A
+        // resumed run's folder is its paused stack's checkpoint: never removed here.
+        await StackLeftovers.removeUnfinished(run.output)
       }
       endQueue(drained: false)
       return
@@ -186,6 +190,7 @@ extension ProjectWindowModel {
     queuedScopes = []
     queueActive = false
     refresh()
+    listLeftoverStacks()
     if let recorded = queueRecorded {
       queueRecorded = nil
       selectStack(recorded.stack.id)

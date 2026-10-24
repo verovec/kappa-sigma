@@ -19,15 +19,7 @@ struct StackingStagePane: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
-      HStack(alignment: .firstTextBaseline, spacing: DesignMetrics.spacingM) {
-        SectionHeader(
-          .app("Stacking"),
-          detail: .app("Masters, stacks and the bundle are written inside the project."),
-          help: StageHelp.help(.stacking, locale: locale))
-        Spacer()
-        controls
-      }
-      .padding(DesignMetrics.spacingM)
+      header
       notices
       HStack(spacing: 0) {
         // The values a run applies stay in view, frozen while it runs (R2).
@@ -53,12 +45,26 @@ struct StackingStagePane: View {
     }
   }
 
+  /// The stage's title and help, the preset and Run.
+  private var header: some View {
+    HStack(alignment: .firstTextBaseline, spacing: DesignMetrics.spacingM) {
+      SectionHeader(
+        .app("Stacking"),
+        detail: .app("Masters, stacks and the bundle are written inside the project."),
+        help: StageHelp.help(.stacking, locale: locale))
+      Spacer()
+      controls
+    }
+    .padding(DesignMetrics.spacingM)
+  }
+
   /// Why Run is greyed, the paused runs to continue (card 0097), then the scratch the run needs
   /// (card 0098); nothing while a run goes.
   @ViewBuilder private var notices: some View {
     blocker
     if !running && !model.pausedRuns.isEmpty { PausedRunsView(model: model) }
     if !running, let budget = model.scratchBudget { ScratchBudgetLine(budget: budget) }
+    if !running && !model.leftoverStacks.isEmpty { StackLeftoversView(model: model) }
   }
 
   /// Why Run is greyed, with the one action that ungreys it; nothing while a run goes.

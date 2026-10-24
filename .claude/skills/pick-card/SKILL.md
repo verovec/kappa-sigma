@@ -88,9 +88,9 @@ After the merge: card frontmatter `done` (acceptance boxes ticked), Queue row `d
 Journal line `YYYY-MM-DD · NNNN · done (PR #N) · next: <one line the next card must
 know — a seam, a decision, a tolerance, a gotcha>`. `git switch main && git pull`,
 delete the local branch, then **`just check` on main** so the next card starts from a
-proven green state (host-tool drift shows up here, not in the middle of a port). If
-`just coverage` exceeds `apps/macos/.coverage-floor`, raise the floor to the new whole
-percent on the next card's branch. If the session must end before the merge, leave a
+proven green state (host-tool drift shows up here, not in the middle of a port). The
+coverage floor (`apps/macos/.coverage-floor`) is fixed at **95%** by the PO (24/10): never
+raise or lower it on a card; only the PO changes it. If the session must end before the merge, leave a
 Journal line saying exactly where the card stands — a claim without a journal trail
 is a protocol violation.
 

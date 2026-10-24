@@ -161,6 +161,22 @@
         }
       }
     },
+    "%@ — %@ kept: no stack records it (an unfinished run).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ — %@ kept: no stack records it (an unfinished run)."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ — %@ conservés : aucun empilement ne l'enregistre (un run inachevé)."
+          }
+        }
+      }
+    },
     "%@: %@ of %@ stacked": {
       "localizations": {
         "en": {
@@ -1473,6 +1489,54 @@
         }
       }
     },
+    "Delete": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer"
+          }
+        }
+      }
+    },
+    "Delete %@?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete %@?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer %@ ?"
+          }
+        }
+      }
+    },
+    "Delete…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer…"
+          }
+        }
+      }
+    },
     "Discard": {
       "localizations": {
         "en": {
@@ -2461,6 +2525,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Inverser"
+          }
+        }
+      }
+    },
+    "Its %@ of masters and previews leave the project; this cannot be undone.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Its %@ of masters and previews leave the project; this cannot be undone."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ses %@ de masters et d'aperçus quittent le projet ; c'est irréversible."
           }
         }
       }

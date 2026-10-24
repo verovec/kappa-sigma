@@ -42,7 +42,8 @@ skip themselves, with the reason, when either is missing. Rules:
 GitHub Actions runs two jobs on every pull request: `test continuity` (the suite may only grow; an
 edited or deleted test needs a `Test-change:` line in the PR body) and `hygiene · lint · build ·
 test` (`just ci` on a macOS 26 runner, live suites skipped). CI runs on pull requests only, since
-macOS minutes bill at ten times the Linux rate. The coverage floor is in `apps/macos/.coverage-floor`.
+macOS minutes bill at ten times the Linux rate. The coverage floor is in `apps/macos/.coverage-floor`: 95%, fixed by the PO (24/10); a card
+never moves it.
 
 ## Conventions
 

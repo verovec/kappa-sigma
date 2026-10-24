@@ -24,6 +24,19 @@ struct SirilSessionRobustnessTests {
     await session.stop()
   }
 
+  @Test("a running session names its FIFO folder, marked by this process", .scratchDirectory)
+  func testSirilSession_fifoFolder_marked() async throws {
+    let scratch = try ScratchDirectory.url
+    let session = SirilSession(binary: try FakeSiril.install(in: scratch), workDirectory: scratch)
+    #expect(await session.fifoFolder == nil, "none before it starts")
+    try await session.start()
+    let folder = try #require(await session.fifoFolder)
+    #expect(ScratchOwner.read(folder)?.owner.pid == getpid())
+    await session.stop()
+    #expect(await session.fifoFolder == nil)
+    #expect(!FileManager.default.fileExists(atPath: folder.path), "stop removes it")
+  }
+
   @Test(
     "cancelling a command stops Siril and reports cancellation, not a crash",
     .scratchDirectory)

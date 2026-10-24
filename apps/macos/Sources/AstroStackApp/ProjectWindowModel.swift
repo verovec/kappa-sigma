@@ -84,6 +84,9 @@ package final class ProjectWindowModel {
   package internal(set) var guideStep: Int?
   /// The project is the untitled temporary package: a run needs it saved first (read on refresh).
   package private(set) var needsSave = false
+  /// Stack folders no stack records, kept because they hold files (finished masters of a
+  /// failed or cancelled run): listed at open and when a queue ends, deleted only by the user.
+  package internal(set) var leftoverStacks: [LeftoverStack] = []
 
   let store: () -> ProjectStore?
   let folder: () -> URL?
@@ -137,6 +140,7 @@ package final class ProjectWindowModel {
       selection = saved.stage.flatMap(JourneyStage.init(rawValue:)) ?? .data
     }
     refresh()
+    listLeftoverStacks()
     if case .failure(let failure) = latest { error = UserFacingError(failure) }
     if case .failure(let failure) = settings { error = UserFacingError(failure) }
   }

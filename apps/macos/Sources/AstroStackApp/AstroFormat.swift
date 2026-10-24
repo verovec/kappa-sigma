@@ -44,6 +44,13 @@ package nonisolated struct AstroFormat: Sendable {
     return integer(seconds) + Self.space + "s"
   }
 
+  // MARK: - Disk
+
+  /// A size on disk, in decimal units as the Finder writes it: `74 Go`, `1,25 GB`.
+  package func bytes(_ count: Int64) -> String {
+    count.formatted(.byteCount(style: .file).locale(locale))
+  }
+
   // MARK: - Sensor
 
   /// A sensor temperature: `−20 °C`.

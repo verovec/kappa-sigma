@@ -17,6 +17,8 @@ package actor SirilSession {
   private var waiting: [CheckedContinuation<Void, Never>] = []
   /// How many Siril processes this session started (1 + restarts).
   package private(set) var launches = 0
+  /// The folder of the running Siril's FIFOs and owner marker; `nil` when none runs.
+  package var fifoFolder: URL? { instance?.folder }
 
   /// A session over the `siril-cli` at `binary`, working in `workDirectory`; `start` fails if
   /// Siril does not say `ready` within `readyTimeout`.

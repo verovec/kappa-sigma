@@ -18,9 +18,11 @@ package final class KnobPanelViewModel {
     package let level: Knob.Level
     /// Number, flag or choice, with its bounds or options.
     package let kind: Knob.Kind
+    /// Per lane or for the whole run (card 0121).
+    package let scope: Knob.Scope
     /// The value the run applies.
     package let value: KnobValue
-    /// The preset's value.
+    /// The preset's value; on a lane's row, the global value the lane falls back to.
     package let defaultValue: KnobValue
     package var isDefault: Bool { value == defaultValue }
     /// The glossary term of the knob (`knob.<id>`), its label and its one-line why.
@@ -40,8 +42,13 @@ package final class KnobPanelViewModel {
   /// Recorded edits the schema no longer accepts (a renamed knob, narrower bounds): dropped and
   /// shown, never applied silently (R2).
   package private(set) var ignored: [String]
+  /// What follows the stack of a split run (card 0121): one flow unless the user picks per channel.
+  package var processing = StackProcessing.single
   /// The user's values by knob id, each accepted by the schema when it was set.
   private var edits: [String: KnobValue]
+  /// The user's lane values (card 0121) by lane kind, then knob id: lane-scoped knobs only, each
+  /// accepted by the schema when it was set.
+  var laneEdits: [FilterSet: [String: KnobValue]] = [:]
 
   /// A panel over the preset of `mode` with `patch` already applied (a stack's recorded one); an
   /// entry the schema refuses lands in `ignored`, after the record's own `ignored` values.
@@ -67,14 +74,40 @@ package final class KnobPanelViewModel {
   /// why when it has one — the why belongs to that value, which may not be the one on screen
   /// (R2, card 0086).
   package func help(for id: String, locale: Locale) -> String {
-    let definition = AppGlossary.term(Knob.termID(id), locale: locale, in: AppGlossary.knobs)
+    var definition = AppGlossary.term(Knob.termID(id), locale: locale, in: AppGlossary.knobs)
       .definition
+    // A run-wide knob says why every lane shares it (card 0121), in the same paragraph.
+    if case .run(let reason) = KnobSchema.knob(id)?.scope {
+      definition += " " + String(localized: Self.sharedWords(reason, locale: locale))
+    }
     guard let profile, let set = profile.preprocessing.knobs[id] else { return definition }
     let language = AppLocale.language(of: locale)
     let line = Self.profileLine(
       profile.title.text(language: language), Self.words(for: set, id: id, locale: locale),
       profile.preprocessing.why[id]?.text(language: language), locale: locale)
     return [definition, line].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: "\n")
+  }
+
+  /// Why a run-wide knob holds one value for every lane: they land on one canvas.
+  package nonisolated static func sharedWords(_ reason: Knob.Shared, locale: Locale)
+    -> LocalizedStringResource
+  {
+    switch reason {
+    case .registration:
+      .app(
+        "Shared by every lane: every lane is registered onto one reference, one canvas.",
+        locale: locale)
+    case .framing:
+      .app("Shared by every lane: the crops cut every lane to the same field.", locale: locale)
+    case .nights:
+      .app(
+        "Shared by every lane: the nights are matched on one scale and one seam for every lane.",
+        locale: locale)
+    case .combine:
+      .app(
+        "Shared by every lane: the combine and its sky model read every lane together.",
+        locale: locale)
+    }
   }
 
   /// « Profile <profile>, <value>: <why> » with the locale's punctuation (French spaces its
@@ -125,7 +158,8 @@ package final class KnobPanelViewModel {
     let applied = settings
     return KnobSchema.knobs.map { knob in
       Row(
-        id: knob.id, level: knob.level, kind: knob.kind, value: knob.value(in: applied),
+        id: knob.id, level: knob.level, kind: knob.kind, scope: knob.scope,
+        value: knob.value(in: applied),
         defaultValue: knob.value(in: preset))
     }
   }
@@ -160,13 +194,26 @@ package final class KnobPanelViewModel {
     edits[id] = value
   }
 
-  /// The panel as a recorded run left it (a paused run's Continue, card 0097): its preset and
-  /// its edits replace the panel's, so the frozen panel shows what the run applies (R2).
-  package func load(mode: PreprocessRequest.Mode, patch: KnobPatch) {
-    let recorded = Self(mode: mode, patch: patch)
-    self.mode = mode
+  /// The panel as a recorded run left it (the latest stack, a paused run's Continue, card 0097):
+  /// its preset, its edits, its lane values and its processing replace the panel's, so a frozen
+  /// panel shows what the run applies (R2); what the schema refuses lands in `ignored`.
+  package func load(_ record: StackRecord) {
+    let recorded = Self(mode: record.mode, patch: record.knobs, ignored: record.ignoredEntries)
+    mode = record.mode
     edits = recorded.edits
-    ignored = recorded.ignored
+    processing = record.processing
+    var refused: [String] = []
+    laneEdits = [:]
+    for (lane, patch) in record.laneKnobs {
+      for (id, value) in patch.values {
+        if KnobSchema.knob(id)?.scope == .lane, KnobSchema.knob(id)?.accepts(value) == true {
+          laneEdits[lane, default: [:]][id] = value
+        } else {
+          refused.append("\(lane.rawValue).\(id)")
+        }
+      }
+    }
+    ignored = recorded.ignored + refused.sorted()
   }
 
   /// The record the ignored values came from was replaced by a run's clean one.
@@ -179,9 +226,10 @@ package final class KnobPanelViewModel {
     edits[id] = nil
   }
 
-  /// Every knob back to the preset.
+  /// Every knob back to the preset, every lane back to the global values.
   package func resetAll() {
     edits = [:]
+    laneEdits = [:]
     ignored = []
   }
 

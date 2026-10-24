@@ -150,6 +150,12 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
   /// The Stacking panel's Reset All (card 0070).
   package static let stackingResetKnobs = stageControl("stacking", "resetKnobs")
 
+  /// The Stacking panel's « After stacking » choice of a split run (card 0121).
+  package static let stackingProcessing = stageControl("stacking", "processing")
+
+  /// The Stacking panel's lane picker: the values of every lane, or of one (card 0121).
+  package static let stackingLane = stageControl("stacking", "lane")
+
   /// A series checkbox of the Stacking stage, by its light-set id (card 0095).
   package static func stackingSeries(_ setID: String) -> Self {
     stageControl("stacking", "series." + setID)

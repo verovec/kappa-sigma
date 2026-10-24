@@ -96,6 +96,21 @@ package final class StackingStageModel {
     groups.flatMap(\.nights).filter { night in night.series.contains { isChecked($0.id) } }
   }
 
+  /// The lane columns of the Stacking panel (card 0121): broadband and dual-band once a checked
+  /// object's series split into both lanes, none otherwise.
+  package var laneColumns: [FilterSet] {
+    scopes.contains(where: splits) ? [.broadband, .dualband] : []
+  }
+
+  /// The run of `scope` stacks a broadband and a dual-band lane: its checked sets hold both, as
+  /// the engine's split of the scoped inventory decides.
+  package func splits(_ scope: RunScope) -> Bool {
+    let ids = Set(scope.setIDs)
+    let kinds = groups.flatMap(\.nights).flatMap(\.series).filter { ids.contains($0.id) }
+      .map { $0.filterSet == .dualband }
+    return kinds.contains(true) && kinds.contains(false)
+  }
+
   /// No scan: the table has nothing to show.
   package var isEmpty: Bool { groups.isEmpty }
 

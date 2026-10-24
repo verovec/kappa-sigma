@@ -34,6 +34,16 @@ package enum KnobSchema {
     return applied
   }
 
+  /// Refuses a lane's patch (card 0121) holding a knob that is unknown, run-wide or set to a value
+  /// it does not accept: a lane never moves the shared canvas.
+  package static func validateLane(_ patch: KnobPatch) throws(KnobError) {
+    for (id, value) in patch.values.sorted(by: { $0.key < $1.key }) {
+      guard let knob = knob(id) else { throw .unknown(id) }
+      guard knob.scope == .lane else { throw .runWide(id) }
+      guard knob.accepts(value) else { throw .invalid(id: id, value: value.description) }
+    }
+  }
+
   /// The knobs of `settings` that differ from the preset of `mode`: what a run records.
   package static func patch(from settings: PreprocessSettings, mode: PreprocessRequest.Mode)
     -> KnobPatch

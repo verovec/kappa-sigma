@@ -24,3 +24,6 @@ package enum FilterSet: String, CaseIterable, Codable, Sendable {
     self = set
   }
 }
+
+/// A verdict keys a JSON object by its wire value (`{"dualband": …}`), not a list of pairs.
+extension FilterSet: CodingKeyRepresentable {}

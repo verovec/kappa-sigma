@@ -8880,6 +8880,230 @@
           }
         }
       }
+    },
+    "After stacking": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "After stacking"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Après l’empilement"
+          }
+        }
+      }
+    },
+    "One flow": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One flow"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un seul flux"
+          }
+        }
+      }
+    },
+    "Per channel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Per channel"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Par canal"
+          }
+        }
+      }
+    },
+    "Values for": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Values for"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valeurs pour"
+          }
+        }
+      }
+    },
+    "Every lane": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Every lane"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les voies"
+          }
+        }
+      }
+    },
+    "%@: %lld changed from the global values": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@: %lld changed from the global values"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ : %lld modifiés par rapport aux valeurs globales"
+          }
+        }
+      }
+    },
+    "≠ global": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "≠ global"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "≠ global"
+          }
+        }
+      }
+    },
+    "Back to the global value": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back to the global value"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revenir à la valeur globale"
+          }
+        }
+      }
+    },
+    "Shared by every lane": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shared by every lane"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commun à toutes les voies"
+          }
+        }
+      }
+    },
+    "Shared by every lane: the crops cut every lane to the same field.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shared by every lane: the crops cut every lane to the same field."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commun à toutes les voies : les recadrages coupent chaque voie au même champ."
+          }
+        }
+      }
+    },
+    "Shared by every lane: the nights are matched on one scale and one seam for every lane.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shared by every lane: the nights are matched on one scale and one seam for every lane."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commun à toutes les voies : les nuits sont raccordées à la même échelle et à la même couture pour chaque voie."
+          }
+        }
+      }
+    },
+    "Shared by every lane: the combine and its sky model read every lane together.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shared by every lane: the combine and its sky model read every lane together."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commun à toutes les voies : la combinaison et son modèle de fond lisent toutes les voies ensemble."
+          }
+        }
+      }
+    },
+    "Broadband, Hα and OIII processed apart, then combined; the stack is the same.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Broadband, Hα and OIII processed apart, then combined; the stack is the same."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Large bande, Hα et OIII traités séparément puis combinés ; l’empilement est le même."
+          }
+        }
+      }
+    },
+    "Shared by every lane: every lane is registered onto one reference, one canvas.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shared by every lane: every lane is registered onto one reference, one canvas."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commun à toutes les voies : chaque voie est alignée sur une même référence, un même canevas."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

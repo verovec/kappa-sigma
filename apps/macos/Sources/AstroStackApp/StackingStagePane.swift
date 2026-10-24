@@ -27,7 +27,7 @@ struct StackingStagePane: View {
           VStack(alignment: .leading, spacing: DesignMetrics.spacingL) {
             StackingSeriesView(model: model.series).padding(DesignMetrics.spacingM)
               .disabled(running)
-            KnobPanel(model: model.knobs, frozen: running)
+            KnobPanel(model: model.knobs, lanes: model.series.laneColumns, frozen: running)
           }
         }
         .frame(width: 300)

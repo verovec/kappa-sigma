@@ -49,24 +49,26 @@ extension KnobSchema {
     .flag("reject_trails", .advanced, \.grading.rejectTrails),
   ]
 
-  /// Registration, framing, the transient mask, several nights and the combine.
+  /// Registration, framing, the transient mask, several nights and the combine: run-wide but for
+  /// the reference pin, the transient mask and the wheel-transition drop, which one lane reads.
   static let run: [Knob] = [
-    .flag("register_2pass", .simple, \.register2Pass),
+    .flag("register_2pass", .simple, \.register2Pass).shared(.registration),
     .flag(referenceBreakpointID, .advanced, \.referenceBreakpoint),
-    .flag("edge_crop", .simple, \.edgeCrop),
-    .flag("coverage_crop", .simple, \.coverageCrop),
+    .flag("edge_crop", .simple, \.edgeCrop).shared(.framing),
+    .flag("coverage_crop", .simple, \.coverageCrop).shared(.framing),
     .number("trail_mask_k", .simple, 0...6, \.trailMaskK),
-    .number("coverage_min_frac", .advanced, 0.05...0.9, \.coverageMinimumFraction),
+    .number("coverage_min_frac", .advanced, 0.05...0.9, \.coverageMinimumFraction)
+      .shared(.framing),
     .flag("drop_wheel_transition", .advanced, \.dropWheelTransition),
     .integer("trail_downsample", .advanced, 128...2048, \.trailDownsample),
-    .flag("photometric_normalisation", .advanced, \.photometricNormalisation),
-    .flag("flatten_background", .advanced, \.flattenBackground),
-    .flag("seam_offset_refit", .advanced, \.seamOffsetRefit),
-    .flag("seam_noise_eq", .advanced, \.seamNoiseEqualisation),
-    .flag("core_saturation_repair", .advanced, \.coreSaturationRepair),
-    .integer("background_degree", .advanced, 1...4, \.backgroundDegree),
+    .flag("photometric_normalisation", .advanced, \.photometricNormalisation).shared(.nights),
+    .flag("flatten_background", .advanced, \.flattenBackground).shared(.nights),
+    .flag("seam_offset_refit", .advanced, \.seamOffsetRefit).shared(.nights),
+    .flag("seam_noise_eq", .advanced, \.seamNoiseEqualisation).shared(.nights),
+    .flag("core_saturation_repair", .advanced, \.coreSaturationRepair).shared(.nights),
+    .integer("background_degree", .advanced, 1...4, \.backgroundDegree).shared(.combine),
     // Siril `rmgreen` type: 0 average neutral, 1 maximum neutral, 2 maximum mask, 3 additive mask.
-    .integer("scnr", .advanced, 0...3, \.scnr),
+    .integer("scnr", .advanced, 0...3, \.scnr).shared(.combine),
   ]
 }
 

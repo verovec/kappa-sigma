@@ -6,8 +6,9 @@ package import StackKit
 /// preset it ran and the knobs the user moved from it (card 0070) — enough to run it again.
 ///
 /// One flat JSON object: the request's own keys, then `mode`, `knobs` (left out when no knob
-/// moved) and `scope` (left out when the run took every light). A record written before 0070
-/// reads as the deepsky preset, untouched; before 0095, unscoped.
+/// moved), `lane_knobs` and `processing` (card 0121, left out when untouched) and `scope` (left
+/// out when the run took every light). A record written before 0070 reads as the deepsky preset,
+/// untouched; before 0095, unscoped; before 0121, one flow with no lane override.
 package struct StackRecord: Equatable, Sendable {
   /// The import the run planned, with its overrides.
   package var request: ImportRequest
@@ -15,6 +16,11 @@ package struct StackRecord: Equatable, Sendable {
   package var mode: PreprocessRequest.Mode
   /// The knobs moved from that preset.
   package var knobs: KnobPatch
+  /// The lane-scoped knobs a split run's lanes of one kind take over `knobs` (card 0121); an
+  /// unsplit run applies none.
+  package var laneKnobs: [FilterSet: KnobPatch] = [:]
+  /// What follows the stack of a split run (card 0121).
+  package var processing = StackProcessing.single
   /// The series the run stacked (card 0095): one object's light sets; `nil` = every light of
   /// the request's nights (a record written before 0095, or a project with one object and no scan).
   package var scope: RunScope?
@@ -56,7 +62,8 @@ extension StackRecord {
 
 extension StackRecord: Codable {
   private enum Key: String, CodingKey {
-    case mode, knobs, scope
+    case mode, knobs, scope, processing
+    case laneKnobs = "lane_knobs"
     case frameReview = "frame_review"
     case referencePins = "reference_pins"
   }
@@ -68,6 +75,8 @@ extension StackRecord: Codable {
     mode = recorded.flatMap(PreprocessRequest.Mode.init(rawValue:)) ?? .deepsky
     unknownMode = mode.rawValue == recorded || recorded == nil ? nil : recorded
     knobs = try record.decodeIfPresent(KnobPatch.self, forKey: .knobs) ?? KnobPatch()
+    laneKnobs = try record.decodeIfPresent([FilterSet: KnobPatch].self, forKey: .laneKnobs) ?? [:]
+    processing = try record.decodeIfPresent(StackProcessing.self, forKey: .processing) ?? .single
     scope = try record.decodeIfPresent(RunScope.self, forKey: .scope)
     frameReview = try record.decodeIfPresent([String: FrameDecision].self, forKey: .frameReview)
     referencePins = try record.decodeIfPresent([String: Int].self, forKey: .referencePins)
@@ -78,6 +87,8 @@ extension StackRecord: Codable {
     var record = encoder.container(keyedBy: Key.self)
     try record.encode(mode, forKey: .mode)
     if !knobs.values.isEmpty { try record.encode(knobs, forKey: .knobs) }
+    if !laneKnobs.isEmpty { try record.encode(laneKnobs, forKey: .laneKnobs) }
+    if processing != .single { try record.encode(processing, forKey: .processing) }
     try record.encodeIfPresent(scope, forKey: .scope)
     try record.encodeIfPresent(frameReview, forKey: .frameReview)
     try record.encodeIfPresent(referencePins, forKey: .referencePins)

@@ -27,6 +27,7 @@ struct FITSHeaderWCSTests {
     ("CRPIX+1", nil), ("A_-1_2", nil), ("PC1_+2", nil), ("CRPIX+1A", nil), ("CD1_-1A", nil),
     ("CRPIX1\u{0301}", nil), ("CRPIX01", .primary), ("CTYPE0", .primary), ("PC1_0", .primary),
     ("PV2_0", .primary), ("A_02_0", .primary), ("CRPIX10", .primary), ("CD1_2A", .alternate),
+    ("CD01_1", .primary), ("CTYPE0A", .alternate),
   ]
 
   @Test("testSolutionKeywords", arguments: cases)

@@ -232,10 +232,10 @@ in en/fr; the English title is the key, resolved with `ProcessKitResources.title
   the step (`Step.movesPixels`, manifest field written only when true); that step and every one
   after it write the header without any solution (`droppingWCS()`) before the image's own moved
   one is put back, so a ZEA primary or an alternate solution of the stack never survives a move.
-  Steps before any move write their files as before (pinned by
-  `HistoryTests.testUnmovedStepsKeepTheHeader`); the one list counts axis-3, `PV`, `WCSNAME`,
-  `WCSAXES`, `RADECSYS`… as primary, so a new solve replaces those too (Siril's solver writes
-  none of them: IC 1848's solved `master_RGB.fits`).
+  Steps before any move write their files as before when the header's solution holds only the
+  cards Siril's solver writes (IC 1848's solved `master_RGB.fits`; an unmoved step keeps an
+  alternate solution, `HistoryTests.testUnmovedStepsKeepTheHeader`). The one list counts
+  axis-3, `PV`, `WCSNAME`, `WCSAXES`, `RADECSYS`… as primary, so a new solve replaces those too.
 - `.text` parameters (`ParamSpec(id:title:level:text:maxLength:)`): free text, trimmed, empty by
   default — a coordinate the user types or takes from a suggestion; JSON stores a string.
 

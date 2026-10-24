@@ -23,11 +23,22 @@ struct JourneySidebar: View {
       Section {
         ForEach(JourneyStage.allCases, id: \.self) { stage in
           JourneySidebarRow(stage: stage, status: model.statuses[stage] ?? .toDo).tag(stage)
+            // The stage already selected sets no new selection: its click closes the card too.
+            .simultaneousGesture(TapGesture().onEnded { objects.closeCard() })
         }
       }
-      ObjectsSection(objects: objects, projectObject: model.projectObjectName)
+      ObjectsSection(objects: objects)
     }
     .listStyle(.sidebar)
+    .task(id: model.projectObjectName) {
+      await objects.load(projectObject: model.projectObjectName)
+    }
+    // Siril found by the install card's « Re-check »: the catalogue is read again.
+    .onChange(of: objects.sirilCard?.state) { _, state in
+      guard case .found = state else { return }
+      objects.retry()
+      Task { await objects.load(projectObject: model.projectObjectName) }
+    }
     .searchable(text: $objects.query, placement: .sidebar, prompt: Text(.app("Search objects")))
   }
 }

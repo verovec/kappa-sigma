@@ -20,7 +20,7 @@ struct ObjectSearchModelTests {
   ])
 
   static func model() -> ObjectSearchModel {
-    ObjectSearchModel(load: { Self.catalogue })
+    ObjectSearchModel(load: { Self.catalogue }, locate: { _ in .missing(path: "") })
   }
 
   @Test(
@@ -51,24 +51,28 @@ struct ObjectSearchModelTests {
 
   @Test("no Siril: the section is unavailable with the reason, nothing searched or offered")
   func testObjectSearchSirilMissingGreys() async {
-    let objects = ObjectSearchModel(load: {
-      throw SkyCatalogueError.sirilMissing(path: "/Applications/Siril.app/Contents/MacOS/siril-cli")
-    })
+    let objects = ObjectSearchModel(
+      load: {
+        throw SkyCatalogueError.sirilMissing(
+          path: "/Applications/Siril.app/Contents/MacOS/siril-cli")
+      }, locate: { _ in .missing(path: "") })
     await objects.load(projectObject: "M31")
     #expect(
       objects.unavailable == .sirilMissing(path: "/Applications/Siril.app/Contents/MacOS/siril-cli")
     )
     objects.query = "m31"
     #expect(objects.results.isEmpty && objects.offered == nil)
+    #expect(objects.sirilCard != nil, "its install card, re-checked through the host-tool client")
   }
 
   @Test("loaded once: a second load only re-matches the project's object")
   func testLoadedOnce() async {
     let loads = LoadCounter()
-    let objects = ObjectSearchModel(load: {
-      loads.increment()
-      return Self.catalogue
-    })
+    let objects = ObjectSearchModel(
+      load: {
+        loads.increment()
+        return Self.catalogue
+      }, locate: { _ in .missing(path: "") })
     await objects.load(projectObject: "M31")
     await objects.load(projectObject: "Sh2-132")
     #expect(loads.count == 1)
@@ -124,5 +128,31 @@ struct ObjectSearchModelTests {
     #expect(
       SkyObjectWords.size(sh2, locale: french) == nil
         && SkyObjectWords.magnitude(sh2, locale: french) == nil)
+  }
+
+  @Test("the offer callback fires when the offered object changes, not when it stays")
+  func testOfferCallback() async throws {
+    let objects = Self.model()
+    var told = 0
+    objects.onOffer = { told += 1 }
+    await objects.load(projectObject: "M31")
+    #expect(told == 1)
+    await objects.load(projectObject: "M 31")
+    #expect(told == 1, "the same object: nothing to rebuild")
+    objects.choose(try #require(Self.catalogue.object(named: "Sh2-132")))
+    #expect(told == 2)
+  }
+
+  @Test("a load cancelled meanwhile writes no selection")
+  func testCancelledLoadWritesNothing() async {
+    let objects = Self.model()
+    let task = Task { @MainActor in
+      withUnsafeCurrentTask { $0?.cancel() }
+      await objects.load(projectObject: "M31")
+    }
+    await task.value
+    #expect(objects.selected == nil)
+    await objects.load(projectObject: "Sh2-132")
+    #expect(objects.selected?.name == "Sh2-132", "the catalogue read once is kept")
   }
 }

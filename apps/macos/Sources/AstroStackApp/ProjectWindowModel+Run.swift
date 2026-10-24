@@ -328,6 +328,7 @@ extension ProjectWindowModel {
     // An undo from another stage brings the Studio into view before moving its history.
     workspace.reveal = { [weak self] in self?.select(.studio) }
     workspace.catalogueObject = { [weak self] in self?.objects.offered }
+    objects.onOffer = { [weak workspace] in workspace?.catalogueOfferChanged() }
     workspace.pipeline = try sidebar(of: workspace, stackID: stackID, store: store, roles: roles)
     self.workspace = workspace
     markOpened(stackID)

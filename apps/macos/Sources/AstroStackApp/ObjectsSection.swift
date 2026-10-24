@@ -5,11 +5,10 @@ internal import SwiftUI
 
 /// The sidebar's Objects (card 0130), under the journey stages: what the search finds, else the
 /// object the project is of; without Siril, its install card — no other list stands in (R2).
+///
+/// Its loading lives on the sidebar's List: a modifier on a Section reaches every row.
 struct ObjectsSection: View {
   @Bindable var objects: ObjectSearchModel
-  /// The stack's `OBJECT`, matched once the catalogue is read.
-  let projectObject: String?
-  @State private var card: InstallCardModel?
   @Environment(\.locale) private var locale
 
   var body: some View {
@@ -18,18 +17,10 @@ struct ObjectsSection: View {
     } header: {
       SectionHeader(.app("Objects"), help: ObjectsHelp.help(locale: locale))
     }
-    .task(id: projectObject) { await objects.load(projectObject: projectObject) }
-    .task(id: objects.unavailable) { makeCard() }
-    // Siril found by « Re-check »: the catalogue is read again.
-    .onChange(of: card?.state) { _, state in
-      guard case .found = state else { return }
-      objects.retry()
-      Task { await objects.load(projectObject: projectObject) }
-    }
   }
 
   @ViewBuilder private var content: some View {
-    if case .sirilMissing = objects.unavailable, let card {
+    if case .sirilMissing = objects.unavailable, let card = objects.sirilCard {
       InstallCard(
         tool: HostTool.siril.productName, reason: .app("Its object lists are Siril’s."),
         installURL: HostTool.siril.installURL, model: card)
@@ -64,18 +55,5 @@ struct ObjectsSection: View {
     }
     .buttonStyle(.plain)
     .accessible(.objectResult(object.name), verbatim: object.name)
-  }
-
-  /// The install card of a missing Siril, made once; its re-check looks for `siril-cli` again.
-  private func makeCard() {
-    guard case .sirilMissing = objects.unavailable else {
-      card = nil
-      return
-    }
-    guard card == nil else { return }
-    card = InstallCardModel(state: .missing) { @concurrent in
-      let path = SirilTool.path()
-      return FileManager.default.isExecutableFile(atPath: path) ? URL(fileURLWithPath: path) : nil
-    }
   }
 }

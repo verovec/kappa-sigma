@@ -21,6 +21,13 @@ extension StudioWorkspaceModel {
     return suggestions + Self.displaySuggestions(viewer.model.frame.stf)
   }
 
+  /// The sidebar's object changed (a choice, the catalogue read): an open plate-solve panel offers
+  /// the new position.
+  package func catalogueOfferChanged() {
+    guard let panel, panel.type == PlateSolveProcess.self else { return }
+    panel.suggestions = offers(for: panel.type, params: panel.params)
+  }
+
   /// The denoise's noise level from the head's measured noise, once measured: the panel's
   /// suggestions are rebuilt when the measurement ends.
   private func denoiseOffers() -> [Suggestion] {

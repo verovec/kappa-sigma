@@ -126,4 +126,15 @@ extension KnobPanelViewModelTests {
     #expect(panel.help(for: "register_2pass", locale: locale).hasSuffix(" " + why))
     #expect(!panel.help(for: "fwhm_sigma", locale: locale).contains(why), "a lane knob: no why")
   }
+
+  @Test("a lane value set to the global one clears the edit: a later global move overrides nothing")
+  func testLaneValueAtGlobalIsNoPin() {
+    let panel = KnobPanelViewModel(mode: .deepsky)
+    panel.set("fwhm_sigma", to: .number(2))
+    panel.set("fwhm_sigma", to: .number(3), lane: .dualband)
+    panel.set("fwhm_sigma", to: .number(2), lane: .dualband)
+    panel.set("fwhm_sigma", to: .number(3))
+    #expect(panel.overrideCount(lane: .dualband) == 0)
+    #expect(panel.runKnobs(for: .deepsky).lanes.isEmpty)
+  }
 }

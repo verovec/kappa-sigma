@@ -108,7 +108,7 @@ package final class StackingStageModel {
   /// The run of `scope` stacks a broadband and a dual-band lane: the engine's own split of the
   /// scoped inventory (a measured broadband AND a measured dual-band set), never a guess.
   package func splits(_ scope: RunScope) -> Bool {
-    inventory.map { FilterSetLanes.splits($0.scoped(scope)) } ?? false
+    inventory.map { FilterSetLanes.splits($0, setIDs: scope.setIDs) } ?? false
   }
 
   /// No scan: the table has nothing to show.

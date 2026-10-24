@@ -17,21 +17,22 @@ struct KnobPanel: View {
   @State private var lane: FilterSet?
   @Environment(\.locale) private var locale
 
-  /// The columns: the series' lanes, or both while the panel holds lane values the series no
-  /// longer split into (a paused run's, on Continue) — no value applied is out of sight (R2).
+  /// The columns: the series' lanes — a run that does not split applies no lane value, so none
+  /// is offered — or both while a frozen run applies lane values the series no longer split into
+  /// (a paused run's, on Continue): no value applied is out of sight (R2).
   private var columns: [FilterSet] {
-    lanes.isEmpty && !model.lanesUntouched ? [.broadband, .dualband] : lanes
+    lanes.isEmpty && frozen && !model.lanesUntouched ? [.broadband, .dualband] : lanes
   }
 
-  /// The lane shown, while it is a column.
-  private var shownLane: FilterSet? { lane.flatMap { columns.contains($0) ? $0 : nil } }
-
   var body: some View {
+    let columns = columns
+    // The lane shown, while it is a column.
+    let shownLane = lane.flatMap { columns.contains($0) ? $0 : nil }
     let rows = shownLane.map { model.rows(lane: $0) } ?? model.rows
     // The Stacking pane scrolls the series and the knobs together (0095): no scroller here.
     VStack(alignment: .leading, spacing: DesignMetrics.spacingM) {
       header
-      if !columns.isEmpty { laneSection }
+      if !columns.isEmpty { laneSection(columns) }
       ForEach(rows.filter { $0.level == .simple }) {
         KnobRow(row: $0, model: model, lane: shownLane, frozen: frozen)
       }
@@ -72,7 +73,7 @@ struct KnobPanel: View {
 
   /// What follows the stack, then which lane the rows show — every lane's overrides counted, so
   /// no value applied is out of sight (R2).
-  private var laneSection: some View {
+  private func laneSection(_ columns: [FilterSet]) -> some View {
     // Counted once per render: each count resolves the lane's settings.
     let counts = columns.reduce(into: [FilterSet: Int]()) { counts, lane in
       let count = model.overrideCount(lane: lane)

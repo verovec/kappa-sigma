@@ -56,4 +56,15 @@ extension KnobSchemaTests {
     try KnobSchema.validateLane(
       KnobPatch(values: ["stack_reject": .choice("winsorized"), "trail_mask_k": .number(2)]))
   }
+
+  @Test("a recorded lane patch splits into what a lane may take and the ids it may not")
+  func testLaneAccepted() {
+    let patch = KnobPatch(values: [
+      "stack_reject": .choice("sigma"), "frame_review": .flag(true),
+      "stack_reject_high": .number(99), "no_such_knob": .number(1),
+    ])
+    let (accepted, refused) = KnobSchema.laneAccepted(patch)
+    #expect(accepted == KnobPatch(values: ["stack_reject": .choice("sigma")]))
+    #expect(refused == ["frame_review", "no_such_knob", "stack_reject_high"])
+  }
 }

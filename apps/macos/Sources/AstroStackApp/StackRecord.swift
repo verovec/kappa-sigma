@@ -51,7 +51,13 @@ package struct StackRecord: Equatable, Sendable {
 extension StackRecord {
   /// What the record carries that this build cannot apply, as the panel lists it (`mode=galaxy`).
   package var ignoredEntries: [String] {
-    (unknownMode.map { ["mode=\($0)"] } ?? []) + unknownLanes.map { "lane_knobs.\($0)" }
+    (unknownMode.map { ["mode=\($0)"] } ?? []) + unknownLanes.map { Self.laneEntry($0) }
+  }
+
+  /// A refused `lane_knobs` entry as the panel lists it: the record's own key path
+  /// (`lane_knobs.narrowband`, `lane_knobs.dualband.edge_crop`), as `mode=galaxy` names a preset.
+  package static func laneEntry(_ lane: String, knob: String? = nil) -> String {
+    (["lane_knobs", lane] + (knob.map { [$0] } ?? [])).joined(separator: ".")
   }
 
   /// The run paused at the frame review and the user answered (`ProjectFacts.framesReviewed`).

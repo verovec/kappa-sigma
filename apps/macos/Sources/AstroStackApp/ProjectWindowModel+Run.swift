@@ -126,8 +126,10 @@ extension ProjectWindowModel {
           settings: settings, library: plan.library)
         request.pause = gate
         request.resuming = resume != nil
-        // Validated by `prepare`: lane knobs only, each accepted.
-        for (lane, patch) in record.laneKnobs { try request.overrideLane(lane, with: patch) }
+        // What a lane may take, as the panel showed it; a refused entry is listed there, unapplied.
+        for (lane, patch) in record.laneKnobs {
+          try request.overrideLane(lane, with: KnobSchema.laneAccepted(patch).accepted)
+        }
         return start(request)
       },
       completion: { [weak self] outcome in
@@ -213,10 +215,8 @@ extension ProjectWindowModel {
   }
 
   /// The settings a run of `record` applies: its knobs on its preset, with the calibration
-  /// choices of its import, as the panel and the Import sheet showed them; a lane value the
-  /// schema refuses for a lane (card 0121) throws before anything runs.
+  /// choices of its import, as the panel and the Import sheet showed them.
   static func runSettings(_ record: StackRecord) throws -> PreprocessSettings {
-    for patch in record.laneKnobs.values { try KnobSchema.validateLane(patch) }
     var settings = try KnobSchema.apply(record.knobs, to: .preset(record.mode))
     settings.calibrationExcluded = record.request.calibExclude
     settings.forceCalibration = record.request.forceCalibration

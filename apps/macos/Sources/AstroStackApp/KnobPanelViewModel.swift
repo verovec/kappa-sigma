@@ -209,14 +209,9 @@ package final class KnobPanelViewModel {
     var refused: [String] = []
     laneEdits = [:]
     for (lane, patch) in record.laneKnobs {
-      for (id, value) in patch.values {
-        if KnobSchema.knob(id)?.scope == .lane, KnobSchema.knob(id)?.accepts(value) == true {
-          laneEdits[lane, default: [:]][id] = value
-        } else {
-          // The record's own key path, as `mode=galaxy` names a refused preset.
-          refused.append("lane_knobs.\(lane.codingKey.stringValue).\(id)")
-        }
-      }
+      let (accepted, refusedIDs) = KnobSchema.laneAccepted(patch)
+      if !accepted.values.isEmpty { laneEdits[lane] = accepted.values }
+      refused += refusedIDs.map { StackRecord.laneEntry(lane.codingKey.stringValue, knob: $0) }
     }
     ignored = recorded.ignored + refused.sorted()
   }

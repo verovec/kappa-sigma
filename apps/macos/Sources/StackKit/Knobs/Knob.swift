@@ -68,6 +68,11 @@ package struct Knob: Sendable, Identifiable {
     }
   }
 
+  /// `value` may differ per lane (card 0121): a lane knob, and a value it accepts.
+  package func acceptsLane(_ value: KnobValue) -> Bool {
+    scope == .lane && accepts(value)
+  }
+
   /// `settings` with this knob set to `value`; refuses a value it does not accept.
   func apply(_ value: KnobValue, to settings: inout PreprocessSettings) throws(KnobError) {
     guard accepts(value) else { throw .invalid(id: id, value: value.description) }

@@ -26,7 +26,7 @@ package enum WelcomeWindow {
   /// Runs the launch review; the window comes up when it has something to ask or to report.
   package static func reviewRetention() async {
     await retention.scan()
-    if !retention.pending.isEmpty || !retention.removed.isEmpty { show() }
+    if !retention.pending.isEmpty || !retention.unseen.isEmpty { show() }
   }
 
   /// Shows the window with the recent projects re-read and the tools re-checked.
@@ -52,6 +52,8 @@ package enum WelcomeWindow {
   /// Closes the window if it is up: a project window just opened.
   package static func dismiss() {
     model.isNaming = false
+    // The sheet's list would be stale by the next time the window shows: asked again next launch.
+    retention.postpone()
     window?.close()
   }
 

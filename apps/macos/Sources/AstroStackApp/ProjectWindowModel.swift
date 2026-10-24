@@ -91,6 +91,8 @@ package final class ProjectWindowModel {
   package internal(set) var leftoverStacks: [LeftoverStack] = []
   /// The Storage section's stacks with their sizes (card 0114); empty until listed.
   package internal(set) var storage: [StackStorageRow] = []
+  /// Bumped by each delete: a size listing that started before one writes nothing.
+  @ObservationIgnored var storageDeletes = 0
 
   let store: () -> ProjectStore?
   let folder: () -> URL?

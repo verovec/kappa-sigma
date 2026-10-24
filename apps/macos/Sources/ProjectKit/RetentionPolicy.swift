@@ -50,7 +50,7 @@ package struct RetentionPolicy: Equatable, Sendable {
   /// When `stack` was last used: its last opening in the Studio, else its last write (a paused
   /// run completed by Continue was written when it finished, not when it started).
   static func lastUse(_ stack: ProjectStack) -> Int64 {
-    max(stack.openedAt ?? 0, stack.updatedAt, stack.createdAt)
+    max(stack.openedAt ?? 0, stack.updatedAt)
   }
 
   /// Deletes each candidate (the user confirmed, or the policy is automatic) and logs it.

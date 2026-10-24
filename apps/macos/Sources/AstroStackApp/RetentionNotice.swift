@@ -9,21 +9,21 @@ struct RetentionNotice: View {
   @Environment(\.locale) private var locale
 
   var body: some View {
-    if !review.removed.isEmpty {
+    if !review.unseen.isEmpty {
       HStack(alignment: .firstTextBaseline) {
         Label {
-          Text(.app("Stacks never exported, deleted: \(review.removed.count) (\(size))."))
+          Text(.app("Stacks never exported, deleted: \(review.unseen.count) (\(size))."))
         } icon: {
           Image(systemName: "externaldrive.badge.minus")
         }
         Spacer()
         Button(.app("OK")) { review.dismissRemoved() }
       }
-      .help(Text(verbatim: review.removed.map(\.label).joined(separator: "\n")))
+      .help(Text(verbatim: review.unseen.joined(separator: "\n")))
     }
   }
 
   private var size: String {
-    AstroFormat(locale: locale).bytes(review.removed.reduce(0) { $0 + $1.bytes })
+    AstroFormat(locale: locale).bytes(review.unseenBytes)
   }
 }

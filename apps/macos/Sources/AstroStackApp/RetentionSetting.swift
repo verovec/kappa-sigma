@@ -7,6 +7,8 @@ package nonisolated struct RetentionSetting {
   private static let modeKey = "retention.mode"
   private static let daysKey = "retention.days"
   private static let snoozeKey = "retention.snoozedUntil"
+  private static let unseenKey = "retention.unseen"
+  private static let unseenBytesKey = "retention.unseenBytes"
   /// The days a policy may be set to.
   package static let dayRange = 7...365
   private let defaults: UserDefaults
@@ -36,5 +38,18 @@ package nonisolated struct RetentionSetting {
   package var snoozedUntil: Int64 {
     get { Int64(defaults.double(forKey: Self.snoozeKey)) }
     nonmutating set { defaults.set(Double(newValue), forKey: Self.snoozeKey) }
+  }
+
+  /// What retention deleted that the welcome window has not shown yet (« M 31 · stacks/… »),
+  /// kept across launches until its OK.
+  package var unseen: [String] {
+    get { defaults.stringArray(forKey: Self.unseenKey) ?? [] }
+    nonmutating set { defaults.set(newValue, forKey: Self.unseenKey) }
+  }
+
+  /// The bytes of `unseen`.
+  package var unseenBytes: Int64 {
+    get { Int64(defaults.double(forKey: Self.unseenBytesKey)) }
+    nonmutating set { defaults.set(Double(newValue), forKey: Self.unseenBytesKey) }
   }
 }

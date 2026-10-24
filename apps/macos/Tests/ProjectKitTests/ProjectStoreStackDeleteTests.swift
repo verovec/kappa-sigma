@@ -116,11 +116,13 @@ struct ProjectStoreStackDeleteTests {
     #expect(try !store.columnNames(of: "stacks").contains("opened_at"))
     try store.migrate(to: nil)
     #expect(try store.columnNames(of: "stacks").contains("opened_at"))
-    // The upgrade counts a stack worked on from its last Studio step, any other from the upgrade.
+    // The upgrade: a stack worked on was opened at its last Studio step; any other still reads
+    // « never opened », its age restarting at the upgrade (updated_at, in ms).
     let image = try #require(try store.images(stackID: stack.id).first)
     let last = try #require(try store.history(imageID: image.id).map(\.createdAt).max())
     #expect(try store.stack(id: stack.id)?.openedAt == last)
-    #expect(try store.stack(id: bare.id)?.openedAt ?? 0 >= stack.createdAt - 1, "ms, not s")
+    let migrated = try #require(try store.stack(id: bare.id))
+    #expect(migrated.openedAt == nil && migrated.updatedAt >= bare.createdAt - 1)
   }
 
   @Test(

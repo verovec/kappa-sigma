@@ -149,8 +149,13 @@ struct RetentionReviewTests {
     #expect(review.pending.isEmpty)
     #expect(review.removed.map(\.stack.bundlePath) == ["stacks/A"])
     #expect(try Self.names(url) == ["stacks/B", "stacks/C"])
-    review.dismissRemoved()
-    #expect(review.removed.isEmpty)
+    #expect(review.unseen == ["M31 · stacks/A"] && review.unseenBytes > 0)
+    // Not shown yet (a restored project closed the welcome window): the next launch still has it.
+    let next = Self.review(url, defaults: defaults, mode: .automatic)
+    #expect(next.unseen == ["M31 · stacks/A"])
+    next.dismissRemoved()
+    #expect(next.removed.isEmpty && next.unseen.isEmpty)
+    #expect(Self.review(url, defaults: defaults).unseen.isEmpty)
   }
 
   @Test(

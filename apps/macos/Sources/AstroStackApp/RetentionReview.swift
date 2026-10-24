@@ -13,8 +13,12 @@ internal import StackKit
 package final class RetentionReview {
   /// What the sheet asks about, by project then stack.
   package private(set) var pending: [RetentionCandidate] = []
-  /// What the automatic policy removed at this launch, until the welcome window's OK.
+  /// What retention removed at this launch (automatically or by Delete All).
   package private(set) var removed: [RetentionCandidate] = []
+  /// What retention removed and the welcome window has not shown yet, across launches.
+  package private(set) var unseen: [String] = []
+  /// The bytes of `unseen`.
+  package private(set) var unseenBytes: Int64 = 0
 
   private let setting: RetentionSetting
   private let recentURLs: @MainActor () -> [URL]
@@ -33,6 +37,8 @@ package final class RetentionReview {
     self.recentURLs = recentURLs
     self.openProjects = openProjects
     self.now = now
+    unseen = setting.unseen
+    unseenBytes = setting.unseenBytes
   }
 
   /// Lists the candidates of every closed recent project, off the main actor, then applies the
@@ -46,7 +52,7 @@ package final class RetentionReview {
     let found = await Self.candidates(urls, policy: policy, now: stamp)
     switch policy.mode {
     case .ask: pending = found
-    case .automatic: removed = await deleteEach(found)
+    case .automatic: record(await deleteEach(found))
     }
   }
 
@@ -55,7 +61,7 @@ package final class RetentionReview {
   package func deleteAll() async {
     let candidates = pending
     pending = []
-    removed = await deleteEach(candidates)
+    record(await deleteEach(candidates))
   }
 
   /// Deletes `candidates` project by project off the main actor; the ones deleted, in order.
@@ -113,9 +119,24 @@ package final class RetentionReview {
     pending = []
   }
 
+  /// Keeps what went for the welcome window, persisted until its OK: a project window that
+  /// closes the welcome window first never hides it (R2).
+  private func record(_ deleted: [RetentionCandidate]) {
+    removed = deleted
+    guard !deleted.isEmpty else { return }
+    unseen += deleted.map(\.label)
+    unseenBytes += deleted.reduce(0) { $0 + $1.bytes }
+    setting.unseen = unseen
+    setting.unseenBytes = unseenBytes
+  }
+
   /// The welcome window showed what was removed.
   package func dismissRemoved() {
     removed = []
+    unseen = []
+    unseenBytes = 0
+    setting.unseen = []
+    setting.unseenBytes = 0
   }
 
   @concurrent

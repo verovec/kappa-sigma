@@ -8,6 +8,7 @@ package enum ProcessOrder {
   package static let usual = [
     ChannelCombinationProcess.id, BackgroundExtractionProcess.id, PlateSolveProcess.id,
     ColourCalibrationProcess.id, ColourBalanceProcess.id, SkyDesatProcess.id, DenoiseProcess.id,
+    LineInjectionProcess.id,
     HDRProcess.id, StretchProcess.id, LevelsProcess.id, CurvesProcess.id,
     EmissionScreensProcess.id, SaturationProcess.id, StarRecompositionProcess.id,
     GeometryProcess.id,

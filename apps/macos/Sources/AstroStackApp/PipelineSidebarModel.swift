@@ -18,6 +18,8 @@ package final class PipelineSidebarModel {
   package enum Status: Equatable, Sendable {
     /// Applied: the history holds it.
     case done
+    /// Applied, but a branch it read has moved since (card 0119): Replay runs it again.
+    case stale
     /// The run halted before it; its process is in the panel.
     case current
     /// Not reached yet.
@@ -74,7 +76,9 @@ package final class PipelineSidebarModel {
 
   /// Where step `index` stands.
   package func status(of index: Int) -> Status {
-    if index < workspace.studio.steps.count { return .done }
+    if index < workspace.studio.steps.count {
+      return index >= (workspace.studio.staleFrom ?? .max) ? .stale : .done
+    }
     return index == stoppedAt ? .current : .next
   }
 
@@ -129,6 +133,11 @@ package final class PipelineSidebarModel {
   /// The user's « Continue » at the breakpoint: the step with the panel's values, then on to
   /// the next breakpoint; the pipeline keeps the values applied (R5), undone on `undoManager`.
   package func continueRun(undoManager: UndoManager? = nil) async {
+    // Continue applies to the combined image: from a branch, the first press shows it there.
+    guard workspace.selection == .main else {
+      workspace.select(.main)
+      return
+    }
     // Read before the commit, whose value change ends the suspension: on a new head the values
     // are shown first, as Apply does, never applied unseen (R2).
     let previews = workspace.isPreviewSuspended
@@ -191,7 +200,10 @@ package final class PipelineSidebarModel {
       @escaping (History, PipelineBundle, @escaping PipelineRunner.EventSink) async throws ->
       PipelineRunner.Outcome
   ) async -> Bool {
-    guard !isRunning else { return false }
+    // A replay of the stale steps rewrites the same history: a run waits for it (card 0119).
+    guard !isRunning, !workspace.isReplaying else { return false }
+    // A run applies to the combined image: it is shown first, its panel what Continue applies.
+    workspace.select(.main)
     // A host tool's Apply records on the head it started from: a run waits for it (card 0092).
     guard workspace.toolTask == nil else {
       failure = .app("A tool is already running: wait for it, or stop it.")
@@ -237,6 +249,8 @@ package final class PipelineSidebarModel {
     }
     stoppedAt = index
     let recipe = pipeline.steps[index].recipe
+    // The run selected Combined before it started and no switch happens while it goes: the
+    // breakpoint's panel opens there.
     guard let type = workspace.registry.type(id: recipe.processID) else { return }
     workspace.choose(
       recipe.processID, params: ParamSet.loading(recipe.params, onto: type.schema).params)

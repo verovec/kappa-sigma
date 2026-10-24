@@ -114,5 +114,13 @@
   "stage.studio": {
     "definition": "Étirement, couleur et étoiles sur l’image empilée, prévisualisés en direct.",
     "label": "Studio"
+  },
+  "studio.branch": {
+    "definition": "L’historique propre d’une couche avant la combinaison : débruiter ou équilibrer Hα, OIII ou la large bande à part.",
+    "label": "Branche"
+  },
+  "studio.combined": {
+    "definition": "L’image après la combinaison des canaux : l’historique principal, où se font les étapes de finition.",
+    "label": "Combiné"
   }
 }

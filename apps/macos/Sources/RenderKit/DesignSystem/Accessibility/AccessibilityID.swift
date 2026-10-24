@@ -230,6 +230,22 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
     stageControl("studio", "process." + processID)
   }
 
+  /// An entry of the Studio's channel switcher (card 0119): `main` or a layer id.
+  package static func studioChannel(_ key: String) -> Self {
+    stageControl("studio", "channel." + key)
+  }
+
+  /// The switcher's « Compare with… » menu (card 0119).
+  package static let studioCompareWith = stageControl("studio", "compare-with")
+
+  /// An entry of « Compare with… » (card 0119): `none` or a channel key.
+  package static func studioCompareTarget(_ key: String) -> Self {
+    stageControl("studio", "compare-with." + key)
+  }
+
+  /// The stale banner's Replay (card 0119).
+  package static let studioReplayStale = stageControl("studio", "replay-stale")
+
   /// A step of the Studio's history list: compare to it (card 0087).
   package static func studioStep(_ index: Int) -> Self {
     stageControl("studio", "step." + String(index))

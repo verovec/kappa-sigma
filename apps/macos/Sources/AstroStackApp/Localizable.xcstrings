@@ -641,6 +641,22 @@
         }
       }
     },
+    "A replay is going on: wait for it, then apply.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A replay is going on: wait for it, then apply."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un rejeu est en cours : attendez qu’il finisse, puis appliquez."
+          }
+        }
+      }
+    },
     "A snapshot is already named “%@”.": {
       "localizations": {
         "en": {
@@ -685,6 +701,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "À propos d’AstroStack"
+          }
+        }
+      }
+    },
+    "Acts on the combined image: apply it there": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acts on the combined image: apply it there"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agit sur l’image combinée : appliquez-le là"
           }
         }
       }
@@ -1089,6 +1121,22 @@
         }
       }
     },
+    "Channel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Channel"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canal"
+          }
+        }
+      }
+    },
     "Channels": {
       "localizations": {
         "en": {
@@ -1341,6 +1389,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Comparer avec"
+          }
+        }
+      }
+    },
+    "Compare with…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compare with…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comparer avec…"
           }
         }
       }
@@ -3057,6 +3121,22 @@
         }
       }
     },
+    "Mask active: %@, not used on a branch: the process reads the layer alone.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mask active: %@, not used on a branch: the process reads the layer alone."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masque actif : %@, non utilisé sur une branche : le traitement lit la couche seule."
+          }
+        }
+      }
+    },
     "Masters, stacks and the bundle are written inside the project.": {
       "localizations": {
         "en": {
@@ -3329,6 +3409,22 @@
         }
       }
     },
+    "Needs a colour layer: this branch is an emission line": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needs a colour layer: this branch is an emission line"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demande une couche couleur : cette branche est une raie d’émission"
+          }
+        }
+      }
+    },
     "Needs the starless: separate the stars first.": {
       "localizations": {
         "en": {
@@ -3485,6 +3581,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aucun canal n’a pu être empilé : %@"
+          }
+        }
+      }
+    },
+    "No compare": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No compare"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sans comparaison"
           }
         }
       }
@@ -4641,6 +4753,22 @@
         }
       }
     },
+    "Replay": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replay"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rejouer"
+          }
+        }
+      }
+    },
     "Replay Pipeline…": {
       "localizations": {
         "en": {
@@ -4957,6 +5085,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "En cours"
+          }
+        }
+      }
+    },
+    "Runs a host tool: on the combined image only": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Runs a host tool: on the combined image only"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lance un outil externe : sur l’image combinée seulement"
           }
         }
       }
@@ -6253,6 +6397,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "L’étape « %@ » lance un outil externe : appliquez-la dans le Studio, puis continuez."
+          }
+        }
+      }
+    },
+    "Stale steps: %@ (they read %@, changed since). Replay runs them again.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stale steps: %@ (they read %@, changed since). Replay runs them again."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Étapes périmées : %@ (elles lisaient %@, modifié depuis). Rejouer les relance."
           }
         }
       }

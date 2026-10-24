@@ -32,9 +32,9 @@ extension SkyCatalogue {
       let key = normalize(cell("name"))
       guard !key.isEmpty, !cell("type").isEmpty else { continue }
       entries[key] = OverlayEntry(
-        type: cell("type"), majorAxisArcmin: Double(cell("majax")),
-        minorAxisArcmin: Double(cell("minax")), positionAngleDeg: Double(cell("posang")),
-        surfaceBrightness: Double(cell("surfbr")),
+        type: cell("type"), majorAxisArcmin: number(cell("majax")),
+        minorAxisArcmin: number(cell("minax")), positionAngleDeg: number(cell("posang")),
+        surfaceBrightness: number(cell("surfbr")),
         morphology: cell("hubble").isEmpty ? nil : cell("hubble"),
         commonNames: cell("common").split(separator: "/").map {
           $0.trimmingCharacters(in: .whitespaces)

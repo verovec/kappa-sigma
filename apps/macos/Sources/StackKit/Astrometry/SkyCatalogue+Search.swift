@@ -10,8 +10,8 @@ extension SkyCatalogue {
   package func search(_ query: String, limit: Int) -> [SkyObject] {
     let key = Self.normalize(query)
     guard !key.isEmpty, limit > 0 else { return [] }
-    let hits = objects.indices.compactMap { position in
-      Self.rank(objects[position], key).map { (position: position, rank: $0) }
+    let hits = tokens.indices.compactMap { position in
+      Self.rank(tokens[position], key).map { (position: position, rank: $0) }
     }
     let sorted = hits.sorted { lhs, rhs in
       if lhs.rank != rhs.rank { return lhs.rank < rhs.rank }
@@ -30,20 +30,25 @@ extension SkyCatalogue {
   ///
   /// Exactness dominates, then the primary name over a common name over an alias — but a
   /// contained common name outranks a contained name (the legacy buckets).
-  private static func rank(_ object: SkyObject, _ key: String) -> Int? {
-    // Per field: its tokens and its exact, prefix and contains buckets.
-    let fields: [(tokens: [String], buckets: [Int])] = [
-      ([object.name], [0, 3, 7]), (object.commonNames, [1, 4, 6]), (object.aliases, [2, 5, 8]),
-    ]
-    return fields.flatMap { field in
-      field.tokens.compactMap { token -> Int? in
-        let normalised = normalize(token)
-        if normalised.isEmpty { return nil }
-        if normalised == key { return field.buckets[0] }
-        if normalised.hasPrefix(key) { return field.buckets[1] }
-        return normalised.contains(key) ? field.buckets[2] : nil
-      }
-    }.min()
+  private static func rank(_ tokens: Tokens, _ key: String) -> Int? {
+    var best = bucket(tokens.name, key, exact: 0, prefix: 3, contains: 7)
+    for token in tokens.commonNames {
+      best = min(best, bucket(token, key, exact: 1, prefix: 4, contains: 6))
+    }
+    for token in tokens.aliases {
+      best = min(best, bucket(token, key, exact: 2, prefix: 5, contains: 8))
+    }
+    return best == Int.max ? nil : best
+  }
+
+  /// One normalised token against the key, in its field's buckets; `Int.max` for no match.
+  private static func bucket(_ token: String, _ key: String, exact: Int, prefix: Int, contains: Int)
+    -> Int
+  {
+    if token.isEmpty { return Int.max }
+    if token == key { return exact }
+    if token.hasPrefix(key) { return prefix }
+    return token.contains(key) ? contains : Int.max
   }
 
   /// The list's rank: Messier objects are the famous ones, then NGC/IC, then the surveys.

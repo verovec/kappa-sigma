@@ -5,7 +5,5 @@ internal import ImageKit
 /// tests (`KitBundle`: `Bundle.module` traps in the `.app`).
 enum StackKitResources {
   /// The bundle holding `Catalogue/`.
-  static var bundle: Bundle {
-    KitBundle.resolve(named: "AstroStack_StackKit.bundle") { Bundle.module }
-  }
+  static let bundle = KitBundle.resolve(named: "AstroStack_StackKit.bundle") { Bundle.module }
 }

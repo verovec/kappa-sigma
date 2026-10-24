@@ -9,10 +9,13 @@ extension SkyCatalogue {
     environment: [String: String] = ProcessInfo.processInfo.environment
   ) throws -> Self {
     let siril = SirilTool.path(environment: environment)
-    guard FileManager.default.isExecutableFile(atPath: siril) else {
+    do {
+      try SirilTool.requireExecutable(siril)
+    } catch {
       throw SkyCatalogueError.sirilMissing(path: siril)
     }
-    let folder = folder(sirilPath: siril)
+    // A symlinked `SIRIL_BIN` (`/usr/local/bin/siril-cli`) names the app's binary: its lists.
+    let folder = folder(sirilPath: URL(fileURLWithPath: siril).resolvingSymlinksInPath().path)
     var isFolder: ObjCBool = false
     guard FileManager.default.fileExists(atPath: folder.path, isDirectory: &isFolder),
       isFolder.boolValue
@@ -53,16 +56,18 @@ extension SkyCatalogue {
   /// The rows of one list: an unusable row (no name, a coordinate that is not a number) is skipped.
   static func parse(_ text: String, source: SkyObject.Source, file: String) throws -> [SkyObject] {
     let (columns, rows) = table(text)
+    // An empty list is a list with no row, as the legacy parser took it.
+    if columns.isEmpty { return [] }
     guard let name = columns["name"], let ra = columns["ra"], let dec = columns["dec"] else {
       throw SkyCatalogueError.missingColumns(file: file)
     }
     return rows.compactMap { row in
       let cell = { (index: Int?) in index.flatMap { $0 < row.count ? row[$0] : nil } ?? "" }
-      guard !cell(name).isEmpty, let raDeg = Double(cell(ra)), let decDeg = Double(cell(dec))
+      guard !cell(name).isEmpty, let raDeg = number(cell(ra)), let decDeg = number(cell(dec))
       else { return nil }
       var object = SkyObject(
         name: cell(name), raDeg: raDeg, decDeg: decDeg, source: source,
-        magnitude: Double(cell(columns["mag"])), majorAxisArcmin: Double(cell(columns["diameter"])))
+        magnitude: number(cell(columns["mag"])), majorAxisArcmin: number(cell(columns["diameter"])))
       for alias in cell(columns["alias"]).split(separator: "/") { object.addAlias(String(alias)) }
       return object
     }
@@ -81,6 +86,11 @@ extension SkyCatalogue {
     let columns = Dictionary(
       header.enumerated().map { ($1.lowercased(), $0) }, uniquingKeysWith: { first, _ in first })
     return (columns, Array(lines.dropFirst()))
+  }
+
+  /// A cell's number; a blank, unparseable or non-finite cell (`nan`) is unknown.
+  static func number(_ cell: String) -> Double? {
+    Double(cell).flatMap { $0.isFinite ? $0 : nil }
   }
 
   /// The text of `file`.

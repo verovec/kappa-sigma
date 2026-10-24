@@ -12,7 +12,7 @@ struct SkyCatalogueTests {
     arguments: [
       ("sh2-132", "SH2132"), ("Sh 2-132", "SH2132"), ("SH2132", "SH2132"), ("m 31", "M31"),
       ("NGC 224", "NGC224"), ("m-101", "M101"), ("Andromeda galaxy", "ANDROMEDAGALAXY"),
-      ("  ", ""), ("Hα", "H"),
+      ("  ", ""), ("Hα", "H"), ("Straße", "STRAE"),
     ])
   func testNormalizeTable(_ name: String, _ key: String) {
     #expect(SkyCatalogue.normalize(name) == key)
@@ -197,5 +197,18 @@ struct SkyCatalogueTests {
     #expect(throws: SkyCatalogueError.sirilMissing(path: "/nonexistent/prefix/bin/siril-cli")) {
       try SkyCatalogue.installed(environment: environment)
     }
+  }
+
+  @Test("an empty list is skipped; a non-finite magnitude is unknown")
+  func testEmptyListAndNonFinite() throws {
+    let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: folder) }
+    try "".write(to: folder.appendingPathComponent("ldn.csv"), atomically: true, encoding: .utf8)
+    try "name,ra,dec,diameter,mag,alias\nM1,83.6,22.0,nan,inf,\n".write(
+      to: folder.appendingPathComponent("messier.csv"), atomically: true, encoding: .utf8)
+    let catalogue = try SkyCatalogue.load(folder: folder, overlay: nil)
+    let crab = try #require(catalogue.object(named: "M1"))
+    #expect(catalogue.objects.count == 1 && crab.magnitude == nil && crab.majorAxisArcmin == nil)
   }
 }

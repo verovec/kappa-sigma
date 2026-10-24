@@ -11,13 +11,17 @@ report() { printf '  ✗ %s\n' "$1"; fail=1; }
 
 echo "hygiene: tracked files"
 files="$(git ls-files)"
+# Membership in the tracked list. Never `printf … | grep -q`: grep stops at the match, the killed
+# writer fails the pipe under pipefail, and the test reads false on a long list
+# (RepoHygieneTests.testNoForbiddenArtifacts_largeTree).
+tracked() { grep -qxF "$1" <<<"$files"; }
 
 # 1. Swift only — no second language, no container.
 bad=$(printf '%s\n' "$files" | grep -E '(^|/)(go\.mod|go\.sum|Dockerfile|docker-compose\.ya?ml|compose\.ya?ml|requirements\.txt|pyproject\.toml|package\.json)$|\.(go|py|cgo|js|ts)$' \
   | grep -vE '^(docs|tasks-context|conventions)/' || true)
 [ -z "$bad" ] || report "non-Swift code or container files tracked:"$'\n'"$bad"
 #    No web front end either, at any depth, whatever it holds (the legacy Vue app is never migrated).
-bad=$(printf '%s\n' "$files" | grep -E '(^|/)frontend/' | grep -vE '^(docs|tasks-context|conventions)/' || true)
+bad=$(printf '%s\n' "$files" | grep -E '(^|/)frontend/' || true)
 [ -z "$bad" ] || report "'frontend/' tracked (the app is SwiftUI only):"$'\n'"$bad"
 
 # 2. Nothing pixel-shaped: fixtures in the repo are text only. The one exception is the README's
@@ -74,16 +78,14 @@ commands() {
   awk '/^```bash/ { inside = 1; next } /^```/ { inside = 0 } inside' "$1" | sed -E 's/[[:space:]]{2,}#.*$//'
 }
 sections() { awk '/^```/ { fenced = !fenced; next } !fenced && /^## / { n++ } END { print n + 0 }' "$1"; }
-#    A here-string, not a pipe: `grep -q` stops at the match, and under pipefail the killed writer
-#    would make the test false on a long file list (RepoHygieneTests.testNoForbiddenArtifacts_largeTree).
-if grep -qxF 'README.fr.md' <<<"$files"; then
-  if [ ! -f README.md ]; then
+if tracked README.fr.md; then
+  if ! tracked README.md; then
     report "README.fr.md is tracked without the README.md it mirrors"
   else
     [ "$(commands README.md)" = "$(commands README.fr.md)" ] \
       || report "README.fr.md commands differ from README.md (translate the comments only)"
-    [ "$(sections README.md)" = "$(sections README.fr.md)" ] \
-      || report "README.fr.md has $(sections README.fr.md) sections, README.md has $(sections README.md)"
+    en=$(sections README.md) fr=$(sections README.fr.md)
+    [ "$en" = "$fr" ] || report "README.fr.md has $fr sections, README.md has $en"
   fi
 fi
 

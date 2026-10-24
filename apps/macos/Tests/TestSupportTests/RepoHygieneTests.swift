@@ -15,8 +15,6 @@ struct RepoHygieneTests {
     var links: [String: String] = [:]
     var removed: [String] = []
     let rule: String
-    /// The item is allowed: the gate must pass (and `rule` is then its success line).
-    var passes = false
     var testDescription: String { item }
   }
 
@@ -28,9 +26,7 @@ struct RepoHygieneTests {
     Case(item: "Python script", files: ["tools/run.py": "print()\n"], rule: "non-Swift code"),
     Case(item: "frontend folder", files: ["frontend/index.html": "<p>\n"], rule: "'frontend/'"),
     Case(item: "nested frontend", files: ["apps/frontend/a.css": "p {}\n"], rule: "'frontend/'"),
-    Case(
-      item: "frontend under docs is reference", files: ["docs/frontend/old.md": "# x\n"],
-      rule: "hygiene: ok", passes: true),
+    Case(item: "frontend under docs", files: ["docs/frontend/a.vue": "<p>\n"], rule: "'frontend/'"),
     Case(item: "file over 2 MB", files: ["notes.txt": big], rule: "files over 2 MB"),
     Case(item: "FITS under Tests", files: ["Tests/Fixtures/m.fits": "SIMPLE\n"], rule: "pixel"),
     Case(item: "PNG under Tests", files: ["Tests/Fixtures/m.png": "x\n"], rule: "pixel"),
@@ -104,7 +100,7 @@ struct RepoHygieneTests {
     }
     try Self.git(["add", "-A", "-f"], in: tree)
     let gate = try Self.run("/bin/bash", ["scripts/hygiene.sh"], in: tree)
-    #expect(gate.status == (testCase.passes ? 0 : 1))
+    #expect(gate.status == 1)
     #expect(gate.output.contains(testCase.rule), "\(gate.output)")
   }
 
@@ -131,9 +127,12 @@ struct RepoHygieneTests {
     let tree = try Self.cleanTree()
     let filler = tree.appendingPathComponent("zz", isDirectory: true)
     try FileManager.default.createDirectory(at: filler, withIntermediateDirectories: true)
-    for index in 0..<8000 {
+    // About 300 KB of names after README.fr.md: several pipe buffers, from few files.
+    let long = String(repeating: "a", count: 240)
+    for index in 0..<1200 {
       FileManager.default.createFile(
-        atPath: filler.appendingPathComponent(String(format: "%05d", index)).path, contents: nil)
+        atPath: filler.appendingPathComponent(long + String(format: "%04d", index)).path,
+        contents: nil)
     }
     try Self.french.replacing("just run", with: "just build").write(
       to: tree.appendingPathComponent("README.fr.md"), atomically: true, encoding: .utf8)

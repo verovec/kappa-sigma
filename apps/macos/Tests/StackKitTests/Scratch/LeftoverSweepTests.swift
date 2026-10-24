@@ -152,6 +152,7 @@ struct LeftoverSweepTests {
 
     #expect(removed.isEmpty)
     #expect(Self.exists(gone))
+    #expect(ScratchOwner.read(gone) != nil, "its marker is back: the next launch retries")
   }
 
   @Test("a recorded Siril pid reused by a later Siril is never signalled", .scratchDirectory)

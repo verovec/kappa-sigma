@@ -77,7 +77,7 @@ struct RunLeftoversTests {
     let project = try ProjectPackage.create(
       at: try ScratchDirectory.url.appendingPathComponent("M31.astrostack"))
     defer { try? project.close() }
-    let window = ProjectWindowModel(store: { project.store }, folder: { project.url })
+    let window = StackLeftoversViewTests.window(project)
 
     window.deleteLeftoverStack(LeftoverStack(path: "project.db", bytes: 0))
 

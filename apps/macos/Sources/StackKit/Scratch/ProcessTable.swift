@@ -10,8 +10,10 @@ package struct ProcessTable: Sendable {
   package var identity: @Sendable (Int32) -> ProcessIdentity?
   /// The executable path of the process running under `pid`, or `nil` when unknown.
   package var executable: @Sendable (Int32) -> String?
-  /// Stops the process `identity` names: SIGTERM, then SIGKILL when it is still there after a
-  /// grace period; each signal only while its pid still runs the process started then.
+  /// Stops the process named: SIGTERM, then SIGKILL after a grace period.
+  ///
+  /// Its identity is checked right before each signal; macOS has no process handle to signal,
+  /// so a pid recycled in that instant cannot be ruled out entirely.
   package var terminate: @Sendable (ProcessIdentity) -> Void
 
   /// A table from its parts.

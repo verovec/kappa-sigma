@@ -40,8 +40,6 @@ struct ProcessTableTests {
     "terminate stops a child: SIGTERM, then SIGKILL when it ignores SIGTERM",
     .timeLimit(.minutes(1)), arguments: [false, true])
   func testTerminate(_ ignoringTerm: Bool) throws {
-    let clock = ContinuousClock()
-    let start = clock.now
     let process = try Self.child(ignoringTerm: ignoringTerm)
     let pid = process.processIdentifier
     defer { if process.isRunning { kill(pid, SIGKILL) } }
@@ -50,8 +48,10 @@ struct ProcessTableTests {
     ProcessTable.live.terminate(started)
 
     #expect(ProcessTable.live.identity(pid) != started, "gone, or a zombie no longer running")
-    // Only an ignored SIGTERM waits out the 2 s grace before SIGKILL: the path really ran.
-    #expect((clock.now - start >= .seconds(2)) == ignoringTerm)
+    process.waitUntilExit()
+    // The signal that ended it says which path ran: SIGKILL only once SIGTERM was ignored.
+    #expect(process.terminationReason == .uncaughtSignal)
+    #expect(process.terminationStatus == (ignoringTerm ? SIGKILL : SIGTERM))
   }
 
   @Test("terminate never signals a pid whose start time differs (a reused pid)")

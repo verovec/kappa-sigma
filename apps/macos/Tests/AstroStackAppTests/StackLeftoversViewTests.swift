@@ -12,8 +12,8 @@ struct StackLeftoversViewTests {
   /// A window over `project` whose import services never reach the host's library.
   static func window(_ project: ProjectPackage) -> ProjectWindowModel {
     ProjectWindowModel(
-      store: { project.store }, folder: { project.url },
-      services: { _ in ImportServices(planning: { try await ImportPlanningStub.empty($0) }) })
+      store: { project.store }, folder: { project.url }, planning: { _ in ImportPlanningStub.empty }
+    )
   }
 
   @Test(

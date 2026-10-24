@@ -93,6 +93,8 @@ package struct LeftoverSweep: Sendable {
         removed.append(Removal(path: entry, bytes: bytes))
       } catch {
         Self.logger.error("could not remove leftover \(entry.path): \(error)")
+        // The removal went part way, the marker with it: put it back so the next launch retries.
+        if FileManager.default.fileExists(atPath: entry.path) { try? marker.write(to: entry) }
       }
     }
     return removed

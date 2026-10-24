@@ -35,8 +35,8 @@ package final class ObjectSearchModel {
   /// The user chose an object for this project object: it is not replaced until the project's
   /// object changes (another stack).
   private var chosen = false
-  /// The project object the last load matched.
-  private var lastProjectObject: String?
+  /// The normalised project object the last load matched; nil before any, or for none.
+  private var lastProjectKey: String?
   /// The read under way: overlapping loads share it.
   @ObservationIgnored private var reading: Task<SkyCatalogue, any Error>?
   @ObservationIgnored private let loader: @Sendable @concurrent () async throws -> SkyCatalogue
@@ -56,6 +56,9 @@ package final class ObjectSearchModel {
 
   /// What the plate solve offers: the selection.
   package var offered: SkyObject? { selected }
+
+  /// The card covers the stage: it is open and has an object to show.
+  package var coversStage: Bool { cardShown && selected != nil }
 
   /// The catalogue is being read: a search has nothing to say yet.
   package var isLoading: Bool { catalogue == nil && unavailable == nil }
@@ -78,12 +81,16 @@ package final class ObjectSearchModel {
       self.reading = nil
     }
     guard !Task.isCancelled else { return }
-    // Another stack's object: the choice made for the previous one gives way.
-    let key = projectObject.map(SkyCatalogue.normalize)
-    if key != lastProjectObject.map(SkyCatalogue.normalize) { chosen = false }
-    lastProjectObject = projectObject
+    // Another stack's object gives way the choice made for the previous one; a name appearing
+    // where there was none (the header read after the stack) does not.
+    let key = projectObject.map(SkyCatalogue.normalize).flatMap { $0.isEmpty ? nil : $0 }
+    if let key, let last = lastProjectKey, key != last { chosen = false }
+    lastProjectKey = key ?? lastProjectKey
     guard !chosen else { return }
-    selected = projectObject.flatMap { catalogue?.object(named: $0) }
+    let match = projectObject.flatMap { catalogue?.object(named: $0) }
+    // The card was the user's; the project's object never opens one, nor keeps one open.
+    if match != selected { cardShown = false }
+    selected = match
   }
 
   /// The user picks `object`: its card shows and the plate solve offers it.
@@ -119,9 +126,7 @@ package final class ObjectSearchModel {
   /// A load's failure as the section words it; another error names the catalogue's folder.
   private static func failure(_ error: any Error) -> SkyCatalogueError {
     if let error = error as? SkyCatalogueError { return error }
-    // As `SkyCatalogue.installed` reads it: a symlinked `SIRIL_BIN` names the app's lists.
-    let siril = URL(fileURLWithPath: SirilTool.path()).resolvingSymlinksInPath().path
-    let folder = SkyCatalogue.folder(sirilPath: siril).path
+    let folder = SkyCatalogue.installedFolder().path
     return .unreadable(file: folder, reason: error.localizedDescription)
   }
 }

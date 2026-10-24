@@ -14,8 +14,7 @@ extension SkyCatalogue {
     } catch {
       throw SkyCatalogueError.sirilMissing(path: siril)
     }
-    // A symlinked `SIRIL_BIN` (`/usr/local/bin/siril-cli`) names the app's binary: its lists.
-    let folder = folder(sirilPath: URL(fileURLWithPath: siril).resolvingSymlinksInPath().path)
+    let folder = installedFolder(environment: environment)
     var isFolder: ObjCBool = false
     guard FileManager.default.fileExists(atPath: folder.path, isDirectory: &isFolder),
       isFolder.boolValue
@@ -25,6 +24,15 @@ extension SkyCatalogue {
     guard !catalogue.objects.isEmpty else { throw SkyCatalogueError.noObjects(folder: folder.path) }
     guard let overlay = openNGCOverlay else { return catalogue }
     return catalogue.overlaid(with: try overlayEntries(contentsOf: overlay))
+  }
+
+  /// The catalogue folder of the Siril `environment` names: a symlinked `SIRIL_BIN`
+  /// (`/usr/local/bin/siril-cli`) names the app's binary, hence its lists.
+  package static func installedFolder(
+    environment: [String: String] = ProcessInfo.processInfo.environment
+  ) -> URL {
+    let siril = SirilTool.path(environment: environment)
+    return folder(sirilPath: URL(fileURLWithPath: siril).resolvingSymlinksInPath().path)
   }
 
   /// Where Siril keeps its lists, from the `siril-cli` path; a pure path function.

@@ -168,4 +168,15 @@ struct ObjectSearchModelTests {
     await objects.load(projectObject: "Sh2-132")
     #expect(objects.selected?.name == "Sh2-132", "another stack: its own object")
   }
+
+  @Test("another stack closes the card of the previous choice; a name appearing keeps the choice")
+  func testStackSwitchClosesTheCard() async throws {
+    let objects = Self.model()
+    await objects.load(projectObject: nil)
+    objects.choose(try #require(Self.catalogue.object(named: "Sh2-131")))
+    await objects.load(projectObject: "M31")
+    #expect(objects.selected?.name == "Sh2-131" && objects.coversStage, "the header's name arrived")
+    await objects.load(projectObject: "Mystery")
+    #expect(objects.selected == nil && !objects.cardShown && !objects.coversStage)
+  }
 }

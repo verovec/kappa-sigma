@@ -24,10 +24,10 @@ package struct ProjectWindowView: View {
         StagePane.pane(for: model.selection, model: model)
           .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
           // Covered, the stage neither reads out nor takes a click.
-          .accessibilityHidden(model.objects.cardShown)
-          .allowsHitTesting(!model.objects.cardShown)
+          .accessibilityHidden(model.objects.coversStage)
+          .allowsHitTesting(!model.objects.coversStage)
           .overlay {
-            if model.objects.cardShown, let object = model.objects.selected {
+            if model.objects.coversStage, let object = model.objects.selected {
               ObjectCard(object: object) { model.objects.closeCard() }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 .background(DesignColor.surface.color)

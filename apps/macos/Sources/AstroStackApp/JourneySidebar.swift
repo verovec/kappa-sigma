@@ -1,4 +1,5 @@
 internal import RenderKit
+internal import StackKit
 internal import SwiftUI
 
 /// The stages of the journey, in working order, each with its state; selecting one shows its
@@ -35,7 +36,10 @@ struct JourneySidebar: View {
     }
     .listStyle(.sidebar)
     // Restarted (the previous one cancelled) when the stack's object changes or Siril comes back.
-    .task(id: LoadKey(object: model.projectObjectName, reloads: objects.reloads)) {
+    .task(
+      id: LoadKey(
+        object: model.projectObjectName.map(SkyCatalogue.normalize), reloads: objects.reloads)
+    ) {
       await objects.load(projectObject: model.projectObjectName)
     }
     // Siril found by the install card's « Re-check »: the catalogue is read again.
@@ -48,6 +52,7 @@ struct JourneySidebar: View {
 
 /// What the sidebar's catalogue load depends on.
 private struct LoadKey: Equatable {
+  /// The project's object, normalised: a respelling is the same object.
   let object: String?
   let reloads: Int
 }

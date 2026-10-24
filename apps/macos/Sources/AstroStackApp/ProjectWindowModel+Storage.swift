@@ -110,10 +110,10 @@ extension ProjectWindowModel {
       deletingStacks.remove(id)
       stacks = (try? store.stacks().filter { !deletingStacks.contains($0.id) }) ?? stacks
       self.error = UserFacingError(error)
-      await listStorage()
       return
     }
-    stacks = (try? store.stacks()) ?? stacks
+    deletingStacks.remove(id)
+    stacks = (try? store.stacks().filter { !deletingStacks.contains($0.id) }) ?? stacks
     if selectedStackID == id { selectStack(nil) } else { refresh() }
   }
 

@@ -8,7 +8,8 @@ extension ProjectStore {
   /// Deletes stack `id`: its rows in one transaction, then its folder.
   ///
   /// Refuses the stack open in the Studio (`openStackID`); an unknown id does nothing; throws
-  /// only when the rows were not deleted. True when the folder is gone too (or never existed).
+  /// only when the rows were not deleted. True when this call deleted the rows and the folder is
+  /// gone too (or never existed); false for an unknown id or a folder that stayed.
   /// Snapshots go first: their step is `ON DELETE RESTRICT`, so the cascade from `stacks` would
   /// stop on them. The folder is removed only when the bundle path is `stacks/<name>` of
   /// `packageFolder`: a stack can never take anything else with it. Rows go before the folder: a
@@ -27,7 +28,7 @@ extension ProjectStore {
       try db.execute(sql: "DELETE FROM stacks WHERE id = ?", arguments: [id])
       return path
     }
-    guard let bundlePath else { return true }
+    guard let bundlePath else { return false }
     guard let folder = Self.stackFolder(bundlePath, in: packageFolder) else {
       Self.storageLogger.notice("stack \(id) deleted; its folder \(bundlePath) is not in stacks/")
       return false

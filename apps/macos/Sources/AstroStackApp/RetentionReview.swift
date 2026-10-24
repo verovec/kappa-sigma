@@ -189,11 +189,19 @@ package final class RetentionReview {
       return []
     }
     defer { try? package.closeKeepingWAL() }
-    return RetentionPolicy.delete(current) {
-      // A folder that stayed freed nothing: not reported as deleted (it is a 0113 leftover).
-      guard
-        try package.store.deleteStack(id: $0.stack.id, packageFolder: project, openStackID: nil)
-      else { throw FolderStayed() }
+    // A stack whose rows went but whose folder stayed (a 0113 leftover now) is reported deleted,
+    // with nothing freed; one already gone (another window deleted it) is not reported.
+    var stayed: Set<Int64> = []
+    let deleted = RetentionPolicy.delete(current) {
+      let id = $0.stack.id
+      guard try package.store.stack(id: id) != nil else { throw AlreadyGone() }
+      if try !package.store.deleteStack(id: id, packageFolder: project, openStackID: nil) {
+        stayed.insert(id)
+      }
+    }
+    return deleted.map {
+      stayed.contains($0.stack.id)
+        ? RetentionCandidate(project: $0.project, stack: $0.stack, bytes: 0) : $0
     }
   }
 
@@ -210,7 +218,7 @@ package final class RetentionReview {
     }
   }
 
-  private struct FolderStayed: Error {}
+  private struct AlreadyGone: Error {}
 
   private nonisolated static let logger = Logger(
     subsystem: "fr.astrostack", category: "App/retention")

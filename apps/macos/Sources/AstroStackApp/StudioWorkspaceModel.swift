@@ -51,10 +51,10 @@ package final class StudioWorkspaceModel {
   /// The chosen process's panel.
   package private(set) var panel: ProcessPanelModel?
   /// The viewer shows the preview of the panel's values, not the head.
-  package private(set) var isPreviewing = false
+  package internal(set) var isPreviewing = false
   /// The history moved under the open panel: the viewer shows the head, not the panel's values,
   /// until a value moves or Preview is pressed; Apply shows them before it records (R2).
-  package private(set) var isPreviewSuspended = false
+  package internal(set) var isPreviewSuspended = false
   /// The step compare shows, if any.
   package internal(set) var comparing: Int?
   /// The viewer shows a geometric preview that moves the pixels (card 0090, `gridMoved`).
@@ -72,7 +72,7 @@ package final class StudioWorkspaceModel {
   package internal(set) var failure: LocalizedStringResource?
   /// The last Apply recorded a step that changed nothing: said, so an Undo showing nothing is
   /// understood.
-  package private(set) var appliedNothing = false
+  package internal(set) var appliedNothing = false
   /// The host tool running for the panel (card 0093), with its last line.
   package internal(set) var toolRun: ToolProgress?
   /// What the last host tool reported (a plate solution), in a locale.
@@ -101,13 +101,13 @@ package final class StudioWorkspaceModel {
   @ObservationIgnored var previewTask: Task<Void, Never>?
   /// The head's display statistics: a preview is drawn through them, never through a previous
   /// preview's.
-  @ObservationIgnored private var headStatistics: [STFMapping] = []
+  @ObservationIgnored var headStatistics: [STFMapping] = []
   /// The values and mask of the preview on screen (`nil`: none); see `gridMoved`.
-  @ObservationIgnored private(set) var shown: (processID: String, params: ParamSet, mask: Mask?)? {
+  @ObservationIgnored var shown: (processID: String, params: ParamSet, mask: Mask?)? {
     didSet { gridMoved(from: oldValue.map { ($0.processID, $0.params) }) }
   }
   /// The failure shown is a preview's (the next preview clears it).
-  @ObservationIgnored private var previewFailed = false
+  @ObservationIgnored var previewFailed = false
 
   /// The workspace of `studio` whose bundle holds the layer roles `base`.
   package init(
@@ -165,191 +165,12 @@ package final class StudioWorkspaceModel {
     stopPreview()
   }
 
-  /// Renders the panel's values now (the debounced preview calls it one frame after a change).
-  package func previewNow() async {
-    drawPreview()
-  }
-
-  /// Draws the panel's values on the head now; a failure shows the head, never an older preview.
-  private func drawPreview() {
-    guard let panel else { return }
-    do {
-      let preview = try studio.preview(panel.type.id, params: panel.params, mask: maskImage())
-      // Through the head's display stretch: an auto-stretch fitted to the preview would hide
-      // the very change the process makes (what is shown is what Apply records, R2).
-      let same = preview.planes.count == headStatistics.count
-      willShow(panel.type.id, panel.params)
-      try show(preview, statistics: same ? headStatistics : nil)
-      isPreviewing = true
-      shown = (panel.type.id, panel.params, mask)
-      // A preview clears only a preview's failure: an Apply or Undo failure stays in view.
-      if previewFailed { failure = nil }
-      previewFailed = false
-    } catch {
-      shown = nil
-      failure = UserFacingError(error).message
-      previewFailed = true
-      if isPreviewing {
-        isPreviewing = false
-        try? show(studio.head, statistics: headStatistics)
-      }
-    }
-  }
-
-  /// Applies the panel's values at full resolution: the head moves (a failure is shown).
-  package func apply() throws {
-    guard let panel else { return }
-    // Apply records what the viewer shows (R2): values not drawn yet (a value just typed, a
-    // drag within the frame) are drawn first, and what was drawn is what is recorded.
-    previewTask?.cancel()
-    // On a new head the values are shown first: this Apply previews, the next one records.
-    if isPreviewSuspended {
-      resumePreview()
-      return
-    }
-    if !isShowing(panel) { drawPreview() }
-    guard isShowing(panel) else { return }
-    // The values applied: a geometry panel is back at the identity once the pixels moved.
-    let (id, params) = (panel.type.id, panel.params)
-    var used: AstroImage?
-    try reported {
-      used = try maskImage()
-      try studio.apply(id, params: params, mask: used)
-    }
-    // The user's manual work becomes the recipe (R5): the pipeline records the step.
-    pipeline?.applied(id, params: params, masked: used != nil)
-    appliedNothing = studio.session.lastApplyChangedNothing
-  }
-
-  /// Whether the viewer shows the current values and mask of `panel`.
-  private func isShowing(_ panel: ProcessPanelModel) -> Bool {
-    guard let shown else { return false }
-    return shown.processID == panel.type.id && shown.params == panel.params && shown.mask == mask
-  }
-
-  /// Back one step.
-  package func undo() throws {
-    try reported { try studio.undo() }
-  }
-
-  /// Forward one undone step.
-  package func redo() throws {
-    try reported { try studio.redo() }
-  }
-
-  /// Shows the panel's values on the head again, after the history moved under it.
-  package func resumePreview() {
-    guard panel != nil else { return }
-    isPreviewSuspended = false
-    drawPreview()
-  }
-
-  /// Runs a history move, then shows the head; a failure is shown in the panel and rethrown.
-  func reported(_ move: () throws -> Void) throws {
-    do {
-      try move()
-      failure = nil
-      previewFailed = false
-    } catch {
-      failure = UserFacingError(error).message
-      previewFailed = false
-      try? headChanged()
-      throw error
-    }
-    do {
-      try headChanged()
-    } catch {
-      // The history moved but its head could not be shown: say so, never a silent stale view.
-      failure = UserFacingError(error).message
-      throw error
-    }
-  }
-
-  /// A value moved: the suggestions follow the values they depend on, the preview follows.
-  private func panelChanged() {
-    // The notice spoke of the values applied, not of these.
-    appliedNothing = false
-    if let panel { panel.suggestions = offers(for: panel.type, params: panel.params) }
-    greyUnavailable()
-    // The head comes back now: a preview cancelled or refused would leave the model on screen.
-    hideModel()
-    schedulePreview()
-  }
-
-  private func schedulePreview() {
-    isPreviewSuspended = false
-    previewTask?.cancel()
-    previewTask = Task { [weak self] in
-      // One frame: a slider drag renders its last position, not every intermediate one.
-      try? await Task.sleep(for: .milliseconds(16))
-      guard !Task.isCancelled else { return }
-      await self?.previewNow()
-    }
-  }
-
-  private func stopPreview() {
-    previewTask?.cancel()
-    shown = nil
-    guard isPreviewing else { return }
-    isPreviewing = false
-    try? show(studio.head)
-  }
-
-  /// The history moved (an Apply, an undo, a pipeline run): the viewer, the panel's inputs and
-  /// the catalogue follow the new head.
-  func headChanged() throws {
-    // Even when showing the head fails, no preview scheduled meanwhile outlives the move.
-    let moved = headSteps != studio.steps
-    defer { suspendPreview(moved: moved) }
-    if dropRegionIfMoved() { resetMovingValues() }
-    shown = nil
-    // A report speaks of the head it was made on.
-    toolReport = nil
-    appliedNothing = false
-    batch.showsModel = false
-    defer { headStatistics = viewer.model.statistics }
-    isPreviewing = false
-    // A compared step undone, or off the head's grid (a crop applied), stops the compare.
-    if let comparing,
-      !onHeadGrid(step: comparing) || viewer.reference?.width != studio.head.width
-        || viewer.reference?.height != studio.head.height
-    {
-      try compare(toStep: nil)
-    }
-    try show(studio.head)
-    // After the viewer shows the new head: the display stretch offered is the one on screen.
-    if let panel { refresh(panel) }
-    refreshCatalogue()
-  }
-
-  /// Suspends the panel's preview once the history moved under it.
-  ///
-  /// The viewer stays on the new head: previewing the values again would show an Apply twice and
-  /// an Undo as nothing, so the panel says so and Apply reads Preview. A history that did not
-  /// move (a refused move) previews again; a host tool has no preview.
-  private func suspendPreview(moved: Bool) {
-    guard moved else {
-      // Nothing changed: a suspended panel stays so, a previewing one previews again.
-      if panel != nil, !isPreviewSuspended { schedulePreview() }
-      return
-    }
-    previewTask?.cancel()
-    previewTask = nil
-    isPreviewSuspended = panel.map { !$0.type.runsTool($0.params) } ?? false
-  }
-
-  /// Waits for the preview scheduled by the last change, if any: a test sees a preview the
-  /// debounce would draw later, without sleeping.
-  package func settlePreview() async {
-    await previewTask?.value
-  }
-
   func show(_ image: AstroImage, statistics: [STFMapping]? = nil) throws {
     viewer.texture = try Self.texture(image, device: studio.session.device)
     viewer.model.replace(image: image, statistics: statistics)
   }
 
-  private func refreshCatalogue() {
+  func refreshCatalogue() {
     var groups: [Group] = []
     for stage in [ProcessStage.linear, .any, .nonlinear] {
       let entries = registry.types.filter { $0.stage == stage }.map { type in

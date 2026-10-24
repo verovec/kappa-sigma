@@ -91,6 +91,11 @@ package final class StackingStageModel {
     set(id, checked: !isChecked(id))
   }
 
+  /// The nights with a checked set, in the table's order: what the next runs redo (card 0100).
+  package var checkedNights: [Night] {
+    groups.flatMap(\.nights).filter { night in night.series.contains { isChecked($0.id) } }
+  }
+
   /// No scan: the table has nothing to show.
   package var isEmpty: Bool { groups.isEmpty }
 

@@ -112,6 +112,12 @@ package nonisolated struct AstroFormat: Sendable {
     .app("\(count) frames")
   }
 
+  /// The night count as a catalog resource (`1 nuit`, `4 nuits` / `1 night`, `4 nights`), for a
+  /// sentence that nests it: the ONE source of that plural.
+  package static func nightCount(_ count: Int) -> LocalizedStringResource {
+    .app("\(count) nights")
+  }
+
   // MARK: - Numbers
 
   /// An integer with the locale's grouping and a U+2212 minus.

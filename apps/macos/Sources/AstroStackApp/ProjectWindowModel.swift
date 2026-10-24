@@ -41,6 +41,8 @@ package final class ProjectWindowModel {
   /// A Rescan is running.
   package internal(set) var isScanning = false
   var scanTask: Task<Void, Never>?
+  /// The scan going is the one Add a night started (card 0100): Run waits for its plan.
+  var rescanAfterAdd = false
   /// The preprocessing run the Stacking stage shows: the one running, or the last one.
   package internal(set) var run: RunViewModel?
   /// The scopes still to run after the current one (card 0095: one run per object).
@@ -248,12 +250,15 @@ package final class ProjectWindowModel {
   /// next run applies the request's overrides.
   ///
   /// Recording is idempotent per folder: after a failure part-way, Add again records the rest.
+  /// A night added through the sheet to a project that has some is followed by a rescan of them
+  /// all (card 0100); any other plan the window cannot adopt waits for the user's Rescan.
   package func add(_ request: ImportRequest) {
     guard let store = store() else {
       error = .projectClosed
       importError = error
       return
     }
+    let isNewNight = addsANight(request)
     var recorded = 0
     do {
       for path in request.paths {
@@ -273,6 +278,10 @@ package final class ProjectWindowModel {
       adoptScan(of: importing, for: request)
       closeImport()
       refresh()
+      if isNewNight && scan == nil {
+        rescan()
+        rescanAfterAdd = isScanning
+      }
     } catch {
       // Some folders may be recorded: the last scan no longer describes the project.
       if recorded > 0 { edited() }

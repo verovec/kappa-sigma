@@ -22,8 +22,9 @@ extension ProjectWindowModel {
   /// A capture night to stack, no run or queue going, and — once a scan lists the series — at
   /// least one checked set. Without a scan, a project whose stacks show several objects waits for
   /// one (`needsSeries`): a run of every light would only fail after the plan.
+  /// While every night is rescanned after Add a night, Run waits for the plan (card 0100).
   package var canRun: Bool {
-    !isStacking && sources.contains { $0.kind == .night }
+    !isStacking && !awaitsRescan && sources.contains { $0.kind == .night }
       && (series.isEmpty ? !needsSeries : !series.scopes.isEmpty)
   }
 

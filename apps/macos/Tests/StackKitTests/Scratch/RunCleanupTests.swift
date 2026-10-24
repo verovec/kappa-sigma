@@ -77,6 +77,17 @@ struct RunCleanupTests {
     #expect(!Self.exists(browsed))
   }
 
+  @Test("a stack folder a run still holds is neither listed nor removed", .scratchDirectory)
+  func testHeldFolderLeftAlone() throws {
+    let package = try ScratchDirectory.url.appendingPathComponent("M31.astrostack")
+    let running = try Self.stack("20261024_010000", in: package, files: [])
+    try TargetLock.acquire(running)
+    defer { TargetLock.release(running) }
+
+    #expect(StackLeftovers.orphans(in: package, recorded: []).isEmpty)
+    #expect(Self.exists(running))
+  }
+
   @Test("a package without stacks has no leftovers", .scratchDirectory)
   func testNoStacksFolder() throws {
     #expect(StackLeftovers.orphans(in: try ScratchDirectory.url, recorded: []).isEmpty)

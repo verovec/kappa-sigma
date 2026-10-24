@@ -64,6 +64,21 @@ struct ScratchDirectoryTests {
     }
   }
 
+  @Test("the age sweep keeps a folder whose test process still runs", .scratchDirectory)
+  func testScratchDirectory_removeStale_keepsLiveOwners() throws {
+    let folder = try ScratchDirectory.url
+    let running = folder.appendingPathComponent("running", isDirectory: true)
+    try FileManager.default.createDirectory(at: running, withIntermediateDirectories: true)
+    try ScratchOwner.mark(running)
+    try FileManager.default.setAttributes(
+      [.modificationDate: Date().addingTimeInterval(-ScratchDirectory.staleAge - 60)],
+      ofItemAtPath: running.path)
+
+    ScratchDirectory.removeStale(in: folder, olderThan: ScratchDirectory.staleAge, now: Date())
+
+    #expect(FileManager.default.fileExists(atPath: running.path))
+  }
+
   @Test("the sweep takes a killed test's directory at once, however recent", .scratchDirectory)
   func testScratchDirectory_removeDead_takesDeadOwners() throws {
     let folder = try ScratchDirectory.url

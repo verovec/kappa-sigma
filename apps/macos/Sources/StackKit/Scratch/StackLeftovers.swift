@@ -65,6 +65,8 @@ package enum StackLeftovers {
     var listed: [LeftoverStack] = []
     for name in names.sorted() where !recorded.contains("stacks/\(name)") {
       let folder = stacks.appendingPathComponent(name, isDirectory: true)
+      // A run still holds it (a cancelled run's teardown): neither listed nor removed yet.
+      guard !TargetLock.isHeld(folder) else { continue }
       var isFolder: ObjCBool = false
       guard FileManager.default.fileExists(atPath: folder.path, isDirectory: &isFolder),
         isFolder.boolValue

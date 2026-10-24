@@ -13,11 +13,16 @@ package struct ScratchOwner: Codable, Equatable, Sendable {
   package var owner: ProcessIdentity
   /// The Siril process working in the folder, recorded once it launched.
   package var siril: ProcessIdentity?
+  /// The program that Siril runs (`SIRIL_BIN` may name any), recorded with it.
+  package var sirilExecutable: String?
 
   /// A marker from its parts.
-  package init(owner: ProcessIdentity, siril: ProcessIdentity? = nil) {
+  package init(
+    owner: ProcessIdentity, siril: ProcessIdentity? = nil, sirilExecutable: String? = nil
+  ) {
     self.owner = owner
     self.siril = siril
+    self.sirilExecutable = sirilExecutable
   }
 
   /// True while the owner runs: its pid is taken by a process started when it was.
@@ -45,6 +50,7 @@ package struct ScratchOwner: Codable, Equatable, Sendable {
   package static func recordSiril(pid: Int32, in folder: URL, table: ProcessTable = .live) throws {
     guard var marker = read(folder), let siril = table.identity(pid) else { return }
     marker.siril = siril
+    marker.sirilExecutable = table.executable(pid)
     try marker.write(to: folder)
   }
 

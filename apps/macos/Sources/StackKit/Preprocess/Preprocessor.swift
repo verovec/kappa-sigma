@@ -97,7 +97,8 @@ package actor Preprocessor {
       try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
     }
     // Tens of GB of Siril files: a killed app's are swept at the next launch (LeftoverSweep).
-    try ScratchOwner.mark(request.work)
+    // Best effort: an unmarked folder is only never swept, never a run that cannot start.
+    try? ScratchOwner.mark(request.work)
     var result = PreprocessResult(runID: request.runID)
     // Built when a lane first needs them: a resume whose lanes are all reused calls no Siril.
     var pool: [CalibrationMaster]?

@@ -24,7 +24,8 @@ final class SirilPipeInstance {
     do {
       // A killed app leaves Siril running here, reparented to launchd: the marker names both, so
       // the next launch's sweep stops that Siril and removes the folder (LeftoverSweep).
-      try ScratchOwner.mark(folder)
+      // Best effort: an unmarked folder is only never swept, never a session that cannot start.
+      try? ScratchOwner.mark(folder)
       let input = folder.appendingPathComponent("command.in").path
       let output = folder.appendingPathComponent("command.out").path
       for path in [input, output] where mkfifo(path, 0o600) != 0 {

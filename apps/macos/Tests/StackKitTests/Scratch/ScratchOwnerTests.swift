@@ -55,6 +55,7 @@ struct ScratchOwnerTests {
     try ScratchOwner.mark(folder)
     try ScratchOwner.recordSiril(pid: 99, in: folder, table: table.table)
     #expect(ScratchOwner.read(folder)?.siril == siril)
+    #expect(ScratchOwner.read(folder)?.sirilExecutable?.hasSuffix("/siril-cli") == true)
     #expect(ScratchOwner.read(folder)?.owner.pid == getpid(), "the owner is kept")
   }
 }

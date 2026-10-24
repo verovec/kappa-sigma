@@ -82,7 +82,7 @@ package struct LeftoverSweep: Sendable {
         let marker = ScratchOwner.read(entry), !marker.isAlive(in: table)
       else { continue }
       // A Siril that keeps running keeps its folder: removed, nothing would point to it any more.
-      if let siril = marker.siril, !stop(siril) {
+      if let siril = marker.siril, !stop(siril, recorded: marker.sirilExecutable) {
         Self.logger.error("kept \(entry.path): its Siril \(siril.pid) still runs")
         continue
       }
@@ -98,12 +98,12 @@ package struct LeftoverSweep: Sendable {
     return removed
   }
 
-  /// Stops the recorded Siril, only while its pid still runs the `siril-cli` recorded; true
-  /// once it no longer runs.
-  private func stop(_ siril: ProcessIdentity) -> Bool {
+  /// Stops the recorded Siril, only while its pid still runs the program recorded at launch (a
+  /// `siril-cli` when none was); true once it no longer runs.
+  private func stop(_ siril: ProcessIdentity, recorded: String?) -> Bool {
     guard table.identity(siril.pid) == siril else { return true }
     guard let path = table.executable(siril.pid),
-      URL(fileURLWithPath: path).lastPathComponent == "siril-cli"
+      recorded.map({ $0 == path }) ?? (URL(fileURLWithPath: path).lastPathComponent == "siril-cli")
     else { return false }
     Self.logger.notice("stopping orphan siril-cli \(siril.pid)")
     table.terminate(siril.pid)

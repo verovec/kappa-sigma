@@ -153,10 +153,12 @@ folders (`$TMPDIR/AstroStack/siril-*`, `SirilPipeInstance`), each run's work fol
 (`AstroStack/Untitled/<UUID>/`, the marker beside the package, never in it) and each test's
 scratch folder (`TestSupport/ScratchDirectory`, the marker one level above the test's directory).
 
-`LeftoverSweep` runs at app launch (`AppDelegate.sweepLeftovers`) and once per test process. Per
+`LeftoverSweep` runs at app launch (`AppDelegate.sweepLeftovers`); a test process sweeps only the
+tests' own `AstroStackTests` folder (`ScratchDirectory`), never the app's. Per
 root it takes only the folders with the root's prefix **and a marker** whose owner no longer runs
-(after stopping its recorded Siril, only while that pid still runs a `siril-cli` started when
-recorded; a Siril left running keeps its folder). An unmarked entry, a file or a symbolic link is
+(after stopping its recorded Siril, only while that pid still runs the program recorded at
+launch, started when recorded; a Siril left running keeps its folder). Markers are best effort: a
+folder that could not be marked is never swept, never a run that cannot start. An unmarked entry, a file or a symbolic link is
 never taken, whatever its age: nothing proves the app made it (24/10: an age rule run on a wrong
 root deleted most of /opt/homebrew). A root that is `/`, inside or around `~/Documents/astro` is
 refused (R7); tests check that with `allows`, never by sweeping a real path. `ProcessTable` is the
@@ -164,7 +166,9 @@ only door to the process table; tests pass a fake one.
 
 Stack folders (`StackLeftovers`): a failed or cancelled run's `stacks/<id>/` goes unless it holds a
 finished `master_*.fits`; at project open and when a queue ends, folders no stack row names are
-removed when empty and listed in the Stacking stage otherwise, deleted only by the user (R2).
+removed when empty (the Finder's `.DS_Store` counts as empty) and listed in the Stacking stage
+otherwise, deleted only by the user (R2); a folder a run still holds (`TargetLock`) or a paused
+run's checkpoint (card 0097) is neither.
 
 To add a scratch folder: create it, `ScratchOwner.mark` it, and give its parent a `Root` in
 `LeftoverSweep.appRoots` with a prefix that names only such folders.

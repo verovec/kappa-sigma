@@ -28,7 +28,9 @@ struct LiveSirilReapTests {
     // app whose pid the kernel gave away), which is all the sweep can see of a dead owner.
     marker.owner.startSeconds += 1
     try marker.write(to: folder)
-    let removed = LeftoverSweep(roots: [.init(folder: Self.app, prefix: "siril-")]).run()
+    // Only this session's folder: a test never sweeps the app's other scratch folders.
+    let removed = LeftoverSweep(roots: [.init(folder: Self.app, prefix: folder.lastPathComponent)])
+      .run()
 
     #expect(removed.map(\.path.lastPathComponent).contains(folder.lastPathComponent))
     #expect(!FileManager.default.fileExists(atPath: folder.path))

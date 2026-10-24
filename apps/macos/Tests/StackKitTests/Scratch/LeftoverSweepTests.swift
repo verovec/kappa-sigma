@@ -117,6 +117,25 @@ struct LeftoverSweepTests {
     #expect(Self.exists(fifo) == !signalled, "a Siril left running keeps its folder")
   }
 
+  @Test(
+    "a Siril recorded with its program (SIRIL_BIN) is stopped only while it runs that program",
+    .scratchDirectory,
+    arguments: [
+      ("/opt/siril-1.4.4/bin/siril", true),
+      ("/Applications/Siril.app/Contents/MacOS/siril-cli", false),
+    ])
+  func testRecordedExecutable(_ running: String, signalled: Bool) throws {
+    let root = try ScratchDirectory.url
+    let marker = ScratchOwner(
+      owner: Self.dead, siril: Self.siril, sirilExecutable: "/opt/siril-1.4.4/bin/siril")
+    _ = try Self.folder("siril-ABC", in: root, owner: marker)
+    let processes = FakeProcessTable(running: [Self.siril], executable: running)
+
+    _ = LeftoverSweep(roots: [.init(folder: root, prefix: "siril-")], table: processes.table).run()
+
+    #expect(processes.terminatedPIDs == (signalled ? [Self.siril.pid] : []))
+  }
+
   @Test("a recorded Siril pid reused by a later Siril is never signalled", .scratchDirectory)
   func testReusedSirilPIDNotSignalled() throws {
     let root = try ScratchDirectory.url

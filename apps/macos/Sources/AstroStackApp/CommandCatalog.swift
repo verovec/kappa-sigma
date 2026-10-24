@@ -76,6 +76,21 @@ nonisolated package enum CommandCatalog {
     AppCommand(
       "studio.replayPipeline", "Replay Pipeline…", menu: .edit, action: "replayPipeline:",
       stage: .studio),
+    // Rotate and flip the shown image (card 0105): they edit the geometry panel, ⌘E applies.
+    // ⌘R is Open Run… and ⌥⌘R Run Pipeline, so ⇧ joins them.
+    AppCommand(
+      "studio.rotateClockwise", "Rotate 90° Clockwise", menu: .edit,
+      action: "rotateImageClockwise:", key: "R", stage: .studio, separatorBefore: true),
+    AppCommand(
+      "studio.rotateCounterclockwise", "Rotate 90° Counterclockwise", menu: .edit,
+      action: "rotateImageCounterclockwise:", key: "R", modifiers: [.command, .option],
+      stage: .studio),
+    AppCommand(
+      "studio.flipHorizontally", "Flip Horizontally", menu: .edit,
+      action: "flipImageHorizontally:", key: "H", stage: .studio),
+    AppCommand(
+      "studio.flipVertically", "Flip Vertically", menu: .edit, action: "flipImageVertically:",
+      key: "V", stage: .studio),
     AppCommand("edit.cut", "Cut", menu: .edit, action: "cut:", key: "x", separatorBefore: true),
     AppCommand("edit.copy", "Copy", menu: .edit, action: "copy:", key: "c"),
     AppCommand("edit.paste", "Paste", menu: .edit, action: "paste:", key: "v"),

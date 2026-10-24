@@ -192,6 +192,9 @@ package final class ProjectDocument: NSDocument {
     if let action = item.action, Self.pipelineActions.contains(action) {
       return Self.pipelineEnabled(action, in: windowModel)
     }
+    if let action = item.action, Self.geometryActions.contains(action) {
+      return Self.geometryEnabled(in: windowModel)
+    }
     guard let action = item.action, Self.reviewActions.contains(action) else {
       return super.validateUserInterfaceItem(item)
     }

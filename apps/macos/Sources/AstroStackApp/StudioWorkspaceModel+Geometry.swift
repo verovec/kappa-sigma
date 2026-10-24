@@ -1,5 +1,5 @@
 internal import ImageKit
-internal import ProcessKit
+package import ProcessKit
 internal import RenderKit
 
 extension StudioWorkspaceModel {
@@ -28,6 +28,31 @@ extension StudioWorkspaceModel {
     ]
     for (id, pixels) in crops { panel.set(id, .number(Double(pixels))) }
     viewer.model.clearRegion()
+  }
+
+  /// Whether a rotate or flip shortcut may act: no host tool running from the panel (it must
+  /// not be swapped out under the run), no pipeline running, and no panel, the geometry panel,
+  /// or another one still at its defaults — a slipped key never throws away unapplied values.
+  package var canMoveGeometry: Bool {
+    // The task covers the instant before the run starts; the run is what SwiftUI observes.
+    guard toolTask == nil, toolRun == nil, pipeline?.isRunning != true else { return false }
+    guard let panel, panel.type != GeometryProcess.self else { return true }
+    return panel.params == ParamSet(schema: panel.type.schema)
+  }
+
+  /// Edit › Rotate / Flip (card 0105): `move` of the image shown, onto the geometry panel.
+  ///
+  /// The panel opens at the identity when none or an untouched one is shown; the preview
+  /// follows, only ⌘E applies (R2).
+  package func moveGeometry(_ move: GeometryMove) {
+    guard canMoveGeometry else { return }
+    guard let panel, panel.type == GeometryProcess.self else {
+      // Opened at the move itself: one preview, not the identity's first.
+      let identity = ParamSet(schema: GeometryProcess.schema)
+      choose(GeometryProcess.id, params: GeometryProcess.composing(move, onto: identity))
+      return
+    }
+    panel.replace(GeometryProcess.composing(move, onto: panel.params))
   }
 
   /// The geometry panel's output on the head, or `nil` (another panel, values leaving no pixel).

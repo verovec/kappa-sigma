@@ -4625,6 +4625,70 @@
         }
       }
     },
+    "Rotate 90° Clockwise": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rotate 90° Clockwise"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rotation de 90° horaire"
+          }
+        }
+      }
+    },
+    "Rotate 90° Counterclockwise": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rotate 90° Counterclockwise"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rotation de 90° antihoraire"
+          }
+        }
+      }
+    },
+    "Flip Horizontally": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flip Horizontally"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Miroir horizontal"
+          }
+        }
+      }
+    },
+    "Flip Vertically": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flip Vertically"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Miroir vertical"
+          }
+        }
+      }
+    },
     "Replay on…": {
       "localizations": {
         "en": {

@@ -1,19 +1,49 @@
+package import Foundation
 internal import RenderKit
 internal import StackKit
-internal import SwiftUI
+package import SwiftUI
 
 /// Every frame of a lane, with its verdict (card 0069).
 ///
 /// Night, metrics in `AstroFormat` units, the verdict as a checkbox while the run waits, and its
-/// reason. Sorting a column reorders the blink.
-struct FrameTable: View {
+/// reason. Sorting a column reorders the blink. A double-click (or Return, or « Open in Viewer »)
+/// opens the row's light in the viewer (card 0125): a view, never a verdict (R2).
+package struct FrameTable: View {
   @Bindable var review: FrameReviewViewModel
   @Binding var selection: FrameReviewViewModel.Row.ID?
+  /// Opens a light in the viewer; tests inject a recorder.
+  private let open: @MainActor (URL) -> Void
   @Environment(\.locale) private var locale
 
-  typealias Row = FrameReviewViewModel.Row
+  package typealias Row = FrameReviewViewModel.Row
 
-  var body: some View {
+  package init(
+    review: FrameReviewViewModel, selection: Binding<Row.ID?>,
+    open: @escaping @MainActor (URL) -> Void = { ImageViewerWindow.show($0) }
+  ) {
+    self.review = review
+    _selection = selection
+    self.open = open
+  }
+
+  /// The context menu's item, worded for `locale` (the user's when nil).
+  package static func openTitle(locale: Locale? = nil) -> LocalizedStringResource {
+    .app("Open in Viewer", locale: locale)
+  }
+
+  /// The light of the one row in `ids`; nil for several rows or a row without a path, and then
+  /// the menu has no item.
+  package func light(of ids: Set<Row.ID>) -> URL? {
+    guard ids.count == 1, let id = ids.first else { return nil }
+    return review.previewURL(of: id)
+  }
+
+  /// Opens the light of the one row in `ids`; selection, verdicts and the blink stay as they are.
+  package func openLight(of ids: Set<Row.ID>) {
+    if let url = light(of: ids) { open(url) }
+  }
+
+  package var body: some View {
     Table(review.sortedRows, selection: $selection, sortOrder: $review.sortOrder) {
       TableColumn(Text(.app("#")), value: \Row.index) { row in
         Text(verbatim: format.integer(row.index) + (row.index == review.elected ? " ★" : ""))
@@ -34,6 +64,14 @@ struct FrameTable: View {
       TableColumn(Text(.app("Reason")), value: \Row.reason) { row in
         Text(verbatim: row.reason).foregroundStyle(row.isOverridden ? .primary : .secondary)
       }
+    }
+    .contextMenu(forSelectionType: Row.ID.self) { ids in
+      if light(of: ids) != nil {
+        let title = Self.openTitle()
+        Button(title) { openLight(of: ids) }.accessible(.reviewOpenInViewer, label: title)
+      }
+    } primaryAction: { ids in
+      openLight(of: ids)
     }
     .frame(minHeight: 200)
   }

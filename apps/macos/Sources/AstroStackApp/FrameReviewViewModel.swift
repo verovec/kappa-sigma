@@ -157,6 +157,15 @@ package final class FrameReviewViewModel {
   /// The row shown, if any.
   package var currentRow: Row? { rows.first { $0.index == current } }
 
+  /// The light frame `index` stands for, to open in the viewer (card 0125): the capture, read-only
+  /// (R7); nil for an unknown index or a frame without a path.
+  package func previewURL(of index: Int) -> URL? {
+    guard let path = rows.first(where: { $0.index == index })?.path, !path.isEmpty else {
+      return nil
+    }
+    return URL(fileURLWithPath: path)
+  }
+
   /// Shows `index` (a row chosen in the table).
   package func select(_ index: Int?) {
     current = index

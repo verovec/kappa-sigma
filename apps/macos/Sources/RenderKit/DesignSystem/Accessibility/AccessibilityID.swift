@@ -166,6 +166,9 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
   /// The Tri stage's « Continue » (card 0069).
   package static let reviewContinue = stageControl("review", "continue")
 
+  /// The Tri stage's « Open in Viewer » on a frame's row (card 0125).
+  package static let reviewOpenInViewer = stageControl("review", "openInViewer")
+
   /// The Tri stage's blink arrow to the previous frame.
   package static let reviewBlinkPrevious = stageControl("review", "blink.previous")
 

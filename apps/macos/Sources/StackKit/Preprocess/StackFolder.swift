@@ -56,7 +56,7 @@ package enum StackFolder {
   /// A FITS file that is not a master.
   private static func isIntermediate(_ name: String) -> Bool {
     let lower = name.lowercased()
-    return (lower.hasSuffix(".fits") || lower.hasSuffix(".fit")) && !name.hasPrefix("master_")
+    return (lower.hasSuffix(".fits") || lower.hasSuffix(".fit")) && !lower.hasPrefix("master_")
   }
 
   private static let logger = Logger(subsystem: "fr.astrostack", category: "StackKit/stackfolders")

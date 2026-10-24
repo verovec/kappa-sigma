@@ -18,7 +18,7 @@ struct StackFolderTests {
   /// Every file a run can leave at the top of its folder, beside a `history/` the Studio wrote.
   static let files = [
     "aligned_RGB.fits", "aligned_Ha.fits", "combine_RGB.fits", "combined.fits",
-    "master_RGB.fits", "master_RGB-dualband.fits", "syn_Ha.fits", "syn_OIII.fits",
+    "master_RGB.fits", "master_RGB-dualband.fits", "Master_Ha.FIT", "syn_Ha.fits", "syn_OIII.fits",
     "trim_RGB.fits", "rgb_base.fits", "combined_preview.png", "master_RGB_preview.png",
     "grades.json", "bundle.json", "journal.txt",
   ]

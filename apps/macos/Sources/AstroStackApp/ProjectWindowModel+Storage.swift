@@ -32,16 +32,14 @@ extension ProjectWindowModel {
 
   /// Reads every finished stack with its folder's size (off the main actor) and export count.
   ///
-  /// Only stacks not listed yet are measured: a folder's size changes with a delete or a run,
-  /// both of which change the stack ids. A listing overtaken (cancelled, or the stacks changed
-  /// while it measured) writes nothing.
+  /// Every folder is measured again (the Studio's history grows it): sizes are never cached. A
+  /// listing overtaken (cancelled, or the stacks changed while it measured) writes nothing.
   package func listStorage() async {
     guard let store = store(), let folder = folder() else { return }
     do {
       let stacks = try store.stacks()
       let counts = try store.exportCounts()
-      let known = Dictionary(storage.map { ($0.id, $0.bytes) }) { first, _ in first }
-      let rows = await Self.measure(stacks, in: folder, counts: counts, known: known)
+      let rows = await Self.measure(stacks, in: folder, counts: counts)
       guard !Task.isCancelled, rows.map(\.id) == self.stacks.map(\.id) else { return }
       storage = rows
     } catch {
@@ -51,13 +49,12 @@ extension ProjectWindowModel {
 
   @concurrent
   private nonisolated static func measure(
-    _ stacks: [ProjectStack], in folder: URL, counts: [Int64: Int], known: [Int64: Int64]
+    _ stacks: [ProjectStack], in folder: URL, counts: [Int64: Int]
   ) async -> [StackStorageRow] {
     stacks.map { stack in
       StackStorageRow(
         stack: stack,
-        bytes: known[stack.id]
-          ?? LeftoverSweep.allocatedBytes(folder.appendingPathComponent(stack.bundlePath)),
+        bytes: LeftoverSweep.allocatedBytes(folder.appendingPathComponent(stack.bundlePath)),
         exports: counts[stack.id] ?? 0)
     }
   }

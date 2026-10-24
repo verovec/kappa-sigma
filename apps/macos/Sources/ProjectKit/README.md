@@ -67,7 +67,7 @@ GRDB 7), and later `images/`, `recipes/`, `history/` (design §4.5). No UI, no A
   links cascade), then its folder — only when the bundle path is exactly `stacks/<name>`, never
   anything else. The stack open in the Studio is refused (`ProjectStoreError.stackOpen`). Rows go
   before the folder: a folder that fails to go is a leftover 0113 lists, never a half-gone row.
-- `stacks.opened_at` (migration 0008, backfilled from each stack's last history step) is set by
+- `stacks.opened_at` (migration 0008, backfilled from each stack's last history step, else the upgrade time) is set by
   `markStackOpened(id:)` when the Studio opens a stack; `exportCounts()` gives every exported
   stack's count. `closeKeepingWAL()` ends a short background write (the retention review) without
   removing `-wal`/`-shm`, which a window opening the project at that moment may hold.

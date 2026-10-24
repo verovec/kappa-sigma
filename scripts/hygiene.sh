@@ -79,8 +79,13 @@ commands() {
 }
 sections() { awk '/^```/ { fenced = !fenced; next } !fenced && /^## / { n++ } END { print n + 0 }' "$1"; }
 if tracked README.fr.md; then
-  if ! tracked README.md; then
-    report "README.fr.md is tracked without the README.md it mirrors"
+  # Both tracked and both on disk, or the comparison would read a missing file.
+  missing=""
+  for page in README.md README.fr.md; do
+    { tracked "$page" && [ -f "$page" ]; } || missing="$missing $page"
+  done
+  if [ -n "$missing" ]; then
+    report "README.fr.md is tracked, but not tracked and on disk:$missing"
   else
     [ "$(commands README.md)" = "$(commands README.fr.md)" ] \
       || report "README.fr.md commands differ from README.md (translate the comments only)"

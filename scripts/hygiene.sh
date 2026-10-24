@@ -74,18 +74,17 @@ bad=$(./scripts/check-links.sh || true)
 # 9. The tracked French README mirrors the English one (card 0064): as many `## ` sections outside
 #    code fences, and the same commands in its ```bash blocks. Comments (after two spaces or more)
 #    are translated, so they are dropped first; other blocks, such as the stage diagram, are prose.
+#    Both pages are read from the index (`git show :page`), like every other rule's file list.
 commands() {
-  awk '/^```bash/ { inside = 1; next } /^```/ { inside = 0 } inside' "$1" | sed -E 's/[[:space:]]{2,}#.*$//'
+  git show ":$1" | awk '/^```bash/ { inside = 1; next } /^```/ { inside = 0 } inside' \
+    | sed -E 's/[[:space:]]{2,}#.*$//'
 }
-sections() { awk '/^```/ { fenced = !fenced; next } !fenced && /^## / { n++ } END { print n + 0 }' "$1"; }
+sections() {
+  git show ":$1" | awk '/^```/ { fenced = !fenced; next } !fenced && /^## / { n++ } END { print n + 0 }'
+}
 if tracked README.fr.md; then
-  # Both tracked and both on disk, or the comparison would read a missing file.
-  missing=""
-  for page in README.md README.fr.md; do
-    { tracked "$page" && [ -f "$page" ]; } || missing="$missing $page"
-  done
-  if [ -n "$missing" ]; then
-    report "README.fr.md is tracked, but not tracked and on disk:$missing"
+  if ! tracked README.md; then
+    report "README.fr.md is tracked without the README.md it mirrors"
   else
     [ "$(commands README.md)" = "$(commands README.fr.md)" ] \
       || report "README.fr.md commands differ from README.md (translate the comments only)"

@@ -62,6 +62,9 @@ package final class ViewerModel {
   package var viewSize = SIMD2<Double>(1, 1)
   /// Image pixel under the cursor.
   package private(set) var readout: PixelReadout?
+  /// What is on screen: the image, or a process's preview of it (the histogram's header says
+  /// which, card 0128); display only.
+  package var subject = ViewerSubject.image
   /// The last frame's histogram, `[channel][bin]`.
   package var histogram: [[Int]] = []
   /// Called when `frame` changes (the Metal view redraws on demand).
@@ -90,12 +93,16 @@ package final class ViewerModel {
     frame.flipRows = image.metadata.rowOrder == .bottomUp
   }
 
-  /// Shows `image` in place of the current one (the Studio's new head, card 0087).
+  /// Shows `image` in place of the current one (the Studio's new head, card 0087); `subject` says
+  /// what it is (a preview, the model), the image itself unless said.
   ///
   /// Zoom, tool, region, compare and the stretch mode stay; the autostretch follows the new
   /// image; manual numbers stay unless the plane count changed. A region does not survive
   /// another size (a crop or a quarter turn, card 0090): its pixels are not the new image's.
-  package func replace(image: AstroImage, statistics measured: [STFMapping]? = nil) {
+  package func replace(
+    image: AstroImage, statistics measured: [STFMapping]? = nil, subject: ViewerSubject = .image
+  ) {
+    self.subject = subject
     let statistics = measured ?? STFMapping.measure(planes: image.planes, linked: false)
     let samePlanes = statistics.count == self.statistics.count
     let resized = image.width != self.image.width || image.height != self.image.height

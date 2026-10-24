@@ -26,7 +26,7 @@ package struct ProcessPanel: View {
         }
       }
       if !model.shownMaxima.isEmpty { shownMaximaLine }
-      if !model.handles.isEmpty, let sample = model.sample {
+      if let sample = model.sample {
         ProcessHistogramExtras(model: model, sample: sample)
       }
       ForEach(Array(model.groupedReasons.enumerated()), id: \.offset) { offset, reason in

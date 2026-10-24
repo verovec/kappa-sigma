@@ -31,10 +31,10 @@ extension ProjectWindowModel {
       return
     }
     // The frozen panel shows the values the continued run applies: the paused run's own (R2).
-    knobs.load(mode: record.mode, patch: record.knobs)
+    knobs.load(record)
     queuedScopes = []
     queueActive = true
-    launch(scope: record.scope, mode: record.mode, patch: record.knobs, resume: paused)
+    launch(scope: record.scope, mode: record.mode, knobs: RunKnobs(record), resume: paused)
   }
 
   /// Discards the paused run `id`: its row, then its folder (the masters it kept).

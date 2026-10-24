@@ -61,8 +61,9 @@ extension ProjectWindowModel {
   /// (an untitled package moves on Save and is deleted on Close).
   ///
   /// The settings are the panel's edits (`knobs.patch`) on the preset of `mode`, the panel's own
-  /// preset unless a mode is given for this run — read once here for the whole queue (the panel
-  /// is frozen until it ends) and left as they are.
+  /// preset unless a mode is given for this run, with its lane values and processing for each run
+  /// that splits (card 0121) — read once here for the whole queue (the panel is frozen until it
+  /// ends) and left as they are.
   package func startRun(mode: PreprocessRequest.Mode? = nil) {
     guard canRun else { return }
     guard isSaved() else {
@@ -73,21 +74,21 @@ extension ProjectWindowModel {
     let preset = mode ?? knobs.mode
     queuedScopes = Array(scopes.dropFirst())
     queueActive = true
-    launch(scope: scopes.first, mode: preset, patch: knobs.patch(for: preset))
+    launch(scope: scopes.first, mode: preset, knobs: knobs.runKnobs(for: preset))
   }
 
-  /// Starts one run of `scope` (every light when `nil`) with `patch` on the preset of `mode` — or,
+  /// Starts one run of `scope` (every light when `nil`) with `knobs` on the preset of `mode` — or,
   /// given a paused run's row (card 0097), continues it: its own record, run id and folder, the
   /// lanes its checkpoint matches reused.
   func launch(
-    scope: RunScope?, mode: PreprocessRequest.Mode, patch: KnobPatch, resume: ProjectStack? = nil
+    scope: RunScope?, mode: PreprocessRequest.Mode, knobs: RunKnobs, resume: ProjectStack? = nil
   ) {
     guard let store = store(), let folder = folder() else {
       endQueue(drained: false)
       error = .projectClosed
       return
     }
-    guard let (record, settings) = prepare(scope: scope, mode: mode, patch: patch, resume: resume)
+    guard let (record, settings) = prepare(scope: scope, mode: mode, knobs: knobs, resume: resume)
     else {
       endQueue(drained: false)
       return
@@ -125,12 +126,16 @@ extension ProjectWindowModel {
           settings: settings, library: plan.library)
         request.pause = gate
         request.resuming = resume != nil
+        // What a lane may take, as the panel showed it; a refused entry is listed there, unapplied.
+        for (lane, patch) in record.laneKnobs {
+          try request.overrideLane(lane, with: KnobSchema.laneAccepted(patch).accepted)
+        }
         return start(request)
       },
       completion: { [weak self] outcome in
         await Self.remove(work)
         await self?.ended(
-          outcome, record: record, runID: runID, resume: resume, mode: mode, patch: patch)
+          outcome, record: record, runID: runID, resume: resume, mode: mode, knobs: knobs)
       })
   }
 
@@ -139,7 +144,7 @@ extension ProjectWindowModel {
   /// queue.
   private func ended(
     _ outcome: Result<PreprocessResult, any Error>, record: StackRecord, runID: String,
-    resume: ProjectStack?, mode: PreprocessRequest.Mode, patch: KnobPatch
+    resume: ProjectStack?, mode: PreprocessRequest.Mode, knobs: RunKnobs
   ) async {
     guard case .success = outcome else {
       if case .failure(let failure) = outcome, let paused = failure as? RunPaused {
@@ -157,16 +162,17 @@ extension ProjectWindowModel {
     // here instead, as asked, and its next scopes are run again with Run.
     if let next = queuedScopes.first, error == nil, run?.pauseRequested != true {
       queuedScopes.removeFirst()
-      launch(scope: next, mode: mode, patch: patch)
+      launch(scope: next, mode: mode, knobs: knobs)
     } else {
       endQueue(drained: error == nil)
     }
   }
 
-  /// The record and settings of a run of `scope` with `patch` on the preset of `mode`; `nil`
-  /// (reported when it is an error) when nothing can run.
+  /// The record and settings of a run of `scope` with `knobs` on the preset of `mode` — its lane
+  /// values and processing only when the scope splits; `nil` (reported when it is an error) when
+  /// nothing can run.
   private func prepare(
-    scope: RunScope?, mode: PreprocessRequest.Mode, patch: KnobPatch, resume: ProjectStack?
+    scope: RunScope?, mode: PreprocessRequest.Mode, knobs: RunKnobs, resume: ProjectStack?
   ) -> (StackRecord, PreprocessSettings)? {
     do {
       if let resume {
@@ -174,7 +180,10 @@ extension ProjectWindowModel {
         return (record, try Self.runSettings(record))
       }
       guard let request = try runRequest() else { return nil }
-      let record = StackRecord(request: request, mode: mode, knobs: patch, scope: scope)
+      let applied = scope.map(series.splits) == true ? knobs : knobs.unsplit
+      var record = StackRecord(request: request, mode: mode, knobs: applied.patch, scope: scope)
+      record.laneKnobs = applied.lanes
+      record.processing = applied.processing
       return (record, try Self.runSettings(record))
     } catch {
       self.error = UserFacingError(error)

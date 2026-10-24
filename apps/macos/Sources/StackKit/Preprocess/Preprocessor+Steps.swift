@@ -28,14 +28,16 @@ extension Preprocessor {
     )
     // Why a resumed run stacks this lane again (card 0097), under the lane's own step.
     if let note { emitter.line(note) }
+    // The lane's own knobs (card 0121): the run's settings unless a split run overrides its kind.
+    let settings = request.settings(forLane: lane, in: plan)
     // The stacker journals its own Siril lines and warnings.
     var stacker = ChannelStacker(
-      runner: tools.runner, settings: request.settings, trailProbe: tools.trailProbe
+      runner: tools.runner, settings: settings, trailProbe: tools.trailProbe
     ) { emitter.line($0) }
-    if request.settings.frameReview {
+    if settings.frameReview {
       stacker.frameReview = frameReviewHook(work: request.work, emitter: emitter)
     }
-    if request.settings.referenceBreakpoint {
+    if settings.referenceBreakpoint {
       stacker.referencePin = referencePinHook(emitter: emitter)
     }
     let outcome: ChannelOutcome

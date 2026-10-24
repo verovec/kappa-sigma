@@ -321,38 +321,6 @@
         }
       }
     },
-    "Histogram (image)": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Histogram (image)"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Histogramme (image)"
-          }
-        }
-      }
-    },
-    "Histogram (region)": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Histogram (region)"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Histogramme (région)"
-          }
-        }
-      }
-    },
     "Histogram domain": {
       "localizations": {
         "en": {
@@ -365,6 +333,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Domaine de l’histogramme"
+          }
+        }
+      }
+    },
+    "Histogram — %@ · %@ · %@": {
+      "comment": "The viewer histogram's header: subject · extent · domain (lowercase words).",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Histogram — %@ · %@ · %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Histogramme — %@ · %@ · %@"
           }
         }
       }
@@ -1249,6 +1234,23 @@
         }
       }
     },
+    "background model": {
+      "comment": "The viewer histogram's header: what it counts (the background extraction's model).",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "background model"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "modèle de fond"
+          }
+        }
+      }
+    },
     "c0, the black point applied. Arrows ±0.0001, ⇧ or ⌥ ±0.00001.": {
       "localizations": {
         "en": {
@@ -1281,6 +1283,23 @@
         }
       }
     },
+    "image": {
+      "comment": "The viewer histogram's header: what it counts (the image itself, not a preview).",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "image"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "image"
+          }
+        }
+      }
+    },
     "m, the midtone balance applied. Arrows ±0.001, ⇧ or ⌥ ±0.0001.": {
       "localizations": {
         "en": {
@@ -1293,6 +1312,57 @@
           "stringUnit": {
             "state": "translated",
             "value": "m, l’équilibre des tons moyens appliqué. Flèches ±0,001, ⇧ ou ⌥ ±0,0001."
+          }
+        }
+      }
+    },
+    "preview": {
+      "comment": "The viewer histogram's header: what it counts (a process's preview).",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "preview"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "aperçu"
+          }
+        }
+      }
+    },
+    "region": {
+      "comment": "The viewer histogram's header: over what (the drawn region).",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "region"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "région"
+          }
+        }
+      }
+    },
+    "whole image": {
+      "comment": "The viewer histogram's header: over what (the whole image, no region).",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "whole image"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "image entière"
           }
         }
       }

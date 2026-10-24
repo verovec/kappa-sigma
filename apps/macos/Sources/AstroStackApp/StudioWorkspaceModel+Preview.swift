@@ -16,7 +16,7 @@ extension StudioWorkspaceModel {
       // the very change the process makes (what is shown is what Apply records, R2).
       let same = preview.planes.count == headStatistics.count
       willShow(panel.type.id, panel.params)
-      try show(preview, statistics: same ? headStatistics : nil)
+      try show(preview, statistics: same ? headStatistics : nil, subject: .preview)
       showRange(of: preview, on: panel)
       isPreviewing = true
       shown = (panel.type.id, panel.params, mask)

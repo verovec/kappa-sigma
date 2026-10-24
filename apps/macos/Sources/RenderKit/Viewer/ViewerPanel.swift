@@ -13,29 +13,7 @@ struct ViewerPanel: View {
     Form {
       viewSection
       stretchSection
-      Section {
-        Picker(selection: $model.frame.histogramDomain) {
-          ForEach(HistogramDomain.allCases, id: \.self) { Text($0.label) }
-        } label: {
-          Text(.renderKit("Histogram domain"))
-        }
-        .pickerStyle(.segmented)
-        .accessible(.viewer("histogramDomain"), label: .renderKit("Histogram domain"))
-        HistogramHandles(
-          bins: model.histogram,
-          handles: model.frame.stf?.map { $0.handlePositions(in: model.frame.histogramDomain) },
-          key: "viewer", label: .renderKit("Histogram"), hint: Self.handlesHint,
-          onDragEnded: { model.endHandleDrag() },
-          onDrag: { channel, handle, position in
-            model.dragHandle(handle, channel: channel, to: position)
-          }
-        )
-        .frame(height: 120)
-      } header: {
-        Text(
-          model.frame.region == nil
-            ? .renderKit("Histogram (image)") : .renderKit("Histogram (region)"))
-      }
+      histogramSection
       Section {
         readout
       } header: {
@@ -43,6 +21,35 @@ struct ViewerPanel: View {
       }
     }
     .formStyle(.grouped)
+  }
+
+  /// The histogram: its domain, the handles of the display stretch, and a header saying what it
+  /// counts (card 0128).
+  private var histogramSection: some View {
+    Section {
+      Picker(selection: $model.frame.histogramDomain) {
+        ForEach(HistogramDomain.allCases, id: \.self) { Text($0.label) }
+      } label: {
+        Text(.renderKit("Histogram domain"))
+      }
+      .pickerStyle(.segmented)
+      .accessible(.viewer("histogramDomain"), label: .renderKit("Histogram domain"))
+      HistogramHandles(
+        bins: model.histogram,
+        handles: model.frame.stf?.map { $0.handlePositions(in: model.frame.histogramDomain) },
+        key: "viewer", label: .renderKit("Histogram"), hint: Self.handlesHint,
+        onDragEnded: { model.endHandleDrag() },
+        onDrag: { channel, handle, position in
+          model.dragHandle(handle, channel: channel, to: position)
+        }
+      )
+      .frame(height: 120)
+    } header: {
+      Text(
+        verbatim: ViewerModel.histogramHeader(
+          subject: model.subject, region: model.frame.region != nil,
+          domain: model.frame.histogramDomain, locale: locale))
+    }
   }
 
   /// Tool, zoom, clipping overlay, region and split.

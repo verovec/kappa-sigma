@@ -34,7 +34,8 @@ saying why (« `<lane>` re-runs: the frames changed / the settings changed / its
 it failed / its record is unreadable », under that lane's own step). Calibration masters are
 built only when a lane has to be stacked. The bundle and `grades.json` of a resumed run are
 byte-identical to an uninterrupted one (`PreprocessorPauseTests`). A Siril step is never interrupted: it has no checkpoint. To extend:
-a new knob changes `settingsDigest` by itself (`String(reflecting:)` of the settings); a new
+a new knob changes `settingsDigest` by itself (`String(reflecting:)` of the lane's settings,
+`settings(forLane:in:)`, so a dual-band override re-runs only that lane); a new
 lane input belongs in `LaneRecord.framesDigest`. Records are written by `RecordCoding`,
 shared with `grades.json`: NaN and ±∞ (a frame Siril could not measure) are the strings `"nan"`,
 `"+inf"`, `"-inf"` — read them back with `RecordCoding.decoder()`, as `GradesRecord.read` and

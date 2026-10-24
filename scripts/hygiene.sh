@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Repo hygiene gate (CLAUDE.md "Language policy" + "Data lives outside every repo", card 0064).
-# Fails when a TRACKED file violates a structural rule. Card 0064 ports this to a Swift test;
-# until then this script is what `just hygiene` and CI run.
+# Fails when a TRACKED file violates a structural rule. The rules live here only: `just hygiene`
+# and both CI jobs run this script (the Linux one has no Swift), and
+# apps/macos/Tests/TestSupportTests/RepoHygieneTests.swift pins each rule on a fixture tree.
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
@@ -10,11 +11,18 @@ report() { printf '  ✗ %s\n' "$1"; fail=1; }
 
 echo "hygiene: tracked files"
 files="$(git ls-files)"
+# Membership in the tracked list. Never `printf … | grep -q`: grep stops at the match, the killed
+# writer fails the pipe under pipefail, and the test reads false on a long list
+# (RepoHygieneTests.testNoForbiddenArtifacts_largeTree).
+tracked() { grep -qxF "$1" <<<"$files"; }
 
 # 1. Swift only — no second language, no container.
 bad=$(printf '%s\n' "$files" | grep -E '(^|/)(go\.mod|go\.sum|Dockerfile|docker-compose\.ya?ml|compose\.ya?ml|requirements\.txt|pyproject\.toml|package\.json)$|\.(go|py|cgo|js|ts)$' \
   | grep -vE '^(docs|tasks-context|conventions)/' || true)
 [ -z "$bad" ] || report "non-Swift code or container files tracked:"$'\n'"$bad"
+#    No web front end either, at any depth, whatever it holds (the legacy Vue app is never migrated).
+bad=$(printf '%s\n' "$files" | grep -E '(^|/)frontend/' || true)
+[ -z "$bad" ] || report "'frontend/' tracked (the app is SwiftUI only):"$'\n'"$bad"
 
 # 2. Nothing pixel-shaped: fixtures in the repo are text only. The one exception is the README's
 #    artwork in docs/assets/ (card 0082): web images only, each at most 600 KB. Data never goes there.
@@ -62,6 +70,28 @@ bad=$( [ -z "$views" ] || printf '%s\n' "$views" | tr '\n' '\0' | xargs -0 grep 
 # 8. Every relative link in the README and docs/ resolves (card 0082).
 bad=$(./scripts/check-links.sh || true)
 [ -z "$bad" ] || report "broken relative links:"$'\n'"$bad"
+
+# 9. The tracked French README mirrors the English one (card 0064): as many `## ` sections outside
+#    code fences, and the same commands in its ```bash blocks. Comments (after two spaces or more)
+#    are translated, so they are dropped first; other blocks, such as the stage diagram, are prose.
+#    Each page is read once from the index (`git show :page`), like the file list; a page git
+#    cannot show (a merge conflict leaves no stage 0) is reported, never compared as empty.
+commands() {
+  awk '/^```bash/ { inside = 1; next } /^```/ { inside = 0 } inside' | sed -E 's/[[:space:]]{2,}#.*$//'
+}
+sections() { awk '/^```/ { fenced = !fenced; next } !fenced && /^## / { n++ } END { print n + 0 }'; }
+if tracked README.fr.md; then
+  if ! tracked README.md; then
+    report "README.fr.md is tracked without the README.md it mirrors"
+  elif ! en=$(git show :README.md 2>/dev/null) || ! fr=$(git show :README.fr.md 2>/dev/null); then
+    report "README.md or README.fr.md cannot be read from the index (unresolved conflict?)"
+  else
+    [ "$(commands <<<"$en")" = "$(commands <<<"$fr")" ] \
+      || report "README.fr.md commands differ from README.md (translate the comments only)"
+    en_n=$(sections <<<"$en") fr_n=$(sections <<<"$fr")
+    [ "$en_n" = "$fr_n" ] || report "README.fr.md has $fr_n sections, README.md has $en_n"
+  fi
+fi
 
 if [ "$fail" -ne 0 ]; then echo "hygiene: FAILED"; exit 1; fi
 echo "hygiene: ok"

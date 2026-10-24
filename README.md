@@ -15,7 +15,8 @@
   <a href="#how-it-works">How it works</a> &middot;
   <a href="#status">Status</a> &middot;
   <a href="#tech-stack">Tech stack</a> &middot;
-  <a href="#documentation">Documentation</a>
+  <a href="#documentation">Documentation</a><br>
+  English &middot; <a href="README.fr.md">Français</a>
 </p>
 
 <p align="center">
@@ -59,9 +60,10 @@ just app-run    # build AstroStack.app (debug) and open it
 just app-run-release   # optimized build for real runs (same bundle path, replaces the debug one)
 ```
 
-File › New Project opens a project window; **Import Captures…** reads a capture folder (it is never
-written) and shows how each night will be calibrated. `just doctor` tells you which host tools are
-found.
+The welcome window lists your recent projects and which host tools are found (`just doctor` says
+the same from the terminal). **New Project…** creates a project for a target; **Import Captures…**
+reads a capture folder (it is never written) and shows how each night will be calibrated; then
+follow the stages down the sidebar, from the stack to the Studio and the export.
 
 ## How it works
 
@@ -88,18 +90,32 @@ only; the app writes only inside its projects.
 
 ## Status
 
-Kappa-Sigma is in active development. What works today:
+Kappa-Sigma stacks and finishes a target from end to end; it is validated on the author's M 31
+(broadband and dual-band nights) and IC 1848 captures against the legacy pipeline. What works
+today:
 
-- Projects: create, save, reopen; the journey sidebar with each stage's state.
-- Import: classification of a capture folder by night, filter and frame type; the calibration plan
-  against your master library, with every verdict overridable; master inspection and rebuild.
+- Projects: the welcome window (recent projects, host tools), create, save, reopen, and the
+  journey sidebar with each stage's state.
+- Données and Calibration: a capture folder classified by night, filter and frame type; the
+  calibration plan against your master library, every verdict overridable; master inspection and
+  rebuild.
+- Tri: per-frame metrics, blink, keep or reject at a breakpoint after grading, and a pinned
+  registration reference.
+- Empilement: single-night and multi-night preprocessing through Siril, broadband and dual-band
+  lanes, simple and advanced settings over the preset; progress, journal, pause and continue,
+  cancel; the scratch space a run needs is checked before it starts, and what a dead run leaves
+  is reaped.
+- Studio: live GPU previews of stretch (MTF, GHS, arcsinh), histogram transformation, curves,
+  saturation, sky desaturation, colour balance, emission screens, HDR, denoise and geometry;
+  background extraction (GraXpert or Siril), plate solving and colour calibration (PCC, SPCC)
+  through the host tools; a history with undo, pipelines with breakpoints, and profiles.
+- Export: star separation with StarNet2 and the deliverable set.
 - Viewer: FITS images on the GPU with zoom, pan, auto or manual display stretch, histogram, pixel
   readout with RA/Dec, clipping overlay and before/after compare.
-- Engine: single-night and multi-night preprocessing ported from the legacy pipeline and pinned by
-  recorded oracles; the stretch process (MTF, GHS, arcsinh); channel combination and masks.
-- Interface in English and French.
+- Interface in English and French, with a help card for every stage and process.
 
-Next: running a stack from the app, frame review, the remaining Studio processes and export.
+Known limitations: one-shot-colour cameras only (mono LRGB and narrowband palettes are planned);
+no drizzle; no signed build yet, so the app is built from source with `just app-run`.
 
 ## Tech stack
 

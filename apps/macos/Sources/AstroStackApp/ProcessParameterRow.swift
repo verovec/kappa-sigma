@@ -96,7 +96,7 @@ struct ProcessParameterRow: View {
 
   /// The process's reason in the view's language (ProcessKit's catalog holds every reason).
   private func reason(_ suggestion: Suggestion) -> String {
-    String(localized: ProcessKitResources.title(suggestion.reason, locale: locale))
+    ProcessPanelModel.words(reason: suggestion.reason, subject: suggestion.subject, locale: locale)
   }
 
   private func words(_ value: ParamValue) -> String {

@@ -110,6 +110,9 @@ package final class StudioWorkspaceModel {
   @ObservationIgnored package private(set) var isRetired = false
   /// Shows the Studio (an undo from another stage brings it into view first).
   @ObservationIgnored package var reveal: () -> Void = {}
+  /// The catalogue object the plate solve offers (card 0130): the one chosen in the sidebar's
+  /// Objects, else the project's own; nil when none is known.
+  @ObservationIgnored package var catalogueObject: () -> SkyObject? = { nil }
   /// The undo manager its moves are registered on, cleared of them when it is retired.
   @ObservationIgnored package weak var undoManager: UndoManager?
   @ObservationIgnored private let base: Set<LayerRole>

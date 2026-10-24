@@ -3248,6 +3248,22 @@
           }
         }
       }
+    },
+    "From the catalogue": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "From the catalogue"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Depuis le catalogue"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

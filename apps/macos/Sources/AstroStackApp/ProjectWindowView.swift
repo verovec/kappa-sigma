@@ -20,8 +20,19 @@ package struct ProjectWindowView: View {
         .navigationSplitViewColumnWidth(min: 180, ideal: 210, max: 280)
     } detail: {
       VStack(spacing: 0) {
+        // The card covers the stage, never replaces it: the Studio's viewer stays as it was.
         StagePane.pane(for: model.selection, model: model)
           .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+          // Covered, the stage neither reads out nor takes a click.
+          .accessibilityHidden(model.objects.coversStage)
+          .allowsHitTesting(!model.objects.coversStage)
+          .overlay {
+            if model.objects.coversStage, let object = model.objects.selected {
+              ObjectCard(object: object) { model.objects.closeCard() }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .background(DesignColor.surface.color)
+            }
+          }
         if let error = model.error {
           StatusBadge(.error, error.message)
             .padding(DesignMetrics.spacingS)

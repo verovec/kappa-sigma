@@ -7,15 +7,23 @@ package struct ParameterValue: Equatable, Sendable {
   package private(set) var value: Double
   /// The value of an untouched preset.
   package let defaultValue: Double
-  /// What the slider and the field accept.
+  /// What the slider spans.
   package let range: ClosedRange<Double>
+  /// What the field and `set` accept: the range, or wider when the slider spans only the useful
+  /// part of what is valid (the crops on the image, card 0104).
+  package let limits: ClosedRange<Double>
 
   /// A parameter at `value` (its default when `nil`); the default and the value are clamped to
-  /// `range`, so a reset never leaves the slider's range.
-  package init(default defaultValue: Double, range: ClosedRange<Double>, value: Double? = nil) {
-    let clamped = min(max(defaultValue, range.lowerBound), range.upperBound)
+  /// `limits` (`range` when `nil`), so a reset never leaves what the field accepts.
+  package init(
+    default defaultValue: Double, range: ClosedRange<Double>, limits: ClosedRange<Double>? = nil,
+    value: Double? = nil
+  ) {
+    let limits = limits ?? range
+    let clamped = min(max(defaultValue, limits.lowerBound), limits.upperBound)
     self.defaultValue = clamped
-    self.range = range
+    self.range = range.clamped(to: limits)
+    self.limits = limits
     self.value = clamped
     set(value ?? clamped)
   }
@@ -23,9 +31,16 @@ package struct ParameterValue: Equatable, Sendable {
   /// The value is the default, bit for bit.
   package var isDefault: Bool { value == defaultValue }
 
-  /// Sets `newValue` clamped to the range.
+  /// Sets `newValue` clamped to the limits.
   package mutating func set(_ newValue: Double) {
-    value = min(max(newValue, range.lowerBound), range.upperBound)
+    value = min(max(newValue, limits.lowerBound), limits.upperBound)
+  }
+
+  /// Sets `newValue` from the slider or its arrows, clamped to the slider's range (`slider`, the
+  /// range a drag began on, or `range`): only typed text goes past it.
+  package mutating func slide(_ newValue: Double, on slider: ClosedRange<Double>? = nil) {
+    let slider = slider ?? range
+    set(min(max(newValue, slider.lowerBound), slider.upperBound))
   }
 
   /// Back to the default.
@@ -46,5 +61,15 @@ package struct ParameterValue: Equatable, Sendable {
     guard let parsed = parse(text), parsed.isFinite else { return false }
     set(parsed)
     return true
+  }
+}
+
+extension ClosedRange where Bound == Double {
+  /// This range stretched to hold every one of `values`: a slider always shows the value it
+  /// edits and its default, even outside the range it normally spans.
+  package func widened(toHold values: [Double]) -> ClosedRange<Double> {
+    let low = Swift.min(lowerBound, values.min() ?? lowerBound)
+    let high = Swift.max(upperBound, values.max() ?? upperBound)
+    return low...high
   }
 }

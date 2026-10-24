@@ -116,7 +116,9 @@ struct ProcessParameterRow: View {
     Binding(
       get: {
         let value = if case .number(let number) = model.params[spec.id] { number } else { fallback }
-        return ParameterValue(default: fallback, range: bounds, value: value)
+        // The slider spans the head when the process sizes it; the field accepts the schema.
+        return ParameterValue(
+          default: fallback, range: model.range(for: spec) ?? bounds, limits: bounds, value: value)
       },
       set: { model.set(spec.id, .number($0.value)) })
   }

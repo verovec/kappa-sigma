@@ -88,4 +88,52 @@ struct ParameterRowTests {
     parameter.reset()
     #expect(parameter.value == 1 && parameter.isDefault)
   }
+
+  @Test("a typed value past the slider is kept up to the limits; the slider's range stays")
+  func testLimitsWiderThanRange() {
+    var parameter = ParameterValue(default: 0, range: 0...7, limits: 0...100_000, value: 20)
+    #expect(parameter.value == 20, "a value within the limits is never clamped to the slider")
+
+    let applied = parameter.commit("30") { Double($0) }
+    #expect(applied)
+    #expect(parameter.value == 30 && parameter.range == 0...7)
+    parameter.set(200_000)
+    #expect(parameter.value == 100_000)
+  }
+
+  @Test("the slider and its arrows stop at the slider's ends; only typed text goes past them")
+  func testSlideStaysOnTheSlider() {
+    var parameter = ParameterValue(default: 0, range: 0...7, limits: 0...100_000, value: 7)
+
+    parameter.slide(8)
+    #expect(parameter.value == 7)
+    parameter.slide(-1)
+    #expect(parameter.value == 0)
+    let applied = parameter.commit("20") { Double($0) }
+    #expect(applied && parameter.value == 20)
+    parameter.slide(15, on: 0...20)
+    #expect(parameter.value == 15, "a drag keeps the range it began on")
+  }
+
+  @Test("a default inside the limits but off the slider stays the default, bit for bit")
+  func testDefaultWithinLimits() {
+    let parameter = ParameterValue(default: 10, range: 0...7, limits: 0...100)
+    #expect(parameter.defaultValue == 10 && parameter.value == 10 && parameter.isDefault)
+  }
+
+  @Test(
+    "a slider's range widens to hold the value and the default, never narrows",
+    arguments: [
+      (0.0...7.0, [3.0, 0.0], 0.0...7.0), (0.0...7.0, [20.0, 0.0], 0.0...20.0),
+      (0.5...1.0, [0.3, 0.8], 0.3...1.0),
+    ])
+  func testWidenedToHold(range: ClosedRange<Double>, values: [Double], want: ClosedRange<Double>) {
+    #expect(range.widened(toHold: values) == want)
+  }
+
+  @Test("a slider range wider than the limits is cut to them")
+  func testRangeWithinLimits() {
+    let parameter = ParameterValue(default: 0, range: 0...200, limits: 0...100)
+    #expect(parameter.range == 0...100)
+  }
 }

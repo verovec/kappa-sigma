@@ -52,9 +52,10 @@ extension StudioWorkspaceModel {
     }
   }
 
-  /// The panel's inputs on the head: its suggestions, the head's sample and statistics.
+  /// The panel's inputs on the head: its suggestions, the head's size, sample and statistics.
   func refresh(_ panel: ProcessPanelModel) {
     panel.suggestions = offers(for: panel.type, params: panel.params)
+    panel.headSize = (studio.head.width, studio.head.height)
     guard panel.type is any HistogramHandled.Type else { return }
     panel.sample = HeadSample(studio.head)
     panel.headStats = studio.session.stepStats

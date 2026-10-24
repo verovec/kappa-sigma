@@ -148,4 +148,17 @@ struct GeometryProcessTests {
       (0..<3).map { Array(plane[$0 * 5..<($0 + 1) * 5]) }, ["rotation": .choice("90")])
     #expect(output.read()[0].map(\.bitPattern) == want.joined().map(\.bitPattern))
   }
+
+  @Test(
+    "testDisplayRanges: each crop's slider ends one pixel short of the side it crops",
+    arguments: [(6000, 4000), (1, 1), (7, 3)])
+  func testDisplayRanges(width: Int, height: Int) {
+    let across = 0...Double(width - 1)
+    let down = 0...Double(height - 1)
+
+    let ranges = GeometryProcess.displayRanges(width: width, height: height)
+
+    #expect(
+      ranges == ["cropLeft": across, "cropRight": across, "cropTop": down, "cropBottom": down])
+  }
 }

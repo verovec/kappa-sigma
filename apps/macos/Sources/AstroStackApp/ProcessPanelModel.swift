@@ -26,10 +26,6 @@ package final class ProcessPanelModel {
   }
   /// The head's statistics (the stretch's handles read them).
   package var headStats = LayerStats(channels: [])
-  /// The largest value per channel of the image on screen (the preview; the head after Apply, a
-  /// stop or a failed preview) for a `RangeShown` process, which clips nothing (values above 1
-  /// wait for the stretch); empty for another process and until the panel's first preview.
-  package internal(set) var shownMaxima: [Double] = []
   /// What the levels send to black and white on the head's sample, per channel (measured once
   /// per change of the values or the sample, shown, never applied); none for another process.
   package internal(set) var clipping: [HeadSample.Clipping] = []

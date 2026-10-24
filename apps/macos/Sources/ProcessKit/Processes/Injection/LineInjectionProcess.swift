@@ -9,7 +9,7 @@ package import Metal
 /// a default; every gain defaults to 0, which returns the head bit for bit. The formula has no
 /// legacy rule (legacy « hargb » was a screen); PixInsight's NBRGBCombination is the idea, the CPU
 /// oracle in the tests pins it.
-package struct LineInjectionProcess: RangeShown {
+package struct LineInjectionProcess: ImageProcess {
   package static let id = "line-injection"
   package static let title = "Line injection"
   package static let stage = ProcessStage.linear

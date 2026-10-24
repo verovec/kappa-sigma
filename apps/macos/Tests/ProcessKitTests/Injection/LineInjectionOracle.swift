@@ -26,7 +26,7 @@ enum LineInjectionOracle {
       let gain = params.number(prefix + "Gain")
       let shares = ["Red", "Green", "Blue"].map { params.number(prefix + $0) }
       // The process's rule: a line injects when some gain × share is not 0.
-      guard shares.contains(where: { gain * $0 != 0 }) else { return nil }
+      guard shares.contains(where: { Float(gain * $0) != 0 }) else { return nil }
       let plane = try #require(planes[layer]?[0], "a gain needs its layer")
       let k = params.number(prefix + "ContinuumK")
       var reference = plane

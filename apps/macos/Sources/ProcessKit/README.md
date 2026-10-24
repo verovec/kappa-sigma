@@ -173,10 +173,8 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   in `LineInjection.metal`, lines added in Hα, [OIII], [SII] order. The reference plane is the
   bundle's `continuum_ref`, read only when k > 0 (refused by name without one). Shares default to
   Hα/[SII] → red, [OIII] → green and blue half each. No normalisation, no clip: values above 1
-  stay, and the Studio panel shows the maximum per channel of the image on screen (the preview, then the
-  head after Apply) (`RangeShown`,
-  `ProcessPanelModel.shownMaxima`, NaN skipped).
-  Gains 0 (the defaults) copy the head bit for bit; a plane no line feeds is copied too. The
+  stay for the stretch's headroom (the viewer's histogram and readout show them).
+  Gains 0 (the defaults) copy the head bit for bit; a pixel or plane nothing is added to keeps its bits. The
   bundle's `continuum_k` is a suggestion whose reason names its reference plane
   (`continuumReason(reference:)`; clamped into 0…5 and offered only for a line with a gain, like the
   screens' k), never a default (R2). Pinned against `LineInjectionOracle`

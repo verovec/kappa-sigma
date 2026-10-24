@@ -173,7 +173,8 @@ struct LineInjectionProcessTests {
     arguments: [
       ("R", "the continuum scale fitted on the stack against the R layer"),
       ("L", "the continuum scale fitted on the stack against the L layer"),
-      ("OSC.g", "the continuum scale fitted on the stack against the colour base's green plane"),
+      ("RGB.g", "the continuum scale fitted on the stack against the colour base's green plane"),
+      ("L.r", "the continuum scale fitted on the stack"),
       ("RGB.b", "the continuum scale fitted on the stack against the colour base's blue plane"),
       ("X", "the continuum scale fitted on the stack"),
     ])

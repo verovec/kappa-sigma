@@ -52,12 +52,15 @@ extension LineInjectionProcess {
 
   /// The reason naming the plane `reference` (a `LayerPlane` token: `R`, `RGB.r`…) k was fitted
   /// against: what the user needs to judge it.
+  ///
+  /// A token naming neither a broadband layer nor a plane of the colour base (`RGB`) gets the
+  /// generic reason, never another plane's.
   package static func continuumReason(reference: String) -> String {
     let plane = LayerPlane(reference)
     let index: Int? =
       plane.token == plane.layer
       ? broadbandLayers.firstIndex(of: plane.layer).map { $0 + 1 }
-      : plane.plane + 5
+      : plane.layer == "RGB" ? plane.plane + 5 : nil
     return suggestionReasons[index ?? 0]
   }
 

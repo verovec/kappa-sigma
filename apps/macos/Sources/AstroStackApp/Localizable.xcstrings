@@ -337,6 +337,46 @@
         }
       }
     },
+    "%lld folders imported since the last stack": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld folder imported since the last stack"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld folders imported since the last stack"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld dossier importé depuis le dernier empilement"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld dossiers importés depuis le dernier empilement"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld frames": {
       "localizations": {
         "en": {
@@ -410,6 +450,46 @@
                 "stringUnit": {
                   "state": "translated",
                   "value": "%lld brutes"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld nights": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld night"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld nights"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld nuit"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld nuits"
                 }
               }
             }
@@ -4193,6 +4273,38 @@
         }
       }
     },
+    "Re-stacks %@ (%@) from scratch, %@: nothing is reused.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Re-stacks %@ (%@) from scratch, %@: nothing is reused."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ré-empile %@ (%@) depuis le début, %@ : rien n’est réutilisé."
+          }
+        }
+      }
+    },
+    "Re-stacks %@ (%@) from scratch: nothing is reused.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Re-stacks %@ (%@) from scratch: nothing is reused."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ré-empile %@ (%@) depuis le début : rien n’est réutilisé."
+          }
+        }
+      }
+    },
     "Read, never written.": {
       "localizations": {
         "en": {
@@ -4589,6 +4701,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Relire parcourt les dossiers pour leur intégration et leur calibration (~90 s par nuit)."
+          }
+        }
+      }
+    },
+    "Rescanning every night (Données › Rescan): the next run’s plan follows.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rescanning every night (Données › Rescan): the next run’s plan follows."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Relecture de toutes les nuits (Données › Relire) : le plan de la prochaine exécution suit."
           }
         }
       }
@@ -5709,6 +5837,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Empilement"
+          }
+        }
+      }
+    },
+    "Stacks %@ (%@): each is calibrated, registered and graded.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stacks %@ (%@): each is calibrated, registered and graded."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Empile %@ (%@) : chacune est calibrée, alignée et notée."
           }
         }
       }

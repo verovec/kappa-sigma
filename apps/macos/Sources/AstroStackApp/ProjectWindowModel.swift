@@ -248,12 +248,15 @@ package final class ProjectWindowModel {
   /// next run applies the request's overrides.
   ///
   /// Recording is idempotent per folder: after a failure part-way, Add again records the rest.
+  /// A night added through the sheet to a project that has some is followed by a rescan of them
+  /// all (card 0100); any other plan the window cannot adopt waits for the user's Rescan.
   package func add(_ request: ImportRequest) {
     guard let store = store() else {
       error = .projectClosed
       importError = error
       return
     }
+    let addsANight = addsANight(request)
     var recorded = 0
     do {
       for path in request.paths {
@@ -273,6 +276,7 @@ package final class ProjectWindowModel {
       adoptScan(of: importing, for: request)
       closeImport()
       refresh()
+      if addsANight && scan == nil { rescan() }
     } catch {
       // Some folders may be recorded: the last scan no longer describes the project.
       if recorded > 0 { edited() }

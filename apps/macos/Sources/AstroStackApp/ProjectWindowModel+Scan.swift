@@ -86,9 +86,11 @@ extension ProjectWindowModel {
 
   /// The same folders, compared as the store records them (standardized file paths).
   static func samePaths(_ lhs: [String], _ rhs: [String]) -> Bool {
-    let standard = { (paths: [String]) in
-      Set(paths.map { URL(fileURLWithPath: $0).standardizedFileURL.path })
-    }
-    return standard(lhs) == standard(rhs)
+    Set(lhs.map(standardPath)) == Set(rhs.map(standardPath))
+  }
+
+  /// A folder as the store records it (a standardized file path).
+  static func standardPath(_ path: String) -> String {
+    URL(fileURLWithPath: path).standardizedFileURL.path
   }
 }

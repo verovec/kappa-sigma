@@ -138,14 +138,14 @@ extension KnobPanelViewModelTests {
     #expect(panel.runKnobs(for: .deepsky).lanes.isEmpty)
   }
 
-  @Test("a global value moved onto a lane's value clears that lane's edit")
-  func testGlobalMoveOntoLaneValueClearsIt() {
+  @Test("a lane value stays as set while the global value moves through it")
+  func testGlobalMoveKeepsLaneValue() {
     let panel = KnobPanelViewModel(mode: .deepsky)
     panel.set("trail_mask_k", to: .number(2))
     panel.set("trail_mask_k", to: .number(4), lane: .dualband)
-    panel.set("trail_mask_k", to: .number(4))
-    panel.set("trail_mask_k", to: .number(5))
-    #expect(panel.overrideCount(lane: .dualband) == 0, "no pin left at 4")
+    for step in [3.0, 4, 5, 6] { panel.set("trail_mask_k", to: .number(step)) }
+    #expect(panel.overrideCount(lane: .dualband) == 1)
+    #expect(panel.runKnobs(for: .deepsky).lanes[.dualband]?.values["trail_mask_k"] == .number(4))
   }
 
   @Test("Reset All brings the processing back to one flow too")

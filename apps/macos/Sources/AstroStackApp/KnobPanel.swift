@@ -18,24 +18,25 @@ struct KnobPanel: View {
   @Environment(\.locale) private var locale
 
   var body: some View {
-    // Counted once per render: each count resolves the lane's settings.
-    let counts = [FilterSet.broadband, .dualband].reduce(into: [FilterSet: Int]()) { counts, lane in
-      let count = model.overrideCount(lane: lane)
-      if count > 0 { counts[lane] = count }
-    }
     // The series' lanes — a run that does not split applies no lane value, so none is offered —
     // or both while a frozen run applies lane values the series no longer split into (a paused
     // run's, on Continue): no value applied is out of sight (R2).
-    let columns = lanes.isEmpty && frozen && !counts.isEmpty ? [.broadband, .dualband] : lanes
+    let candidates: [FilterSet] = lanes.isEmpty && frozen ? [.broadband, .dualband] : lanes
+    // Counted once per render, for the lanes that can show: each count resolves their settings.
+    let counts = candidates.reduce(into: [FilterSet: Int]()) { counts, lane in
+      let count = model.overrideCount(lane: lane)
+      if count > 0 { counts[lane] = count }
+    }
+    let columns = lanes.isEmpty ? (counts.isEmpty ? [] : candidates) : lanes
     // The lane shown, while it is a column.
     let shownLane = lane.flatMap { columns.contains($0) ? $0 : nil }
     let rows = shownLane.map { model.rows(lane: $0) } ?? model.rows
     // The Stacking pane scrolls the series and the knobs together (0095): no scroller here.
     VStack(alignment: .leading, spacing: DesignMetrics.spacingM) {
-      header(lanesChanged: !columns.isEmpty && !counts.isEmpty)
+      header(lanesChanged: !counts.isEmpty, lanesShown: !columns.isEmpty)
       if !columns.isEmpty { laneSection(columns, counts: counts) }
       // One identity per lane: a field typed in on one lane never commits into the next.
-      Group {
+      VStack(alignment: .leading, spacing: DesignMetrics.spacingM) {
         ForEach(rows.filter { $0.level == .simple }) {
           KnobRow(row: $0, model: model, lane: shownLane, frozen: frozen)
         }
@@ -57,7 +58,7 @@ struct KnobPanel: View {
 
   /// The section's title, how many knobs moved, Reset All — for the lane values shown and the
   /// processing choice too — and the record's refused values.
-  @ViewBuilder private func header(lanesChanged: Bool) -> some View {
+  @ViewBuilder private func header(lanesChanged: Bool, lanesShown: Bool) -> some View {
     HStack(alignment: .firstTextBaseline) {
       SectionHeader(
         .app("Settings"),
@@ -67,7 +68,8 @@ struct KnobPanel: View {
       Spacer()
       Button(.app("Reset All")) { model.resetAll() }
         .disabled(
-          (model.changedCount == 0 && !lanesChanged && model.processing == .single) || frozen
+          (model.changedCount == 0 && !lanesChanged
+            && (!lanesShown || model.processing == .single)) || frozen
         )
         .accessible(.stackingResetKnobs, label: .app("Reset All"))
     }

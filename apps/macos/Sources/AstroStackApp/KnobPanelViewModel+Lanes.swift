@@ -61,14 +61,4 @@ extension KnobPanelViewModel {
   private func settings(for mode: PreprocessRequest.Mode, lane: FilterSet) -> PreprocessSettings {
     Self.applying(laneEdits[lane] ?? [:], to: settings(for: mode))
   }
-
-  /// Every lane's edit of `id` that the global value now equals is cleared: no latent pin that a
-  /// later global move would turn into an override nobody set at that value.
-  func clearLanes(atGlobal id: String) {
-    guard let knob = KnobSchema.knob(id) else { return }
-    let global = knob.value(in: settings)
-    for lane in laneEdits.keys where laneEdits[lane]?[id] == global {
-      laneEdits[lane]?[id] = nil
-    }
-  }
 }

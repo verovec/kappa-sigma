@@ -203,7 +203,6 @@ package final class KnobPanelViewModel {
   package func set(_ id: String, to value: KnobValue) {
     guard KnobSchema.knob(id)?.accepts(value) == true else { return }
     edits[id] = value
-    clearLanes(atGlobal: id)
   }
 
   /// The panel as a recorded run left it (the latest stack, a paused run's Continue, card 0097):
@@ -232,7 +231,6 @@ package final class KnobPanelViewModel {
   /// Knob `id` back to the preset.
   package func reset(_ id: String) {
     edits[id] = nil
-    clearLanes(atGlobal: id)
   }
 
   /// Every knob back to the preset, every lane back to the global values.

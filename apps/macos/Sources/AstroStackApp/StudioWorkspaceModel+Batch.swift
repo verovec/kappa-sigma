@@ -109,7 +109,7 @@ extension StudioWorkspaceModel {
     else { return }
     // A preview scheduled a frame ago would draw over the model while the toggle says model.
     previewTask?.cancel()
-    try show(model)
+    try show(model, subject: .model)
     batch.showsModel = true
   }
 

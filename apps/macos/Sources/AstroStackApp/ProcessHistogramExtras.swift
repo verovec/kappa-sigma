@@ -2,19 +2,23 @@ internal import ProcessKit
 internal import RenderKit
 internal import SwiftUI
 
-/// The panel's histogram (card 0089): the head's values with the process's handles over them,
-/// a drag setting the value it names; for the levels, what each channel sends to black and to
-/// white (measured on the head, shown only).
+/// The panel's histogram (card 0089): the head's values — the process's input, said in a caption
+/// (card 0128) — with the process's handles over them when its values sit there, a drag setting
+/// the value it names; for the levels, what each channel sends to black and to white (measured
+/// on the head, shown only).
 struct ProcessHistogramExtras: View {
   let model: ProcessPanelModel
   let sample: HeadSample
   @Environment(\.locale) private var locale
 
   var body: some View {
+    let handles = model.handles
     VStack(alignment: .leading, spacing: DesignMetrics.spacingXS) {
+      Text(Self.caption).font(.caption).foregroundStyle(.secondary)
       HistogramHandles(
-        bins: sample.bins, handles: model.handles, key: model.histogramKey,
-        label: .app("Input histogram"), hint: .app("Drag a handle to set the value it names")
+        bins: sample.bins, handles: handles.isEmpty ? nil : handles, key: model.histogramKey,
+        label: .app("Input histogram"),
+        hint: handles.isEmpty ? Self.caption : .app("Drag a handle to set the value it names")
       ) { channel, handle, position in
         model.drag(handle, channel: channel, to: position)
       }
@@ -27,6 +31,9 @@ struct ProcessHistogramExtras: View {
       }
     }
   }
+
+  /// The visible title: which image the plot counts (the viewer's may count a preview).
+  static let caption: LocalizedStringResource = .app("Input — the head before this process")
 
   private var format: AstroFormat { AstroFormat(locale: locale) }
 

@@ -16,7 +16,7 @@ extension StudioWorkspaceModel {
       // the very change the process makes (what is shown is what Apply records, R2).
       let same = preview.planes.count == headStatistics.count
       willShow(panel.type.id, panel.params)
-      try show(preview, statistics: same ? headStatistics : nil)
+      try show(preview, statistics: same ? headStatistics : nil, subject: .preview)
       isPreviewing = true
       shown = (panel.type.id, panel.params, mask)
       // A preview clears only a preview's failure: an Apply or Undo failure stays in view.

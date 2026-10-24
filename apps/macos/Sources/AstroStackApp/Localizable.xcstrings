@@ -2529,6 +2529,22 @@
         }
       }
     },
+    "Input — the head before this process": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Input — the head before this process"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entrée — la tête avant ce process"
+          }
+        }
+      }
+    },
     "Inspect %@": {
       "localizations": {
         "en": {

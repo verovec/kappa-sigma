@@ -155,4 +155,17 @@ struct ObjectSearchModelTests {
     await objects.load(projectObject: "Sh2-132")
     #expect(objects.selected?.name == "Sh2-132", "the catalogue read once is kept")
   }
+
+  @Test("a choice holds for its project object; another stack's object matches again")
+  func testChoiceGivesWayToAnotherStack() async throws {
+    let objects = Self.model()
+    #expect(objects.isLoading)
+    await objects.load(projectObject: "M31")
+    #expect(!objects.isLoading)
+    objects.choose(try #require(Self.catalogue.object(named: "Sh2-131")))
+    await objects.load(projectObject: "M 31")
+    #expect(objects.selected?.name == "Sh2-131", "the same object: the choice stays")
+    await objects.load(projectObject: "Sh2-132")
+    #expect(objects.selected?.name == "Sh2-132", "another stack: its own object")
+  }
 }

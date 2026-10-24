@@ -23,6 +23,9 @@ package struct ProjectWindowView: View {
         // The card covers the stage, never replaces it: the Studio's viewer stays as it was.
         StagePane.pane(for: model.selection, model: model)
           .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+          // Covered, the stage neither reads out nor takes a click.
+          .accessibilityHidden(model.objects.cardShown)
+          .allowsHitTesting(!model.objects.cardShown)
           .overlay {
             if model.objects.cardShown, let object = model.objects.selected {
               ObjectCard(object: object) { model.objects.closeCard() }

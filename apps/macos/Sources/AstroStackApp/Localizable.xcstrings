@@ -9808,6 +9808,22 @@
           }
         }
       }
+    },
+    "Reading Siril’s object lists…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading Siril’s object lists…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lecture des listes d’objets de Siril…"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

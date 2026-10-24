@@ -26,6 +26,12 @@ struct ObjectsSection: View {
         installURL: HostTool.siril.installURL, model: card)
     } else if let unavailable = objects.unavailable {
       StatusBadge(.attention, ObjectsHelp.reason(unavailable))
+    } else if objects.isLoading {
+      HStack(spacing: DesignMetrics.spacingS) {
+        ProgressView().controlSize(.small)
+        Text(.app("Reading Siril’s object lists…")).font(.caption)
+          .foregroundStyle(DesignColor.textSecondary.color)
+      }
     } else if objects.query.isEmpty {
       if let selected = objects.selected {
         row(selected)

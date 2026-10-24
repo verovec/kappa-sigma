@@ -23,6 +23,9 @@ package struct PreprocessRequest: Sendable {
   package var pause: PauseGate?
   /// Continue of a paused run: every lane whose `LaneRecord` still matches is reused.
   package var resuming = false
+  /// The lane-scoped knobs a split run's lanes of one kind take over `settings` (card 0121), set
+  /// through `overrideLane`; outside `settings` so an untouched run's digests stay as they were.
+  package internal(set) var laneOverrides: [FilterSet: KnobPatch] = [:]
 
   /// A request; without `settings`, the preset of `mode`.
   package init(

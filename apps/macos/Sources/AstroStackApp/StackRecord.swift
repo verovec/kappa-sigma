@@ -6,8 +6,9 @@ package import StackKit
 /// preset it ran and the knobs the user moved from it (card 0070) — enough to run it again.
 ///
 /// One flat JSON object: the request's own keys, then `mode`, `knobs` (left out when no knob
-/// moved) and `scope` (left out when the run took every light). A record written before 0070
-/// reads as the deepsky preset, untouched; before 0095, unscoped.
+/// moved), `lane_knobs` and `processing` (card 0121, left out when untouched) and `scope` (left
+/// out when the run took every light). A record written before 0070 reads as the deepsky preset,
+/// untouched; before 0095, unscoped; before 0121, one flow with no lane override.
 package struct StackRecord: Equatable, Sendable {
   /// The import the run planned, with its overrides.
   package var request: ImportRequest
@@ -15,11 +16,21 @@ package struct StackRecord: Equatable, Sendable {
   package var mode: PreprocessRequest.Mode
   /// The knobs moved from that preset.
   package var knobs: KnobPatch
+  /// The lane-scoped knobs a split run's lanes of one kind take over `knobs` (card 0121); an
+  /// unsplit run applies none.
+  package var laneKnobs: [FilterSet: KnobPatch] = [:]
+  /// What follows the stack of a split run (card 0121).
+  package var processing = StackProcessing.single
   /// The series the run stacked (card 0095): one object's light sets; `nil` = every light of
   /// the request's nights (a record written before 0095, or a project with one object and no scan).
   package var scope: RunScope?
   /// A recorded preset this build does not know: read as deepsky, and shown.
   package var unknownMode: String?
+  /// Recorded `lane_knobs` keys that name no lane of a split run (card 0121): never applied,
+  /// shown.
+  package var unknownLanes: [String] = []
+  /// A recorded `processing` this build does not know: read as one flow, and shown.
+  package var unknownProcessing: String?
   /// The frame review's decisions per lane (card 0069, `frame_review`): one entry per lane the run
   /// paused on, empty lists when the hand changed nothing; nil when the run never paused.
   package var frameReview: [String: FrameDecision]?
@@ -42,7 +53,15 @@ package struct StackRecord: Equatable, Sendable {
 extension StackRecord {
   /// What the record carries that this build cannot apply, as the panel lists it (`mode=galaxy`).
   package var ignoredEntries: [String] {
-    unknownMode.map { ["mode=\($0)"] } ?? []
+    (unknownMode.map { ["mode=\($0)"] } ?? [])
+      + (unknownProcessing.map { ["processing=\($0)"] } ?? [])
+      + unknownLanes.map { Self.laneEntry($0) }
+  }
+
+  /// A refused `lane_knobs` entry as the panel lists it: the record's own key path
+  /// (`lane_knobs.narrowband`, `lane_knobs.dualband.edge_crop`), as `mode=galaxy` names a preset.
+  package static func laneEntry(_ lane: String, knob: String? = nil) -> String {
+    (["lane_knobs", lane] + (knob.map { [$0] } ?? [])).joined(separator: ".")
   }
 
   /// The run paused at the frame review and the user answered (`ProjectFacts.framesReviewed`).
@@ -56,7 +75,8 @@ extension StackRecord {
 
 extension StackRecord: Codable {
   private enum Key: String, CodingKey {
-    case mode, knobs, scope
+    case mode, knobs, scope, processing
+    case laneKnobs = "lane_knobs"
     case frameReview = "frame_review"
     case referencePins = "reference_pins"
   }
@@ -68,6 +88,19 @@ extension StackRecord: Codable {
     mode = recorded.flatMap(PreprocessRequest.Mode.init(rawValue:)) ?? .deepsky
     unknownMode = mode.rawValue == recorded || recorded == nil ? nil : recorded
     knobs = try record.decodeIfPresent(KnobPatch.self, forKey: .knobs) ?? KnobPatch()
+    // A key naming no lane of a split run is kept aside and shown, never the whole record lost.
+    let lanes = try record.decodeIfPresent([String: KnobPatch].self, forKey: .laneKnobs) ?? [:]
+    for (key, patch) in lanes {
+      if let lane = FilterSet(rawValue: key), lane.isKnown {
+        laneKnobs[lane] = patch
+      } else {
+        unknownLanes.append(key)
+      }
+    }
+    unknownLanes.sort()
+    let flow = try record.decodeIfPresent(String.self, forKey: .processing)
+    processing = flow.flatMap(StackProcessing.init(rawValue:)) ?? .single
+    unknownProcessing = flow == nil || processing.rawValue == flow ? nil : flow
     scope = try record.decodeIfPresent(RunScope.self, forKey: .scope)
     frameReview = try record.decodeIfPresent([String: FrameDecision].self, forKey: .frameReview)
     referencePins = try record.decodeIfPresent([String: Int].self, forKey: .referencePins)
@@ -78,6 +111,8 @@ extension StackRecord: Codable {
     var record = encoder.container(keyedBy: Key.self)
     try record.encode(mode, forKey: .mode)
     if !knobs.values.isEmpty { try record.encode(knobs, forKey: .knobs) }
+    if !laneKnobs.isEmpty { try record.encode(laneKnobs, forKey: .laneKnobs) }
+    if processing != .single { try record.encode(processing, forKey: .processing) }
     try record.encodeIfPresent(scope, forKey: .scope)
     try record.encodeIfPresent(frameReview, forKey: .frameReview)
     try record.encodeIfPresent(referencePins, forKey: .referencePins)

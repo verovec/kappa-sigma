@@ -146,7 +146,7 @@ struct RepoHygieneTests {
   func testNoForbiddenArtifacts_frenchMirrorConflict() throws {
     let tree = try Self.cleanTree()
     let page = tree.appendingPathComponent("README.fr.md")
-    let commit = ["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-am", "x"]
+    let commit = ["commit", "-q", "-am", "x"]
     try Self.french.write(to: page, atomically: true, encoding: .utf8)
     try Self.git(["add", "-A", "-f"], in: tree)
     try Self.git(commit, in: tree)
@@ -156,9 +156,9 @@ struct RepoHygieneTests {
     try Self.git(["checkout", "-q", "-"], in: tree)
     try (Self.french + "deux\n").write(to: page, atomically: true, encoding: .utf8)
     try Self.git(commit, in: tree)
-    _ = try Self.run("/usr/bin/git", ["merge", "-q", "other"], in: tree)
+    let merge = try Self.run("/usr/bin/git", ["merge", "-q", "other"], in: tree)
     let unmerged = try Self.run("/usr/bin/git", ["ls-files", "-u"], in: tree)
-    try #require(unmerged.output.contains("README.fr.md"), "the merge conflicts on the page")
+    try #require(unmerged.output.contains("README.fr.md"), "no conflict: \(merge.output)")
     let gate = try Self.run("/bin/bash", ["scripts/hygiene.sh"], in: tree)
     #expect(gate.status == 1)
     #expect(gate.output.contains("cannot be read from the index"), "\(gate.output)")
@@ -200,7 +200,8 @@ struct RepoHygieneTests {
       .deletingLastPathComponent().deletingLastPathComponent()
   }
 
-  /// A fresh git repository in the test's scratch folder with the gate's scripts and a README, all tracked.
+  /// A fresh git repository in the test's scratch folder with the gate's scripts and a README,
+  /// all tracked.
   static func cleanTree() throws -> URL {
     let tree = try ScratchDirectory.url
     let scripts = tree.appendingPathComponent("scripts", isDirectory: true)
@@ -230,8 +231,8 @@ struct RepoHygieneTests {
 
   /// Runs `executable` in `directory` and returns its status with stdout and stderr together.
   /// In a fixture tree (`isolated`) the GIT_* variables a hook exports (GIT_DIR, GIT_INDEX_FILE…)
-  /// are dropped, or git would act on the real repository, and the global config is ignored; on the real one they are kept, so the
-  /// gate judges the index being committed.
+  /// are dropped, or git would act on the real repository, and the machine's git config is
+  /// ignored; on the real one they are kept, so the gate judges the index being committed.
   static func run(
     _ executable: String, _ arguments: [String], in directory: URL, isolated: Bool = true
   ) throws
@@ -247,6 +248,11 @@ struct RepoHygieneTests {
       // Nor the machine's git config: signing, hooks or merge.ff=only would change the fixture.
       environment["GIT_CONFIG_GLOBAL"] = "/dev/null"
       environment["GIT_CONFIG_NOSYSTEM"] = "1"
+      environment["XDG_CONFIG_HOME"] = "/nonexistent"  // ~/.config/git ignore and attributes
+      for role in ["AUTHOR", "COMMITTER"] {
+        environment["GIT_\(role)_NAME"] = "fixture"
+        environment["GIT_\(role)_EMAIL"] = "fixture@localhost"
+      }
       process.environment = environment
     }
     process.standardOutput = pipe

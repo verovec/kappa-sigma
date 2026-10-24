@@ -71,6 +71,8 @@ package final class ProjectWindowModel {
   @ObservationIgnored var pendingReplay: PendingReplay?
   /// The Stacking panel's preset and knob edits: what the next run applies (card 0070).
   package let knobs: KnobPanelViewModel
+  /// The sidebar's Objects (card 0130): Siril's catalogue and the object the plate solve offers.
+  package let objects: ObjectSearchModel
   /// The profile id the knobs' help was last looked up for (`knobs.profile` is its result, nil
   /// when it resolves to nothing); not state a view reads.
   @ObservationIgnored private var profileLookupID: String?
@@ -117,8 +119,10 @@ package final class ProjectWindowModel {
     exports: ExportServices = .live,
     isSaved: @escaping () -> Bool = { true },
     edited: @escaping () -> Void = {},
-    save: @escaping () -> Void = {}
+    save: @escaping () -> Void = {},
+    objects: ObjectSearchModel = ObjectSearchModel()
   ) {
+    self.objects = objects
     self.store = store
     self.folder = folder
     self.services = services

@@ -161,6 +161,14 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
     stageControl("stacking", "series." + setID)
   }
 
+  /// A result of the sidebar's Objects search, by the object's name (card 0130).
+  package static func objectResult(_ name: String) -> Self {
+    stageControl("objects", "result." + name)
+  }
+
+  /// The object card's « Close » (card 0130).
+  package static let objectCardClose = stageControl("objects", "close")
+
   /// The Studio stage's stack picker (card 0095).
   package static let studioStack = stageControl("studio", "stack")
   /// The Tri stage's « Review frames before stacking » toggle (card 0069).

@@ -25,18 +25,14 @@ package struct ProcessPanel: View {
             .font(.headline)
         }
       }
+      if let solved = model.solved {
+        Text(verbatim: ProcessPanelModel.solvedWords(solved, locale: locale))
+          .font(.caption).foregroundStyle(.secondary)
+      }
       if let sample = model.sample {
         ProcessHistogramExtras(model: model, sample: sample)
       }
-      ForEach(Array(model.groupedReasons.enumerated()), id: \.offset) { offset, reason in
-        Button {
-          model.take(reason: reason)
-        } label: {
-          let words = String(localized: ProcessKitResources.title(reason, locale: locale))
-          Text(.app("Take together: \(words)"))
-        }
-        .accessible(.suggestion(model.togetherKey, offset), label: .app("Take together"))
-      }
+      takeTogether
       ForEach(model.visibleSpecs, id: \.id) { spec in
         ProcessParameterRow(spec: spec, model: model)
       }
@@ -45,6 +41,20 @@ package struct ProcessPanel: View {
           .toggleStyle(.switch)
           .accessible(.processAdvanced(model.type.id), label: .app("Advanced"))
       }
+    }
+  }
+
+  /// One button per reason several suggestions share: one click takes them all.
+  private var takeTogether: some View {
+    ForEach(Array(model.groupedReasons.enumerated()), id: \.offset) { offset, reason in
+      Button {
+        model.take(reason: reason)
+      } label: {
+        let words = ProcessPanelModel.words(
+          reason: reason, subject: model.subject(of: reason), locale: locale)
+        Text(.app("Take together: \(words)"))
+      }
+      .accessible(.suggestion(model.togetherKey, offset), label: .app("Take together"))
     }
   }
 }

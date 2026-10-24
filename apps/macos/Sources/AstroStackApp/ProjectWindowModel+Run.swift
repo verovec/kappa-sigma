@@ -40,14 +40,6 @@ extension ProjectWindowModel {
   /// The `project_settings` key of the stack the Studio shows (card 0095).
   nonisolated static let stackSettingKey = "workspace.stack"
 
-  /// The target, as the project is named (`M31.astrostack` → `M31`).
-  var targetName: String { folder()?.deletingPathExtension().lastPathComponent ?? "" }
-
-  /// What a stack's Studio is named after: its object, else the project.
-  func studioObject(_ object: String) -> String {
-    object.isEmpty ? targetName : object
-  }
-
   /// Runs preprocessing on the project's nights into `stacks/<run_id>/` of the package: one run
   /// per object with a checked series (card 0095), in the table's order, one after the other —
   /// or one run of every light when no scan listed the series.
@@ -335,6 +327,7 @@ extension ProjectWindowModel {
     let workspace = try StudioWorkspaceModel(studio: studio, base: roles, tools: tools)
     // An undo from another stage brings the Studio into view before moving its history.
     workspace.reveal = { [weak self] in self?.select(.studio) }
+    workspace.catalogueObject = { [weak self] in self?.objects.offered }
     workspace.pipeline = try sidebar(of: workspace, stackID: stackID, store: store, roles: roles)
     self.workspace = workspace
     markOpened(stackID)

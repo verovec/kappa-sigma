@@ -6,11 +6,15 @@ package import RenderKit
 extension StudioWorkspaceModel {
   /// What `type` with `params` proposes on the head, for the levels the viewer's display
   /// stretch (the STF → HT handoff, card 0089), for plate solving the stack header's pointing and
-  /// optics (0093), for the denoise the head's measured noise (0115): offered, never set (R2).
+  /// optics (0093) then the catalogue object's position (0130), for the denoise the head's
+  /// measured noise (0115): offered, never set (R2).
   package func offers(for type: any ImageProcess.Type, params: ParamSet) -> [Suggestion] {
     let suggestions = (try? studio.session.suggestions(for: type, params: params)) ?? []
     if type == PlateSolveProcess.self {
-      return suggestions + PlateSolveProcess.suggestions(header: studio.header)
+      let object = catalogueObject().map {
+        PlateSolveProcess.suggestions(object: $0.name, raDeg: $0.raDeg, decDeg: $0.decDeg)
+      }
+      return suggestions + PlateSolveProcess.suggestions(header: studio.header) + (object ?? [])
     }
     if type == DenoiseProcess.self { return suggestions + denoiseOffers() }
     guard type == LevelsProcess.self else { return suggestions }
@@ -57,6 +61,12 @@ extension StudioWorkspaceModel {
   func refresh(_ panel: ProcessPanelModel) {
     panel.suggestions = offers(for: panel.type, params: panel.params)
     panel.headSize = (studio.head.width, studio.head.height)
+    // A head already solved says so on the plate-solve panel (card 0130); a new solve stays a choice.
+    panel.solved =
+      panel.type == PlateSolveProcess.self
+      ? PlateSolveStatus(
+        wcs: studio.head.metadata.wcs, width: studio.head.width, height: studio.head.height)
+      : nil
     guard !(panel.type is any GeometricProcess.Type) else {
       panel.sample = nil
       return

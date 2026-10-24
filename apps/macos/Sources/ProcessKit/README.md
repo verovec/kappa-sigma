@@ -167,8 +167,8 @@ non-destructive history, recipes and the registry (design §2, §4.1).
 
 ## Line injection (card 0120)
 
-- `LineInjectionProcess` (`line-injection`, linear, requires colour + emission, right after
-  `channel-combination`): per line of `EmissionLine` (params `<ha|oiii|sii><Gain|ContinuumK|Black|
+- `LineInjectionProcess` (`line-injection`, linear, requires colour + emission, registered (menu) right
+  after `channel-combination`): per line of `EmissionLine` (params `<ha|oiii|sii><Gain|ContinuumK|Black|
   Red|Green|Blue>`) and base plane `p`, `base_p + gain · share_p · max(line − k·ref − black, 0)`
   in `LineInjection.metal`, lines added in Hα, [OIII], [SII] order. The reference plane is the
   bundle's `continuum_ref`, read only when k > 0 (refused by name without one). Shares default to

@@ -74,8 +74,8 @@ extension StudioWorkspaceModel {
   func stopPreview() {
     previewTask?.cancel()
     shown = nil
-    if let panel { showRange(of: studio.head, on: panel) }
     guard isPreviewing else { return }
+    if let panel { showRange(of: studio.head, on: panel) }
     isPreviewing = false
     try? show(studio.head)
   }
@@ -108,12 +108,12 @@ extension StudioWorkspaceModel {
   /// another process).
   func showRange(of image: AstroImage, on panel: ProcessPanelModel) {
     panel.shownMaxima =
-      panel.type is any RangeShown.Type ? image.planes.map(Self.finiteMaximum) : []
+      panel.type is any RangeShown.Type ? image.planes.map(Self.maximumSkippingNaN) : []
   }
 
-  /// The largest value of `plane`, NaN (a rejected pixel) skipped: a NaN never compares greater;
-  /// `-inf` when every value is NaN.
-  package static func finiteMaximum(_ plane: [Float]) -> Double {
+  /// The largest value of `plane`, NaN (a rejected pixel) skipped — a NaN never compares greater
+  /// — and +inf kept (a saturated pixel the stretch will clip); `-inf` when every value is NaN.
+  package static func maximumSkippingNaN(_ plane: [Float]) -> Double {
     var maximum = -Float.infinity
     for value in plane where value > maximum { maximum = value }
     return Double(maximum)

@@ -61,9 +61,8 @@ package struct LineInjectionProcess: RangeShown {
     guard output.planes.count == input.planes.count, output.width == input.width,
       output.height == input.height
     else { throw ProcessError.sizeMismatch }
-    let lines = EmissionLine.allCases.map { (line: $0, weights: Self.weights($0, params: params)) }
     // Nothing to add changes no bit (not even −0.0): the head goes through as it is.
-    guard lines.contains(where: { $0.weights.contains { $0 != 0 } }) else {
+    guard EmissionLine.allCases.contains(where: { Self.injects($0, params: params) }) else {
       return try ColourKernel.copy(input, into: output, commands: context.commands)
     }
     guard input.planes.count == 3 else {
@@ -71,14 +70,14 @@ package struct LineInjectionProcess: RangeShown {
     }
     var textures: [MTLTexture] = []
     var values: [Float] = []
-    for (line, weights) in lines {
+    for line in EmissionLine.allCases {
       // A line that adds nothing needs no layer: the kernel skips zero weights.
       let (plane, reference) =
-        weights.contains { $0 != 0 }
+        Self.injects(line, params: params)
         ? try planes(line, size: input, context: context) : (input.planes[0], input.planes[0])
       textures += [plane, reference]
       values +=
-        weights
+        Self.weights(line, params: params)
         + [params.number(line.id("ContinuumK")), params.number(line.id("Black"))]
         .map(Float.init)
     }

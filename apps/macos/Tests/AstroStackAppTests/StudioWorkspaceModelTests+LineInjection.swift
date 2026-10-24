@@ -56,7 +56,7 @@ extension StudioWorkspaceModelTests {
     arguments: [
       ([0.2, .nan, 1.75, 0.4], 1.75), ([.nan, .nan], -Double.infinity), ([0.5, 0.25], 0.5),
     ] as [([Float], Double)])
-  func testFiniteMaximum(plane: [Float], expected: Double) {
-    #expect(StudioWorkspaceModel.finiteMaximum(plane) == expected)
+  func testMaximumSkippingNaN(plane: [Float], expected: Double) {
+    #expect(StudioWorkspaceModel.maximumSkippingNaN(plane) == expected)
   }
 }

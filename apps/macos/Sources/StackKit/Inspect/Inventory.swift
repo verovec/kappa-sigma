@@ -69,6 +69,20 @@ package struct Inventory: Equatable, Sendable {
     return out
   }
 
+  /// Names each package folder the scan did not enter, once, in the warnings the import sheet
+  /// shows (two nested roots walk the same package twice).
+  mutating func skip(_ packages: [String]) {
+    for package in packages {
+      let warning = Self.skipWarning(package)
+      if !warnings.contains(warning) { warnings.append(warning) }
+    }
+  }
+
+  /// The warning naming a skipped package folder (`path` relative to the scan's root).
+  package static func skipWarning(_ path: String) -> String {
+    "skip \(path): a package (a project, an app) is never read as captures"
+  }
+
   /// Warns when a multi-night split leaves light/flat frames without DATE-OBS in their own group.
   package mutating func warnUndatedSplit() {
     let undated = frames.count { $0.session.isEmpty && [.light, .flat].contains($0.type) }

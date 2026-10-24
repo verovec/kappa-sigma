@@ -1,14 +1,32 @@
 internal import Foundation
+internal import ProjectKit
 
 /// The legacy walk (`filepath.WalkDir`): depth-first, entries of each folder in byte order of
 /// their names, hidden folders skipped, symlinked folders not followed.
+///
+/// A package folder (a `.astrostack` project, an app) is never walked (card 0101): a project
+/// saved among the captures holds stacks with no OBJECT, read as lights of another object.
 enum InspectWalk {
-  /// Every non-folder entry under `root`, in walk order. `skippingOutput` also skips any folder
-  /// named `output` (case-insensitive): the legacy pipeline's own results.
-  static func files(under root: String, skippingOutput: Bool) throws -> [String] {
-    var out: [String] = []
+  /// What a walk found: the files, and the package folders it did not enter.
+  struct Listing {
+    var files: [String] = []
+    var packages: [String] = []
+  }
+
+  /// Every non-folder entry under `root`, in walk order, and the packages skipped. `skippingOutput`
+  /// also skips any folder named `output` (case-insensitive): the legacy pipeline's own results.
+  static func listing(under root: String, skippingOutput: Bool) throws -> Listing {
+    var out = Listing()
     try visit(root, isRoot: true, skippingOutput: skippingOutput, into: &out)
     return out
+  }
+
+  /// Whether the folder at `path` is a package: a project by its extension (the app may not be
+  /// registered with Launch Services, as under `swift test`), anything else as the Finder says.
+  static func isPackage(_ path: String) -> Bool {
+    let url = URL(fileURLWithPath: path, isDirectory: true)
+    if url.pathExtension.lowercased() == ProjectPackage.fileExtension { return true }
+    return (try? url.resourceValues(forKeys: [.isPackageKey]).isPackage) == true
   }
 
   /// Whether `path` is a folder (not following a symlink).
@@ -18,10 +36,15 @@ enum InspectWalk {
   }
 
   private static func visit(
-    _ folder: String, isRoot: Bool, skippingOutput: Bool, into out: inout [String]
+    _ folder: String, isRoot: Bool, skippingOutput: Bool, into out: inout Listing
   ) throws {
     let name = PathMeta.baseName(folder)
     if !isRoot && (name.hasPrefix(".") || (skippingOutput && name.lowercased() == "output")) {
+      return
+    }
+    // A root too: a project picked as a capture folder is still a project.
+    if isPackage(folder) {
+      out.packages.append(folder)
       return
     }
     // An unlistable folder fails the scan, as Go's WalkDir did: an empty capture would hide a
@@ -34,7 +57,7 @@ enum InspectWalk {
       if isFolder(path) {
         try visit(path, isRoot: false, skippingOutput: skippingOutput, into: &out)
       } else {
-        out.append(path)
+        out.files.append(path)
       }
     }
   }

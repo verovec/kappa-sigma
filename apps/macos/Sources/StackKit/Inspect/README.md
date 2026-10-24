@@ -21,6 +21,13 @@ union steps. Observation only: the inventory is the same with or without it (pin
 `InventoryBuilderTests.testScanReportsProgress`). `ImportPlanner.plan` forwards it; the app adds
 `.library` while the calibration library is indexed.
 
+The walk (`InspectWalk`) skips hidden folders, `output/` folders and, since card 0101, **package
+folders**: a `.astrostack` project (by extension, Launch Services may not know it) or anything the
+Finder shows as a package. Their FITS are never frames (a project's stacks have no OBJECT and
+read as a second object); each one lands in `Inventory.skipped` (relative to the root) with a
+`skip <path>: a package …` warning the import sheet shows. A new kind of folder to keep out of a
+scan is a rule in `InspectWalk.visit` plus a row in `InventoryBuilderTests+Packages`.
+
 ## How a frame is decided (precedence, same as Go)
 
 1. **Header** (`CaptureFrame+Header`): IMAGETYP, FILTER (via `Filter`), EXPTIME/EXPOSURE/EXPOINUS,

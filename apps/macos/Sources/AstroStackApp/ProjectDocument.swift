@@ -1,6 +1,7 @@
 package import AppKit
 package import Foundation
 internal import OSLog
+internal import ProcessKit
 package import ProjectKit
 package import StackKit
 internal import SwiftUI
@@ -15,6 +16,8 @@ package final class ProjectDocument: NSDocument {
   private var isTemporary = false
   /// The window's model, so closing the project stops a run that writes into it.
   package private(set) var windowModel: ProjectWindowModel?
+  /// The home whose `~/Documents/astro` folders never receive a project (R7); tests use a fake.
+  package var home = FileManager.default.homeDirectoryForCurrentUser
 
   /// The folder of the package the document currently edits.
   package var packageURL: URL? { project?.url }
@@ -52,6 +55,8 @@ package final class ProjectDocument: NSDocument {
   /// Opens the package at `url`, then releases the one open before (revert, or an untitled one).
   nonisolated override package func read(from url: URL, ofType typeName: String) throws {
     try MainActor.assumeIsolated {
+      // A project left among the captures before card 0101 would get its runs written there.
+      try refuseReadOnly(url)
       let opened = try ProjectPackage.open(at: url)
       if let project { release(project) }
       project = opened
@@ -70,7 +75,10 @@ package final class ProjectDocument: NSDocument {
   /// Save on a titled project checkpoints it in place: AppKit's `url` is the document's own file,
   /// even if the folder moved since it was opened. Any other operation copies the package to
   /// `url`; only Save (first save of an untitled project) and Save As move the document there.
+  /// Nothing is written in a folder the app only reads (R7, card 0101), not even in place after a
+  /// Finder move there: the export's refusal.
   private func write(to url: URL, for saveOperation: NSDocument.SaveOperationType) throws {
+    try refuseReadOnly(url)
     if saveOperation == .saveOperation { try followMove(to: url) }
     guard let project else { throw CocoaError(.fileWriteUnknown) }
     if (saveOperation == .saveOperation && !isTemporary) || Self.isSameFile(project.url, url) {
@@ -85,6 +93,13 @@ package final class ProjectDocument: NSDocument {
     self.project = moved
     // An untitled project just got its name: the window offers Run now.
     windowModel?.refresh()
+  }
+
+  /// Throws the export's refusal when the package at `url` (links resolved, the link itself
+  /// included) lies under `~/Documents/astro/{captures,runs,library,fixtures}`.
+  private func refuseReadOnly(_ url: URL) throws {
+    guard let reason = ExportGuard.refusal(for: url, home: home) else { return }
+    throw CocoaError(.fileWriteNoPermission, userInfo: [NSLocalizedDescriptionKey: reason])
   }
 
   /// Follows a move of the package in the Finder as soon as AppKit reports it.

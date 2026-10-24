@@ -56,6 +56,26 @@ extension StudioModelTests {
     #expect(workspace.studio.steps.count == 1, "nothing applied before ⌘E")
   }
 
+  /// Another panel with values not yet applied is never replaced by a shortcut; at its defaults
+  /// it is.
+  @Test("a shortcut never throws away another panel's edits", .scratchDirectory)
+  func testShortcutKeepsAnotherPanelsEdits() throws {
+    let opened = try Self.project()
+    defer { try? opened.package.close() }
+    let workspace = try StudioWorkspaceModelTests.workspace(opened, bundle: Self.bundle())
+    workspace.choose(SaturationProcess.id)
+    let edited = try #require(workspace.panel)
+    edited.set("amount", .number(1.5))
+    #expect(!workspace.canMoveGeometry)
+    workspace.moveGeometry(.rotateClockwise)
+    #expect(workspace.panel === edited, "the edited panel stays")
+
+    workspace.choose(SaturationProcess.id)
+    #expect(workspace.canMoveGeometry)
+    workspace.moveGeometry(.rotateClockwise)
+    #expect(workspace.panel?.type.id == GeometryProcess.id)
+  }
+
   /// A shortcut on an open geometry panel keeps its other values (crops, interpolation).
   @Test("a shortcut keeps the geometry panel's other values", .scratchDirectory)
   func testShortcutKeepsValues() throws {

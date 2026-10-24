@@ -6,31 +6,40 @@ internal import ProcessKit
 extension ProjectDocument {
   /// Edit › Rotate 90° Clockwise (⇧⌘R): the geometry panel turns the shown image; ⌘E applies.
   @objc package func rotateImageClockwise(_ sender: Any?) {
-    windowModel?.workspace?.moveGeometry(.rotateClockwise)
+    move(.rotateClockwise)
   }
 
   /// Edit › Rotate 90° Counterclockwise (⌥⇧⌘R).
   @objc package func rotateImageCounterclockwise(_ sender: Any?) {
-    windowModel?.workspace?.moveGeometry(.rotateCounterclockwise)
+    move(.rotateCounterclockwise)
   }
 
   /// Edit › Flip Horizontally (⇧⌘H): left and right of the shown image swapped.
   @objc package func flipImageHorizontally(_ sender: Any?) {
-    windowModel?.workspace?.moveGeometry(.flipHorizontally)
+    move(.flipHorizontally)
   }
 
   /// Edit › Flip Vertically (⇧⌘V): top and bottom of the shown image swapped.
   @objc package func flipImageVertically(_ sender: Any?) {
-    windowModel?.workspace?.moveGeometry(.flipVertically)
+    move(.flipVertically)
   }
 
   /// Whether the rotate and flip commands are enabled: on the Studio stage with a stack open,
-  /// no pipeline moving the head, and no text being edited (⇧⌘V there is the field's own).
+  /// no pipeline moving the head, no text being edited (⇧⌘V there is the field's own, and a
+  /// field committing later would overwrite the move) and no other panel's edits to replace.
   package static func geometryEnabled(in window: ProjectWindowModel?) -> Bool {
     guard let window, window.selection == .studio, let workspace = window.workspace else {
       return false
     }
-    return workspace.pipeline?.isRunning != true && !(NSApp.keyWindow?.firstResponder is NSText)
+    return workspace.pipeline?.isRunning != true && workspace.canMoveGeometry
+      && !(NSApp.keyWindow?.firstResponder is NSText)
+  }
+
+  /// `move` on the workspace, when the menu would allow it (an action sent without validation
+  /// does no more).
+  private func move(_ move: GeometryMove) {
+    guard Self.geometryEnabled(in: windowModel) else { return }
+    windowModel?.workspace?.moveGeometry(move)
   }
 
   /// The rotate and flip commands' actions: on the Studio stage with a stack open.

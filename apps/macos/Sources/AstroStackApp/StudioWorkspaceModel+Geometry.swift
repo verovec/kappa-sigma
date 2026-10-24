@@ -30,11 +30,19 @@ extension StudioWorkspaceModel {
     viewer.model.clearRegion()
   }
 
+  /// Whether a rotate or flip shortcut may act: no panel, the geometry panel, or another one
+  /// still at its defaults — a slipped key never throws away values not yet applied.
+  package var canMoveGeometry: Bool {
+    guard let panel, panel.type != GeometryProcess.self else { return true }
+    return panel.params == ParamSet(schema: panel.type.schema)
+  }
+
   /// Edit › Rotate / Flip (card 0105): `move` of the image shown, onto the geometry panel.
   ///
-  /// The panel opens at the identity when another is shown; the preview follows, only ⌘E
-  /// applies (R2).
+  /// The panel opens at the identity when none or an untouched one is shown; the preview
+  /// follows, only ⌘E applies (R2).
   package func moveGeometry(_ move: GeometryMove) {
+    guard canMoveGeometry else { return }
     guard let panel, panel.type == GeometryProcess.self else {
       // Opened at the move itself: one preview, not the identity's first.
       let identity = ParamSet(schema: GeometryProcess.schema)

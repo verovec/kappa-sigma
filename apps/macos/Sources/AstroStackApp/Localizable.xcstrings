@@ -3841,6 +3841,22 @@
         }
       }
     },
+    "Open in Viewer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open in Viewer"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir dans le visualiseur"
+          }
+        }
+      }
+    },
     "Open Run…": {
       "localizations": {
         "en": {
@@ -8289,6 +8305,38 @@
         }
       }
     },
+    "“%@” moves the pixels: crop, turn or flip in the main history.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” moves the pixels: crop, turn or flip in the main history."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« %@ » déplace les pixels : recadrez, tournez ou retournez dans l’historique principal."
+          }
+        }
+      }
+    },
+    "“%@” needs a colour layer: a line layer has a single plane.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” needs a colour layer: a line layer has a single plane."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« %@ » demande une couche couleur : une couche de raie n’a qu’un plan."
+          }
+        }
+      }
+    },
     "“%@” runs a host tool: nothing was applied without it.": {
       "localizations": {
         "en": {
@@ -8301,6 +8349,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "« %@ » lance un outil externe : rien n’a été appliqué sans lui."
+          }
+        }
+      }
+    },
+    "“%@” works on the whole image: apply it in the main history.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” works on the whole image: apply it in the main history."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« %@ » traite l’image entière : appliquez-le dans l’historique principal."
           }
         }
       }

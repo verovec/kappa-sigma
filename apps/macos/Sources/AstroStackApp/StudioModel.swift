@@ -18,15 +18,19 @@ package final class StudioModel {
   @ObservationIgnored package let session: StudioSession
   /// The applied steps, oldest first.
   package private(set) var steps: [History.Step] = []
+  /// The first step that read a branch head which moved since (card 0118), or `nil`.
+  package private(set) var staleFrom: Int?
   /// The working image: the history's head.
   package private(set) var head: AstroImage
   /// The stack's header (its base layer's): where suggestions read pointing and optics.
   @ObservationIgnored package let header: FITSHeader?
 
-  @ObservationIgnored private let store: ProjectStore
+  @ObservationIgnored let store: ProjectStore
   /// The project image (role `studio`) the history is mirrored on.
   @ObservationIgnored package let imageID: Int64
-  @ObservationIgnored private let packageRoot: URL
+  /// The stack whose layers' rows the branches are mirrored on.
+  @ObservationIgnored let stackID: Int64
+  @ObservationIgnored let packageRoot: URL
 
   /// The Studio of stack `stackID` over `bundle`.
   ///
@@ -44,15 +48,21 @@ package final class StudioModel {
     guard let baseID = StudioSession.baseLayerID(bundle.layers.keys),
       let base = bundle.layers[baseID]
     else { throw StudioError.emptyBundle }
-    // Every step keeps the stack's descriptive cards (WCS, OBJECT…).
+    let directory = stackFolder.appendingPathComponent("history")
+    let branches = try BranchSet(
+      folder: BranchSet.folder(besides: directory), bundle: bundle, header: header
+    ) { registry.type(id: $0)?.schema }
+    // Every step keeps the stack's descriptive cards (WCS, OBJECT…); the session starts it from
+    // the base layer's branch head (card 0118).
     let history = try History.reopen(
-      directory: stackFolder.appendingPathComponent("history"), original: base, header: header,
+      directory: directory, original: base, header: header,
       movesPixels: registry.movesPixels
     ) { registry.type(id: $0)?.schema ?? Self.batchSchemas[$0] }
     session = try StudioSession(
-      history: history, bundle: bundle, registry: registry, device: device)
+      history: history, bundle: bundle, registry: registry, device: device, branches: branches)
     self.store = store
     self.header = header
+    self.stackID = stackID
     packageRoot = packageFolder
     let images = try store.images(stackID: stackID)
     imageID =
@@ -64,6 +74,7 @@ package final class StudioModel {
       try apply(ChannelCombinationProcess.id, params: params)
     }
     steps = history.steps
+    staleFrom = session.staleFrom
   }
 
   /// The project image the Studio's history is mirrored on.
@@ -141,20 +152,26 @@ package final class StudioModel {
   /// kept step, matched by its output file (never by position), the head on the last applied.
   private func mirror() {
     defer { refresh() }
+    mirror(session.history, on: imageID)
+  }
+
+  /// Brings the rows of project image `imageID` in line with `history` (the main one, or a
+  /// branch's on its layer's row).
+  func mirror(_ history: History, on imageID: Int64) {
     do {
-      let history = session.history
       let kept = history.steps + history.undone.reversed()
       var rows = try store.history(imageID: imageID)
-      let wanted = Set(kept.map { path(of: $0.file) })
+      let wanted = Set(kept.map { path(of: $0.file, in: history) })
       for row in rows where !wanted.contains(row.outputPath ?? "") {
         try store.deleteHistoryStep(id: row.id)
       }
       rows = rows.filter { wanted.contains($0.outputPath ?? "") }
-      for step in kept where !rows.contains(where: { $0.outputPath == path(of: step.file) }) {
-        rows.append(try appendRow(step))
+      for step in kept
+      where !rows.contains(where: { $0.outputPath == path(of: step.file, in: history) }) {
+        rows.append(try appendRow(step, of: history, on: imageID))
       }
       let head = history.steps.last.flatMap { last in
-        rows.first { $0.outputPath == path(of: last.file) }?.id
+        rows.first { $0.outputPath == path(of: last.file, in: history) }?.id
       }
       try store.setHead(imageID: imageID, stepID: head)
     } catch {
@@ -164,39 +181,43 @@ package final class StudioModel {
     }
   }
 
-  private func path(of file: String) -> String {
-    let url = session.history.directory.appendingPathComponent(file)
+  private func path(of file: String, in history: History) -> String {
+    let url = history.directory.appendingPathComponent(file)
     return String(url.path.dropFirst(packageRoot.path.count + 1))
   }
 
-  private func appendRow(_ step: History.Step) throws -> HistoryStep {
+  private func appendRow(_ step: History.Step, of history: History, on imageID: Int64) throws
+    -> HistoryStep
+  {
     // The step's image and the layers it wrote or rewrote: what the disk budget counts.
     let files = [step.file] + step.outputs.values + step.replaced.values
     let bytes = files.reduce(0) { total, file in
-      let url = session.history.directory.appendingPathComponent(file)
+      let url = history.directory.appendingPathComponent(file)
       let size = try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int
       return total + (size ?? 0)
     }
     let json = String(bytes: try JSONEncoder().encode(step.params), encoding: .utf8) ?? "[]"
     return try store.appendHistoryStep(
       imageID: imageID, processID: step.processID, paramsJSON: json,
-      output: HistoryStep.Output(path: path(of: step.file), bytes: Int64(bytes)), contentHash: nil)
+      output: HistoryStep.Output(path: path(of: step.file, in: history), bytes: Int64(bytes)),
+      contentHash: nil)
   }
 
   /// Removes the outputs nothing refers to any more; the step is recorded whatever happens
   /// here, so a failure is logged, never reported as a failed Apply.
-  private func cleanUp() {
+  func cleanUp(_ history: History? = nil) {
     do {
-      try session.history.save()
+      try (history ?? session.history).save()
     } catch {
       Self.logger.error("history cleanup: \(String(describing: error), privacy: .public)")
     }
   }
 
-  private static let logger = Logger(subsystem: "fr.astrostack", category: "App/studio")
+  static let logger = Logger(subsystem: "fr.astrostack", category: "App/studio")
 
-  private func refresh() {
+  func refresh() {
     steps = session.history.steps
     head = session.history.current
+    staleFrom = session.staleFrom
   }
 }

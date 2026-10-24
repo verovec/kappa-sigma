@@ -25,6 +25,8 @@ package final class History {
     /// Whether it moved the pixels (a geometric step off its identity, card 0106): from it on,
     /// no file keeps a plate solution of the original that was not moved with them.
     package var movesPixels = false
+    /// The branch heads it read, by layer id (card 0118): it is stale once one of them moved.
+    package var branchHeads: [String: String] = [:]
   }
 
   /// A named state ("v9"): the output of a step, or the original (`file == nil`).
@@ -47,7 +49,7 @@ package final class History {
   package var current: AstroImage { Self.copy(shown) }
 
   private var shown: AstroImage
-  private let original: AstroImage
+  private var original: AstroImage
   private let header: FITSHeader?
   private var nextNumber: Int
   /// The number the next step's file takes (the manifest records it).
@@ -56,6 +58,11 @@ package final class History {
   private var created: Set<String> = []
   /// Layer files already read, by file name (a step's files never change once written).
   var layerCache: [String: AstroImage] = [:]
+  /// The heads of the branches a new step of `processID` with `params` at `index` reads, stamped
+  /// on it (card 0118): set by the Studio session over its branches; none elsewhere.
+  package var branchHeadsRead: BranchHeadsRead = { _, _, _ in [:] }
+  /// The heads a new step reads (`branchHeadsRead`): process, values, index → layer id → file.
+  package typealias BranchHeadsRead = (String, ParamSet, Int) -> [String: String]
 
   /// A history of `original` with its outputs in `directory` (created).
   ///
@@ -116,7 +123,7 @@ package final class History {
     }
     let step = Step(
       processID: processID, params: params, file: file, outputs: written, replaced: replaced,
-      movesPixels: movesPixels)
+      movesPixels: movesPixels, branchHeads: branchHeadsRead(processID, params, steps.count))
     try writeManifest(steps: steps + [step], undone: [], snapshots: snapshots)
     steps.append(step)
     undone.removeAll()
@@ -168,6 +175,13 @@ package final class History {
     try writeManifest(steps: steps + [step], undone: Array(undone.dropLast()), snapshots: snapshots)
     shown = next
     steps.append(undone.removeLast())
+  }
+
+  /// Starts the history from `original` instead (card 0118: its branch moved); the steps keep
+  /// their outputs, and while none is applied the head is the new original.
+  package func rebase(onto original: AstroImage) {
+    self.original = Self.copy(original)
+    if steps.isEmpty { shown = Self.copy(original) }
   }
 
   /// Names the current state; a name is used once.

@@ -16,6 +16,7 @@ package struct ColourCalibrationProcess: ImageProcess {
   package static let previewExactOnlyAt1to1 = false
   package static let hostTool = true
   package static let requiresSolution = true
+  package static let branchable = BranchUse.colourLayers
 
   package static let schema = ParamSchema([
     ParamSpec(id: "enabled", title: "Calibrate the colours", level: .simple, flag: true),

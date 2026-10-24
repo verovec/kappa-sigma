@@ -265,6 +265,31 @@ in en/fr; the English title is the key, resolved with `ProcessKitResources.title
 To give a host tool layers: return them in `StudioToolResult(…outputs:replaced:)` from a
 `StudioTool(step:)`; the Studio records them, the next steps read them.
 
+## Branches (card 0118)
+
+- A `Branch` is one bundle layer's own `History` (`stacks/<run>/branches/<layerID>/`, beside the
+  main `history/`), opened by `BranchSet` when its manifest exists or at its first step: a stack
+  never branched writes nothing, and its main `history.json` and outputs stay byte-identical.
+- **Overlay order**: stack bundle → branch heads (`BranchSet.overlay`, measured, the stack's
+  continuum fit kept: a branch moves no pixel) → the main history's `writtenFiles`.
+  `StudioSession.bundle` is the overlaid bundle (the pipeline runner reads it too),
+  `stackBundle` the one as stacked; the main history starts from the base layer's branch head
+  (`History.rebase(onto:)`).
+- A branch takes only `ImageProcess.branchable` processes (`BranchUse`: `.anyLayer`,
+  `.colourLayers` on three-plane layers), never a `GeometricProcess`; anything else is refused
+  with `StudioError.notBranchable(processID:reason:)`, a host tool with `needsTool` (its branch
+  route over `replaced` is still to come). `ProcessRegistryTests.testBranchableAudit` pins the set.
+- **Staleness**: `History.branchHeadsRead` (set by the session) stamps every new main step —
+  Apply, host tool, pipeline run — with the heads it read: the layers of
+  `ImageProcess.layersRead(_:layerIDs:)`, plus the base layer for step 0. `History.Step.branchHeads`
+  is written only when not empty. `StudioSession.staleFrom` is the first step whose stamp differs
+  from what it would read now; `StudioModel.replayMain()` re-applies from there with the recorded
+  values through `PipelineRunner` (never by itself, R2), `StudioUndo.replayMain` as one ⌘Z.
+
+To make a process branchable: declare `static let branchable = BranchUse.anyLayer` (or
+`.colourLayers`) — linear, same size, its input alone — and add it to the audit table. A process
+that reads bundle layers declares them in `layersRead`, or its steps never go stale.
+
 ## Geometry (card 0090)
 
 - `GeometryProcess` (`geometry`, stage any): crops (`.px`, as shown: top = the displayed top),

@@ -56,7 +56,9 @@ package struct StudioSideView: View {
   /// and, where the process takes no mask, the mask still set with its Clear (card 0111).
   @ViewBuilder
   private func rows(under panel: ProcessPanelModel) -> some View {
-    if panel.type is any GeometricProcess.Type {
+    if model.selection != .main {
+      StudioInactiveMaskRow(model: model, kind: .branch)
+    } else if panel.type is any GeometricProcess.Type {
       // Geometry moves the whole grid: no mask, the output's size and solution instead
       // (none while the values leave no pixel: the panel shows that failure).
       StudioInactiveMaskRow(model: model, kind: .ignored)
@@ -87,7 +89,7 @@ package struct StudioSideView: View {
       Button(.app("Replay")) {
         Task { try? await StudioUndo.replayMain(model, on: undoManager) }
       }
-      .disabled(model.isReplaying)
+      .disabled(model.isMovingMain || model.toolRun != nil)
       .accessible(.studioReplayStale, label: .app("Replay"))
     }
   }

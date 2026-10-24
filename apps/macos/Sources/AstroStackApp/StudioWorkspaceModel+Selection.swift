@@ -22,7 +22,7 @@ extension StudioWorkspaceModel {
   /// The history the viewer, the panel, Apply and Undo work on from now on.
   package func select(_ selection: StudioSelection) {
     // A replay or a run rewrites the combined image: the view stays on it until it ends.
-    guard selection != self.selection, !isReplaying, !(pipeline?.isRunning ?? false) else { return }
+    guard selection != self.selection, !isMovingMain, toolTask == nil else { return }
     stretches[self.selection] = ViewerStretch(
       stretch: viewer.model.stretch, linked: viewer.model.linked, manual: viewer.model.manualSTF)
     try? compare(toStep: nil)
@@ -44,7 +44,12 @@ extension StudioWorkspaceModel {
     } catch {
       failure = UserFacingError(error).message
     }
+    // Another image, even with the same steps: the panel's values are shown before they apply.
+    suspendPreview(moved: true)
   }
+
+  /// A replay or a pipeline run is rewriting the combined image: no other move starts meanwhile.
+  package var isMovingMain: Bool { isReplaying || (pipeline?.isRunning ?? false) }
 
   /// The applied steps of the history shown.
   package var steps: [History.Step] { studio.steps(of: selection) }
@@ -64,8 +69,12 @@ extension StudioWorkspaceModel {
   /// offers (the combined image after a crop is on another grid).
   package var comparable: [StudioSelection] {
     let shown = head
+    // A crop, turn or flip on the combined image moved its pixels off the layers' grid.
+    let mainMoved = studio.steps.contains(where: \.movesPixels)
     return selections.filter { other in
-      guard other != selection else { return false }
+      guard other != selection, !(mainMoved && (other == .main || selection == .main)) else {
+        return false
+      }
       let image = studio.head(of: other)
       return image.width == shown.width && image.height == shown.height
     }

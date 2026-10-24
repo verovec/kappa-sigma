@@ -3105,6 +3105,22 @@
         }
       }
     },
+    "Mask active: %@, not used on a branch: the process reads the layer alone.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mask active: %@, not used on a branch: the process reads the layer alone."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masque actif : %@, non utilisé sur une branche : le traitement lit la couche seule."
+          }
+        }
+      }
+    },
     "Masters, stacks and the bundle are written inside the project.": {
       "localizations": {
         "en": {

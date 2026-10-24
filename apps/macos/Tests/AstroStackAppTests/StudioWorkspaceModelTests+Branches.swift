@@ -143,6 +143,26 @@ extension StudioWorkspaceModelTests {
     #expect(workspace.appliedNothing)
   }
 
+  @Test(
+    "compare across histories only on one grid; a switch suspends the preview", .scratchDirectory)
+  func testCompareGridAndSwitchSuspends() async throws {
+    let opened = try BranchTests.project()
+    defer { try? opened.package.close() }
+    let workspace = try Self.workspace(opened, bundle: BranchTests.bundle())
+    workspace.select(.branch("RGB"))
+    #expect(workspace.comparable.contains(.main))
+    workspace.choose(DenoiseProcess.id)
+    await workspace.previewNow()
+    workspace.select(.branch("Ha"))  // no step on either: the same step list, another image
+    #expect(workspace.isPreviewSuspended)
+
+    var flip = ParamSet(schema: GeometryProcess.schema)
+    try flip.set("flipH", .flag(true))
+    try workspace.studio.apply(GeometryProcess.id, params: flip)
+    #expect(!workspace.comparable.contains(.main), "a flip keeps the size, not the grid")
+    #expect(workspace.comparable.contains(.branch("OIII")))
+  }
+
   @Test("testStaleBannerAndReplay", .scratchDirectory)
   func testStaleBannerAndReplay() async throws {
     let opened = try BranchTests.project()

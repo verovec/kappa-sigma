@@ -4,7 +4,7 @@ internal import ProcessKit
 extension StudioWorkspaceModel {
   /// Applies the panel's values at full resolution: the head moves (a failure is shown).
   package func apply() throws {
-    guard let panel else { return }
+    guard let panel, !isMovingMain else { return }
     // Apply records what the viewer shows (R2): values not drawn yet (a value just typed, a
     // drag within the frame) are drawn first, and what was drawn is what is recorded.
     previewTask?.cancel()
@@ -18,16 +18,13 @@ extension StudioWorkspaceModel {
     // The values applied: a geometry panel is back at the identity once the pixels moved.
     let (id, params) = (panel.type.id, panel.params)
     var used: AstroImage?
-    let before = head
     try reported {
       used = try maskImage()
       try studio.apply(id, params: params, on: selection, mask: used)
     }
     // A branch step is not a pipeline step (0122 carries them).
     guard selection == .main else {
-      // The branch's head is the one written: the same bits say the values changed nothing.
-      appliedNothing =
-        before.width == head.width && StudioSession.samePixels(before.planes, head.planes)
+      appliedNothing = studio.session.lastApplyChangedNothing
       return
     }
     // The user's manual work becomes the recipe (R5): the pipeline records the step.
@@ -37,11 +34,13 @@ extension StudioWorkspaceModel {
 
   /// Back one step on the history shown.
   package func undo() throws {
+    guard !isMovingMain else { return }
     try reported { try studio.undo(on: selection) }
   }
 
   /// Forward one undone step on the history shown.
   package func redo() throws {
+    guard !isMovingMain else { return }
     try reported { try studio.redo(on: selection) }
   }
 

@@ -55,7 +55,10 @@ extension StudioModel {
   /// Brings the rows of the layer's own project image (`images` row of role `layerID`, added
   /// with the stack) in line with its branch, and the main history's staleness with its head.
   private func mirrorBranch(_ layerID: String) {
-    defer { refresh() }
+    defer {
+      refreshBranches()
+      refresh()
+    }
     guard let branch = session.branches.branch(layerID) else { return }
     cleanUp(branch.history)
     do {

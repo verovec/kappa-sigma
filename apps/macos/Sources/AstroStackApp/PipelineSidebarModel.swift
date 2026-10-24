@@ -200,7 +200,8 @@ package final class PipelineSidebarModel {
       @escaping (History, PipelineBundle, @escaping PipelineRunner.EventSink) async throws ->
       PipelineRunner.Outcome
   ) async -> Bool {
-    guard !isRunning else { return false }
+    // A replay of the stale steps rewrites the same history: a run waits for it (card 0119).
+    guard !isRunning, !workspace.isReplaying else { return false }
     // A run applies to the combined image: it is shown first, its panel what Continue applies.
     workspace.select(.main)
     // A host tool's Apply records on the head it started from: a run waits for it (card 0092).

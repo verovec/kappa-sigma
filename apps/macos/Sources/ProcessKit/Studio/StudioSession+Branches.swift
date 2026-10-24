@@ -42,8 +42,13 @@ extension StudioSession {
   package func applyBranch(_ layerID: String, _ processID: String, params: ParamSet) throws {
     let result = try renderBranch(layerID, processID, params: params)
     let layer = try stackLayer(layerID)
-    try branches.branch(layerID, layer: layer).history.apply(
-      processID: processID, params: params, result: result)
+    let branch = try branches.branch(layerID, layer: layer)
+    let input = branch.head ?? layer
+    lastApplyChangedNothing = false
+    try branch.history.apply(processID: processID, params: params, result: result)
+    lastApplyChangedNothing =
+      result.width == input.width && result.height == input.height
+      && Self.samePixels(result.planes, input.planes)
     try branchMoved(layerID)
   }
 

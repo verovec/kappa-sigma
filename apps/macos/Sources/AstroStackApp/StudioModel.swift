@@ -78,6 +78,7 @@ package final class StudioModel {
       try apply(ChannelCombinationProcess.id, params: params)
     }
     refresh()
+    refreshBranches()
   }
 
   /// The project image the Studio's history is mirrored on.
@@ -222,6 +223,10 @@ package final class StudioModel {
     steps = session.history.steps
     head = session.history.current
     staleFrom = session.staleFrom
+  }
+
+  /// Reads the branches' steps and heads again: after a branch move only (a head is a copy).
+  func refreshBranches() {
     branchSteps = Dictionary(
       uniqueKeysWithValues: session.branches.all.map { ($0.layerID, $0.history.steps) })
     branchHeads = Dictionary(

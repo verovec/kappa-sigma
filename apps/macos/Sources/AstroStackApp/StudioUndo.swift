@@ -72,7 +72,7 @@ package enum StudioUndo {
     async throws
   {
     let studio = model.studio
-    guard !model.isReplaying, let start = studio.staleFrom else { return }
+    guard !model.isMovingMain, model.toolTask == nil, let start = studio.staleFrom else { return }
     model.isReplaying = true
     defer { model.isReplaying = false }
     undoManager?.beginUndoGrouping()
@@ -130,15 +130,16 @@ package enum StudioUndo {
     _ model: StudioWorkspaceModel, undoing: Bool, in selection: StudioSelection, head: String?,
     on undoManager: UndoManager?
   ) {
+    guard let undoManager else { return }
     // Where the entry lands, as the undo manager decides: the redo stack while undoing, else the
     // undo stack — a new move (neither undoing nor redoing) empties the redo stack.
-    if undoManager?.isUndoing == true {
+    if undoManager.isUndoing {
       model.redoSelections.append(selection)
     } else {
       model.undoSelections.append(selection)
-      if undoManager?.isRedoing != true { model.redoSelections.removeAll() }
+      if !undoManager.isRedoing { model.redoSelections.removeAll() }
     }
-    undoManager?.registerUndo(withTarget: model) { [weak undoManager] target in
+    undoManager.registerUndo(withTarget: model) { [weak undoManager] target in
       MainActor.assumeIsolated {
         // The entry leaves its stack whatever it does next.
         if undoManager?.isRedoing == true {
@@ -158,7 +159,7 @@ package enum StudioUndo {
         record(target, undoing: !undoing, in: selection, head: moved, on: undoManager)
       }
     }
-    undoManager?.setActionIsDiscardable(true)
-    undoManager?.setActionName(actionName)
+    undoManager.setActionIsDiscardable(true)
+    undoManager.setActionName(actionName)
   }
 }

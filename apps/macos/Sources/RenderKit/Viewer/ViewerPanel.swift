@@ -65,6 +65,10 @@ struct ViewerPanel: View {
           .monospacedDigit()
       }
       Toggle(isOn: $model.frame.clippingOverlay) { Text(.renderKit("Clipping overlay")) }
+      if model.frame.clipsOnTheAverage {
+        Text(.renderKit("Zoomed out, clipping is shown on the average; 1:1 shows each pixel."))
+          .font(.caption).foregroundStyle(.secondary)
+      }
       HStack {
         Button(.renderKit("Clear region")) { model.clearRegion() }
           .disabled(model.frame.region == nil)

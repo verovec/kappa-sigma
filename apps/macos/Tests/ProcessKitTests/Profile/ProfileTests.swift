@@ -128,4 +128,16 @@ struct ProfileTests {
     #expect(proposal.reasons == example.reasons)
     #expect(proposal.candidates.count == example.candidates)
   }
+
+  @Test("every shipped profile lists its steps in the usual order (card 0116)")
+  func testProfiles_FollowUsualOrder() throws {
+    let profiles = try ProfileLibrary.builtins(registry: ProcessRegistry.standard())
+    #expect(!profiles.isEmpty)
+    for profile in profiles {
+      let ranks = try profile.steps.map {
+        try #require(ProcessOrder.rank(of: $0.recipe.processID), "\(profile.id)")
+      }
+      #expect(ranks == ranks.sorted(), "\(profile.id): \(profile.steps.map(\.recipe.processID))")
+    }
+  }
 }

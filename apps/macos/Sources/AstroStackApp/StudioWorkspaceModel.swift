@@ -19,13 +19,15 @@ package final class StudioWorkspaceModel {
     package let title: String
     /// Why it cannot be the next step, shown on the greyed row (R2: shown, never enforced).
     package let unavailable: StudioUnavailable?
+    /// Its place in the usual processing order (card 0116), 1-based.
+    package var rank: Int? { ProcessOrder.rank(of: id) }
   }
 
   /// The processes of one stage.
   package struct Group: Identifiable, Equatable {
     /// Linear, non-linear or either.
     package let stage: ProcessStage
-    /// Its processes, in registry order.
+    /// Its processes, in the usual processing order (card 0116).
     package let entries: [Entry]
     package var id: String { stage.rawValue }
   }
@@ -173,7 +175,9 @@ package final class StudioWorkspaceModel {
   func refreshCatalogue() {
     var groups: [Group] = []
     for stage in [ProcessStage.linear, .any, .nonlinear] {
-      let entries = registry.types.filter { $0.stage == stage }.map { type in
+      let ordered = registry.types.filter { $0.stage == stage }
+        .sorted { (ProcessOrder.rank(of: $0.id) ?? .max) < (ProcessOrder.rank(of: $1.id) ?? .max) }
+      let entries = ordered.map { type in
         Entry(
           id: type.id, title: type.title,
           unavailable: studio.session.unavailable(for: type, base: base, registry: registry)

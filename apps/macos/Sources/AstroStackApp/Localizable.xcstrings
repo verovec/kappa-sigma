@@ -8784,6 +8784,54 @@
           }
         }
       }
+    },
+    "Usually next: it works on the linear data, before the stretch.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usually next: it works on the linear data, before the stretch."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Habituellement ensuite : il travaille sur les données linéaires, avant l’étirement."
+          }
+        }
+      }
+    },
+    "Usually next: it fits before or after the stretch.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usually next: it fits before or after the stretch."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Habituellement ensuite : il se place avant ou après l’étirement."
+          }
+        }
+      }
+    },
+    "Usually next: it finishes the stretched image.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usually next: it finishes the stretched image."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Habituellement ensuite : il finalise l’image étirée."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -117,9 +117,12 @@ struct StretchTests {
     }
   }
 
-  @Test("the Studio offers the stretch right after the channel combination")
+  @Test("the Studio offers the stretch right after the combination and the linear line injection")
   func testRegistered() throws {
-    #expect(try ProcessRegistry.standard().ids.prefix(2) == ["channel-combination", "stretch"])
+    #expect(
+      try ProcessRegistry.standard().ids.prefix(3) == [
+        "channel-combination", "line-injection", "stretch",
+      ])
   }
 
   @Test("the stretch passes every process contract, in each mode, mono and colour")

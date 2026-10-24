@@ -141,7 +141,7 @@ non-destructive history, recipes and the registry (design §2, §4.1).
 - `ProcessRegistry`: refuses duplicates and invalid schemas (`.px` without
   `previewExactOnlyAt1to1`, a default outside its bounds or options, infinite bounds);
   `standard()` is validated like any registry and lists the shipped processes (today:
-  `channel-combination`, `stretch`, `hdr`, `emission-screens`, `colour-balance`, `sky-desat`,
+  `channel-combination`, `line-injection`, `stretch`, `hdr`, `emission-screens`, `colour-balance`, `sky-desat`,
   `curves`, `saturation`, `star-recomposition`, `denoise`; pipeline order is E15's — `stage` documents it).
 - **Colour processes** (card 0053), `Processes/Colour/`, kernels in `Colour.metal` (they share the
   HSL helpers; a runtime-compiled source has no `#include`) and `SkyDesat.metal`; every default is
@@ -164,6 +164,24 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   - `saturation` (non-linear): astrocomp's `-sat -sat-masked` (HSL S through the
     `saturationMaskLUT` band on the HSL lightness), the compose star-core desaturation
     (`starDesatMaskLUT` on the luminance) and the `desat` tool's luma blend `k`; the PO's values are suggestions.
+
+## Line injection (card 0120)
+
+- `LineInjectionProcess` (`line-injection`, linear, requires colour + emission, registered (menu) right
+  after `channel-combination`): per line of `EmissionLine` (params `<ha|oiii|sii><Gain|ContinuumK|Black|
+  Red|Green|Blue>`) and base plane `p`, `base_p + gain · share_p · max(line − k·ref − black, 0)`
+  in `LineInjection.metal`, lines added in Hα, [OIII], [SII] order. The reference plane is the
+  bundle's `continuum_ref`, read only when k > 0 (refused by name without one). Shares default to
+  Hα/[SII] → red, [OIII] → green and blue half each. No normalisation, no clip: values above 1
+  stay for the stretch's headroom (the viewer's histogram and readout show them).
+  Gains 0 (the defaults) copy the head bit for bit; a pixel or plane nothing is added to keeps its bits. The
+  bundle's `continuum_k` is a suggestion whose reason names its reference plane
+  (`continuumReason(reference:)`; clamped into 0…5 and offered only for a line with a gain, like the
+  screens' k), never a default (R2); so is a black point at the line's sky (its median − k × the
+  reference's). Pinned against `LineInjectionOracle`
+  (max |Δ| ≤ 1e-6). A main step reads the injecting line layers, and the broadband ones once k > 0
+  (`layersRead`, card 0118); usual order: after denoise, before HDR. Rejected: more combination
+  slots (0054's one source per slot), more boost on the screens (non-linear).
 
 ## Denoise (card 0115)
 
@@ -338,8 +356,8 @@ Allowed dependencies: `ImageKit`, `RenderKit` (`Tests/TestSupport/BoundaryRules.
 ## Usual order (card 0116)
 
 `ProcessOrder.usual` is the one list of the usual processing order: combination, background
-extraction, plate solve, colour calibration, colour balance, sky desat, denoise, HDR, stretch,
-levels, curves, emission screens, saturation, star recomposition, then geometry (anywhere).
+extraction, plate solve, colour calibration, colour balance, sky desat, denoise, line injection, HDR,
+stretch, levels, curves, emission screens, saturation, star recomposition, then geometry (anywhere).
 `ProcessOrderTests` checks every registered process is in it exactly once, so **a new process
 must be placed in it**. The Studio's catalogue sorts each stage by it, `rank(of:)` numbers the
 rows, and `usuallyNext(after:)` marks the process after the head's last ordered step: a

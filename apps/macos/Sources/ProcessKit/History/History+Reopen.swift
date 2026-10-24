@@ -6,9 +6,11 @@ extension History {
   ///
   /// `<directory>.json` beside it gives the steps, undone steps and snapshots; the head is read
   /// from disk. A folder without a manifest is a fresh history. `schema` gives each process's
-  /// schema, to read its stored values back.
+  /// schema, to read its stored values back; `movesPixels` says whether a step moved the pixels
+  /// when its entry does not (a manifest written before card 0106: `ProcessRegistry.movesPixels`).
   package static func reopen(
     directory: URL, original: AstroImage, header: FITSHeader? = nil,
+    movesPixels: (String, ParamSet) -> Bool = { _, _ in false },
     schema: (String) -> ParamSchema?
   ) throws -> History {
     let history = try History(directory: directory, original: original, header: header)
@@ -24,10 +26,11 @@ extension History {
         }
         outputs[role] = file
       }
+      let params = ParamSet.loading(entry.params, onto: schema).params
       return Step(
-        processID: entry.processID,
-        params: ParamSet.loading(entry.params, onto: schema).params, file: entry.file,
-        outputs: outputs, replaced: entry.replaced ?? [:])
+        processID: entry.processID, params: params, file: entry.file, outputs: outputs,
+        replaced: entry.replaced ?? [:],
+        movesPixels: entry.movesPixels ?? movesPixels(entry.processID, params))
     }
     try history.restore(
       steps: manifest.steps.map(step), undone: manifest.undone.map(step),
@@ -48,7 +51,8 @@ extension History {
       HistoryManifest.Entry(
         processID: step.processID, params: step.params.entries, file: step.file,
         outputs: Dictionary(uniqueKeysWithValues: step.outputs.map { ($0.key.rawValue, $0.value) }),
-        replaced: step.replaced.isEmpty ? nil : step.replaced)
+        replaced: step.replaced.isEmpty ? nil : step.replaced,
+        movesPixels: step.movesPixels ? true : nil)
     }
     return HistoryManifest(
       version: HistoryManifest.version, nextNumber: nextStepNumber, steps: steps.map(entry),

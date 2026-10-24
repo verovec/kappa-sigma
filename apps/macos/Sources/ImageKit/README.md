@@ -28,6 +28,12 @@ No UI, no Metal: RenderKit uploads what ImageKit produces.
   FITS coordinates (`p' = M·p + t`, `M` a signed permutation); `FITSHeader.moved(by:)` moves a
   TAN/TAN-SIP solution with it (`CRPIX`, `CD·M⁻¹`, SIP substituted), any other solution is
   dropped; `droppingWCS()` for a resampled frame. Pinned by "every star keeps its RA/Dec".
+- `SolutionKeyword` (card 0106): the ONE list of plate-solution cards,
+  `FITSHeader.solutionKeyword(_:)` → `.primary` (axis cards of any axis, `CD`/`PC`/`PV`/`PS`,
+  frame and names, `PLTSOLVD`, SIP) or `.alternate` (the same followed by a letter, `CTYPE1A`).
+  `isWCS` / `wcsCards` / `carrying` read primaries only (an alternate solution of an unmoved image
+  stays valid); `droppingWCS()` and `moved(by:)` remove alternates too. A new keyword goes there
+  and in `FITSHeaderWCSTests`, never in a second table.
   `FITSHeader.Card(keyword:value:)` / `(keyword:number:)` build fixed-format cards.
 
 ## Oracles

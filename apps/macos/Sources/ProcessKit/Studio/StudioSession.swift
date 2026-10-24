@@ -98,7 +98,7 @@ package final class StudioSession {
       && result.metadata == input.metadata && Self.samePixels(result.planes, input.planes)
     try history.apply(
       processID: processID, params: params, result: result, outputs: moved.outputs,
-      replacing: moved.replacing)
+      replacing: moved.replacing, movesPixels: registry.movesPixels(processID, params: params))
     lastApplyChangedNothing = unchanged && moved.outputs.isEmpty && moved.replacing.isEmpty
   }
 

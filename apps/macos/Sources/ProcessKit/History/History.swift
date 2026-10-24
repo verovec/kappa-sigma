@@ -22,6 +22,9 @@ package final class History {
     /// The bundle layers it rewrote, by the bundle's id (`Ha` after a background extraction):
     /// later steps read them under that id, and they add no role.
     package let replaced: [String: String]
+    /// Whether it moved the pixels (a geometric step off its identity, card 0106): from it on,
+    /// no file keeps a plate solution of the original that was not moved with them.
+    package var movesPixels = false
   }
 
   /// A named state ("v9"): the output of a step, or the original (`file == nil`).
@@ -87,29 +90,33 @@ package final class History {
 
   /// Records `result` as the output of `processID` with `params`, `outputs` as the layers it
   /// wrote and `replacing` as the bundle layers it rewrote; what was undone is dropped.
+  /// `movesPixels` says the step moved the pixels (`ProcessRegistry.movesPixels`).
   package func apply(
     processID: String, params: ParamSet, result: AstroImage,
-    outputs: [LayerRole: AstroImage] = [:], replacing: [String: AstroImage] = [:]
+    outputs: [LayerRole: AstroImage] = [:], replacing: [String: AstroImage] = [:],
+    movesPixels: Bool = false
   ) throws {
+    let moved = movesPixels || steps.contains(where: \.movesPixels)
     let digits = String(nextNumber)
     let stem = "step-" + String(repeating: "0", count: max(0, 4 - digits.count)) + digits
     nextNumber += 1
     let file = stem + ".fits"
-    try write(result, file)
+    try write(result, file, moved: moved)
     var written: [LayerRole: String] = [:]
     for (role, image) in outputs {
       let name = stem + "-" + role.rawValue + ".fits"
-      try write(image, name)
+      try write(image, name, moved: moved)
       written[role] = name
     }
     var replaced: [String: String] = [:]
     for (id, image) in replacing {
       let name = stem + "-" + id + ".fits"
-      try write(image, name)
+      try write(image, name, moved: moved)
       replaced[id] = name
     }
     let step = Step(
-      processID: processID, params: params, file: file, outputs: written, replaced: replaced)
+      processID: processID, params: params, file: file, outputs: written, replaced: replaced,
+      movesPixels: movesPixels)
     try writeManifest(steps: steps + [step], undone: [], snapshots: snapshots)
     steps.append(step)
     undone.removeAll()
@@ -210,9 +217,12 @@ package final class History {
     try writeManifest()
   }
 
-  private func write(_ image: AstroImage, _ file: String) throws {
+  /// Writes `image` as `file` with the original's descriptive cards; once the pixels `moved`, none
+  /// of its solutions (a ZEA primary, an alternate) unless the image's own carries it moved.
+  private func write(_ image: AstroImage, _ file: String, moved: Bool) throws {
+    let base = header ?? FITSHeader(cards: [])
     // The image's own solution (a plate solve adds one; the steps after it carry it on).
-    let header = (header ?? FITSHeader(cards: [])).carrying(image.metadata.wcs)
+    let header = (moved ? base.droppingWCS() : base).carrying(image.metadata.wcs)
     try FITSFile.create(image, keeping: header, at: directory.appendingPathComponent(file))
     created.insert(file)
   }

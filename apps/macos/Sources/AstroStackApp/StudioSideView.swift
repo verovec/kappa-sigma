@@ -28,8 +28,11 @@ package struct StudioSideView: View {
             // On a new head Apply previews first, and says so.
             let title: LocalizedStringResource =
               model.isPreviewSuspended ? .app("Preview") : .app("Apply")
+            // A host tool under a mask cannot run: greyed with the reason, not refused after.
+            let blocked = panel.type.runsTool(panel.params) ? model.toolRefusal : nil
             Button(title) { applyRecorded() }
-              .disabled(model.toolRun != nil)
+              .disabled(model.toolRun != nil || blocked != nil)
+              .help(blocked.map { Text($0) } ?? Text(verbatim: ""))
               .accessible(.studioApply, label: title)
           }
           StudioToolRow(model: model)
@@ -48,16 +51,20 @@ package struct StudioSideView: View {
     }
   }
 
-  /// What the panel's process asks for below its parameters: the mask row, or its own rows.
+  /// What the panel's process asks for below its parameters: the mask row, or its own rows —
+  /// and, where the process takes no mask, the mask still set with its Clear (card 0111).
   @ViewBuilder
   private func rows(under panel: ProcessPanelModel) -> some View {
     if panel.type is any GeometricProcess.Type {
       // Geometry moves the whole grid: no mask, the output's size and solution instead
       // (none while the values leave no pixel: the panel shows that failure).
+      StudioInactiveMaskRow(model: model, kind: .ignored)
       if let output = model.geometryOutput { GeometryExtras(model: model, output: output) }
-    } else if panel.type.id == BackgroundExtractionProcess.id {
-      // The extraction runs on the whole image and its layers: no mask, its own rows.
-      StudioBatchRows(model: model)
+    } else if let kind = StudioInactiveMaskRow.kind(for: panel.type, params: panel.params) {
+      // A host tool (extraction, plate solve, SPCC) works on the whole image: no mask.
+      StudioInactiveMaskRow(model: model, kind: kind)
+      // The extraction runs on its layers too: its own rows.
+      if panel.type.id == BackgroundExtractionProcess.id { StudioBatchRows(model: model) }
     } else {
       StudioMaskRow(model: model)
     }

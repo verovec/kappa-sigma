@@ -1,14 +1,10 @@
 internal import Foundation
 
 extension FITSHeader {
-  /// Keywords of a plate solution (FITS WCS papers I–II, SIP, Siril's `PLTSOLVD`).
-  private static let wcsPattern =
-    #"^((CTYPE|CUNIT|CRPIX|CRVAL|CDELT|CROTA)[12]|(CD|PC)[12]_[12]|(A|B|AP|BP)_(ORDER|\d+_\d+)"#
-    + #"|LONPOLE|LATPOLE|EQUINOX|RADESYS|PLTSOLVD)$"#
-
-  /// Whether `keyword` belongs to a plate solution.
+  /// Whether `keyword` belongs to the image's own plate solution (`SolutionKeyword.primary`; an
+  /// alternate solution is not read, and an image that moves nothing keeps it).
   package static func isWCS(_ keyword: String) -> Bool {
-    keyword.range(of: wcsPattern, options: .regularExpression) != nil
+    solutionKeyword(keyword) == .primary
   }
 
   /// The cards of its plate solution, in order.

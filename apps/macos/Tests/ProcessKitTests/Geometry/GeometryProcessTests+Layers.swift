@@ -159,3 +159,37 @@ extension GeometryProcessTests {
     #expect(onlyMoved.1["Ha"]?.continuumK == 0.42, "only moved: the stack fit stays")
   }
 }
+
+extension GeometryProcessTests {
+  /// Card 0106: whether a step moves the pixels is decided once, from its process and values.
+  @Test(
+    "testRegistryMovesPixels",
+    arguments: [
+      (GeometryProcess.id, ["flipH": ParamValue.flag(true)], true),
+      (GeometryProcess.id, ["cropLeft": .number(1)], true),
+      (GeometryProcess.id, [:], false), ("stretch", [:], false), ("unknown", [:], false),
+    ])
+  func testRegistryMovesPixels(id: String, values: [String: ParamValue], moves: Bool) throws {
+    let registry = try ProcessRegistry([GeometryProcess.self, StretchProcess.self])
+    let schema = registry.type(id: id)?.schema ?? ParamSchema([])
+    var params = ParamSet(schema: schema)
+    for (key, value) in values { try params.set(key, value) }
+    #expect(registry.movesPixels(id, params: params) == moves)
+  }
+
+  /// Card 0106: a Studio Apply records whether the step moved the pixels; at its identity a
+  /// geometry step is an ordinary one.
+  @Test("testStudioApplyRecordsAMove", .scratchDirectory)
+  func testStudioApplyRecordsAMove() throws {
+    let device = try #require(MTLCreateSystemDefaultDevice())
+    let history = try History(
+      directory: ScratchDirectory.url.appendingPathComponent("history"),
+      original: try HistoryTests.image([0, 1, 2, 3]))
+    let session = try StudioSession(
+      history: history, bundle: PipelineBundle(stats: LayerStats(channels: [])),
+      registry: ProcessRegistry([GeometryProcess.self]), device: device)
+    try session.apply("geometry", params: try Self.params(["flipH": .flag(true)]))
+    try session.apply("geometry", params: try Self.params([:]))
+    #expect(history.steps.map(\.movesPixels) == [true, false])
+  }
+}

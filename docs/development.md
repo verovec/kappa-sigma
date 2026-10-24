@@ -41,8 +41,9 @@ skip themselves, with the reason, when either is missing. Rules:
 
 GitHub Actions runs two jobs on every pull request: `test continuity` (the suite may only grow; an
 edited or deleted test needs a `Test-change:` line in the PR body) and `hygiene · lint · build ·
-test` (`just ci` on a macOS 26 runner, live suites skipped). CI runs on pull requests only, since
-macOS minutes bill at ten times the Linux rate. The coverage floor is in `apps/macos/.coverage-floor`: 95%, fixed by the PO (24/10); a card
+test` (`just ci` on the maintainer's Mac as a self-hosted runner, live suites skipped). CI runs on
+pull requests only. The hygiene gate is `scripts/hygiene.sh`, run by both jobs and pinned rule by
+rule by `RepoHygieneTests`. The coverage floor is in `apps/macos/.coverage-floor`: 95%, fixed by the PO (24/10); a card
 never moves it.
 
 ## Conventions
@@ -54,6 +55,6 @@ recipes, README. The reasoning behind every gate and every technical decision of
 
 ## Workflow
 
-Work is planned as cards grouped in epics (E10 to E20), kept locally in `roadmap.md` and `cards/`
+Work is planned as cards grouped in epics (E10 to E22), kept locally in `roadmap.md` and `cards/`
 (not versioned). Each card is one branch, one pull request, strict TDD, a code review, and a merge
 only when both CI jobs are green (`just merge <pr>`).

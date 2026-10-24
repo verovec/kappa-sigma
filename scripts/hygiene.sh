@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Repo hygiene gate (CLAUDE.md "Language policy" + "Data lives outside every repo", card 0064).
-# Fails when a TRACKED file violates a structural rule. Card 0064 ports this to a Swift test;
-# until then this script is what `just hygiene` and CI run.
+# Fails when a TRACKED file violates a structural rule. The rules live here only: `just hygiene`
+# and both CI jobs run this script (the Linux one has no Swift), and
+# apps/macos/Tests/TestSupportTests/RepoHygieneTests.swift pins each rule on a fixture tree.
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
@@ -15,6 +16,8 @@ files="$(git ls-files)"
 bad=$(printf '%s\n' "$files" | grep -E '(^|/)(go\.mod|go\.sum|Dockerfile|docker-compose\.ya?ml|compose\.ya?ml|requirements\.txt|pyproject\.toml|package\.json)$|\.(go|py|cgo|js|ts)$' \
   | grep -vE '^(docs|tasks-context|conventions)/' || true)
 [ -z "$bad" ] || report "non-Swift code or container files tracked:"$'\n'"$bad"
+#    No web front end either, whatever it holds (the legacy Vue app is never migrated).
+if [ -e frontend ]; then report "'frontend/' exists at the repo root (the app is SwiftUI only)"; fi
 
 # 2. Nothing pixel-shaped: fixtures in the repo are text only. The one exception is the README's
 #    artwork in docs/assets/ (card 0082): web images only, each at most 600 KB. Data never goes there.
@@ -62,6 +65,18 @@ bad=$( [ -z "$views" ] || printf '%s\n' "$views" | tr '\n' '\0' | xargs -0 grep 
 # 8. Every relative link in the README and docs/ resolves (card 0082).
 bad=$(./scripts/check-links.sh || true)
 [ -z "$bad" ] || report "broken relative links:"$'\n'"$bad"
+
+# 9. The French README mirrors the English one (card 0064): the same sections and the same
+#    commands in its ```bash blocks (their comments are translated, so they are dropped first; other
+#    blocks, such as the stage diagram, are prose).
+commands() { awk '/^```bash/ { inside = 1; next } /^```/ { inside = 0 } inside' "$1" | sed -E 's/[[:space:]]+#.*$//'; }
+sections() { grep -c '^## ' "$1" || true; }
+if [ -f README.fr.md ]; then
+  [ "$(commands README.md)" = "$(commands README.fr.md)" ] \
+    || report "README.fr.md commands differ from README.md (translate the comments only)"
+  [ "$(sections README.md)" = "$(sections README.fr.md)" ] \
+    || report "README.fr.md has $(sections README.fr.md) sections, README.md has $(sections README.md)"
+fi
 
 if [ "$fail" -ne 0 ]; then echo "hygiene: FAILED"; exit 1; fi
 echo "hygiene: ok"

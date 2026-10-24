@@ -39,7 +39,7 @@ extension ProjectWindowModel {
     guard let store = store(), let folder = folder() else { return }
     let deletes = storageDeletes
     do {
-      let stacks = try store.stacks()
+      let stacks = try store.stacks().filter { !deletingStacks.contains($0.id) }
       let counts = try store.exportCounts()
       let measured = await Self.measure(stacks, in: folder, counts: counts)
       guard !Task.isCancelled, deletes == storageDeletes else { return }
@@ -56,8 +56,10 @@ extension ProjectWindowModel {
   private nonisolated static func measure(
     _ stacks: [ProjectStack], in folder: URL, counts: [Int64: Int]
   ) async -> [StackStorageRow] {
-    stacks.map { stack in
-      StackStorageRow(
+    stacks.compactMap { stack in
+      // A cancelled listing (the stacks changed) stops walking folders of tens of GB.
+      guard !Task.isCancelled else { return nil }
+      return StackStorageRow(
         stack: stack,
         bytes: LeftoverSweep.allocatedBytes(folder.appendingPathComponent(stack.bundlePath)),
         exports: counts[stack.id] ?? 0)
@@ -93,18 +95,22 @@ extension ProjectWindowModel {
       error = .stackOpen
       return
     }
+    // The store's own guard gets the Studio's stack, read while the stack is still listed.
+    let open = openStackID
     // Out of the picker and the list before the folder goes: nothing can open it meanwhile.
-    let (listed, rows) = (stacks, storage)
     stacks.removeAll { $0.id == id }
     storage.removeAll { $0.id == id }
     storageDeletes += 1
     deletingStacks.insert(id)
     defer { deletingStacks.remove(id) }
     do {
-      try await Self.delete(id, store: store, folder: folder, open: openStackID)
+      try await Self.delete(id, store: store, folder: folder, open: open)
     } catch {
-      (stacks, storage) = (listed, rows)
+      // The store as it is now, never a snapshot: another delete may have finished meanwhile.
+      deletingStacks.remove(id)
+      stacks = (try? store.stacks().filter { !deletingStacks.contains($0.id) }) ?? stacks
       self.error = UserFacingError(error)
+      await listStorage()
       return
     }
     stacks = (try? store.stacks()) ?? stacks

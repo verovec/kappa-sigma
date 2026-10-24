@@ -139,7 +139,9 @@ struct ProjectStoreStackDeleteTests {
     defer {
       try? FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: locked.path)
     }
-    try store.deleteStack(id: stack.id, packageFolder: package.url, openStackID: nil)
+    let folderGone = try store.deleteStack(
+      id: stack.id, packageFolder: package.url, openStackID: nil)
+    #expect(!folderGone, "the caller is told nothing left the disk")
     #expect(try store.stack(id: stack.id) == nil)
     #expect(Self.exists("stacks/A/history/1.fits", in: package.url))
   }

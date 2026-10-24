@@ -24,6 +24,8 @@ package final class RetentionReview {
   private let recentURLs: @MainActor () -> [URL]
   private let openProjects: @MainActor () -> Set<String>
   private let now: @Sendable () -> Int64
+  /// Bumped by `postpone`: a scan that started before writes no sheet.
+  @ObservationIgnored private var postponements = 0
   private static let snooze: Int64 = 7 * 86_400_000
 
   /// A review of `recentURLs` under `setting`; `openProjects` are the keys (`WelcomeModel.key`)
@@ -49,9 +51,13 @@ package final class RetentionReview {
     guard policy.mode == .automatic || setting.snoozedUntil <= stamp else { return }
     let open = openProjects()
     let urls = recentURLs().filter { !open.contains(WelcomeModel.key($0)) }
+    let postponed = postponements
     let found = await Self.candidates(urls, policy: policy, now: stamp)
     switch policy.mode {
-    case .ask: pending = found
+    case .ask:
+      // The welcome window closed while the folders were measured: asked again next launch.
+      guard postponed == postponements else { return }
+      pending = found
     case .automatic: record(await deleteEach(found))
     }
   }
@@ -100,6 +106,7 @@ package final class RetentionReview {
 
   /// Closes the sheet without a decision (Escape): asked again at the next launch.
   package func postpone() {
+    postponements += 1
     pending = []
   }
 
@@ -150,11 +157,9 @@ package final class RetentionReview {
         let usage = try? ProjectPackage.readUsage(
           at: url, chosenKey: ProjectWindowModel.stackSettingKey)
       else { return [] }
-      return policy.candidates(
-        usage.stacks, exportCounts: usage.exportCounts, protected: usage.protected,
-        since: usage.since, now: now
-      ).map { stack in
-        RetentionCandidate(
+      return policy.candidates(in: usage, now: now).compactMap { stack in
+        guard !Task.isCancelled else { return nil }
+        return RetentionCandidate(
           project: url, stack: stack,
           bytes: LeftoverSweep.allocatedBytes(url.appendingPathComponent(stack.bundlePath)))
       }
@@ -173,11 +178,7 @@ package final class RetentionReview {
       let usage = try? ProjectPackage.readUsage(
         at: project, chosenKey: ProjectWindowModel.stackSettingKey)
     else { return [] }
-    let still = Set(
-      policy.candidates(
-        usage.stacks, exportCounts: usage.exportCounts, protected: usage.protected,
-        since: usage.since, now: now
-      ).map(\.id))
+    let still = Set(policy.candidates(in: usage, now: now).map(\.id))
     let current = candidates.filter { still.contains($0.stack.id) }
     guard !current.isEmpty else { return [] }
     let package: ProjectPackage
@@ -189,7 +190,10 @@ package final class RetentionReview {
     }
     defer { try? package.closeKeepingWAL() }
     return RetentionPolicy.delete(current) {
-      try package.store.deleteStack(id: $0.stack.id, packageFolder: project, openStackID: nil)
+      // A folder that stayed freed nothing: not reported as deleted (it is a 0113 leftover).
+      guard
+        try package.store.deleteStack(id: $0.stack.id, packageFolder: project, openStackID: nil)
+      else { throw FolderStayed() }
     }
   }
 
@@ -205,6 +209,8 @@ package final class RetentionReview {
       logger.error("could not keep stacks of \(project.path): \(error)")
     }
   }
+
+  private struct FolderStayed: Error {}
 
   private nonisolated static let logger = Logger(
     subsystem: "fr.astrostack", category: "App/retention")

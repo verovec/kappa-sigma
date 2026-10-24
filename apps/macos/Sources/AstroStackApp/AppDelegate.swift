@@ -8,7 +8,7 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
   /// Set once AppKit first asked: `-openImage` only holds the welcome window back at launch,
   /// whenever AppKit asks then (restoration may defer it past `applicationDidFinishLaunching`).
   private var askedOnce = false
-  /// Armed by a real launch only (a test never runs `applicationDidFinishLaunching`): the
+  /// Armed by a real launch only (a test never runs `applicationWillFinishLaunching`): the
   /// retention review runs once, the first time the app has no document to show (card 0114).
   private var retentionArmed = false
 
@@ -32,12 +32,17 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
     return true
   }
 
+  /// Arms the retention review before AppKit can ask for an untitled document: a plain launch
+  /// asks it before `applicationDidFinishLaunching`.
+  package func applicationWillFinishLaunching(_ notification: Notification) {
+    retentionArmed = true
+  }
+
   /// `-openImage <path>` opens that FITS in the viewer at launch; `-openRun <folder>` opens a
   /// legacy run into the open project, or an untitled one so the run is still recorded.
   package func applicationDidFinishLaunching(_ notification: Notification) {
     Task { await Self.openLaunchArguments(UserDefaults.standard) }
     Task { await Self.sweepLeftovers() }
-    retentionArmed = true
   }
 
   /// What a killed run left (its Siril, its tens of GB of work files, an untitled project) goes

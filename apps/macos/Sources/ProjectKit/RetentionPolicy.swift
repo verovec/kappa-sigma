@@ -49,6 +49,14 @@ package struct RetentionPolicy: Equatable, Sendable {
     .sorted { $0.id < $1.id }
   }
 
+  /// The candidates of a project read by `ProjectPackage.readUsage`: the one rule the sheet and
+  /// the delete-time re-check share.
+  package func candidates(in usage: StackUsage, now: Int64) -> [ProjectStack] {
+    candidates(
+      usage.stacks, exportCounts: usage.exportCounts, protected: usage.protected,
+      since: usage.since, now: now)
+  }
+
   /// When `stack` was last used: its last opening in the Studio, else its last write (a paused
   /// run completed by Continue was written when it finished, not when it started).
   static func lastUse(_ stack: ProjectStack) -> Int64 {

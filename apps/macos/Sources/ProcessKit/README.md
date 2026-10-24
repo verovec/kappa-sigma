@@ -177,7 +177,8 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   Gains 0 (the defaults) copy the head bit for bit; a pixel or plane nothing is added to keeps its bits. The
   bundle's `continuum_k` is a suggestion whose reason names its reference plane
   (`continuumReason(reference:)`; clamped into 0…5 and offered only for a line with a gain, like the
-  screens' k), never a default (R2). Pinned against `LineInjectionOracle`
+  screens' k), never a default (R2); so is a black point at the line's sky (its median − k × the
+  reference's). Pinned against `LineInjectionOracle`
   (max |Δ| ≤ 1e-6). A main step reads the injecting line layers, and the broadband ones once k > 0
   (`layersRead`, card 0118); usual order: after denoise, before HDR. Rejected: more combination
   slots (0054's one source per slot), more boost on the screens (non-linear).

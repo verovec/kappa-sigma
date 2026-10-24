@@ -3201,6 +3201,22 @@
         }
       }
     },
+    "the line's sky level on the stack, after its continuum: below it nothing is added": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the line's sky level on the stack, after its continuum: below it nothing is added"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "le niveau de ciel de la raie à l’empilement, après son continuum : rien n’est ajouté en dessous"
+          }
+        }
+      }
+    },
     "the noise measured on the image's finest starlet scale (median of its planes)": {
       "localizations": {
         "en": {

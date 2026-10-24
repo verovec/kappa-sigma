@@ -50,4 +50,34 @@ extension LineInjectionProcessTests {
     let out = try Self.render(["haGain": 1, "haBlack": 0.15], base: base)
     #expect(out[0][index].bitPattern == (-0.0 as Float).bitPattern)
   }
+
+  @Test("the black point is offered at the line's sky: its median, less k × the reference's")
+  func testBlackSuggestion() throws {
+    let device = try #require(MTLCreateSystemDefaultDevice())
+    let reason = try #require(LineInjectionProcess.suggestionReasons.last)
+    var layers = Self.layerStats
+    layers["RGB"] = LayerStats(
+      channels: [0.04, 0.03, 0.02].map {
+        ChannelStats(median: $0, madn: 0.001, minimum: 0, maximum: 1)
+      })
+    let plain = try LineInjectionProcess(
+      params: Self.params(["haGain": 1, "siiGain": 1]), device: device)
+    let black = plain.suggestions(stats: LayerStats(channels: []), layers: layers)
+      .filter { $0.paramID.hasSuffix("Black") }
+    #expect(
+      black == [
+        Suggestion(paramID: "haBlack", value: .number(0.05), reason: reason),
+        Suggestion(paramID: "siiBlack", value: .number(0.03), reason: reason),
+      ])
+    let subtracted = try LineInjectionProcess(
+      params: Self.params(["haGain": 1, "haContinuumK": 0.5]), device: device)
+    let derived = subtracted.suggestions(stats: LayerStats(channels: []), layers: layers)
+      .first { $0.paramID == "haBlack" }
+    guard case .number(let value)? = derived?.value else {
+      Issue.record("no black point offered with k > 0")
+      return
+    }
+    #expect(abs(value - (0.05 - 0.5 * 0.04)) <= 1e-12)
+    #expect(subtracted.params.number("haBlack") == 0, "offered, never applied")
+  }
 }

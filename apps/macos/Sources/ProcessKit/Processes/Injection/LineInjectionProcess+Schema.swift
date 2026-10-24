@@ -34,7 +34,8 @@ extension LineInjectionProcess {
 
   /// The reasons the panel shows next to a suggestion: English keys of the catalog.
   ///
-  /// The first is the emission screens' own, for a reference plane this list does not name.
+  /// The first is the emission screens' own, for a reference plane this list does not name; the
+  /// last is the black point's.
   package static let suggestionReasons = [
     "the continuum scale fitted on the stack",
     "the continuum scale fitted on the stack against the L layer",
@@ -44,6 +45,7 @@ extension LineInjectionProcess {
     "the continuum scale fitted on the stack against the colour base's red plane",
     "the continuum scale fitted on the stack against the colour base's green plane",
     "the continuum scale fitted on the stack against the colour base's blue plane",
+    "the line's sky level on the stack, after its continuum: below it nothing is added",
   ]
 
   /// The broadband layers a continuum is fitted against, in the canonical filter order (pinned
@@ -64,19 +66,44 @@ extension LineInjectionProcess {
     return suggestionReasons[index ?? 0]
   }
 
-  /// The fitted continuum scale of every line whose bundle layer carries one with its reference
-  /// plane, inside the schema's range as the emission screens offer it (the suggested value is
-  /// the one applied); never applied by the process (R2).
+  /// For every line that injects (as the screens offer only for an enabled line): the fitted
+  /// continuum scale with its reference plane, inside the schema's range as the screens offer it,
+  /// and a black point at the line's sky level; never applied by the process (R2).
   package func suggestions(stats: LayerStats, layers: [String: LayerStats]) -> [Suggestion] {
-    // Only for a line that injects, as the screens offer k only for an enabled line.
-    EmissionLine.allCases.compactMap { line in
-      guard Self.injects(line, params: params), let fit = line.continuumFit(in: layers),
-        case .number(_, let bounds)? = Self.schema.spec(line.id("ContinuumK"))?.kind
-      else { return nil }
-      return Suggestion(
-        paramID: line.id("ContinuumK"),
-        value: .number(min(max(fit.k, bounds.lowerBound), bounds.upperBound)),
-        reason: Self.continuumReason(reference: fit.reference))
+    EmissionLine.allCases.filter { Self.injects($0, params: params) }.flatMap { line in
+      [continuumSuggestion(line, layers: layers), blackSuggestion(line, layers: layers)]
+        .compactMap { $0 }
     }
+  }
+
+  /// The bundle's continuum scale of `line`, clamped into the schema's range.
+  private func continuumSuggestion(_ line: EmissionLine, layers: [String: LayerStats])
+    -> Suggestion?
+  {
+    guard let fit = line.continuumFit(in: layers),
+      case .number(_, let bounds)? = Self.schema.spec(line.id("ContinuumK"))?.kind
+    else { return nil }
+    return Suggestion(
+      paramID: line.id("ContinuumK"),
+      value: .number(min(max(fit.k, bounds.lowerBound), bounds.upperBound)),
+      reason: Self.continuumReason(reference: fit.reference))
+  }
+
+  /// The sky level of the excess of `line` with the current k, as a black point.
+  ///
+  /// Its bundle median − k × the reference plane's median (derived, never measured, R2); none when
+  /// the stats are missing or the level is not inside 0…1.
+  private func blackSuggestion(_ line: EmissionLine, layers: [String: LayerStats]) -> Suggestion? {
+    guard let median = layers[line.layerID]?.channels.first?.median else { return nil }
+    var sky = median
+    if Self.subtracts(line, params: params) {
+      guard let token = line.continuumFit(in: layers)?.reference,
+        let reference = LayerPlane(token).stats(in: layers)
+      else { return nil }
+      sky -= params.number(line.id("ContinuumK")) * reference.median
+    }
+    guard (0...1).contains(sky) else { return nil }
+    return Suggestion(
+      paramID: line.id("Black"), value: .number(sky), reason: Self.suggestionReasons.last ?? "")
   }
 }

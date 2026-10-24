@@ -154,7 +154,7 @@ struct LineInjectionProcessTests {
     let suggestions = process.suggestions(
       stats: LayerStats(channels: []), layers: Self.layerStats)
     #expect(
-      suggestions == [
+      suggestions.filter { $0.paramID.hasSuffix("ContinuumK") } == [
         Suggestion(
           paramID: "haContinuumK", value: .number(0.6),
           reason: "the continuum scale fitted on the stack against the colour base's red plane"),

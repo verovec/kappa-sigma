@@ -52,7 +52,7 @@ enum LineInjectionOracle {
           guard weight != 0 else { continue }
           let continuum = Float(line.k) == 0 ? 0 : Float(line.k) * line.reference[index]
           let excess = line.plane[index] - continuum - Float(line.black)
-          // fmax in the kernel: a NaN excess adds nothing; no excess keeps the pixel's bits.
+          // As the kernel: only a positive excess adds (NaN or none keeps the pixel's bits).
           guard excess > 0 else { continue }
           out += weight * excess
         }

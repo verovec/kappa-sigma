@@ -1,0 +1,32 @@
+Exécution de la commande : load
+1792833148: running command load
+HDU 1: type=0, EXTNAME=
+Lecture FITS : fichier input.fits, 3 canal(aux), 6248x4013 pixels, 32bits
+Exécution de la commande : platesolve
+1792833148: running command platesolve
+Utilisation de la taille de pixel fournie : 3.76
+En utilisant la distance focale fournie : 248.00
+Résolution astrométrique de l'image de local Gaia DR3 astrométrie pour un champ de vision de 5.00 degrés, en utilisant une magnitude limite de 11.74
+Findstar : en cours pour le canal 1...
+Préparation de l'environnement virtuel python : <VENV>.
+Vérifier que le module python est à jour...
+Utilisation de 2000 étoiles détectées dans l'image.
+Installation / mise à jour du module python en arrière-plan. Cela peut prendre quelques secondes...
+Recherche de 1908 étoiles dans le catalogue Gaia DR3 astrométrie
+sig=2.3236e-01 Nr=823 Nm=985 sx=4.1803e-01 sy=4.6889e-01
+Le haut est à +82.28 deg (sens inverse des aiguilles d'une montre) par rapport au Nord
+Résolution :       3.119 arcsec/px
+Focale :   248.62 mm
+Pixel dim. :       3.76 µm
+Champ de vision :   05d 24m 50.51s x 03d 28m 38.47s
+Centre de l'image : alpha : 02 51 26.731, delta : +60 23 32.014
+était de 3.61 arcmin par rapport à la valeur initiale
+La résolution de Siril a réussi.
+progress: , 0.00%
+Exécution de la commande : save
+1792833150: running command save
+Fichier FITS enregistré : fichier solved.fits, 3 canal(aux), 6248x4013 pixels, 32bits
+Définir le répertoire de travail à '<WORK>'
+L'exécution du script s'est terminée avec succès.
+Temps d'exécution total: 2.47 s
+closing pipes

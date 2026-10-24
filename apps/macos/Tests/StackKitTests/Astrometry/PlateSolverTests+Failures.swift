@@ -30,6 +30,20 @@ extension PlateSolverTests {
     ) { try PlateSolver.solved(log: log, file: file, kept: Self.kept) }
   }
 
+  @Test(
+    "a French Siril's solve is not read: English is forced at launch, never translated (0124)",
+    .scratchDirectory)
+  func testSolved_FrenchLogIsNotRead() throws {
+    let file = (try ScratchDirectory.url).appendingPathComponent("solved.fits")
+    let error = #expect(throws: PlateSolveError.self) {
+      try PlateSolver.solved(log: try Self.transcript("ic1848-fr"), file: file, kept: Self.kept)
+    }
+    guard case .noReport = error else {
+      Issue.record("expected noReport, got \(String(describing: error))")
+      return
+    }
+  }
+
   @Test("Siril saying it solved, its report unread, is this reader's miss", .scratchDirectory)
   func testSolved_ReportUnread() throws {
     let file = (try ScratchDirectory.url).appendingPathComponent("solved.fits")

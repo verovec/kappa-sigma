@@ -229,6 +229,9 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
   /// The Studio's mask « Invert » (card 0087).
   package static let studioMaskInvert = stageControl("studio", "mask.invert")
 
+  /// « Clear mask » under a panel that does not take the mask (card 0111).
+  package static let studioMaskClear = stageControl("studio", "mask.clear")
+
   /// The Studio's « Apply » (card 0087).
   package static let studioApply = stageControl("studio", "apply")
 

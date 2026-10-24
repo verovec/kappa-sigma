@@ -8,6 +8,11 @@ extension StudioWorkspaceModel {
     registry.type(id: id)?.title ?? id
   }
 
+  /// Clears the mask (card 0111): the row under a panel that does not take it offers this.
+  package func clearMask() {
+    mask = nil
+  }
+
   /// The mask of the head, one plane, or `nil` without a mask — and for a geometric process,
   /// which moves the whole grid and has no mask row (card 0090).
   func maskImage() throws -> AstroImage? {

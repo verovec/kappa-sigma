@@ -48,16 +48,22 @@ package struct StudioSideView: View {
     }
   }
 
-  /// What the panel's process asks for below its parameters: the mask row, or its own rows.
+  /// What the panel's process asks for below its parameters: the mask row, or its own rows —
+  /// and, where the process takes no mask, the mask still set with its Clear (card 0111).
   @ViewBuilder
   private func rows(under panel: ProcessPanelModel) -> some View {
     if panel.type is any GeometricProcess.Type {
       // Geometry moves the whole grid: no mask, the output's size and solution instead
       // (none while the values leave no pixel: the panel shows that failure).
+      StudioInactiveMaskRow(model: model, geometry: true)
       if let output = model.geometryOutput { GeometryExtras(model: model, output: output) }
     } else if panel.type.id == BackgroundExtractionProcess.id {
       // The extraction runs on the whole image and its layers: no mask, its own rows.
+      StudioInactiveMaskRow(model: model, geometry: false)
       StudioBatchRows(model: model)
+    } else if panel.type.runsTool(panel.params) {
+      // Any other host tool (plate solve, SPCC) works on the whole image too.
+      StudioInactiveMaskRow(model: model, geometry: false)
     } else {
       StudioMaskRow(model: model)
     }

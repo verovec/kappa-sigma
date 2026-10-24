@@ -74,22 +74,22 @@ bad=$(./scripts/check-links.sh || true)
 # 9. The tracked French README mirrors the English one (card 0064): as many `## ` sections outside
 #    code fences, and the same commands in its ```bash blocks. Comments (after two spaces or more)
 #    are translated, so they are dropped first; other blocks, such as the stage diagram, are prose.
-#    Both pages are read from the index (`git show :page`), like every other rule's file list.
+#    Each page is read once from the index (`git show :page`), like the file list; a page git
+#    cannot show (a merge conflict leaves no stage 0) is reported, never compared as empty.
 commands() {
-  git show ":$1" | awk '/^```bash/ { inside = 1; next } /^```/ { inside = 0 } inside' \
-    | sed -E 's/[[:space:]]{2,}#.*$//'
+  awk '/^```bash/ { inside = 1; next } /^```/ { inside = 0 } inside' | sed -E 's/[[:space:]]{2,}#.*$//'
 }
-sections() {
-  git show ":$1" | awk '/^```/ { fenced = !fenced; next } !fenced && /^## / { n++ } END { print n + 0 }'
-}
+sections() { awk '/^```/ { fenced = !fenced; next } !fenced && /^## / { n++ } END { print n + 0 }'; }
 if tracked README.fr.md; then
   if ! tracked README.md; then
     report "README.fr.md is tracked without the README.md it mirrors"
+  elif ! en=$(git show :README.md 2>/dev/null) || ! fr=$(git show :README.fr.md 2>/dev/null); then
+    report "README.md or README.fr.md cannot be read from the index (unresolved conflict?)"
   else
-    [ "$(commands README.md)" = "$(commands README.fr.md)" ] \
+    [ "$(commands <<<"$en")" = "$(commands <<<"$fr")" ] \
       || report "README.fr.md commands differ from README.md (translate the comments only)"
-    en=$(sections README.md) fr=$(sections README.fr.md)
-    [ "$en" = "$fr" ] || report "README.fr.md has $fr sections, README.md has $en"
+    en_n=$(sections <<<"$en") fr_n=$(sections <<<"$fr")
+    [ "$en_n" = "$fr_n" ] || report "README.fr.md has $fr_n sections, README.md has $en_n"
   fi
 fi
 

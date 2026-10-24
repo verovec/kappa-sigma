@@ -142,6 +142,27 @@ struct RepoHygieneTests {
     #expect(gate.status == 0, "\(gate.output)")
   }
 
+  @Test("a French README in an unresolved merge conflict is reported", .scratchDirectory)
+  func testNoForbiddenArtifacts_frenchMirrorConflict() throws {
+    let tree = try Self.cleanTree()
+    let page = tree.appendingPathComponent("README.fr.md")
+    let commit = ["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-am", "x"]
+    try Self.french.write(to: page, atomically: true, encoding: .utf8)
+    try Self.git(["add", "-A", "-f"], in: tree)
+    try Self.git(commit, in: tree)
+    try Self.git(["checkout", "-q", "-b", "other"], in: tree)
+    try (Self.french + "un\n").write(to: page, atomically: true, encoding: .utf8)
+    try Self.git(commit, in: tree)
+    try Self.git(["checkout", "-q", "-"], in: tree)
+    try (Self.french + "deux\n").write(to: page, atomically: true, encoding: .utf8)
+    try Self.git(commit, in: tree)
+    let merge = try Self.run("/usr/bin/git", ["merge", "-q", "other"], in: tree)
+    try #require(merge.status != 0, "the merge conflicts")
+    let gate = try Self.run("/bin/bash", ["scripts/hygiene.sh"], in: tree)
+    #expect(gate.status == 1)
+    #expect(gate.output.contains("cannot be read from the index"), "\(gate.output)")
+  }
+
   /// A real repository lists more than a pipe holds after README.fr.md: the rule must still run
   /// (a `grep -q` that exits early would kill the writer, and `pipefail` would skip the check).
   @Test("the French README check runs on a tree whose file list outgrows a pipe", .scratchDirectory)

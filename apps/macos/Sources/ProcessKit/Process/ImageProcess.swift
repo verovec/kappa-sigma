@@ -70,6 +70,13 @@ package protocol ImageProcess {
   /// True when the process reads the image's plate solution (colour calibration): greyed until
   /// the head carries one.
   static var requiresSolution: Bool { get }
+
+  /// Which bundle layers it may edit on a branch (card 0118); `.never` by default.
+  static var branchable: BranchUse { get }
+
+  /// The bundle layers `params` make it read besides its input, among `layerIDs` (card 0118: a
+  /// main step is stale once a branch it read moved); none by default.
+  static func layersRead(_ params: ParamSet, layerIDs: Set<String>) -> Set<String>
 }
 
 extension ImageProcess {
@@ -109,6 +116,12 @@ extension ImageProcess {
 
   /// No solution needed.
   package static var requiresSolution: Bool { false }
+
+  /// Main history only.
+  package static var branchable: BranchUse { .never }
+
+  /// Its input only.
+  package static func layersRead(_ params: ParamSet, layerIDs: Set<String>) -> Set<String> { [] }
 }
 
 /// Where a process belongs in a pipeline.

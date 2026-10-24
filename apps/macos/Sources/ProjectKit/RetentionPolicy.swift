@@ -5,7 +5,7 @@ internal import OSLog
 /// Storage).
 ///
 /// A candidate is a finished stack never exported, unused for more than `days` (its last open in
-/// the Studio, else its creation), neither its project's newest nor one it protects (chosen for
+/// the Studio or its last write, whichever is later), neither its project's newest nor one it protects (chosen for
 /// its Studio, kept by the user). Exported stacks are never
 /// candidates: an export may need a re-export. Pure over its inputs: the caller reads the rows,
 /// measures the folders and deletes.
@@ -22,6 +22,7 @@ package struct RetentionPolicy: Equatable, Sendable {
   package static let defaultDays = 30
   private static let dayMs: Int64 = 86_400_000
 
+  /// Ask at launch, or delete automatically.
   package var mode: Mode
   /// Days without use before a stack never exported is a candidate.
   package var days: Int
@@ -41,9 +42,15 @@ package struct RetentionPolicy: Equatable, Sendable {
     let kept = protected.union(done.map(\.id).max().map { [$0] } ?? [])
     return done.filter { stack in
       !kept.contains(stack.id) && (exportCounts[stack.id] ?? 0) == 0
-        && now - (stack.openedAt ?? stack.createdAt) > Int64(days) * Self.dayMs
+        && now - Self.lastUse(stack) > Int64(days) * Self.dayMs
     }
     .sorted { $0.id < $1.id }
+  }
+
+  /// When `stack` was last used: its last opening in the Studio, else its last write (a paused
+  /// run completed by Continue was written when it finished, not when it started).
+  static func lastUse(_ stack: ProjectStack) -> Int64 {
+    max(stack.openedAt ?? 0, stack.updatedAt, stack.createdAt)
   }
 
   /// Deletes each candidate (the user confirmed, or the policy is automatic) and logs it.

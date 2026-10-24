@@ -13,6 +13,7 @@ struct RetentionPolicyTests {
     var name: String
     var ageDays: Int64
     var openedDaysAgo: Int64?
+    var writtenDaysAgo: Int64?
     var exports: Int
     var status: ProjectStack.Status = .done
     var candidate: Bool
@@ -32,15 +33,19 @@ struct RetentionPolicyTests {
       name: "old, last opened 31 days ago", ageDays: 90, openedDaysAgo: 31, exports: 0,
       candidate: true),
     Case(name: "a paused run", ageDays: 90, exports: 0, status: .paused, candidate: false),
+    Case(
+      name: "old, continued and finished 2 days ago", ageDays: 90, writtenDaysAgo: 2, exports: 0,
+      candidate: false),
   ]
 
   static func stack(
-    id: Int64, ageDays: Int64, openedDaysAgo: Int64? = nil, status: ProjectStack.Status = .done
+    id: Int64, ageDays: Int64, openedDaysAgo: Int64? = nil, writtenDaysAgo: Int64? = nil,
+    status: ProjectStack.Status = .done
   ) -> ProjectStack {
     ProjectStack(
       id: id, bundlePath: "stacks/\(id)", sourceIDs: [], paramsJSON: "{}", status: status,
       openedAt: openedDaysAgo.map { now - $0 * day }, createdAt: now - ageDays * day,
-      updatedAt: now - ageDays * day)
+      updatedAt: now - (writtenDaysAgo ?? ageDays) * day)
   }
 
   static let policy = RetentionPolicy(mode: .ask, days: 30)
@@ -48,7 +53,8 @@ struct RetentionPolicyTests {
   @Test("only never exported, unused for more than N days, not the newest", arguments: cases)
   func testCandidates(_ row: Case) {
     let older = Self.stack(
-      id: 1, ageDays: row.ageDays, openedDaysAgo: row.openedDaysAgo, status: row.status)
+      id: 1, ageDays: row.ageDays, openedDaysAgo: row.openedDaysAgo,
+      writtenDaysAgo: row.writtenDaysAgo, status: row.status)
     let newest = Self.stack(id: 99, ageDays: 400)
     let found = Self.policy.candidates(
       [older, newest], exportCounts: row.exports > 0 ? [1: row.exports] : [:], now: Self.now)

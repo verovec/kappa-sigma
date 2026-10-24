@@ -147,14 +147,17 @@ public final class ProjectPackage {
     try pool.backup(to: target)
   }
 
-  /// Checkpoints (passively) and closes the database, leaving `-wal` and `-shm` in place; the
-  /// package must not be used afterwards.
+  /// Checkpoints and closes the database, leaving `-wal` and `-shm` in place; the package must
+  /// not be used afterwards.
   ///
   /// For a short background write to a project a window may open at the same moment (the
   /// retention review, card 0114): removing the WAL files under another connection could corrupt
-  /// it, so they stay for whoever closes the project last.
+  /// it, so they stay (emptied by the truncating checkpoint, `project.db` holding every change)
+  /// for whoever closes the project last. A checkpoint another connection blocks stays passive.
   package func closeKeepingWAL() throws {
-    try pool.writeWithoutTransaction { db in _ = try db.checkpoint(.passive) }
+    try pool.writeWithoutTransaction { db in
+      if (try? db.checkpoint(.truncate)) == nil { _ = try db.checkpoint(.passive) }
+    }
     try pool.close()
   }
 

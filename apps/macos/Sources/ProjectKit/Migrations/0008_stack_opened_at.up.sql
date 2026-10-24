@@ -2,8 +2,8 @@
 -- shows it, and the retention policy counts a stack's age from its last use (opened, else
 -- created): a stack being worked on is never offered for deletion. NULL = never opened.
 ALTER TABLE stacks ADD COLUMN opened_at INTEGER;
--- Before 0008 nobody recorded openings: a stack counts from its last Studio step, else from the
--- upgrade itself, so nothing is « old » on upgrade (a stack only looked at is not lost).
+-- Before 0008 nobody recorded openings: a stack worked on counts from its last Studio step (unused
+-- since then); one never worked on counts from the upgrade, since it may have been looked at.
 UPDATE stacks SET opened_at = COALESCE(
   (SELECT MAX(h.created_at) FROM history_steps h JOIN images i ON h.image_id = i.id
    WHERE i.stack_id = stacks.id),

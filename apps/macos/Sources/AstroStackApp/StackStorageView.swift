@@ -47,7 +47,7 @@ struct StackStorageView: View {
   }
 
   @ViewBuilder private func deleteButton(_ row: StackStorageRow) -> some View {
-    let open = row.id == model.openStackID
+    let open = model.isStackOpen(row.id)
     Button(.app("Delete…"), role: .destructive) { confirming = row }
       .disabled(open || model.isStacking)
       .help(open ? Text(.app("The Studio shows this stack.")) : Text(verbatim: ""))

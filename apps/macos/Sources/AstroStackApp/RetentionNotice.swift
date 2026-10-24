@@ -19,7 +19,7 @@ struct RetentionNotice: View {
         Spacer()
         Button(.app("OK")) { review.dismissRemoved() }
       }
-      .help(Text(verbatim: review.removed.map(\.stack.bundlePath).joined(separator: "\n")))
+      .help(Text(verbatim: review.removed.map(\.label).joined(separator: "\n")))
     }
   }
 

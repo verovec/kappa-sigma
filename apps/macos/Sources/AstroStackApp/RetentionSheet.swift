@@ -23,7 +23,7 @@ package struct RetentionSheet: View {
         .foregroundStyle(DesignColor.textSecondary.color)
       List(review.pending) { candidate in
         HStack {
-          Text(verbatim: name(candidate))
+          Text(verbatim: candidate.label)
           Spacer()
           Text(verbatim: size(candidate.bytes)).monospacedDigit()
         }
@@ -43,11 +43,6 @@ package struct RetentionSheet: View {
   }
 
   private var total: Int64 { review.pending.reduce(0) { $0 + $1.bytes } }
-
-  /// « M 31 · stacks/20261022_202418 ».
-  private func name(_ candidate: RetentionCandidate) -> String {
-    "\(candidate.project.deletingPathExtension().lastPathComponent) · \(candidate.stack.bundlePath)"
-  }
 
   private func size(_ bytes: Int64) -> String {
     AstroFormat(locale: locale).bytes(bytes)

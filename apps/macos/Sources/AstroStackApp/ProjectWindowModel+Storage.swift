@@ -72,6 +72,11 @@ extension ProjectWindowModel {
     }?.id ?? workspaceStackID
   }
 
+  /// True for the stack the Studio reads or is loading: it cannot be deleted.
+  package func isStackOpen(_ id: Int64) -> Bool {
+    id == openStackID || id == workspaceStackID
+  }
+
   /// Deletes stack `id`, its history and its folder, off the main actor; the stack the Studio
   /// reads (or loads) is refused.
   ///
@@ -79,8 +84,7 @@ extension ProjectWindowModel {
   /// when the stacks change.
   package func deleteStack(_ id: Int64) async {
     guard !isStacking, let store = store(), let folder = folder() else { return }
-    let open = id == workspaceStackID ? id : openStackID
-    guard id != open else {
+    guard !isStackOpen(id) else {
       error = .stackOpen
       return
     }
@@ -89,7 +93,7 @@ extension ProjectWindowModel {
     stacks.removeAll { $0.id == id }
     storage.removeAll { $0.id == id }
     do {
-      try await Self.delete(id, store: store, folder: folder, open: open)
+      try await Self.delete(id, store: store, folder: folder, open: openStackID)
     } catch {
       (stacks, storage) = (listed, rows)
       self.error = UserFacingError(error)

@@ -609,18 +609,18 @@
         }
       }
     },
-    "A host tool works on the whole image: clear the mask first (Mask row below).": {
+    "A host tool works on the whole image: clear the mask first (Clear Mask, above).": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A host tool works on the whole image: clear the mask first (Mask row below)."
+            "value": "A host tool works on the whole image: clear the mask first (Clear Mask, above)."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un outil externe travaille sur toute l’image : retirez d’abord le masque (ligne Masque ci-dessous)."
+            "value": "Un outil externe travaille sur toute l’image : effacez d’abord le masque (Effacer le masque, au-dessus)."
           }
         }
       }
@@ -8732,7 +8732,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Masque actif : %@, non utilisé par ce traitement ; Appliquer reste bloqué tant qu'il n'est pas effacé."
+            "value": "Masque actif : %@, non utilisé par ce traitement ; Appliquer reste bloqué tant qu’il n’est pas effacé."
           }
         }
       }
@@ -8748,7 +8748,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Masque actif : %@, ignoré par ce traitement : il déplace toute l'image."
+            "value": "Masque actif : %@, ignoré par ce traitement : il déplace toute l’image."
           }
         }
       }
@@ -8765,6 +8765,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Effacer le masque"
+          }
+        }
+      }
+    },
+    "%@, inverted": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, inverted"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, inversé"
           }
         }
       }

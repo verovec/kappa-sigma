@@ -253,7 +253,7 @@ extension ColourCalibrationProcessTests {
     #expect(await workspace.runTool() == false)
     #expect(
       workspace.failure
-        == .app("A host tool works on the whole image: clear the mask first (Mask row below)."))
+        == .app("A host tool works on the whole image: clear the mask first (Clear Mask, above)."))
     #expect(workspace.studio.steps.count == steps && opened.siril.calls.isEmpty)
   }
 }
@@ -285,6 +285,6 @@ extension ColourCalibrationProcessTests {
     #expect(workspace.studio.steps.count == steps)
     #expect(
       workspace.failure
-        == .app("A host tool works on the whole image: clear the mask first (Mask row below)."))
+        == .app("A host tool works on the whole image: clear the mask first (Clear Mask, above)."))
   }
 }

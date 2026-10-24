@@ -8,9 +8,11 @@ extension StudioWorkspaceModel {
     registry.type(id: id)?.title ?? id
   }
 
-  /// Clears the mask (card 0111): the row under a panel that does not take it offers this.
+  /// Clears the mask (card 0111), and the refusal it caused: the row under a panel that does
+  /// not take the mask offers this, the mask row's « No mask » too.
   package func clearMask() {
     mask = nil
+    if failure == Self.maskRefusal { failure = nil }
   }
 
   /// The mask of the head, one plane, or `nil` without a mask — and for a geometric process,

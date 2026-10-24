@@ -43,10 +43,10 @@ struct StudioInactiveMaskRowTests {
     workspace.mask = Self.mask
     workspace.choose(GeometryProcess.id)
     #expect(Self.ids(workspace).contains(Self.clear))
-    let (ignored, blocked) = (
-      StudioInactiveMaskRow.note(geometry: true, source: "Stars"),
-      StudioInactiveMaskRow.note(geometry: false, source: "Stars")
-    )
+    var ignored = StudioInactiveMaskRow.note(.ignored, source: "Stars")
+    var blocked = StudioInactiveMaskRow.note(.blocking, source: "Stars")
+    ignored.locale = Locale(identifier: "en")
+    blocked.locale = Locale(identifier: "en")
     #expect(String(localized: ignored).contains("ignored"))
     #expect(String(localized: blocked).contains("blocked"))
   }
@@ -63,8 +63,10 @@ struct StudioInactiveMaskRowTests {
     #expect(workspace.toolRefusal != nil)
     #expect(await workspace.runTool() == false && calls.engines.isEmpty)
 
+    #expect(workspace.failure != nil, "the refusal is shown")
     workspace.clearMask()
     #expect(workspace.mask == nil && workspace.toolRefusal == nil)
+    #expect(workspace.failure == nil, "Clear takes the refusal it answers away")
     #expect(await workspace.runTool())
     #expect(calls.engines.count == 1)
   }
@@ -80,5 +82,23 @@ struct StudioInactiveMaskRowTests {
     workspace.choose(StretchProcess.id)
     #expect(workspace.mask == Self.mask)
     #expect(Self.ids(workspace).contains(Self.source), "a masked process edits it again")
+  }
+
+  @Test("which panels show the row: geometry ignores, a host tool blocks, a process takes it")
+  func testKind() {
+    let empty = { (type: any ImageProcess.Type) in ParamSet(schema: type.schema) }
+    #expect(
+      StudioInactiveMaskRow.kind(for: GeometryProcess.self, params: empty(GeometryProcess.self))
+        == .ignored)
+    #expect(
+      StudioInactiveMaskRow.kind(
+        for: BackgroundExtractionProcess.self, params: empty(BackgroundExtractionProcess.self))
+        == .blocking)
+    #expect(
+      StudioInactiveMaskRow.kind(for: PlateSolveProcess.self, params: empty(PlateSolveProcess.self))
+        == .blocking)
+    #expect(
+      StudioInactiveMaskRow.kind(for: StretchProcess.self, params: empty(StretchProcess.self))
+        == nil)
   }
 }

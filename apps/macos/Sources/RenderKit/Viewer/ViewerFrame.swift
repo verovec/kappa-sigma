@@ -16,6 +16,11 @@ package struct ViewerFrame: Equatable, Sendable {
   package var stf: [STFParameters]?
   /// Tints pixels ≥ 1 red and ≤ 0 blue.
   package var clippingOverlay = false
+  /// The clipping overlay judges the average under each view pixel (zoomed out, card 0110).
+  ///
+  /// Decided on the scale the kernel receives (a `Float`), so the panel never disagrees with the
+  /// GPU just above 1:1.
+  package var clipsOnTheAverage: Bool { clippingOverlay && Float(transform.scale) > 1 }
   /// Current, reference, or split.
   package var compare = Compare.off
   /// The histogram's window; `nil` counts the whole image.

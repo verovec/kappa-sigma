@@ -5,6 +5,8 @@ package import Foundation
 package enum ExecutableCheck {
   /// Where Rosetta 2 lives once installed.
   package static let rosetta = "/Library/Apple/usr/share/rosetta/rosetta"
+  /// What the user runs to install Rosetta 2 (the app never runs it: R2).
+  package static let rosettaCommand = "softwareupdate --install-rosetta --agree-to-license"
 
   /// The CPU types of the Mach-O at `url` (both slices of a universal binary); empty for a script
   /// or anything that is not Mach-O.
@@ -39,7 +41,7 @@ package enum ExecutableCheck {
     guard !found.isEmpty, !found.contains("arm64") else { return nil }
     guard found.contains("x86_64"), !rosettaInstalled else { return nil }
     return "\(path) is an Intel (x86_64) program and Rosetta is not installed: "
-      + "install Rosetta (softwareupdate --install-rosetta) or an Apple-silicon build"
+      + "install Rosetta (\(rosettaCommand)) or an Apple-silicon build"
   }
 
   private static func name(of cpuType: UInt32) -> String {

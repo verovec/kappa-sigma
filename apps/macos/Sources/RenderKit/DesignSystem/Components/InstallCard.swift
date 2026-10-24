@@ -23,7 +23,7 @@ package struct InstallCard: View {
   nonisolated package static func status(of state: InstallCardModel.State) -> DesignStatus {
     switch state {
     case .found: .ok
-    case .outdated: .attention
+    case .outdated, .unusable: .attention
     case .missing, .checking: .unavailable
     }
   }
@@ -37,7 +37,13 @@ package struct InstallCard: View {
     case .checking: .renderKit("Checking…", locale: locale)
     case .found(let url): .renderKit("Installed: \(url.path)", locale: locale)
     case .outdated(let version): .renderKit("Too old: \(version)", locale: locale)
+    case .unusable(let url, _): .renderKit("Installed but cannot run: \(url.path)", locale: locale)
     }
+  }
+
+  /// What to do about an install that cannot run (selectable: it holds the command), else `nil`.
+  nonisolated package static func detail(of state: InstallCardModel.State) -> String? {
+    if case .unusable(_, let reason) = state { reason } else { nil }
   }
 
   package var body: some View {
@@ -52,6 +58,12 @@ package struct InstallCard: View {
       Text(reason)
         .foregroundStyle(DesignColor.textSecondary.color)
         .fixedSize(horizontal: false, vertical: true)
+      if let detail = Self.detail(of: model.state) {
+        Text(verbatim: detail)
+          .font(.callout.monospaced())
+          .textSelection(.enabled)
+          .fixedSize(horizontal: false, vertical: true)
+      }
       HStack(spacing: DesignMetrics.spacingM) {
         Link(destination: installURL) { Text(.renderKit("Install…")) }
           .accessible(.installCard(tool, .install), label: .renderKit("Install…"))

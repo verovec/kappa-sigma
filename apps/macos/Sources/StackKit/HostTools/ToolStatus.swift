@@ -6,11 +6,15 @@ package enum ToolStatus: Equatable, Sendable {
   case missing(path: String)
   /// Installed, but older than the version the app's scripts need.
   case tooOld(path: String, version: String)
+  /// On disk, but this Mac cannot launch it (`reason`: an Intel build without Rosetta, with what
+  /// to install): never called missing, never run.
+  case cannotRun(path: String, reason: String)
 
   /// The path that was looked at.
   package var path: String {
     switch self {
-    case .found(let path, _), .missing(let path), .tooOld(let path, _): path
+    case .found(let path, _), .missing(let path), .tooOld(let path, _), .cannotRun(let path, _):
+      path
     }
   }
 

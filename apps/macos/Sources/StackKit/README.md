@@ -10,7 +10,9 @@ the same oracles.
 
 **StarNet** (card 0055, `StarNet/`): `StarNetRunner.located(by: HostTools)` → `.missing` (no
 binary) or `.cannotRun` (`ExecutableCheck`: an x86_64 build without Rosetta) as
-`StarNetError`, never a fallback; `starless(of:in:onProgress:)` writes a 16-bit TIFF, runs it,
+`StarNetError`, never a fallback. `HostTools.live` already reports such a StarNet as
+`ToolStatus.cannotRun(path:reason:)` (`Probe.refusal`), so every screen says « installed but
+cannot run », never « missing » (card 0108); `starless(of:in:onProgress:)` writes a 16-bit TIFF, runs it,
 reads the TIFF back (`ImageImport`). `StarNetCLI` probes `--machine-info` for the StarNet2 flag
 CLI (`-i/-o`) vs StarNet++ positional; `StarNetProgress` reads every `N.N%` in the unbroken
 `Working: 8.3%Working: 16.7%…` stream. No starless cache yet (legacy `starlessTIFF` reuse).

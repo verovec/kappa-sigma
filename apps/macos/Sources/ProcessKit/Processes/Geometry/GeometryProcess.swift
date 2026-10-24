@@ -46,6 +46,14 @@ package struct GeometryProcess: GeometricProcess {
     "cropLeft": 1, "cropTop": 1, "cropRight": 1, "cropBottom": 1, "angle": 0.1,
   ]
 
+  /// Each crop slides up to one pixel short of the side it crops: a crop that leaves no pixel is
+  /// refused by the plan, a larger typed value is kept as typed (R2).
+  package static func displayRanges(width: Int, height: Int) -> [String: ClosedRange<Double>] {
+    let across = 0...Double(max(width - 1, 0))
+    let down = 0...Double(max(height - 1, 0))
+    return ["cropLeft": across, "cropRight": across, "cropTop": down, "cropBottom": down]
+  }
+
   package let params: ParamSet
   private let exact: MTLComputePipelineState
   private let resample: MTLComputePipelineState

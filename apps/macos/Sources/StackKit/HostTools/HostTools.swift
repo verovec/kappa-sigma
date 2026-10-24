@@ -22,16 +22,20 @@ package struct HostTools: Sendable {
     package var isApp: @Sendable (String) -> Bool
     /// Siril's version at the path, throwing `SirilError` when it is not a usable Siril.
     package var sirilVersion: @Sendable (String) async throws -> String
+    /// Why this Mac cannot launch the executable at the path (`ExecutableCheck`), or `nil`.
+    package var refusal: @Sendable (String) -> String?
 
-    /// A probe answering with these closures.
+    /// A probe answering with these closures; without `refusal`, every executable can launch.
     package init(
       isExecutable: @escaping @Sendable (String) -> Bool,
       isApp: @escaping @Sendable (String) -> Bool,
-      sirilVersion: @escaping @Sendable (String) async throws -> String
+      sirilVersion: @escaping @Sendable (String) async throws -> String,
+      refusal: @escaping @Sendable (String) -> String? = { _ in nil }
     ) {
       self.isExecutable = isExecutable
       self.isApp = isApp
       self.sirilVersion = sirilVersion
+      self.refusal = refusal
     }
 
     /// The file system and `siril-cli --version`.
@@ -41,7 +45,8 @@ package struct HostTools: Sendable {
         guard let executable = Bundle(path: path)?.executableURL else { return false }
         return FileManager.default.isExecutableFile(atPath: executable.path)
       },
-      sirilVersion: { try await SirilTool.verify($0) })
+      sirilVersion: { try await SirilTool.verify($0) },
+      refusal: { ExecutableCheck.refusal(path: $0) })
   }
 
   /// The standard install of GraXpert.
@@ -67,9 +72,16 @@ package struct HostTools: Sendable {
         found(
           override(environment, "GRAXPERT_APP") ?? graxpertDefaultPath, if: probe.isApp)
       case .starnet:
-        found(override(environment, "STARNET_BIN") ?? starnetDefaultPath, if: probe.isExecutable)
+        starnet(at: override(environment, "STARNET_BIN") ?? starnetDefaultPath, probe: probe)
       }
     }
+  }
+
+  /// StarNet is an executable this Mac can launch: the user's StarNet2 is often an Intel build.
+  private static func starnet(at path: String, probe: Probe) -> ToolStatus {
+    guard probe.isExecutable(path) else { return .missing(path: path) }
+    if let reason = probe.refusal(path) { return .cannotRun(path: path, reason: reason) }
+    return .found(path: path, version: nil)
   }
 
   private static func siril(at path: String, probe: Probe, timeout: Duration) async -> ToolStatus {

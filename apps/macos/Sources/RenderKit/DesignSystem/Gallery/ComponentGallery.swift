@@ -18,6 +18,9 @@ package struct ComponentGallery: View {
   package static let installStates: [InstallCardModel.State] = [
     .missing, .checking,
     .found(URL(fileURLWithPath: "/Applications/Siril.app/Contents/MacOS/siril")),
+    .unusable(
+      path: URL(fileURLWithPath: "/usr/local/bin/starnet++"),
+      reason: "softwareupdate --install-rosetta --agree-to-license"),
   ]
 
   /// An untouched curve, then an S curve.
@@ -190,7 +193,7 @@ package struct ComponentGallery: View {
       SectionHeader(.renderKit("Host tools"))
       ForEach(installs.indices, id: \.self) { index in
         InstallCard(
-          tool: ["GraXpert", "StarNet2", "Siril"][index], reason: Self.reasons[index],
+          tool: ["GraXpert", "StarNet2", "Siril", "StarNet++"][index], reason: Self.reasons[index],
           installURL: URL(fileURLWithPath: "/Applications"), model: installs[index])
       }
     }
@@ -211,6 +214,7 @@ package struct ComponentGallery: View {
     .renderKit("GraXpert models and removes the sky background."),
     .renderKit("StarNet separates the stars from the nebula for the star layer."),
     .renderKit("Siril calibrates, registers and stacks the frames."),
+    .renderKit("StarNet separates the stars from the nebula for the star layer."),
   ]
 
   private static func word(for status: DesignStatus) -> LocalizedStringResource {

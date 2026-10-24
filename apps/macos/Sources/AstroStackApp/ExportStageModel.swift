@@ -191,17 +191,22 @@ package final class ExportStageModel {
   }
 
   private func showInstallCard(for error: any Error) {
-    let check = StarSeparation.check(services.tools)
+    let state: InstallCardModel.State
     switch error {
     case StarNetError.missing:
-      installReason = .app("Separates the stars from the nebula.")
-    case StarNetError.cannotRun, StarNetError.probeTimedOut:
-      installReason = UserFacingError(error).message
+      state = .missing
+    case StarNetError.cannotRun(let path, let reason):
+      state = WelcomeModel.cardState(.cannotRun(path: path, reason: reason))
+    case StarNetError.probeTimedOut(let path):
+      let reason = String(localized: UserFacingError(error).message)
+      state = .unusable(path: URL(fileURLWithPath: path), reason: reason)
     default:
       failure = UserFacingError(error)
       return
     }
-    installCard = InstallCardModel(state: .missing, check: check)
+    // The card's badge and its own line say why it cannot run (card 0108).
+    installReason = .app("Separates the stars from the nebula.")
+    installCard = InstallCardModel(state: state, check: StarSeparation.check(services.tools))
   }
 
   // MARK: - Export

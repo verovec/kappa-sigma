@@ -449,6 +449,22 @@
         }
       }
     },
+    "Installed but cannot run: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installed but cannot run: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installé mais ne peut pas démarrer : %@"
+          }
+        }
+      }
+    },
     "Installed: %@": {
       "localizations": {
         "en": {
@@ -1213,6 +1229,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pourquoi cette valeur ?"
+          }
+        }
+      }
+    },
+    "Zoomed out, clipping is shown on the average; 1:1 shows each pixel.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoomed out, clipping is shown on the average; 1:1 shows each pixel."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En vue réduite, l’écrêtage est montré sur la moyenne ; le 1:1 montre chaque pixel."
           }
         }
       }

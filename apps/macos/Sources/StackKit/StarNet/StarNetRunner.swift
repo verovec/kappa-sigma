@@ -30,6 +30,9 @@ package struct StarNetRunner: Sendable {
     by tools: HostTools, refusal: (String) -> String? = { ExecutableCheck.refusal(path: $0) }
   ) async throws -> Self {
     let status = await tools.locate(.starnet)
+    if case .cannotRun(let path, let reason) = status {
+      throw StarNetError.cannotRun(path: path, reason: reason)
+    }
     guard status.isUsable else { throw StarNetError.missing(path: status.path) }
     if let reason = refusal(status.path) {
       throw StarNetError.cannotRun(path: status.path, reason: reason)

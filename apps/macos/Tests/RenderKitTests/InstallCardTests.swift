@@ -100,6 +100,27 @@ struct InstallCardTests {
         != String(localized: InstallCard.label(of: .missing, locale: Locale(identifier: language))))
   }
 
+  static let intel = InstallCardModel.State.unusable(
+    path: URL(fileURLWithPath: "/usr/local/bin/starnet2"), reason: "Install Rosetta.")
+
+  @Test(
+    "an install that cannot run says it is installed, never « Not installed » (card 0108)",
+    arguments: [("en", "Installed but cannot run"), ("fr", "Installé mais ne peut pas démarrer")])
+  func testLabel_Unusable(_ language: String, _ words: String) {
+    let locale = Locale(identifier: language)
+    let label = String(localized: InstallCard.label(of: Self.intel, locale: locale))
+    #expect(label.hasPrefix(words))
+    #expect(label.contains("/usr/local/bin/starnet2"))
+    #expect(label != String(localized: InstallCard.label(of: .missing, locale: locale)))
+  }
+
+  @Test("an install that cannot run is flagged for attention, not greyed as missing")
+  func testStatus_Unusable_IsAttention() {
+    #expect(InstallCard.status(of: Self.intel) == .attention)
+    #expect(InstallCard.detail(of: Self.intel) == "Install Rosetta.")
+    #expect(InstallCard.detail(of: .missing) == nil)
+  }
+
   @Test("a card checking a full state keeps an outdated install outdated")
   func testCheckKeepsOutdated() async {
     let model = InstallCardModel(state: .outdated(version: "1.2.6")) { @concurrent in

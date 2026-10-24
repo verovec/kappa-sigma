@@ -12,7 +12,10 @@ processes run (design §4.1, §4.6).
 - **GPU** (`GPU/`, `Shaders/`):
   - `ImageTexture`: one `r32Float` texture per plane, mip levels = ImageKit's `Pyramid` (2×2 means).
   - `DisplayPipeline` (`display` kernel): view pixel → image via `origin + (gid + ½)·scale`, mip
-    level `floor(log2 scale)`, optional STF per channel, clipping overlay (≥ 1 red, ≤ 0 blue),
+    nearest at 1:1 and zoomed in; zoomed out, bilinear on mip level `ceil(log2 scale)` (card
+    0110: the first level whose block means hold every pixel under a view pixel — no aliasing at
+    Fit), optional STF per channel after the filtering, clipping overlay (≥ 1 red, ≤ 0 blue; zoomed
+    out it judges the filtered value, and the panel says so: `ViewerFrame.clipsOnTheAverage`),
     compare (reference everywhere, or left of a split column), bottom-up rows flipped
     (`ROWORDER`), and the process mask as a red tint (`ViewerFrame.maskOverlay`, texture 7).
     Pinned to the CPU STF within 1/65535 (`DisplayPipelineTests`).
@@ -94,7 +97,8 @@ Rules: `Sources/StringCatalog/README.md`.
   `SectionHeader` and `EmptyState` take a `KeyedHelp` — card 0086), `ParameterRow` over a
   `ParameterValue` (slider + field in the user's notation, reset, « Default » badge on the
   exact default, `help:` the « ? »), `InstallCard` over an
-  `InstallCardModel` (re-check asks the `locate` closure; never a fallback, R2), `EmptyState`,
+  `InstallCardModel` (re-check asks the `locate` closure; never a fallback, R2; `.unusable`
+  = on disk but cannot run, its reason shown selectable — card 0108), `EmptyState`,
   `SectionHeader`, `CurveEditor` over `CurveEditorPoints` (card 0053). Values arrive
   **formatted**: RenderKit never imports the app, so the caller passes `AstroFormat` strings or
   `format`/`parse` closures.

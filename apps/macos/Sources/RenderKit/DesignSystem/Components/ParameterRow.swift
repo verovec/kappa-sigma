@@ -27,6 +27,9 @@ package struct ParameterRow: View {
   @State private var dragging = false
   @State private var fineHeld = false
   @State private var gearing: Gearing?
+  /// The slider's range while a drag runs: a range that widens to hold the value would otherwise
+  /// move under the pointer.
+  @State private var dragRange: ClosedRange<Double>?
   @FocusState private var editing: Bool
 
   /// A row editing `parameter`; `help` is its « ? » (summary on hover, content on click);
@@ -67,6 +70,8 @@ package struct ParameterRow: View {
     .onChange(of: editing) { if !editing && !frozen { commit() } }
     // A freeze (a run starting) shows the applied value, never a typed one nobody committed.
     .onChange(of: frozen) {
+      // A row frozen mid-drag gets no end of the drag: the next drag starts on the live range.
+      dragRange = nil
       if frozen {
         editing = false
         text = format(parameter.value)
@@ -108,9 +113,10 @@ package struct ParameterRow: View {
       stepped(
         Slider(
           value: Binding(get: { parameter.value }, set: { slide(to: $0) }),
-          in: parameter.range, label: { Text(label) },
+          in: dragRange ?? parameter.range, label: { Text(label) },
           onEditingChanged: { active in
             dragging = active
+            dragRange = active ? parameter.range : nil
             gearing = nil
           }
         )
@@ -135,7 +141,7 @@ package struct ParameterRow: View {
         .focusable()
         .onKeyPress(keys: [.leftArrow, .rightArrow]) { press in
           let fine = !press.modifiers.isDisjoint(with: [.shift, .option])
-          parameter.set(
+          parameter.slide(
             step.moved(parameter.value, forward: press.key == .rightArrow, fine: fine))
           return .handled
         }
@@ -151,13 +157,14 @@ package struct ParameterRow: View {
   private func slide(to pointer: Double) {
     guard let step, dragging, fineHeld else {
       gearing = nil
-      parameter.set(pointer)
+      parameter.slide(pointer, on: dragRange)
       return
     }
     let gearing = self.gearing ?? Gearing(anchor: parameter.value, start: pointer)
     self.gearing = gearing
-    parameter.set(
-      step.fineDragValue(anchor: gearing.anchor, start: gearing.start, pointer: pointer))
+    parameter.slide(
+      step.fineDragValue(anchor: gearing.anchor, start: gearing.start, pointer: pointer),
+      on: dragRange)
   }
 
   /// The field's text applied, then shown as the value it became (clamped, or unchanged).

@@ -54,6 +54,11 @@ package protocol ImageProcess {
   /// tenth of it with ⇧ or ⌥), by id.
   static var steps: [String: Double] { get }
 
+  /// The slider range of number parameters whose useful travel depends on the image, by id, for
+  /// a `width` × `height` head (full-resolution pixels); none by default. Display only: the
+  /// schema bounds stay what a value is validated against (recipes are checked without an image).
+  static func displayRanges(width: Int, height: Int) -> [String: ClosedRange<Double>]
+
   /// True when Apply runs a host tool (Siril…) the caller injects: `render` is only the preview,
   /// and recording it as the step is refused (`StudioError.needsTool`).
   static var hostTool: Bool { get }
@@ -90,6 +95,11 @@ extension ImageProcess {
 
   /// The panel's default steps.
   package static var steps: [String: Double] { [:] }
+
+  /// None: the panel's sliders span the schema bounds.
+  package static func displayRanges(width: Int, height: Int) -> [String: ClosedRange<Double>] {
+    [:]
+  }
 
   /// A GPU process: `render` is the step.
   package static var hostTool: Bool { false }

@@ -4625,6 +4625,70 @@
         }
       }
     },
+    "Rotate 90° Clockwise": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rotate 90° Clockwise"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rotation de 90° horaire"
+          }
+        }
+      }
+    },
+    "Rotate 90° Counterclockwise": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rotate 90° Counterclockwise"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rotation de 90° antihoraire"
+          }
+        }
+      }
+    },
+    "Flip Horizontally": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flip Horizontally"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Miroir horizontal"
+          }
+        }
+      }
+    },
+    "Flip Vertically": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flip Vertically"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Miroir vertical"
+          }
+        }
+      }
+    },
     "Replay on…": {
       "localizations": {
         "en": {
@@ -8781,6 +8845,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@, inversé"
+          }
+        }
+      }
+    },
+    "%@ is installed at %@, but this Mac cannot run it.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ is installed at %2$@, but this Mac cannot run it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ est installé dans %2$@, mais ce Mac ne peut pas le démarrer."
+          }
+        }
+      }
+    },
+    "Install Rosetta (%@) or an Apple-silicon build.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install Rosetta (%@) or an Apple-silicon build."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installez Rosetta (%@) ou une version pour Apple silicon."
           }
         }
       }

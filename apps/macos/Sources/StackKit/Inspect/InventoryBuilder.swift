@@ -38,14 +38,20 @@ package struct InventoryBuilder: Sendable {
     progress(.listing)
     let walks = try roots.map { root in
       try Task.checkCancellation()
-      return (root: root, files: try InspectWalk.files(under: root, skippingOutput: true))
+      return (root: root, listing: try InspectWalk.listing(under: root, skippingOutput: true))
     }
-    var count = (done: 0, total: walks.reduce(0) { $0 + $1.files.filter(Self.isFITS).count })
+    for walk in walks {
+      merged.skip(walk.listing.packages.map { InspectWalk.relative($0, to: merged.root) })
+    }
+    var count = (
+      done: 0, total: walks.reduce(0) { $0 + $1.listing.files.filter(Self.isFITS).count }
+    )
     progress(.reading(done: 0, total: count.total))
     for walk in walks {
       try Task.checkCancellation()
       let folder = try scanFrames(
-        root: walk.root, files: walk.files, overrides: overrides, count: &count, progress: progress)
+        root: walk.root, files: walk.listing.files, overrides: overrides, count: &count,
+        progress: progress)
       merged.frames += folder.frames
       merged.warnings += folder.warnings
       if merged.channelDetection == nil { merged.channelDetection = folder.channelDetection }

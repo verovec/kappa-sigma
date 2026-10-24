@@ -249,8 +249,9 @@ package final class PipelineSidebarModel {
     }
     stoppedAt = index
     let recipe = pipeline.steps[index].recipe
+    // The run selected Combined before it started and no switch happens while it goes: the
+    // breakpoint's panel opens there.
     guard let type = workspace.registry.type(id: recipe.processID) else { return }
-    workspace.select(.main)
     workspace.choose(
       recipe.processID, params: ParamSet.loading(recipe.params, onto: type.schema).params)
   }

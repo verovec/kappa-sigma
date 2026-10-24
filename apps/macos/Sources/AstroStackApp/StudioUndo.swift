@@ -147,7 +147,10 @@ package enum StudioUndo {
         } else {
           _ = target.undoSelections.popLast()
         }
-        guard !target.isRetired, target.studio.steps(of: selection).last?.file == head else {
+        // A replay or a run rewrites the combined image: nothing moves, no inverse is recorded.
+        guard !target.isRetired, !target.isMovingMain,
+          target.studio.steps(of: selection).last?.file == head
+        else {
           return
         }
         target.reveal()

@@ -641,6 +641,22 @@
         }
       }
     },
+    "A replay is going on: wait for it, then apply.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A replay is going on: wait for it, then apply."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un rejeu est en cours : attendez qu’il finisse, puis appliquez."
+          }
+        }
+      }
+    },
     "A snapshot is already named “%@”.": {
       "localizations": {
         "en": {

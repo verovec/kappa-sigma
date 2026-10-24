@@ -225,13 +225,12 @@ package final class StudioModel {
     staleFrom = session.staleFrom
   }
 
-  /// Reads the branches' steps and heads again: after a branch move only (a head is a copy).
-  func refreshBranches() {
-    branchSteps = Dictionary(
-      uniqueKeysWithValues: session.branches.all.map { ($0.layerID, $0.history.steps) })
-    branchHeads = Dictionary(
-      uniqueKeysWithValues: session.branches.all.compactMap { branch in
-        branch.head.map { (branch.layerID, $0) }
-      })
+  /// Reads the steps and head of branch `layerID` again (every opened branch when `nil`): after
+  /// a branch move only, and only that branch (a head is a full copy).
+  func refreshBranches(_ layerID: String? = nil) {
+    for branch in session.branches.all where layerID == nil || branch.layerID == layerID {
+      branchSteps[branch.layerID] = branch.history.steps
+      branchHeads[branch.layerID] = branch.head
+    }
   }
 }

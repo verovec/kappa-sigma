@@ -32,7 +32,6 @@ extension StudioWorkspaceModel {
     let kept = stretches[selection] ?? ViewerStretch(stretch: .auto, linked: false, manual: [])
     viewer.model.linked = kept.linked
     viewer.model.stretch = kept.stretch
-    if kept.stretch == .manual { viewer.model.manualSTF = kept.manual }
     refreshCatalogue()
     // A process this history refuses is not left in the panel.
     let entries = catalogue.flatMap(\.entries)
@@ -44,6 +43,9 @@ extension StudioWorkspaceModel {
     } catch {
       failure = UserFacingError(error).message
     }
+    // Its manual numbers once its image is shown: showing an image of another plane count resets
+    // them to the autostretch.
+    if kept.stretch == .manual { viewer.model.manualSTF = kept.manual }
     // Another image, even with the same steps: the panel's values are shown before they apply.
     suspendPreview(moved: true)
   }

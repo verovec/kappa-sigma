@@ -17,7 +17,7 @@ bad=$(printf '%s\n' "$files" | grep -E '(^|/)(go\.mod|go\.sum|Dockerfile|docker-
   | grep -vE '^(docs|tasks-context|conventions)/' || true)
 [ -z "$bad" ] || report "non-Swift code or container files tracked:"$'\n'"$bad"
 #    No web front end either, at any depth, whatever it holds (the legacy Vue app is never migrated).
-bad=$(printf '%s\n' "$files" | grep -E '(^|/)frontend/' || true)
+bad=$(printf '%s\n' "$files" | grep -E '(^|/)frontend/' | grep -vE '^(docs|tasks-context|conventions)/' || true)
 [ -z "$bad" ] || report "'frontend/' tracked (the app is SwiftUI only):"$'\n'"$bad"
 
 # 2. Nothing pixel-shaped: fixtures in the repo are text only. The one exception is the README's
@@ -74,11 +74,17 @@ commands() {
   awk '/^```bash/ { inside = 1; next } /^```/ { inside = 0 } inside' "$1" | sed -E 's/[[:space:]]{2,}#.*$//'
 }
 sections() { awk '/^```/ { fenced = !fenced; next } !fenced && /^## / { n++ } END { print n + 0 }' "$1"; }
-if printf '%s\n' "$files" | grep -qx 'README.fr.md' && [ -f README.md ]; then
-  [ "$(commands README.md)" = "$(commands README.fr.md)" ] \
-    || report "README.fr.md commands differ from README.md (translate the comments only)"
-  [ "$(sections README.md)" = "$(sections README.fr.md)" ] \
-    || report "README.fr.md has $(sections README.fr.md) sections, README.md has $(sections README.md)"
+#    A here-string, not a pipe: `grep -q` stops at the match, and under pipefail the killed writer
+#    would make the test false on a long file list (RepoHygieneTests.testNoForbiddenArtifacts_largeTree).
+if grep -qxF 'README.fr.md' <<<"$files"; then
+  if [ ! -f README.md ]; then
+    report "README.fr.md is tracked without the README.md it mirrors"
+  else
+    [ "$(commands README.md)" = "$(commands README.fr.md)" ] \
+      || report "README.fr.md commands differ from README.md (translate the comments only)"
+    [ "$(sections README.md)" = "$(sections README.fr.md)" ] \
+      || report "README.fr.md has $(sections README.fr.md) sections, README.md has $(sections README.md)"
+  fi
 fi
 
 if [ "$fail" -ne 0 ]; then echo "hygiene: FAILED"; exit 1; fi

@@ -13,7 +13,10 @@ struct RepoHygieneTests {
     let item: String
     var files: [String: String] = [:]
     var links: [String: String] = [:]
+    var removed: [String] = []
     let rule: String
+    /// The item is allowed: the gate must pass (and `rule` is then its success line).
+    var passes = false
     var testDescription: String { item }
   }
 
@@ -25,6 +28,9 @@ struct RepoHygieneTests {
     Case(item: "Python script", files: ["tools/run.py": "print()\n"], rule: "non-Swift code"),
     Case(item: "frontend folder", files: ["frontend/index.html": "<p>\n"], rule: "'frontend/'"),
     Case(item: "nested frontend", files: ["apps/frontend/a.css": "p {}\n"], rule: "'frontend/'"),
+    Case(
+      item: "frontend under docs is reference", files: ["docs/frontend/old.md": "# x\n"],
+      rule: "hygiene: ok", passes: true),
     Case(item: "file over 2 MB", files: ["notes.txt": big], rule: "files over 2 MB"),
     Case(item: "FITS under Tests", files: ["Tests/Fixtures/m.fits": "SIMPLE\n"], rule: "pixel"),
     Case(item: "PNG under Tests", files: ["Tests/Fixtures/m.png": "x\n"], rule: "pixel"),
@@ -53,9 +59,12 @@ struct RepoHygieneTests {
     Case(
       item: "French README with a fenced heading only",
       files: [
-        "README.fr.md": french.replacing("## Démarrer\n\n```bash\n", with: "```bash\n## x\n")
+        "README.fr.md": french.replacing("## Démarrer\n\n", with: "```text\n## x\n```\n\n")
       ],
       rule: "README.fr.md has 0 sections"),
+    Case(
+      item: "French README without the English one",
+      files: ["README.fr.md": french], removed: ["README.md"], rule: "without the README.md"),
     Case(
       item: "broken link in the French README",
       files: ["README.fr.md": french + "[x](absent.md)\n"], rule: "broken relative"),
@@ -83,6 +92,9 @@ struct RepoHygieneTests {
         at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
       try contents.write(to: url, atomically: true, encoding: .utf8)
     }
+    for path in testCase.removed {
+      try FileManager.default.removeItem(at: tree.appendingPathComponent(path))
+    }
     for (path, target) in testCase.links {
       let url = tree.appendingPathComponent(path)
       try FileManager.default.createDirectory(
@@ -92,7 +104,7 @@ struct RepoHygieneTests {
     }
     try Self.git(["add", "-A", "-f"], in: tree)
     let gate = try Self.run("/bin/bash", ["scripts/hygiene.sh"], in: tree)
-    #expect(gate.status == 1)
+    #expect(gate.status == (testCase.passes ? 0 : 1))
     #expect(gate.output.contains(testCase.rule), "\(gate.output)")
   }
 
@@ -112,9 +124,29 @@ struct RepoHygieneTests {
     #expect(gate.status == 0, "\(gate.output)")
   }
 
+  /// A real repository lists more than a pipe holds after README.fr.md: the rule must still run
+  /// (a `grep -q` that exits early would kill the writer, and `pipefail` would skip the check).
+  @Test("the French README check runs on a tree whose file list outgrows a pipe", .scratchDirectory)
+  func testNoForbiddenArtifacts_largeTree() throws {
+    let tree = try Self.cleanTree()
+    let filler = tree.appendingPathComponent("zz", isDirectory: true)
+    try FileManager.default.createDirectory(at: filler, withIntermediateDirectories: true)
+    for index in 0..<8000 {
+      FileManager.default.createFile(
+        atPath: filler.appendingPathComponent(String(format: "%05d", index)).path, contents: nil)
+    }
+    try Self.french.replacing("just run", with: "just build").write(
+      to: tree.appendingPathComponent("README.fr.md"), atomically: true, encoding: .utf8)
+    try Self.git(["add", "-A", "-f"], in: tree)
+    let gate = try Self.run("/bin/bash", ["scripts/hygiene.sh"], in: tree)
+    #expect(gate.status == 1)
+    #expect(gate.output.contains("README.fr.md commands differ"), "\(gate.output)")
+  }
+
   @Test("the gate passes this repository")
   func testNoForbiddenArtifacts_thisRepository() throws {
-    let gate = try Self.run("/bin/bash", ["scripts/hygiene.sh"], in: try Self.repositoryRoot())
+    let gate = try Self.run(
+      "/bin/bash", ["scripts/hygiene.sh"], in: try Self.repositoryRoot(), isolated: false)
     #expect(gate.status == 0, "\(gate.output)")
   }
 
@@ -155,9 +187,12 @@ struct RepoHygieneTests {
   }
 
   /// Runs `executable` in `directory` and returns its status with stdout and stderr together.
-  /// The GIT_* variables a hook exports (GIT_DIR, GIT_INDEX_FILE…) are dropped: with them, git in
-  /// a fixture tree would act on the real repository.
-  static func run(_ executable: String, _ arguments: [String], in directory: URL) throws
+  /// In a fixture tree (`isolated`) the GIT_* variables a hook exports (GIT_DIR, GIT_INDEX_FILE…)
+  /// are dropped, or git would act on the real repository; on the real one they are kept, so the
+  /// gate judges the index being committed.
+  static func run(
+    _ executable: String, _ arguments: [String], in directory: URL, isolated: Bool = true
+  ) throws
     -> (status: Int32, output: String)
   {
     let process = Process()
@@ -165,7 +200,9 @@ struct RepoHygieneTests {
     process.executableURL = URL(fileURLWithPath: executable)
     process.arguments = arguments
     process.currentDirectoryURL = directory
-    process.environment = ProcessInfo.processInfo.environment.filter { !$0.key.hasPrefix("GIT_") }
+    if isolated {
+      process.environment = ProcessInfo.processInfo.environment.filter { !$0.key.hasPrefix("GIT_") }
+    }
     process.standardOutput = pipe
     process.standardError = pipe
     try process.run()

@@ -1,5 +1,5 @@
 internal import ImageKit
-internal import ProcessKit
+package import ProcessKit
 internal import RenderKit
 
 extension StudioWorkspaceModel {
@@ -28,6 +28,20 @@ extension StudioWorkspaceModel {
     ]
     for (id, pixels) in crops { panel.set(id, .number(Double(pixels))) }
     viewer.model.clearRegion()
+  }
+
+  /// Edit › Rotate / Flip (card 0105): `move` of the image shown, onto the geometry panel.
+  ///
+  /// The panel opens at the identity when another is shown; the preview follows, only ⌘E
+  /// applies (R2).
+  package func moveGeometry(_ move: GeometryMove) {
+    guard let panel, panel.type == GeometryProcess.self else {
+      // Opened at the move itself: one preview, not the identity's first.
+      let identity = ParamSet(schema: GeometryProcess.schema)
+      choose(GeometryProcess.id, params: GeometryProcess.composing(move, onto: identity))
+      return
+    }
+    panel.replace(GeometryProcess.composing(move, onto: panel.params))
   }
 
   /// The geometry panel's output on the head, or `nil` (another panel, values leaving no pixel).

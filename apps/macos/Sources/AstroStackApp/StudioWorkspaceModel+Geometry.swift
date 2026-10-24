@@ -34,7 +34,8 @@ extension StudioWorkspaceModel {
   /// not be swapped out under the run), no pipeline running, and no panel, the geometry panel,
   /// or another one still at its defaults — a slipped key never throws away unapplied values.
   package var canMoveGeometry: Bool {
-    guard toolRun == nil, pipeline?.isRunning != true else { return false }
+    // The task covers the instant before the run starts; the run is what SwiftUI observes.
+    guard toolTask == nil, toolRun == nil, pipeline?.isRunning != true else { return false }
     guard let panel, panel.type != GeometryProcess.self else { return true }
     return panel.params == ParamSet(schema: panel.type.schema)
   }

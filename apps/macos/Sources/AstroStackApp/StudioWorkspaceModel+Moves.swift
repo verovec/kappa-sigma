@@ -10,11 +10,9 @@ extension StudioWorkspaceModel {
       && !studio.steps[(index + 1)...].contains { movesPixels($0) }
   }
 
+  /// The registry's rule on the step's values, the one `History.Step.movesPixels` records.
   private func movesPixels(_ step: History.Step) -> Bool {
-    guard let type = registry.type(id: step.processID) as? any GeometricProcess.Type else {
-      return false
-    }
-    return !type.isIdentity(step.params)
+    registry.movesPixels(step.processID, params: step.params)
   }
 
   /// Drops the viewer's region when the head changed through a step that moved the pixels.

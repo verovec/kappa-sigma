@@ -46,7 +46,8 @@ package final class StudioModel {
     else { throw StudioError.emptyBundle }
     // Every step keeps the stack's descriptive cards (WCS, OBJECT…).
     let history = try History.reopen(
-      directory: stackFolder.appendingPathComponent("history"), original: base, header: header
+      directory: stackFolder.appendingPathComponent("history"), original: base, header: header,
+      movesPixels: registry.movesPixels
     ) { registry.type(id: $0)?.schema ?? Self.batchSchemas[$0] }
     session = try StudioSession(
       history: history, bundle: bundle, registry: registry, device: device)

@@ -36,6 +36,13 @@ package struct ProcessRegistry {
     Set(types.filter { $0 is any GeometricProcess.Type }.map { $0.id })
   }
 
+  /// Whether a step of `processID` with `params` moves the pixels: a geometric process off its
+  /// identity (card 0106; recorded as `History.Step.movesPixels`).
+  package func movesPixels(_ processID: String, params: ParamSet) -> Bool {
+    guard let type = type(id: processID) as? any GeometricProcess.Type else { return false }
+    return !type.isIdentity(params)
+  }
+
   /// The ids, in menu order.
   package var ids: [String] { types.map { $0.id } }
 

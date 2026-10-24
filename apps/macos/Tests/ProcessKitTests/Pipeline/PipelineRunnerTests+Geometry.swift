@@ -39,3 +39,30 @@ extension PipelineRunnerTests {
     #expect(try replay.history.writtenLayers().mapValues(\.planes) == layers.mapValues(\.planes))
   }
 }
+
+extension PipelineRunnerTests {
+  /// Card 0106: a pipeline's geometry step is recorded as a move, so the steps after it drop
+  /// the solutions it could not move; a locked replay reuses the step as a move.
+  @Test("a pipeline records which steps moved the pixels, replayed too", .scratchDirectory)
+  func testGeometryIsRecordedAsAMove() async throws {
+    let device = try #require(MTLCreateSystemDefaultDevice())
+    let runner = try PipelineRunner(
+      registry: ProcessRegistry([GeometryProcess.self, DummyGain.self]), device: device)
+    var params = ParamSet(schema: GeometryProcess.schema)
+    try params.set("flipV", .flag(true))
+    let geometry = PipelineStep(
+      recipe: Recipe(processID: GeometryProcess.id, params: params), locked: true)
+    let pipeline = Pipeline(name: "flip", steps: [geometry, try Self.gain(2)])
+
+    let history = try History(directory: try Self.folder("first"), original: Self.image(0.1))
+    #expect(try await runner.run(pipeline, on: history, bundle: Self.bundle) == .finished)
+    #expect(history.steps.map(\.movesPixels) == [true, false])
+
+    let log = EventLog()
+    let replay = try await runner.replay(
+      pipeline, on: Self.image(0.1), in: try Self.folder("again"), bundle: Self.bundle,
+      previous: PipelineRun(history: history, bundle: Self.bundle), onEvent: log.sink)
+    #expect(log.events == [.reused(0), .applied(1)])
+    #expect(replay.history.steps.map(\.movesPixels) == [true, false])
+  }
+}

@@ -155,10 +155,11 @@ package final class PipelineRunner {
         step: index, of: previous, into: history, bundle: session.bundle, processID: id)
     {
       let written = try previous.history.written(ofStep: index)
+      let reused = previous.history.steps[index]
       try history.apply(
-        processID: id, params: previous.history.steps[index].params,
-        result: previous.history.output(ofStep: index), outputs: written.outputs,
-        replacing: written.replaced)
+        processID: id, params: reused.params, result: previous.history.output(ofStep: index),
+        outputs: written.outputs, replacing: written.replaced,
+        movesPixels: registry.movesPixels(id, params: reused.params))
       session.onEvent(.reused(index))
       return
     }
@@ -184,7 +185,7 @@ package final class PipelineRunner {
         process, layers: layers, input: input, result: result, roles: history.layerRoles)
       try history.apply(
         processID: id, params: params, result: result, outputs: moved.outputs,
-        replacing: moved.replacing)
+        replacing: moved.replacing, movesPixels: registry.movesPixels(id, params: params))
     } else {
       throw PipelineError.unknownProcess(id)
     }

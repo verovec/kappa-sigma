@@ -3,7 +3,8 @@ package import Foundation
 /// The help cards on disk, in every locale the app ships.
 ///
 /// Cards are `<root>/<locale>/process/<process id>.md` and, per journey stage,
-/// `<root>/<locale>/stage/<stage id>.md` (card 0086). The coverage gates (`coverageProblems`)
+/// `<root>/<locale>/stage/<stage id>.md` (card 0086), per app setting
+/// `<root>/<locale>/setting/<setting id>.md` (card 0114). The coverage gates (`coverageProblems`)
 /// keep every registered process and every stage documented and every card short;
 /// `HelpMarkdown` renders them (card 0061). The first-stack guide is
 /// `<root>/<locale>/guide/first-stack.md`, one step per line.
@@ -48,6 +49,11 @@ package struct HelpIndex: Sendable {
     card(folder: "stage", id: id, locale: locale)
   }
 
+  /// The card of app setting `id` (`storage`, card 0114) in `locale`, or `nil`.
+  package func settingCard(_ id: String, locale: String) -> String? {
+    card(folder: "setting", id: id, locale: locale)
+  }
+
   /// One sentence per gate failure for `processIDs`: a missing locale, or a card too long.
   package func coverageProblems(processIDs: [String]) -> [String] {
     problems(folder: "process", ids: processIDs, kind: "card")
@@ -56,6 +62,11 @@ package struct HelpIndex: Sendable {
   /// One sentence per gate failure for the stages `ids`: a missing locale, or a card too long.
   package func coverageProblems(stages ids: [String]) -> [String] {
     problems(folder: "stage", ids: ids, kind: "stage card")
+  }
+
+  /// One sentence per gate failure for the settings `ids`: a missing locale, or a card too long.
+  package func coverageProblems(settings ids: [String]) -> [String] {
+    problems(folder: "setting", ids: ids, kind: "setting card")
   }
 
   private func card(folder: String, id: String, locale: String) -> String? {

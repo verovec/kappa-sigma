@@ -5,10 +5,13 @@ internal import GRDB
 extension ProjectStore {
   /// The value of setting `key`, `nil` when it was never written.
   package func setting(_ key: String) throws -> String? {
-    try pool.read { db in
-      try String.fetchOne(
-        db, sql: "SELECT value FROM project_settings WHERE key = ?", arguments: [key])
-    }
+    try pool.read { db in try Self.setting(key, in: db) }
+  }
+
+  /// The value of setting `key` in `db` (a read-only connection reads it too).
+  static func setting(_ key: String, in db: Database) throws -> String? {
+    try String.fetchOne(
+      db, sql: "SELECT value FROM project_settings WHERE key = ?", arguments: [key])
   }
 
   /// Writes setting `key`; an existing row keeps its id and `created_at`.

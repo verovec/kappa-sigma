@@ -1,5 +1,6 @@
 package import Foundation
 internal import OSLog
+internal import ProjectKit
 
 /// A folder under a project's `stacks/` that no stack records, and the bytes it holds.
 package struct LeftoverStack: Equatable, Hashable, Sendable {
@@ -83,11 +84,9 @@ package enum StackLeftovers {
 
   /// Deletes `leftover` from `package`; only a folder directly under its `stacks/`.
   package static func remove(_ leftover: LeftoverStack, in package: URL) throws {
-    let parts = leftover.path.split(separator: "/", omittingEmptySubsequences: false)
-    guard parts.count == 2, parts[0] == "stacks", !["", ".", ".."].contains(parts[1]) else {
+    guard let folder = ProjectStore.stackFolder(leftover.path, in: package) else {
       throw Refusal(path: leftover.path)
     }
-    let folder = package.appendingPathComponent(leftover.path, isDirectory: true)
     try FileManager.default.removeItem(at: folder)
     logger.notice("removed stack folder \(folder.path) (\(leftover.bytes) bytes)")
   }

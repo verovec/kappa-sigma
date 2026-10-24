@@ -38,7 +38,7 @@ extension ProjectWindowModel {
   }
 
   /// The `project_settings` key of the stack the Studio shows (card 0095).
-  static let stackSettingKey = "workspace.stack"
+  nonisolated static let stackSettingKey = "workspace.stack"
 
   /// The target, as the project is named (`M31.astrostack` → `M31`).
   var targetName: String { folder()?.deletingPathExtension().lastPathComponent ?? "" }
@@ -328,6 +328,7 @@ extension ProjectWindowModel {
     workspace.reveal = { [weak self] in self?.select(.studio) }
     workspace.pipeline = try sidebar(of: workspace, stackID: stackID, store: store, roles: roles)
     self.workspace = workspace
+    markOpened(stackID)
     showExport(of: studio, stackID: stackID, folder: folder)
     // The Studio's stage state follows; an error the window shows stays (a refresh clears it).
     let reported = error
@@ -353,9 +354,10 @@ extension ProjectWindowModel {
   /// its object and scope, and one image per layer in one transaction; kept as the queue's last
   /// stack, chosen and loaded when the queue ends.
   ///
-  /// The stack is opened first: a bundle the Studio cannot open is reported, not recorded.
-  /// The package is read where it is now: a project renamed in the Finder after the run's last
-  /// write still records its stack. A continued run (card 0097) completes its paused row.
+  /// The stack is opened first: a bundle the Studio cannot open is reported, not recorded. Once
+  /// its row is written, its folder is trimmed to what the bundle reads (card 0114). The package
+  /// is read where it is now: a project renamed in the Finder after the run's last write still
+  /// records its stack. A continued run (card 0097) completes its paused row.
   private func register(_ record: StackRecord, runID: String, completing paused: Int64?) async {
     do {
       guard let store = store(), let folder = folder() else {
@@ -373,6 +375,7 @@ extension ProjectWindowModel {
         ?? store.addStack(
           bundlePath: "stacks/\(runID)", sourceIDs: row.sourceIDs, paramsJSON: row.params,
           imageRoles: roles, object: object, scopeJSON: row.scope)
+      await trimStack(folder.appendingPathComponent("stacks/\(runID)"), bundle: source.bundle)
       knobs.clearIgnored()
       // Shown when the queue ends, whether it drains, fails or is cancelled (`endQueue`).
       queueRecorded = (stack, source)

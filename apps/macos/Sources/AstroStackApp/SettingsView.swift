@@ -1,33 +1,41 @@
 internal import AppKit
+internal import ProjectKit
 internal import RenderKit
 package import SwiftUI
 
 /// The Settings window's content: the interface language, applied on relaunch, the runs'
-/// scratch folder (card 0098) and the host tools' status.
+/// scratch folder (card 0098), the stacks' retention (card 0114) and the host tools' status.
 package struct SettingsView: View {
   private let setting: LanguageSetting
   private let relaunch: () -> Void
   private let tools: WelcomeModel?
   private let scratch: ScratchSetting
+  private let retention: RetentionSetting
   /// The choice the app was launched with: Relaunch is offered once the choice differs.
   private let launched: LanguageSetting.Choice
   @State private var choice: LanguageSetting.Choice
+  @Environment(\.locale) private var locale
   /// The folder runs go to, as last read (the setting is not observable).
   @State private var scratchFolder: URL
   /// The last folder chosen was under the read-only sources (R7) and was not kept.
   @State private var scratchRefused = false
+  /// The retention policy as edited; written back on every change.
+  @State private var policy: RetentionPolicy
 
   /// Settings over `setting`; `relaunch` restarts the app; `tools` fills the Tools section;
-  /// `scratch` is the runs' scratch folder.
+  /// `scratch` is the runs' scratch folder; `retention` the policy for stacks never exported.
   package init(
     setting: LanguageSetting, relaunch: @escaping () -> Void,
-    tools: WelcomeModel? = nil, scratch: ScratchSetting = ScratchSetting()
+    tools: WelcomeModel? = nil, scratch: ScratchSetting = ScratchSetting(),
+    retention: RetentionSetting = RetentionSetting()
   ) {
     self.setting = setting
     self.relaunch = relaunch
     self.tools = tools
     self.scratch = scratch
     _scratchFolder = State(initialValue: scratch.folder)
+    self.retention = retention
+    _policy = State(initialValue: retention.policy)
     launched = setting.choice
     _choice = State(initialValue: setting.choice)
   }
@@ -49,6 +57,7 @@ package struct SettingsView: View {
         Button(.app("Relaunch"), action: relaunch).disabled(choice == launched)
       }
       scratchSection
+      storageSection
       if let tools {
         Section { ToolStrip(model: tools) }
       }
@@ -78,6 +87,26 @@ package struct SettingsView: View {
           .font(.caption).foregroundStyle(DesignColor.statusError.color)
       }
     }
+  }
+
+  /// Stacks never exported: asked about at launch (the default) or deleted automatically.
+  private var storageSection: some View {
+    Section {
+      Picker(selection: $policy.mode) {
+        Text(.app("Ask at launch")).tag(RetentionPolicy.Mode.ask)
+        Text(.app("Delete automatically")).tag(RetentionPolicy.Mode.automatic)
+      } label: {
+        Text(.app("Stacks never exported"))
+      }
+      Stepper(value: $policy.days, in: RetentionSetting.dayRange) {
+        Text(.app("Unused for more than \(policy.days) days"))
+      }
+      Text(.app("An exported stack and each project's newest are always kept."))
+        .font(.caption).foregroundStyle(.secondary)
+    } header: {
+      SectionHeader(.app("Storage"), help: SettingHelp.help(SettingHelp.storage, locale: locale))
+    }
+    .onChange(of: policy) { retention.policy = policy }
   }
 
   private func chooseScratch() {

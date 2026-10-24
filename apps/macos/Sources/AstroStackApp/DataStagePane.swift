@@ -2,7 +2,8 @@ internal import RenderKit
 internal import SwiftUI
 
 /// The Données stage: the project's capture nights, what they hold (integration per filter ×
-/// night) and how each light set is calibrated (0078), and the Import sheet that adds nights.
+/// night) and how each light set is calibrated (0078), the Import sheet that adds nights, and
+/// what the stacks take on disk (0114).
 struct DataStagePane: View {
   var model: ProjectWindowModel
   @Environment(\.locale) private var locale
@@ -26,6 +27,10 @@ struct DataStagePane: View {
             Label(source.path, systemImage: "folder").font(.caption)
           }
           scanned
+          if !model.stacks.isEmpty {
+            Divider()
+            StackStorageView(model: model)
+          }
         }
         .padding(DesignMetrics.spacingM)
         .frame(maxWidth: .infinity, alignment: .leading)

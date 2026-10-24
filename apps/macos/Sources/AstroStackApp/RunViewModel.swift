@@ -184,12 +184,22 @@ package final class RunViewModel {
     if progress.line.isEmpty {
       percent = nil
     } else {
-      journal.append(Line(id: linesSeen, step: progress.step, text: progress.line))
-      linesSeen += 1
-      if journal.count > Self.journalLimit {
-        journal.removeFirst(journal.count - Self.journalLimit)
-      }
+      append(progress.line, step: progress.step)
       if let value = progress.percent { percent = value }
+    }
+  }
+
+  /// Adds `text` to the journal under the last step: what the app did once the stream ended
+  /// (the trim of the stack folder, card 0114).
+  package func note(_ text: String) {
+    append(text, step: steps.count)
+  }
+
+  private func append(_ text: String, step: Int) {
+    journal.append(Line(id: linesSeen, step: step, text: text))
+    linesSeen += 1
+    if journal.count > Self.journalLimit {
+      journal.removeFirst(journal.count - Self.journalLimit)
     }
   }
 

@@ -26,11 +26,11 @@ struct ProjectStoreTests {
 
     #expect(try store.tableNames() == (Self.applicationTables + ["schema_migrations"]).sorted())
     let applied = try store.appliedMigrations()
-    #expect(applied.map(\.version) == [1, 2, 3, 4, 5, 6, 7])
+    #expect(applied.map(\.version) == [1, 2, 3, 4, 5, 6, 7, 8])
     #expect(
       applied.map(\.name) == [
         "init", "calibration_masters", "project_settings", "source_profile", "stack_object_scope",
-        "exports", "stack_status",
+        "exports", "stack_status", "stack_opened_at",
       ])
 
     try store.migrate(to: 0)
@@ -257,7 +257,7 @@ struct ProjectStoreTests {
     try package.close()
 
     let reopened = try ProjectPackage.open(at: package.url)
-    #expect(try reopened.store.appliedMigrations().map(\.version) == [1, 2, 3, 4, 5, 6, 7])
+    #expect(try reopened.store.appliedMigrations().map(\.version) == [1, 2, 3, 4, 5, 6, 7, 8])
     #expect(try reopened.store.sources().count == 1)
     try reopened.close()
     let items = try FileManager.default.contentsOfDirectory(atPath: package.url.path)

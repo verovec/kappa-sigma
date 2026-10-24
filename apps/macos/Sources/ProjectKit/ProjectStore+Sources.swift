@@ -127,7 +127,8 @@ extension ProjectStore {
       id: id, bundlePath: row["bundle_path"], sourceIDs: sources,
       paramsJSON: row["params_json"], object: row["object"] ?? "", scopeJSON: row["scope_json"],
       status: (row["status"] as String?).flatMap(ProjectStack.Status.init(rawValue:)) ?? .done,
-      checkpointJSON: row["checkpoint_json"], createdAt: row["created_at"],
+      checkpointJSON: row["checkpoint_json"], openedAt: row["opened_at"],
+      createdAt: row["created_at"],
       updatedAt: row["updated_at"])
   }
 }

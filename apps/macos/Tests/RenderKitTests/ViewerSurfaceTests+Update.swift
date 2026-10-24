@@ -49,9 +49,11 @@ struct ViewerSurfaceUpdateTests {
     try ImageTexture(device: device, width: image.width, height: image.height, planes: image.planes)
   }
 
-  static func hosted(_ image: AstroImage) throws -> (Hosted, ImageTexture) {
+  static func hosted(
+    _ image: AstroImage, panelSetting: ViewerPanelSetting = ViewerPanelSetting()
+  ) throws -> (Hosted, ImageTexture) {
     let device = try GPU.requireDevice()
-    let model = ViewerModel(image: image)
+    let model = ViewerModel(image: image, panelSetting: panelSetting)
     let renderer = try ViewerRenderer(device: device)
     let texture = try texture(image, device: device)
     let host = NSHostingView(

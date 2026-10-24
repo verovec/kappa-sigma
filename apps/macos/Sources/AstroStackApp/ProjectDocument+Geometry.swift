@@ -24,15 +24,14 @@ extension ProjectDocument {
     move(.flipVertically)
   }
 
-  /// Whether the rotate and flip commands are enabled: on the Studio stage with a stack open,
-  /// no pipeline moving the head, no text being edited (⇧⌘V there is the field's own, and a
-  /// field committing later would overwrite the move) and no other panel's edits to replace.
+  /// Whether the rotate and flip commands are enabled: on the Studio stage when the workspace
+  /// can take a move (`canMoveGeometry`) and no text is being edited (⇧⌘V there is the field's
+  /// own, and a field committing later would overwrite the move).
   package static func geometryEnabled(in window: ProjectWindowModel?) -> Bool {
     guard let window, window.selection == .studio, let workspace = window.workspace else {
       return false
     }
-    return workspace.pipeline?.isRunning != true && workspace.canMoveGeometry
-      && !(NSApp.keyWindow?.firstResponder is NSText)
+    return workspace.canMoveGeometry && !(NSApp.keyWindow?.firstResponder is NSText)
   }
 
   /// `move` on the workspace, when the menu would allow it (an action sent without validation

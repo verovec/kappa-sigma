@@ -30,9 +30,11 @@ extension StudioWorkspaceModel {
     viewer.model.clearRegion()
   }
 
-  /// Whether a rotate or flip shortcut may act: no panel, the geometry panel, or another one
-  /// still at its defaults — a slipped key never throws away values not yet applied.
+  /// Whether a rotate or flip shortcut may act: nothing moving the head (a pipeline, a host
+  /// tool) and no panel, the geometry panel, or another one still at its defaults — a slipped
+  /// key never throws away values not yet applied.
   package var canMoveGeometry: Bool {
+    guard toolTask == nil, pipeline?.isRunning != true else { return false }
     guard let panel, panel.type != GeometryProcess.self else { return true }
     return panel.params == ParamSet(schema: panel.type.schema)
   }

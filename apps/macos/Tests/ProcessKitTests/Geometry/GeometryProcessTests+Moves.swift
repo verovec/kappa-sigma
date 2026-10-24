@@ -47,6 +47,14 @@ extension GeometryProcessTests {
       moves: [.rotateClockwise],
       values: ["rotation": .choice("270"), "flipH": .flag(false), "flipV": .flag(false)]),
     MoveCase(
+      name: "a half turn then flipV keeps the turn (fewest values changed)",
+      start: ["rotation": .choice("180")], moves: [.flipVertically],
+      values: ["rotation": .choice("180"), "flipH": .flag(false), "flipV": .flag(true)]),
+    MoveCase(
+      name: "flipV then flipH is a half turn", start: [:],
+      moves: [.flipVertically, .flipHorizontally],
+      values: ["rotation": .choice("180"), "flipH": .flag(false), "flipV": .flag(false)]),
+    MoveCase(
       name: "back to the shown original is the identity values",
       start: ["rotation": .choice("90"), "flipH": .flag(true)],
       moves: [.rotateCounterclockwise, .flipVertically],
@@ -77,6 +85,7 @@ extension GeometryProcessTests {
   func testComposingKeepsTheAngleShown() throws {
     let params = try Self.params(["angle": .number(2.5)])
     #expect(GeometryProcess.composing(.flipHorizontally, onto: params).number("angle") == -2.5)
+    #expect(GeometryProcess.composing(.flipVertically, onto: params).number("angle") == -2.5)
     #expect(GeometryProcess.composing(.rotateClockwise, onto: params).number("angle") == 2.5)
   }
 

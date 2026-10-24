@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 # Line coverage for the SwiftPM package: runs the suite with instrumentation, exports lcov and a
 # per-file summary. Usage: scripts/coverage.sh apps/macos [extra swift test args]
-# Ratchet: when `.coverage-floor` exists next to Package.swift, the run fails below that figure
-# (whole percent). The worker raises the floor whenever coverage grows (pick-card §7); it never
-# goes down without a `Test-change:` justification in the PR body.
+# Floor: when `.coverage-floor` exists next to Package.swift, the run fails below that figure
+# (whole percent). It is fixed at 95% by the PO (24/10, pick-card §7): a card never moves it.
 set -euo pipefail
 pkg="${1:?package dir}"; shift || true
 cd "$pkg"

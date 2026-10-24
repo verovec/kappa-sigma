@@ -37,6 +37,8 @@ package struct Knob: Sendable, Identifiable {
     case nights
     /// The combine and its sky model read every lane together.
     case combine
+    /// The run's breakpoints, toggled once on the Tri stage, pause every lane alike.
+    case breakpoints
   }
 
   /// The wire id, stable once shipped.

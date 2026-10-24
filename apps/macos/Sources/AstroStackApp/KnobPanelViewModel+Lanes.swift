@@ -36,17 +36,16 @@ extension KnobPanelViewModel {
     laneEdits[lane]?[id] = nil
   }
 
-  /// What a run on the preset of `mode` applies and records: lanes and processing only when the
-  /// run `split`s, so an unsplit run records exactly what it did before 0121.
-  package func runKnobs(for mode: PreprocessRequest.Mode, split: Bool) -> RunKnobs {
-    let knobs = RunKnobs(
+  /// What a run on the preset of `mode` applies and records; `prepare` keeps the lanes and the
+  /// processing only for a scope that splits (`RunKnobs.unsplit` otherwise).
+  package func runKnobs(for mode: PreprocessRequest.Mode) -> RunKnobs {
+    RunKnobs(
       patch: patch(for: mode),
       lanes: laneEdits.keys.reduce(into: [:]) { lanes, lane in
         let patch = lanePatch(lane, mode: mode)
         if !patch.values.isEmpty { lanes[lane] = patch }
       },
       processing: processing)
-    return split ? knobs : knobs.unsplit
   }
 
   /// The lane values of `lane` that differ from the global settings on the preset of `mode`.

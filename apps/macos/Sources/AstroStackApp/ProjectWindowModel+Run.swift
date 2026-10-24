@@ -74,7 +74,7 @@ extension ProjectWindowModel {
     let preset = mode ?? knobs.mode
     queuedScopes = Array(scopes.dropFirst())
     queueActive = true
-    launch(scope: scopes.first, mode: preset, knobs: knobs.runKnobs(for: preset, split: true))
+    launch(scope: scopes.first, mode: preset, knobs: knobs.runKnobs(for: preset))
   }
 
   /// Starts one run of `scope` (every light when `nil`) with `knobs` on the preset of `mode` — or,

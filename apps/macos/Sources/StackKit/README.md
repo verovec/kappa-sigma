@@ -95,8 +95,9 @@ Re-recording is a contract change: the PR that commits new fixtures says why (`T
   - its kind (number with bounds and integer flag, flag, or choice ids);
   - its level (simple or advanced);
   - its scope (card 0121): `.lane` when one lane's stacker reads it alone (stack options,
-    grading, frame review, reference pin, transient mask, wheel transition), `.run(Shared)` when
-    the shared canvas reads it, with why (registration, framing, nights, combine).
+    grading, transient mask, wheel transition), `.run(Shared)` when the shared canvas reads it,
+    with why (registration, framing, nights, combine; the frame-review and reference
+    breakpoints too, toggled once for the run on the Tri stage, which shows them run-wide).
 - **Lane overrides (card 0121):** `PreprocessRequest.overrideLane(_:with:)` sets a lane kind's
   (`FilterSet.broadband` / `.dualband`) lane-scoped patch, refusing a run-wide knob
   (`KnobError.runWide`); `settings(forLane:in:)` resolves it in `stackChannel` and in the lane's

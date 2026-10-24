@@ -17,15 +17,21 @@ struct KnobPanel: View {
   @State private var lane: FilterSet?
   @Environment(\.locale) private var locale
 
-  /// The lane shown, while the series still split.
-  private var shownLane: FilterSet? { lane.flatMap { lanes.contains($0) ? $0 : nil } }
+  /// The columns: the series' lanes, or both while the panel holds lane values the series no
+  /// longer split into (a paused run's, on Continue) — no value applied is out of sight (R2).
+  private var columns: [FilterSet] {
+    lanes.isEmpty && !model.lanesUntouched ? [.broadband, .dualband] : lanes
+  }
+
+  /// The lane shown, while it is a column.
+  private var shownLane: FilterSet? { lane.flatMap { columns.contains($0) ? $0 : nil } }
 
   var body: some View {
     let rows = shownLane.map { model.rows(lane: $0) } ?? model.rows
     // The Stacking pane scrolls the series and the knobs together (0095): no scroller here.
     VStack(alignment: .leading, spacing: DesignMetrics.spacingM) {
       header
-      if !lanes.isEmpty { laneSection }
+      if !columns.isEmpty { laneSection }
       ForEach(rows.filter { $0.level == .simple }) {
         KnobRow(row: $0, model: model, lane: shownLane, frozen: frozen)
       }
@@ -67,7 +73,12 @@ struct KnobPanel: View {
   /// What follows the stack, then which lane the rows show — every lane's overrides counted, so
   /// no value applied is out of sight (R2).
   private var laneSection: some View {
-    VStack(alignment: .leading, spacing: DesignMetrics.spacingS) {
+    // Counted once per render: each count resolves the lane's settings.
+    let counts = columns.reduce(into: [FilterSet: Int]()) { counts, lane in
+      let count = model.overrideCount(lane: lane)
+      if count > 0 { counts[lane] = count }
+    }
+    return VStack(alignment: .leading, spacing: DesignMetrics.spacingS) {
       Picker(.app("After stacking"), selection: $model.processing) {
         Text(.app("One flow")).tag(StackProcessing.single)
         Text(.app("Per channel")).tag(StackProcessing.perChannel)
@@ -77,24 +88,21 @@ struct KnobPanel: View {
       .accessible(.stackingProcessing, label: .app("After stacking"))
       Text(
         .app(
-          "Broadband, Hα and OIII processed apart, then combined; the stack is the same."
+          "Per channel: broadband, Hα and OIII processed apart, then combined; one stack."
         )
       )
       .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
       Picker(.app("Values for"), selection: $lane) {
         Text(.app("Every lane")).tag(FilterSet?.none)
-        ForEach(lanes, id: \.self) { lane in
+        ForEach(columns, id: \.self) { lane in
           Text(verbatim: laneLabel(lane)).tag(Optional(lane))
         }
       }
       .pickerStyle(.segmented)
       .accessible(.stackingLane, label: .app("Values for"))
-      ForEach(lanes.filter { model.overrideCount(lane: $0) > 0 }, id: \.self) { lane in
-        StatusBadge(
-          .attention,
-          .app(
-            "\(laneLabel(lane)): \(model.overrideCount(lane: lane)) changed from the global values")
-        )
+      ForEach(columns.filter { counts[$0] != nil }, id: \.self) { lane in
+        let count = counts[lane] ?? 0
+        StatusBadge(.attention, .app("\(laneLabel(lane)): \(count) changed from the global values"))
       }
     }
   }

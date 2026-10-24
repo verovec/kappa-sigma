@@ -9137,22 +9137,6 @@
         }
       }
     },
-    "Broadband, Hα and OIII processed apart, then combined; the stack is the same.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Broadband, Hα and OIII processed apart, then combined; the stack is the same."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Large bande, Hα et OIII traités séparément puis combinés ; l’empilement est le même."
-          }
-        }
-      }
-    },
     "Shared by every lane: every lane is registered onto one reference, one canvas.": {
       "localizations": {
         "en": {
@@ -9165,6 +9149,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Commun à toutes les voies : chaque voie est alignée sur une même référence, un même canevas."
+          }
+        }
+      }
+    },
+    "Shared by every lane: the run pauses every lane alike, as the Tri stage sets it.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shared by every lane: the run pauses every lane alike, as the Tri stage sets it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commun à toutes les voies : le run s’arrête pour chaque voie de la même façon, comme l’étape Tri le règle."
+          }
+        }
+      }
+    },
+    "Per channel: broadband, Hα and OIII processed apart, then combined; one stack.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Per channel: broadband, Hα and OIII processed apart, then combined; one stack."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Par canal : large bande, Hα et OIII traités séparément puis combinés ; un seul empilement."
           }
         }
       }

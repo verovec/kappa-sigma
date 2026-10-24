@@ -68,4 +68,14 @@ struct StackRecordTests {
     let decoded = try JSONDecoder().decode(StackRecord.self, from: Data(plain.utf8))
     #expect(decoded.laneKnobs.isEmpty && decoded.processing == .single)
   }
+
+  @Test("a lane_knobs key naming no lane is kept aside and shown; the record still reads")
+  func testUnknownLaneKeyShown() throws {
+    let json =
+      #"{"path": "/c/M31", "lane_knobs": {"narrowband": {"fwhm_sigma": 2}, "unknown": {}, "#
+      + #""dualband": {"fwhm_sigma": 2}}}"#
+    let record = try JSONDecoder().decode(StackRecord.self, from: Data(json.utf8))
+    #expect(record.laneKnobs == [.dualband: KnobPatch(values: ["fwhm_sigma": .number(2)])])
+    #expect(record.ignoredEntries == ["lane_knobs.narrowband", "lane_knobs.unknown"])
+  }
 }

@@ -40,7 +40,7 @@ extension KnobSchema {
 
   /// Which registered frames are stacked (`Grader.Options`).
   static let grading: [Knob] = [
-    .flag(frameReviewID, .simple, \.frameReview),
+    .flag(frameReviewID, .simple, \.frameReview).shared(.breakpoints),
     .number("roundness_floor", .simple, 0.2...0.95, \.grading.roundnessFloor),
     .number("fwhm_sigma", .simple, 1...5, \.grading.fwhmSigma),
     .number("background_sigma", .simple, 1...5, \.grading.backgroundSigma),
@@ -50,10 +50,10 @@ extension KnobSchema {
   ]
 
   /// Registration, framing, the transient mask, several nights and the combine: run-wide but for
-  /// the reference pin, the transient mask and the wheel-transition drop, which one lane reads.
+  /// the transient mask and the wheel-transition drop, which one lane reads.
   static let run: [Knob] = [
     .flag("register_2pass", .simple, \.register2Pass).shared(.registration),
-    .flag(referenceBreakpointID, .advanced, \.referenceBreakpoint),
+    .flag(referenceBreakpointID, .advanced, \.referenceBreakpoint).shared(.breakpoints),
     .flag("edge_crop", .simple, \.edgeCrop).shared(.framing),
     .flag("coverage_crop", .simple, \.coverageCrop).shared(.framing),
     .number("trail_mask_k", .simple, 0...6, \.trailMaskK),

@@ -26,6 +26,9 @@ package struct StackRecord: Equatable, Sendable {
   package var scope: RunScope?
   /// A recorded preset this build does not know: read as deepsky, and shown.
   package var unknownMode: String?
+  /// Recorded `lane_knobs` keys that name no lane of a split run (card 0121): never applied,
+  /// shown.
+  package var unknownLanes: [String] = []
   /// The frame review's decisions per lane (card 0069, `frame_review`): one entry per lane the run
   /// paused on, empty lists when the hand changed nothing; nil when the run never paused.
   package var frameReview: [String: FrameDecision]?
@@ -48,7 +51,7 @@ package struct StackRecord: Equatable, Sendable {
 extension StackRecord {
   /// What the record carries that this build cannot apply, as the panel lists it (`mode=galaxy`).
   package var ignoredEntries: [String] {
-    unknownMode.map { ["mode=\($0)"] } ?? []
+    (unknownMode.map { ["mode=\($0)"] } ?? []) + unknownLanes.map { "lane_knobs.\($0)" }
   }
 
   /// The run paused at the frame review and the user answered (`ProjectFacts.framesReviewed`).
@@ -75,7 +78,16 @@ extension StackRecord: Codable {
     mode = recorded.flatMap(PreprocessRequest.Mode.init(rawValue:)) ?? .deepsky
     unknownMode = mode.rawValue == recorded || recorded == nil ? nil : recorded
     knobs = try record.decodeIfPresent(KnobPatch.self, forKey: .knobs) ?? KnobPatch()
-    laneKnobs = try record.decodeIfPresent([FilterSet: KnobPatch].self, forKey: .laneKnobs) ?? [:]
+    // A key naming no lane of a split run is kept aside and shown, never the whole record lost.
+    let lanes = try record.decodeIfPresent([String: KnobPatch].self, forKey: .laneKnobs) ?? [:]
+    for (key, patch) in lanes {
+      if let lane = FilterSet(rawValue: key), lane.isKnown {
+        laneKnobs[lane] = patch
+      } else {
+        unknownLanes.append(key)
+      }
+    }
+    unknownLanes.sort()
     processing = try record.decodeIfPresent(StackProcessing.self, forKey: .processing) ?? .single
     scope = try record.decodeIfPresent(RunScope.self, forKey: .scope)
     frameReview = try record.decodeIfPresent([String: FrameDecision].self, forKey: .frameReview)

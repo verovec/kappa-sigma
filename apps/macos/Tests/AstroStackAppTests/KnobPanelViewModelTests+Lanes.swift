@@ -38,6 +38,8 @@ extension KnobPanelViewModelTests {
       Split(name: "BB only", verdicts: [.broadband, .broadband], columns: []),
       Split(name: "DB only", verdicts: [.dualband, .dualband], columns: []),
       Split(name: "BB+DB", verdicts: [.broadband, .dualband], columns: [.broadband, .dualband]),
+      // The engine splits only on a measured broadband AND a measured dual-band set.
+      Split(name: "unclassified+DB", verdicts: [.unknown, .dualband], columns: []),
     ])
   func testLaneColumnsOnlyWhenSplit(_ split: Split) throws {
     let series = Self.series(split.verdicts)
@@ -82,7 +84,7 @@ extension KnobPanelViewModelTests {
     #expect(row.scope == .run(.registration))
   }
 
-  @Test("the run knobs: lane overrides and the processing choice only for a split run")
+  @Test("the run knobs: lane overrides and the processing choice; an unsplit run drops both")
   func testRunKnobsOnlyWhenSplit() {
     let panel = KnobPanelViewModel(mode: .deepsky)
     panel.set("fwhm_sigma", to: .number(2))
@@ -90,11 +92,11 @@ extension KnobPanelViewModelTests {
     // A lane value equal to the global one is no override.
     panel.set("fwhm_sigma", to: .number(2), lane: .broadband)
     panel.processing = .perChannel
-    let split = panel.runKnobs(for: .deepsky, split: true)
+    let split = panel.runKnobs(for: .deepsky)
     #expect(split.patch == KnobPatch(values: ["fwhm_sigma": .number(2)]))
     #expect(split.lanes == [.dualband: KnobPatch(values: ["stack_reject": .choice("sigma")])])
     #expect(split.processing == .perChannel)
-    let unsplit = panel.runKnobs(for: .deepsky, split: false)
+    let unsplit = split.unsplit
     #expect(unsplit.patch == split.patch && unsplit.lanes.isEmpty && unsplit.processing == .single)
   }
 
@@ -111,7 +113,7 @@ extension KnobPanelViewModelTests {
     let row = try #require(panel.rows(lane: .dualband).first { $0.id == "stack_reject" })
     #expect(row.value == .choice("sigma"))
     #expect(panel.processing == .perChannel)
-    #expect(panel.ignored == ["dualband.edge_crop"])
+    #expect(panel.ignored == ["lane_knobs.dualband.edge_crop"])
   }
 
   @Test(

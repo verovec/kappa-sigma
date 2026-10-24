@@ -103,6 +103,10 @@ package final class KnobPanelViewModel {
       .app(
         "Shared by every lane: the nights are matched on one scale and one seam for every lane.",
         locale: locale)
+    case .breakpoints:
+      .app(
+        "Shared by every lane: the run pauses every lane alike, as the Tri stage sets it.",
+        locale: locale)
     case .combine:
       .app(
         "Shared by every lane: the combine and its sky model read every lane together.",
@@ -209,7 +213,8 @@ package final class KnobPanelViewModel {
         if KnobSchema.knob(id)?.scope == .lane, KnobSchema.knob(id)?.accepts(value) == true {
           laneEdits[lane, default: [:]][id] = value
         } else {
-          refused.append("\(lane.rawValue).\(id)")
+          // The record's own key path, as `mode=galaxy` names a refused preset.
+          refused.append("lane_knobs.\(lane.codingKey.stringValue).\(id)")
         }
       }
     }

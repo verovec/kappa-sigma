@@ -87,9 +87,8 @@ package struct STFChannelControls: Equatable, Sendable {
         shown = defaultValue
       }
       let bounds = Self.range(of: control)
-      let range =
-        min(bounds.lowerBound, shown, defaultValue)...max(bounds.upperBound, shown, defaultValue)
-      return ParameterValue(default: defaultValue, range: range, value: shown)
+      return ParameterValue(
+        default: defaultValue, range: bounds.widened(toHold: [shown, defaultValue]), value: shown)
     }
     set {
       if newValue.isDefault {

@@ -285,6 +285,12 @@ To give a host tool layers: return them in `StudioToolResult(…outputs:replaced
   everything its step wrote (`History.written(ofStep:)`).
 - No automatic crop of the stacking edges (R2): the app's « Use region » fills the crops from
   the viewer's region.
+- Display ranges (card 0104): `ImageProcess.displayRanges(width:height:)` (none by default)
+  sizes a number's slider from the head — each crop up to one pixel short of the side it crops.
+  Display only: the schema bounds stay the validation bounds (recipes and profiles are checked
+  without an image). The panel (`ProcessPanelModel.range(for:)`) widens the slider to hold the
+  value; the field accepts the schema (`ParameterValue.limits`), so a typed value is never clamped
+  to the image and the plan refuses a crop that leaves no pixel.
 
 ## How to add a process
 

@@ -32,6 +32,18 @@ package final class ProcessPanelModel {
   /// Choice options that cannot run, by parameter then option, with the reason (an engine
   /// whose tool is missing, card 0092): shown greyed, never switched away from (R2).
   package var unavailableOptions: [String: [String: LocalizedStringResource]] = [:]
+  /// The head's size in full-resolution pixels (`nil` until the workspace sets it).
+  ///
+  /// Setting it sizes the sliders the process sizes from the image (`displayRanges`).
+  @ObservationIgnored package var headSize: (width: Int, height: Int)? {
+    didSet {
+      let ranges = headSize.map { type.displayRanges(width: $0.width, height: $0.height) } ?? [:]
+      // Only a change redraws the rows: a head moved without resizing leaves the sliders as is.
+      if ranges != displayRanges { displayRanges = ranges }
+    }
+  }
+  /// The slider ranges the process gives on the head, by id (`ImageProcess.displayRanges`).
+  package private(set) var displayRanges: [String: ClosedRange<Double>] = [:]
   /// Called after every accepted change (the live preview).
   @ObservationIgnored package var onChange: () -> Void = {}
 
@@ -54,6 +66,18 @@ package final class ProcessPanelModel {
   /// The arrow step of `id`, when the process gives one.
   package func step(for id: String) -> ParameterStep? {
     type.steps[id].map(ParameterStep.init)
+  }
+
+  /// The slider range of `spec`: the process's display range on the head when it gives one, else
+  /// the schema bounds (also when the head leaves the slider no travel, a 1-pixel side); widened
+  /// to hold the value and the default, since a typed value is never clamped to the slider (R2).
+  /// `nil` for a parameter without a slider.
+  package func range(for spec: ParamSpec) -> ClosedRange<Double>? {
+    guard case .number(let fallback, let bounds) = spec.kind else { return nil }
+    guard let display = displayRanges[spec.id], display.upperBound > display.lowerBound else {
+      return bounds
+    }
+    return display.widened(toHold: [params.number(spec.id), fallback]).clamped(to: bounds)
   }
 
   /// The key the input histogram is identified by.

@@ -29,6 +29,8 @@ package struct StackRecord: Equatable, Sendable {
   /// Recorded `lane_knobs` keys that name no lane of a split run (card 0121): never applied,
   /// shown.
   package var unknownLanes: [String] = []
+  /// A recorded `processing` this build does not know: read as one flow, and shown.
+  package var unknownProcessing: String?
   /// The frame review's decisions per lane (card 0069, `frame_review`): one entry per lane the run
   /// paused on, empty lists when the hand changed nothing; nil when the run never paused.
   package var frameReview: [String: FrameDecision]?
@@ -51,7 +53,9 @@ package struct StackRecord: Equatable, Sendable {
 extension StackRecord {
   /// What the record carries that this build cannot apply, as the panel lists it (`mode=galaxy`).
   package var ignoredEntries: [String] {
-    (unknownMode.map { ["mode=\($0)"] } ?? []) + unknownLanes.map { Self.laneEntry($0) }
+    (unknownMode.map { ["mode=\($0)"] } ?? [])
+      + (unknownProcessing.map { ["processing=\($0)"] } ?? [])
+      + unknownLanes.map { Self.laneEntry($0) }
   }
 
   /// A refused `lane_knobs` entry as the panel lists it: the record's own key path
@@ -94,7 +98,9 @@ extension StackRecord: Codable {
       }
     }
     unknownLanes.sort()
-    processing = try record.decodeIfPresent(StackProcessing.self, forKey: .processing) ?? .single
+    let flow = try record.decodeIfPresent(String.self, forKey: .processing)
+    processing = flow.flatMap(StackProcessing.init(rawValue:)) ?? .single
+    unknownProcessing = flow == nil || processing.rawValue == flow ? nil : flow
     scope = try record.decodeIfPresent(RunScope.self, forKey: .scope)
     frameReview = try record.decodeIfPresent([String: FrameDecision].self, forKey: .frameReview)
     referencePins = try record.decodeIfPresent([String: Int].self, forKey: .referencePins)

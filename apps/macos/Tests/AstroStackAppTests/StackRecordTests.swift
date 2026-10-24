@@ -78,4 +78,11 @@ struct StackRecordTests {
     #expect(record.laneKnobs == [.dualband: KnobPatch(values: ["fwhm_sigma": .number(2)])])
     #expect(record.ignoredEntries == ["lane_knobs.narrowband", "lane_knobs.unknown"])
   }
+
+  @Test("a processing this build does not know reads as one flow and is shown")
+  func testUnknownProcessingShown() throws {
+    let record = try JSONDecoder().decode(
+      StackRecord.self, from: Data(#"{"path": "/c/M31", "processing": "per_lane"}"#.utf8))
+    #expect(record.processing == .single && record.ignoredEntries == ["processing=per_lane"])
+  }
 }

@@ -183,10 +183,17 @@ package final class KnobPanelViewModel {
   /// The preset of `mode` with the edits, each applied on its own: every edit was accepted by the
   /// schema on entry, and one that could fail never takes the others with it.
   package func settings(for mode: PreprocessRequest.Mode) -> PreprocessSettings {
-    var settings = PreprocessSettings.preset(mode)
-    for (id, value) in edits.sorted(by: { $0.key < $1.key }) {
-      let edit = KnobPatch(values: [id: value])
-      settings = (try? KnobSchema.apply(edit, to: settings)) ?? settings
+    Self.applying(edits, to: .preset(mode))
+  }
+
+  /// `settings` with `values` applied each on its own, in id order: every value was accepted on
+  /// entry, and one that could fail never takes the others with it.
+  nonisolated static func applying(_ values: [String: KnobValue], to settings: PreprocessSettings)
+    -> PreprocessSettings
+  {
+    var settings = settings
+    for (id, value) in values.sorted(by: { $0.key < $1.key }) {
+      settings = (try? KnobSchema.apply(KnobPatch(values: [id: value]), to: settings)) ?? settings
     }
     return settings
   }
@@ -196,6 +203,7 @@ package final class KnobPanelViewModel {
   package func set(_ id: String, to value: KnobValue) {
     guard KnobSchema.knob(id)?.accepts(value) == true else { return }
     edits[id] = value
+    clearLanes(atGlobal: id)
   }
 
   /// The panel as a recorded run left it (the latest stack, a paused run's Continue, card 0097):
@@ -224,12 +232,14 @@ package final class KnobPanelViewModel {
   /// Knob `id` back to the preset.
   package func reset(_ id: String) {
     edits[id] = nil
+    clearLanes(atGlobal: id)
   }
 
   /// Every knob back to the preset, every lane back to the global values.
   package func resetAll() {
     edits = [:]
     laneEdits = [:]
+    processing = .single
     ignored = []
   }
 

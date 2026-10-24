@@ -137,4 +137,23 @@ extension KnobPanelViewModelTests {
     #expect(panel.overrideCount(lane: .dualband) == 0)
     #expect(panel.runKnobs(for: .deepsky).lanes.isEmpty)
   }
+
+  @Test("a global value moved onto a lane's value clears that lane's edit")
+  func testGlobalMoveOntoLaneValueClearsIt() {
+    let panel = KnobPanelViewModel(mode: .deepsky)
+    panel.set("trail_mask_k", to: .number(2))
+    panel.set("trail_mask_k", to: .number(4), lane: .dualband)
+    panel.set("trail_mask_k", to: .number(4))
+    panel.set("trail_mask_k", to: .number(5))
+    #expect(panel.overrideCount(lane: .dualband) == 0, "no pin left at 4")
+  }
+
+  @Test("Reset All brings the processing back to one flow too")
+  func testResetAllResetsProcessing() {
+    let panel = KnobPanelViewModel(mode: .deepsky)
+    panel.processing = .perChannel
+    panel.set("fwhm_sigma", to: .number(2), lane: .dualband)
+    panel.resetAll()
+    #expect(panel.processing == .single && panel.overrideCount(lane: .dualband) == 0)
+  }
 }

@@ -20,11 +20,6 @@ extension KnobPanelViewModel {
     lanePatch(lane, mode: mode).values.count
   }
 
-  /// No lane overrides anything.
-  package var lanesUntouched: Bool {
-    laneEdits.keys.allSatisfy { overrideCount(lane: $0) == 0 }
-  }
-
   /// Sets lane knob `id` to `value` for `lane`; a run-wide knob or a refused value is ignored, and
   /// the global value clears the lane's edit — never a latent pin that a later global move would
   /// turn into an override.
@@ -62,12 +57,18 @@ extension KnobPanelViewModel {
     return KnobPatch(values: values)
   }
 
-  /// The global settings on the preset of `mode` with the lane values of `lane`, each on its own.
+  /// The global settings on the preset of `mode` with the lane values of `lane`.
   private func settings(for mode: PreprocessRequest.Mode, lane: FilterSet) -> PreprocessSettings {
-    var settings = settings(for: mode)
-    for (id, value) in (laneEdits[lane] ?? [:]).sorted(by: { $0.key < $1.key }) {
-      settings = (try? KnobSchema.apply(KnobPatch(values: [id: value]), to: settings)) ?? settings
+    Self.applying(laneEdits[lane] ?? [:], to: settings(for: mode))
+  }
+
+  /// Every lane's edit of `id` that the global value now equals is cleared: no latent pin that a
+  /// later global move would turn into an override nobody set at that value.
+  func clearLanes(atGlobal id: String) {
+    guard let knob = KnobSchema.knob(id) else { return }
+    let global = knob.value(in: settings)
+    for lane in laneEdits.keys where laneEdits[lane]?[id] == global {
+      laneEdits[lane]?[id] = nil
     }
-    return settings
   }
 }

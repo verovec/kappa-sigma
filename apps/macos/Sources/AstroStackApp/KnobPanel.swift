@@ -17,41 +17,47 @@ struct KnobPanel: View {
   @State private var lane: FilterSet?
   @Environment(\.locale) private var locale
 
-  /// The columns: the series' lanes — a run that does not split applies no lane value, so none
-  /// is offered — or both while a frozen run applies lane values the series no longer split into
-  /// (a paused run's, on Continue): no value applied is out of sight (R2).
-  private var columns: [FilterSet] {
-    lanes.isEmpty && frozen && !model.lanesUntouched ? [.broadband, .dualband] : lanes
-  }
-
   var body: some View {
-    let columns = columns
+    // Counted once per render: each count resolves the lane's settings.
+    let counts = [FilterSet.broadband, .dualband].reduce(into: [FilterSet: Int]()) { counts, lane in
+      let count = model.overrideCount(lane: lane)
+      if count > 0 { counts[lane] = count }
+    }
+    // The series' lanes — a run that does not split applies no lane value, so none is offered —
+    // or both while a frozen run applies lane values the series no longer split into (a paused
+    // run's, on Continue): no value applied is out of sight (R2).
+    let columns = lanes.isEmpty && frozen && !counts.isEmpty ? [.broadband, .dualband] : lanes
     // The lane shown, while it is a column.
     let shownLane = lane.flatMap { columns.contains($0) ? $0 : nil }
     let rows = shownLane.map { model.rows(lane: $0) } ?? model.rows
     // The Stacking pane scrolls the series and the knobs together (0095): no scroller here.
     VStack(alignment: .leading, spacing: DesignMetrics.spacingM) {
-      header
-      if !columns.isEmpty { laneSection(columns) }
-      ForEach(rows.filter { $0.level == .simple }) {
-        KnobRow(row: $0, model: model, lane: shownLane, frozen: frozen)
-      }
-      DisclosureGroup(isExpanded: $model.showsAdvanced) {
-        VStack(alignment: .leading, spacing: DesignMetrics.spacingM) {
-          ForEach(rows.filter { $0.level == .advanced }) {
-            KnobRow(row: $0, model: model, lane: shownLane, frozen: frozen)
-          }
+      header(lanesChanged: !columns.isEmpty && !counts.isEmpty)
+      if !columns.isEmpty { laneSection(columns, counts: counts) }
+      // One identity per lane: a field typed in on one lane never commits into the next.
+      Group {
+        ForEach(rows.filter { $0.level == .simple }) {
+          KnobRow(row: $0, model: model, lane: shownLane, frozen: frozen)
         }
-        .padding(.top, DesignMetrics.spacingS)
-      } label: {
-        Text(.app("Advanced"))
+        DisclosureGroup(isExpanded: $model.showsAdvanced) {
+          VStack(alignment: .leading, spacing: DesignMetrics.spacingM) {
+            ForEach(rows.filter { $0.level == .advanced }) {
+              KnobRow(row: $0, model: model, lane: shownLane, frozen: frozen)
+            }
+          }
+          .padding(.top, DesignMetrics.spacingS)
+        } label: {
+          Text(.app("Advanced"))
+        }
       }
+      .id(shownLane)
     }
     .padding(DesignMetrics.spacingM)
   }
 
-  /// The section's title, how many knobs moved, Reset All, and the record's refused values.
-  @ViewBuilder private var header: some View {
+  /// The section's title, how many knobs moved, Reset All — for the lane values shown and the
+  /// processing choice too — and the record's refused values.
+  @ViewBuilder private func header(lanesChanged: Bool) -> some View {
     HStack(alignment: .firstTextBaseline) {
       SectionHeader(
         .app("Settings"),
@@ -60,7 +66,9 @@ struct KnobPanel: View {
           : .app("\(model.changedCount) changed from the preset"))
       Spacer()
       Button(.app("Reset All")) { model.resetAll() }
-        .disabled((model.changedCount == 0 && model.lanesUntouched) || frozen)
+        .disabled(
+          (model.changedCount == 0 && !lanesChanged && model.processing == .single) || frozen
+        )
         .accessible(.stackingResetKnobs, label: .app("Reset All"))
     }
     if !model.ignored.isEmpty {
@@ -73,13 +81,8 @@ struct KnobPanel: View {
 
   /// What follows the stack, then which lane the rows show — every lane's overrides counted, so
   /// no value applied is out of sight (R2).
-  private func laneSection(_ columns: [FilterSet]) -> some View {
-    // Counted once per render: each count resolves the lane's settings.
-    let counts = columns.reduce(into: [FilterSet: Int]()) { counts, lane in
-      let count = model.overrideCount(lane: lane)
-      if count > 0 { counts[lane] = count }
-    }
-    return VStack(alignment: .leading, spacing: DesignMetrics.spacingS) {
+  private func laneSection(_ columns: [FilterSet], counts: [FilterSet: Int]) -> some View {
+    VStack(alignment: .leading, spacing: DesignMetrics.spacingS) {
       Picker(.app("After stacking"), selection: $model.processing) {
         Text(.app("One flow")).tag(StackProcessing.single)
         Text(.app("Per channel")).tag(StackProcessing.perChannel)

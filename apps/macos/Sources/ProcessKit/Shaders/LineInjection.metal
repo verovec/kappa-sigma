@@ -11,6 +11,8 @@ static float3 inject(float3 acc, float line, float reference, constant float *q)
   // At k = 0 no reference is read: inf − 0·inf would turn a saturated line pixel into NaN.
   float continuum = q[3] == 0.0f ? 0.0f : q[3] * reference;
   float excess = fmax(line - continuum - q[4], 0.0f);
+  // Nothing to add keeps the pixel's bits (+0 would turn a −0.0 base into +0.0).
+  if (!(excess > 0.0f)) { return acc; }
   if (w.r != 0.0f) { acc.r += w.r * excess; }
   if (w.g != 0.0f) { acc.g += w.g * excess; }
   if (w.b != 0.0f) { acc.b += w.b * excess; }

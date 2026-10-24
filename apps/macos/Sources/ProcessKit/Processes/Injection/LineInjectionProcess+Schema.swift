@@ -37,14 +37,18 @@ extension LineInjectionProcess {
   /// The first is the emission screens' own, for a reference plane this list does not name.
   package static let suggestionReasons = [
     "the continuum scale fitted on the stack",
+    "the continuum scale fitted on the stack against the L layer",
     "the continuum scale fitted on the stack against the R layer",
     "the continuum scale fitted on the stack against the G layer",
     "the continuum scale fitted on the stack against the B layer",
-    "the continuum scale fitted on the stack against the L layer",
     "the continuum scale fitted on the stack against the colour base's red plane",
     "the continuum scale fitted on the stack against the colour base's green plane",
     "the continuum scale fitted on the stack against the colour base's blue plane",
   ]
+
+  /// The broadband layers a continuum is fitted against, in the canonical filter order (pinned
+  /// against StackKit's `Filter` by the tests: ProcessKit cannot import it), as `EmissionLine` is.
+  package static let broadbandLayers = ["L", "R", "G", "B"]
 
   /// The reason naming the plane `reference` (a `LayerPlane` token: `R`, `RGB.r`…) k was fitted
   /// against: what the user needs to judge it.
@@ -52,7 +56,7 @@ extension LineInjectionProcess {
     let plane = LayerPlane(reference)
     let index: Int? =
       plane.token == plane.layer
-      ? ["R", "G", "B", "L"].firstIndex(of: plane.layer).map { $0 + 1 }
+      ? broadbandLayers.firstIndex(of: plane.layer).map { $0 + 1 }
       : plane.plane + 5
     return suggestionReasons[index ?? 0]
   }

@@ -60,7 +60,7 @@ let package = Package(
       ],
       exclude: ["README.md", "Siril/README.md", "Inspect/README.md", "Calibration/README.md",
         "Preprocess/README.md", "Import/README.md",
-      ], swiftSettings: common),
+      ], resources: [.copy("Resources/Catalogue")], swiftSettings: common),
     .target(
       name: "HelpKit", dependencies: [],
       exclude: ["README.md"], resources: [.copy("Help")], swiftSettings: safe),

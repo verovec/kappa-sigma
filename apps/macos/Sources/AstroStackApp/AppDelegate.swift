@@ -32,8 +32,8 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
   /// What a killed run left (its Siril, its tens of GB of work files, an untitled project) goes
   /// at launch, off the main actor; a folder whose owner still runs is never touched (0113).
   @concurrent
-  nonisolated static func sweepLeftovers() async {
-    LeftoverSweep(roots: leftoverRoots(work: RunServices.live.scratch)).run()
+  package nonisolated static func sweepLeftovers(roots: [LeftoverSweep.Root]? = nil) async {
+    LeftoverSweep(roots: roots ?? leftoverRoots(work: RunServices.live.scratch)).run()
   }
 
   /// The app's scratch roots with the runs' work folder `work` (Settings, card 0098); the default

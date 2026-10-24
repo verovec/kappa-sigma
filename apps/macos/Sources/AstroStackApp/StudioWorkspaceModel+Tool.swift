@@ -1,4 +1,4 @@
-internal import Foundation
+package import Foundation
 internal import ImageKit
 internal import ProcessKit
 internal import StackKit
@@ -27,11 +27,15 @@ extension StudioWorkspaceModel {
     toolTask?.cancel()
   }
 
+  /// The refusal of a host tool under a mask, pointing at the row that clears it.
+  static let maskRefusal: LocalizedStringResource = .app(
+    "A host tool works on the whole image: clear the mask first (Clear Mask, above).")
+
   /// Why no tool may run now, whatever the panel: a mask, or a pipeline run moving the head.
-  private func refusal() -> LocalizedStringResource? {
+  package var toolRefusal: LocalizedStringResource? {
     // A host tool works on the whole image: under a mask, what is applied would not be what the
-    // mask shows (R2).
-    if mask != nil { return .app("A host tool works on the whole image: clear the mask first.") }
+    // mask shows (R2). The side column shows the mask and its Clear under the panel (card 0111).
+    if mask != nil { return Self.maskRefusal }
     // A pipeline run moves the head too: the tool would record on another image.
     if pipeline?.isRunning == true {
       return .app("A pipeline run is going on: wait for it, then apply.")
@@ -44,8 +48,8 @@ extension StudioWorkspaceModel {
   @discardableResult
   package func runTool() async -> Bool {
     guard let panel else { return false }
-    guard let tool = tools[panel.type.id], refusal() == nil else {
-      failure = refusal() ?? UserFacingError(StudioError.needsTool(panel.type.id)).message
+    guard let tool = tools[panel.type.id], toolRefusal == nil else {
+      failure = toolRefusal ?? UserFacingError(StudioError.needsTool(panel.type.id)).message
       return false
     }
     var recorded = false
@@ -56,7 +60,7 @@ extension StudioWorkspaceModel {
     defer { toolRun = nil }
     // Refused before the tool runs (an engine's tool missing, card 0092): nothing else runs.
     // A mask or a pipeline run started while the probe ran is refused too.
-    if let reason = await preflight(id, params: params) ?? refusal() {
+    if let reason = await preflight(id, params: params) ?? toolRefusal {
       failure = reason
       return false
     }
@@ -81,7 +85,7 @@ extension StudioWorkspaceModel {
       let moved: LocalizedStringResource? =
         studio.steps.last?.file == head
         ? nil : .app("The image changed while the tool ran: nothing was recorded.")
-      if let reason = moved ?? refusal() {
+      if let reason = moved ?? toolRefusal {
         failure = reason
         return false
       }

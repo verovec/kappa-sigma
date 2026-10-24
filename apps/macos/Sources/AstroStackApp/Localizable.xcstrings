@@ -609,18 +609,18 @@
         }
       }
     },
-    "A host tool works on the whole image: clear the mask first.": {
+    "A host tool works on the whole image: clear the mask first (Clear Mask, above).": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A host tool works on the whole image: clear the mask first."
+            "value": "A host tool works on the whole image: clear the mask first (Clear Mask, above)."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un outil externe travaille sur toute l’image : retirez d’abord le masque."
+            "value": "Un outil externe travaille sur toute l’image : effacez d’abord le masque (Effacer le masque, au-dessus)."
           }
         }
       }
@@ -8717,6 +8717,70 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ partent avec son historique et ses exports enregistrés ; les fichiers exportés restent."
+          }
+        }
+      }
+    },
+    "Mask active: %@, not used by this process; Apply is blocked until it is cleared.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mask active: %@, not used by this process; Apply is blocked until it is cleared."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masque actif : %@, non utilisé par ce traitement ; Appliquer reste bloqué tant qu’il n’est pas effacé."
+          }
+        }
+      }
+    },
+    "Mask active: %@, ignored by this process: it moves the whole image.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mask active: %@, ignored by this process: it moves the whole image."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masque actif : %@, ignoré par ce traitement : il déplace toute l’image."
+          }
+        }
+      }
+    },
+    "Clear Mask": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear Mask"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effacer le masque"
+          }
+        }
+      }
+    },
+    "%@, inverted": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, inverted"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, inversé"
           }
         }
       }

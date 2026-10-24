@@ -8704,6 +8704,22 @@
           }
         }
       }
+    },
+    "%@ go with its history and export records; exported files stay.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ go with its history and export records; exported files stay."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ partent avec son historique et ses exports enregistrés ; les fichiers exportés restent."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

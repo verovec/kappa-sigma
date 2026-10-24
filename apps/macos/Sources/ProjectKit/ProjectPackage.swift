@@ -155,10 +155,11 @@ public final class ProjectPackage {
   /// it, so they stay (emptied by the truncating checkpoint, `project.db` holding every change)
   /// for whoever closes the project last. A checkpoint another connection blocks stays passive.
   package func closeKeepingWAL() throws {
+    // The pool closes even when both checkpoints fail: never a connection left behind.
+    defer { try? pool.close() }
     try pool.writeWithoutTransaction { db in
       if (try? db.checkpoint(.truncate)) == nil { _ = try db.checkpoint(.passive) }
     }
-    try pool.close()
   }
 
   /// Checkpoints and closes the database; the package must not be used afterwards.

@@ -33,15 +33,15 @@ extension ProjectWindowModel {
   /// Reads every finished stack with its folder's size (off the main actor) and export count.
   ///
   /// Every folder is measured again (the Studio's history grows it): sizes are never cached. A
-  /// listing overtaken (cancelled, or a delete while it measured) writes nothing.
+  /// listing overtaken (cancelled, or a delete or an opening while it measured) writes nothing.
   package func listStorage() async {
     guard let store = store(), let folder = folder() else { return }
-    let deletes = storageDeletes
+    let deletes = storageWrites
     do {
       let stacks = try store.stacks()
       let counts = try store.exportCounts()
       let rows = await Self.measure(stacks, in: folder, counts: counts)
-      guard !Task.isCancelled, deletes == storageDeletes else { return }
+      guard !Task.isCancelled, deletes == storageWrites else { return }
       storage = rows
     } catch {
       self.error = UserFacingError(error)
@@ -93,7 +93,7 @@ extension ProjectWindowModel {
     let (listed, rows) = (stacks, storage)
     stacks.removeAll { $0.id == id }
     storage.removeAll { $0.id == id }
-    storageDeletes += 1
+    storageWrites += 1
     do {
       try await Self.delete(id, store: store, folder: folder, open: openStackID)
     } catch {
@@ -124,6 +124,7 @@ extension ProjectWindowModel {
       storage = storage.map {
         $0.id == id ? StackStorageRow(stack: marked, bytes: $0.bytes, exports: $0.exports) : $0
       }
+      storageWrites += 1
     } catch {
       Self.storageLogger.error("stack \(id) not marked opened: \(error)")
     }

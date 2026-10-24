@@ -41,8 +41,13 @@ struct StackStorageView: View {
       }
       Button(.app("Cancel"), role: .cancel) {}
     } message: { row in
-      Text(
-        .app("\(size(row.bytes)) leave the disk with its Studio history; this cannot be undone."))
+      let amount = size(row.bytes)
+      if row.exports > 0 {
+        Text(.app("\(amount) go with its history and export records; exported files stay."))
+      } else {
+        Text(
+          .app("\(size(row.bytes)) leave the disk with its Studio history; this cannot be undone."))
+      }
     }
   }
 

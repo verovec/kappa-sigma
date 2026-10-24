@@ -40,17 +40,22 @@ extension FITSHeader {
   /// `CTYPEn`…`CSYERn` and `CDi_j`, `PCi_j`, `PVi_j`, `PSi_j` of any axes.
   private static func isAxisKeyword(_ keyword: String) -> Bool {
     if let prefix = axisPrefixes.first(where: keyword.hasPrefix) {
-      return Int(keyword.dropFirst(prefix.count)) != nil
+      return isIndex(keyword.dropFirst(prefix.count))
     }
     guard matrixPrefixes.contains(where: keyword.hasPrefix) else { return false }
     let indices = keyword.dropFirst(2).split(separator: "_", omittingEmptySubsequences: false)
-    return indices.count == 2 && indices.allSatisfy { Int($0) != nil }
+    return indices.count == 2 && indices.allSatisfy(isIndex)
+  }
+
+  /// Digits only (`Int` would also take `+1`, `-1`: not a FITS index).
+  private static func isIndex(_ text: Substring) -> Bool {
+    !text.isEmpty && text.allSatisfy { ("0"..."9").contains($0) }
   }
 
   /// `A_p_q`, `B_p_q`, `AP_p_q`, `BP_p_q` (not the `_ORDER` cards).
   static func isSIPTerm(_ keyword: String) -> Bool {
     let parts = keyword.split(separator: "_", omittingEmptySubsequences: false)
     return parts.count == 3 && ["A", "B", "AP", "BP"].contains(String(parts[0]))
-      && Int(parts[1]) != nil && Int(parts[2]) != nil
+      && isIndex(parts[1]) && isIndex(parts[2])
   }
 }

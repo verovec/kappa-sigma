@@ -23,6 +23,7 @@ struct FITSHeaderWCSTests {
     // Not a solution.
     ("OBJECT", nil), ("CDFORM", nil), ("FILTERA", nil), ("FOCALLEN", nil), ("EXPTIME", nil),
     ("CD1", nil), ("PC1_X", nil), ("A_ORDERA", nil), ("PLTSOLVDA", nil), ("CTYPE", nil),
+    ("CRPIX+1", nil), ("A_-1_2", nil), ("PC1_+2", nil),
   ]
 
   @Test("testSolutionKeywords", arguments: cases)

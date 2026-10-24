@@ -20,12 +20,11 @@ extension SkyCatalogue {
     guard FileManager.default.fileExists(atPath: folder.path, isDirectory: &isFolder),
       isFolder.boolValue
     else { throw SkyCatalogueError.catalogueMissing(folder: folder.path) }
-    let catalogue = try load(folder: folder)
-    // A folder holding none of the five lists is no catalogue, never an empty one shown as such.
-    guard !catalogue.objects.isEmpty else {
-      throw SkyCatalogueError.catalogueMissing(folder: folder.path)
-    }
-    return catalogue
+    let catalogue = try load(folder: folder, overlay: nil)
+    // Lists that yield no object are no catalogue, never an empty one shown as such.
+    guard !catalogue.objects.isEmpty else { throw SkyCatalogueError.noObjects(folder: folder.path) }
+    guard let overlay = openNGCOverlay else { return catalogue }
+    return catalogue.overlaid(with: try overlayEntries(contentsOf: overlay))
   }
 
   /// Where Siril keeps its lists, from the `siril-cli` path; a pure path function.

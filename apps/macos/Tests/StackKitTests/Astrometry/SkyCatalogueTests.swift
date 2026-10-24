@@ -218,6 +218,8 @@ struct SkyCatalogueTests {
     let entries = try SkyCatalogue.overlayEntries(contentsOf: url)
     let cD = try #require(entries["NGC6166"])
     #expect(cD.majorAxisArcmin == 2.14 && cD.morphology == "E")
+    let group = try #require(entries["IC2431"])
+    #expect(group.type == "GGroup" && group.commonNames == ["Browning"])
   }
 
   @Test("a header-only list gives no row, whatever its columns")
@@ -228,5 +230,25 @@ struct SkyCatalogueTests {
     try "id,lon,lat\n".write(
       to: folder.appendingPathComponent("ldn.csv"), atomically: true, encoding: .utf8)
     #expect(try SkyCatalogue.load(folder: folder, overlay: nil).objects.isEmpty)
+  }
+
+  @Test(
+    "a Siril prefix whose catalogue folder yields no object is noObjects, not an empty catalogue")
+  func testInstalledWithNoObjects() throws {
+    let prefix = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: prefix) }
+    let bin = prefix.appendingPathComponent("bin")
+    let folder = prefix.appendingPathComponent("share/siril/catalogue")
+    try FileManager.default.createDirectory(at: bin, withIntermediateDirectories: true)
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    let siril = bin.appendingPathComponent("siril-cli")
+    try "#!/bin/sh\n".write(to: siril, atomically: true, encoding: .utf8)
+    try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: siril.path)
+    try "name,ra,dec\n".write(
+      to: folder.appendingPathComponent("ldn.csv"), atomically: true, encoding: .utf8)
+    let resolved = folder.resolvingSymlinksInPath().path
+    #expect(throws: SkyCatalogueError.noObjects(folder: resolved)) {
+      try SkyCatalogue.installed(environment: ["SIRIL_BIN": siril.path])
+    }
   }
 }

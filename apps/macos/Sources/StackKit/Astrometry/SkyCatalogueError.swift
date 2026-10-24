@@ -4,6 +4,8 @@ package enum SkyCatalogueError: Error, Equatable, Sendable {
   case sirilMissing(path: String)
   /// Siril is there but its catalogue folder is not.
   case catalogueMissing(folder: String)
+  /// The folder is there but none of its five lists yields an object (absent, empty, unparseable).
+  case noObjects(folder: String)
   /// A list could not be read.
   case unreadable(file: String, reason: String)
   /// A list lacks its `name`, `ra` or `dec` column.

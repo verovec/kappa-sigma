@@ -24,8 +24,10 @@ extension SkyCatalogue {
 
   /// The overlay rows of `url` by normalised name; a row without a name or a type is skipped.
   ///
-  /// The first row of a name wins: the slimmed file lost OpenNGC's `A`/`B` suffixes, so a name
-  /// repeats for an object's components, listed after the object itself.
+  /// The slimmed file lost OpenNGC's `A`/`B` suffixes, so a name repeats for an object's
+  /// components, listed after the object itself: the first row gives the type and the geometry
+  /// (the legacy last-row overwrite gave NGC6166 a component's 0.74′), every row its common names
+  /// (IC2431 « Browning » sits on a component's row).
   package static func overlayEntries(contentsOf url: URL) throws -> [String: OverlayEntry] {
     let (columns, rows) = table(try read(url))
     var entries: [String: OverlayEntry] = [:]
@@ -33,15 +35,20 @@ extension SkyCatalogue {
       let cell = { (name: String) in columns[name].flatMap { $0 < row.count ? row[$0] : nil } ?? ""
       }
       let key = normalize(cell("name"))
-      guard !key.isEmpty, !cell("type").isEmpty, entries[key] == nil else { continue }
+      guard !key.isEmpty, !cell("type").isEmpty else { continue }
+      let names = cell("common").split(separator: "/").map {
+        $0.trimmingCharacters(in: .whitespaces)
+      }.filter { !$0.isEmpty }
+      if var first = entries[key] {
+        first.commonNames += names.filter { !first.commonNames.contains($0) }
+        entries[key] = first
+        continue
+      }
       entries[key] = OverlayEntry(
         type: cell("type"), majorAxisArcmin: number(cell("majax")),
         minorAxisArcmin: number(cell("minax")), positionAngleDeg: number(cell("posang")),
         surfaceBrightness: number(cell("surfbr")),
-        morphology: cell("hubble").isEmpty ? nil : cell("hubble"),
-        commonNames: cell("common").split(separator: "/").map {
-          $0.trimmingCharacters(in: .whitespaces)
-        }.filter { !$0.isEmpty })
+        morphology: cell("hubble").isEmpty ? nil : cell("hubble"), commonNames: names)
     }
     return entries
   }

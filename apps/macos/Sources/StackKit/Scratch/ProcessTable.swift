@@ -10,14 +10,15 @@ package struct ProcessTable: Sendable {
   package var identity: @Sendable (Int32) -> ProcessIdentity?
   /// The executable path of the process running under `pid`, or `nil` when unknown.
   package var executable: @Sendable (Int32) -> String?
-  /// Stops the process `pid`: SIGTERM, then SIGKILL when it is still there after a grace period.
-  package var terminate: @Sendable (Int32) -> Void
+  /// Stops the process `identity` names: SIGTERM, then SIGKILL when it is still there after a
+  /// grace period; each signal only while its pid still runs the process started then.
+  package var terminate: @Sendable (ProcessIdentity) -> Void
 
   /// A table from its parts.
   package init(
     identity: @escaping @Sendable (Int32) -> ProcessIdentity?,
     executable: @escaping @Sendable (Int32) -> String?,
-    terminate: @escaping @Sendable (Int32) -> Void
+    terminate: @escaping @Sendable (ProcessIdentity) -> Void
   ) {
     self.identity = identity
     self.executable = executable
@@ -27,18 +28,19 @@ package struct ProcessTable: Sendable {
   /// The host's processes, read with `proc_pidinfo` / `proc_pidpath`.
   package static let live = Self(
     identity: liveIdentity, executable: liveExecutable,
-    terminate: { pid in
+    terminate: { process in
+      // The pid is signalled only while it still names `process`: a reused pid never is.
+      let pid = process.pid
+      guard liveIdentity(pid) == process, kill(pid, SIGTERM) == 0 else { return }
       // Siril's own teardown gets the 2 s the session gives it (SirilPipeInstance).
-      guard kill(pid, SIGTERM) == 0 else { return }
-      let started = liveIdentity(pid)
       for _ in 0..<20 {
-        guard let now = liveIdentity(pid), now == started else { return }
+        guard liveIdentity(pid) == process else { return }
         usleep(100_000)
       }
-      guard let now = liveIdentity(pid), now == started else { return }
+      guard liveIdentity(pid) == process else { return }
       kill(pid, SIGKILL)
       // The kernel takes a moment to retire it: the caller checks it is gone right after.
-      for _ in 0..<10 where liveIdentity(pid) == started { usleep(50_000) }
+      for _ in 0..<10 where liveIdentity(pid) == process { usleep(50_000) }
     })
 
   /// This process.

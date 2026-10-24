@@ -106,7 +106,7 @@ package struct LeftoverSweep: Sendable {
       recorded.map({ $0 == path }) ?? (URL(fileURLWithPath: path).lastPathComponent == "siril-cli")
     else { return false }
     Self.logger.notice("stopping orphan siril-cli \(siril.pid)")
-    table.terminate(siril.pid)
+    table.terminate(siril)
     return table.identity(siril.pid) != siril
   }
 

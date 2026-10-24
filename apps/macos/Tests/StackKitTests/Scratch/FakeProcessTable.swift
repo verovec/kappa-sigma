@@ -25,7 +25,8 @@ final class FakeProcessTable: Sendable {
     ProcessTable(
       identity: { pid in self.running.withLock { $0[pid]?.0 } },
       executable: { pid in self.running.withLock { $0[pid]?.1 } },
-      terminate: { pid in
+      terminate: { process in
+        let pid = process.pid
         self.terminated.withLock { $0.append(pid) }
         _ = self.running.withLock { $0.removeValue(forKey: pid) }
       })

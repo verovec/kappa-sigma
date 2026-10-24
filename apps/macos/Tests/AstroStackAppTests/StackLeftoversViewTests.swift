@@ -9,6 +9,13 @@ import Testing
 @MainActor
 @Suite("Stack leftovers row — in the Stacking stage, fr and en")
 struct StackLeftoversViewTests {
+  /// A window over `project` whose import services never reach the host's library.
+  static func window(_ project: ProjectPackage) -> ProjectWindowModel {
+    ProjectWindowModel(
+      store: { project.store }, folder: { project.url },
+      services: { _ in ImportServices(planning: { try await ImportPlanningStub.empty($0) }) })
+  }
+
   @Test(
     "a kept stack folder shows its Delete…, labelled in the interface language",
     .scratchDirectory, arguments: [("fr", "Supprimer…"), ("en", "Delete…")])
@@ -19,7 +26,7 @@ struct StackLeftoversViewTests {
     let kept = project.url.appendingPathComponent("stacks/20261020_220000")
     try FileManager.default.createDirectory(at: kept, withIntermediateDirectories: true)
     try Data(count: 4096).write(to: kept.appendingPathComponent("master_G.fits"))
-    let window = ProjectWindowModel(store: { project.store }, folder: { project.url })
+    let window = Self.window(project)
     window.select(.stacking)
 
     let entries = AccessibilityAuditTests.entries(
@@ -35,11 +42,12 @@ struct StackLeftoversViewTests {
     let project = try ProjectPackage.create(
       at: try ScratchDirectory.url.appendingPathComponent("M31.astrostack"))
     defer { try? project.close() }
-    let window = ProjectWindowModel(store: { project.store }, folder: { project.url })
+    let window = Self.window(project)
     window.select(.stacking)
 
     let ids = AccessibilityAuditTests.entries(ProjectWindowView(model: window)).map(\.id)
 
+    #expect(ids.contains(AccessibilityID.stackingRun.rawValue), "the Stacking pane is shown")
     #expect(!ids.contains { $0.contains("deleteLeftover") })
   }
 }

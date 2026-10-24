@@ -72,6 +72,20 @@ struct RunLeftoversTests {
     #expect(fixture.window.leftoverStacks.isEmpty)
   }
 
+  @Test("a Delete the package refuses is shown, nothing removed", .scratchDirectory)
+  func testRefusedDeleteShown() throws {
+    let project = try ProjectPackage.create(
+      at: try ScratchDirectory.url.appendingPathComponent("M31.astrostack"))
+    defer { try? project.close() }
+    let window = ProjectWindowModel(store: { project.store }, folder: { project.url })
+
+    window.deleteLeftoverStack(LeftoverStack(path: "project.db", bytes: 0))
+
+    #expect(window.error != nil)
+    #expect(
+      FileManager.default.fileExists(atPath: project.url.appendingPathComponent("project.db").path))
+  }
+
   @Test(
     "opening a project lists its unrecorded stack folders and removes the empty ones",
     .scratchDirectory)

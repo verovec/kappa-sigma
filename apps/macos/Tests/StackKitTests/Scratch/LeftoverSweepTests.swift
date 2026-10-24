@@ -136,6 +136,24 @@ struct LeftoverSweepTests {
     #expect(processes.terminatedPIDs == (signalled ? [Self.siril.pid] : []))
   }
 
+  @Test("a leftover that cannot be removed is not reported as removed", .scratchDirectory)
+  func testRemovalFailureNotCounted() throws {
+    let root = try ScratchDirectory.url.appendingPathComponent("Work", isDirectory: true)
+    let gone = try Self.folder("run_dead", in: root, owner: ScratchOwner(owner: Self.dead))
+    // A read-only root (inside the scratch directory): its entries cannot be unlinked.
+    try FileManager.default.setAttributes([.posixPermissions: 0o555], ofItemAtPath: root.path)
+    defer {
+      try? FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: root.path)
+    }
+
+    let removed = LeftoverSweep(
+      roots: [.init(folder: root, prefix: "run_")], table: FakeProcessTable(running: []).table
+    ).run()
+
+    #expect(removed.isEmpty)
+    #expect(Self.exists(gone))
+  }
+
   @Test("a recorded Siril pid reused by a later Siril is never signalled", .scratchDirectory)
   func testReusedSirilPIDNotSignalled() throws {
     let root = try ScratchDirectory.url

@@ -88,6 +88,21 @@ struct RunCleanupTests {
     #expect(Self.exists(running))
   }
 
+  @Test("a folder that cannot be removed is reported, not counted", .scratchDirectory)
+  func testRemovalFailureReported() async throws {
+    let package = try ScratchDirectory.url.appendingPathComponent("M31.astrostack")
+    let folder = try Self.stack("20261024_020000", in: package, files: ["master_L_preview.png"])
+    let stacks = folder.deletingLastPathComponent()
+    // A read-only stacks/ (inside the scratch directory): its entries cannot be unlinked.
+    try FileManager.default.setAttributes([.posixPermissions: 0o555], ofItemAtPath: stacks.path)
+    defer {
+      try? FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: stacks.path)
+    }
+
+    #expect(await StackLeftovers.removeUnfinished(folder) == nil)
+    #expect(Self.exists(folder))
+  }
+
   @Test("a package without stacks has no leftovers", .scratchDirectory)
   func testNoStacksFolder() throws {
     #expect(StackLeftovers.orphans(in: try ScratchDirectory.url, recorded: []).isEmpty)

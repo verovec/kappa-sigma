@@ -19,12 +19,36 @@ package struct Knob: Sendable, Identifiable {
     case choice(options: [String])
   }
 
+  /// Who reads the knob (card 0121): one lane's stacker alone, or the canvas every lane shares.
+  package enum Scope: Equatable, Sendable {
+    /// One lane's stacker reads it alone: a split run may set it per lane.
+    case lane
+    /// The shared canvas reads it: one value for every lane, for this reason.
+    case run(Shared)
+  }
+
+  /// Why a run-wide knob cannot differ per lane: every lane lands on one canvas.
+  package enum Shared: String, CaseIterable, Sendable {
+    /// The registration reference defines the canvas every lane is registered onto.
+    case registration
+    /// The crops cut every lane to the same field.
+    case framing
+    /// Several nights are matched on one scale and one seam for every lane.
+    case nights
+    /// The combine and its sky model read every lane together.
+    case combine
+    /// The run's breakpoints, toggled once on the Tri stage, pause every lane alike.
+    case breakpoints
+  }
+
   /// The wire id, stable once shipped.
   package let id: String
   /// Where the panel shows it.
   package let level: Level
   /// Number, flag or choice, with its bounds or options.
   package let kind: Kind
+  /// Per lane or for the whole run.
+  package private(set) var scope = Scope.lane
   private let read: @Sendable (PreprocessSettings) -> KnobValue
   private let write: @Sendable (inout PreprocessSettings, KnobValue) -> Void
 
@@ -44,10 +68,22 @@ package struct Knob: Sendable, Identifiable {
     }
   }
 
+  /// `value` may differ per lane (card 0121): a lane knob, and a value it accepts.
+  package func acceptsLane(_ value: KnobValue) -> Bool {
+    scope == .lane && accepts(value)
+  }
+
   /// `settings` with this knob set to `value`; refuses a value it does not accept.
   func apply(_ value: KnobValue, to settings: inout PreprocessSettings) throws(KnobError) {
     guard accepts(value) else { throw .invalid(id: id, value: value.description) }
     write(&settings, value)
+  }
+
+  /// This knob read by the shared canvas, for `reason`.
+  func shared(_ reason: Shared) -> Self {
+    var knob = self
+    knob.scope = .run(reason)
+    return knob
   }
 
   // MARK: - Builders

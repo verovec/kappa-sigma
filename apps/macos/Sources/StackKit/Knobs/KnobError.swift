@@ -4,4 +4,6 @@ package enum KnobError: Error, Equatable, Sendable {
   case unknown(String)
   /// The value is not of the knob's kind, outside its bounds, or not one of its choices.
   case invalid(id: String, value: String)
+  /// A lane's patch sets a knob the shared canvas reads (card 0121).
+  case runWide(String)
 }

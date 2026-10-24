@@ -130,9 +130,8 @@ package final class ProjectWindowModel {
     // The panel starts where the latest stack left it; an unreadable record is reported.
     let latest = Result { try store()?.latestStack().map(StackRecord.init(stack:)) }
     let record = (try? latest.get()) ?? nil
-    knobs = KnobPanelViewModel(
-      mode: record?.mode ?? .deepsky, patch: record?.knobs ?? KnobPatch(),
-      ignored: record?.ignoredEntries ?? [])
+    knobs = KnobPanelViewModel(mode: .deepsky)
+    if let record { knobs.load(record) }
     // The chosen stack is known before the first refresh, which derives Tri from it (0095): a
     // stack that no longer exists reads as no choice, the latest is shown.
     let settings = Result {

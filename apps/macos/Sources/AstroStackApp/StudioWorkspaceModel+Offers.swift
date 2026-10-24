@@ -57,13 +57,28 @@ extension StudioWorkspaceModel {
     }
   }
 
-  /// The panel's inputs on the head: its suggestions, the head's size, sample and statistics.
+  /// The panel's inputs on the head: its suggestions, the head's size, its sample (the input
+  /// histogram of every process that keeps the grid, card 0128) and, for the handles, statistics.
   func refresh(_ panel: ProcessPanelModel) {
     panel.suggestions = offers(for: panel.type, params: panel.params)
     panel.headSize = (head.width, head.height)
+    guard !(panel.type is any GeometricProcess.Type) else {
+      panel.sample = nil
+      return
+    }
+    panel.sample = sampleOfHead()
     guard panel.type is any HistogramHandled.Type else { return }
-    panel.sample = HeadSample(head)
     panel.headStats = studio.session.stepStats
+  }
+
+  /// The head's sample, measured once per head: opening another panel or a refused move does
+  /// not sample the same image again.
+  private func sampleOfHead() -> HeadSample {
+    let head = self.head
+    if let headSample, headSample.head === head { return headSample.sample }
+    let sample = HeadSample(head)
+    headSample = (head, sample)
+    return sample
   }
 
   /// The display stretch `stf` (one per channel; `nil`: off) as the levels' values.

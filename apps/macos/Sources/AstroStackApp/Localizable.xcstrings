@@ -2577,6 +2577,22 @@
         }
       }
     },
+    "Input — the head before this process": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Input — the head before this process"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entrée — la tête avant ce process"
+          }
+        }
+      }
+    },
     "Inspect %@": {
       "localizations": {
         "en": {
@@ -9133,6 +9149,246 @@
           "stringUnit": {
             "state": "translated",
             "value": "Habituellement ensuite : l’étirement, une fois le travail linéaire fait."
+          }
+        }
+      }
+    },
+    "After stacking": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "After stacking"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Après l’empilement"
+          }
+        }
+      }
+    },
+    "One flow": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One flow"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un seul flux"
+          }
+        }
+      }
+    },
+    "Per channel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Per channel"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Par canal"
+          }
+        }
+      }
+    },
+    "Values for": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Values for"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valeurs pour"
+          }
+        }
+      }
+    },
+    "Every lane": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Every lane"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les voies"
+          }
+        }
+      }
+    },
+    "%@: %lld changed from the global values": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@: %lld changed from the global values"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ : %lld modifiés par rapport aux valeurs globales"
+          }
+        }
+      }
+    },
+    "≠ global": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "≠ global"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "≠ global"
+          }
+        }
+      }
+    },
+    "Back to the global value": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back to the global value"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revenir à la valeur globale"
+          }
+        }
+      }
+    },
+    "Shared by every lane": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shared by every lane"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commun à toutes les voies"
+          }
+        }
+      }
+    },
+    "Shared by every lane: the crops cut every lane to the same field.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shared by every lane: the crops cut every lane to the same field."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commun à toutes les voies : les recadrages coupent chaque voie au même champ."
+          }
+        }
+      }
+    },
+    "Shared by every lane: the nights are matched on one scale and one seam for every lane.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shared by every lane: the nights are matched on one scale and one seam for every lane."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commun à toutes les voies : les nuits sont raccordées à la même échelle et à la même couture pour chaque voie."
+          }
+        }
+      }
+    },
+    "Shared by every lane: the combine and its sky model read every lane together.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shared by every lane: the combine and its sky model read every lane together."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commun à toutes les voies : la combinaison et son modèle de fond lisent toutes les voies ensemble."
+          }
+        }
+      }
+    },
+    "Shared by every lane: every lane is registered onto one reference, one canvas.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shared by every lane: every lane is registered onto one reference, one canvas."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commun à toutes les voies : chaque voie est alignée sur une même référence, un même canevas."
+          }
+        }
+      }
+    },
+    "Shared by every lane: the run pauses every lane alike, as the Tri stage sets it.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shared by every lane: the run pauses every lane alike, as the Tri stage sets it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commun à toutes les voies : le run s’arrête pour chaque voie de la même façon, comme l’étape Tri le règle."
+          }
+        }
+      }
+    },
+    "Per channel: broadband, Hα and OIII processed apart, then combined; one stack.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Per channel: broadband, Hα and OIII processed apart, then combined; one stack."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Par canal : large bande, Hα et OIII traités séparément puis combinés ; un seul empilement."
           }
         }
       }

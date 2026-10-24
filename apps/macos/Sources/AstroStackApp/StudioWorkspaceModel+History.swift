@@ -68,6 +68,8 @@ extension StudioWorkspaceModel {
   func headChanged() throws {
     // Even when showing the head fails, no preview scheduled meanwhile outlives the move.
     let moved = headSteps != steps
+    // The superseded head is never kept alive by its sample.
+    headSample = nil
     defer { suspendPreview(moved: moved) }
     if dropRegionIfMoved() { resetMovingValues() }
     shown = nil

@@ -119,6 +119,8 @@ package final class StudioWorkspaceModel {
   @ObservationIgnored var shown: (processID: String, params: ParamSet, mask: Mask?)? {
     didSet { gridMoved(from: oldValue.map { ($0.processID, $0.params) }) }
   }
+  /// The head's input-histogram sample, kept while the head is the same image (card 0128).
+  @ObservationIgnored var headSample: (head: AstroImage, sample: HeadSample)?
   /// The failure shown is a preview's (the next preview clears it).
   @ObservationIgnored var previewFailed = false
 
@@ -148,6 +150,7 @@ package final class StudioWorkspaceModel {
     previewTask?.cancel()
     toolTask?.cancel()
     headNoise.close()
+    headSample = nil
     undoManager?.removeAllActions(withTarget: self)
   }
 
@@ -178,9 +181,12 @@ package final class StudioWorkspaceModel {
     stopPreview()
   }
 
-  func show(_ image: AstroImage, statistics: [STFMapping]? = nil) throws {
+  /// Shows `image` in the viewer: the head unless `subject` says it is a preview or the model.
+  func show(
+    _ image: AstroImage, statistics: [STFMapping]? = nil, subject: ViewerSubject = .image
+  ) throws {
     viewer.texture = try Self.texture(image, device: studio.session.device)
-    viewer.model.replace(image: image, statistics: statistics)
+    viewer.model.replace(image: image, statistics: statistics, subject: subject)
   }
 
   func refreshCatalogue() {

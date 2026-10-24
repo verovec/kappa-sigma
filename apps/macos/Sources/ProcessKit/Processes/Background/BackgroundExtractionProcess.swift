@@ -93,6 +93,11 @@ package struct BackgroundExtractionProcess: ImageProcess {
     }
   }
 
+  /// The bundle layers it corrects besides the working image.
+  package static func layersRead(_ params: ParamSet, layerIDs: Set<String>) -> Set<String> {
+    Set(targets(params, layerIDs: layerIDs).layers)
+  }
+
   /// What `params` rewrites over a bundle of `layerIDs`.
   package static func targets(_ params: ParamSet, layerIDs: some Collection<String>) -> Targets {
     let lines = Set(EmissionLine.allCases.map(\.layerID))

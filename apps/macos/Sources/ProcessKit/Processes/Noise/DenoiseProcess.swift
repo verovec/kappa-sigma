@@ -16,6 +16,7 @@ package struct DenoiseProcess: ImageProcess {
   package static let id = "denoise"
   package static let title = "Denoise"
   package static let stage = ProcessStage.linear
+  package static let branchable = BranchUse.anyLayer
   // A starlet scale is a distance in pixels: the half-size preview is not the same transform.
   package static let previewExactOnlyAt1to1 = true
   /// The strengths of scales 1…4 (1, 2, 4 and 8 px): StackKit's deep-sky preset.

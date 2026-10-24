@@ -8881,6 +8881,70 @@
         }
       }
     },
+    "Usually next: it works on the linear data, before the stretch.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usually next: it works on the linear data, before the stretch."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Habituellement ensuite : il travaille sur les données linéaires, avant l’étirement."
+          }
+        }
+      }
+    },
+    "Usually next: it fits before or after the stretch.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usually next: it fits before or after the stretch."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Habituellement ensuite : il se place avant ou après l’étirement."
+          }
+        }
+      }
+    },
+    "Usually next: it finishes the stretched image.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usually next: it finishes the stretched image."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Habituellement ensuite : il finalise l’image étirée."
+          }
+        }
+      }
+    },
+    "Usually next: the stretch, once the linear work is done.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usually next: the stretch, once the linear work is done."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Habituellement ensuite : l’étirement, une fois le travail linéaire fait."
+          }
+        }
+      }
+    },
     "After stacking": {
       "localizations": {
         "en": {

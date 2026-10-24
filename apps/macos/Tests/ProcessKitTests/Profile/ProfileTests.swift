@@ -128,4 +128,15 @@ struct ProfileTests {
     #expect(proposal.reasons == example.reasons)
     #expect(proposal.candidates.count == example.candidates)
   }
+
+  @Test("every shipped profile lists its steps in the usual order (card 0116)")
+  func testProfiles_FollowUsualOrder() throws {
+    let profiles = try ProfileLibrary.builtins(registry: ProcessRegistry.standard())
+    #expect(!profiles.isEmpty)
+    for profile in profiles {
+      // A batch step outside the order (StarNet) keeps no rank: it is not in the comparison.
+      let ranks = profile.steps.compactMap { ProcessOrder.rank(of: $0.recipe.processID) }
+      #expect(ranks == ranks.sorted(), "\(profile.id): \(profile.steps.map(\.recipe.processID))")
+    }
+  }
 }

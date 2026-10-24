@@ -10,6 +10,7 @@ extension ProjectWindowModel {
   /// without a capture night.
   package func rescan() {
     cancelScan()
+    rescanAfterAdd = false
     guard let store = store() else {
       error = .projectClosed
       return

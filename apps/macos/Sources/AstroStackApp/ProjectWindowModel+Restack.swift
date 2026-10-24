@@ -11,9 +11,11 @@ extension ProjectWindowModel {
       lastStackSourceIDs: stacks.last?.sourceIDs)
   }
 
-  /// Every night is being rescanned with no scan to show yet (after Add a night): Run waits, so
-  /// the plan it applies is on screen before it starts.
-  package var awaitsRescan: Bool { isScanning && scan == nil }
+  /// Add a night's rescan is going with no scan to show yet.
+  ///
+  /// Run waits, so the plan it applies is on screen before it starts; a Rescan the user asked
+  /// for holds nothing back.
+  package var awaitsRescan: Bool { rescanAfterAdd && isScanning && scan == nil }
 
   /// `request` adds a night, through the sheet, to a project that has some.
   ///

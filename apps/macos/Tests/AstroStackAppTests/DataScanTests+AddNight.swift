@@ -141,3 +141,18 @@ extension DataScanTests {
     #expect(window.canRun)
   }
 }
+
+extension DataScanTests {
+  @Test("a Rescan the user asks for never holds Run back", .scratchDirectory)
+  func testManualRescanKeepsRun() async throws {
+    let project = try ProjectWindowModelTests.package()
+    defer { try? project.close() }
+    let window = Self.window(project)
+    window.add(ImportRequest(paths: ["/c/M31-DB"]))
+    window.rescan()
+    #expect(window.isScanning)
+    #expect(window.awaitsRescan == false)
+    #expect(window.canRun)
+    await window.scanSettled()
+  }
+}

@@ -63,8 +63,8 @@ struct StackingStagePane: View {
   @ViewBuilder private var notices: some View {
     blocker
     if !running && !model.pausedRuns.isEmpty { PausedRunsView(model: model) }
-    if model.awaitsRescan {
-      notice(.app("Rescanning every night (Données › Rescan): the next run’s plan follows."))
+    if !running && model.awaitsRescan {
+      notice(.app("Rescanning every night after the new one: the next run’s plan follows."))
     } else if model.canRun && !model.needsSave, let plan = model.restackPlan {
       RestackLine(plan: plan)
     }

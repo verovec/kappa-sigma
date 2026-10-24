@@ -24,8 +24,7 @@ package nonisolated struct RestackPlan: Equatable, Sendable {
   ) {
     guard !series.scopes.isEmpty else { return nil }
     // Two objects shot the same night are one capture night. An empty key is a single-night
-    // scan (`FrameSet.group`), or the undated lights of a longer one — a row of its own in the
-    // series table, counted as the table shows it.
+    // scan (`FrameSet.group`), or the undated lights of a longer one, counted as one night.
     nights = Set(series.checkedNights.map(\.night)).count
     frames = series.scopes.map(\.lights).reduce(0, +)
     added = lastStackSourceIDs.map { stacked in

@@ -4705,18 +4705,18 @@
         }
       }
     },
-    "Rescanning every night (Données › Rescan): the next run’s plan follows.": {
+    "Rescanning every night after the new one: the next run’s plan follows.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Rescanning every night (Données › Rescan): the next run’s plan follows."
+            "value": "Rescanning every night after the new one: the next run’s plan follows."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Relecture de toutes les nuits (Données › Relire) : le plan de la prochaine exécution suit."
+            "value": "Relecture de toutes les nuits après l’ajout : le plan de la prochaine exécution suit."
           }
         }
       }

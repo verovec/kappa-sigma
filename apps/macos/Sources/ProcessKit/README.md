@@ -141,7 +141,7 @@ non-destructive history, recipes and the registry (design §2, §4.1).
 - `ProcessRegistry`: refuses duplicates and invalid schemas (`.px` without
   `previewExactOnlyAt1to1`, a default outside its bounds or options, infinite bounds);
   `standard()` is validated like any registry and lists the shipped processes (today:
-  `channel-combination`, `stretch`, `hdr`, `emission-screens`, `colour-balance`, `sky-desat`,
+  `channel-combination`, `line-injection`, `stretch`, `hdr`, `emission-screens`, `colour-balance`, `sky-desat`,
   `curves`, `saturation`, `star-recomposition`, `denoise`; pipeline order is E15's — `stage` documents it).
 - **Colour processes** (card 0053), `Processes/Colour/`, kernels in `Colour.metal` (they share the
   HSL helpers; a runtime-compiled source has no `#include`) and `SkyDesat.metal`; every default is
@@ -164,6 +164,24 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   - `saturation` (non-linear): astrocomp's `-sat -sat-masked` (HSL S through the
     `saturationMaskLUT` band on the HSL lightness), the compose star-core desaturation
     (`starDesatMaskLUT` on the luminance) and the `desat` tool's luma blend `k`; the PO's values are suggestions.
+
+## Line injection (card 0120)
+
+- `LineInjectionProcess` (`line-injection`, linear, requires colour + emission, right after
+  `channel-combination`): per line of `EmissionLine` (params `<ha|oiii|sii><Gain|ContinuumK|Black|
+  Red|Green|Blue>`) and base plane `p`, `base_p + gain · share_p · max(line − k·ref − black, 0)`
+  in `LineInjection.metal`, lines added in Hα, [OIII], [SII] order. The reference plane is the
+  bundle's `continuum_ref`, read only when k > 0 (refused by name without one). Shares default to
+  Hα/[SII] → red, [OIII] → green and blue half each. No normalisation, no clip: values above 1
+  stay, and the Studio panel shows the maximum per channel of the image on screen (the preview, then the
+  head after Apply) (`RangeShown`,
+  `ProcessPanelModel.shownMaxima`, NaN skipped).
+  Gains 0 (the defaults) copy the head bit for bit; a plane no line feeds is copied too. The
+  bundle's `continuum_k` is a suggestion whose reason names its reference plane
+  (`continuumReason(reference:)`; clamped into 0…5 and offered only for a line with a gain, like the
+  screens' k), never a default (R2). Pinned against `LineInjectionOracle`
+  (max |Δ| ≤ 1e-6). Rejected: more combination slots (0054's one source per slot), more boost on
+  the screens (non-linear).
 
 ## Denoise (card 0115)
 

@@ -17,6 +17,7 @@ extension StudioWorkspaceModel {
       let same = preview.planes.count == headStatistics.count
       willShow(panel.type.id, panel.params)
       try show(preview, statistics: same ? headStatistics : nil)
+      showRange(of: preview, on: panel)
       isPreviewing = true
       shown = (panel.type.id, panel.params, mask)
       // A preview clears only a preview's failure: an Apply or Undo failure stays in view.
@@ -26,6 +27,8 @@ extension StudioWorkspaceModel {
       shown = nil
       failure = UserFacingError(error).message
       previewFailed = true
+      // The viewer shows the head after a failed preview: so does the range.
+      showRange(of: studio.head, on: panel)
       if isPreviewing {
         isPreviewing = false
         try? show(studio.head, statistics: headStatistics)
@@ -71,6 +74,7 @@ extension StudioWorkspaceModel {
   func stopPreview() {
     previewTask?.cancel()
     shown = nil
+    if let panel { showRange(of: studio.head, on: panel) }
     guard isPreviewing else { return }
     isPreviewing = false
     try? show(studio.head)
@@ -89,6 +93,8 @@ extension StudioWorkspaceModel {
     }
     previewTask?.cancel()
     previewTask = nil
+    // The viewer shows the new head now: its range, not the preview's.
+    if let panel { showRange(of: studio.head, on: panel) }
     isPreviewSuspended = panel.map { !$0.type.runsTool($0.params) } ?? false
   }
 
@@ -96,5 +102,20 @@ extension StudioWorkspaceModel {
   /// debounce would draw later, without sleeping.
   package func settlePreview() async {
     await previewTask?.value
+  }
+
+  /// The maximum per channel of `image`, the one on screen, for a `RangeShown` `panel` (none for
+  /// another process).
+  func showRange(of image: AstroImage, on panel: ProcessPanelModel) {
+    panel.shownMaxima =
+      panel.type is any RangeShown.Type ? image.planes.map(Self.finiteMaximum) : []
+  }
+
+  /// The largest value of `plane`, NaN (a rejected pixel) skipped: a NaN never compares greater;
+  /// `-inf` when every value is NaN.
+  package static func finiteMaximum(_ plane: [Float]) -> Double {
+    var maximum = -Float.infinity
+    for value in plane where value > maximum { maximum = value }
+    return Double(maximum)
   }
 }

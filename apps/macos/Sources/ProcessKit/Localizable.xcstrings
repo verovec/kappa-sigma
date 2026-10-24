@@ -1105,6 +1105,70 @@
         }
       }
     },
+    "Hα gain": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hα gain"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gain Hα"
+          }
+        }
+      }
+    },
+    "Hα into blue": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hα into blue"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hα dans le bleu"
+          }
+        }
+      }
+    },
+    "Hα into green": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hα into green"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hα dans le vert"
+          }
+        }
+      }
+    },
+    "Hα into red": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hα into red"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hα dans le rouge"
+          }
+        }
+      }
+    },
     "Hα opacity": {
       "localizations": {
         "en": {
@@ -1309,6 +1373,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Magnitude limite (0 : automatique)"
+          }
+        }
+      }
+    },
+    "Line injection": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Line injection"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Injection des raies"
           }
         }
       }
@@ -2513,6 +2593,70 @@
         }
       }
     },
+    "[OIII] gain": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[OIII] gain"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gain [OIII]"
+          }
+        }
+      }
+    },
+    "[OIII] into blue": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[OIII] into blue"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[OIII] dans le bleu"
+          }
+        }
+      }
+    },
+    "[OIII] into green": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[OIII] into green"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[OIII] dans le vert"
+          }
+        }
+      }
+    },
+    "[OIII] into red": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[OIII] into red"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[OIII] dans le rouge"
+          }
+        }
+      }
+    },
     "[OIII] opacity": {
       "localizations": {
         "en": {
@@ -2637,6 +2781,70 @@
           "stringUnit": {
             "state": "translated",
             "value": "Soustraction du continuum [SII]"
+          }
+        }
+      }
+    },
+    "[SII] gain": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[SII] gain"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gain [SII]"
+          }
+        }
+      }
+    },
+    "[SII] into blue": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[SII] into blue"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[SII] dans le bleu"
+          }
+        }
+      }
+    },
+    "[SII] into green": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[SII] into green"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[SII] dans le vert"
+          }
+        }
+      }
+    },
+    "[SII] into red": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[SII] into red"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[SII] dans le rouge"
           }
         }
       }
@@ -2861,6 +3069,118 @@
           "stringUnit": {
             "state": "translated",
             "value": "l’échelle du continuum mesurée à l’empilement"
+          }
+        }
+      }
+    },
+    "the continuum scale fitted on the stack against the B layer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the continuum scale fitted on the stack against the B layer"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "l’échelle du continuum mesurée à l’empilement face à la couche B"
+          }
+        }
+      }
+    },
+    "the continuum scale fitted on the stack against the G layer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the continuum scale fitted on the stack against the G layer"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "l’échelle du continuum mesurée à l’empilement face à la couche V"
+          }
+        }
+      }
+    },
+    "the continuum scale fitted on the stack against the L layer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the continuum scale fitted on the stack against the L layer"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "l’échelle du continuum mesurée à l’empilement face à la couche L"
+          }
+        }
+      }
+    },
+    "the continuum scale fitted on the stack against the R layer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the continuum scale fitted on the stack against the R layer"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "l’échelle du continuum mesurée à l’empilement face à la couche R"
+          }
+        }
+      }
+    },
+    "the continuum scale fitted on the stack against the colour base's blue plane": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the continuum scale fitted on the stack against the colour base's blue plane"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "l’échelle du continuum mesurée à l’empilement face au plan bleu de la base couleur"
+          }
+        }
+      }
+    },
+    "the continuum scale fitted on the stack against the colour base's green plane": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the continuum scale fitted on the stack against the colour base's green plane"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "l’échelle du continuum mesurée à l’empilement face au plan vert de la base couleur"
+          }
+        }
+      }
+    },
+    "the continuum scale fitted on the stack against the colour base's red plane": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the continuum scale fitted on the stack against the colour base's red plane"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "l’échelle du continuum mesurée à l’empilement face au plan rouge de la base couleur"
           }
         }
       }

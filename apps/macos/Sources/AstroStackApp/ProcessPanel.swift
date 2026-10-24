@@ -25,6 +25,7 @@ package struct ProcessPanel: View {
             .font(.headline)
         }
       }
+      if !model.shownMaxima.isEmpty { shownMaximaLine }
       if !model.handles.isEmpty, let sample = model.sample {
         ProcessHistogramExtras(model: model, sample: sample)
       }
@@ -46,5 +47,21 @@ package struct ProcessPanel: View {
           .accessible(.processAdvanced(model.type.id), label: .app("Advanced"))
       }
     }
+  }
+
+  /// The maximum per channel of the image on screen (a `RangeShown` process clips nothing).
+  private var shownMaximaLine: some View {
+    let format = AstroFormat(locale: locale)
+    let values = model.shownMaxima.map { words($0, format) }.joined(
+      separator: " · ")
+    return Text(.app("Maximum on screen: \(values)"))
+      .font(.caption)
+      .monospacedDigit()
+  }
+
+  /// A channel's maximum: « ∞ » for a saturated (infinite) one, « — » when every value is NaN.
+  private func words(_ maximum: Double, _ format: AstroFormat) -> String {
+    if maximum == .infinity { return "∞" }
+    return maximum.isFinite ? format.parameter(maximum) : "—"
   }
 }

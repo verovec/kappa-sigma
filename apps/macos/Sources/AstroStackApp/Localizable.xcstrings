@@ -8880,6 +8880,22 @@
           }
         }
       }
+    },
+    "Maximum on screen: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maximum on screen: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maximum à l’écran : %@"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

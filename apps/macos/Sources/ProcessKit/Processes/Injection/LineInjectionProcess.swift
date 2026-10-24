@@ -1,0 +1,105 @@
+package import Metal
+
+/// Adds the emission lines into the linear broadband base (E22, « booster mon Hα / OIII face à
+/// du BB »): per line and target plane `p`, `base_p + gain · share_p · max(line − k·ref − black, 0)`.
+///
+/// Linear, unlike the emission screens: the line is not stretched here, so a later stretch reads
+/// base and line together. No normalisation and no clip: values above 1 stay (the stretch has
+/// headroom). R2: the bundle's `continuum_k` is a suggestion shown with its reference plane, never
+/// a default; every gain defaults to 0, which returns the head bit for bit. The formula has no
+/// legacy rule (legacy « hargb » was a screen); PixInsight's NBRGBCombination is the idea, the CPU
+/// oracle in the tests pins it.
+package struct LineInjectionProcess: RangeShown {
+  package static let id = "line-injection"
+  package static let title = "Line injection"
+  package static let stage = ProcessStage.linear
+  package static let requires: [LayerRole] = [.color, .emission]
+  package static let previewExactOnlyAt1to1 = false
+
+  /// The planes a line can go into, in base order (the suffixes of the share ids).
+  static let planes = ["Red", "Green", "Blue"]
+
+  package let params: ParamSet
+  private let pipeline: MTLComputePipelineState
+
+  package init(params: ParamSet, device: MTLDevice) throws {
+    self.params = params
+    pipeline = try ProcessLibrary.pipeline(
+      device: device, file: "LineInjection.metal", function: "lineInjection")
+  }
+
+  /// What `line` adds to each base plane per unit of excess: gain × share.
+  package func weights(_ line: EmissionLine) -> [Double] {
+    let gain = params.number(line.id("Gain"))
+    return Self.planes.map { gain * params.number(line.id($0)) }
+  }
+
+  package func render(
+    _ input: GPUImage, stats: LayerStats, into output: GPUImage, context: RenderContext
+  ) throws {
+    guard output.planes.count == input.planes.count, output.width == input.width,
+      output.height == input.height
+    else { throw ProcessError.sizeMismatch }
+    // The kernel's own test: Float weights (a Double too small for a Float adds nothing).
+    let lines = EmissionLine.allCases.map { (line: $0, weights: weights($0).map(Float.init)) }
+    // Nothing to add changes no bit (not even −0.0): the head goes through as it is.
+    guard lines.contains(where: { $0.weights.contains { $0 != 0 } }) else {
+      return try ColourKernel.copy(input, into: output, commands: context.commands)
+    }
+    guard input.planes.count == 3 else {
+      throw ProcessError.invalidParameter("line injection needs an RGB base")
+    }
+    var textures: [MTLTexture] = []
+    var values: [Float] = []
+    for (line, weights) in lines {
+      // A line that adds nothing needs no layer: the kernel skips zero weights.
+      let (plane, reference) =
+        weights.contains { $0 != 0 }
+        ? try planes(line, size: input, context: context) : (input.planes[0], input.planes[0])
+      textures += [plane, reference]
+      values +=
+        weights
+        + [params.number(line.id("ContinuumK")), params.number(line.id("Black"))]
+        .map(Float.init)
+    }
+    try encode(input, into: output, lines: textures, values: values, context: context)
+  }
+
+  /// The plane of `line` and the plane k multiplies (the line itself when k = 0: no reference
+  /// needed then).
+  private func planes(
+    _ line: EmissionLine, size: GPUImage, context: RenderContext
+  ) throws -> (MTLTexture, MTLTexture) {
+    let plane = try LayerPlane(line.layerID).texture(
+      in: context.layers, width: size.width, height: size.height)
+    guard params.number(line.id("ContinuumK")) > 0 else { return (plane, plane) }
+    guard let token = context.layerStats[line.layerID]?.continuumReference else {
+      throw ProcessError.invalidParameter(
+        "\(line.name): the bundle has no continuum fit: set k to 0")
+    }
+    let reference = try LayerPlane(token).texture(
+      in: context.layers, width: size.width, height: size.height)
+    return (plane, reference)
+  }
+
+  /// Encodes the kernel: base at textures 0–2, output at 3–5, then each line's plane and
+  /// reference from 6; five values per line at buffer 0 (see LineInjection.metal).
+  private func encode(
+    _ input: GPUImage, into output: GPUImage, lines: [MTLTexture], values: [Float],
+    context: RenderContext
+  ) throws {
+    guard let encoder = context.commands.makeComputeCommandEncoder() else {
+      throw ProcessError.commandFailed("line injection encoder")
+    }
+    var values = values
+    encoder.setComputePipelineState(pipeline)
+    for (index, plane) in input.planes.enumerated() { encoder.setTexture(plane, index: index) }
+    for (index, plane) in output.planes.enumerated() { encoder.setTexture(plane, index: 3 + index) }
+    for (index, texture) in lines.enumerated() { encoder.setTexture(texture, index: 6 + index) }
+    unsafe encoder.setBytes(&values, length: values.count * MemoryLayout<Float>.stride, index: 0)
+    encoder.dispatchThreads(
+      MTLSize(width: output.width, height: output.height, depth: 1),
+      threadsPerThreadgroup: MTLSize(width: 16, height: 16, depth: 1))
+    encoder.endEncoding()
+  }
+}

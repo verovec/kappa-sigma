@@ -28,10 +28,26 @@ package struct LineInjectionProcess: RangeShown {
       device: device, file: "LineInjection.metal", function: "lineInjection")
   }
 
-  /// What `line` adds to each base plane per unit of excess: gain × share.
-  package func weights(_ line: EmissionLine) -> [Double] {
+  /// What `line` adds to each base plane per unit of excess with `params`: gain × share, as the
+  /// kernel reads it (a Double too small for a Float adds nothing).
+  package static func weights(_ line: EmissionLine, params: ParamSet) -> [Float] {
     let gain = params.number(line.id("Gain"))
-    return Self.planes.map { gain * params.number(line.id($0)) }
+    return planes.map { Float(gain * params.number(line.id($0))) }
+  }
+
+  /// Whether `line` adds something with `params`: the one rule for reading its layer.
+  package static func injects(_ line: EmissionLine, params: ParamSet) -> Bool {
+    weights(line, params: params).contains { $0 != 0 }
+  }
+
+  /// The line layers that inject, and every broadband layer once one of them subtracts its
+  /// continuum (the plane k multiplies is the bundle's fit, unknown from the values alone).
+  package static func layersRead(_ params: ParamSet, layerIDs: Set<String>) -> Set<String> {
+    let injected = EmissionLine.allCases.filter { injects($0, params: params) }
+    let lines = Set(EmissionLine.allCases.map(\.layerID))
+    let continuum = injected.contains { params.number($0.id("ContinuumK")) > 0 }
+    return Set(injected.map(\.layerID)).union(continuum ? layerIDs.subtracting(lines) : [])
+      .intersection(layerIDs)
   }
 
   package func render(
@@ -40,8 +56,7 @@ package struct LineInjectionProcess: RangeShown {
     guard output.planes.count == input.planes.count, output.width == input.width,
       output.height == input.height
     else { throw ProcessError.sizeMismatch }
-    // The kernel's own test: Float weights (a Double too small for a Float adds nothing).
-    let lines = EmissionLine.allCases.map { (line: $0, weights: weights($0).map(Float.init)) }
+    let lines = EmissionLine.allCases.map { (line: $0, weights: Self.weights($0, params: params)) }
     // Nothing to add changes no bit (not even −0.0): the head goes through as it is.
     guard lines.contains(where: { $0.weights.contains { $0 != 0 } }) else {
       return try ColourKernel.copy(input, into: output, commands: context.commands)

@@ -246,6 +246,22 @@ struct LineInjectionProcessTests {
     #expect(try contracts.violations(of: LineInjectionProcess.self, params: params).isEmpty)
   }
 
+  @Test(
+    "a main step reads the line layers that inject, and the broadband ones once k > 0 (card 0118)",
+    arguments: [
+      ([:], []),
+      (["haGain": 1], ["Ha"]),
+      (["haGain": 1, "haRed": 0], []),
+      (["oiiiGain": 2, "siiGain": 1], ["OIII", "SII"]),
+      (["haGain": 1, "haContinuumK": 0.5], ["Ha", "RGB"]),
+      (["haContinuumK": 0.5], []),
+    ] as [([String: Double], Set<String>)])
+  func testLayersRead(values: [String: Double], expected: Set<String>) throws {
+    let read = LineInjectionProcess.layersRead(
+      try Self.params(values), layerIDs: ["RGB", "Ha", "OIII", "SII"])
+    #expect(read == expected)
+  }
+
   @Test("a linear process needing colour and emission layers, right after the combination")
   func testRegistered() throws {
     let ids = try ProcessRegistry.standard().ids

@@ -14,7 +14,7 @@ extension LineInjectionProcess {
         id: line.id("ContinuumK"), title: name + " continuum scale k", unit: .none,
         level: .simple, number: 0, in: 0...5),
       ParamSpec(
-        id: line.id("Black"), title: name + " black point", unit: .none, level: .advanced,
+        id: line.id("Black"), title: name + " black point", unit: .none, level: .simple,
         number: 0, in: 0...1),
     ]
       + zip(shareSuffixes, shares).map { plane, share in

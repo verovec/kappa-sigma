@@ -356,8 +356,8 @@ Allowed dependencies: `ImageKit`, `RenderKit` (`Tests/TestSupport/BoundaryRules.
 ## Usual order (card 0116)
 
 `ProcessOrder.usual` is the one list of the usual processing order: combination, background
-extraction, plate solve, colour calibration, colour balance, sky desat, denoise, HDR, stretch,
-levels, curves, emission screens, saturation, star recomposition, then geometry (anywhere).
+extraction, plate solve, colour calibration, colour balance, sky desat, denoise, line injection, HDR,
+stretch, levels, curves, emission screens, saturation, star recomposition, then geometry (anywhere).
 `ProcessOrderTests` checks every registered process is in it exactly once, so **a new process
 must be placed in it**. The Studio's catalogue sorts each stage by it, `rank(of:)` numbers the
 rows, and `usuallyNext(after:)` marks the process after the head's last ordered step: a

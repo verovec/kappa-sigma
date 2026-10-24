@@ -81,11 +81,12 @@ package struct StudioSideView: View {
       HStack {
         SectionHeader(.app("History"))
         Spacer()
+        // A run or a host tool moving the history: the move waits, as Edit › Undo does.
         Button(.app("Undo")) { undo() }
-          .disabled(!model.studio.canUndo)
+          .disabled(!model.studio.canUndo || model.isMovingHistory)
           .accessible(.studioUndo, label: .app("Undo"))
         Button(.app("Redo")) { redo() }
-          .disabled(!model.studio.canRedo)
+          .disabled(!model.studio.canRedo || model.isMovingHistory)
           .accessible(.studioRedo, label: .app("Redo"))
       }
       ForEach(Array(model.studio.steps.enumerated()), id: \.offset) { index, step in
@@ -123,7 +124,8 @@ package struct StudioSideView: View {
     StudioUndo.apply(model, undoManager: undoManager)
   }
 
-  /// One step back: ⌘Z when the last action is a Studio move, so the menu follows the button.
+  /// One step back: ⌘Z when the last action is this Studio's step back, so the menu follows the
+  /// button.
   private func undo() {
     StudioUndo.undo(model, undoManager: undoManager)
   }

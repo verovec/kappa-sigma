@@ -113,21 +113,27 @@ package final class PipelineSidebarModel {
   /// `previous` is another stack's run whose locked steps may be reused (a replay; the runner
   /// reuses one only for the same input). On this stack's own history nothing is reused: the
   /// last run is that very history, never a copy of it. The steps it adds are undone together on
-  /// `undoManager`.
-  package func run(previous: PipelineRun? = nil, undoManager: UndoManager? = nil) async {
+  /// `undoManager`, the breakpoint with them.
+  ///
+  /// `before` is the column a ⌘Z puts back, as it is now unless given (a replay's, before it
+  /// replaced the pipeline).
+  package func run(
+    previous: PipelineRun? = nil, undoManager: UndoManager? = nil, before: Mark? = nil
+  ) async {
     let start = workspace.studio.steps.count
     guard follows(upTo: start) else {
       failure = .app("The history does not follow the pipeline: undo to a step it shares")
       return
     }
-    await moving(on: undoManager) { [runner, pipeline] history, bundle, sink in
+    await moving(on: undoManager, mark: before ?? mark()) { [runner, pipeline] in
       try await runner.run(
-        pipeline, on: history, bundle: bundle, from: start, previous: previous, onEvent: sink)
+        pipeline, on: $0, bundle: $1, from: start, previous: previous, onEvent: $2)
     }
   }
 
   /// The user's « Continue » at the breakpoint: the step with the panel's values, then on to
-  /// the next breakpoint; the pipeline keeps the values applied (R5), undone on `undoManager`.
+  /// the next breakpoint; the pipeline keeps the values applied (R5), undone on `undoManager`
+  /// with the breakpoint and the values it had.
   package func continueRun(undoManager: UndoManager? = nil) async {
     // Read before the commit, whose value change ends the suspension: on a new head the values
     // are shown first, as Apply does, never applied unseen (R2).
@@ -140,9 +146,10 @@ package final class PipelineSidebarModel {
       return
     }
     let params = panel.params
-    let applied = await moving(on: undoManager) { [runner, pipeline] history, bundle, sink in
+    let before = mark(keeping: [index])
+    let applied = await moving(on: undoManager, mark: before) { [runner, pipeline] in
       try await runner.resume(
-        pipeline, at: index, on: history, bundle: bundle, params: params, onEvent: sink)
+        pipeline, at: index, on: $0, bundle: $1, params: params, onEvent: $2)
     }
     // Recorded once applied: a refused Continue leaves the recipe as it was.
     if applied, workspace.studio.steps.count > index {
@@ -183,10 +190,11 @@ package final class PipelineSidebarModel {
   /// Runs `body` on the history, then shows the new head and loads the breakpoint's process;
   /// whether it ran without failing.
   ///
-  /// The steps added are registered on `undoManager`.
+  /// The steps added are registered on `undoManager` as one move, which puts the column back at
+  /// `mark`.
   @discardableResult
   private func moving(
-    on undoManager: UndoManager?,
+    on undoManager: UndoManager?, mark: Mark,
     _ body:
       @escaping (History, PipelineBundle, @escaping PipelineRunner.EventSink) async throws ->
       PipelineRunner.Outcome
@@ -206,7 +214,7 @@ package final class PipelineSidebarModel {
     let bundle = studio.session.bundle
     let before = studio.steps.count
     // Even a run that stops on a failure keeps the steps it applied: they are undoable too.
-    defer { StudioUndo.recordRun(workspace, from: before, on: undoManager) }
+    defer { StudioUndo.recordRun(workspace, from: before, mark: mark, on: undoManager) }
     // Events come from the run's task or a batch tool's: kept under a lock, shown after the run;
     // a batch step's progress is shown as it goes.
     let log = OSAllocatedUnfairLock(initialState: [PipelineRunner.Event]())
@@ -235,10 +243,6 @@ package final class PipelineSidebarModel {
       stoppedAt = nil
       return
     }
-    stoppedAt = index
-    let recipe = pipeline.steps[index].recipe
-    guard let type = workspace.registry.type(id: recipe.processID) else { return }
-    workspace.choose(
-      recipe.processID, params: ParamSet.loading(recipe.params, onto: type.schema).params)
+    halt(at: index)
   }
 }

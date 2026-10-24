@@ -129,16 +129,36 @@ package final class StudioModel {
     return result
   }
 
-  /// Back one step.
-  package func undo() throws {
+  /// Back `steps` steps, mirrored once (a pipeline run undone in one move, card 0117); a
+  /// failure puts back the steps already undone.
+  package func undo(steps: Int = 1) throws {
     defer { mirror() }
-    try session.history.undo()
+    let history = session.history
+    try Self.move(steps, by: history.undo, back: history.redo)
   }
 
-  /// Forward one undone step.
-  package func redo() throws {
+  /// Forward `steps` undone steps, mirrored once; a failure takes back those already redone.
+  package func redo(steps: Int = 1) throws {
     defer { mirror() }
-    try session.history.redo()
+    let history = session.history
+    try Self.move(steps, by: history.redo, back: history.undo)
+  }
+
+  /// Makes `step` `count` times, all or none: a move that fails half-way never leaves the head
+  /// between where it started and where it was going.
+  private static func move(
+    _ count: Int, by step: () throws -> Void, back: () throws -> Void
+  ) throws {
+    var done = 0
+    do {
+      while done < count {
+        try step()
+        done += 1
+      }
+    } catch {
+      for _ in 0..<done { try? back() }
+      throw error
+    }
   }
 
   /// Whether a step can be undone (step 0 included: back to the base layer).

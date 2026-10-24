@@ -69,6 +69,8 @@ package final class ProjectWindowModel {
   package var isChoosingReplay = false
   /// A pipeline to replay on a stack once its workspace is loaded (card 0088).
   @ObservationIgnored var pendingReplay: PendingReplay?
+  /// The window's undo manager, the document's: what a replay registers on (card 0117).
+  @ObservationIgnored package var undoManager: () -> UndoManager? = { nil }
   /// The Stacking panel's preset and knob edits: what the next run applies (card 0070).
   package let knobs: KnobPanelViewModel
   /// The profile id the knobs' help was last looked up for (`knobs.profile` is its result, nil

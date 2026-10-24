@@ -1,17 +1,10 @@
+internal import ImageKit
+
 /// The à-trous B3-spline starlet transform (`noise/starlet.go`): a redundant multiscale
 /// decomposition whose planes add back to the input exactly.
 package enum Starlet {
-  /// Per scale, the sigma of a detail plane of unit-variance white noise.
-  static let whiteNoiseSigma = [0.8907, 0.2007, 0.0855, 0.0412, 0.0205, 0.0107]
-
-  /// The white-noise detail sigma at scale j, halving per octave past the table.
-  static func scaleSigma(_ scale: Int) -> Double {
-    let index = max(0, scale)
-    guard index >= whiteNoiseSigma.count, let last = whiteNoiseSigma.last else {
-      return whiteNoiseSigma[index]
-    }
-    return (whiteNoiseSigma.count...index).reduce(last) { value, _ in value * 0.5 }
-  }
+  /// The white-noise detail sigma at scale j (`StarletNoise`, shared with the Studio).
+  package static func scaleSigma(_ scale: Int) -> Double { StarletNoise.scaleSigma(scale) }
 
   /// The coarsest smooth and the `scales` detail planes (wⱼ = cⱼ − cⱼ₊₁).
   package static func decompose(_ plane: [Float], width: Int, height: Int, scales: Int)

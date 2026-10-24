@@ -58,10 +58,12 @@ struct StackingStagePane: View {
     .padding(DesignMetrics.spacingM)
   }
 
-  /// Why Run is greyed, then the paused runs to continue (card 0097); nothing while a run goes.
+  /// Why Run is greyed, the paused runs to continue (card 0097), then the scratch the run needs
+  /// (card 0098); nothing while a run goes.
   @ViewBuilder private var notices: some View {
     blocker
     if !running && !model.pausedRuns.isEmpty { PausedRunsView(model: model) }
+    if !running, let budget = model.scratchBudget { ScratchBudgetLine(budget: budget) }
     if !running && !model.leftoverStacks.isEmpty { StackLeftoversView(model: model) }
   }
 

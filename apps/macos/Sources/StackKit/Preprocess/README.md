@@ -244,3 +244,11 @@ A new step is a type taking the run's `SirilRunner` and a `PreprocessJournal`, c
 `Preprocessor+Steps.swift` with an `emitter.begin(title)`. Add its scripts to `SirilScripts`
 (with a sample in `SirilCommand+Samples` for a new verb). Pin it with the oracle replay: extend
 `PipelineSiril` for the files its scripts produce.
+
+## Trimming a finished stack (`StackFolder`, card 0114)
+
+`StackFolder.trim(_:bundle:)` removes the FITS at the top of a stack folder that `bundle.json`
+does not name (`aligned_*`, `combine_*`, an unnamed `combined`…); masters, previews, records and
+sub-folders (`history/`) stay, and a bundle naming a file outside the folder refuses the trim. The
+app calls it when it records a finished run, after the bundle opened — not the Preprocessor: the
+live oracles hash `aligned_*` after `perform` returns.

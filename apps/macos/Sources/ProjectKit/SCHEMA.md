@@ -1,8 +1,8 @@
 # project.db schema
 
-The schema of a `.astrostack` package's `project.db`, at migration **0007_stack_status**
+The schema of a `.astrostack` package's `project.db`, at migration **0008_stack_opened_at**
 (0001_init: card 0068; 0002: card 0047; 0003: card 0076; 0004: card 0060; 0005: card 0095;
-0006: card 0091; 0007: card 0097).
+0006: card 0091; 0007: card 0097; 0008: card 0114).
 Source of truth: `Migrations/NNNN_name.{up,down}.sql`; this page is the map. Every table has
 `id`, `created_at` and `updated_at`, the last two in int64 Unix milliseconds, except where noted.
 `ProjectStore` writes the timestamps.
@@ -11,7 +11,7 @@ Source of truth: `Migrations/NNNN_name.{up,down}.sql`; this page is the map. Eve
 |---|---|---|---|
 | `schema_migrations` | applied migration | `version` (PK), `name`, `applied_at` ms | written by the migrator only; no id/updated_at |
 | `sources` | capture night or legacy run, by path | `kind` (`night`, `legacy_run`), `path`, `read_only`, `profile_id` (0004) | unique (kind, path); never written to (R7); `profile_id` = the profile kept at import, NULL for none |
-| `stacks` | bundle (0057, 0043) | `bundle_path`, `params_json`, `object` (0005), `scope_json` (0005), `status` (0007), `checkpoint_json` (0007) | `object` = the OBJECT the run stacked (`''` before 0095 or for every light), `scope_json` = the app's `RunScope` (its light-set ids), NULL before 0095; `status` = `done` (a bundle) or `paused` (card 0097: a run stopped after a lane, no images, `checkpoint_json` = StackKit's `PreprocessCheckpoint`); indexed on `status` |
+| `stacks` | bundle (0057, 0043) | `bundle_path`, `params_json`, `object` (0005), `scope_json` (0005), `status` (0007), `checkpoint_json` (0007), `opened_at` (0008) | `object` = the OBJECT the run stacked (`''` before 0095 or for every light), `scope_json` = the app's `RunScope` (its light-set ids), NULL before 0095; `status` = `done` (a bundle) or `paused` (card 0097: a run stopped after a lane, no images, `checkpoint_json` = StackKit's `PreprocessCheckpoint`); indexed on `status`; `opened_at` = ms when the Studio last opened it (NULL = never; 0008 backfills it from the stack's last history step; the retention policy also counts 0008's `applied_at` as a use), the retention age counts from the latest of `opened_at`, `updated_at` and 0008's `applied_at`; `ProjectStore.deleteStack` removes the row (snapshots first: RESTRICT), then `stacks/<name>` only |
 | `stack_sources` | stack ↔ source link | `stack_id`, `source_id` | PK (stack_id, source_id); a source used by a stack cannot be deleted |
 | `images` | image of a stack | `stack_id`, `role`, `head_step_id` | cascades with its stack; head set to NULL if its step goes |
 | `history_steps` | applied process (0049) | `image_id`, `ordinal`, `process_id`, `params_json`, `output_path`, `output_bytes`, `content_hash` | unique (image_id, ordinal); the disk budget sums `output_bytes` of steps with a file |

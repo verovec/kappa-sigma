@@ -1,5 +1,6 @@
 package import Foundation
 package import ProcessKit
+internal import ProjectKit
 package import StackKit
 
 /// An error as the user reads it: one catalog sentence naming what to act on (the path, the
@@ -45,6 +46,8 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
   /// The viewer shows a geometry preview that moves the pixels: no step lies under them, so
   /// none can be compared (card 0090).
   case movedPreview
+  /// The stack to delete is the one the Studio shows (card 0114).
+  case stackOpen
   /// An error without a sentence of its own (SQLite, FITS, the file system): its description,
   /// which names the file or value it is about.
   case other(String)
@@ -66,6 +69,7 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     case let error as PlateSolveError: self = .plateSolve(error)
     case let error as ColourCalibrationError: self = .colourCalibration(error)
     case let error as PlateSolveTool.InputError: self = .plateSolveInput(error)
+    case ProjectStoreError.stackOpen(_): self = .stackOpen
     case let error as LocalizedError where error.errorDescription != nil:
       self = .other(error.errorDescription ?? "")
     // A system error has a sentence of its own; a Swift error without one would read
@@ -105,6 +109,8 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
       .app("The run stopped without writing its bundle; its journal shows the last step.")
     case .movedPreview:
       .app("The preview moves the pixels: compare once the geometry is applied or reset.")
+    case .stackOpen:
+      .app("The Studio shows this stack: choose another one there before deleting it.")
     case .other(let description): .app("\(description)")
     }
   }

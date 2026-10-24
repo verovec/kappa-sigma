@@ -126,6 +126,11 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
     stageControl("stacking", "deleteLeftover." + name)
   }
 
+  /// The Données stage's « Delete… » of a stack in the Storage section, by its row id (0114).
+  package static func dataDeleteStack(_ id: Int64) -> Self {
+    stageControl("data", "deleteStack-\(id)")
+  }
+
   /// The Empilement stage's « Pause » of a running run (card 0097).
   package static let stackingPause = stageControl("stacking", "pause")
 

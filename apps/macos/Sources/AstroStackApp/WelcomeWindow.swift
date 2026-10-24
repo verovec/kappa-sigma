@@ -17,6 +17,17 @@ package enum WelcomeWindow {
     recentURLs: { NSDocumentController.shared.recentDocumentURLs }, tools: hostTools,
     openProjects: openProjects)
 
+  /// The retention policy's launch review over the recent projects no window has open (0114).
+  package static let retention = RetentionReview(
+    setting: RetentionSetting(),
+    recentURLs: { NSDocumentController.shared.recentDocumentURLs },
+    openProjects: openProjectKeys)
+
+  /// Runs the launch review (the welcome window is up: no document is open).
+  package static func reviewRetention() async {
+    await retention.scan()
+  }
+
   /// Shows the window with the recent projects re-read and the tools re-checked.
   @discardableResult
   package static func show() -> NSWindow {
@@ -40,6 +51,8 @@ package enum WelcomeWindow {
   /// Closes the window if it is up: a project window just opened.
   package static func dismiss() {
     model.isNaming = false
+    // The sheet's list would be stale by the next time the window shows: asked again next launch.
+    retention.postpone()
     window?.close()
   }
 
@@ -52,12 +65,23 @@ package enum WelcomeWindow {
       create: { try NewProject.create(target: $0) })
     let window = NSWindow(
       contentViewController: NSHostingController(
-        rootView: WelcomeView(model: model, actions: actions).interfaceLocale()))
+        rootView: WelcomeView(model: model, actions: actions, retention: retention)
+          .interfaceLocale()))
     window.title = String(localized: .app("Welcome to AstroStack"))
     window.styleMask = [.titled, .closable, .miniaturizable]
     window.isReleasedWhenClosed = false
     window.center()
     return window
+  }
+
+  /// The key (`WelcomeModel.key`) of every project open in a document; reads no database.
+  package static func openProjectKeys() -> Set<String> {
+    Set(
+      NSDocumentController.shared.documents.compactMap {
+        guard let document = $0 as? ProjectDocument else { return nil }
+        // The file URL is there before the package finishes opening.
+        return (document.packageURL ?? document.fileURL).map(WelcomeModel.key)
+      })
   }
 
   /// The counts of every project open in a document, keyed like `WelcomeModel` looks them up.

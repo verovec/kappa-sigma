@@ -60,6 +60,26 @@ GRDB 7), and later `images/`, `recipes/`, `history/` (design §4.5). No UI, no A
 - `summary(in:)` counts a table only if it exists: `readSummary(at:)` never migrates, so a package
   written before a migration reads 0 for the table it adds instead of failing.
 
+## Storage and retention (card 0114)
+
+- `deleteStack(id:packageFolder:openStackID:)` deletes a stack: snapshots of its images first
+  (their step is `ON DELETE RESTRICT`), then the `stacks` row (images, history, exports, source
+  links cascade), then its folder — only when the bundle path is exactly `stacks/<name>`, never
+  anything else. The stack open in the Studio is refused (`ProjectStoreError.stackOpen`). Rows go
+  before the folder: a folder that fails to go is a leftover 0113 lists, never a half-gone row.
+- `stacks.opened_at` (migration 0008, backfilled from each stack's last history step; `readUsage` returns 0008's `applied_at` as `since`, a use of every stack) is set by
+  `markStackOpened(id:)` when the Studio opens a stack; `exportCounts()` gives every exported
+  stack's count. `closeKeepingWAL()` ends a short background write (the retention review) without
+  removing `-wal`/`-shm`, which a window opening the project at that moment may hold.
+- `RetentionPolicy` is pure: `candidates(_:exportCounts:protected:now:)` = finished, never
+  exported, unused (opened, else created) for more than `days`, neither the project's newest nor
+  protected; `delete(_:delete:)` deletes through the caller's closure, logs each, and returns what
+  went. `ProjectPackage.readUsage(at:chosenKey:)` reads a closed project read-only (no migration,
+  no checkpoint; `nil` before 0008): stacks, export counts, the Studio's chosen stack and the
+  stacks kept from the launch sheet (`keepStacks`, `project_settings` `retention.kept`, so a moved
+  project keeps the decision) — `StackUsage.protected`. The app owns the setting, the sizes
+  (`LeftoverSweep.allocatedBytes`, never stored) and the launch review over the recent projects.
+
 ## Why `NSDocument` over the package, not SwiftUI `FileDocument`
 
 `FileDocument`/`ReferenceFileDocument` save through `FileWrapper`: every save writes a new package

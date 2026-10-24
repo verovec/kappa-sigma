@@ -72,6 +72,12 @@ public final class ProjectPackage {
   /// The counts of the package at `url`, read without opening it: a read-only connection that
   /// neither migrates, checkpoints nor removes the WAL, so a project open elsewhere is untouched.
   package static func readSummary(at url: URL) throws -> ProjectSummary {
+    try readOnly(at: url, ProjectStore.summary(in:))
+  }
+
+  /// Runs `body` on a read-only connection to the package at `url`, which neither migrates,
+  /// checkpoints nor removes the WAL: a project open elsewhere is untouched.
+  static func readOnly<T>(at url: URL, _ body: (Database) throws -> T) throws -> T {
     let database = databaseURL(in: url)
     guard FileManager.default.fileExists(atPath: database.path) else {
       throw ProjectPackageError.missingDatabase(path: url.path)
@@ -87,7 +93,7 @@ public final class ProjectPackage {
     let path = wal ? database.path : database.absoluteString + "?immutable=1"
     let queue = try DatabaseQueue(path: path, configuration: configuration)
     defer { try? queue.close() }
-    return try queue.read(ProjectStore.summary(in:))
+    return try queue.read(body)
   }
 
   /// The application id in the SQLite file header, or 0 for an empty or non-SQLite file.
@@ -139,6 +145,21 @@ public final class ProjectPackage {
     let target = try DatabaseQueue(path: Self.databaseURL(in: destination).path)
     defer { try? target.close() }
     try pool.backup(to: target)
+  }
+
+  /// Checkpoints and closes the database, leaving `-wal` and `-shm` in place; the package must
+  /// not be used afterwards.
+  ///
+  /// For a short background write to a project a window may open at the same moment (the
+  /// retention review, card 0114): removing the WAL files under another connection could corrupt
+  /// it, so they stay (emptied by the truncating checkpoint, `project.db` holding every change)
+  /// for whoever closes the project last. A checkpoint another connection blocks stays passive.
+  package func closeKeepingWAL() throws {
+    // The pool closes even when both checkpoints fail: never a connection left behind.
+    defer { try? pool.close() }
+    try pool.writeWithoutTransaction { db in
+      if (try? db.checkpoint(.truncate)) == nil { _ = try db.checkpoint(.passive) }
+    }
   }
 
   /// Checkpoints and closes the database; the package must not be used afterwards.

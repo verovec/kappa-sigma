@@ -104,6 +104,11 @@ nonisolated package enum CommandCatalog {
     AppCommand(
       "view.actualPixels", "Actual Pixels", menu: .view, action: "zoomToActualSize:", key: "1",
       stage: .studio),
+    // The viewer's « View » panel (card 0126): Xcode's « Hide Inspectors » chord, ⌘0 stays Zoom
+    // to Fit; the surface retitles it Show View Panel while the panel is hidden.
+    AppCommand(
+      "view.togglePanel", "Hide View Panel", menu: .view, action: "toggleViewerPanel:", key: "0",
+      modifiers: [.command, .option], stage: .studio),
     // The Tri stage's blink and verdicts (card 0069): greyed unless a run waits at the review.
     AppCommand(
       "review.blinkPrevious", "Previous Frame", menu: .view, action: "blinkPrevious:",

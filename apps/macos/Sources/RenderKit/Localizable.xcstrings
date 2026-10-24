@@ -289,6 +289,22 @@
         }
       }
     },
+    "Hide View Panel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide View Panel"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masquer le panneau Vue"
+          }
+        }
+      }
+    },
     "Highlights": {
       "localizations": {
         "en": {
@@ -1005,6 +1021,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ombres en σ, fond cible, valeurs brutes ; les poignées de l’histogramme se glissent."
+          }
+        }
+      }
+    },
+    "Show View Panel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show View Panel"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher le panneau Vue"
           }
         }
       }

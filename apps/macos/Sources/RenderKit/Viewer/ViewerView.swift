@@ -1,7 +1,8 @@
 package import Metal
 package import SwiftUI
 
-/// The viewer: the image on the GPU, the region outline over it, the panel beside it.
+/// The viewer: the image on the GPU, the region outline over it, the panel beside it unless
+/// hidden (`ViewerModel.showsPanel`).
 package struct ViewerView: View {
   private let model: ViewerModel
   private let renderer: ViewerRenderer
@@ -30,11 +31,35 @@ package struct ViewerView: View {
           model: model, renderer: renderer, texture: texture, reference: reference, mask: mask)
         RegionOutline(model: model).allowsHitTesting(false)
       }
+      .overlay(alignment: .topTrailing) { PanelToggle(model: model) }
       .clipped()
       .frame(minWidth: 480, minHeight: 320)
-      Divider()
-      ViewerPanel(model: model).frame(width: 280)
+      // The surface keeps its slot whether the panel is shown: SwiftUI keeps the same
+      // `ViewerMTKView` (card 0109), so zoom, focus and the ⌥ compare key survive (card 0126).
+      if model.showsPanel {
+        Divider()
+        ViewerPanel(model: model).frame(width: 280)
+      }
     }
+  }
+}
+
+/// The canvas-edge button that hides or shows the « View » panel (⌥⌘0), so a hidden panel is
+/// found again without the menu.
+private struct PanelToggle: View {
+  let model: ViewerModel
+
+  var body: some View {
+    let title = ViewerMTKView.panelCommandTitle(showsPanel: model.showsPanel)
+    Button {
+      model.showsPanel.toggle()
+    } label: {
+      Image(systemName: "sidebar.trailing")
+    }
+    .buttonStyle(.borderless)
+    .padding(8)
+    .help(Text(title))
+    .accessible(.viewer("togglePanel"), label: title)
   }
 }
 

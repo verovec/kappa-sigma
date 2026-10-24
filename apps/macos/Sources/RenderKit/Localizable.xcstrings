@@ -1217,6 +1217,22 @@
         }
       }
     },
+    "Zoomed out, clipping is shown on the average; 1:1 shows each pixel.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoomed out, clipping is shown on the average; 1:1 shows each pixel."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En vue réduite, l’écrêtage est montré sur la moyenne ; le 1:1 montre chaque pixel."
+          }
+        }
+      }
+    },
     "c0, the black point applied. Arrows ±0.0001, ⇧ or ⌥ ±0.00001.": {
       "localizations": {
         "en": {

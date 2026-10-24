@@ -12,7 +12,10 @@ processes run (design §4.1, §4.6).
 - **GPU** (`GPU/`, `Shaders/`):
   - `ImageTexture`: one `r32Float` texture per plane, mip levels = ImageKit's `Pyramid` (2×2 means).
   - `DisplayPipeline` (`display` kernel): view pixel → image via `origin + (gid + ½)·scale`, mip
-    level `floor(log2 scale)`, optional STF per channel, clipping overlay (≥ 1 red, ≤ 0 blue),
+    nearest at 1:1 and zoomed in; zoomed out, bilinear on mip level `ceil(log2 scale)` (card
+    0110: the first level whose block means hold every pixel under a view pixel — no aliasing at
+    Fit), optional STF per channel after the filtering, clipping overlay (≥ 1 red, ≤ 0 blue; zoomed
+    out it judges the filtered value, and the panel says so: `ViewerFrame.clipsOnTheAverage`),
     compare (reference everywhere, or left of a split column), bottom-up rows flipped
     (`ROWORDER`), and the process mask as a red tint (`ViewerFrame.maskOverlay`, texture 7).
     Pinned to the CPU STF within 1/65535 (`DisplayPipelineTests`).

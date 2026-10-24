@@ -35,7 +35,7 @@ extension FITSHeader {
       movedPolynomial("A", "B", map) + movedPolynomial("AP", "BP", map) + orders
     let integers = Set(orders.map(\.0))
     let replaced = cards.filter {
-      !Self.isMovedKeyword($0.keyword) && !Self.isAlternateWCSKeyword($0.keyword)
+      !Self.isMovedKeyword($0.keyword) && Self.solutionKeyword($0.keyword) != .alternate
     }
     return FITSHeader(
       cards: replaced
@@ -46,10 +46,10 @@ extension FITSHeader {
         })
   }
 
-  /// This header without any plate-solution card (an image resampled at an angle needs a new
-  /// solve: an approximate solution would read wrong coordinates).
+  /// This header without any plate-solution card, primary or alternate (an image resampled at an
+  /// angle needs a new solve: an approximate solution would read wrong coordinates).
   package func droppingWCS() -> FITSHeader {
-    FITSHeader(cards: cards.filter { !Self.isWCSKeyword($0.keyword) })
+    FITSHeader(cards: cards.filter { Self.solutionKeyword($0.keyword) == nil })
   }
 
   /// The SIP coefficients of `u`/`v` (`A`/`B`, or `AP`/`BP`) after `map`.
@@ -98,55 +98,9 @@ extension FITSHeader {
       || ["A_ORDER", "B_ORDER", "AP_ORDER", "BP_ORDER"].contains(keyword)
   }
 
-  private static let namedWCS: Set<String> = [
-    "WCSAXES", "WCSNAME", "LONPOLE", "LATPOLE", "RADESYS", "RADECSYS", "EQUINOX", "PLTSOLVD",
-    "A_ORDER", "B_ORDER", "AP_ORDER", "BP_ORDER",
-  ]
-  private static let axisPrefixes = [
-    "CTYPE", "CUNIT", "CRPIX", "CRVAL", "CDELT", "CROTA", "CNAME", "CRDER", "CSYER",
-  ]
-  private static let matrixPrefixes = ["CD", "PC", "PV", "PS"]
-  /// The named cards a solution letter may follow (`WCSAXESA`, `RADESYSB`…).
-  private static let alternateNamed: Set<String> = [
-    "WCSAXES", "WCSNAME", "LONPOLE", "LATPOLE", "RADESYS", "EQUINOX",
-  ]
-
-  /// Every card of a plate solution, primary or alternate: the axis cards (`CTYPEn`, `CRPIXn`,
-  /// `CDi_j`, `PVi_j`…), the frame (`RADESYS`, `EQUINOX`), the solver's flag (`PLTSOLVD`) and
-  /// the SIP terms.
-  private static func isWCSKeyword(_ keyword: String) -> Bool {
-    namedWCS.contains(keyword) || isMovedKeyword(keyword) || isPrimaryAxisKeyword(keyword)
-      || isAlternateWCSKeyword(keyword)
-  }
-
-  /// A card of an alternate solution: a primary WCS keyword followed by a letter A–Z
-  /// (`CTYPE1A`, `CD1_1B`, `WCSNAMEA`; FITS WCS paper I §3.5).
-  private static func isAlternateWCSKeyword(_ keyword: String) -> Bool {
-    guard let last = keyword.last, ("A"..."Z").contains(last) else { return false }
-    let base = String(keyword.dropLast())
-    return alternateNamed.contains(base) || isPrimaryAxisKeyword(base)
-  }
-
-  /// `CTYPEn`…`CSYERn` and `CDi_j`, `PCi_j`, `PVi_j`, `PSi_j` of any axes.
-  private static func isPrimaryAxisKeyword(_ keyword: String) -> Bool {
-    if let prefix = axisPrefixes.first(where: keyword.hasPrefix) {
-      return Int(keyword.dropFirst(prefix.count)) != nil
-    }
-    guard matrixPrefixes.contains(where: keyword.hasPrefix) else { return false }
-    let indices = keyword.dropFirst(2).split(separator: "_", omittingEmptySubsequences: false)
-    return indices.count == 2 && indices.allSatisfy { Int($0) != nil }
-  }
-
   private static func isMatrixKeyword(_ keyword: String) -> Bool {
     ["CD", "PC"].contains { prefix in
       ["1_1", "1_2", "2_1", "2_2"].contains { keyword == prefix + $0 }
     }
-  }
-
-  /// `A_p_q`, `B_p_q`, `AP_p_q`, `BP_p_q` (not the `_ORDER` cards).
-  private static func isSIPTerm(_ keyword: String) -> Bool {
-    let parts = keyword.split(separator: "_", omittingEmptySubsequences: false)
-    return parts.count == 3 && ["A", "B", "AP", "BP"].contains(String(parts[0]))
-      && Int(parts[1]) != nil && Int(parts[2]) != nil
   }
 }

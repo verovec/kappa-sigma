@@ -23,6 +23,9 @@ extension SkyCatalogue {
   }
 
   /// The overlay rows of `url` by normalised name; a row without a name or a type is skipped.
+  ///
+  /// The first row of a name wins: the slimmed file lost OpenNGC's `A`/`B` suffixes, so a name
+  /// repeats for an object's components, listed after the object itself.
   package static func overlayEntries(contentsOf url: URL) throws -> [String: OverlayEntry] {
     let (columns, rows) = table(try read(url))
     var entries: [String: OverlayEntry] = [:]
@@ -30,7 +33,7 @@ extension SkyCatalogue {
       let cell = { (name: String) in columns[name].flatMap { $0 < row.count ? row[$0] : nil } ?? ""
       }
       let key = normalize(cell("name"))
-      guard !key.isEmpty, !cell("type").isEmpty else { continue }
+      guard !key.isEmpty, !cell("type").isEmpty, entries[key] == nil else { continue }
       entries[key] = OverlayEntry(
         type: cell("type"), majorAxisArcmin: number(cell("majax")),
         minorAxisArcmin: number(cell("minax")), positionAngleDeg: number(cell("posang")),

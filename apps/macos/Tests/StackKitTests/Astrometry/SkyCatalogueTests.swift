@@ -211,4 +211,22 @@ struct SkyCatalogueTests {
     let crab = try #require(catalogue.object(named: "M1"))
     #expect(catalogue.objects.count == 1 && crab.magnitude == nil && crab.majorAxisArcmin == nil)
   }
+
+  @Test("a name the overlay repeats keeps its first row: the object, not a component")
+  func testOverlayFirstRowWins() throws {
+    let url = try #require(SkyCatalogue.openNGCOverlay)
+    let entries = try SkyCatalogue.overlayEntries(contentsOf: url)
+    let cD = try #require(entries["NGC6166"])
+    #expect(cD.majorAxisArcmin == 2.14 && cD.morphology == "E")
+  }
+
+  @Test("a header-only list gives no row, whatever its columns")
+  func testHeaderOnlyList() throws {
+    let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: folder) }
+    try "id,lon,lat\n".write(
+      to: folder.appendingPathComponent("ldn.csv"), atomically: true, encoding: .utf8)
+    #expect(try SkyCatalogue.load(folder: folder, overlay: nil).objects.isEmpty)
+  }
 }

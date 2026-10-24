@@ -20,7 +20,12 @@ extension SkyCatalogue {
     guard FileManager.default.fileExists(atPath: folder.path, isDirectory: &isFolder),
       isFolder.boolValue
     else { throw SkyCatalogueError.catalogueMissing(folder: folder.path) }
-    return try load(folder: folder)
+    let catalogue = try load(folder: folder)
+    // A folder holding none of the five lists is no catalogue, never an empty one shown as such.
+    guard !catalogue.objects.isEmpty else {
+      throw SkyCatalogueError.catalogueMissing(folder: folder.path)
+    }
+    return catalogue
   }
 
   /// Where Siril keeps its lists, from the `siril-cli` path; a pure path function.
@@ -56,8 +61,8 @@ extension SkyCatalogue {
   /// The rows of one list: an unusable row (no name, a coordinate that is not a number) is skipped.
   static func parse(_ text: String, source: SkyObject.Source, file: String) throws -> [SkyObject] {
     let (columns, rows) = table(text)
-    // An empty list is a list with no row, as the legacy parser took it.
-    if columns.isEmpty { return [] }
+    // An empty or header-only list is a list with no row, as the legacy parser took it.
+    if rows.isEmpty { return [] }
     guard let name = columns["name"], let ra = columns["ra"], let dec = columns["dec"] else {
       throw SkyCatalogueError.missingColumns(file: file)
     }
@@ -83,8 +88,9 @@ extension SkyCatalogue {
       }
     }
     guard let header = lines.first else { return ([:], []) }
+    // A repeated column name keeps its last position, as the legacy `headerIndex`.
     let columns = Dictionary(
-      header.enumerated().map { ($1.lowercased(), $0) }, uniquingKeysWith: { first, _ in first })
+      header.enumerated().map { ($1.lowercased(), $0) }, uniquingKeysWith: { _, last in last })
     return (columns, Array(lines.dropFirst()))
   }
 

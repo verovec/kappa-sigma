@@ -26,6 +26,20 @@ package enum SirilTool {
     HostTools.override(environment, "SIRIL_BIN") ?? defaultPath
   }
 
+  /// The locale every `siril-cli` runs under, set over the app's environment.
+  ///
+  /// The log readers (plate solve, SPCC, error hints) match Siril's English sentences, and Siril
+  /// otherwise speaks the Mac's language (card 0124). Siril's own `[core] lang` outranks it.
+  package static let englishLocale = [
+    "LANG": "en_US.UTF-8", "LANGUAGE": "en", "LC_ALL": "en_US.UTF-8",
+    "LC_MESSAGES": "en_US.UTF-8",
+  ]
+
+  /// What every `siril-cli` launch is started with.
+  static var processEnvironment: Environment {
+    ToolProcess.environment(overriding: englishLocale)
+  }
+
   /// Throws `notInstalled` unless `path` is an executable file.
   package static func requireExecutable(_ path: String) throws {
     guard FileManager.default.isExecutableFile(atPath: path) else {
@@ -40,7 +54,8 @@ package enum SirilTool {
     // A cancelled probe (the host-tool timeout) stops siril-cli: SIGTERM, then SIGKILL.
     options.teardownSequence = [.gracefulShutDown(allowedDurationToNextStep: .seconds(1))]
     let result = try await Subprocess.run(
-      .path(FilePath(binary)), arguments: ["--version"], platformOptions: options,
+      .path(FilePath(binary)), arguments: ["--version"],
+      environment: processEnvironment, platformOptions: options,
       output: .string(limit: 64 * 1024), error: .combinedWithOutput)
     return try SirilVersion.parse(result.standardOutput)
   }

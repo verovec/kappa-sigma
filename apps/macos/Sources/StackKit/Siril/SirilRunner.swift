@@ -48,7 +48,8 @@ package struct SirilRunner: Sendable {
     let file = directory.appendingPathComponent("_astrostack.ssf")
     try Data(limits.apply(to: script.render()).utf8).write(to: file)
     let outcome = try await ToolProcess.runLines(
-      binary, arguments: scriptArguments(directory: directory, file: file, initFile: initFile)
+      binary, arguments: scriptArguments(directory: directory, file: file, initFile: initFile),
+      environment: SirilTool.englishLocale
     ) { line in onLine(SirilLine(parsing: line)) }
     guard outcome.exitCode == 0 else {
       throw SirilError.scriptFailed(

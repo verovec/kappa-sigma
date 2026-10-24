@@ -19,18 +19,22 @@ package enum ToolProcess {
     }
   }
 
-  /// Runs `binary` with `arguments`, handing every line to `onLine` as it arrives.
+  /// Runs `binary` with `arguments` and `environment` set over the app's own, handing every line
+  /// to `onLine` as it arrives.
   ///
   /// Lines end at `\n` only, with no length cap (the legacy bufio.Scanner's rule). Cancelling the
   /// task stops the tool: SIGTERM, then SIGKILL two seconds later.
   package static func runLines(
-    _ binary: String, arguments: [String], onLine: @escaping @Sendable (String) -> Void
+    _ binary: String, arguments: [String], environment: [String: String] = [:],
+    onLine: @escaping @Sendable (String) -> Void
   ) async throws -> Outcome {
     var options = PlatformOptions()
     options.teardownSequence = [.gracefulShutDown(allowedDurationToNextStep: .seconds(2))]
     let result = try await Subprocess.run(
-      .path(FilePath(binary)), arguments: Arguments(arguments), platformOptions: options,
-      input: .none, output: .sequence, error: .combinedWithOutput
+      .path(FilePath(binary)), arguments: Arguments(arguments),
+      environment: Self.environment(overriding: environment), platformOptions: options,
+      input: .none,
+      output: .sequence, error: .combinedWithOutput
     ) { execution in
       let splitter = LineSplitter()
       var log = ""
@@ -48,5 +52,15 @@ package enum ToolProcess {
     }
     let code: Int32? = if case .exited(let value) = result.terminationStatus { value } else { nil }
     return Outcome(exitCode: code, log: result.closureResult)
+  }
+
+  /// The app's environment with `overrides` set over it: never a copy of the whole environment,
+  /// which swift-subprocess would validate entry by entry where `.inherit` passes it as is.
+  static func environment(overriding overrides: [String: String]) -> Environment {
+    .inherit.updating(
+      Dictionary(
+        uniqueKeysWithValues: overrides.compactMap { key, value in
+          Environment.Key(rawValue: key).map { ($0, Optional(value)) }
+        }))
   }
 }

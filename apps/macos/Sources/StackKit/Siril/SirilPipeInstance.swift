@@ -85,7 +85,8 @@ final class SirilPipeInstance {
     let arguments = Arguments(["-p", "-r", input, "-w", output, "-d", workDirectory.path])
     return Task {
       _ = try? await Subprocess.run(
-        .path(FilePath(binary)), arguments: arguments, platformOptions: options,
+        .path(FilePath(binary)), arguments: arguments,
+        environment: SirilTool.processEnvironment, platformOptions: options,
         input: .none, output: .discarded, error: .discarded
       ) { execution in onLaunch(execution.processIdentifier.value) }
       onExit()

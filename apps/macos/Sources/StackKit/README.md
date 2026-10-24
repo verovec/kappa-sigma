@@ -31,8 +31,12 @@ subtract (`unsupportedCorrection`); every value is validated against the tool's 
 pair on the input pixels + engine + correction: the same request again makes no tool call.
 Progress lines of both tools arrive as `ToolProgress` (`ProgressPercent`: the legacy `N%` rule);
 Siril's script mode and GraXpert run through one `ToolProcess.runLines` (swift-subprocess,
-teardown on cancellation, `LineSplitter`). GraXpert 3.0 appends the input's extension to
-`-output` (the stem is passed) and logs a fatal AI failure as `Critical error` while exiting 0
+teardown on cancellation, `LineSplitter`). Every `siril-cli` launch (pipe, script,
+`--version`) runs with `SirilTool.englishLocale` over the app's environment, and the app's `-i`
+settings carry `lang=en_US`: every log reader (plate solve, SPCC, error hints) matches English
+sentences (card 0124), so a reader is never translated. Launches without `-i` (pipe, masters,
+background) still follow a language picked in the user's own Siril settings. GraXpert 3.0 appends the input's
+extension to `-output` (the stem is passed) and logs a fatal AI failure as `Critical error` while exiting 0
 (`GraXpertError.reportedError`, the legacy `firstErrorLine`).
 
 ## Oracle cases

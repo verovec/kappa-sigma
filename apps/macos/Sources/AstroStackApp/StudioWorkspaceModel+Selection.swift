@@ -35,7 +35,10 @@ extension StudioWorkspaceModel {
     refreshCatalogue()
     // A process this history refuses is not left in the panel.
     let entries = catalogue.flatMap(\.entries)
-    if let panel, entries.first(where: { $0.id == panel.type.id })?.unavailable != nil {
+    // A breakpoint's panel stays (Continue applies it on Combined): greyed here, never lost.
+    if let panel, pipeline?.stoppedAt == nil,
+      entries.first(where: { $0.id == panel.type.id })?.unavailable != nil
+    {
       closePanel()
     }
     do {
@@ -45,7 +48,11 @@ extension StudioWorkspaceModel {
     }
     // Its manual numbers once its image is shown: showing an image of another plane count resets
     // them to the autostretch.
-    if kept.stretch == .manual { viewer.model.manualSTF = kept.manual }
+    if kept.stretch == .manual {
+      viewer.model.manualSTF = kept.manual
+      // The panel's offers (the STF → HT handoff) read the stretch now on screen.
+      if let panel { refresh(panel) }
+    }
     // Another image, even with the same steps: the panel's values are shown before they apply.
     suspendPreview(moved: true)
   }

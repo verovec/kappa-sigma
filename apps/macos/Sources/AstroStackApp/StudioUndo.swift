@@ -75,10 +75,14 @@ package enum StudioUndo {
     guard !model.isMovingMain, model.toolTask == nil, let start = studio.staleFrom else { return }
     model.isReplaying = true
     defer { model.isReplaying = false }
-    undoManager?.beginUndoGrouping()
-    defer { undoManager?.endUndoGrouping() }
-    // Even a replay that stops on a failure keeps the steps it applied: they are undoable too.
-    defer { recordRun(model, from: start, on: undoManager) }
+    // Even a replay that stops on a failure keeps the steps it applied: they are undoable too,
+    // as one group opened and closed once the replay ended — never across its await, where an
+    // undo would find a group left open.
+    defer {
+      undoManager?.beginUndoGrouping()
+      recordRun(model, from: start, on: undoManager)
+      undoManager?.endUndoGrouping()
+    }
     do {
       try await studio.replayMain()
     } catch {
@@ -93,6 +97,8 @@ package enum StudioUndo {
   /// one step back on the history — also when that move went stale (the head moved since), so
   /// the button never does nothing.
   package static func undo(_ model: StudioWorkspaceModel, undoManager: UndoManager?) {
+    // A replay or a run holds the combined image: the button waits, as ⌘Z does.
+    guard !model.isMovingMain else { return }
     if let undoManager, undoManager.canUndo, undoManager.undoActionName == actionName,
       model.undoSelections.last == model.selection, moves(model, by: undoManager.undo)
     {
@@ -104,6 +110,7 @@ package enum StudioUndo {
   /// The history's Redo button: ⇧⌘Z itself when the window's last undo was a Studio move, else
   /// one step forward on the history.
   package static func redo(_ model: StudioWorkspaceModel, undoManager: UndoManager?) {
+    guard !model.isMovingMain else { return }
     if let undoManager, undoManager.canRedo, undoManager.redoActionName == actionName,
       model.redoSelections.last == model.selection, moves(model, by: undoManager.redo)
     {

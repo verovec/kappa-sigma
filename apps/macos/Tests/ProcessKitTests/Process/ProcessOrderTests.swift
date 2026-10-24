@@ -8,6 +8,7 @@ struct ProcessOrderTests {
   @Test("every registered process is in the usual order exactly once")
   func testUsual_CoversEveryRegisteredProcessOnce() throws {
     let ids = try ProcessRegistry.standard().ids
+    #expect(ProcessOrder.usual.last == GeometryProcess.id, "anywhere, listed last")
     #expect(Set(ProcessOrder.usual).count == ProcessOrder.usual.count)
     #expect(Set(ProcessOrder.usual) == Set(ids))
   }
@@ -16,7 +17,7 @@ struct ProcessOrderTests {
   func testStagesInOrder() throws {
     let registry = try ProcessRegistry.standard()
     let stretch = try #require(ProcessOrder.rank(of: StretchProcess.id))
-    for id in ProcessOrder.usual where id != StretchProcess.id {
+    for id in ProcessOrder.usual where ![StretchProcess.id, GeometryProcess.id].contains(id) {
       let type = try #require(registry.type(id: id))
       let rank = try #require(ProcessOrder.rank(of: id))
       if type.stage == .linear { #expect(rank < stretch, "\(id)") }
@@ -40,10 +41,20 @@ struct ProcessOrderTests {
     Next(applied: ["channel-combination", "starnet"], next: BackgroundExtractionProcess.id),
     Next(applied: ["channel-combination", "star-recomposition"], next: nil),
     Next(applied: [], next: ChannelCombinationProcess.id),
+    Next(applied: ["channel-combination", "stretch", "plate-solve"], next: LevelsProcess.id),
   ]
 
   @Test("usually next: the process after the last ordered step, never geometry", arguments: nexts)
   func testUsuallyNext(_ row: Next) {
     #expect(ProcessOrder.usuallyNext(after: row.applied) == row.next)
+  }
+
+  @Test("a greyed process is skipped; geometry has no rank")
+  func testSkippingAndAnywhere() {
+    let next = ProcessOrder.usuallyNext(
+      after: ["channel-combination"], skipping: [BackgroundExtractionProcess.id])
+    #expect(next == PlateSolveProcess.id)
+    #expect(ProcessOrder.rank(of: GeometryProcess.id) == nil)
+    #expect(ProcessOrder.rank(of: "starnet") == nil)
   }
 }

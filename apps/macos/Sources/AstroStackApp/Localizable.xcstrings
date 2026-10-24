@@ -8832,6 +8832,22 @@
           }
         }
       }
+    },
+    "Usually next: the stretch, once the linear work is done.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usually next: the stretch, once the linear work is done."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Habituellement ensuite : l’étirement, une fois le travail linéaire fait."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

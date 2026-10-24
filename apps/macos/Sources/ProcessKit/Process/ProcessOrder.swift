@@ -13,20 +13,28 @@ package enum ProcessOrder {
     GeometryProcess.id,
   ]
 
-  /// The process that fits anywhere: never « usually next ».
+  /// The process that fits anywhere: no rank, never « usually next ».
   private static let anywhere: Set<String> = [GeometryProcess.id]
 
-  /// The 1-based rank of process `id` in the usual order, `nil` for one outside it.
+  /// Rank by id, the order's processes but `anywhere`.
+  private static let ranks: [String: Int] = Dictionary(
+    uniqueKeysWithValues: usual.enumerated().filter { !anywhere.contains($0.element) }
+      .map { ($0.element, $0.offset + 1) })
+
+  /// The 1-based rank of process `id` in the usual order; `nil` for geometry (anywhere) and for a
+  /// process outside the order (a batch step such as StarNet).
   package static func rank(of id: String) -> Int? {
-    usual.firstIndex(of: id).map { $0 + 1 }
+    ranks[id]
   }
 
-  /// The process usually applied after the steps `applied` (process ids, oldest first): the one
-  /// after the last ordered step, geometry and processes outside the order skipped; the first one
-  /// for an empty history, `nil` past the last.
-  package static func usuallyNext(after applied: [String]) -> String? {
-    let last = applied.last { usual.contains($0) && !anywhere.contains($0) }
-    let start = last.flatMap { usual.firstIndex(of: $0) }.map { $0 + 1 } ?? 0
-    return usual[start...].first { !anywhere.contains($0) }
+  /// The process usually applied after the steps `applied` (process ids, oldest first): the
+  /// first one ranked after the furthest step reached — so a plate solve after the stretch does
+  /// not send the hint back to linear work — that `skipping` (the greyed ones) leaves; the first
+  /// one for an empty history, `nil` past the last.
+  package static func usuallyNext(after applied: [String], skipping: Set<String> = []) -> String? {
+    let reached = applied.compactMap { rank(of: $0) }.max() ?? 0
+    return usual.first { id in
+      (rank(of: id) ?? 0) > reached && !skipping.contains(id)
+    }
   }
 }

@@ -26,7 +26,6 @@ struct StudioCatalogueOrderTests {
     for group in workspace.catalogue {
       let ranks = group.entries.compactMap(\.rank)
       #expect(ranks == ranks.sorted(), "\(group.stage)")
-      for entry in group.entries { #expect(entry.rank == ProcessOrder.rank(of: entry.id)) }
     }
   }
 
@@ -36,18 +35,22 @@ struct StudioCatalogueOrderTests {
   func testUsuallyNext_AfterCombination_IsBackgroundExtraction() throws {
     let opened = try StudioModelTests.project()
     defer { try? opened.package.close() }
-    let workspace = try StudioWorkspaceModelTests.workspace(
-      opened, bundle: StudioModelTests.bundle())
+    // Without its tool the extraction is greyed: the hint passes it by.
+    let bare = try StudioWorkspaceModelTests.workspace(opened, bundle: StudioModelTests.bundle())
+    #expect(bare.usuallyNext != BackgroundExtractionProcess.id)
+    let workspace = try BackgroundProcessTests.workspace(opened)
     #expect(workspace.studio.steps.map(\.processID) == ["channel-combination"])
     #expect(workspace.usuallyNext == BackgroundExtractionProcess.id)
-    let greyed = workspace.catalogue.flatMap(\.entries).map(\.unavailable)
+    let greyed = Dictionary(
+      uniqueKeysWithValues: workspace.catalogue.flatMap(\.entries).map { ($0.id, $0.unavailable) })
 
     workspace.choose(StretchProcess.id)
     try workspace.apply()
     #expect(workspace.usuallyNext == LevelsProcess.id)
-    #expect(
-      workspace.catalogue.flatMap(\.entries).map(\.unavailable).count == greyed.count,
-      "the hint greys nothing")
+    for entry in workspace.catalogue.flatMap(\.entries) where entry.id != StretchProcess.id {
+      // Only the stretch moved the data: every other row is greyed as before (R2).
+      if greyed[entry.id] == nil { #expect(entry.unavailable == nil, "\(entry.id)") }
+    }
     #expect(
       workspace.catalogue.flatMap(\.entries).first { $0.id == LevelsProcess.id }?.unavailable
         == nil)

@@ -32,7 +32,7 @@ package struct StudioCatalogueRow: View {
         }
         if let stage = nextStage {
           // A suggestion only: nothing greyed, nothing reordered (R2).
-          Text(StudioWorkspaceModel.usuallyNextReason(stage))
+          Text(StudioWorkspaceModel.usuallyNextReason(entry.id, stage: stage))
             .font(.caption).foregroundStyle(DesignColor.statusOK.color)
         }
         if let unavailable = entry.unavailable {

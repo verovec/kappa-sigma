@@ -134,9 +134,8 @@ struct ProfileTests {
     let profiles = try ProfileLibrary.builtins(registry: ProcessRegistry.standard())
     #expect(!profiles.isEmpty)
     for profile in profiles {
-      let ranks = try profile.steps.map {
-        try #require(ProcessOrder.rank(of: $0.recipe.processID), "\(profile.id)")
-      }
+      // A batch step outside the order (StarNet) keeps no rank: it is not in the comparison.
+      let ranks = profile.steps.compactMap { ProcessOrder.rank(of: $0.recipe.processID) }
       #expect(ranks == ranks.sorted(), "\(profile.id): \(profile.steps.map(\.recipe.processID))")
     }
   }

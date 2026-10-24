@@ -20,6 +20,10 @@ package final class StudioModel {
   package private(set) var steps: [History.Step] = []
   /// The first step that read a branch head which moved since (card 0118), or `nil`.
   package private(set) var staleFrom: Int?
+  /// The applied steps of each opened branch, by layer id (card 0119).
+  package private(set) var branchSteps: [String: [History.Step]] = [:]
+  /// The head of each branch with a step, read once per move (a branch history hands out copies).
+  @ObservationIgnored private(set) var branchHeads: [String: AstroImage] = [:]
   /// The working image: the history's head.
   package private(set) var head: AstroImage
   /// The stack's header (its base layer's): where suggestions read pointing and optics.
@@ -73,8 +77,8 @@ package final class StudioModel {
       let params = combination ?? ParamSet(schema: ChannelCombinationProcess.schema)
       try apply(ChannelCombinationProcess.id, params: params)
     }
-    steps = history.steps
-    staleFrom = session.staleFrom
+    refresh()
+    refreshBranches()
   }
 
   /// The project image the Studio's history is mirrored on.
@@ -219,5 +223,14 @@ package final class StudioModel {
     steps = session.history.steps
     head = session.history.current
     staleFrom = session.staleFrom
+  }
+
+  /// Reads the steps and head of branch `layerID` again (every opened branch when `nil`): after
+  /// a branch move only, and only that branch (a head is a full copy).
+  func refreshBranches(_ layerID: String? = nil) {
+    for branch in session.branches.all where layerID == nil || branch.layerID == layerID {
+      branchSteps[branch.layerID] = branch.history.steps
+      branchHeads[branch.layerID] = branch.head
+    }
   }
 }

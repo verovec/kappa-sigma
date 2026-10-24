@@ -11,7 +11,8 @@ extension StudioWorkspaceModel {
   func drawPreview() {
     guard let panel else { return }
     do {
-      let preview = try studio.preview(panel.type.id, params: panel.params, mask: maskImage())
+      let preview = try studio.preview(
+        panel.type.id, params: panel.params, on: selection, mask: maskImage())
       // Through the head's display stretch: an auto-stretch fitted to the preview would hide
       // the very change the process makes (what is shown is what Apply records, R2).
       let same = preview.planes.count == headStatistics.count
@@ -28,7 +29,7 @@ extension StudioWorkspaceModel {
       previewFailed = true
       if isPreviewing {
         isPreviewing = false
-        try? show(studio.head, statistics: headStatistics)
+        try? show(head, statistics: headStatistics)
       }
     }
   }
@@ -73,7 +74,7 @@ extension StudioWorkspaceModel {
     shown = nil
     guard isPreviewing else { return }
     isPreviewing = false
-    try? show(studio.head)
+    try? show(head)
   }
 
   /// Suspends the panel's preview once the history moved under it.

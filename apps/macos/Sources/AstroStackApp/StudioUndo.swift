@@ -27,7 +27,7 @@ package enum StudioUndo {
       done()
       return
     }
-    let before = model.studio.steps.count
+    let before = model.steps.count
     // A host tool (plate solving) runs in the background; its step is registered when recorded.
     if let panel = model.panel, panel.type.runsTool(panel.params) {
       model.startTool { [weak model, weak undoManager] recorded in
@@ -35,15 +35,18 @@ package enum StudioUndo {
         // Only the tool's own step: another Apply made meanwhile registered its own undo.
         guard recorded, let model else { return }
         model.undoManager = undoManager
-        record(model, undoing: true, head: model.studio.steps.last?.file, on: undoManager)
+        let head = model.studio.steps.last?.file
+        record(model, undoing: true, in: .main, head: head, on: undoManager)
       }
       return
     }
     defer { done() }
     try? model.apply()
-    guard model.studio.steps.count > before else { return }
+    // The step goes to the history shown (card 0119): its ⌘Z undoes it there.
+    let selection = model.selection
+    guard model.steps.count > before else { return }
     model.undoManager = undoManager
-    record(model, undoing: true, head: model.studio.steps.last?.file, on: undoManager)
+    record(model, undoing: true, in: selection, head: model.steps.last?.file, on: undoManager)
   }
 
   /// The steps a pipeline run added after the history's first `count`: one ⌘Z takes them back.
@@ -56,7 +59,9 @@ package enum StudioUndo {
     guard let undoManager, !model.isRetired, steps.count > count else { return }
     model.undoManager = undoManager
     // Oldest first: the group undoes the last step first, which leaves the head on the one before.
-    for step in steps[count...] { record(model, undoing: true, head: step.file, on: undoManager) }
+    for step in steps[count...] {
+      record(model, undoing: true, in: .main, head: step.file, on: undoManager)
+    }
   }
 
   /// Re-applies the stale main steps (card 0118) and registers them as one move.
@@ -67,11 +72,17 @@ package enum StudioUndo {
     async throws
   {
     let studio = model.studio
-    guard let start = studio.staleFrom else { return }
-    undoManager?.beginUndoGrouping()
-    defer { undoManager?.endUndoGrouping() }
-    // Even a replay that stops on a failure keeps the steps it applied: they are undoable too.
-    defer { recordRun(model, from: start, on: undoManager) }
+    guard !model.isMovingMain, model.toolTask == nil, let start = studio.staleFrom else { return }
+    model.isReplaying = true
+    defer { model.isReplaying = false }
+    // Even a replay that stops on a failure keeps the steps it applied: they are undoable too,
+    // as one group opened and closed once the replay ended — never across its await, where an
+    // undo would find a group left open.
+    defer {
+      undoManager?.beginUndoGrouping()
+      recordRun(model, from: start, on: undoManager)
+      undoManager?.endUndoGrouping()
+    }
     do {
       try await studio.replayMain()
     } catch {
@@ -86,8 +97,10 @@ package enum StudioUndo {
   /// one step back on the history — also when that move went stale (the head moved since), so
   /// the button never does nothing.
   package static func undo(_ model: StudioWorkspaceModel, undoManager: UndoManager?) {
+    // A replay or a run holds the combined image: the button waits, as ⌘Z does.
+    guard !model.isMovingMain else { return }
     if let undoManager, undoManager.canUndo, undoManager.undoActionName == actionName,
-      moves(model, by: undoManager.undo)
+      model.undoSelections.last == model.selection, moves(model, by: undoManager.undo)
     {
       return
     }
@@ -97,39 +110,66 @@ package enum StudioUndo {
   /// The history's Redo button: ⇧⌘Z itself when the window's last undo was a Studio move, else
   /// one step forward on the history.
   package static func redo(_ model: StudioWorkspaceModel, undoManager: UndoManager?) {
+    guard !model.isMovingMain else { return }
     if let undoManager, undoManager.canRedo, undoManager.redoActionName == actionName,
-      moves(model, by: undoManager.redo)
+      model.redoSelections.last == model.selection, moves(model, by: undoManager.redo)
     {
       return
     }
     try? model.redo()
   }
 
-  /// Whether `move` changed the history's head.
+  /// Whether `move` changed the head of the history shown.
   private static func moves(_ model: StudioWorkspaceModel, by move: () -> Void) -> Bool {
-    let head = model.studio.steps.map(\.file)
+    let (selection, head) = (model.selection, model.steps.map(\.file))
     move()
-    return model.studio.steps.map(\.file) != head
+    return model.selection == selection && model.steps.map(\.file) != head
   }
 
   /// What Edit › Undo says of a Studio move, and how the history's buttons recognise one.
   static var actionName: String { String(localized: .app("Studio Step")) }
 
-  /// Registers the inverse of the last move, valid while the history's head is the step whose
-  /// output is `head` (`nil`: the original): an undo after an apply or a redo, a redo after an
-  /// undo.
+  /// Registers the inverse of the last move on the history of `selection`.
+  ///
+  /// Valid while that head is the step whose output is `head` (`nil`: the original): an undo
+  /// after an apply or a redo, a redo after an undo. It shows that history first (card 0119).
   private static func record(
-    _ model: StudioWorkspaceModel, undoing: Bool, head: String?, on undoManager: UndoManager?
+    _ model: StudioWorkspaceModel, undoing: Bool, in selection: StudioSelection, head: String?,
+    on undoManager: UndoManager?
   ) {
-    undoManager?.registerUndo(withTarget: model) { [weak undoManager] target in
+    guard let undoManager else { return }
+    // Where the entry lands, as the undo manager decides: the redo stack while undoing, else the
+    // undo stack — a new move (neither undoing nor redoing) empties the redo stack.
+    if undoManager.isUndoing {
+      model.redoSelections.append(selection)
+    } else {
+      model.undoSelections.append(selection)
+      if !undoManager.isRedoing { model.redoSelections.removeAll() }
+    }
+    undoManager.registerUndo(withTarget: model) { [weak undoManager] target in
       MainActor.assumeIsolated {
-        guard !target.isRetired, target.studio.steps.last?.file == head else { return }
+        // The entry leaves its stack whatever it does next.
+        if undoManager?.isRedoing == true {
+          _ = target.redoSelections.popLast()
+        } else {
+          _ = target.undoSelections.popLast()
+        }
+        // A replay or a run rewrites the combined image: nothing moves, no inverse is recorded.
+        guard !target.isRetired, !target.isMovingMain,
+          target.studio.steps(of: selection).last?.file == head
+        else {
+          return
+        }
         target.reveal()
+        target.select(selection)
+        // A replay or a run holds the combined image: never undo another history instead.
+        guard target.selection == selection else { return }
         guard (try? undoing ? target.undo() : target.redo()) != nil else { return }
-        record(target, undoing: !undoing, head: target.studio.steps.last?.file, on: undoManager)
+        let moved = target.studio.steps(of: selection).last?.file
+        record(target, undoing: !undoing, in: selection, head: moved, on: undoManager)
       }
     }
-    undoManager?.setActionIsDiscardable(true)
-    undoManager?.setActionName(actionName)
+    undoManager.setActionIsDiscardable(true)
+    undoManager.setActionName(actionName)
   }
 }

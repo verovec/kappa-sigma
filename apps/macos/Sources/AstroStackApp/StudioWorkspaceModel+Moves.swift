@@ -6,8 +6,8 @@ extension StudioWorkspaceModel {
   /// Whether step `index` lies on the head's grid: no geometric step after it moved the pixels
   /// (decided from the recorded values, no image read).
   func onHeadGrid(step index: Int) -> Bool {
-    studio.steps.indices.contains(index)
-      && !studio.steps[(index + 1)...].contains { movesPixels($0) }
+    steps.indices.contains(index)
+      && !steps[(index + 1)...].contains { movesPixels($0) }
   }
 
   /// The registry's rule on the step's values, the one `History.Step.movesPixels` records.
@@ -21,7 +21,7 @@ extension StudioWorkspaceModel {
   /// of the image even at the same size (a flip, a half turn). Returns whether the pixels moved.
   @discardableResult
   func dropRegionIfMoved() -> Bool {
-    let after = studio.steps
+    let after = steps
     let common = zip(headSteps, after).prefix { $0 == $1 }.count
     let changed = headSteps.dropFirst(common) + after.dropFirst(common)
     headSteps = after

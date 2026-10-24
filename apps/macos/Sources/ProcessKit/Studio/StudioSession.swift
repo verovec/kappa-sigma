@@ -27,7 +27,7 @@ package final class StudioSession {
   /// The last manual Apply left the image, its solution and its layers as they were (an
   /// amount at 0, a process switched off, a mask letting nothing through): recorded all the
   /// same — the pipeline keeps its steps — but worth saying, since undoing it shows nothing.
-  package private(set) var lastApplyChangedNothing = false
+  package internal(set) var lastApplyChangedNothing = false
   var overlay: Overlay?
 
   /// A session over `history` and `bundle`, running the processes of `registry` on `device`;

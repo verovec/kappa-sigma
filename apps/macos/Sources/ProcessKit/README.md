@@ -304,6 +304,13 @@ To give a host tool layers: return them in `StudioToolResult(…outputs:replaced
   from what it would read now; `StudioModel.replayMain()` re-applies from there with the recorded
   values through `PipelineRunner` (never by itself, R2), `StudioUndo.replayMain` as one ⌘Z.
 
+- **In the app** (card 0119): `StudioWorkspaceModel.selection` (`.main | .branch(layerID)`)
+  routes the viewer head, preview, Apply and Undo through `StudioModel.head/steps/apply/undo(on:)`;
+  on a branch the catalogue greys what `StudioSession.refusal(of:planes:)` refuses (and host tools)
+  as `StudioUnavailable.onCombinedImage` / `.needsColourLayer`; a registered ⌘Z re-selects its
+  history first; the combined view's `staleNotice` names `staleFrom…` and
+  `movedBranches(ofStep:)`, the pipeline column marks those steps `.stale`.
+
 To make a process branchable: declare `static let branchable = BranchUse.anyLayer` (or
 `.colourLayers`) — linear, same size, its input alone — and add it to the audit table. A process
 that reads bundle layers declares them in `layersRead`, or its steps never go stale.

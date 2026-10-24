@@ -30,7 +30,8 @@ extension History {
       return Step(
         processID: entry.processID, params: params, file: entry.file, outputs: outputs,
         replaced: entry.replaced ?? [:],
-        movesPixels: entry.movesPixels ?? movesPixels(entry.processID, params))
+        movesPixels: entry.movesPixels ?? movesPixels(entry.processID, params),
+        branchHeads: entry.branchHeads ?? [:])
     }
     try history.restore(
       steps: manifest.steps.map(step), undone: manifest.undone.map(step),
@@ -52,7 +53,8 @@ extension History {
         processID: step.processID, params: step.params.entries, file: step.file,
         outputs: Dictionary(uniqueKeysWithValues: step.outputs.map { ($0.key.rawValue, $0.value) }),
         replaced: step.replaced.isEmpty ? nil : step.replaced,
-        movesPixels: step.movesPixels ? true : nil)
+        movesPixels: step.movesPixels ? true : nil,
+        branchHeads: step.branchHeads.isEmpty ? nil : step.branchHeads)
     }
     return HistoryManifest(
       version: HistoryManifest.version, nextNumber: nextStepNumber, steps: steps.map(entry),

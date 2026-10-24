@@ -10,4 +10,16 @@ package enum StudioError: Error, Equatable, Sendable {
   /// A host-tool process (`ImageProcess.hostTool`) recorded without its tool: the step would
   /// claim what the tool never did.
   case needsTool(String)
+  /// A branch refused the process (card 0118), and why.
+  case notBranchable(processID: String, reason: BranchRefusal)
+
+  /// Why a branch refuses a process.
+  package enum BranchRefusal: String, Sendable {
+    /// A crop, turn or flip: the layers would leave the shared canvas.
+    case movesPixels
+    /// Not a per-layer linear process (`ImageProcess.branchable` is `.never`).
+    case notPerLayer
+    /// A colour process on a line layer (one plane).
+    case needsColour
+  }
 }

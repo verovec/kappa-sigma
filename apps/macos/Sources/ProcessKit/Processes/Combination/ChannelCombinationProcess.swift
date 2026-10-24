@@ -74,6 +74,11 @@ package struct ChannelCombinationProcess: ImageProcess {
     return needed
   }
 
+  /// The layers its slots read.
+  package static func layersRead(_ params: ParamSet, layerIDs: Set<String>) -> Set<String> {
+    Set(layersNeeded(params: params)).intersection(layerIDs)
+  }
+
   /// Why `params` cannot run with only `present` layers ("HOO needs the OIII layer"), or `nil`.
   package static func unavailableReason(params: ParamSet, present: Set<String>) -> String? {
     guard let missing = layersNeeded(params: params).first(where: { !present.contains($0) }) else {

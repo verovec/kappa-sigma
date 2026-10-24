@@ -59,6 +59,28 @@ package enum StudioUndo {
     recordNew(model, steps: added, name: .app("Run Pipeline"), mark: mark, on: undoManager)
   }
 
+  /// Re-applies the stale main steps (card 0118) and registers them as one move (in a group
+  /// of its own, `register`).
+  ///
+  /// One ⌘Z takes the whole replay (`StudioModel.replayMain`) back; a failure is shown in the
+  /// panel.
+  package static func replayMain(_ model: StudioWorkspaceModel, on undoManager: UndoManager?)
+    async throws
+  {
+    let studio = model.studio
+    guard let start = studio.staleFrom else { return }
+    // Even a replay that stops on a failure keeps the steps it applied: they are undoable too.
+    defer { recordRun(model, from: start, on: undoManager) }
+    do {
+      try await studio.replayMain()
+    } catch {
+      model.failure = UserFacingError(error).message
+      try? model.headChanged()
+      throw error
+    }
+    try model.headChanged()
+  }
+
   /// The history's Undo button: ⌘Z itself when the window's last action is this Studio's step
   /// back, else one step back on the history, registered so ⌘Z redoes it — also when that move
   /// went stale (the head moved since), so the button never does nothing.

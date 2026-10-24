@@ -10,6 +10,8 @@ package import SwiftUI
 package struct WelcomeView: View {
   private let model: WelcomeModel
   private let actions: Actions
+  /// The launch review of the retention policy (card 0114), when one ran.
+  private let retention: RetentionReview?
 
   /// What the buttons do: the window opens documents, tests record the calls.
   package struct Actions {
@@ -31,10 +33,12 @@ package struct WelcomeView: View {
     }
   }
 
-  /// The welcome content over `model`, acting through `actions`.
-  package init(model: WelcomeModel, actions: Actions) {
+  /// The welcome content over `model`, acting through `actions`; `retention` adds its sheet and
+  /// notice.
+  package init(model: WelcomeModel, actions: Actions, retention: RetentionReview? = nil) {
     self.model = model
     self.actions = actions
+    self.retention = retention
   }
 
   package var body: some View {
@@ -45,6 +49,7 @@ package struct WelcomeView: View {
         Button(.app("New Project…")) { model.isNaming = true }
         Button(.app("Open…"), action: actions.choose)
       }
+      if let retention { RetentionNotice(review: retention) }
       recentList
       ToolStrip(model: model)
     }
@@ -54,6 +59,16 @@ package struct WelcomeView: View {
     .sheet(isPresented: Binding(get: { model.isNaming }, set: { model.isNaming = $0 })) {
       NewProjectSheet(model: model, actions: actions)
     }
+    .sheet(isPresented: asking) {
+      if let retention { RetentionSheet(review: retention) }
+    }
+  }
+
+  /// The retention sheet is up while it has stacks to ask about; closing it decides nothing.
+  private var asking: Binding<Bool> {
+    Binding(
+      get: { !(retention?.pending.isEmpty ?? true) },
+      set: { if !$0 { retention?.postpone() } })
   }
 
   @ViewBuilder

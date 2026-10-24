@@ -8,4 +8,6 @@ package enum ProjectStoreError: Error, Equatable, Sendable {
   case notImageStep(imageID: Int64, stepID: Int64)
   /// The stack is not a paused run (card 0097): only a paused run is completed or discarded.
   case notPaused(stackID: Int64)
+  /// The stack is open in the Studio (card 0114): close it, or open another, before deleting it.
+  case stackOpen(stackID: Int64)
 }

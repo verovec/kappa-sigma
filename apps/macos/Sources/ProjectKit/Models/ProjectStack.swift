@@ -24,6 +24,8 @@ package struct ProjectStack: Equatable, Sendable, Identifiable {
   package let status: Status
   /// A paused run's checkpoint (StackKit's `PreprocessCheckpoint`) as JSON; nil once done.
   package let checkpointJSON: String?
+  /// When the Studio last opened it (card 0114), Unix milliseconds; `nil` = never.
+  package let openedAt: Int64?
   /// Creation time, Unix milliseconds.
   package let createdAt: Int64
   /// Last update time, Unix milliseconds.
@@ -33,7 +35,7 @@ package struct ProjectStack: Equatable, Sendable, Identifiable {
   package init(
     id: Int64, bundlePath: String, sourceIDs: [Int64], paramsJSON: String, object: String = "",
     scopeJSON: String? = nil, status: Status = .done, checkpointJSON: String? = nil,
-    createdAt: Int64, updatedAt: Int64
+    openedAt: Int64? = nil, createdAt: Int64, updatedAt: Int64
   ) {
     self.id = id
     self.bundlePath = bundlePath
@@ -43,6 +45,7 @@ package struct ProjectStack: Equatable, Sendable, Identifiable {
     self.scopeJSON = scopeJSON
     self.status = status
     self.checkpointJSON = checkpointJSON
+    self.openedAt = openedAt
     self.createdAt = createdAt
     self.updatedAt = updatedAt
   }

@@ -87,6 +87,8 @@ package final class ProjectWindowModel {
   /// Stack folders no stack records, kept because they hold files (finished masters of a
   /// failed or cancelled run): listed at open and when a queue ends, deleted only by the user.
   package internal(set) var leftoverStacks: [LeftoverStack] = []
+  /// The Storage section's stacks with their sizes (card 0114); empty until listed.
+  package internal(set) var storage: [StackStorageRow] = []
 
   let store: () -> ProjectStore?
   let folder: () -> URL?

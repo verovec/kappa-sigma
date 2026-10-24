@@ -72,6 +72,12 @@ public final class ProjectPackage {
   /// The counts of the package at `url`, read without opening it: a read-only connection that
   /// neither migrates, checkpoints nor removes the WAL, so a project open elsewhere is untouched.
   package static func readSummary(at url: URL) throws -> ProjectSummary {
+    try readOnly(at: url, ProjectStore.summary(in:))
+  }
+
+  /// Runs `body` on a read-only connection to the package at `url`, which neither migrates,
+  /// checkpoints nor removes the WAL: a project open elsewhere is untouched.
+  static func readOnly<T>(at url: URL, _ body: (Database) throws -> T) throws -> T {
     let database = databaseURL(in: url)
     guard FileManager.default.fileExists(atPath: database.path) else {
       throw ProjectPackageError.missingDatabase(path: url.path)
@@ -87,7 +93,7 @@ public final class ProjectPackage {
     let path = wal ? database.path : database.absoluteString + "?immutable=1"
     let queue = try DatabaseQueue(path: path, configuration: configuration)
     defer { try? queue.close() }
-    return try queue.read(ProjectStore.summary(in:))
+    return try queue.read(body)
   }
 
   /// The application id in the SQLite file header, or 0 for an empty or non-SQLite file.

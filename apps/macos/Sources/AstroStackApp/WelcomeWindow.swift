@@ -17,6 +17,18 @@ package enum WelcomeWindow {
     recentURLs: { NSDocumentController.shared.recentDocumentURLs }, tools: hostTools,
     openProjects: openProjects)
 
+  /// The retention policy's launch review over the recent projects no window has open (0114).
+  package static let retention = RetentionReview(
+    setting: RetentionSetting(),
+    recentURLs: { NSDocumentController.shared.recentDocumentURLs },
+    openProjects: { Set(openProjects().keys) })
+
+  /// Runs the launch review; the window comes up when it has something to ask or to report.
+  package static func reviewRetention() async {
+    await retention.scan()
+    if !retention.pending.isEmpty || !retention.removed.isEmpty { show() }
+  }
+
   /// Shows the window with the recent projects re-read and the tools re-checked.
   @discardableResult
   package static func show() -> NSWindow {
@@ -52,7 +64,8 @@ package enum WelcomeWindow {
       create: { try NewProject.create(target: $0) })
     let window = NSWindow(
       contentViewController: NSHostingController(
-        rootView: WelcomeView(model: model, actions: actions).interfaceLocale()))
+        rootView: WelcomeView(model: model, actions: actions, retention: retention)
+          .interfaceLocale()))
     window.title = String(localized: .app("Welcome to AstroStack"))
     window.styleMask = [.titled, .closable, .miniaturizable]
     window.isReleasedWhenClosed = false

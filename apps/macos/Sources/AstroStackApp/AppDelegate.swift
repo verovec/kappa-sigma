@@ -27,6 +27,8 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
   package func applicationDidFinishLaunching(_ notification: Notification) {
     Task { await Self.openLaunchArguments(UserDefaults.standard) }
     Task { await Self.sweepLeftovers() }
+    // Stacks never exported (card 0114): asked about, or removed, once the documents are back.
+    Task { await WelcomeWindow.reviewRetention() }
   }
 
   /// What a killed run left (its Siril, its tens of GB of work files, an untitled project) goes

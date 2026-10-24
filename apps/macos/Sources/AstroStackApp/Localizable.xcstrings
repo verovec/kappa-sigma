@@ -3841,6 +3841,22 @@
         }
       }
     },
+    "Open in Viewer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open in Viewer"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir dans le visualiseur"
+          }
+        }
+      }
+    },
     "Open Run…": {
       "localizations": {
         "en": {

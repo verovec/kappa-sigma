@@ -18,13 +18,16 @@ extension StudioWorkspaceModel {
     // The values applied: a geometry panel is back at the identity once the pixels moved.
     let (id, params) = (panel.type.id, panel.params)
     var used: AstroImage?
+    let before = head
     try reported {
       used = try maskImage()
       try studio.apply(id, params: params, on: selection, mask: used)
     }
     // A branch step is not a pipeline step (0122 carries them).
     guard selection == .main else {
-      appliedNothing = false
+      // The branch's head is the one written: the same bits say the values changed nothing.
+      appliedNothing =
+        before.width == head.width && StudioSession.samePixels(before.planes, head.planes)
       return
     }
     // The user's manual work becomes the recipe (R5): the pipeline records the step.

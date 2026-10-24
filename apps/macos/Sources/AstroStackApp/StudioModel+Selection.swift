@@ -14,7 +14,7 @@ extension StudioModel {
   /// it has no step).
   package func head(of selection: StudioSelection) -> AstroImage {
     guard let id = selection.layerID else { return head }
-    return session.branches.branch(id)?.head ?? session.stackBundle.layers[id] ?? head
+    return branchHeads[id] ?? session.stackBundle.layers[id] ?? head
   }
 
   /// What `processID` with `params` makes of the head of `selection` (the live preview); a branch

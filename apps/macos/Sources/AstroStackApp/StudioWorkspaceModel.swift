@@ -61,9 +61,11 @@ package final class StudioWorkspaceModel {
   package internal(set) var selection = StudioSelection.main
   /// The viewer's stretch left on each other history, put back when it is shown again.
   @ObservationIgnored var stretches: [StudioSelection: ViewerStretch] = [:]
-  /// The history of the Studio move last registered on the undo manager: the history buttons
-  /// replay ⌘Z only for the history shown (card 0119).
-  @ObservationIgnored var lastMoveSelection: StudioSelection?
+  /// The history of each Studio entry on the undo manager's undo stack, the top last: the
+  /// history buttons replay ⌘Z only when the top one is the history shown (card 0119).
+  @ObservationIgnored var undoSelections: [StudioSelection] = []
+  /// The same for the redo stack.
+  @ObservationIgnored var redoSelections: [StudioSelection] = []
   /// A Replay of the stale steps is running (card 0119): a second one waits for it.
   package internal(set) var isReplaying = false
   /// The other history whose head compare shows, if any (card 0119).
@@ -152,6 +154,8 @@ package final class StudioWorkspaceModel {
     headNoise.close()
     headSample = nil
     undoManager?.removeAllActions(withTarget: self)
+    undoSelections.removeAll()
+    redoSelections.removeAll()
   }
 
   /// Opens the panel of `processID` at `params` (its defaults when `nil`), with its suggestions.

@@ -22,6 +22,8 @@ package final class StudioModel {
   package private(set) var staleFrom: Int?
   /// The applied steps of each opened branch, by layer id (card 0119).
   package private(set) var branchSteps: [String: [History.Step]] = [:]
+  /// The head of each branch with a step, read once per move (a branch history hands out copies).
+  @ObservationIgnored private(set) var branchHeads: [String: AstroImage] = [:]
   /// The working image: the history's head.
   package private(set) var head: AstroImage
   /// The stack's header (its base layer's): where suggestions read pointing and optics.
@@ -222,5 +224,9 @@ package final class StudioModel {
     staleFrom = session.staleFrom
     branchSteps = Dictionary(
       uniqueKeysWithValues: session.branches.all.map { ($0.layerID, $0.history.steps) })
+    branchHeads = Dictionary(
+      uniqueKeysWithValues: session.branches.all.compactMap { branch in
+        branch.head.map { (branch.layerID, $0) }
+      })
   }
 }

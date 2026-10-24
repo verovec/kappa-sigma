@@ -102,6 +102,47 @@ extension StudioWorkspaceModelTests {
     #expect(undoManager.canUndo, "⌘Z still names the stretch")
   }
 
+  @Test("the Undo button follows the top of the undo stack, history by history", .scratchDirectory)
+  func testUndoButtonAfterMixedMoves() async throws {
+    let opened = try BranchTests.project()
+    defer { try? opened.package.close() }
+    let workspace = try Self.workspace(opened, bundle: BranchTests.bundle())
+    let undoManager = UndoManager()
+    undoManager.groupsByEvent = false
+    func apply(_ processID: String, _ params: ParamSet? = nil) async {
+      workspace.choose(processID, params: params)
+      await workspace.previewNow()
+      undoManager.beginUndoGrouping()
+      StudioUndo.apply(workspace, undoManager: undoManager)
+      undoManager.endUndoGrouping()
+    }
+    workspace.select(.branch("Ha"))
+    await apply(DenoiseProcess.id, try BranchTests.denoise())
+    workspace.select(.main)
+    await apply(StretchProcess.id)
+    undoManager.undo()  // ⌘Z: the stretch; the top entry is now the Hα denoise
+    #expect(workspace.studio.steps.map(\.processID) == ["channel-combination"])
+
+    StudioUndo.undo(workspace, undoManager: undoManager)  // the button, on Combined
+
+    #expect(workspace.studio.steps.isEmpty, "one step back on the combined image")
+    #expect(workspace.studio.steps(of: .branch("Ha")).count == 1, "Hα untouched")
+    #expect(workspace.selection == .main)
+  }
+
+  @Test("a branch Apply that changed nothing says so", .scratchDirectory)
+  func testBranchNoOpSaysSo() async throws {
+    let opened = try BranchTests.project()
+    defer { try? opened.package.close() }
+    let workspace = try Self.workspace(opened, bundle: BranchTests.bundle())
+    workspace.select(.branch("Ha"))
+    workspace.choose(DenoiseProcess.id)  // amount 0: the identity
+    await workspace.previewNow()
+    try workspace.apply()
+    #expect(workspace.studio.steps(of: .branch("Ha")).count == 1)
+    #expect(workspace.appliedNothing)
+  }
+
   @Test("testStaleBannerAndReplay", .scratchDirectory)
   func testStaleBannerAndReplay() async throws {
     let opened = try BranchTests.project()

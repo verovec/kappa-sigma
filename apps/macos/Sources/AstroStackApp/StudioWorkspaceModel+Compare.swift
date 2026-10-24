@@ -4,10 +4,10 @@ internal import ProcessKit
 extension StudioWorkspaceModel {
   /// Compares the viewer's image with the output of step `index` (`nil`: no compare).
   package func compare(toStep index: Int?) throws {
-    comparingWith = nil
     guard let index else {
       viewer.reference = nil
       comparing = nil
+      comparingWith = nil
       return
     }
     // On a moved preview (a crop, a flip) the step's pixels are not under the ones shown.
@@ -22,6 +22,7 @@ extension StudioWorkspaceModel {
     }
     viewer.reference = try Self.texture(image, device: studio.session.device)
     comparing = index
+    comparingWith = nil
   }
 
   /// Compares with step `index`, or stops when it is the one compared; a failure is reported.

@@ -94,7 +94,7 @@ package enum StudioUndo {
   /// the button never does nothing.
   package static func undo(_ model: StudioWorkspaceModel, undoManager: UndoManager?) {
     if let undoManager, undoManager.canUndo, undoManager.undoActionName == actionName,
-      model.lastMoveSelection == model.selection, moves(model, by: undoManager.undo)
+      model.undoSelections.last == model.selection, moves(model, by: undoManager.undo)
     {
       return
     }
@@ -105,7 +105,7 @@ package enum StudioUndo {
   /// one step forward on the history.
   package static func redo(_ model: StudioWorkspaceModel, undoManager: UndoManager?) {
     if let undoManager, undoManager.canRedo, undoManager.redoActionName == actionName,
-      model.lastMoveSelection == model.selection, moves(model, by: undoManager.redo)
+      model.redoSelections.last == model.selection, moves(model, by: undoManager.redo)
     {
       return
     }
@@ -130,14 +130,29 @@ package enum StudioUndo {
     _ model: StudioWorkspaceModel, undoing: Bool, in selection: StudioSelection, head: String?,
     on undoManager: UndoManager?
   ) {
-    model.lastMoveSelection = selection
+    // Where the entry lands, as the undo manager decides: the redo stack while undoing, else the
+    // undo stack — a new move (neither undoing nor redoing) empties the redo stack.
+    if undoManager?.isUndoing == true {
+      model.redoSelections.append(selection)
+    } else {
+      model.undoSelections.append(selection)
+      if undoManager?.isRedoing != true { model.redoSelections.removeAll() }
+    }
     undoManager?.registerUndo(withTarget: model) { [weak undoManager] target in
       MainActor.assumeIsolated {
+        // The entry leaves its stack whatever it does next.
+        if undoManager?.isRedoing == true {
+          _ = target.redoSelections.popLast()
+        } else {
+          _ = target.undoSelections.popLast()
+        }
         guard !target.isRetired, target.studio.steps(of: selection).last?.file == head else {
           return
         }
         target.reveal()
         target.select(selection)
+        // A replay or a run holds the combined image: never undo another history instead.
+        guard target.selection == selection else { return }
         guard (try? undoing ? target.undo() : target.redo()) != nil else { return }
         let moved = target.studio.steps(of: selection).last?.file
         record(target, undoing: !undoing, in: selection, head: moved, on: undoManager)

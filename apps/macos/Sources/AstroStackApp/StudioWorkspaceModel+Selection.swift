@@ -3,28 +3,6 @@ package import ProcessKit
 internal import RenderKit
 internal import StackKit
 
-/// The viewer's stretch on one history (card 0119): a line layer is mono, its stretch its own.
-struct ViewerStretch {
-  let stretch: ViewerModel.Stretch
-  let linked: Bool
-  let manual: [STFParameters]
-}
-
-/// What the combined view says after a branch edit (card 0119): the main steps that will run
-/// again and the branches whose head moved under them.
-package struct StaleNotice: Equatable, Sendable {
-  /// The main steps from the first stale one on, 0-based.
-  package let steps: [Int]
-  /// The branches that changed, by layer id.
-  package let branches: [String]
-
-  /// The steps `steps` outdated by `branches`.
-  package init(steps: [Int], branches: [String]) {
-    self.steps = steps
-    self.branches = branches
-  }
-}
-
 extension StudioWorkspaceModel {
   /// The histories the switcher offers: the combined image, then one branch per bundle layer
   /// (the base layer first, then in filter order); none for a single-layer bundle.
@@ -43,12 +21,18 @@ extension StudioWorkspaceModel {
 
   /// The history the viewer, the panel, Apply and Undo work on from now on.
   package func select(_ selection: StudioSelection) {
-    // A replay rewrites the combined image: the view stays on it until it ends.
-    guard selection != self.selection, !isReplaying else { return }
+    // A replay or a run rewrites the combined image: the view stays on it until it ends.
+    guard selection != self.selection, !isReplaying, !(pipeline?.isRunning ?? false) else { return }
     stretches[self.selection] = ViewerStretch(
       stretch: viewer.model.stretch, linked: viewer.model.linked, manual: viewer.model.manualSTF)
     try? compare(toStep: nil)
     self.selection = selection
+    // Its own stretch (a line layer is mono), auto on a first visit; set before the head is shown,
+    // so the panel's offers read the stretch on screen.
+    let kept = stretches[selection] ?? ViewerStretch(stretch: .auto, linked: false, manual: [])
+    viewer.model.linked = kept.linked
+    viewer.model.stretch = kept.stretch
+    if kept.stretch == .manual { viewer.model.manualSTF = kept.manual }
     refreshCatalogue()
     // A process this history refuses is not left in the panel.
     let entries = catalogue.flatMap(\.entries)
@@ -59,11 +43,6 @@ extension StudioWorkspaceModel {
       try headChanged()
     } catch {
       failure = UserFacingError(error).message
-    }
-    if let kept = stretches[selection] {
-      viewer.model.linked = kept.linked
-      viewer.model.stretch = kept.stretch
-      if kept.stretch == .manual { viewer.model.manualSTF = kept.manual }
     }
   }
 

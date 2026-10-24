@@ -133,6 +133,11 @@ package final class PipelineSidebarModel {
   /// The user's « Continue » at the breakpoint: the step with the panel's values, then on to
   /// the next breakpoint; the pipeline keeps the values applied (R5), undone on `undoManager`.
   package func continueRun(undoManager: UndoManager? = nil) async {
+    // Continue applies to the combined image: from a branch, the first press shows it there.
+    guard workspace.selection == .main else {
+      workspace.select(.main)
+      return
+    }
     // Read before the commit, whose value change ends the suspension: on a new head the values
     // are shown first, as Apply does, never applied unseen (R2).
     let previews = workspace.isPreviewSuspended
@@ -244,6 +249,7 @@ package final class PipelineSidebarModel {
     stoppedAt = index
     let recipe = pipeline.steps[index].recipe
     guard let type = workspace.registry.type(id: recipe.processID) else { return }
+    workspace.select(.main)
     workspace.choose(
       recipe.processID, params: ParamSet.loading(recipe.params, onto: type.schema).params)
   }

@@ -105,7 +105,8 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   TIFF16 (`ImageExport`) / FITS32 (`FITSFile.create`), crop fraction per edge (astrocomp
   rounding), hflip/vflip, `{name}` template (one file name containing `{name}`); everything is
   checked before a file is written. `ExportGuard` refuses a folder under
-  `~/Documents/astro/{captures,runs,library,fixtures}` (links resolved, case ignored, R7).
+  `~/Documents/astro/{captures,runs,library,fixtures}` (links resolved, case ignored, R7); the
+  same refusal guards the scratch folder setting and a project's Save / Save As (card 0101).
   Card 0091: `starless: nil` (never separated) writes `.final` only, the shaped original, and
   refuses a star tier with `.needsStarless`; `ExportSettings` is `Codable` (the app's `exports`
   record keeps it).

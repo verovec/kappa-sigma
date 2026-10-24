@@ -40,10 +40,10 @@ struct AccessibilityAuditTests {
   func testEveryInteractiveElementHasLabelAndIdentifier(language: String) {
     let entries = Self.entries(ComponentGallery(), language: language)
     #expect(AccessibilityAudit.problems(entries) == [])
-    // 2 parameter rows × 4 (help, slider, field, reset), 3 install cards × 2, 2 curve editors × 2,
+    // 2 parameter rows × 4 (help, slider, field, reset), 4 install cards × 2, 2 curve editors × 2,
     // the stretch controls' 3 visible rows × 4 (the raw rows sit in a closed disclosure) and the
     // histogram canvas.
-    #expect(entries.count == 31, "\(entries.map(\.id))")
+    #expect(entries.count == 33, "\(entries.map(\.id))")
     #expect(entries.contains { $0.id == "fr.astrostack.parameter.haBlend.slider" })
     #expect(entries.contains { $0.id == "fr.astrostack.parameter.gallery.shadowsSigma.slider" })
     #expect(entries.contains { $0.id == "fr.astrostack.histogram.gallery.canvas" })

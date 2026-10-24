@@ -34,6 +34,7 @@ extension StudioWorkspaceModel {
     case .found: nil
     case .missing(let path): .app("\(tool.productName) is not installed at \(path).")
     case .tooOld(_, let version): UserFacingError.siril(.tooOld(version: version)).message
+    case .cannotRun(let path, _): tool.cannotRun(at: path)
     }
   }
 

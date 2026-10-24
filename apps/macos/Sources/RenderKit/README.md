@@ -94,7 +94,8 @@ Rules: `Sources/StringCatalog/README.md`.
   `SectionHeader` and `EmptyState` take a `KeyedHelp` — card 0086), `ParameterRow` over a
   `ParameterValue` (slider + field in the user's notation, reset, « Default » badge on the
   exact default, `help:` the « ? »), `InstallCard` over an
-  `InstallCardModel` (re-check asks the `locate` closure; never a fallback, R2), `EmptyState`,
+  `InstallCardModel` (re-check asks the `locate` closure; never a fallback, R2; `.unusable`
+  = on disk but cannot run, its reason shown selectable — card 0108), `EmptyState`,
   `SectionHeader`, `CurveEditor` over `CurveEditorPoints` (card 0053). Values arrive
   **formatted**: RenderKit never imports the app, so the caller passes `AstroFormat` strings or
   `format`/`parse` closures.

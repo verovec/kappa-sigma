@@ -63,7 +63,7 @@ struct ComponentGalleryTests {
   func testGalleryCoversEveryState() {
     #expect(ComponentGallery.statuses == DesignStatus.allCases)
     #expect(ComponentGallery.parameters.map(\.isDefault) == [true, false])
-    #expect(ComponentGallery.installStates.count == 3)
+    #expect(ComponentGallery.installStates.count == 4)
   }
 
   @Test("French words are longer: the gallery widens nothing past its frame", arguments: variants)

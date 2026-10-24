@@ -53,4 +53,16 @@ struct ExecutableCheckTests {
       try await StarNetRunner.located(by: tools) { _ in "needs Rosetta" }
     }
   }
+
+  @Test("a StarNet the locator already found unlaunchable is cannotRun, never missing")
+  func testCannotRunStatus() async throws {
+    let tools = HostTools { _ in
+      .cannotRun(path: "/usr/local/bin/starnet2", reason: "needs Rosetta")
+    }
+    await #expect(
+      throws: StarNetError.cannotRun(path: "/usr/local/bin/starnet2", reason: "needs Rosetta")
+    ) {
+      try await StarNetRunner.located(by: tools) { _ in nil }
+    }
+  }
 }

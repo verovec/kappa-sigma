@@ -51,7 +51,7 @@ package struct ToolStrip: View {
     switch card {
     case .found(let url)?:
       return row.status.isUsable ? row.status : .found(path: url.path, version: nil)
-    case .missing?, .outdated?: return nil
+    case .missing?, .outdated?, .unusable?: return nil
     case .checking?, nil: return row.status.isUsable ? row.status : nil
     }
   }
@@ -70,6 +70,10 @@ package struct ToolStrip: View {
       // The sentence the app already shows for a too old Siril, the only tool with a floor.
       return UserFacingError.siril(.tooOld(version: version)).message
     }
+    if case .cannotRun(let path, _) = row.status {
+      // The install card's own line says what to install: the reason is not repeated here.
+      return row.tool.cannotRun(at: path)
+    }
     return switch row.tool {
     case .siril: .app("Calibrates, registers and stacks the captures.")
     case .graxpert: .app("Extracts the background.")
@@ -79,6 +83,11 @@ package struct ToolStrip: View {
 }
 
 extension HostTool {
+  /// The tool is on disk at `path` but this Mac cannot launch it (card 0108).
+  nonisolated package func cannotRun(at path: String) -> LocalizedStringResource {
+    .app("\(productName) is installed at \(path), but this Mac cannot run it.")
+  }
+
   /// Where the user installs the tool; the app never downloads it (licences, StarNet).
   package var installURL: URL {
     switch self {

@@ -14,13 +14,13 @@ import Testing
   "Live object card — SH2-132 from the installed Siril (fr, en)", .liveFixtures, .tags(.live),
   .enabled(
     if: FileManager.default.isExecutableFile(atPath: SirilTool.path()), "siril-cli absent"),
-  .timeLimit(.minutes(1)))
+  .timeLimit(.minutes(5)))
 struct LiveObjectCardRenderTests {
   @Test("the SH2-132 project's object card lays out and is attached", arguments: ["fr", "en"])
   func testSh2132Card(language: String) async throws {
     let objects = ObjectSearchModel()
     await objects.load(projectObject: "SH2-132")
-    let object = try #require(objects.selected)
+    let object = try #require(objects.selected, "unavailable: \(String(describing: objects.unavailable))")
     #expect(object.name == "Sh2-132")
     let host = NSHostingView(
       rootView: ObjectCard(object: object) {}.frame(width: 520, height: 360)

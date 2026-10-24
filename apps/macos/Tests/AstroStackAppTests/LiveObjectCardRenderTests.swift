@@ -20,7 +20,8 @@ struct LiveObjectCardRenderTests {
   func testSh2132Card(language: String) async throws {
     let objects = ObjectSearchModel()
     await objects.load(projectObject: "SH2-132")
-    let object = try #require(objects.selected, "unavailable: \(String(describing: objects.unavailable))")
+    let object = try #require(
+      objects.selected, "unavailable: \(String(describing: objects.unavailable))")
     #expect(object.name == "Sh2-132")
     let host = NSHostingView(
       rootView: ObjectCard(object: object) {}.frame(width: 520, height: 360)

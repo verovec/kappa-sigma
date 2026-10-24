@@ -46,7 +46,7 @@ struct StackStorageView: View {
         Text(.app("\(amount) go with its history and export records; exported files stay."))
       } else {
         Text(
-          .app("\(size(row.bytes)) leave the disk with its Studio history; this cannot be undone."))
+          .app("\(amount) leave the disk with its Studio history; this cannot be undone."))
       }
     }
   }

@@ -76,6 +76,16 @@ struct RetentionPolicyTests {
     }
   }
 
+  @Test("the upgrade time counts as a use of every stack")
+  func testSinceCountsAsUse() {
+    let stacks = [1, 2].map { Self.stack(id: $0, ageDays: 90) }
+    let recent = Self.now - 5 * Self.day
+    #expect(Self.policy.candidates(stacks, exportCounts: [:], since: recent, now: Self.now).isEmpty)
+    let old = Self.now - 40 * Self.day
+    #expect(
+      Self.policy.candidates(stacks, exportCounts: [:], since: old, now: Self.now).map(\.id) == [1])
+  }
+
   @Test("a protected stack (chosen for the Studio, kept by the user) is kept like the newest")
   func testProtectedKept() {
     let stacks = [1, 2, 3, 4].map { Self.stack(id: $0, ageDays: 90) }

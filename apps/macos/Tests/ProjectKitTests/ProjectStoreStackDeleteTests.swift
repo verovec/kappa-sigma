@@ -117,12 +117,13 @@ struct ProjectStoreStackDeleteTests {
     try store.migrate(to: nil)
     #expect(try store.columnNames(of: "stacks").contains("opened_at"))
     // The upgrade: a stack worked on was opened at its last Studio step; any other still reads
-    // « never opened », its age restarting at the upgrade (updated_at, in ms).
+    // « never opened », untouched; the policy reads the upgrade time from 0008's applied_at.
     let image = try #require(try store.images(stackID: stack.id).first)
     let last = try #require(try store.history(imageID: image.id).map(\.createdAt).max())
     #expect(try store.stack(id: stack.id)?.openedAt == last)
     let migrated = try #require(try store.stack(id: bare.id))
-    #expect(migrated.openedAt == nil && migrated.updatedAt >= bare.createdAt - 1)
+    #expect(migrated.openedAt == nil && migrated.updatedAt == bare.updatedAt)
+    #expect(try store.appliedMigrations().last.map(\.appliedAtMs) ?? 0 >= bare.createdAt)
   }
 
   @Test(
@@ -156,6 +157,7 @@ struct ProjectStoreStackDeleteTests {
     #expect(usage.stacks.map(\.id) == [stack.id])
     #expect(usage.exportCounts == [stack.id: 1] && usage.chosenStackID == stack.id)
     #expect(usage.keptStackIDs == [3, 7] && usage.protected == [3, 7, stack.id])
+    #expect(usage.since >= stack.createdAt - 1000, "0008's applied_at")
 
     let reopened = try ProjectPackage.open(at: package.url)
     try reopened.store.migrate(to: 7)

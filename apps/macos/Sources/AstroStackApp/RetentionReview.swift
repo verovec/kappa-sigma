@@ -151,7 +151,8 @@ package final class RetentionReview {
           at: url, chosenKey: ProjectWindowModel.stackSettingKey)
       else { return [] }
       return policy.candidates(
-        usage.stacks, exportCounts: usage.exportCounts, protected: usage.protected, now: now
+        usage.stacks, exportCounts: usage.exportCounts, protected: usage.protected,
+        since: usage.since, now: now
       ).map { stack in
         RetentionCandidate(
           project: url, stack: stack,
@@ -174,7 +175,8 @@ package final class RetentionReview {
     else { return [] }
     let still = Set(
       policy.candidates(
-        usage.stacks, exportCounts: usage.exportCounts, protected: usage.protected, now: now
+        usage.stacks, exportCounts: usage.exportCounts, protected: usage.protected,
+        since: usage.since, now: now
       ).map(\.id))
     let current = candidates.filter { still.contains($0.stack.id) }
     guard !current.isEmpty else { return [] }

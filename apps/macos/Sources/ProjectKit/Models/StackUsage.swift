@@ -9,16 +9,19 @@ package struct StackUsage: Equatable, Sendable {
   package let chosenStackID: Int64?
   /// The stacks the user chose to keep from the launch sheet.
   package let keptStackIDs: Set<Int64>
+  /// When openings started being recorded (0008's `applied_at`, Unix ms): a use of every stack.
+  package let since: Int64
 
   /// A reading.
   package init(
     stacks: [ProjectStack], exportCounts: [Int64: Int], chosenStackID: Int64?,
-    keptStackIDs: Set<Int64> = []
+    keptStackIDs: Set<Int64> = [], since: Int64 = 0
   ) {
     self.stacks = stacks
     self.exportCounts = exportCounts
     self.chosenStackID = chosenStackID
     self.keptStackIDs = keptStackIDs
+    self.since = since
   }
 
   /// The stacks the policy never offers: the chosen one and the kept ones.

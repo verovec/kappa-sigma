@@ -98,7 +98,7 @@ package struct SettingsView: View {
       } label: {
         Text(.app("Stacks never exported"))
       }
-      Stepper(value: $policy.days, in: RetentionSetting.dayRange, step: 7) {
+      Stepper(value: $policy.days, in: RetentionSetting.dayRange) {
         Text(.app("Unused for more than \(policy.days) days"))
       }
       Text(.app("An exported stack and each project's newest are always kept."))

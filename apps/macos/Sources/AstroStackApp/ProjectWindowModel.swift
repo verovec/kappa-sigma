@@ -91,9 +91,10 @@ package final class ProjectWindowModel {
   package internal(set) var leftoverStacks: [LeftoverStack] = []
   /// The Storage section's stacks with their sizes (card 0114); empty until listed.
   package internal(set) var storage: [StackStorageRow] = []
-  /// Bumped by each write to `storage` (a delete, an opening): a size listing that started
-  /// before one writes nothing.
-  @ObservationIgnored var storageWrites = 0
+  /// Bumped by each delete: a size listing that started before one writes nothing.
+  @ObservationIgnored var storageDeletes = 0
+  /// Stacks whose delete is running: a refresh never lists them again meanwhile.
+  @ObservationIgnored var deletingStacks: Set<Int64> = []
 
   let store: () -> ProjectStore?
   let folder: () -> URL?
@@ -317,7 +318,9 @@ package final class ProjectWindowModel {
       let summary = try store?.summary() ?? ProjectSummary()
       // The stacks are read again only when their count moved: a refresh runs on every event.
       // A queue's stacks appear when it ends: until then the picker, Tri and « the latest » stay.
-      if !queueActive, summary.stacks != stacks.count { stacks = try store?.stacks() ?? [] }
+      if !queueActive, summary.stacks != stacks.count {
+        stacks = try (store?.stacks() ?? []).filter { !deletingStacks.contains($0.id) }
+      }
       // Paused runs change only between runs (a pause recorded, a Continue, a Discard), and the
       // list is hidden while one goes: no read per run event.
       if !isStacking {

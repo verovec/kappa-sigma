@@ -20,7 +20,9 @@ extension ProjectPackage {
       return StackUsage(
         stacks: stacks, exportCounts: counts,
         chosenStackID: try setting(chosenKey).flatMap(Int64.init),
-        keptStackIDs: ProjectStore.keptIDs(try setting(ProjectStore.keptStacksKey)))
+        keptStackIDs: ProjectStore.keptIDs(try setting(ProjectStore.keptStacksKey)),
+        since: try Int64.fetchOne(
+          db, sql: "SELECT applied_at FROM schema_migrations WHERE version = 8") ?? 0)
     }
   }
 }

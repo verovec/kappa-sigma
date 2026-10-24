@@ -34,15 +34,17 @@ package struct RetentionPolicy: Equatable, Sendable {
   }
 
   /// The candidates among one project's `stacks`, oldest first; `exportCounts` by stack id;
-  /// `protected` are kept like the newest (the Studio's chosen stack, the ones the user kept).
+  /// `protected` are kept like the newest (the Studio's chosen stack, the ones the user kept);
+  /// `since` (the 0008 upgrade) counts as a use of every stack.
   package func candidates(
-    _ stacks: [ProjectStack], exportCounts: [Int64: Int], protected: Set<Int64> = [], now: Int64
+    _ stacks: [ProjectStack], exportCounts: [Int64: Int], protected: Set<Int64> = [],
+    since: Int64 = 0, now: Int64
   ) -> [ProjectStack] {
     let done = stacks.filter { $0.status == .done }
     let kept = protected.union(done.map(\.id).max().map { [$0] } ?? [])
     return done.filter { stack in
       !kept.contains(stack.id) && (exportCounts[stack.id] ?? 0) == 0
-        && now - Self.lastUse(stack) > Int64(days) * Self.dayMs
+        && now - max(Self.lastUse(stack), since) > Int64(days) * Self.dayMs
     }
     .sorted { $0.id < $1.id }
   }

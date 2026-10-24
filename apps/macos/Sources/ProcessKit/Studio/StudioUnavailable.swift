@@ -9,4 +9,11 @@ package enum StudioUnavailable: Equatable, Sendable {
   case toolMissing
   /// A process reading the plate solution on a head without one (card 0094).
   case unsolved
+  /// On a branch (card 0119): the process acts on the combined image (a stretch, a crop, a host
+  /// tool…), not on one layer before the combination.
+  case onCombinedImage
+  /// On a branch: a host-tool process (colour calibration), which runs on the combined image only.
+  case toolOnCombinedImage
+  /// On a line branch (one plane): a colour process.
+  case needsColourLayer
 }

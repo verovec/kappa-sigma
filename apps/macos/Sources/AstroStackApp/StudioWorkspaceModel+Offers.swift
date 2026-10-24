@@ -8,7 +8,11 @@ extension StudioWorkspaceModel {
   /// stretch (the STF → HT handoff, card 0089), for plate solving the stack header's pointing and
   /// optics (0093), for the denoise the head's measured noise (0115): offered, never set (R2).
   package func offers(for type: any ImageProcess.Type, params: ParamSet) -> [Suggestion] {
-    let suggestions = (try? studio.session.suggestions(for: type, params: params)) ?? []
+    let session = studio.session
+    let measured =
+      selection.layerID.map { try? session.branchSuggestions($0, for: type, params: params) }
+      ?? (try? session.suggestions(for: type, params: params))
+    let suggestions = measured ?? []
     if type == PlateSolveProcess.self {
       return suggestions + PlateSolveProcess.suggestions(header: studio.header)
     }
@@ -20,8 +24,9 @@ extension StudioWorkspaceModel {
   /// The denoise's noise level from the head's measured noise, once measured: the panel's
   /// suggestions are rebuilt when the measurement ends.
   private func denoiseOffers() -> [Suggestion] {
-    let head = studio.steps.last?.file ?? ""
-    let sigma = headNoise.sigma(of: head, image: studio.head) { [weak self] in
+    // Keyed by history too: a branch's step files are named like the main history's.
+    let key = String(describing: selection) + "/" + (steps.last?.file ?? "")
+    let sigma = headNoise.sigma(of: key, image: head) { [weak self] in
       guard let self, !self.isRetired, let panel = self.panel, panel.type == DenoiseProcess.self
       else { return }
       panel.suggestions = self.offers(for: panel.type, params: panel.params)
@@ -55,9 +60,9 @@ extension StudioWorkspaceModel {
   /// The panel's inputs on the head: its suggestions, the head's size, sample and statistics.
   func refresh(_ panel: ProcessPanelModel) {
     panel.suggestions = offers(for: panel.type, params: panel.params)
-    panel.headSize = (studio.head.width, studio.head.height)
+    panel.headSize = (head.width, head.height)
     guard panel.type is any HistogramHandled.Type else { return }
-    panel.sample = HeadSample(studio.head)
+    panel.sample = HeadSample(head)
     panel.headStats = studio.session.stepStats
   }
 

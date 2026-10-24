@@ -101,7 +101,7 @@ extension StudioWorkspaceModel {
   package func toggleModel() throws {
     if batch.showsModel {
       batch.showsModel = false
-      try show(studio.head)
+      try show(head)
       return
     }
     guard
@@ -127,6 +127,6 @@ extension StudioWorkspaceModel {
   func hideModel() {
     guard batch.showsModel else { return }
     batch.showsModel = false
-    try? show(studio.head)
+    try? show(head)
   }
 }

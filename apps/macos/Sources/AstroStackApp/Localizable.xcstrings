@@ -689,6 +689,22 @@
         }
       }
     },
+    "Acts on the combined image: apply it there": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acts on the combined image: apply it there"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agit sur l’image combinée : appliquez-le là"
+          }
+        }
+      }
+    },
     "Actual Pixels": {
       "localizations": {
         "en": {
@@ -1089,6 +1105,22 @@
         }
       }
     },
+    "Channel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Channel"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canal"
+          }
+        }
+      }
+    },
     "Channels": {
       "localizations": {
         "en": {
@@ -1341,6 +1373,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Comparer avec"
+          }
+        }
+      }
+    },
+    "Compare with…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compare with…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comparer avec…"
           }
         }
       }
@@ -3313,6 +3361,22 @@
         }
       }
     },
+    "Needs a colour layer: this branch is an emission line": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needs a colour layer: this branch is an emission line"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demande une couche couleur : cette branche est une raie d’émission"
+          }
+        }
+      }
+    },
     "Needs the starless: separate the stars first.": {
       "localizations": {
         "en": {
@@ -3469,6 +3533,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aucun canal n’a pu être empilé : %@"
+          }
+        }
+      }
+    },
+    "No compare": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No compare"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sans comparaison"
           }
         }
       }
@@ -4625,6 +4705,22 @@
         }
       }
     },
+    "Replay": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replay"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rejouer"
+          }
+        }
+      }
+    },
     "Replay Pipeline…": {
       "localizations": {
         "en": {
@@ -4941,6 +5037,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "En cours"
+          }
+        }
+      }
+    },
+    "Runs a host tool: on the combined image only": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Runs a host tool: on the combined image only"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lance un outil externe : sur l’image combinée seulement"
           }
         }
       }
@@ -6237,6 +6349,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "L’étape « %@ » lance un outil externe : appliquez-la dans le Studio, puis continuez."
+          }
+        }
+      }
+    },
+    "Stale steps: %@ (they read %@, changed since). Replay runs them again.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stale steps: %@ (they read %@, changed since). Replay runs them again."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Étapes périmées : %@ (elles lisaient %@, modifié depuis). Rejouer les relance."
           }
         }
       }

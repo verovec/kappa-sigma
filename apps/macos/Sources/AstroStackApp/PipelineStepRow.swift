@@ -92,6 +92,9 @@ struct PipelineStepRow: View {
   @ViewBuilder private var statusImage: some View {
     switch model.status(of: index) {
     case .done: Image(systemName: "checkmark.circle.fill")
+    case .stale:
+      Image(systemName: "exclamationmark.arrow.circlepath")
+        .foregroundStyle(DesignColor.textSecondary.color)
     case .current: Image(systemName: "play.circle.fill")
     case .next: Image(systemName: "circle")
     }

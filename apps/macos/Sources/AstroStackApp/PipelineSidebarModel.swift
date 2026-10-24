@@ -18,6 +18,8 @@ package final class PipelineSidebarModel {
   package enum Status: Equatable, Sendable {
     /// Applied: the history holds it.
     case done
+    /// Applied, but a branch it read has moved since (card 0119): Replay runs it again.
+    case stale
     /// The run halted before it; its process is in the panel.
     case current
     /// Not reached yet.
@@ -74,7 +76,9 @@ package final class PipelineSidebarModel {
 
   /// Where step `index` stands.
   package func status(of index: Int) -> Status {
-    if index < workspace.studio.steps.count { return .done }
+    if index < workspace.studio.steps.count {
+      return index >= (workspace.studio.staleFrom ?? .max) ? .stale : .done
+    }
     return index == stoppedAt ? .current : .next
   }
 
@@ -192,6 +196,8 @@ package final class PipelineSidebarModel {
       PipelineRunner.Outcome
   ) async -> Bool {
     guard !isRunning else { return false }
+    // A run applies to the combined image: it is shown first, its panel what Continue applies.
+    workspace.select(.main)
     // A host tool's Apply records on the head it started from: a run waits for it (card 0092).
     guard workspace.toolTask == nil else {
       failure = .app("A tool is already running: wait for it, or stop it.")

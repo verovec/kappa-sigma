@@ -41,6 +41,7 @@ package struct StudioSideView: View {
           Text(.app("Choose a process in the catalogue."))
             .foregroundStyle(DesignColor.textSecondary.color)
         }
+        if let notice = model.staleNotice { stale(notice) }
         if let failure = model.failure { StatusBadge(.error, failure) }
         if model.appliedNothing {
           StatusBadge(.attention, .app("These values changed nothing: Undo takes the step back."))
@@ -70,6 +71,27 @@ package struct StudioSideView: View {
     }
   }
 
+  /// A branch edit outdated main steps (card 0119): which, and why; Replay runs them again with
+  /// their recorded values — never by itself (R2).
+  private func stale(_ notice: StaleNotice) -> some View {
+    let steps = notice.steps.map { AstroFormat(locale: locale).integer($0 + 1) }
+      .joined(separator: ", ")
+    let branches = notice.branches.map { StudioSelection.label(.branch($0), locale: locale) }
+      .joined(separator: ", ")
+    return VStack(alignment: .leading, spacing: DesignMetrics.spacingXS) {
+      StatusBadge(
+        .attention,
+        .app(
+          "Stale steps: \(steps) (they read \(branches), changed since). Replay runs them again."
+        ))
+      Button(.app("Replay")) {
+        Task { try? await StudioUndo.replayMain(model, on: undoManager) }
+      }
+      .disabled(model.isReplaying)
+      .accessible(.studioReplayStale, label: .app("Replay"))
+    }
+  }
+
   /// The history moved under the panel: the viewer shows the image, not these values.
   private var suspended: some View {
     StatusBadge(
@@ -82,13 +104,13 @@ package struct StudioSideView: View {
         SectionHeader(.app("History"))
         Spacer()
         Button(.app("Undo")) { undo() }
-          .disabled(!model.studio.canUndo)
+          .disabled(!model.studio.canUndo(on: model.selection))
           .accessible(.studioUndo, label: .app("Undo"))
         Button(.app("Redo")) { redo() }
-          .disabled(!model.studio.canRedo)
+          .disabled(!model.studio.canRedo(on: model.selection))
           .accessible(.studioRedo, label: .app("Redo"))
       }
-      ForEach(Array(model.studio.steps.enumerated()), id: \.offset) { index, step in
+      ForEach(Array(model.steps.enumerated()), id: \.offset) { index, step in
         stepRow(index, step)
       }
     }

@@ -12,15 +12,29 @@ extension StudioSession {
   ) throws -> AstroImage {
     let (type, layer) = try branchable(layerID, processID, params: params)
     let head = branches.branch(layerID)?.head
-    // The stack's statistics until the branch has a step, then its head's with the stack's fit:
-    // what the main history reads for the same head (`BranchSet.overlay`).
-    let recorded = stackBundle.layerStats[layerID]
-    let stats =
-      head.map { LayerStats.measured($0).keepingFit(of: recorded) } ?? recorded
-      ?? LayerStats.measured(layer)
     return try runner.image(
-      type.init(params: params, device: device), input: head ?? layer, stats: stats, scale: scale,
-      purpose: purpose)
+      type.init(params: params, device: device), input: head ?? layer,
+      stats: branchStats(layerID, head: head, layer: layer), scale: scale, purpose: purpose)
+  }
+
+  /// What `type` with `params` proposes from the statistics of branch `layerID` (card 0119).
+  ///
+  /// Offered by the panel, never set (R2).
+  package func branchSuggestions(
+    _ layerID: String, for type: any ImageProcess.Type, params: ParamSet
+  ) throws -> [Suggestion] {
+    let layer = try stackLayer(layerID)
+    let head = branches.branch(layerID)?.head
+    let process = try type.init(params: params, device: device)
+    return process.suggestions(stats: branchStats(layerID, head: head, layer: layer))
+  }
+
+  /// The stack's statistics until the branch has a step, then its head's with the stack's fit:
+  /// what the main history reads for the same head (`BranchSet.overlay`).
+  private func branchStats(_ layerID: String, head: AstroImage?, layer: AstroImage) -> LayerStats {
+    let recorded = stackBundle.layerStats[layerID]
+    return head.map { LayerStats.measured($0).keepingFit(of: recorded) } ?? recorded
+      ?? LayerStats.measured(layer)
   }
 
   /// Applies `processID` with `params` to branch `layerID` at full resolution: its head moves,
@@ -58,6 +72,16 @@ extension StudioSession {
     }
   }
 
+  /// The branches whose head moved since main step `index` read them (card 0119: what the stale
+  /// banner names), by layer id.
+  package func movedBranches(ofStep index: Int) -> [String] {
+    guard history.steps.indices.contains(index) else { return [] }
+    let step = history.steps[index]
+    let now = headsRead(step.processID, params: step.params, index: index)
+    return Set(step.branchHeads.keys).union(now.keys)
+      .filter { step.branchHeads[$0] != now[$0] }.sorted()
+  }
+
   /// Why branch `layerID` refuses `processID` with `params`, or the process and the layer.
   func branchable(_ layerID: String, _ processID: String, params: ParamSet) throws
     -> (any ImageProcess.Type, AstroImage)
@@ -74,7 +98,9 @@ extension StudioSession {
   }
 
   /// Why a branch over a layer of `planes` planes refuses `type`, or `nil`.
-  static func refusal(of type: any ImageProcess.Type, planes: Int) -> StudioError.BranchRefusal? {
+  package static func refusal(of type: any ImageProcess.Type, planes: Int)
+    -> StudioError.BranchRefusal?
+  {
     if type is any GeometricProcess.Type { return .movesPixels }
     switch type.branchable {
     case .never: return .notPerLayer

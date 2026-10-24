@@ -114,5 +114,13 @@
   "stage.studio": {
     "definition": "Stretch, colour and stars on the stacked image, previewed live.",
     "label": "Studio"
+  },
+  "studio.branch": {
+    "definition": "One layer's own history before the combination: denoise or balance Hα, OIII or the broadband apart.",
+    "label": "Branch"
+  },
+  "studio.combined": {
+    "definition": "The image after the channel combination: the main history, where the finishing steps run.",
+    "label": "Combined"
   }
 }

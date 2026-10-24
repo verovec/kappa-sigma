@@ -57,6 +57,17 @@ package final class StudioWorkspaceModel {
   /// The history moved under the open panel: the viewer shows the head, not the panel's values,
   /// until a value moves or Preview is pressed; Apply shows them before it records (R2).
   package internal(set) var isPreviewSuspended = false
+  /// The history shown and edited: the combined image or a layer's branch (card 0119).
+  package internal(set) var selection = StudioSelection.main
+  /// The viewer's stretch left on each other history, put back when it is shown again.
+  @ObservationIgnored var stretches: [StudioSelection: ViewerStretch] = [:]
+  /// The history of the Studio move last registered on the undo manager: the history buttons
+  /// replay ⌘Z only for the history shown (card 0119).
+  @ObservationIgnored var lastMoveSelection: StudioSelection?
+  /// A Replay of the stale steps is running (card 0119): a second one waits for it.
+  package internal(set) var isReplaying = false
+  /// The other history whose head compare shows, if any (card 0119).
+  package internal(set) var comparingWith: StudioSelection?
   /// The step compare shows, if any.
   package internal(set) var comparing: Int?
   /// The viewer shows a geometric preview that moves the pixels (card 0090, `gridMoved`).
@@ -178,14 +189,18 @@ package final class StudioWorkspaceModel {
       let ordered = registry.types.filter { $0.stage == stage }
         .sorted { (ProcessOrder.rank(of: $0.id) ?? .max) < (ProcessOrder.rank(of: $1.id) ?? .max) }
       let entries = ordered.map { type in
-        Entry(
-          id: type.id, title: type.title,
-          unavailable: studio.session.unavailable(for: type, base: base, registry: registry)
-            ?? (type.hostTool && tools[type.id] == nil ? .toolMissing : nil))
+        Entry(id: type.id, title: type.title, unavailable: unavailable(type))
       }
       if !entries.isEmpty { groups.append(Group(stage: stage, entries: entries)) }
     }
     catalogue = groups
+  }
+
+  /// Why `type` cannot be the next step of the history shown, or `nil`.
+  private func unavailable(_ type: any ImageProcess.Type) -> StudioUnavailable? {
+    if let id = selection.layerID { return branchUnavailable(type, layerID: id) }
+    return studio.session.unavailable(for: type, base: base, registry: registry)
+      ?? (type.hostTool && tools[type.id] == nil ? .toolMissing : nil)
   }
 
   static func texture(_ image: AstroImage, device: MTLDevice) throws -> ImageTexture {

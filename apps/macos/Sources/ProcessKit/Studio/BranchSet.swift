@@ -44,6 +44,9 @@ package final class BranchSet {
     return branch
   }
 
+  /// The branches opened so far (a manifest on disk, or a step this session).
+  package var all: [Branch] { Array(opened.values) }
+
   /// The file of each branch head, by layer id (branches without an applied step left out).
   package var heads: [String: String] {
     opened.compactMapValues(\.headFile)

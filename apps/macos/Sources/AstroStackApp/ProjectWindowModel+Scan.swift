@@ -10,7 +10,6 @@ extension ProjectWindowModel {
   /// without a capture night.
   package func rescan() {
     cancelScan()
-    rescanAfterAdd = false
     guard let store = store() else {
       error = .projectClosed
       return
@@ -32,6 +31,7 @@ extension ProjectWindowModel {
         // A night recorded while it ran is not in this plan: show nothing rather than a part.
         if Self.samePaths(request.paths, nightPaths) { scan = plan } else { dropScan() }
         isScanning = false
+        rescanAfterAdd = false
         scanTask = nil
         refresh()
       } catch {
@@ -50,6 +50,7 @@ extension ProjectWindowModel {
     scanTask?.cancel()
     scanTask = nil
     isScanning = false
+    rescanAfterAdd = false
   }
 
   /// Waits for the scan in flight, if any.

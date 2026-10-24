@@ -98,17 +98,19 @@ extension ProjectWindowModel {
     // The store's own guard gets the Studio's stack, read while the stack is still listed.
     let open = openStackID
     // Out of the picker and the list before the folder goes: nothing can open it meanwhile.
+    let row = storage.first { $0.id == id }
     stacks.removeAll { $0.id == id }
     storage.removeAll { $0.id == id }
     storageDeletes += 1
+    // Removed before each re-read below, which must already list the stack again or not.
     deletingStacks.insert(id)
-    defer { deletingStacks.remove(id) }
     do {
       try await Self.delete(id, store: store, folder: folder, open: open)
     } catch {
       // The store as it is now, never a snapshot: another delete may have finished meanwhile.
       deletingStacks.remove(id)
       stacks = (try? store.stacks().filter { !deletingStacks.contains($0.id) }) ?? stacks
+      if let row, !storage.contains(where: { $0.id == id }) { storage.append(row) }
       self.error = UserFacingError(error)
       return
     }

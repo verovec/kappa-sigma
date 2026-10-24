@@ -16,8 +16,9 @@ files="$(git ls-files)"
 bad=$(printf '%s\n' "$files" | grep -E '(^|/)(go\.mod|go\.sum|Dockerfile|docker-compose\.ya?ml|compose\.ya?ml|requirements\.txt|pyproject\.toml|package\.json)$|\.(go|py|cgo|js|ts)$' \
   | grep -vE '^(docs|tasks-context|conventions)/' || true)
 [ -z "$bad" ] || report "non-Swift code or container files tracked:"$'\n'"$bad"
-#    No web front end either, whatever it holds (the legacy Vue app is never migrated).
-if [ -e frontend ]; then report "'frontend/' exists at the repo root (the app is SwiftUI only)"; fi
+#    No web front end either, at any depth, whatever it holds (the legacy Vue app is never migrated).
+bad=$(printf '%s\n' "$files" | grep -E '(^|/)frontend/' || true)
+[ -z "$bad" ] || report "'frontend/' tracked (the app is SwiftUI only):"$'\n'"$bad"
 
 # 2. Nothing pixel-shaped: fixtures in the repo are text only. The one exception is the README's
 #    artwork in docs/assets/ (card 0082): web images only, each at most 600 KB. Data never goes there.
@@ -66,12 +67,14 @@ bad=$( [ -z "$views" ] || printf '%s\n' "$views" | tr '\n' '\0' | xargs -0 grep 
 bad=$(./scripts/check-links.sh || true)
 [ -z "$bad" ] || report "broken relative links:"$'\n'"$bad"
 
-# 9. The French README mirrors the English one (card 0064): the same sections and the same
-#    commands in its ```bash blocks (their comments are translated, so they are dropped first; other
-#    blocks, such as the stage diagram, are prose).
-commands() { awk '/^```bash/ { inside = 1; next } /^```/ { inside = 0 } inside' "$1" | sed -E 's/[[:space:]]+#.*$//'; }
-sections() { grep -c '^## ' "$1" || true; }
-if [ -f README.fr.md ]; then
+# 9. The tracked French README mirrors the English one (card 0064): as many `## ` sections outside
+#    code fences, and the same commands in its ```bash blocks. Comments (after two spaces or more)
+#    are translated, so they are dropped first; other blocks, such as the stage diagram, are prose.
+commands() {
+  awk '/^```bash/ { inside = 1; next } /^```/ { inside = 0 } inside' "$1" | sed -E 's/[[:space:]]{2,}#.*$//'
+}
+sections() { awk '/^```/ { fenced = !fenced; next } !fenced && /^## / { n++ } END { print n + 0 }' "$1"; }
+if printf '%s\n' "$files" | grep -qx 'README.fr.md' && [ -f README.md ]; then
   [ "$(commands README.md)" = "$(commands README.fr.md)" ] \
     || report "README.fr.md commands differ from README.md (translate the comments only)"
   [ "$(sections README.md)" = "$(sections README.fr.md)" ] \

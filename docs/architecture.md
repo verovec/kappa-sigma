@@ -17,7 +17,7 @@ helper binary and no second language. The full design, with the decisions behind
 | `StackKit` | Preprocessing: frame inspection, calibration library, Siril driver, grading, stacking, multi-night lanes | [README](../apps/macos/Sources/StackKit/README.md) |
 | `HelpKit` | Help cards and the fr/en glossary | [README](../apps/macos/Sources/HelpKit/README.md) |
 | `StringCatalog` | Compiles and gates the fr/en string catalogs at build time | [README](../apps/macos/Sources/StringCatalog/README.md) |
-| `CatalogTool` | The build-tool executable `CatalogPlugin` runs to compile the catalogs | |
+| `CatalogTool` | The build-tool executable `CatalogPlugin` runs to compile the catalogs | [README](../apps/macos/Sources/CatalogTool/README.md) |
 | `AstroStackApp` | The executable: document lifecycle (AppKit), windows and screens (SwiftUI) | |
 
 Module boundaries are pinned by a test in every test target (`Tests/TestSupport/BoundaryRules.swift`):

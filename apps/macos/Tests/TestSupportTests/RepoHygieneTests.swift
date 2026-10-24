@@ -24,6 +24,7 @@ struct RepoHygieneTests {
     Case(item: "compose file", files: ["compose.yaml": "services: {}\n"], rule: "non-Swift code"),
     Case(item: "Python script", files: ["tools/run.py": "print()\n"], rule: "non-Swift code"),
     Case(item: "frontend folder", files: ["frontend/index.html": "<p>\n"], rule: "'frontend/'"),
+    Case(item: "nested frontend", files: ["apps/frontend/a.css": "p {}\n"], rule: "'frontend/'"),
     Case(item: "file over 2 MB", files: ["notes.txt": big], rule: "files over 2 MB"),
     Case(item: "FITS under Tests", files: ["Tests/Fixtures/m.fits": "SIMPLE\n"], rule: "pixel"),
     Case(item: "PNG under Tests", files: ["Tests/Fixtures/m.png": "x\n"], rule: "pixel"),
@@ -48,6 +49,12 @@ struct RepoHygieneTests {
     Case(
       item: "French README missing a section",
       files: ["README.fr.md": french.replacing("## Démarrer\n\n", with: "")],
+      rule: "README.fr.md has 0 sections"),
+    Case(
+      item: "French README with a fenced heading only",
+      files: [
+        "README.fr.md": french.replacing("## Démarrer\n\n```bash\n", with: "```bash\n## x\n")
+      ],
       rule: "README.fr.md has 0 sections"),
     Case(
       item: "broken link in the French README",
@@ -83,7 +90,7 @@ struct RepoHygieneTests {
       try FileManager.default.createSymbolicLink(
         atPath: url.path, withDestinationPath: target)
     }
-    _ = try Self.run("/usr/bin/git", ["add", "-A"], in: tree)
+    try Self.git(["add", "-A", "-f"], in: tree)
     let gate = try Self.run("/bin/bash", ["scripts/hygiene.sh"], in: tree)
     #expect(gate.status == 1)
     #expect(gate.output.contains(testCase.rule), "\(gate.output)")
@@ -100,7 +107,7 @@ struct RepoHygieneTests {
     let tree = try Self.cleanTree()
     try Self.french.write(
       to: tree.appendingPathComponent("README.fr.md"), atomically: true, encoding: .utf8)
-    _ = try Self.run("/usr/bin/git", ["add", "-A"], in: tree)
+    try Self.git(["add", "-A", "-f"], in: tree)
     let gate = try Self.run("/bin/bash", ["scripts/hygiene.sh"], in: tree)
     #expect(gate.status == 0, "\(gate.output)")
   }
@@ -135,12 +142,21 @@ struct RepoHygieneTests {
       at: tree.appendingPathComponent("docs"), withIntermediateDirectories: true)
     try "# A\n".write(
       to: tree.appendingPathComponent("docs/a.md"), atomically: true, encoding: .utf8)
-    _ = try run("/usr/bin/git", ["init", "-q"], in: tree)
-    _ = try run("/usr/bin/git", ["add", "-A"], in: tree)
+    try git(["init", "-q"], in: tree)
+    try git(["add", "-A", "-f"], in: tree)
     return tree
   }
 
+  /// Runs git in the fixture tree and fails the test when it fails. `add -f`: a global ignore
+  /// (`core.excludesFile`) must not keep a case's forbidden file out of the index.
+  static func git(_ arguments: [String], in tree: URL) throws {
+    let result = try run("/usr/bin/git", arguments, in: tree)
+    try #require(result.status == 0, "git \(arguments.joined(separator: " ")): \(result.output)")
+  }
+
   /// Runs `executable` in `directory` and returns its status with stdout and stderr together.
+  /// The GIT_* variables a hook exports (GIT_DIR, GIT_INDEX_FILE…) are dropped: with them, git in
+  /// a fixture tree would act on the real repository.
   static func run(_ executable: String, _ arguments: [String], in directory: URL) throws
     -> (status: Int32, output: String)
   {
@@ -149,6 +165,7 @@ struct RepoHygieneTests {
     process.executableURL = URL(fileURLWithPath: executable)
     process.arguments = arguments
     process.currentDirectoryURL = directory
+    process.environment = ProcessInfo.processInfo.environment.filter { !$0.key.hasPrefix("GIT_") }
     process.standardOutput = pipe
     process.standardError = pipe
     try process.run()

@@ -42,9 +42,9 @@ skip themselves, with the reason, when either is missing. Rules:
 GitHub Actions runs two jobs on every pull request: `test continuity` (the suite may only grow; an
 edited or deleted test needs a `Test-change:` line in the PR body) and `hygiene · lint · build ·
 test` (`just ci` on the maintainer's Mac as a self-hosted runner, live suites skipped). CI runs on
-pull requests only. The hygiene gate is `scripts/hygiene.sh`, run by both jobs and pinned rule by
-rule by `RepoHygieneTests`. The coverage floor is in `apps/macos/.coverage-floor`: 95%, fixed by the PO (24/10); a card
-never moves it.
+pull requests only, so a squash-merged green PR is what main is. The hygiene gate is
+`scripts/hygiene.sh`, run by both jobs and pinned rule by rule by `RepoHygieneTests`. The coverage
+floor is in `apps/macos/.coverage-floor`: 95%, fixed by the PO (24/10); a card never moves it.
 
 ## Conventions
 

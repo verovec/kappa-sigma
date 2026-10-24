@@ -13,10 +13,7 @@ extension ProjectPackage {
       let stacks = try Row.fetchAll(db, sql: "SELECT * FROM stacks ORDER BY id")
         .map { try ProjectStore.stack($0, in: db) }
       let counts = try ProjectStore.exportCounts(in: db)
-      func setting(_ key: String) throws -> String? {
-        try String.fetchOne(
-          db, sql: "SELECT value FROM project_settings WHERE key = ?", arguments: [key])
-      }
+      func setting(_ key: String) throws -> String? { try ProjectStore.setting(key, in: db) }
       return StackUsage(
         stacks: stacks, exportCounts: counts,
         chosenStackID: try setting(chosenKey).flatMap(Int64.init),

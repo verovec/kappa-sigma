@@ -176,4 +176,12 @@ struct ProjectStoreStackDeleteTests {
     #expect(try reopened.store.stacks().count == 1)
     try reopened.close()
   }
+
+  @Test(
+    "a stack's folder name only for stacks/<name>",
+    arguments: zip(
+      ["stacks/A", "stacks/../x", "stacks", "/tmp/run", "stacks/a/b"], ["A", nil, nil, nil, nil]))
+  func testStackFolderName(_ path: String, name: String?) {
+    #expect(ProjectStore.stackFolderName(path) == name)
+  }
 }

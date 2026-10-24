@@ -8,6 +8,9 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
   /// Set once AppKit first asked: `-openImage` only holds the welcome window back at launch,
   /// whenever AppKit asks then (restoration may defer it past `applicationDidFinishLaunching`).
   private var askedOnce = false
+  /// Armed by a real launch only (a test never runs `applicationDidFinishLaunching`): the
+  /// retention review runs once, the first time the app has no document to show (card 0114).
+  private var retentionArmed = false
 
   /// Yes, unless the app is launching with `-openImage`: AppKit then asks
   /// `applicationOpenUntitledFile` (at launch, and from the Dock with no window open).
@@ -17,8 +20,15 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
   }
 
   /// Shows the welcome window instead of creating an untitled project.
+  ///
+  /// AppKit calls it once restoration is over and no document opened: the first time after a
+  /// launch, stacks never exported are reviewed — never while a project is restoring or opening.
   package func applicationOpenUntitledFile(_ sender: NSApplication) -> Bool {
     WelcomeWindow.show()
+    if retentionArmed {
+      retentionArmed = false
+      Task { await WelcomeWindow.reviewRetention() }
+    }
     return true
   }
 
@@ -27,8 +37,7 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
   package func applicationDidFinishLaunching(_ notification: Notification) {
     Task { await Self.openLaunchArguments(UserDefaults.standard) }
     Task { await Self.sweepLeftovers() }
-    // Stacks never exported (card 0114): asked about, or removed, once the documents are back.
-    Task { await WelcomeWindow.reviewRetention() }
+    retentionArmed = true
   }
 
   /// What a killed run left (its Siril, its tens of GB of work files, an untitled project) goes

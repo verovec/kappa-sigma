@@ -23,10 +23,9 @@ package enum WelcomeWindow {
     recentURLs: { NSDocumentController.shared.recentDocumentURLs },
     openProjects: openProjectKeys)
 
-  /// Runs the launch review; the window comes up when it has something to ask or to report.
+  /// Runs the launch review (the welcome window is up: no document is open).
   package static func reviewRetention() async {
     await retention.scan()
-    if !retention.pending.isEmpty || !retention.unseen.isEmpty { show() }
   }
 
   /// Shows the window with the recent projects re-read and the tools re-checked.

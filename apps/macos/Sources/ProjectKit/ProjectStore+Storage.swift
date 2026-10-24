@@ -79,6 +79,11 @@ extension ProjectStore {
     Set((value ?? "").split(separator: ",").compactMap { Int64($0) })
   }
 
+  /// The `<name>` of a `stacks/<name>` bundle path, else `nil`.
+  package static func stackFolderName(_ bundlePath: String) -> String? {
+    stackFolder(bundlePath, in: URL(fileURLWithPath: "/"))?.lastPathComponent
+  }
+
   /// The folder of `bundlePath` when it is exactly `stacks/<name>`, else `nil`: the one guard
   /// that keeps a stack delete inside the package's `stacks/` (0113 leftovers use it too).
   package static func stackFolder(_ bundlePath: String, in package: URL) -> URL? {

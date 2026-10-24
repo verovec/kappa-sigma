@@ -66,15 +66,15 @@ extension ProjectWindowModel {
 
   /// The stack the Studio reads: the one whose folder it shows, else the workspace loading.
   ///
-  /// Matched on the folder, never on the selection: with no choice the selection follows the
-  /// latest stack while the Studio may still show an older one (`retryWorkspace`).
+  /// Matched on the folder's name, never on the selection: with no choice the selection follows
+  /// the latest stack while the Studio may still show an older one (`retryWorkspace`); the name
+  /// survives a project renamed in the Finder while open.
   package var openStackID: Int64? {
-    guard let shown = studio?.source.folder.standardizedFileURL, let folder = folder() else {
+    guard let shown = studio?.source.folder.standardizedFileURL.lastPathComponent else {
       return workspaceStackID
     }
-    return stacks.first {
-      folder.appendingPathComponent($0.bundlePath).standardizedFileURL == shown
-    }?.id ?? workspaceStackID
+    return stacks.first { ProjectStore.stackFolderName($0.bundlePath) == shown }?.id
+      ?? workspaceStackID
   }
 
   /// True for the stack the Studio reads or is loading: it cannot be deleted.

@@ -27,7 +27,8 @@ struct KnobPanel: View {
       let count = model.overrideCount(lane: lane)
       if count > 0 { counts[lane] = count }
     }
-    let columns = lanes.isEmpty ? (counts.isEmpty ? [] : candidates) : lanes
+    let applied = !counts.isEmpty || model.processing != .single
+    let columns = lanes.isEmpty ? (applied ? candidates : []) : lanes
     // The lane shown, while it is a column.
     let shownLane = lane.flatMap { columns.contains($0) ? $0 : nil }
     let rows = shownLane.map { model.rows(lane: $0) } ?? model.rows

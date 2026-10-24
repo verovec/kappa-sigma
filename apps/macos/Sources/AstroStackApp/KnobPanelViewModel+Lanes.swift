@@ -20,9 +20,10 @@ extension KnobPanelViewModel {
     lanePatch(lane, mode: mode).values.count
   }
 
-  /// Sets lane knob `id` to `value` for `lane`; a run-wide knob or a refused value is ignored, and
-  /// the global value clears the lane's edit — never a latent pin that a later global move would
-  /// turn into an override.
+  /// Sets lane knob `id` to `value` for `lane`; a run-wide knob or a refused value is ignored.
+  ///
+  /// The global value clears the lane's edit: a lane value equal to the global one is no override
+  /// and follows the global. A lane value set apart stays as set while the global moves.
   package func set(_ id: String, to value: KnobValue, lane: FilterSet) {
     guard let knob = KnobSchema.knob(id), knob.acceptsLane(value) else { return }
     laneEdits[lane, default: [:]][id] = value == knob.value(in: settings) ? nil : value

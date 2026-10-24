@@ -74,7 +74,43 @@ struct RetentionReviewTests {
     #expect(review.pending.count == 1)
     open.keys = [WelcomeModel.key(url)]
     await review.deleteAll()
-    #expect(review.pending.isEmpty)
+    #expect(review.pending.isEmpty && review.removed.isEmpty)
+    #expect(try Self.names(url) == ["stacks/A", "stacks/B", "stacks/C"])
+
+    await review.scan()
+    open.keys = []
+    await review.scan()
+    open.keys = [WelcomeModel.key(url)]
+    await review.keep()
+    let again = RetentionReview(
+      setting: setting, recentURLs: { [url] }, openProjects: { [] }, now: { now })
+    await again.scan()
+    #expect(again.pending.count == 1, "Keep never writes into a project a window has open")
+  }
+
+  @Test(
+    "Delete all applies the policy again: a stack exported since the scan stays",
+    .scratchDirectory)
+  func testDeleteAllReappliesThePolicy() async throws {
+    let (defaults, name) = try Self.suite()
+    defer { defaults.removePersistentDomain(forName: name) }
+    let url = try Self.project()
+    let setting = RetentionSetting(defaults: defaults)
+    let now = Int64(Date().timeIntervalSince1970 * 1000) + 60 * Self.day
+    let review = RetentionReview(
+      setting: setting, recentURLs: { [url] }, openProjects: { [] }, now: { now })
+    await review.scan()
+    #expect(review.pending.map(\.stack.bundlePath) == ["stacks/A"])
+    // Exported while the sheet waited: no longer a candidate.
+    let package = try ProjectPackage.open(at: url)
+    let stack = try #require(review.pending.first).stack
+    let image = try #require(try package.store.images(stackID: stack.id).first)
+    try package.store.addExport(
+      stackID: stack.id, imageID: image.id, headStepID: nil, folder: "/tmp/out", settingsJSON: "{}",
+      files: ["final.png"])
+    try package.close()
+    await review.deleteAll()
+    #expect(review.removed.isEmpty)
     #expect(try Self.names(url) == ["stacks/A", "stacks/B", "stacks/C"])
   }
 

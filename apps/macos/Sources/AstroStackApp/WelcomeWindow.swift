@@ -21,7 +21,7 @@ package enum WelcomeWindow {
   package static let retention = RetentionReview(
     setting: RetentionSetting(),
     recentURLs: { NSDocumentController.shared.recentDocumentURLs },
-    openProjects: { Set(openProjects().keys) })
+    openProjects: openProjectKeys)
 
   /// Runs the launch review; the window comes up when it has something to ask or to report.
   package static func reviewRetention() async {
@@ -71,6 +71,16 @@ package enum WelcomeWindow {
     window.isReleasedWhenClosed = false
     window.center()
     return window
+  }
+
+  /// The key (`WelcomeModel.key`) of every project open in a document; reads no database.
+  package static func openProjectKeys() -> Set<String> {
+    Set(
+      NSDocumentController.shared.documents.compactMap {
+        guard let document = $0 as? ProjectDocument else { return nil }
+        // The file URL is there before the package finishes opening.
+        return (document.packageURL ?? document.fileURL).map(WelcomeModel.key)
+      })
   }
 
   /// The counts of every project open in a document, keyed like `WelcomeModel` looks them up.

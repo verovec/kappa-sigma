@@ -31,12 +31,19 @@ extension ProjectWindowModel {
   }
 
   /// Reads every finished stack with its folder's size (off the main actor) and export count.
+  ///
+  /// Only stacks not listed yet are measured: a folder's size changes with a delete or a run,
+  /// both of which change the stack ids. A listing overtaken (cancelled, or the stacks changed
+  /// while it measured) writes nothing.
   package func listStorage() async {
     guard let store = store(), let folder = folder() else { return }
     do {
       let stacks = try store.stacks()
       let counts = try store.exportCounts()
-      storage = await Self.measure(stacks, in: folder, counts: counts)
+      let known = Dictionary(storage.map { ($0.id, $0.bytes) }) { first, _ in first }
+      let rows = await Self.measure(stacks, in: folder, counts: counts, known: known)
+      guard !Task.isCancelled, rows.map(\.id) == self.stacks.map(\.id) else { return }
+      storage = rows
     } catch {
       self.error = UserFacingError(error)
     }
@@ -44,12 +51,13 @@ extension ProjectWindowModel {
 
   @concurrent
   private nonisolated static func measure(
-    _ stacks: [ProjectStack], in folder: URL, counts: [Int64: Int]
+    _ stacks: [ProjectStack], in folder: URL, counts: [Int64: Int], known: [Int64: Int64]
   ) async -> [StackStorageRow] {
     stacks.map { stack in
       StackStorageRow(
         stack: stack,
-        bytes: LeftoverSweep.allocatedBytes(folder.appendingPathComponent(stack.bundlePath)),
+        bytes: known[stack.id]
+          ?? LeftoverSweep.allocatedBytes(folder.appendingPathComponent(stack.bundlePath)),
         exports: counts[stack.id] ?? 0)
     }
   }
@@ -75,14 +83,22 @@ extension ProjectWindowModel {
   package func deleteStack(_ id: Int64) async {
     guard !isStacking, let store = store(), let folder = folder() else { return }
     let open = id == workspaceStackID ? id : openStackID
+    guard id != open else {
+      error = .stackOpen
+      return
+    }
+    // Out of the picker and the list before the folder goes: nothing can open it meanwhile.
+    let (listed, rows) = (stacks, storage)
+    stacks.removeAll { $0.id == id }
+    storage.removeAll { $0.id == id }
     do {
       try await Self.delete(id, store: store, folder: folder, open: open)
     } catch {
+      (stacks, storage) = (listed, rows)
       self.error = UserFacingError(error)
       return
     }
-    stacks = (try? store.stacks()) ?? stacks.filter { $0.id != id }
-    storage.removeAll { $0.id == id }
+    stacks = (try? store.stacks()) ?? stacks
     if selectedStackID == id { selectStack(nil) } else { refresh() }
   }
 

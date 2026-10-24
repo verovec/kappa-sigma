@@ -116,6 +116,11 @@ struct ProjectStoreStackDeleteTests {
     #expect(try !store.columnNames(of: "stacks").contains("opened_at"))
     try store.migrate(to: nil)
     #expect(try store.columnNames(of: "stacks").contains("opened_at"))
+    // The upgrade counts a stack worked on from its last Studio step, one never worked on as new.
+    let image = try #require(try store.images(stackID: stack.id).first)
+    let last = try #require(try store.history(imageID: image.id).map(\.createdAt).max())
+    #expect(try store.stack(id: stack.id)?.openedAt == last)
+    #expect(try store.stack(id: bare.id)?.openedAt == nil)
   }
 
   @Test(
@@ -154,5 +159,17 @@ struct ProjectStoreStackDeleteTests {
     try reopened.store.migrate(to: 7)
     try reopened.close()
     #expect(try ProjectPackage.readUsage(at: package.url, chosenKey: "workspace.stack") == nil)
+  }
+
+  @Test("a background write closes without removing the WAL files", .scratchDirectory)
+  func testCloseKeepingWAL() throws {
+    let package = try ProjectStoreTests.newPackage()
+    try package.store.addStack(bundlePath: "stacks/A", sourceIDs: [], paramsJSON: "{}")
+    try package.closeKeepingWAL()
+    let wal = package.url.appendingPathComponent("project.db-wal")
+    #expect(FileManager.default.fileExists(atPath: wal.path))
+    let reopened = try ProjectPackage.open(at: package.url)
+    #expect(try reopened.store.stacks().count == 1)
+    try reopened.close()
   }
 }

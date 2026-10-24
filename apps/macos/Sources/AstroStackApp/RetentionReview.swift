@@ -58,19 +58,38 @@ package final class RetentionReview {
     removed = await deleteEach(candidates)
   }
 
-  /// Deletes `candidates` one at a time off the main actor, the ones deleted in order.
+  /// Deletes `candidates` project by project off the main actor; the ones deleted, in order.
   ///
-  /// Each project is checked closed right before its stack goes: one opened since the scan (a
+  /// Each project is checked closed right before it is touched: one opened since the scan (a
   /// restored document, a double click) is left to its own Storage section, whose Studio may
-  /// show it.
+  /// show it. The policy is applied again to the project as it is then: a stack opened, chosen,
+  /// kept or exported since the scan stays.
   @discardableResult
   private func deleteEach(_ candidates: [RetentionCandidate]) async -> [RetentionCandidate] {
+    let policy = setting.policy
     var deleted: [RetentionCandidate] = []
-    for candidate in candidates
-    where !openProjects().contains(WelcomeModel.key(candidate.project)) {
-      deleted += await Self.deleteOffMain(candidate)
+    for (project, group) in Self.byProject(candidates) where !isOpen(project) {
+      deleted += await Self.deleteOffMain(group, in: project, policy: policy, now: now())
     }
     return deleted
+  }
+
+  /// A project open in a window now.
+  private func isOpen(_ project: URL) -> Bool {
+    openProjects().contains(WelcomeModel.key(project))
+  }
+
+  /// `candidates` grouped by project, in the order the projects first appear.
+  private nonisolated static func byProject(_ candidates: [RetentionCandidate])
+    -> [(URL, [RetentionCandidate])]
+  {
+    var order: [URL] = []
+    var groups: [URL: [RetentionCandidate]] = [:]
+    for candidate in candidates {
+      if groups[candidate.project] == nil { order.append(candidate.project) }
+      groups[candidate.project, default: []].append(candidate)
+    }
+    return order.map { ($0, groups[$0] ?? []) }
   }
 
   /// Closes the sheet without a decision (Escape): asked again at the next launch.
@@ -78,11 +97,14 @@ package final class RetentionReview {
     pending = []
   }
 
-  /// Keep: these stacks are never offered again, recorded in their own projects.
+  /// Keep: these stacks are never offered again, recorded in their own projects; a project
+  /// opened meanwhile is not written (its window owns it): asked about again next launch.
   package func keep() async {
     let candidates = pending
     pending = []
-    await Self.keepOffMain(candidates)
+    for (project, group) in Self.byProject(candidates) where !isOpen(project) {
+      await Self.keepOffMain(Set(group.map(\.stack.id)), in: project)
+    }
   }
 
   /// Remind in 7 days: the sheet comes back at the first launch after that.
@@ -117,37 +139,50 @@ package final class RetentionReview {
     }
   }
 
-  /// One candidate deleted off the main actor (folders of many GB), logged; empty on failure.
+  /// Deletes the candidates of one project that are still candidates now, opening it once.
+  ///
+  /// Returns the ones deleted (logged). The package is closed without removing its WAL files: a window may be
+  /// opening it at this moment.
   @concurrent
-  private nonisolated static func deleteOffMain(_ candidate: RetentionCandidate) async
-    -> [RetentionCandidate]
-  {
-    RetentionPolicy.delete([candidate], delete: delete)
+  private nonisolated static func deleteOffMain(
+    _ candidates: [RetentionCandidate], in project: URL, policy: RetentionPolicy, now: Int64
+  ) async -> [RetentionCandidate] {
+    guard
+      let usage = try? ProjectPackage.readUsage(
+        at: project, chosenKey: ProjectWindowModel.stackSettingKey)
+    else { return [] }
+    let still = Set(
+      policy.candidates(
+        usage.stacks, exportCounts: usage.exportCounts, protected: usage.protected, now: now
+      ).map(\.id))
+    let current = candidates.filter { still.contains($0.stack.id) }
+    guard !current.isEmpty else { return [] }
+    let package: ProjectPackage
+    do {
+      package = try ProjectPackage.open(at: project)
+    } catch {
+      logger.error("could not open \(project.path) to delete stacks: \(error)")
+      return []
+    }
+    defer { try? package.closeKeepingWAL() }
+    return RetentionPolicy.delete(current) {
+      try package.store.deleteStack(id: $0.stack.id, packageFolder: project, openStackID: nil)
+    }
   }
 
-  /// Records `candidates` as kept in their projects, each opened for the time of the write; a
-  /// project that cannot be written is logged and asked about again.
+  /// Records stacks `ids` as kept in `project`, closed without removing its WAL files; a project
+  /// that cannot be written is logged and asked about again.
   @concurrent
-  private nonisolated static func keepOffMain(_ candidates: [RetentionCandidate]) async {
-    for (project, kept) in Dictionary(grouping: candidates, by: \.project) {
-      do {
-        let package = try ProjectPackage.open(at: project)
-        defer { try? package.close() }
-        try package.store.keepStacks(Set(kept.map(\.stack.id)))
-      } catch {
-        logger.error("could not keep stacks of \(project.path): \(error)")
-      }
+  private nonisolated static func keepOffMain(_ ids: Set<Int64>, in project: URL) async {
+    do {
+      let package = try ProjectPackage.open(at: project)
+      defer { try? package.closeKeepingWAL() }
+      try package.store.keepStacks(ids)
+    } catch {
+      logger.error("could not keep stacks of \(project.path): \(error)")
     }
   }
 
   private nonisolated static let logger = Logger(
     subsystem: "fr.astrostack", category: "App/retention")
-
-  /// Deletes one candidate in its project, opened for the time of the delete.
-  private nonisolated static func delete(_ candidate: RetentionCandidate) throws {
-    let package = try ProjectPackage.open(at: candidate.project)
-    defer { try? package.close() }
-    try package.store.deleteStack(
-      id: candidate.stack.id, packageFolder: candidate.project, openStackID: nil)
-  }
 }

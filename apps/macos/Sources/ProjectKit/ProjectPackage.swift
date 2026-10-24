@@ -147,6 +147,17 @@ public final class ProjectPackage {
     try pool.backup(to: target)
   }
 
+  /// Checkpoints (passively) and closes the database, leaving `-wal` and `-shm` in place; the
+  /// package must not be used afterwards.
+  ///
+  /// For a short background write to a project a window may open at the same moment (the
+  /// retention review, card 0114): removing the WAL files under another connection could corrupt
+  /// it, so they stay for whoever closes the project last.
+  package func closeKeepingWAL() throws {
+    try pool.writeWithoutTransaction { db in _ = try db.checkpoint(.passive) }
+    try pool.close()
+  }
+
   /// Checkpoints and closes the database; the package must not be used afterwards.
   ///
   /// GRDB keeps the WAL persistent, so SQLite leaves `-wal` and `-shm` behind on close. Once the

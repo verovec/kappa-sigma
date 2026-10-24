@@ -17,7 +17,7 @@ package struct LineInjectionProcess: RangeShown {
   package static let previewExactOnlyAt1to1 = false
 
   /// The planes a line can go into, in base order (the suffixes of the share ids).
-  static let planes = ["Red", "Green", "Blue"]
+  static let shareSuffixes = ["Red", "Green", "Blue"]
 
   package let params: ParamSet
   private let pipeline: MTLComputePipelineState
@@ -32,7 +32,7 @@ package struct LineInjectionProcess: RangeShown {
   /// kernel reads it (a Double too small for a Float adds nothing).
   package static func weights(_ line: EmissionLine, params: ParamSet) -> [Float] {
     let gain = params.number(line.id("Gain"))
-    return planes.map { Float(gain * params.number(line.id($0))) }
+    return shareSuffixes.map { Float(gain * params.number(line.id($0))) }
   }
 
   /// Whether `line` adds something with `params`: the one rule for reading its layer.
@@ -45,9 +45,14 @@ package struct LineInjectionProcess: RangeShown {
   package static func layersRead(_ params: ParamSet, layerIDs: Set<String>) -> Set<String> {
     let injected = EmissionLine.allCases.filter { injects($0, params: params) }
     let lines = Set(EmissionLine.allCases.map(\.layerID))
-    let continuum = injected.contains { params.number($0.id("ContinuumK")) > 0 }
+    let continuum = injected.contains { subtracts($0, params: params) }
     return Set(injected.map(\.layerID)).union(continuum ? layerIDs.subtracting(lines) : [])
       .intersection(layerIDs)
+  }
+
+  /// Whether `line` subtracts its continuum with `params`: k as the kernel reads it (Float).
+  package static func subtracts(_ line: EmissionLine, params: ParamSet) -> Bool {
+    Float(params.number(line.id("ContinuumK"))) != 0
   }
 
   package func render(
@@ -87,7 +92,7 @@ package struct LineInjectionProcess: RangeShown {
   ) throws -> (MTLTexture, MTLTexture) {
     let plane = try LayerPlane(line.layerID).texture(
       in: context.layers, width: size.width, height: size.height)
-    guard params.number(line.id("ContinuumK")) > 0 else { return (plane, plane) }
+    guard Self.subtracts(line, params: params) else { return (plane, plane) }
     guard let token = context.layerStats[line.layerID]?.continuumReference else {
       throw ProcessError.invalidParameter(
         "\(line.name): the bundle has no continuum fit: set k to 0")

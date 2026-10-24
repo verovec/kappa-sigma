@@ -30,7 +30,7 @@ enum LineInjectionOracle {
       let plane = try #require(planes[layer]?[0], "a gain needs its layer")
       let k = params.number(prefix + "ContinuumK")
       var reference = plane
-      if k > 0 {
+      if Float(k) != 0 {
         // The process refuses k > 0 without a fitted plane: so does the oracle, never the line.
         let parsed = LayerPlane(try #require(references[layer], "k > 0 needs a reference"))
         reference = try #require(planes[parsed.layer]?[parsed.plane])
@@ -50,7 +50,7 @@ enum LineInjectionOracle {
         for line in lines {
           let weight = Float(line.gain * line.shares[plane])
           guard weight != 0 else { continue }
-          let continuum = line.k == 0 ? 0 : Float(line.k) * line.reference[index]
+          let continuum = Float(line.k) == 0 ? 0 : Float(line.k) * line.reference[index]
           let excess = line.plane[index] - continuum - Float(line.black)
           // Metal's max is fmax: a NaN excess adds nothing (Swift's max would keep the NaN).
           out += weight * (excess.isNaN ? 0 : max(excess, 0))

@@ -17,7 +17,7 @@ extension LineInjectionProcess {
         id: line.id("Black"), title: name + " black point", unit: .none, level: .advanced,
         number: 0, in: 0...1),
     ]
-      + zip(planes, shares).map { plane, share in
+      + zip(shareSuffixes, shares).map { plane, share in
         ParamSpec(
           id: line.id(plane), title: name + " into " + plane.lowercased(), unit: .opacity,
           level: .advanced, number: share, in: 0...1)
@@ -61,9 +61,9 @@ extension LineInjectionProcess {
   /// plane, inside the schema's range as the emission screens offer it (the suggested value is
   /// the one applied); never applied by the process (R2).
   package func suggestions(stats: LayerStats, layers: [String: LayerStats]) -> [Suggestion] {
-    // Only for a line with a gain, as the screens offer k only for an enabled line.
+    // Only for a line that injects, as the screens offer k only for an enabled line.
     EmissionLine.allCases.compactMap { line in
-      guard params.number(line.id("Gain")) > 0, let fit = line.continuumFit(in: layers),
+      guard Self.injects(line, params: params), let fit = line.continuumFit(in: layers),
         case .number(_, let bounds)? = Self.schema.spec(line.id("ContinuumK"))?.kind
       else { return nil }
       return Suggestion(

@@ -3,14 +3,14 @@
 #include <metal_stdlib>
 using namespace metal;
 
-// One line's contribution: q[0..2] = gain · share per plane, q[3] = k, q[4] = black. max is
-// fmax: a NaN excess (a rejected line pixel) adds nothing rather than poisoning the base.
+// One line's contribution: q[0..2] = gain · share per plane, q[3] = k, q[4] = black. fmax: a
+// NaN excess (a rejected line pixel) adds nothing rather than poisoning the base.
 static float3 inject(float3 acc, float line, float reference, constant float *q) {
   float3 w = float3(q[0], q[1], q[2]);
   if (all(w == 0.0f)) { return acc; }
   // At k = 0 no reference is read: inf − 0·inf would turn a saturated line pixel into NaN.
   float continuum = q[3] == 0.0f ? 0.0f : q[3] * reference;
-  float excess = max(line - continuum - q[4], 0.0f);
+  float excess = fmax(line - continuum - q[4], 0.0f);
   if (w.r != 0.0f) { acc.r += w.r * excess; }
   if (w.g != 0.0f) { acc.g += w.g * excess; }
   if (w.b != 0.0f) { acc.b += w.b * excess; }

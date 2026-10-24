@@ -98,4 +98,17 @@ struct HostToolsTests {
 
     #expect(await tools.locate(.siril) == .missing(path: Self.siril))
   }
+
+  @Test("a StarNet on disk this Mac cannot launch is installed but cannot run, with the reason")
+  func testStatus_StarNetCannotRun() async {
+    let probe = HostTools.Probe(
+      isExecutable: { $0 == Self.starnet }, isApp: { _ in false }, sirilVersion: { _ in "" },
+      refusal: { $0 == Self.starnet ? "needs Rosetta" : nil })
+    let tools = HostTools.live(environment: [:], probe: probe)
+
+    let status = await tools.locate(.starnet)
+    #expect(status == .cannotRun(path: Self.starnet, reason: "needs Rosetta"))
+    #expect(!status.isUsable)
+    #expect(status.path == Self.starnet)
+  }
 }

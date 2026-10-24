@@ -449,6 +449,22 @@
         }
       }
     },
+    "Installed but cannot run: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installed but cannot run: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installé mais ne peut pas démarrer : %@"
+          }
+        }
+      }
+    },
     "Installed: %@": {
       "localizations": {
         "en": {

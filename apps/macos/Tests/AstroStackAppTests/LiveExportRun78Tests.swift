@@ -5,6 +5,7 @@ import ImageKit
 import Metal
 import ProcessKit
 import ProjectKit
+import RenderKit
 import StackKit
 import SwiftUI
 import TestSupport
@@ -68,7 +69,10 @@ struct LiveExportRun78Tests {
     await model.separateStars()
 
     if let card = model.installCard {
-      #expect(card.state == .missing && model.installReason != nil)
+      // Not installed, or installed but cannot run (card 0108): an Intel build without Rosetta.
+      #expect(
+        (card.state == .missing || InstallCard.detail(of: card.state) != nil)
+          && model.installReason != nil)
       #expect(model.studio.steps.map(\.processID) == ["channel-combination"])
     } else {
       #expect(model.failure == nil)

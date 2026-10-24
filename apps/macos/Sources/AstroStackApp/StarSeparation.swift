@@ -18,17 +18,25 @@ nonisolated package enum StarSeparation {
     id == Self.id ? .app("Star separation (StarNet)", locale: locale) : nil
   }
 
-  /// The install card's re-check: StarNet located and runnable on this Mac (an Intel build
-  /// without Rosetta stays refused), as the separation itself would find it.
-  package static func check(_ tools: HostTools)
-    -> @Sendable @concurrent () async -> InstallCardModel.State
-  {
+  /// The install card's re-check: StarNet located and runnable on this Mac, as the separation
+  /// itself would find it; one on disk that cannot run (an Intel build without Rosetta, a
+  /// `detect` probe that fails) says so with why, only an absent one is missing (card 0108).
+  package static func check(
+    _ tools: HostTools,
+    detect: @escaping @Sendable (String) async throws -> Void = {
+      _ = try await StarNetCLI.detect(binary: $0)
+    }
+  ) -> @Sendable @concurrent () async -> InstallCardModel.State {
     { @concurrent in
       let status = await tools.locate(.starnet)
-      guard status.isUsable, ExecutableCheck.refusal(path: status.path) == nil,
-        (try? await StarNetCLI.detect(binary: status.path)) != nil
-      else { return .missing }
-      return .found(URL(fileURLWithPath: status.path))
+      guard status.isUsable else { return WelcomeModel.cardState(status) }
+      let url = URL(fileURLWithPath: status.path)
+      do {
+        try await detect(status.path)
+      } catch {
+        return .unusable(path: url, reason: String(localized: UserFacingError(error).message))
+      }
+      return .found(url)
     }
   }
 

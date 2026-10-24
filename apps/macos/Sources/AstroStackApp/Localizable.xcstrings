@@ -8784,6 +8784,38 @@
           }
         }
       }
+    },
+    "%@ is installed at %@, but this Mac cannot run it.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ is installed at %2$@, but this Mac cannot run it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ est installé dans %2$@, mais ce Mac ne peut pas le démarrer."
+          }
+        }
+      }
+    },
+    "Install Rosetta (%@) or an Apple-silicon build.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install Rosetta (%@) or an Apple-silicon build."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installez Rosetta (%@) ou une version pour Apple silicon."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

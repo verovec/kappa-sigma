@@ -1,7 +1,8 @@
 package import Foundation
 internal import Observation
 
-/// What an install card knows of its tool: missing, being looked for, or found at a path.
+/// What an install card knows of its tool: missing, being looked for, found at a path, too old,
+/// or installed but unable to run.
 ///
 /// The card never probes on its own: it shows the verdict it was given, and asks `locate` again
 /// only on « Re-check ». A missing tool greys its process; nothing falls back (R2).
@@ -18,6 +19,9 @@ package final class InstallCardModel {
     case found(URL)
     /// Installed, but this version is older than the one the app needs.
     case outdated(version: String)
+    /// On disk at this executable, but this Mac cannot launch it; `reason` says what to install,
+    /// as the caller wrote it (card 0108).
+    case unusable(path: URL, reason: String)
   }
 
   /// The tool's state as the card shows it.

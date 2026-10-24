@@ -128,14 +128,27 @@ package final class WelcomeModel {
     case .found(let path, _): .found(URL(fileURLWithPath: path))
     case .missing: .missing
     case .tooOld(_, let version): .outdated(version: version)
+    case .cannotRun(let path, _):
+      // StackKit's reason is English for the log; ExecutableCheck refuses only an Intel build
+      // without Rosetta, so the card says that in the user's language.
+      .unusable(path: URL(fileURLWithPath: path), reason: String(localized: rosettaFix()))
     }
   }
 
-  /// An install card's re-check: the tool probed again, as the card shows it.
+  /// What to do about an Intel-only tool on a Mac without Rosetta (card 0108).
+  nonisolated package static func rosettaFix(locale: Locale? = nil) -> LocalizedStringResource {
+    .app(
+      "Install Rosetta (\(ExecutableCheck.rosettaCommand)) or an Apple-silicon build.",
+      locale: locale)
+  }
+
+  /// An install card's re-check: the tool probed again, as the card shows it; StarNet as the
+  /// separation would find it, so the welcome window and the Export stage agree.
   nonisolated package static func check(_ tool: HostTool, _ hostTools: HostTools)
     -> @Sendable @concurrent () async -> InstallCardModel.State
   {
-    { @concurrent in cardState(await hostTools.locate(tool)) }
+    if tool == .starnet { return StarSeparation.check(hostTools) }
+    return { @concurrent in cardState(await hostTools.locate(tool)) }
   }
 
   /// The counts of the package at `url`, read-only (never migrated nor checkpointed), or `nil`

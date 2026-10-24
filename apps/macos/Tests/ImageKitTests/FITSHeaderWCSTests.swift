@@ -23,7 +23,11 @@ struct FITSHeaderWCSTests {
     // Not a solution.
     ("OBJECT", nil), ("CDFORM", nil), ("FILTERA", nil), ("FOCALLEN", nil), ("EXPTIME", nil),
     ("CD1", nil), ("PC1_X", nil), ("A_ORDERA", nil), ("PLTSOLVDA", nil), ("CTYPE", nil),
-    ("CRPIX+1", nil), ("A_-1_2", nil), ("PC1_+2", nil),
+    // An index is written as FITS writes it: digits, no sign, no leading zero, axes from 1.
+    ("CRPIX+1", nil), ("A_-1_2", nil), ("PC1_+2", nil), ("CTYPE0", nil), ("CRPIX01", nil),
+    ("CD01_1", nil), ("PC1_0", nil), ("A_02_0", nil), ("CRPIX+1A", nil), ("CTYPE0A", nil),
+    ("PV2_0", .primary), ("CRPIX10", .primary), ("A_0_0", .primary), ("AP_1_0", .primary),
+    ("CD1_2A", .alternate),
   ]
 
   @Test("testSolutionKeywords", arguments: cases)

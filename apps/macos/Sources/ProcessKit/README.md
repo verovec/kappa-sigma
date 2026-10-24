@@ -232,8 +232,10 @@ in en/fr; the English title is the key, resolved with `ProcessKitResources.title
   the step (`Step.movesPixels`, manifest field written only when true); that step and every one
   after it write the header without any solution (`droppingWCS()`) before the image's own moved
   one is put back, so a ZEA primary or an alternate solution of the stack never survives a move.
-  Steps before any move write their files as before: byte-identical for a Siril solution (no
-  axis-3, `PV`, `WCSNAME`… cards, which the one list now counts as primary).
+  Steps before any move write their files as before: byte-identical when the header's solution
+  holds only the cards Siril's solver writes (checked on IC 1848's solved `master_RGB.fits`);
+  axis-3, `PV`, `WCSNAME`, `WCSAXES`, `RADECSYS`… now count as primary, so a new solve replaces
+  them.
 - `.text` parameters (`ParamSpec(id:title:level:text:maxLength:)`): free text, trimmed, empty by
   default — a coordinate the user types or takes from a suggestion; JSON stores a string.
 

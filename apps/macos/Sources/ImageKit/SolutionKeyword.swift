@@ -40,22 +40,28 @@ extension FITSHeader {
   /// `CTYPEn`…`CSYERn` and `CDi_j`, `PCi_j`, `PVi_j`, `PSi_j` of any axes.
   private static func isAxisKeyword(_ keyword: String) -> Bool {
     if let prefix = axisPrefixes.first(where: keyword.hasPrefix) {
-      return isIndex(keyword.dropFirst(prefix.count))
+      return isIndex(keyword.dropFirst(prefix.count), axis: true)
     }
-    guard matrixPrefixes.contains(where: keyword.hasPrefix) else { return false }
+    guard let prefix = matrixPrefixes.first(where: keyword.hasPrefix) else { return false }
     let indices = keyword.dropFirst(2).split(separator: "_", omittingEmptySubsequences: false)
-    return indices.count == 2 && indices.allSatisfy(isIndex)
+    // `PVi_m` / `PSi_m`: `m` is a parameter number, from 0 (paper II §2.5).
+    let parameter = ["PV", "PS"].contains(prefix)
+    return indices.count == 2 && isIndex(indices[0], axis: true)
+      && isIndex(indices[1], axis: !parameter)
   }
 
-  /// Digits only (`Int` would also take `+1`, `-1`: not a FITS index).
-  private static func isIndex(_ text: Substring) -> Bool {
-    !text.isEmpty && text.allSatisfy { ("0"..."9").contains($0) }
+  /// A FITS index as written: ASCII digits without a leading zero (`Int` would also take `+1`,
+  /// `01`); an axis counts from 1, a SIP power from 0.
+  private static func isIndex(_ text: Substring, axis: Bool) -> Bool {
+    let digits = Array(text.utf8)
+    guard !digits.isEmpty, digits.allSatisfy({ (0x30...0x39).contains($0) }) else { return false }
+    return digits == [0x30] ? !axis : digits[0] != 0x30
   }
 
   /// `A_p_q`, `B_p_q`, `AP_p_q`, `BP_p_q` (not the `_ORDER` cards).
   static func isSIPTerm(_ keyword: String) -> Bool {
     let parts = keyword.split(separator: "_", omittingEmptySubsequences: false)
     return parts.count == 3 && ["A", "B", "AP", "BP"].contains(String(parts[0]))
-      && isIndex(parts[1]) && isIndex(parts[2])
+      && isIndex(parts[1], axis: false) && isIndex(parts[2], axis: false)
   }
 }

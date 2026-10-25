@@ -43,10 +43,16 @@ package struct LineInjectionProcess: ImageProcess {
   /// The line layers that inject, and every broadband layer once one of them subtracts its
   /// continuum (the plane k multiplies is the bundle's fit, unknown from the values alone).
   package static func layersRead(_ params: ParamSet, layerIDs: Set<String>) -> Set<String> {
-    let injected = EmissionLine.allCases.filter { injects($0, params: params) }
-    let lines = Set(EmissionLine.allCases.map(\.layerID))
-    let continuum = injected.contains { subtracts($0, params: params) }
-    return Set(injected.map(\.layerID)).union(continuum ? layerIDs.subtracting(lines) : [])
+    let continuum = EmissionLine.allCases.contains {
+      injects($0, params: params) && subtracts($0, params: params)
+    }
+    return layersMerged(params, layerIDs: layerIDs)
+      .union(continuum ? layerIDs.subtracting(EmissionLine.layerIDs) : [])
+  }
+
+  /// The lines that inject: the broadband a continuum subtracts is not added.
+  package static func layersMerged(_ params: ParamSet, layerIDs: Set<String>) -> Set<String> {
+    Set(EmissionLine.allCases.filter { injects($0, params: params) }.map(\.layerID))
       .intersection(layerIDs)
   }
 

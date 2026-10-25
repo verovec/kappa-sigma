@@ -49,9 +49,9 @@ package struct EmissionScreensProcess: ImageProcess {
   /// plane the stack fitted the continuum against is one of them).
   package static func layersRead(_ params: ParamSet, layerIDs: Set<String>) -> Set<String> {
     let enabled = enabledLines(params)
-    let lines = Set(EmissionLine.allCases.map(\.layerID))
     let continuum = enabled.contains { params.flag($0.id("Continuum")) }
-    return Set(enabled.map(\.layerID)).union(continuum ? layerIDs.subtracting(lines) : [])
+    return Set(enabled.map(\.layerID))
+      .union(continuum ? layerIDs.subtracting(EmissionLine.layerIDs) : [])
       .intersection(layerIDs)
   }
 

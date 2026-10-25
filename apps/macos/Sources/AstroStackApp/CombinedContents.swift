@@ -17,7 +17,7 @@ package struct CombinedContents: Equatable, Sendable {
   }
 
   /// The line under « Combined » in `locale`: the layers in, then those out — with the
-  /// processes that lay lines in when the ones out are all lines over a broadband base.
+  /// processes that lay lines in when the ones out are all lines over a colour base.
   package func words(locale: Locale) -> LocalizedStringResource {
     let names = { (ids: [String]) in
       ids.map { StudioSelection.label(.branch($0), locale: locale) }
@@ -25,9 +25,12 @@ package struct CombinedContents: Equatable, Sendable {
     // « + » reads alike in both languages: the layers are summed into one image.
     let holding = names(holds).joined(separator: " + ")
     guard !missing.isEmpty else { return .app("Holds \(holding).", locale: locale) }
-    let out = names(missing).formatted(.list(type: .and).locale(locale))
-    // The two processes lay lines over a broadband base only (line injection refuses another).
-    guard holds.contains("RGB"), missing.allSatisfy(EmissionLine.layerIDs.contains) else {
+    let out = names(missing).formatted(.list(type: .or).locale(locale))
+    // The two processes lay lines over a colour base (RGB, or mono R/G/B combined), not over
+    // lines alone: there, a channel combination is what adds the others.
+    guard !holds.allSatisfy(EmissionLine.layerIDs.contains),
+      missing.allSatisfy(EmissionLine.layerIDs.contains)
+    else {
       return .app("Holds \(holding); not \(out).", locale: locale)
     }
     let title = { (title: String) in

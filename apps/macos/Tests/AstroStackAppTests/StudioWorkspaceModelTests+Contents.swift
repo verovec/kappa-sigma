@@ -22,12 +22,12 @@ extension StudioWorkspaceModelTests {
     #expect(workspace.combinedContents == broadband)
     #expect(
       String(localized: broadband.words(locale: en))
-        == "Holds \(name("RGB", en)); not yet \(name("Ha", en)) and \(name("OIII", en)) (to add "
+        == "Holds \(name("RGB", en)); not yet \(name("Ha", en)) or \(name("OIII", en)) (to add "
         + "with Line injection or Emission screens).")
     let french = String(localized: broadband.words(locale: fr))
     #expect(
       french.hasPrefix(
-        "Contient \(name("RGB", fr)) ; pas encore \(name("Ha", fr)) et \(name("OIII", fr))"))
+        "Contient \(name("RGB", fr)) ; pas encore \(name("Ha", fr)) ou \(name("OIII", fr))"))
     #expect(
       french.contains(String(localized: ProcessKitResources.title("Line injection", locale: fr))))
 
@@ -64,6 +64,11 @@ extension StudioWorkspaceModelTests {
       String(localized: narrowband.words(locale: en))
         == "Holds \(StudioSelection.label(.branch("Ha"), locale: en)); not "
         + "\(StudioSelection.label(.branch("OIII"), locale: en)).")
+    // A mono R/G/B combination is a colour base: the line processes are named.
+    let mono = CombinedContents(holds: ["R", "G", "B"], missing: ["Ha"])
+    #expect(
+      String(localized: mono.words(locale: en)).hasSuffix(
+        "(to add with Line injection or Emission screens)."))
   }
 
   @Test("testCombinedContentsNoneForASingleLayer", .scratchDirectory)

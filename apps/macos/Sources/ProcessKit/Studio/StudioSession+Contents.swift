@@ -1,16 +1,9 @@
 // MARK: - What the combined image holds (card 0131)
 
 extension StudioSession {
-  /// The bundle layers the combined image holds at the head: what the Studio says under
-  /// « Combined », so a step that reads the head (colour calibration) is not taken to see the
-  /// lines before they are injected.
-  package var combinedLayers: Set<String> {
-    Self.combinedLayers(
-      after: history.steps.map { (processID: $0.processID, params: $0.params) },
-      layerIDs: Set(stackBundle.layers.keys), registry: registry)
-  }
-
-  /// The layers of `layerIDs` the image holds after `steps`.
+  /// The layers of `layerIDs` the image holds after the main `steps`: what the Studio says under
+  /// « Combined », so a step reading the head (colour calibration) is not taken to see the lines
+  /// before they are injected.
   ///
   /// The base layer (the history starts from it), then each step's `layersMerged` — added, or
   /// replacing everything before for a process whose input only sets the size (`replacesInput`,

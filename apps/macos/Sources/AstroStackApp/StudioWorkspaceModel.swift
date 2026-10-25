@@ -61,11 +61,6 @@ package final class StudioWorkspaceModel {
   package internal(set) var selection = StudioSelection.main
   /// The viewer's stretch left on each other history, put back when it is shown again.
   @ObservationIgnored var stretches: [StudioSelection: ViewerStretch] = [:]
-  /// The history of each Studio entry on the undo manager's undo stack, the top last: the
-  /// history buttons replay ⌘Z only when the top one is the history shown (card 0119).
-  @ObservationIgnored var undoSelections: [StudioSelection] = []
-  /// The same for the redo stack.
-  @ObservationIgnored var redoSelections: [StudioSelection] = []
   /// A Replay of the stale steps is running (card 0119): a second one waits for it.
   package internal(set) var isReplaying = false
   /// The other history whose head compare shows, if any (card 0119).
@@ -94,7 +89,8 @@ package final class StudioWorkspaceModel {
   package internal(set) var toolReport: (@Sendable (Locale) -> LocalizedStringResource)?
   /// The host tools by process id: what Apply runs for a `hostTool` process.
   @ObservationIgnored package let tools: [String: StudioTool]
-  @ObservationIgnored var toolTask: Task<Void, Never>?
+  /// Observed: the history's buttons wait for it (`isMovingHistory`).
+  var toolTask: Task<Void, Never>?
   /// Numbers the tool runs, so a late progress line finds its own run or none.
   @ObservationIgnored var toolRunNumber = 0
   /// The head's measured noise, for the denoise's suggestion.
@@ -115,6 +111,12 @@ package final class StudioWorkspaceModel {
   @ObservationIgnored package var catalogueObject: () -> SkyObject? = { nil }
   /// The undo manager its moves are registered on, cleared of them when it is retired.
   @ObservationIgnored package weak var undoManager: UndoManager?
+  /// What its moves are registered with on `undoManager`, one per direction and history
+  /// (card 0117, `moveTarget(backward:in:)`).
+  @ObservationIgnored var moveTargets: [StudioMoveTarget] = []
+  /// The histories a button moved behind ⌘Z's back since their moves were last dropped: the
+  /// next new step there drops them all, their chain broken by the redo it discards.
+  @ObservationIgnored var movedOutOfBand: Set<StudioSelection> = []
   @ObservationIgnored private let base: Set<LayerRole>
   @ObservationIgnored var previewTask: Task<Void, Never>?
   /// The head's display statistics: a preview is drawn through them, never through a previous
@@ -156,9 +158,13 @@ package final class StudioWorkspaceModel {
     toolTask?.cancel()
     headNoise.close()
     headSample = nil
-    undoManager?.removeAllActions(withTarget: self)
-    undoSelections.removeAll()
-    redoSelections.removeAll()
+    // Between undo groups only (`StudioUndo.drop`); otherwise its moves stay, refused as
+    // retired.
+    if let undoManager, undoManager.groupingLevel == 0 {
+      for target in [self] + moveTargets as [AnyObject] {
+        undoManager.removeAllActions(withTarget: target)
+      }
+    }
   }
 
   /// Opens the panel of `processID` at `params` (its defaults when `nil`), with its suggestions.

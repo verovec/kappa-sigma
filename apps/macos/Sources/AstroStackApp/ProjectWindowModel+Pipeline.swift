@@ -11,6 +11,8 @@ struct PendingReplay {
   let pipeline: Pipeline
   /// The run its locked steps come from.
   let previous: PipelineRun?
+  /// The undo manager the run registers on (card 0117), the window's when it was asked for.
+  weak var undoManager: UndoManager?
 }
 
 extension ProjectWindowModel {
@@ -50,12 +52,14 @@ extension ProjectWindowModel {
   }
 
   /// Replays the pipeline shown on stack `id`: the Studio switches to that stack and runs it
-  /// there once its working image is loaded (the user's choice in the Replay menu).
+  /// there once its working image is loaded (the user's choice in the Replay menu), undone in
+  /// one ⌘Z.
   package func replayPipeline(on id: Int64) {
     guard let sidebar = workspace?.pipeline, replayTargets.contains(where: { $0.id == id })
     else { return }
     pendingReplay = PendingReplay(
-      stackID: id, pipeline: sidebar.pipeline, previous: sidebar.lastRun)
+      stackID: id, pipeline: sidebar.pipeline, previous: sidebar.lastRun,
+      undoManager: undoManager())
     selectStack(id)
     select(.studio)
     Task { await openStudio() }
@@ -67,7 +71,14 @@ extension ProjectWindowModel {
       let sidebar = workspace?.pipeline
     else { return }
     pendingReplay = nil
+    // A ⌘Z of the replay puts this stack's own pipeline back with its history.
+    let before = sidebar.mark(whole: true)
+    let count = workspace?.studio.steps.count
     sidebar.show(pending.pipeline)
-    await sidebar.run(previous: pending.previous)
+    await sidebar.run(previous: pending.previous, undoManager: pending.undoManager, before: before)
+    // Nothing added, nothing registered: the replaced pipeline still comes back with ⌘Z.
+    if let workspace, workspace.studio.steps.count == count {
+      StudioUndo.recordReplaced(workspace, mark: before, on: pending.undoManager)
+    }
   }
 }

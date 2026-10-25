@@ -38,16 +38,16 @@ extension StudioModel {
     try applyBranch(id, processID, params: params)
   }
 
-  /// Back one step on the history of `selection`.
-  package func undo(on selection: StudioSelection) throws {
-    guard let id = selection.layerID else { return try undo() }
-    try undoBranch(id)
+  /// Back `steps` steps on the history of `selection`, all or none (card 0117).
+  package func undo(steps: Int = 1, on selection: StudioSelection) throws {
+    guard let id = selection.layerID else { return try undo(steps: steps) }
+    try Self.move(steps, by: { try undoBranch(id) }, back: { try redoBranch(id) })
   }
 
-  /// Forward one undone step on the history of `selection`.
-  package func redo(on selection: StudioSelection) throws {
-    guard let id = selection.layerID else { return try redo() }
-    try redoBranch(id)
+  /// Forward `steps` undone steps on the history of `selection`, all or none.
+  package func redo(steps: Int = 1, on selection: StudioSelection) throws {
+    guard let id = selection.layerID else { return try redo(steps: steps) }
+    try Self.move(steps, by: { try redoBranch(id) }, back: { try undoBranch(id) })
   }
 
   /// The output of applied step `index` of the history of `selection`, read back from disk.

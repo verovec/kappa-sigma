@@ -57,10 +57,8 @@ struct ProjectWindowWorkspaceTests {
 extension ProjectWindowWorkspaceTests {
   /// Card 0088: the Replay menu lists the project's other stacks; choosing one switches the
   /// Studio to it and runs the pipeline shown there once its working image is loaded.
-  @Test("Replay lists the other stacks and runs the pipeline on the chosen one", .scratchDirectory)
-  func testReplayOnAnotherStack() async throws {
-    let fixture = try ProjectTests.fixture()
-    defer { try? fixture.project.close() }
+  /// Two stacks of M 31 (runs A and B) recorded in the fixture's project.
+  static func twoStacks(_ fixture: ProjectTests.Fixture) throws -> [ProjectStack] {
     var stacks: [ProjectStack] = []
     for runID in ["A", "B"] {
       let output = fixture.project.url.appendingPathComponent("stacks/\(runID)")
@@ -71,6 +69,14 @@ extension ProjectWindowWorkspaceTests {
           bundlePath: "stacks/\(runID)", sourceIDs: [], paramsJSON: "{}", object: "M 31",
           scopeJSON: nil))
     }
+    return stacks
+  }
+
+  @Test("Replay lists the other stacks and runs the pipeline on the chosen one", .scratchDirectory)
+  func testReplayOnAnotherStack() async throws {
+    let fixture = try ProjectTests.fixture()
+    defer { try? fixture.project.close() }
+    let stacks = try Self.twoStacks(fixture)
     let window = fixture.window
     window.refresh()
     window.selectStack(stacks[0].id)

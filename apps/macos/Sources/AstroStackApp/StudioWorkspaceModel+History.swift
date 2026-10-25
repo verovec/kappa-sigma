@@ -32,16 +32,21 @@ extension StudioWorkspaceModel {
     appliedNothing = studio.session.lastApplyChangedNothing
   }
 
-  /// Back one step on the history shown.
-  package func undo() throws {
+  /// Back `steps` steps on the history shown, its head shown once.
+  package func undo(steps: Int = 1) throws {
     guard !isMovingMain else { return }
-    try reported { try studio.undo(on: selection) }
+    try reported { try studio.undo(steps: steps, on: selection) }
   }
 
-  /// Forward one undone step on the history shown.
-  package func redo() throws {
+  /// Forward `steps` undone steps on the history shown, its head shown once.
+  package func redo(steps: Int = 1) throws {
     guard !isMovingMain else { return }
-    try reported { try studio.redo(on: selection) }
+    try reported { try studio.redo(steps: steps, on: selection) }
+  }
+
+  /// A replay, a pipeline run or a host tool is moving a history: no other move lands meanwhile.
+  package var isMovingHistory: Bool {
+    isMovingMain || toolTask != nil
   }
 
   /// Runs a history move, then shows the head; a failure is shown in the panel and rethrown.

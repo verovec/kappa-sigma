@@ -82,5 +82,8 @@ extension PipelineSidebarModel {
       }
     }
     undoManager?.setActionIsDiscardable(true)
+    // Refused, not consumed, while a run or a tool moves the history (`ProjectUndoManager`).
+    undoManager?.setActionUserInfoValue(
+      workspace.moveTarget(backward: true, in: .main), forKey: StudioUndo.columnKey)
   }
 }

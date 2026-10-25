@@ -2449,6 +2449,54 @@
         }
       }
     },
+    "Holds %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Holds %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contient %@."
+          }
+        }
+      }
+    },
+    "Holds %@; not %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Holds %@; not %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contient %@ ; pas %@."
+          }
+        }
+      }
+    },
+    "Holds %@; not yet %@ (to add with %@ or %@).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Holds %@; not yet %@ (to add with %@ or %@)."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contient %@ ; pas encore %@ (à ajouter par « %@ » ou « %@ »)."
+          }
+        }
+      }
+    },
     "Host tools": {
       "localizations": {
         "en": {

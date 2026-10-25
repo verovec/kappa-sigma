@@ -25,6 +25,17 @@ package enum EmissionLine: String, CaseIterable, Sendable {
   /// The id of its parameter `name` (`Enabled`, `Black`…).
   package func id(_ name: String) -> String { prefix + name }
 
+  /// The continuum scale the bundle fitted on this line's layer and the plane it was fitted
+  /// against (`continuum_k`, `continuum_ref`); `nil` without both: a scale without its plane
+  /// cannot be applied.
+  package func continuumFit(in layerStats: [String: LayerStats]) -> (k: Double, reference: String)?
+  {
+    guard let stats = layerStats[layerID], let k = stats.continuumK,
+      let reference = stats.continuumReference
+    else { return nil }
+    return (k, reference)
+  }
+
   /// On by default: the HOO-over-broadband layers; [SII] waits for the user.
   var enabledByDefault: Bool { self != .sulfurII }
 

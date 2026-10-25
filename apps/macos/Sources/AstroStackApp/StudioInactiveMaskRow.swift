@@ -13,6 +13,8 @@ package struct StudioInactiveMaskRow: View {
     case ignored
     /// A host tool works on the whole image: Apply is blocked while a mask is set.
     case blocking
+    /// On a branch (card 0119): the process reads its layer alone, under no mask.
+    case branch
   }
 
   let model: StudioWorkspaceModel
@@ -47,6 +49,8 @@ package struct StudioInactiveMaskRow: View {
     case .blocking:
       .app(
         "Mask active: \(source), not used by this process; Apply is blocked until it is cleared.")
+    case .branch:
+      .app("Mask active: \(source), not used on a branch: the process reads the layer alone.")
     }
   }
 

@@ -70,8 +70,8 @@ struct ColourContractTests {
     let registry = try ProcessRegistry.standard()
     #expect(
       registry.ids == [
-        "channel-combination", "stretch", "levels", "background-extraction", "hdr",
-        "emission-screens", "colour-balance", "sky-desat", "curves", "saturation",
+        "channel-combination", "line-injection", "stretch", "levels", "background-extraction",
+        "hdr", "emission-screens", "colour-balance", "sky-desat", "curves", "saturation",
         "star-recomposition", "plate-solve", "colour-calibration", "denoise", "geometry",
       ])
     #expect(ColourBalanceProcess.stage == .linear && SkyDesatProcess.stage == .linear)

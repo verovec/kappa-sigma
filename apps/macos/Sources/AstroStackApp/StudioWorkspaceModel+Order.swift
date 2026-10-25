@@ -9,7 +9,7 @@ extension StudioWorkspaceModel {
   /// last.
   package var usuallyNext: String? {
     let greyed = Set(catalogue.flatMap(\.entries).filter { $0.unavailable != nil }.map(\.id))
-    return ProcessOrder.usuallyNext(after: studio.steps.map(\.processID), skipping: greyed)
+    return ProcessOrder.usuallyNext(after: steps.map(\.processID), skipping: greyed)
   }
 
   /// Why process `id` of `stage` usually comes at this point: linear work before the stretch,

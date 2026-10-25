@@ -4,7 +4,7 @@ internal import ProcessKit
 extension StudioWorkspaceModel {
   /// Applies the panel's values at full resolution: the head moves (a failure is shown).
   package func apply() throws {
-    guard let panel else { return }
+    guard let panel, !isMovingMain else { return }
     // Apply records what the viewer shows (R2): values not drawn yet (a value just typed, a
     // drag within the frame) are drawn first, and what was drawn is what is recorded.
     previewTask?.cancel()
@@ -20,26 +20,33 @@ extension StudioWorkspaceModel {
     var used: AstroImage?
     try reported {
       used = try maskImage()
-      try studio.apply(id, params: params, mask: used)
+      try studio.apply(id, params: params, on: selection, mask: used)
+    }
+    // A branch step is not a pipeline step (0122 carries them).
+    guard selection == .main else {
+      appliedNothing = studio.session.lastApplyChangedNothing
+      return
     }
     // The user's manual work becomes the recipe (R5): the pipeline records the step.
     pipeline?.applied(id, params: params, masked: used != nil)
     appliedNothing = studio.session.lastApplyChangedNothing
   }
 
-  /// Back `steps` steps, the head shown once.
+  /// Back `steps` steps on the history shown, its head shown once.
   package func undo(steps: Int = 1) throws {
-    try reported { try studio.undo(steps: steps) }
+    guard !isMovingMain else { return }
+    try reported { try studio.undo(steps: steps, on: selection) }
   }
 
-  /// Forward `steps` undone steps, the head shown once.
+  /// Forward `steps` undone steps on the history shown, its head shown once.
   package func redo(steps: Int = 1) throws {
-    try reported { try studio.redo(steps: steps) }
+    guard !isMovingMain else { return }
+    try reported { try studio.redo(steps: steps, on: selection) }
   }
 
-  /// A pipeline run or a host tool is moving the history: no other move may land meanwhile.
+  /// A replay, a pipeline run or a host tool is moving a history: no other move lands meanwhile.
   package var isMovingHistory: Bool {
-    pipeline?.isRunning == true || toolTask != nil
+    isMovingMain || toolTask != nil
   }
 
   /// Runs a history move, then shows the head; a failure is shown in the panel and rethrown.
@@ -67,7 +74,9 @@ extension StudioWorkspaceModel {
   /// the catalogue follow the new head.
   func headChanged() throws {
     // Even when showing the head fails, no preview scheduled meanwhile outlives the move.
-    let moved = headSteps != studio.steps
+    let moved = headSteps != steps
+    // The superseded head is never kept alive by its sample.
+    headSample = nil
     defer { suspendPreview(moved: moved) }
     if dropRegionIfMoved() { resetMovingValues() }
     shown = nil
@@ -79,12 +88,13 @@ extension StudioWorkspaceModel {
     isPreviewing = false
     // A compared step undone, or off the head's grid (a crop applied), stops the compare.
     if let comparing,
-      !onHeadGrid(step: comparing) || viewer.reference?.width != studio.head.width
-        || viewer.reference?.height != studio.head.height
+      !onHeadGrid(step: comparing) || viewer.reference?.width != head.width
+        || viewer.reference?.height != head.height
     {
       try compare(toStep: nil)
     }
-    try show(studio.head)
+    if let other = comparingWith, !comparable.contains(other) { try compare(with: nil) }
+    try show(head)
     // After the viewer shows the new head: the display stretch offered is the one on screen.
     if let panel { refresh(panel) }
     refreshCatalogue()

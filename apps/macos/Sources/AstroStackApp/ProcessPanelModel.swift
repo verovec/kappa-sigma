@@ -24,6 +24,9 @@ package final class ProcessPanelModel {
   package var sample: HeadSample? {
     didSet { measureClipping() }
   }
+  /// Where the head points when it already carries a solution (plate solving, card 0130): shown
+  /// read-only; nil without one or for another process.
+  package var solved: PlateSolveStatus?
   /// The head's statistics (the stretch's handles read them).
   package var headStats = LayerStats(channels: [])
   /// What the levels send to black and white on the head's sample, per channel (measured once
@@ -118,6 +121,33 @@ package final class ProcessPanelModel {
     guard params != self.params else { return }
     self.params = params
     onChange()
+  }
+
+  /// The subject of the suggestions of `reason` (card 0130: the catalogue object), if any.
+  package func subject(of reason: String) -> String? {
+    suggestions.first { $0.reason == reason }?.subject
+  }
+
+  /// `reason` in the language of `locale` (ProcessKit's catalog holds every reason), with its
+  /// `subject` when it has one: « From the catalogue (Sh2-132) ».
+  package nonisolated static func words(reason: String, subject: String?, locale: Locale)
+    -> String
+  {
+    let words = String(localized: ProcessKitResources.title(reason, locale: locale))
+    guard let subject else { return words }
+    return String(localized: .app("\(words) about \(subject)", locale: locale))
+  }
+
+  /// The solution the head carries, as the plate-solve panel words it: « Already solved: centre
+  /// 22h18m51,8s +56°08′05″, 1,52″/px ».
+  package nonisolated static func solvedWords(_ status: PlateSolveStatus, locale: Locale) -> String
+  {
+    let format = AstroFormat(locale: locale)
+    let ra = format.rightAscension(degrees: status.raDeg)
+    let dec = format.declination(degrees: status.decDeg)
+    let scale = format.decimal(status.arcsecPerPixel, maxFractionDigits: 2)
+    return String(
+      localized: .app("Already solved: centre \(ra) \(dec), \(scale)″/px", locale: locale))
   }
 
   /// Takes every suggestion of `reason` (the user's click on the group), in their order.

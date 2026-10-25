@@ -11,12 +11,13 @@ extension StudioWorkspaceModel {
   func drawPreview() {
     guard let panel else { return }
     do {
-      let preview = try studio.preview(panel.type.id, params: panel.params, mask: maskImage())
+      let preview = try studio.preview(
+        panel.type.id, params: panel.params, on: selection, mask: maskImage())
       // Through the head's display stretch: an auto-stretch fitted to the preview would hide
       // the very change the process makes (what is shown is what Apply records, R2).
       let same = preview.planes.count == headStatistics.count
       willShow(panel.type.id, panel.params)
-      try show(preview, statistics: same ? headStatistics : nil)
+      try show(preview, statistics: same ? headStatistics : nil, subject: .preview)
       isPreviewing = true
       shown = (panel.type.id, panel.params, mask)
       // A preview clears only a preview's failure: an Apply or Undo failure stays in view.
@@ -28,7 +29,7 @@ extension StudioWorkspaceModel {
       previewFailed = true
       if isPreviewing {
         isPreviewing = false
-        try? show(studio.head, statistics: headStatistics)
+        try? show(head, statistics: headStatistics)
       }
     }
   }
@@ -73,7 +74,7 @@ extension StudioWorkspaceModel {
     shown = nil
     guard isPreviewing else { return }
     isPreviewing = false
-    try? show(studio.head)
+    try? show(head)
   }
 
   /// Suspends the panel's preview once the history moved under it.

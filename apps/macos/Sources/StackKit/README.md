@@ -93,7 +93,17 @@ Re-recording is a contract change: the PR that commits new fixtures says why (`T
 - `KnobSchema.knobs` is every `PreprocessSettings` value a user may move, once:
   - its wire id (the legacy `params_patch.go` key when there was one);
   - its kind (number with bounds and integer flag, flag, or choice ids);
-  - its level (simple or advanced).
+  - its level (simple or advanced);
+  - its scope (card 0121): `.lane` when one lane's stacker reads it alone (stack options,
+    grading, transient mask, wheel transition), `.run(Shared)` when the shared canvas reads it,
+    with why (registration, framing, nights, combine; the frame-review and reference
+    breakpoints too, toggled once for the run on the Tri stage, which shows them run-wide).
+- **Lane overrides (card 0121):** `PreprocessRequest.overrideLane(_:with:)` sets a lane kind's
+  (`FilterSet.broadband` / `.dualband`) lane-scoped patch, refusing a run-wide knob
+  (`KnobError.runWide`); `settings(forLane:in:)` resolves it in `stackChannel` and in the lane's
+  checkpoint digest — only in a split run (a dual-band lane exists), so an unsplit run never
+  applies an override. They live on the request, not in `PreprocessSettings`: an untouched run's
+  settings, scripts and `LaneRecord` digests are byte-identical.
 - `KnobSchema.apply(_:to:)` puts a `KnobPatch` on the preset. An unknown id or a refused value
   throws before anything is applied. `patch(from:mode:)` returns only what differs from the
   preset, so a patch of defaults is a no-op and untouched runs stay byte-identical.
@@ -102,7 +112,24 @@ Re-recording is a contract change: the PR that commits new fixtures says why (`T
 - **To add a knob:** expose the value in `PreprocessSettings`, add it to `KnobSchema+Knobs.swift`
   under its area, list it in the fixture (`preprocess` or `swiftOnly`), and give it its words in
   HelpKit's `Help/<locale>/knobs.json` (`knob.<id>`, plus `knob.<id>.<option>` for a choice).
+  Give it its scope: `.shared(_:)` in the schema when the shared canvas reads it (the app words
+  the reason), its row in `KnobSchemaTests+Scope.swift` either way.
   `KnobSchemaTests` and `KnobPanelViewModelTests` fail on any one missing.
+**Sky-object catalogue** (card 0129, `Astrometry/SkyCatalogue*.swift`, port of the legacy
+`internal/skycat`): `SkyCatalogue.installed()` reads the five lists the installed Siril ships
+(`folder(sirilPath:)`: `…/Siril.app/Contents/Resources/share/siril/catalogue`, or the prefix's
+`share/siril/catalogue` beside a `bin/siril-cli`; `SIRIL_BIN` honoured; no Siril →
+`SkyCatalogueError.sirilMissing`, the app's install card) and merges them Messier → NGC → IC → Sh2 →
+LDN: the first list wins the primary name, later ones fill missing photometry and add their names as
+aliases. `object(named:)` finds any name or alias; `search(_:limit:)` ranks exact → prefix →
+contains, name → common name → alias, then the list, then the brighter. `SkyCatalogue.normalize` is
+**the** object-name key (A–Z, 0–9, upper-cased): compare a FITS `OBJECT` with it, never with a
+second normaliser. The OpenNGC overlay (`Resources/Catalogue/openngc.csv`, CC-BY-SA-4.0, attribution
+in its README) adds types, ellipses, surface brightness, morphology and common names by name, never
+coordinates. Siril's CSVs are never copied into the repo (one list). To extend: a new Siril list is a
+`SkyObject.Source` case in load order (its rank in search follows); a new overlay column is an
+`OverlayEntry` field.
+
 **Plate solving** (card 0093, `Astrometry/`): `PlateSolver(siril:support:catalogues:)` — or
 `.live(binary:support:catalogues:)`, a `SirilRunner.live(…, initFile:)` passing `-i` — runs
 `load input` → `platesolve <ra,dec> -force -focal= -pixelsize= [-limitmag=] -catalog= -noflip` →

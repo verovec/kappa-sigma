@@ -37,7 +37,7 @@ package nonisolated enum AppGlossary {
     FrameType.allCases.map(\.termID) + Filter.allCases.map(\.termID)
       + FilterSet.allCases.map(\.termID) + ColorChoice.allCases.map(\.termID)
       + ColorModel.allCases.map(\.termID) + LinearBundle.Role.allCases.map(\.termID)
-      + JourneyStage.allCases.map(\.termID)
+      + JourneyStage.allCases.map(\.termID) + StudioSelection.termIDs
   }
 
   /// The label of `id` of `glossary` in `locale`.

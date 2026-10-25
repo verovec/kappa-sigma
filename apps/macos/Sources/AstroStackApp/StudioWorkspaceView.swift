@@ -14,6 +14,11 @@ package struct StudioWorkspaceView: View {
   package var body: some View {
     HStack(spacing: 0) {
       VStack(spacing: 0) {
+        // Which history the column works on (card 0119), only when there is a choice.
+        if !model.selections.isEmpty {
+          StudioChannelSwitcher(model: model)
+          Divider()
+        }
         // The pipeline on top of the left column (card 0088), the catalogue under it.
         if let pipeline = model.pipeline {
           ScrollView { PipelineSidebarView(model: pipeline) }

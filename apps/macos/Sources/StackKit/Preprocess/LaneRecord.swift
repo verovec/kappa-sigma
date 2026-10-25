@@ -20,7 +20,7 @@ package struct LaneRecord: Codable, Equatable, Sendable {
   package init(_ outcome: ChannelOutcome, lane: String, plan: NightPlan, request: PreprocessRequest)
   {
     frames = Self.framesDigest(lane, plan: plan, request: request)
-    settings = Self.settingsDigest(request)
+    settings = Self.settingsDigest(request, lane: lane, plan: plan)
     self.outcome = outcome
   }
 
@@ -31,7 +31,9 @@ package struct LaneRecord: Codable, Equatable, Sendable {
     if frames != Self.framesDigest(lane, plan: plan, request: request) {
       return "the frames changed"
     }
-    if settings != Self.settingsDigest(request) { return "the settings changed" }
+    if settings != Self.settingsDigest(request, lane: lane, plan: plan) {
+      return "the settings changed"
+    }
     if let master = master(in: request.output),
       !FileManager.default.fileExists(atPath: master.path)
     {
@@ -100,8 +102,11 @@ package struct LaneRecord: Codable, Equatable, Sendable {
   }
 
   /// Every knob, as applied: a knob added by a later build changes it (the lane re-runs).
-  static func settingsDigest(_ request: PreprocessRequest) -> String {
-    digest(String(reflecting: request.settings))
+  ///
+  /// The lane's own settings (card 0121): an override of the other lane leaves this one reusable.
+  static func settingsDigest(_ request: PreprocessRequest, lane: String, plan: NightPlan) -> String
+  {
+    digest(String(reflecting: request.settings(forLane: lane, in: plan)))
   }
 
   private static func digest(_ text: String) -> String {

@@ -150,10 +150,24 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
   /// The Stacking panel's Reset All (card 0070).
   package static let stackingResetKnobs = stageControl("stacking", "resetKnobs")
 
+  /// The Stacking panel's « After stacking » choice of a split run (card 0121).
+  package static let stackingProcessing = stageControl("stacking", "processing")
+
+  /// The Stacking panel's lane picker: the values of every lane, or of one (card 0121).
+  package static let stackingLane = stageControl("stacking", "lane")
+
   /// A series checkbox of the Stacking stage, by its light-set id (card 0095).
   package static func stackingSeries(_ setID: String) -> Self {
     stageControl("stacking", "series." + setID)
   }
+
+  /// A result of the sidebar's Objects search, by the object's name (card 0130).
+  package static func objectResult(_ name: String) -> Self {
+    stageControl("objects", "result." + name)
+  }
+
+  /// The object card's « Close » (card 0130).
+  package static let objectCardClose = stageControl("objects", "close")
 
   /// The Studio stage's stack picker (card 0095).
   package static let studioStack = stageControl("studio", "stack")
@@ -215,6 +229,22 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
   package static func studioProcess(_ processID: String) -> Self {
     stageControl("studio", "process." + processID)
   }
+
+  /// An entry of the Studio's channel switcher (card 0119): `main` or a layer id.
+  package static func studioChannel(_ key: String) -> Self {
+    stageControl("studio", "channel." + key)
+  }
+
+  /// The switcher's « Compare with… » menu (card 0119).
+  package static let studioCompareWith = stageControl("studio", "compare-with")
+
+  /// An entry of « Compare with… » (card 0119): `none` or a channel key.
+  package static func studioCompareTarget(_ key: String) -> Self {
+    stageControl("studio", "compare-with." + key)
+  }
+
+  /// The stale banner's Replay (card 0119).
+  package static let studioReplayStale = stageControl("studio", "replay-stale")
 
   /// A step of the Studio's history list: compare to it (card 0087).
   package static func studioStep(_ index: Int) -> Self {

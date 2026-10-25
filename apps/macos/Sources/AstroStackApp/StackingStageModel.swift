@@ -58,6 +58,8 @@ package final class StackingStageModel {
   /// One run per object with a checked set, in the table's order; empty without a scan.
   package private(set) var scopes: [RunScope] = []
   private var checked: Set<String> = []
+  /// The last scan, which `splits(_:)` asks the engine about.
+  private var inventory: Inventory?
   /// Every set id a scan listed so far: a set seen before keeps its choice, a new one is checked.
   private var seen: Set<String> = []
 
@@ -68,6 +70,7 @@ package final class StackingStageModel {
 
   /// A new scan: the sets it still has keep their choice, the new ones are checked.
   package func replace(inventory: Inventory?) {
+    self.inventory = inventory
     groups = inventory.map(Self.groups(of:)) ?? []
     let ids = Set(groups.flatMap(\.nights).flatMap(\.series).map(\.id))
     // Kept: the choice on a set seen before (a dropped scan in between forgets nothing); new sets
@@ -94,6 +97,18 @@ package final class StackingStageModel {
   /// The nights with a checked set, in the table's order: what the next runs redo (card 0100).
   package var checkedNights: [Night] {
     groups.flatMap(\.nights).filter { night in night.series.contains { isChecked($0.id) } }
+  }
+
+  /// The lane columns of the Stacking panel (card 0121): broadband and dual-band once a checked
+  /// object's series split into both lanes, none otherwise.
+  package var laneColumns: [FilterSet] {
+    scopes.contains(where: splits) ? [.broadband, .dualband] : []
+  }
+
+  /// The run of `scope` stacks a broadband and a dual-band lane: the engine's own split of the
+  /// scoped inventory (a measured broadband AND a measured dual-band set), never a guess.
+  package func splits(_ scope: RunScope) -> Bool {
+    inventory.map { FilterSetLanes.splits($0, setIDs: scope.setIDs) } ?? false
   }
 
   /// No scan: the table has nothing to show.

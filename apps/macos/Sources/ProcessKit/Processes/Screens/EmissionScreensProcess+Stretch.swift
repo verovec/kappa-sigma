@@ -98,11 +98,10 @@ extension EmissionScreensProcess {
     let reasons = Self.suggestionReasons
     var suggestions: [Suggestion] = []
     for line in enabledLines {
-      // A scale without the plane it was fitted on cannot be applied: no suggestion.
-      if let k = layers[line.layerID]?.continuumK, layers[line.layerID]?.continuumReference != nil,
+      if let fit = line.continuumFit(in: layers),
         case .number(_, let bounds)? = Self.schema.spec(line.id("ContinuumK"))?.kind
       {
-        let value = min(max(k, bounds.lowerBound), bounds.upperBound)
+        let value = min(max(fit.k, bounds.lowerBound), bounds.upperBound)
         suggestions.append(
           Suggestion(paramID: line.id("ContinuumK"), value: .number(value), reason: reasons[0]))
       }

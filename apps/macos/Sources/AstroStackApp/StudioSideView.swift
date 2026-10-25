@@ -41,6 +41,7 @@ package struct StudioSideView: View {
           Text(.app("Choose a process in the catalogue."))
             .foregroundStyle(DesignColor.textSecondary.color)
         }
+        if let notice = model.staleNotice { stale(notice) }
         if let failure = model.failure { StatusBadge(.error, failure) }
         if model.appliedNothing {
           StatusBadge(.attention, .app("These values changed nothing: Undo takes the step back."))
@@ -55,7 +56,9 @@ package struct StudioSideView: View {
   /// and, where the process takes no mask, the mask still set with its Clear (card 0111).
   @ViewBuilder
   private func rows(under panel: ProcessPanelModel) -> some View {
-    if panel.type is any GeometricProcess.Type {
+    if model.selection != .main {
+      StudioInactiveMaskRow(model: model, kind: .branch)
+    } else if panel.type is any GeometricProcess.Type {
       // Geometry moves the whole grid: no mask, the output's size and solution instead
       // (none while the values leave no pixel: the panel shows that failure).
       StudioInactiveMaskRow(model: model, kind: .ignored)
@@ -67,6 +70,27 @@ package struct StudioSideView: View {
       if panel.type.id == BackgroundExtractionProcess.id { StudioBatchRows(model: model) }
     } else {
       StudioMaskRow(model: model)
+    }
+  }
+
+  /// A branch edit outdated main steps (card 0119): which, and why; Replay runs them again with
+  /// their recorded values — never by itself (R2).
+  private func stale(_ notice: StaleNotice) -> some View {
+    let steps = notice.steps.map { AstroFormat(locale: locale).integer($0 + 1) }
+      .joined(separator: ", ")
+    let branches = notice.branches.map { StudioSelection.label(.branch($0), locale: locale) }
+      .joined(separator: ", ")
+    return VStack(alignment: .leading, spacing: DesignMetrics.spacingXS) {
+      StatusBadge(
+        .attention,
+        .app(
+          "Stale steps: \(steps) (they read \(branches), changed since). Replay runs them again."
+        ))
+      Button(.app("Replay")) {
+        Task { try? await StudioUndo.replayMain(model, on: undoManager) }
+      }
+      .disabled(model.isMovingMain || model.toolRun != nil)
+      .accessible(.studioReplayStale, label: .app("Replay"))
     }
   }
 
@@ -83,13 +107,13 @@ package struct StudioSideView: View {
         Spacer()
         // A run or a host tool moving the history: the move waits, as Edit › Undo does.
         Button(.app("Undo")) { undo() }
-          .disabled(!model.studio.canUndo || model.isMovingHistory)
+          .disabled(!model.studio.canUndo(on: model.selection) || model.isMovingHistory)
           .accessible(.studioUndo, label: .app("Undo"))
         Button(.app("Redo")) { redo() }
-          .disabled(!model.studio.canRedo || model.isMovingHistory)
+          .disabled(!model.studio.canRedo(on: model.selection) || model.isMovingHistory)
           .accessible(.studioRedo, label: .app("Redo"))
       }
-      ForEach(Array(model.studio.steps.enumerated()), id: \.offset) { index, step in
+      ForEach(Array(model.steps.enumerated()), id: \.offset) { index, step in
         stepRow(index, step)
       }
     }

@@ -39,7 +39,9 @@ package struct PlateSolveProcess: ImageProcess {
 
   /// The reason of the header suggestions: an English key of the catalog.
   package static let fromHeader = "From the image header"
-  package static let suggestionReasons = [fromHeader]
+  /// The reason of a catalogue object's position (card 0130), the object as its subject.
+  package static let fromCatalogue = "From the catalogue"
+  package static let suggestionReasons = [fromHeader, fromCatalogue]
 
   package let params: ParamSet
 
@@ -75,6 +77,15 @@ package struct PlateSolveProcess: ImageProcess {
       var params = ParamSet(schema: schema)
       guard (try? params.set(id, value)) != nil, params[id] == value else { return nil }
       return Suggestion(paramID: id, value: value, reason: fromHeader)
+    }
+  }
+
+  /// A catalogue object's position (J2000, degrees) as the RA/Dec texts the solver reads, the
+  /// object named as the reason's subject; the optics stay the header's.
+  package static func suggestions(object: String, raDeg: Double, decDeg: Double) -> [Suggestion] {
+    [("ra", raDeg), ("dec", decDeg)].map { id, value in
+      Suggestion(
+        paramID: id, value: .text(degrees(value)), reason: fromCatalogue, subject: object)
     }
   }
 

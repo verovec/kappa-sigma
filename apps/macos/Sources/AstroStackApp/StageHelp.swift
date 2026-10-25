@@ -50,6 +50,29 @@ package enum StageHelp {
       HelpContent(summary: .app("\(card.summary)")) { HelpText(card.text) }, key: key(stage))
   }
 
+  /// The « ? » of a stage-level card that is not a journey stage (`branches`, card 0119), or
+  /// `nil` without the card.
+  package static func help(card id: String, locale: Locale) -> KeyedHelp? {
+    guard let card = extra[id]?[AppLocale.language(of: locale)] else { return nil }
+    let content = HelpContent(summary: .app("\(card.summary)")) { HelpText(card.text) }
+    return KeyedHelp(content, key: .help("stage." + id))
+  }
+
+  /// The cards of `stage/<id>.md` that are not journey stages, parsed once.
+  nonisolated private static let extra: [String: [String: Card]] = {
+    var cards: [String: [String: Card]] = [:]
+    for id in [StudioSelection.helpCard] {
+      for language in HelpIndex.locales {
+        guard let text = AppGlossary.help.stageCard(id, locale: language),
+          let first = HelpMarkdown.parse(text).first
+        else { continue }
+        cards[id, default: [:]][language] = Card(
+          text: text, summary: first.runs.map(\.text).joined())
+      }
+    }
+    return cards
+  }()
+
   /// The identifier of the stage's « ? ».
   package static func key(_ stage: JourneyStage) -> AccessibilityID {
     .help("stage." + stage.rawValue)

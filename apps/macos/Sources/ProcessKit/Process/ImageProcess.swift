@@ -183,12 +183,16 @@ package struct Suggestion: Equatable, Sendable {
   package let value: ParamValue
   /// Why, in a sentence the panel shows.
   package let reason: String
+  /// What the reason is about, shown as is next to it (card 0130: the catalogue object's name);
+  /// nil for a reason that says it all.
+  package let subject: String?
 
-  /// A proposal of `value` for `paramID`, because `reason`.
-  package init(paramID: String, value: ParamValue, reason: String) {
+  /// A proposal of `value` for `paramID`, because `reason` (about `subject`).
+  package init(paramID: String, value: ParamValue, reason: String, subject: String? = nil) {
     self.paramID = paramID
     self.value = value
     self.reason = reason
+    self.subject = subject
   }
 }
 

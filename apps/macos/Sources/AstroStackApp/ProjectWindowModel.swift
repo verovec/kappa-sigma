@@ -71,6 +71,8 @@ package final class ProjectWindowModel {
   @ObservationIgnored var pendingReplay: PendingReplay?
   /// The Stacking panel's preset and knob edits: what the next run applies (card 0070).
   package let knobs: KnobPanelViewModel
+  /// The sidebar's Objects (card 0130): Siril's catalogue and the object the plate solve offers.
+  package let objects: ObjectSearchModel
   /// The profile id the knobs' help was last looked up for (`knobs.profile` is its result, nil
   /// when it resolves to nothing); not state a view reads.
   @ObservationIgnored private var profileLookupID: String?
@@ -117,8 +119,10 @@ package final class ProjectWindowModel {
     exports: ExportServices = .live,
     isSaved: @escaping () -> Bool = { true },
     edited: @escaping () -> Void = {},
-    save: @escaping () -> Void = {}
+    save: @escaping () -> Void = {},
+    objects: ObjectSearchModel = ObjectSearchModel()
   ) {
+    self.objects = objects
     self.store = store
     self.folder = folder
     self.services = services
@@ -130,9 +134,8 @@ package final class ProjectWindowModel {
     // The panel starts where the latest stack left it; an unreadable record is reported.
     let latest = Result { try store()?.latestStack().map(StackRecord.init(stack:)) }
     let record = (try? latest.get()) ?? nil
-    knobs = KnobPanelViewModel(
-      mode: record?.mode ?? .deepsky, patch: record?.knobs ?? KnobPatch(),
-      ignored: record?.ignoredEntries ?? [])
+    knobs = KnobPanelViewModel(mode: .deepsky)
+    if let record { knobs.load(record) }
     // The chosen stack is known before the first refresh, which derives Tri from it (0095): a
     // stack that no longer exists reads as no choice, the latest is shown.
     let settings = Result {

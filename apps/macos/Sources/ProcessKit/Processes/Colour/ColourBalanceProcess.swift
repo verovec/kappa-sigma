@@ -14,6 +14,7 @@ package struct ColourBalanceProcess: ImageProcess {
   package static let id = "colour-balance"
   package static let title = "Colour balance"
   package static let stage = ProcessStage.linear
+  package static let branchable = BranchUse.colourLayers
   package static let previewExactOnlyAt1to1 = false
   private static let channels = ["Red", "Green", "Blue"]
 

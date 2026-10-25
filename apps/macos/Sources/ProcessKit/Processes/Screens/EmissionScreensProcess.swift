@@ -38,8 +38,21 @@ package struct EmissionScreensProcess: ImageProcess {
   }
 
   /// The enabled lines, in screen order.
-  package var enabledLines: [EmissionLine] {
+  package var enabledLines: [EmissionLine] { Self.enabledLines(params) }
+
+  /// The lines `params` enable, in screen order.
+  package static func enabledLines(_ params: ParamSet) -> [EmissionLine] {
     EmissionLine.allCases.filter { params.flag($0.id("Enabled")) }
+  }
+
+  /// The enabled lines' layers; with a continuum subtraction, the broadband layers too (the
+  /// plane the stack fitted the continuum against is one of them).
+  package static func layersRead(_ params: ParamSet, layerIDs: Set<String>) -> Set<String> {
+    let enabled = enabledLines(params)
+    let lines = Set(EmissionLine.allCases.map(\.layerID))
+    let continuum = enabled.contains { params.flag($0.id("Continuum")) }
+    return Set(enabled.map(\.layerID)).union(continuum ? layerIDs.subtracting(lines) : [])
+      .intersection(layerIDs)
   }
 
   /// Why `params` cannot run with only the `present` layers ("Hα screen needs the Ha layer").

@@ -82,6 +82,41 @@ struct PlateSolveProcessTests {
     return Opened(project: project, workspace: workspace, siril: siril)
   }
 
+  @Test("the header's offers first, then the catalogue object's; nothing taken", .scratchDirectory)
+  func testPlateSolveOffersHeaderThenCatalogue() throws {
+    let opened = try Self.open()
+    defer { try? opened.project.package.close() }
+    let workspace = opened.workspace
+    workspace.catalogueObject = {
+      SkyObject(name: "M31", raDeg: 10.684793, decDeg: 41.269065, source: .messier)
+    }
+    workspace.choose(PlateSolveProcess.id)
+    let panel = try #require(workspace.panel)
+    #expect(
+      panel.suggestions.map(\.reason) == Array(repeating: PlateSolveProcess.fromHeader, count: 4)
+        + [PlateSolveProcess.fromCatalogue, PlateSolveProcess.fromCatalogue])
+    #expect(panel.suggestions.suffix(2).map(\.value) == [.text("10.684793"), .text("41.269065")])
+    #expect(panel.suggestions.last?.subject == "M31")
+    #expect(panel.params == ParamSet(schema: PlateSolveProcess.schema), "nothing taken")
+    #expect(panel.solved == nil, "the stack header carries no solution")
+    let english = Locale(identifier: "en")
+    #expect(
+      ProcessPanelModel.words(
+        reason: PlateSolveProcess.fromCatalogue, subject: "Sh2-132", locale: english)
+        == "From the catalogue (Sh2-132)")
+    #expect(
+      ProcessPanelModel.words(
+        reason: PlateSolveProcess.fromCatalogue, subject: "Sh2-132",
+        locale: Locale(identifier: "fr"))
+        == "Depuis le catalogue (Sh2-132)")
+    let solved = try #require(
+      PlateSolveStatus(
+        wcs: WCS(header: try Self.header(Self.solution)), width: 8, height: 8))
+    #expect(
+      ProcessPanelModel.solvedWords(solved, locale: english)
+        == "Already solved: centre 00h42m48.8s +41°16′17″, 3.12″/px")
+  }
+
   @Test(
     "the header's values are offered, the panel stays empty; Apply refuses empty coordinates",
     .scratchDirectory)

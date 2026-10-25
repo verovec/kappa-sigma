@@ -47,4 +47,42 @@ struct StackRecordTests {
       StackRecord.self, from: Data(#"{"path": "/c/M31-DB"}"#.utf8))
     #expect(none.referencePins == nil)
   }
+
+  @Test("lane knobs and the processing choice encode under lane_knobs and processing (card 0121)")
+  func testOverridesAndProcessingRoundTrip() throws {
+    var record = StackRecord(request: ImportRequest(paths: ["/c/M31-DB"]))
+    record.laneKnobs = [.dualband: KnobPatch(values: ["stack_reject": .choice("sigma")])]
+    record.processing = .perChannel
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = [.sortedKeys]
+    let json = try #require(String(bytes: try encoder.encode(record), encoding: .utf8))
+    #expect(
+      json
+        == #"{"lane_knobs":{"dualband":{"stack_reject":"sigma"}},"mode":"deepsky","#
+        + #""path":"\/c\/M31-DB","processing":"per_channel"}"#)
+    #expect(try JSONDecoder().decode(StackRecord.self, from: Data(json.utf8)) == record)
+    // Untouched: neither key is written, and a record without them reads as one flow.
+    let untouched = StackRecord(request: ImportRequest(paths: ["/c/M31-DB"]))
+    let plain = try #require(String(bytes: try encoder.encode(untouched), encoding: .utf8))
+    #expect(plain == #"{"mode":"deepsky","path":"\/c\/M31-DB"}"#)
+    let decoded = try JSONDecoder().decode(StackRecord.self, from: Data(plain.utf8))
+    #expect(decoded.laneKnobs.isEmpty && decoded.processing == .single)
+  }
+
+  @Test("a lane_knobs key naming no lane is kept aside and shown; the record still reads")
+  func testUnknownLaneKeyShown() throws {
+    let json =
+      #"{"path": "/c/M31", "lane_knobs": {"narrowband": {"fwhm_sigma": 2}, "unknown": {}, "#
+      + #""dualband": {"fwhm_sigma": 2}}}"#
+    let record = try JSONDecoder().decode(StackRecord.self, from: Data(json.utf8))
+    #expect(record.laneKnobs == [.dualband: KnobPatch(values: ["fwhm_sigma": .number(2)])])
+    #expect(record.ignoredEntries == ["lane_knobs.narrowband", "lane_knobs.unknown"])
+  }
+
+  @Test("a processing this build does not know reads as one flow and is shown")
+  func testUnknownProcessingShown() throws {
+    let record = try JSONDecoder().decode(
+      StackRecord.self, from: Data(#"{"path": "/c/M31", "processing": "per_lane"}"#.utf8))
+    #expect(record.processing == .single && record.ignoredEntries == ["processing=per_lane"])
+  }
 }

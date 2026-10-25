@@ -18,7 +18,8 @@ package struct HeadSample: Equatable, Sendable {
 
   /// Each channel's finite sampled values.
   package let planes: [[Float]]
-  /// Each channel's counts over [0, 1] (values outside fall in the end bins).
+  /// Each channel's counts over [0, 1], bin `i` centred on i/255 as the viewer bins (values
+  /// outside fall in the end bins).
   package let bins: [[Int]]
 
   /// The sample of `image`.
@@ -31,7 +32,8 @@ package struct HeadSample: Equatable, Sendable {
     bins = planes.map { plane in
       var counts = [Int](repeating: 0, count: Self.binCount)
       for value in plane {
-        let bin = Int((min(max(value, 0), 1) * Float(Self.binCount)).rounded(.down))
+        // The viewer's rule (`Histogram.metal`): the same head fills the same bins.
+        let bin = Int(min(max(value, 0), 1) * Float(Self.binCount - 1) + 0.5)
         counts[min(bin, Self.binCount - 1)] += 1
       }
       return counts

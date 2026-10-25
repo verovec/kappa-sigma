@@ -10,30 +10,52 @@ package import Metal
 package final class StudioSession {
   /// The non-destructive history; its head is the working image.
   package let history: History
-  /// The stack's layers and statistics.
-  package let bundle: PipelineBundle
+  /// The stack's layers and statistics, each branch head over its layer (card 0118): what the
+  /// main history reads.
+  package internal(set) var bundle: PipelineBundle
+  /// The stack's layers and statistics as stacked: what the branches start from.
+  package let stackBundle: PipelineBundle
+  /// The per-layer histories (card 0118).
+  package let branches: BranchSet
   /// The processes it runs (the catalogue lists the same).
   package let registry: ProcessRegistry
   /// The GPU it runs on (the viewer draws on the same one).
   package let device: MTLDevice
-  private let runner: ProcessRunner
-  private let bundleLayers: [String: GPUImage]
+  let runner: ProcessRunner
+  /// The layers of `bundle` on the GPU: the stack's, uploaded once, and the branch heads.
+  var bundleLayers: [String: GPUImage]
   /// The last manual Apply left the image, its solution and its layers as they were (an
   /// amount at 0, a process switched off, a mask letting nothing through): recorded all the
   /// same — the pipeline keeps its steps — but worth saying, since undoing it shows nothing.
-  package private(set) var lastApplyChangedNothing = false
-  private var overlay: Overlay?
+  package internal(set) var lastApplyChangedNothing = false
+  var overlay: Overlay?
 
-  /// A session over `history` and `bundle`, running the processes of `registry` on `device`.
+  /// A session over `history` and `bundle`, running the processes of `registry` on `device`;
+  /// `branches` are those beside the history's folder unless given.
   package init(
-    history: History, bundle: PipelineBundle, registry: ProcessRegistry, device: MTLDevice
+    history: History, bundle: PipelineBundle, registry: ProcessRegistry, device: MTLDevice,
+    branches: BranchSet? = nil
   ) throws {
     self.history = history
-    self.bundle = bundle
+    stackBundle = bundle
     self.registry = registry
     self.device = device
+    let branches =
+      try branches
+      ?? BranchSet(
+        folder: BranchSet.folder(besides: history.directory), bundle: bundle,
+        schema: { registry.type(id: $0)?.schema })
+    self.branches = branches
+    self.bundle = branches.overlay(bundle, baseID: Self.baseLayerID(bundle.layers.keys))
     runner = try ProcessRunner(device: device)
-    bundleLayers = try bundle.layers.mapValues { try GPUImage(device: device, image: $0) }
+    bundleLayers = try self.bundle.layers.mapValues { try GPUImage(device: device, image: $0) }
+    // A history opened over the stacked base layer starts from its branch head (card 0118).
+    if let baseID = Self.baseLayerID(bundle.layers.keys), let head = branches.branch(baseID)?.head {
+      history.rebase(onto: head)
+    }
+    history.branchHeadsRead = { [weak self] processID, params, index in
+      self?.headsRead(processID, params: params, index: index) ?? [:]
+    }
   }
 
   /// The statistics of `image` as a layer's (a bundle built from files, a step's output).
@@ -151,7 +173,7 @@ package final class StudioSession {
   }
 
   /// The context of the step files `files`.
-  private struct Overlay {
+  struct Overlay {
     let files: [String: String]
     let layers: [String: GPUImage]
     let stats: [String: LayerStats]

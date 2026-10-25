@@ -20,7 +20,7 @@ extension StudioWorkspaceModel {
     guard regionUnavailable == nil, let panel, let region = viewer.model.frame.region else {
       return
     }
-    let head = studio.head
+    let head = self.head
     let crops: [(String, Int)] = [
       ("cropLeft", region.x), ("cropTop", region.y),
       ("cropRight", head.width - region.x - region.width),
@@ -58,7 +58,7 @@ extension StudioWorkspaceModel {
   /// The geometry panel's output on the head, or `nil` (another panel, values leaving no pixel).
   package var geometryOutput: GeometryOutput? {
     guard let panel, panel.type == GeometryProcess.self else { return nil }
-    let head = studio.head
+    let head = self.head
     guard
       let size = try? GeometryProcess.outputSize(
         panel.params, width: head.width, height: head.height)

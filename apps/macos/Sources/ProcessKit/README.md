@@ -141,7 +141,7 @@ non-destructive history, recipes and the registry (design §2, §4.1).
 - `ProcessRegistry`: refuses duplicates and invalid schemas (`.px` without
   `previewExactOnlyAt1to1`, a default outside its bounds or options, infinite bounds);
   `standard()` is validated like any registry and lists the shipped processes (today:
-  `channel-combination`, `stretch`, `hdr`, `emission-screens`, `colour-balance`, `sky-desat`,
+  `channel-combination`, `line-injection`, `stretch`, `hdr`, `emission-screens`, `colour-balance`, `sky-desat`,
   `curves`, `saturation`, `star-recomposition`, `denoise`; pipeline order is E15's — `stage` documents it).
 - **Colour processes** (card 0053), `Processes/Colour/`, kernels in `Colour.metal` (they share the
   HSL helpers; a runtime-compiled source has no `#include`) and `SkyDesat.metal`; every default is
@@ -164,6 +164,24 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   - `saturation` (non-linear): astrocomp's `-sat -sat-masked` (HSL S through the
     `saturationMaskLUT` band on the HSL lightness), the compose star-core desaturation
     (`starDesatMaskLUT` on the luminance) and the `desat` tool's luma blend `k`; the PO's values are suggestions.
+
+## Line injection (card 0120)
+
+- `LineInjectionProcess` (`line-injection`, linear, requires colour + emission, registered (menu) right
+  after `channel-combination`): per line of `EmissionLine` (params `<ha|oiii|sii><Gain|ContinuumK|Black|
+  Red|Green|Blue>`) and base plane `p`, `base_p + gain · share_p · max(line − k·ref − black, 0)`
+  in `LineInjection.metal`, lines added in Hα, [OIII], [SII] order. The reference plane is the
+  bundle's `continuum_ref`, read only when k > 0 (refused by name without one). Shares default to
+  Hα/[SII] → red, [OIII] → green and blue half each. No normalisation, no clip: values above 1
+  stay for the stretch's headroom (the viewer's histogram and readout show them).
+  Gains 0 (the defaults) copy the head bit for bit; a pixel or plane nothing is added to keeps its bits. The
+  bundle's `continuum_k` is a suggestion whose reason names its reference plane
+  (`continuumReason(reference:)`; clamped into 0…5 and offered only for a line with a gain, like the
+  screens' k), never a default (R2); so is a black point at the line's sky (its median − k × the
+  reference's). Pinned against `LineInjectionOracle`
+  (max |Δ| ≤ 1e-6). A main step reads the injecting line layers, and the broadband ones once k > 0
+  (`layersRead`, card 0118); usual order: after denoise, before HDR. Rejected: more combination
+  slots (0054's one source per slot), more boost on the screens (non-linear).
 
 ## Denoise (card 0115)
 
@@ -265,6 +283,38 @@ in en/fr; the English title is the key, resolved with `ProcessKitResources.title
 To give a host tool layers: return them in `StudioToolResult(…outputs:replaced:)` from a
 `StudioTool(step:)`; the Studio records them, the next steps read them.
 
+## Branches (card 0118)
+
+- A `Branch` is one bundle layer's own `History` (`stacks/<run>/branches/<layerID>/`, beside the
+  main `history/`), opened by `BranchSet` when its manifest exists or at its first step: a stack
+  never branched writes nothing, and its main `history.json` and outputs stay byte-identical.
+- **Overlay order**: stack bundle → branch heads (`BranchSet.overlay`, measured, the stack's
+  continuum fit kept: a branch moves no pixel) → the main history's `writtenFiles`.
+  `StudioSession.bundle` is the overlaid bundle (the pipeline runner reads it too),
+  `stackBundle` the one as stacked; the main history starts from the base layer's branch head
+  (`History.rebase(onto:)`).
+- A branch takes only `ImageProcess.branchable` processes (`BranchUse`: `.anyLayer`,
+  `.colourLayers` on three-plane layers), never a `GeometricProcess`; anything else is refused
+  with `StudioError.notBranchable(processID:reason:)`, a host tool with `needsTool` (its branch
+  route over `replaced` is still to come). `ProcessRegistryTests.testBranchableAudit` pins the set.
+- **Staleness**: `History.branchHeadsRead` (set by the session) stamps every new main step —
+  Apply, host tool, pipeline run — with the heads it read: the layers of
+  `ImageProcess.layersRead(_:layerIDs:)`, plus the base layer for step 0. `History.Step.branchHeads`
+  is written only when not empty. `StudioSession.staleFrom` is the first step whose stamp differs
+  from what it would read now; `StudioModel.replayMain()` re-applies from there with the recorded
+  values through `PipelineRunner` (never by itself, R2), `StudioUndo.replayMain` as one ⌘Z.
+
+- **In the app** (card 0119): `StudioWorkspaceModel.selection` (`.main | .branch(layerID)`)
+  routes the viewer head, preview, Apply and Undo through `StudioModel.head/steps/apply/undo(on:)`;
+  on a branch the catalogue greys what `StudioSession.refusal(of:planes:)` refuses (and host tools)
+  as `StudioUnavailable.onCombinedImage` / `.needsColourLayer`; a registered ⌘Z re-selects its
+  history first; the combined view's `staleNotice` names `staleFrom…` and
+  `movedBranches(ofStep:)`, the pipeline column marks those steps `.stale`.
+
+To make a process branchable: declare `static let branchable = BranchUse.anyLayer` (or
+`.colourLayers`) — linear, same size, its input alone — and add it to the audit table. A process
+that reads bundle layers declares them in `layersRead`, or its steps never go stale.
+
 ## Geometry (card 0090)
 
 - `GeometryProcess` (`geometry`, stage any): crops (`.px`, as shown: top = the displayed top),
@@ -309,3 +359,14 @@ To give a host tool layers: return them in `StudioToolResult(…outputs:replaced
    and `movedLayers` then move the header and the layers with it.
 
 Allowed dependencies: `ImageKit`, `RenderKit` (`Tests/TestSupport/BoundaryRules.swift`).
+
+## Usual order (card 0116)
+
+`ProcessOrder.usual` is the one list of the usual processing order: combination, background
+extraction, plate solve, colour calibration, colour balance, sky desat, denoise, line injection, HDR,
+stretch, levels, curves, emission screens, saturation, star recomposition, then geometry (anywhere).
+`ProcessOrderTests` checks every registered process is in it exactly once, so **a new process
+must be placed in it**. The Studio's catalogue sorts each stage by it, `rank(of:)` numbers the
+rows, and `usuallyNext(after:)` marks the process after the head's last ordered step: a
+suggestion only, nothing greyed (R2). `ProfileTests.testProfiles_FollowUsualOrder` keeps the
+shipped profiles in that order.

@@ -18,9 +18,12 @@ extension StudioWorkspaceModel {
   /// The mask of the head, one plane, or `nil` without a mask — and for a geometric process,
   /// which moves the whole grid and has no mask row (card 0090).
   func maskImage() throws -> AstroImage? {
-    guard let mask, !(panel?.type is any GeometricProcess.Type) else { return nil }
+    // A branch takes no mask: its process reads the layer alone (card 0119).
+    guard let mask, selection == .main, !(panel?.type is any GeometricProcess.Type) else {
+      return nil
+    }
     let device = studio.session.device
-    let head = studio.head
+    let head = self.head
     let built = try MaskBuilder(device: device)
       .build(mask, image: GPUImage(device: device, image: head), scale: 1)
     return AstroImage(

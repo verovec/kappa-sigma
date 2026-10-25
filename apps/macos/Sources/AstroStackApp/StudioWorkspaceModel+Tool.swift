@@ -40,6 +40,8 @@ extension StudioWorkspaceModel {
     if pipeline?.isRunning == true {
       return .app("A pipeline run is going on: wait for it, then apply.")
     }
+    // So does a replay of the stale steps (card 0119).
+    if isReplaying { return .app("A replay is going on: wait for it, then apply.") }
     return nil
   }
 

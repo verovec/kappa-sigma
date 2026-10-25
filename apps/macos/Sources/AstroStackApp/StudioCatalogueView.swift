@@ -33,6 +33,14 @@ package struct StudioCatalogueView: View {
       return String(localized: .app("Runs on linear data: undo the stretch first", locale: locale))
     case .unsolved:
       return String(localized: .app("Solve the image first (plate solving)", locale: locale))
+    case .onCombinedImage:
+      return String(localized: .app("Acts on the combined image: apply it there", locale: locale))
+    case .toolOnCombinedImage:
+      return String(
+        localized: .app("Runs a host tool: on the combined image only", locale: locale))
+    case .needsColourLayer:
+      return String(
+        localized: .app("Needs a colour layer: this branch is an emission line", locale: locale))
     case .toolMissing:
       return String(
         localized: .app(

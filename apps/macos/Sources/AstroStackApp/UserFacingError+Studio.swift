@@ -11,6 +11,12 @@ extension UserFacingError {
     case .otherGrid(let step):
       .app("Step \(step + 1) is from before a crop, turn or flip: it cannot be compared.")
     case .needsTool(let id): .app("“\(id)” runs a host tool: nothing was applied without it.")
+    case .notBranchable(let id, .movesPixels):
+      .app("“\(id)” moves the pixels: crop, turn or flip in the main history.")
+    case .notBranchable(let id, .notPerLayer):
+      .app("“\(id)” works on the whole image: apply it in the main history.")
+    case .notBranchable(let id, .needsColour):
+      .app("“\(id)” needs a colour layer: a line layer has a single plane.")
     }
   }
 

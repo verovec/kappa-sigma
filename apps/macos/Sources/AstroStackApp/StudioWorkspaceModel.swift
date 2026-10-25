@@ -19,13 +19,15 @@ package final class StudioWorkspaceModel {
     package let title: String
     /// Why it cannot be the next step, shown on the greyed row (R2: shown, never enforced).
     package let unavailable: StudioUnavailable?
+    /// Its place in the usual processing order (card 0116), 1-based.
+    package var rank: Int? { ProcessOrder.rank(of: id) }
   }
 
   /// The processes of one stage.
   package struct Group: Identifiable, Equatable {
     /// Linear, non-linear or either.
     package let stage: ProcessStage
-    /// Its processes, in registry order.
+    /// Its processes, in the usual processing order (card 0116).
     package let entries: [Entry]
     package var id: String { stage.rawValue }
   }
@@ -55,6 +57,19 @@ package final class StudioWorkspaceModel {
   /// The history moved under the open panel: the viewer shows the head, not the panel's values,
   /// until a value moves or Preview is pressed; Apply shows them before it records (R2).
   package internal(set) var isPreviewSuspended = false
+  /// The history shown and edited: the combined image or a layer's branch (card 0119).
+  package internal(set) var selection = StudioSelection.main
+  /// The viewer's stretch left on each other history, put back when it is shown again.
+  @ObservationIgnored var stretches: [StudioSelection: ViewerStretch] = [:]
+  /// The history of each Studio entry on the undo manager's undo stack, the top last: the
+  /// history buttons replay ⌘Z only when the top one is the history shown (card 0119).
+  @ObservationIgnored var undoSelections: [StudioSelection] = []
+  /// The same for the redo stack.
+  @ObservationIgnored var redoSelections: [StudioSelection] = []
+  /// A Replay of the stale steps is running (card 0119): a second one waits for it.
+  package internal(set) var isReplaying = false
+  /// The other history whose head compare shows, if any (card 0119).
+  package internal(set) var comparingWith: StudioSelection?
   /// The step compare shows, if any.
   package internal(set) var comparing: Int?
   /// The viewer shows a geometric preview that moves the pixels (card 0090, `gridMoved`).
@@ -95,6 +110,9 @@ package final class StudioWorkspaceModel {
   @ObservationIgnored package private(set) var isRetired = false
   /// Shows the Studio (an undo from another stage brings it into view first).
   @ObservationIgnored package var reveal: () -> Void = {}
+  /// The catalogue object the plate solve offers (card 0130): the one chosen in the sidebar's
+  /// Objects, else the project's own; nil when none is known.
+  @ObservationIgnored package var catalogueObject: () -> SkyObject? = { nil }
   /// The undo manager its moves are registered on, cleared of them when it is retired.
   @ObservationIgnored package weak var undoManager: UndoManager?
   @ObservationIgnored private let base: Set<LayerRole>
@@ -106,6 +124,8 @@ package final class StudioWorkspaceModel {
   @ObservationIgnored var shown: (processID: String, params: ParamSet, mask: Mask?)? {
     didSet { gridMoved(from: oldValue.map { ($0.processID, $0.params) }) }
   }
+  /// The head's input-histogram sample, kept while the head is the same image (card 0128).
+  @ObservationIgnored var headSample: (head: AstroImage, sample: HeadSample)?
   /// The failure shown is a preview's (the next preview clears it).
   @ObservationIgnored var previewFailed = false
 
@@ -135,7 +155,10 @@ package final class StudioWorkspaceModel {
     previewTask?.cancel()
     toolTask?.cancel()
     headNoise.close()
+    headSample = nil
     undoManager?.removeAllActions(withTarget: self)
+    undoSelections.removeAll()
+    redoSelections.removeAll()
   }
 
   /// Opens the panel of `processID` at `params` (its defaults when `nil`), with its suggestions.
@@ -165,23 +188,32 @@ package final class StudioWorkspaceModel {
     stopPreview()
   }
 
-  func show(_ image: AstroImage, statistics: [STFMapping]? = nil) throws {
+  /// Shows `image` in the viewer: the head unless `subject` says it is a preview or the model.
+  func show(
+    _ image: AstroImage, statistics: [STFMapping]? = nil, subject: ViewerSubject = .image
+  ) throws {
     viewer.texture = try Self.texture(image, device: studio.session.device)
-    viewer.model.replace(image: image, statistics: statistics)
+    viewer.model.replace(image: image, statistics: statistics, subject: subject)
   }
 
   func refreshCatalogue() {
     var groups: [Group] = []
     for stage in [ProcessStage.linear, .any, .nonlinear] {
-      let entries = registry.types.filter { $0.stage == stage }.map { type in
-        Entry(
-          id: type.id, title: type.title,
-          unavailable: studio.session.unavailable(for: type, base: base, registry: registry)
-            ?? (type.hostTool && tools[type.id] == nil ? .toolMissing : nil))
+      let ordered = registry.types.filter { $0.stage == stage }
+        .sorted { (ProcessOrder.rank(of: $0.id) ?? .max) < (ProcessOrder.rank(of: $1.id) ?? .max) }
+      let entries = ordered.map { type in
+        Entry(id: type.id, title: type.title, unavailable: unavailable(type))
       }
       if !entries.isEmpty { groups.append(Group(stage: stage, entries: entries)) }
     }
     catalogue = groups
+  }
+
+  /// Why `type` cannot be the next step of the history shown, or `nil`.
+  private func unavailable(_ type: any ImageProcess.Type) -> StudioUnavailable? {
+    if let id = selection.layerID { return branchUnavailable(type, layerID: id) }
+    return studio.session.unavailable(for: type, base: base, registry: registry)
+      ?? (type.hostTool && tools[type.id] == nil ? .toolMissing : nil)
   }
 
   static func texture(_ image: AstroImage, device: MTLDevice) throws -> ImageTexture {

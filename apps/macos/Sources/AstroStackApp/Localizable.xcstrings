@@ -641,6 +641,22 @@
         }
       }
     },
+    "A replay is going on: wait for it, then apply.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A replay is going on: wait for it, then apply."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un rejeu est en cours : attendez qu’il finisse, puis appliquez."
+          }
+        }
+      }
+    },
     "A snapshot is already named “%@”.": {
       "localizations": {
         "en": {
@@ -685,6 +701,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "À propos d’AstroStack"
+          }
+        }
+      }
+    },
+    "Acts on the combined image: apply it there": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acts on the combined image: apply it there"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agit sur l’image combinée : appliquez-le là"
           }
         }
       }
@@ -1089,6 +1121,22 @@
         }
       }
     },
+    "Channel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Channel"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canal"
+          }
+        }
+      }
+    },
     "Channels": {
       "localizations": {
         "en": {
@@ -1341,6 +1389,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Comparer avec"
+          }
+        }
+      }
+    },
+    "Compare with…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compare with…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comparer avec…"
           }
         }
       }
@@ -2545,6 +2609,22 @@
         }
       }
     },
+    "Input — the head before this process": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Input — the head before this process"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entrée — la tête avant ce process"
+          }
+        }
+      }
+    },
     "Inspect %@": {
       "localizations": {
         "en": {
@@ -3057,6 +3137,22 @@
         }
       }
     },
+    "Mask active: %@, not used on a branch: the process reads the layer alone.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mask active: %@, not used on a branch: the process reads the layer alone."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masque actif : %@, non utilisé sur une branche : le traitement lit la couche seule."
+          }
+        }
+      }
+    },
     "Masters, stacks and the bundle are written inside the project.": {
       "localizations": {
         "en": {
@@ -3329,6 +3425,22 @@
         }
       }
     },
+    "Needs a colour layer: this branch is an emission line": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needs a colour layer: this branch is an emission line"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demande une couche couleur : cette branche est une raie d’émission"
+          }
+        }
+      }
+    },
     "Needs the starless: separate the stars first.": {
       "localizations": {
         "en": {
@@ -3485,6 +3597,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aucun canal n’a pu être empilé : %@"
+          }
+        }
+      }
+    },
+    "No compare": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No compare"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sans comparaison"
           }
         }
       }
@@ -3853,6 +3981,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ouvrir une image…"
+          }
+        }
+      }
+    },
+    "Open in Viewer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open in Viewer"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir dans le visualiseur"
           }
         }
       }
@@ -4625,6 +4769,22 @@
         }
       }
     },
+    "Replay": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replay"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rejouer"
+          }
+        }
+      }
+    },
     "Replay Pipeline…": {
       "localizations": {
         "en": {
@@ -4941,6 +5101,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "En cours"
+          }
+        }
+      }
+    },
+    "Runs a host tool: on the combined image only": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Runs a host tool: on the combined image only"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lance un outil externe : sur l’image combinée seulement"
           }
         }
       }
@@ -6237,6 +6413,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "L’étape « %@ » lance un outil externe : appliquez-la dans le Studio, puis continuez."
+          }
+        }
+      }
+    },
+    "Stale steps: %@ (they read %@, changed since). Replay runs them again.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stale steps: %@ (they read %@, changed since). Replay runs them again."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Étapes périmées : %@ (elles lisaient %@, modifié depuis). Rejouer les relance."
           }
         }
       }
@@ -8305,6 +8497,38 @@
         }
       }
     },
+    "“%@” moves the pixels: crop, turn or flip in the main history.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” moves the pixels: crop, turn or flip in the main history."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« %@ » déplace les pixels : recadrez, tournez ou retournez dans l’historique principal."
+          }
+        }
+      }
+    },
+    "“%@” needs a colour layer: a line layer has a single plane.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” needs a colour layer: a line layer has a single plane."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« %@ » demande une couche couleur : une couche de raie n’a qu’un plan."
+          }
+        }
+      }
+    },
     "“%@” runs a host tool: nothing was applied without it.": {
       "localizations": {
         "en": {
@@ -8317,6 +8541,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "« %@ » lance un outil externe : rien n’a été appliqué sans lui."
+          }
+        }
+      }
+    },
+    "“%@” works on the whole image: apply it in the main history.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” works on the whole image: apply it in the main history."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« %@ » traite l’image entière : appliquez-le dans l’historique principal."
           }
         }
       }
@@ -8893,6 +9133,870 @@
           "stringUnit": {
             "state": "translated",
             "value": "Installez Rosetta (%@) ou une version pour Apple silicon."
+          }
+        }
+      }
+    },
+    "Usually next: it works on the linear data, before the stretch.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usually next: it works on the linear data, before the stretch."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Habituellement ensuite : il travaille sur les données linéaires, avant l’étirement."
+          }
+        }
+      }
+    },
+    "Usually next: it fits before or after the stretch.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usually next: it fits before or after the stretch."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Habituellement ensuite : il se place avant ou après l’étirement."
+          }
+        }
+      }
+    },
+    "Usually next: it finishes the stretched image.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usually next: it finishes the stretched image."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Habituellement ensuite : il finalise l’image étirée."
+          }
+        }
+      }
+    },
+    "Usually next: the stretch, once the linear work is done.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usually next: the stretch, once the linear work is done."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Habituellement ensuite : l’étirement, une fois le travail linéaire fait."
+          }
+        }
+      }
+    },
+    "After stacking": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "After stacking"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Après l’empilement"
+          }
+        }
+      }
+    },
+    "One flow": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One flow"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un seul flux"
+          }
+        }
+      }
+    },
+    "Per channel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Per channel"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Par canal"
+          }
+        }
+      }
+    },
+    "Values for": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Values for"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valeurs pour"
+          }
+        }
+      }
+    },
+    "Every lane": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Every lane"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les voies"
+          }
+        }
+      }
+    },
+    "%@: %lld changed from the global values": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@: %lld changed from the global values"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ : %lld modifiés par rapport aux valeurs globales"
+          }
+        }
+      }
+    },
+    "≠ global": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "≠ global"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "≠ global"
+          }
+        }
+      }
+    },
+    "Back to the global value": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back to the global value"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revenir à la valeur globale"
+          }
+        }
+      }
+    },
+    "Shared by every lane": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shared by every lane"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commun à toutes les voies"
+          }
+        }
+      }
+    },
+    "Shared by every lane: the crops cut every lane to the same field.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shared by every lane: the crops cut every lane to the same field."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commun à toutes les voies : les recadrages coupent chaque voie au même champ."
+          }
+        }
+      }
+    },
+    "Shared by every lane: the nights are matched on one scale and one seam for every lane.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shared by every lane: the nights are matched on one scale and one seam for every lane."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commun à toutes les voies : les nuits sont raccordées à la même échelle et à la même couture pour chaque voie."
+          }
+        }
+      }
+    },
+    "Shared by every lane: the combine and its sky model read every lane together.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shared by every lane: the combine and its sky model read every lane together."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commun à toutes les voies : la combinaison et son modèle de fond lisent toutes les voies ensemble."
+          }
+        }
+      }
+    },
+    "Shared by every lane: every lane is registered onto one reference, one canvas.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shared by every lane: every lane is registered onto one reference, one canvas."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commun à toutes les voies : chaque voie est alignée sur une même référence, un même canevas."
+          }
+        }
+      }
+    },
+    "Shared by every lane: the run pauses every lane alike, as the Tri stage sets it.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shared by every lane: the run pauses every lane alike, as the Tri stage sets it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commun à toutes les voies : le run s’arrête pour chaque voie de la même façon, comme l’étape Tri le règle."
+          }
+        }
+      }
+    },
+    "Per channel: broadband, Hα and OIII processed apart, then combined; one stack.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Per channel: broadband, Hα and OIII processed apart, then combined; one stack."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Par canal : large bande, Hα et OIII traités séparément puis combinés ; un seul empilement."
+          }
+        }
+      }
+    },
+    "%@ about %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ (%@)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ (%@)"
+          }
+        }
+      }
+    },
+    "Already solved: centre %@ %@, %@″/px": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Already solved: centre %@ %@, %@″/px"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déjà résolue : centre %@ %@, %@″/px"
+          }
+        }
+      }
+    },
+    "Objects": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Objects"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Objets"
+          }
+        }
+      }
+    },
+    "Search objects": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search objects"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chercher un objet"
+          }
+        }
+      }
+    },
+    "Its object lists are Siril’s.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Its object lists are Siril’s."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ses listes d’objets sont celles de Siril."
+          }
+        }
+      }
+    },
+    "Search a name: M 31, NGC 7000, Sh2-132…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search a name: M 31, NGC 7000, Sh2-132…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cherchez un nom : M 31, NGC 7000, Sh2-132…"
+          }
+        }
+      }
+    },
+    "No object by that name.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No object by that name."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun objet de ce nom."
+          }
+        }
+      }
+    },
+    "%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@"
+          }
+        }
+      }
+    },
+    "The plate-solve panel offers this position; nothing is set for you.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The plate-solve panel offers this position; nothing is set for you."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le panneau d’astrométrie propose cette position ; rien n’est rempli à votre place."
+          }
+        }
+      }
+    },
+    "Right ascension": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Right ascension"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ascension droite"
+          }
+        }
+      }
+    },
+    "Declination": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Declination"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déclinaison"
+          }
+        }
+      }
+    },
+    "Size": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Size"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Taille"
+          }
+        }
+      }
+    },
+    "Magnitude": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Magnitude"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Magnitude"
+          }
+        }
+      }
+    },
+    "Also known as": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Also known as"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autres noms"
+          }
+        }
+      }
+    },
+    "Catalogue": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Catalogue"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Catalogue"
+          }
+        }
+      }
+    },
+    "Galaxy": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Galaxy"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Galaxie"
+          }
+        }
+      }
+    },
+    "Galaxy pair": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Galaxy pair"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paire de galaxies"
+          }
+        }
+      }
+    },
+    "Galaxy triplet": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Galaxy triplet"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Triplet de galaxies"
+          }
+        }
+      }
+    },
+    "Galaxy group": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Galaxy group"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Groupe de galaxies"
+          }
+        }
+      }
+    },
+    "Open cluster": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open cluster"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Amas ouvert"
+          }
+        }
+      }
+    },
+    "Globular cluster": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Globular cluster"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Amas globulaire"
+          }
+        }
+      }
+    },
+    "Cluster with nebulosity": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cluster with nebulosity"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Amas avec nébulosité"
+          }
+        }
+      }
+    },
+    "Stellar association": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stellar association"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Association stellaire"
+          }
+        }
+      }
+    },
+    "Planetary nebula": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Planetary nebula"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nébuleuse planétaire"
+          }
+        }
+      }
+    },
+    "H II region": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "H II region"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Région H II"
+          }
+        }
+      }
+    },
+    "Emission nebula": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emission nebula"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nébuleuse en émission"
+          }
+        }
+      }
+    },
+    "Reflection nebula": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reflection nebula"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nébuleuse par réflexion"
+          }
+        }
+      }
+    },
+    "Supernova remnant": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supernova remnant"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rémanent de supernova"
+          }
+        }
+      }
+    },
+    "Dark nebula": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dark nebula"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nébuleuse obscure"
+          }
+        }
+      }
+    },
+    "Siril is not installed: its object lists come with it.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril is not installed: its object lists come with it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril n’est pas installé : ses listes d’objets viennent avec lui."
+          }
+        }
+      }
+    },
+    "Siril’s object lists are missing from %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril’s object lists are missing from %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les listes d’objets de Siril manquent dans %@."
+          }
+        }
+      }
+    },
+    "Siril’s object lists in %@ hold no object.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril’s object lists in %@ hold no object."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les listes d’objets de Siril dans %@ ne contiennent aucun objet."
+          }
+        }
+      }
+    },
+    "Siril’s list %@ cannot be read: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril’s list %@ cannot be read: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La liste %@ de Siril est illisible : %@"
+          }
+        }
+      }
+    },
+    "Siril’s list %@ has no name, ra, dec columns.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril’s list %@ has no name, ra, dec columns."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La liste %@ de Siril n’a pas de colonnes name, ra, dec."
+          }
+        }
+      }
+    },
+    "Reading Siril’s object lists…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading Siril’s object lists…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lecture des listes d’objets de Siril…"
           }
         }
       }

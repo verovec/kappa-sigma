@@ -13,10 +13,13 @@ package enum FilterSetLanes {
   /// Whether the scan holds BOTH a measured broadband and a measured dual-band light set: one
   /// verdict alone says nothing about another set, and unclassified is silence.
   package static func splits(_ inventory: Inventory) -> Bool {
-    let verdicts = Set(
-      inventory.sets.filter { $0.key.type == .light }.compactMap {
-        inventory.filterSets[$0.key.id]
-      })
+    splits(inventory, setIDs: inventory.sets.filter { $0.key.type == .light }.map(\.key.id))
+  }
+
+  /// Whether the light sets `setIDs` of `inventory` split (a run scoped to them, card 0121),
+  /// without building the scoped inventory.
+  package static func splits(_ inventory: Inventory, setIDs: some Sequence<String>) -> Bool {
+    let verdicts = Set(setIDs.compactMap { inventory.filterSets[$0] })
     return verdicts.contains(.broadband) && verdicts.contains(.dualband)
   }
 

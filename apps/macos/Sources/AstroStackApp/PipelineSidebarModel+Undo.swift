@@ -12,6 +12,8 @@ extension PipelineSidebarModel {
     package let recipes: [Int: Recipe]
     /// The whole pipeline, kept when a replay replaces it.
     package let pipeline: Pipeline?
+    /// What its loading reported, kept with it.
+    package let warnings: [String]
   }
 
   /// The column now, with the recipes of `steps`, and its whole pipeline when `whole`.
@@ -25,14 +27,17 @@ extension PipelineSidebarModel {
     }
     return Mark(
       stopped: stopped, recipes: Dictionary(uniqueKeysWithValues: recipes),
-      pipeline: whole ? pipeline : nil)
+      pipeline: whole ? pipeline : nil, warnings: whole ? warnings : [])
   }
 
   /// Puts the column back at `mark`: its pipeline when it kept one, its recipes on the steps
   /// still running the same process, and the breakpoint — on its own step only — with its
   /// process in the panel, as the run halted there.
   package func restore(_ mark: Mark) {
-    if let whole = mark.pipeline { pipeline = whole }
+    if let whole = mark.pipeline {
+      pipeline = whole
+      warnings = mark.warnings
+    }
     for (index, recipe) in mark.recipes
     where pipeline.steps.indices.contains(index)
       && pipeline.steps[index].recipe.processID == recipe.processID

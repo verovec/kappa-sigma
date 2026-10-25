@@ -62,6 +62,15 @@ package enum StudioUndo {
       model, steps: added, in: .main, name: .app("Run Pipeline"), mark: mark, on: undoManager)
   }
 
+  /// A replay that added no step (refused, or halted before its first): one ⌘Z still puts back
+  /// the pipeline it replaced, at `mark`.
+  package static func recordReplaced(
+    _ model: StudioWorkspaceModel, mark: PipelineSidebarModel.Mark, on undoManager: UndoManager?
+  ) {
+    recordNew(
+      model, steps: 0, in: .main, name: .app("Run Pipeline"), mark: mark, on: undoManager)
+  }
+
   /// Re-applies the stale main steps (card 0118) and registers them as one move.
   ///
   /// One ⌘Z takes the whole replay (`StudioModel.replayMain`) back; a failure is shown in the
@@ -124,6 +133,10 @@ package enum StudioUndo {
   /// The user-info key tagging a Studio move with its workspace, direction and history: how the
   /// buttons recognise their own moves, whatever the action's localised name.
   static let ownerKey = UndoManager.UserInfoKey(rawValue: "fr.astrostack.studio.move")
+
+  /// The user-info key tagging an edit of the pipeline column with its workspace: refused too
+  /// while a history moves, never taken by the history's buttons.
+  static let columnKey = UndoManager.UserInfoKey(rawValue: "fr.astrostack.studio.column")
 
   /// What Edit › Undo says of a Studio step.
   static var actionName: LocalizedStringResource { .app("Studio Step") }

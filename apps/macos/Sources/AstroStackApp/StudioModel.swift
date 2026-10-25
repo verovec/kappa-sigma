@@ -150,7 +150,7 @@ package final class StudioModel {
 
   /// Makes `step` `count` times, all or none: a move that fails half-way never leaves the head
   /// between where it started and where it was going.
-  private static func move(
+  static func move(
     _ count: Int, by step: () throws -> Void, back: () throws -> Void
   ) throws {
     var done = 0

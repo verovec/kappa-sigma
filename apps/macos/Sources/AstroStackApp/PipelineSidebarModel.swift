@@ -33,7 +33,7 @@ package final class PipelineSidebarModel {
   /// A batch step's progress (0…1) while it runs, by step.
   package private(set) var progress: [Int: Double] = [:]
   /// What loading the pipeline ignored or changed (unknown keys, clamped values).
-  package private(set) var warnings: [String] = []
+  package internal(set) var warnings: [String] = []
   /// What the last run did, step by step.
   package private(set) var events: [PipelineRunner.Event] = []
   /// A run is going on.

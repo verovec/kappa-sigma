@@ -1,15 +1,21 @@
 package import Foundation
 
 /// The project window's undo manager (card 0117): while a pipeline run or a host tool moves the
-/// Studio's history, a Studio move on top of the stack is refused — Edit › Undo / Redo greyed,
+/// Studio's history, a Studio move or a pipeline-column edit on top of the stack is refused — Edit › Undo / Redo greyed,
 /// the history's buttons too — never taken off the stack and dropped.
 package final class ProjectUndoManager: UndoManager {
   override package var canUndo: Bool {
-    super.canUndo && !refuses(undoActionUserInfoValue(forKey: StudioUndo.ownerKey))
+    super.canUndo
+      && !refuses(
+        undoActionUserInfoValue(forKey: StudioUndo.ownerKey)
+          ?? undoActionUserInfoValue(forKey: StudioUndo.columnKey))
   }
 
   override package var canRedo: Bool {
-    super.canRedo && !refuses(redoActionUserInfoValue(forKey: StudioUndo.ownerKey))
+    super.canRedo
+      && !refuses(
+        redoActionUserInfoValue(forKey: StudioUndo.ownerKey)
+          ?? redoActionUserInfoValue(forKey: StudioUndo.columnKey))
   }
 
   override package func undo() {

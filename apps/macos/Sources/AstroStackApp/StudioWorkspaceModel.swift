@@ -158,8 +158,12 @@ package final class StudioWorkspaceModel {
     toolTask?.cancel()
     headNoise.close()
     headSample = nil
-    for target in [self] + moveTargets as [AnyObject] {
-      undoManager?.removeAllActions(withTarget: target)
+    // Between undo groups only (`StudioUndo.drop`); otherwise its moves stay, refused as
+    // retired.
+    if let undoManager, undoManager.groupingLevel == 0 {
+      for target in [self] + moveTargets as [AnyObject] {
+        undoManager.removeAllActions(withTarget: target)
+      }
     }
   }
 

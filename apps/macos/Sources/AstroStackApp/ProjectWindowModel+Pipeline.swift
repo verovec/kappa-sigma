@@ -73,7 +73,12 @@ extension ProjectWindowModel {
     pendingReplay = nil
     // A ⌘Z of the replay puts this stack's own pipeline back with its history.
     let before = sidebar.mark(whole: true)
+    let count = workspace?.studio.steps.count
     sidebar.show(pending.pipeline)
     await sidebar.run(previous: pending.previous, undoManager: pending.undoManager, before: before)
+    // Nothing added, nothing registered: the replaced pipeline still comes back with ⌘Z.
+    if let workspace, workspace.studio.steps.count == count {
+      StudioUndo.recordReplaced(workspace, mark: before, on: pending.undoManager)
+    }
   }
 }

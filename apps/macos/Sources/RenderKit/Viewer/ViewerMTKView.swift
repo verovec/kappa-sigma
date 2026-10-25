@@ -4,8 +4,9 @@ internal import os
 
 /// The Metal surface of the viewer: draws `model.frame` on demand and turns events into model
 /// changes — scroll/pinch zoom around the cursor, drag with the current tool, ⌥ held to compare,
-/// ⌘0 / ⌘1 / ⌥⌘0 through the responder chain (`zoomToFit(_:)`, `zoomToActualSize(_:)`,
-/// `toggleViewerPanel(_:)`).
+/// ⌘0 / ⌘1 / ⌥⌘0 / ⌘= / ⌘- / ⇧⌘F / Esc through the responder chain (`zoomToFit(_:)`,
+/// `zoomToActualSize(_:)`, `toggleViewerPanel(_:)`, `zoomIn(_:)`, `zoomOut(_:)`,
+/// `toggleFocusImage(_:)`, `cancelOperation(_:)`).
 @MainActor
 package final class ViewerMTKView: MTKView, MTKViewDelegate {
   private nonisolated static let logger = Logger(
@@ -23,6 +24,12 @@ package final class ViewerMTKView: MTKView, MTKViewDelegate {
   private var dragStart: SIMD2<Double>?
   private var dragLast: SIMD2<Double>?
   private var fitted = false
+  /// How focus enters and leaves the window's full screen (card 0127).
+  package var fullScreen = ViewerFullScreen.window
+  /// Focus entered the window's full screen: leaving focus leaves it (never the user's own).
+  var enteredFullScreen = false
+  /// The Esc key's virtual key code.
+  static let escapeKey: UInt16 = 53
   /// The backing scale the drawable size was last given at.
   private var backing: CGFloat?
   /// What the shown histogram counted (`nil`: nothing counted yet).
@@ -49,6 +56,7 @@ package final class ViewerMTKView: MTKView, MTKViewDelegate {
     enableSetNeedsDisplay = true
     model.redraw = { [weak self] in self?.needsDisplay = true }
     model.panelToggled = { [weak self] in self?.panelToggled() }
+    model.focusToggled = { [weak self] in self?.focusToggled() }
   }
 
   /// Draws these inputs from now on (SwiftUI hands them on every update: the Studio swaps the
@@ -84,11 +92,15 @@ package final class ViewerMTKView: MTKView, MTKViewDelegate {
     super.viewDidMoveToWindow()
     let center = NotificationCenter.default
     center.removeObserver(self, name: NSWindow.didResignKeyNotification, object: nil)
+    center.removeObserver(self, name: NSWindow.didExitFullScreenNotification, object: nil)
     guard let window else { return }
     window.makeFirstResponder(self)
     center.addObserver(
       self, selector: #selector(windowResignedKey), name: NSWindow.didResignKeyNotification,
       object: window)
+    center.addObserver(
+      self, selector: #selector(windowExitedFullScreen),
+      name: NSWindow.didExitFullScreenNotification, object: window)
   }
 
   @objc private func windowResignedKey(_ note: Notification) {

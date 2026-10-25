@@ -1,3 +1,4 @@
+package import Foundation
 package import ImageKit
 
 /// What is under the cursor: the pixel, its linear value in every plane (the data, never the
@@ -44,6 +45,26 @@ package struct PixelReadout: Equatable, Sendable {
     private static func two(_ value: Int) -> String {
       value < 10 ? "0\(value)" : "\(value)"
     }
+  }
+
+  /// The readout on one line in `locale`, as the View panel words it: `120, 48 · R 0,012345 G …
+  /// · AD 00h42m44,3s Déc +41°16′09″` (the focus HUD, card 0127).
+  package func summary(locale: Locale) -> String {
+    let channels = values.indices.map { channel in
+      ViewerPanel.channelName(channel, of: values.count) + " "
+        + ViewerPanel.number(Double(values[channel]), digits: 6, locale: locale)
+    }
+    var parts = ["\(x), \(y)", channels.joined(separator: " ")]
+    if let sky {
+      let (ra, dec) = (
+        String(localized: .renderKit("RA", locale: locale)),
+        String(localized: .renderKit("Dec", locale: locale))
+      )
+      parts.append(
+        ra + " " + LocaleNumber.decimalMark(sky.raText, locale: locale) + " " + dec + " "
+          + sky.decText)
+    }
+    return parts.joined(separator: " · ")
   }
 
   /// The readout at (`x`, `y`), or `nil` outside the image.

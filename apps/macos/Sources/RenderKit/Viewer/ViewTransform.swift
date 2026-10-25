@@ -1,3 +1,5 @@
+package import Foundation
+
 /// Where the image sits in the view.
 ///
 /// `image = origin + view × scale`, in pixels of each (the view in drawable pixels, not points,
@@ -26,6 +28,12 @@ package struct ViewTransform: Equatable, Sendable {
     let view = SIMD2(max(viewWidth, 1), max(viewHeight, 1))
     let scale = max(image.x / view.x, image.y / view.y)
     return Self(scale: scale, origin: (image - view * scale) / 2)
+  }
+
+  /// The zoom as a whole percentage in `locale`: 1:1 is `100 %` (the View panel, the Studio's
+  /// focus HUD).
+  package func zoomText(locale: Locale) -> String {
+    LocaleNumber.decimal(100 / scale, locale: locale, maxFractionDigits: 0) + "\u{a0}%"
   }
 
   /// The image position under the view point (`viewX`, `viewY`).

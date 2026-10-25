@@ -68,7 +68,7 @@ struct ViewerPanel: View {
         } label: {
           Text(verbatim: "1:1")
         }
-        Text(verbatim: Self.percent(100 / model.frame.transform.scale, locale: locale))
+        Text(verbatim: model.frame.transform.zoomText(locale: locale))
           .monospacedDigit()
       }
       Toggle(isOn: $model.frame.clippingOverlay) { Text(.renderKit("Clipping overlay")) }
@@ -163,7 +163,7 @@ struct ViewerPanel: View {
   }
 
   /// The channel's short name: `K` for a mono image, `R`, `G`, `B` otherwise.
-  static func channelName(_ index: Int, of count: Int) -> String {
+  nonisolated static func channelName(_ index: Int, of count: Int) -> String {
     count < 3 ? "K" : ["R", "G", "B"][min(index, 2)]
   }
 
@@ -175,14 +175,9 @@ struct ViewerPanel: View {
   }
 
   /// `value` with `digits` fixed decimals in `locale`.
-  static func number(_ value: Double, digits: Int, locale: Locale) -> String {
+  nonisolated static func number(_ value: Double, digits: Int, locale: Locale) -> String {
     LocaleNumber.decimal(
       value, locale: locale, maxFractionDigits: digits, minFractionDigits: digits)
-  }
-
-  /// A zoom: `100 %`.
-  static func percent(_ value: Double, locale: Locale) -> String {
-    number(value, digits: 0, locale: locale) + "\u{a0}%"
   }
 }
 

@@ -79,6 +79,22 @@ package struct ChannelCombinationProcess: ImageProcess {
     Set(layersNeeded(params: params)).intersection(layerIDs)
   }
 
+  /// The sources of the slots that add something: a colour slot at weight 0, an L slot at weight
+  /// or opacity 0, puts none of its layer in the image.
+  package static func layersMerged(_ params: ParamSet, layerIDs: Set<String>) -> Set<String> {
+    var merged = Set<String>()
+    for slot in ["r", "g", "b"] where params.number(slot + "Weight") != 0 {
+      merged.formUnion(layers(of: params.choice(slot + "Source")))
+    }
+    if params.number("lWeight") != 0, params.number("lOpacity") != 0 {
+      merged.formUnion(layers(of: params.choice("lSource")))
+    }
+    return merged.intersection(layerIDs)
+  }
+
+  /// Its input only sets the size.
+  package static let replacesInput = true
+
   /// Why `params` cannot run with only `present` layers ("HOO needs the OIII layer"), or `nil`.
   package static func unavailableReason(params: ParamSet, present: Set<String>) -> String? {
     guard let missing = layersNeeded(params: params).first(where: { !present.contains($0) }) else {

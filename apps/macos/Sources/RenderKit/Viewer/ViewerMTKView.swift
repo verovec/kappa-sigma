@@ -4,14 +4,15 @@ internal import os
 
 /// The Metal surface of the viewer: draws `model.frame` on demand and turns events into model
 /// changes — scroll/pinch zoom around the cursor, drag with the current tool, ⌥ held to compare,
-/// ⌘0 / ⌘1 through the responder chain (`zoomToFit(_:)`, `zoomToActualSize(_:)`).
+/// ⌘0 / ⌘1 / ⌥⌘0 through the responder chain (`zoomToFit(_:)`, `zoomToActualSize(_:)`,
+/// `toggleViewerPanel(_:)`).
 @MainActor
 package final class ViewerMTKView: MTKView, MTKViewDelegate {
   private nonisolated static let logger = Logger(
     subsystem: "fr.astrostack", category: "RenderKit/viewer")
   private nonisolated static let signposter = OSSignposter(logger: logger)
 
-  private let model: ViewerModel
+  let model: ViewerModel
   private let renderer: ViewerRenderer
   /// The image drawn.
   package private(set) var texture: ImageTexture
@@ -22,6 +23,8 @@ package final class ViewerMTKView: MTKView, MTKViewDelegate {
   private var dragStart: SIMD2<Double>?
   private var dragLast: SIMD2<Double>?
   private var fitted = false
+  /// The backing scale the drawable size was last given at.
+  private var backing: CGFloat?
   /// What the shown histogram counted (`nil`: nothing counted yet).
   private var counted: ViewerFrame.HistogramInput?
   private var frameNumber = 0
@@ -45,6 +48,7 @@ package final class ViewerMTKView: MTKView, MTKViewDelegate {
     isPaused = true
     enableSetNeedsDisplay = true
     model.redraw = { [weak self] in self?.needsDisplay = true }
+    model.panelToggled = { [weak self] in self?.panelToggled() }
   }
 
   /// Draws these inputs from now on (SwiftUI hands them on every update: the Studio swaps the
@@ -108,11 +112,24 @@ package final class ViewerMTKView: MTKView, MTKViewDelegate {
   }
 
   package func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
-    model.viewSize = SIMD2(Double(size.width), Double(size.height))
-    if !fitted, size.width > 0, size.height > 0 {
-      fitted = true
-      model.zoomToFit()
+    let size = SIMD2(Double(size.width), Double(size.height))
+    guard fitted else {
+      model.viewSize = size
+      if size.x > 0, size.y > 0 {
+        fitted = true
+        model.zoomToFit()
+      }
+      return
     }
+    let scale = window?.backingScaleFactor
+    defer { backing = scale }
+    guard backing == nil || scale == backing else {
+      // Another display's backing scale: the same view in points, nothing to keep centred.
+      model.viewSize = size
+      return
+    }
+    // The panel hidden or shown, a window resize: keep where the user looks (card 0126).
+    model.resizeView(to: size)
   }
 
   package func draw(in view: MTKView) {

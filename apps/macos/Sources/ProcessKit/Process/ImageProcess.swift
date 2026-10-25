@@ -77,6 +77,15 @@ package protocol ImageProcess {
   /// The bundle layers `params` make it read besides its input, among `layerIDs` (card 0118: a
   /// main step is stale once a branch it read moved); none by default.
   static func layersRead(_ params: ParamSet, layerIDs: Set<String>) -> Set<String>
+
+  /// The bundle layers whose signal `params` put into its image, among `layerIDs` (card 0131:
+  /// what « Combined » says it holds) — a layer read for a continuum or a model only is not one;
+  /// none by default.
+  static func layersMerged(_ params: ParamSet, layerIDs: Set<String>) -> Set<String>
+
+  /// True when its image is made of `layersMerged` alone, its input only setting the size
+  /// (channel combination): what the image held before is gone.
+  static var replacesInput: Bool { get }
 }
 
 extension ImageProcess {
@@ -122,6 +131,14 @@ extension ImageProcess {
 
   /// Its input only.
   package static func layersRead(_ params: ParamSet, layerIDs: Set<String>) -> Set<String> { [] }
+
+  /// Nothing besides its input.
+  package static func layersMerged(_ params: ParamSet, layerIDs: Set<String>) -> Set<String> {
+    []
+  }
+
+  /// Its input goes into its image.
+  package static var replacesInput: Bool { false }
 }
 
 /// Where a process belongs in a pipeline.

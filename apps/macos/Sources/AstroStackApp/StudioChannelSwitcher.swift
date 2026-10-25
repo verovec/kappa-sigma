@@ -17,7 +17,16 @@ package struct StudioChannelSwitcher: View {
     VStack(alignment: .leading, spacing: DesignMetrics.spacingXS) {
       SectionHeader(
         .app("Channel"), help: StageHelp.help(card: StudioSelection.helpCard, locale: locale))
-      ForEach(model.selections, id: \.self) { selection in row(selection) }
+      ForEach(model.selections, id: \.self) { selection in
+        row(selection)
+        // Which layers « Combined » holds now: the lines join only at line injection (card 0131).
+        if selection == .main, let contents = model.combinedContents {
+          Text(contents.words(locale: locale))
+            .font(.caption)
+            .foregroundStyle(DesignColor.textSecondary.color)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+      }
       Menu(.app("Compare with…")) {
         Button(.app("No compare")) { compare(nil) }
           .accessible(.studioCompareTarget("none"), label: .app("No compare"))

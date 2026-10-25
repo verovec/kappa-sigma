@@ -67,6 +67,17 @@ package final class ViewerModel {
   package var subject = ViewerSubject.image
   /// The last frame's histogram, `[channel][bin]`.
   package var histogram: [[Int]] = []
+  /// The « View » panel is beside the image (card 0126); display only, the frame never changes.
+  package var showsPanel: Bool {
+    didSet {
+      panelSetting.showsPanel = showsPanel
+      panelToggled?()
+    }
+  }
+  /// Where `showsPanel` is remembered.
+  @ObservationIgnored private let panelSetting: ViewerPanelSetting
+  /// Called when `showsPanel` changes (the surface takes the keyboard back from a hidden panel).
+  @ObservationIgnored package var panelToggled: (@MainActor () -> Void)?
   /// Called when `frame` changes (the Metal view redraws on demand).
   @ObservationIgnored package var redraw: (@MainActor () -> Void)?
 
@@ -80,9 +91,15 @@ package final class ViewerModel {
   private var dragOrigin: [STFParameters]?
 
   /// A viewer of `image`, autostretched (`statistics` when the caller measured them off the main
-  /// actor), at 1:1 until the view has a size (then `zoomToFit`).
-  package init(image: AstroImage, statistics measured: [STFMapping]? = nil) {
+  /// actor), at 1:1 until the view has a size (then `zoomToFit`); the panel as `panelSetting`
+  /// last left it.
+  package init(
+    image: AstroImage, statistics measured: [STFMapping]? = nil,
+    panelSetting: ViewerPanelSetting = ViewerPanelSetting()
+  ) {
     self.image = image
+    self.panelSetting = panelSetting
+    showsPanel = panelSetting.showsPanel
     let statistics = measured ?? STFMapping.measure(planes: image.planes, linked: false)
     self.statistics = statistics
     linkedStatistics = STFMapping.linked(statistics)
@@ -164,6 +181,29 @@ package final class ViewerModel {
     frame.transform = .fit(
       imageWidth: image.width, imageHeight: image.height, viewWidth: viewSize.x,
       viewHeight: viewSize.y)
+  }
+
+  /// The view is now `size`: a window resize, the panel hidden or shown.
+  ///
+  /// The image point under the view centre stays there at the same zoom; an image that was whole
+  /// and no longer is is fitted again. An empty size (a collapsing layout) is ignored: the next
+  /// real one is compared with the last real one.
+  package func resizeView(to size: SIMD2<Double>) {
+    guard size.x > 0, size.y > 0 else { return }
+    let old = viewSize
+    viewSize = size
+    // `zoomToFit`'s scale times the view can land a hair under the image: compare relatively.
+    let whole = { (view: SIMD2<Double>) in
+      let shown = view * self.frame.transform.scale * (1 + 1e-9)
+      return shown.x >= Double(self.image.width) && shown.y >= Double(self.image.height)
+    }
+    if whole(old), !whole(size) {
+      zoomToFit()
+      return
+    }
+    let transform = frame.transform
+    frame.transform = ViewTransform(
+      scale: transform.scale, origin: transform.origin + (old - size) / 2 * transform.scale)
   }
 
   /// 1:1 around the view centre (⌘1).

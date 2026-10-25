@@ -2417,6 +2417,22 @@
         }
       }
     },
+    "Hide View Panel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide View Panel"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masquer le panneau Vue"
+          }
+        }
+      }
+    },
     "History": {
       "localizations": {
         "en": {

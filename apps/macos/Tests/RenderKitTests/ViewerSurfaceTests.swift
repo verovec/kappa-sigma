@@ -21,7 +21,11 @@ struct ViewerSurfaceTests {
     var backing: Double { Double(window.backingScaleFactor) }
   }
 
-  static func surface(width: Int = 64, height: Int = 32) throws -> Surface {
+  /// A surface over a `width` × `height` ramp; `panelSetting` is where the panel choice lives
+  /// (a scratch suite for a test that toggles it).
+  static func surface(
+    width: Int = 64, height: Int = 32, panelSetting: ViewerPanelSetting = ViewerPanelSetting()
+  ) throws -> Surface {
     let device = try GPU.requireDevice()
     let planes: [[Float]] = (0..<3).map { channel in
       (0..<width * height).map { Float(($0 + channel) % 50) / 50 }
@@ -29,7 +33,7 @@ struct ViewerSurfaceTests {
     let header = try ViewerTests.header([("ROWORDER", "'TOP-DOWN'")])
     let image = AstroImage(
       width: width, height: height, planes: planes, metadata: ImageMetadata(header: header))
-    let model = ViewerModel(image: image)
+    let model = ViewerModel(image: image, panelSetting: panelSetting)
     let view = ViewerMTKView(
       model: model, renderer: try ViewerRenderer(device: device),
       texture: try ImageTexture(device: device, width: width, height: height, planes: planes),

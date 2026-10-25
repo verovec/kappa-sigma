@@ -80,9 +80,7 @@ extension StudioWorkspaceModel {
     let ids = selections.compactMap(\.layerID)
     guard !ids.isEmpty else { return nil }
     // The observed steps, like the step count beside it (a run moves the history first).
-    let holds = StudioSession.combinedLayers(
-      after: studio.steps.map { (processID: $0.processID, params: $0.params) },
-      layerIDs: Set(studio.session.stackBundle.layers.keys), registry: studio.session.registry)
+    let holds = studio.session.combinedLayers(after: studio.steps)
     // Nothing to name (a combination whose sources all weigh 0): no line rather than « Holds . ».
     guard !holds.isEmpty else { return nil }
     return CombinedContents(

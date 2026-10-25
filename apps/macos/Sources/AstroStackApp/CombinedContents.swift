@@ -25,13 +25,16 @@ package struct CombinedContents: Equatable, Sendable {
     // « + » reads alike in both languages: the layers are summed into one image.
     let holding = names(holds).joined(separator: " + ")
     guard !missing.isEmpty else { return .app("Holds \(holding).", locale: locale) }
-    let out = names(missing).formatted(.list(type: .or).locale(locale))
+    // « not R, G and B » (each one is out), but « not yet Hα or OIII » (either may come next).
+    let list = { (either: Bool) in
+      names(missing).formatted(.list(type: either ? .or : .and).locale(locale))
+    }
     // The two processes lay lines over a colour base (RGB, or mono R/G/B combined), not over
     // lines alone: there, a channel combination is what adds the others.
     guard !holds.allSatisfy(EmissionLine.layerIDs.contains),
       missing.allSatisfy(EmissionLine.layerIDs.contains)
     else {
-      return .app("Holds \(holding); not \(out).", locale: locale)
+      return .app("Holds \(holding); not \(list(false)).", locale: locale)
     }
     let title = { (title: String) in
       String(localized: ProcessKitResources.title(title, locale: locale))
@@ -40,6 +43,7 @@ package struct CombinedContents: Equatable, Sendable {
       title(LineInjectionProcess.title), title(EmissionScreensProcess.title)
     )
     return .app(
-      "Holds \(holding); not yet \(out) (to add with \(injection) or \(screens)).", locale: locale)
+      "Holds \(holding); not yet \(list(true)) (to add with \(injection) or \(screens)).",
+      locale: locale)
   }
 }

@@ -321,6 +321,8 @@ package final class ProjectDocument: NSDocument {
 
   /// One window per project, centred; the window controller cascades further ones.
   override package func makeWindowControllers() {
+    // A Studio move is refused, not consumed, while a run moves the history (card 0117).
+    if !(undoManager is ProjectUndoManager) { undoManager = ProjectUndoManager() }
     let window = NSWindow(
       contentRect: SplitWindow.contentRect(panes: NSSize(width: 960, height: 640)),
       styleMask: SplitWindow.styleMask,
@@ -330,6 +332,7 @@ package final class ProjectDocument: NSDocument {
       isSaved: { [weak self] in self?.isTemporary == false },
       edited: { [weak self] in self?.markEditedIfUntitled() },
       save: { [weak self] in self?.save(nil) })
+    model.undoManager = { [weak self] in self?.undoManager }
     windowModel = model
     let content = NSHostingView(rootView: ProjectWindowView(model: model).interfaceLocale())
     // Only the minimum size comes from SwiftUI; the window keeps its own frame.

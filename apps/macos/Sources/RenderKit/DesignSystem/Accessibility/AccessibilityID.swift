@@ -246,6 +246,12 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
   /// The stale banner's Replay (card 0119).
   package static let studioReplayStale = stageControl("studio", "replay-stale")
 
+  /// A control of the full-screen image's HUD (card 0127): `fit`, `actual`, `zoomOut`,
+  /// `zoomIn`, `exit`.
+  package static func studioFocus(_ name: String) -> Self {
+    stageControl("studio", "focus." + name)
+  }
+
   /// A step of the Studio's history list: compare to it (card 0087).
   package static func studioStep(_ index: Int) -> Self {
     stageControl("studio", "step." + String(index))

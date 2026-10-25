@@ -1905,6 +1905,22 @@
         }
       }
     },
+    "Exit Full-Screen Image": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exit Full-Screen Image"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitter l’image en plein écran"
+          }
+        }
+      }
+    },
     "Export": {
       "localizations": {
         "en": {
@@ -1997,6 +2013,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "FITS 32 bits flottant"
+          }
+        }
+      }
+    },
+    "Full-Screen Image": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Full-Screen Image"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Image en plein écran"
           }
         }
       }
@@ -7765,6 +7797,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Réduire/agrandir"
+          }
+        }
+      }
+    },
+    "Zoom In": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom In"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom avant"
+          }
+        }
+      }
+    },
+    "Zoom Out": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom Out"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom arrière"
           }
         }
       }

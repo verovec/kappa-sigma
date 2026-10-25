@@ -109,6 +109,16 @@ nonisolated package enum CommandCatalog {
     AppCommand(
       "view.togglePanel", "Hide View Panel", menu: .view, action: "toggleViewerPanel:", key: "0",
       modifiers: [.command, .option], stage: .studio),
+    // Zoom steps and the full-screen image (card 0127): ⌘= / ⌘- around the view centre; ⇧⌘F
+    // shows only the image (⌃⌘F stays the system's window full screen), Esc leaves it.
+    AppCommand(
+      "view.zoomIn", "Zoom In", menu: .view, action: "zoomIn:", key: "=", stage: .studio,
+      separatorBefore: true),
+    AppCommand(
+      "view.zoomOut", "Zoom Out", menu: .view, action: "zoomOut:", key: "-", stage: .studio),
+    AppCommand(
+      "view.focusImage", "Full-Screen Image", menu: .view, action: "toggleFocusImage:", key: "F",
+      stage: .studio),
     // The Tri stage's blink and verdicts (card 0069): greyed unless a run waits at the review.
     AppCommand(
       "review.blinkPrevious", "Previous Frame", menu: .view, action: "blinkPrevious:",

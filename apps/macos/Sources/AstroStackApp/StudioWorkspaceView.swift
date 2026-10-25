@@ -13,28 +13,41 @@ package struct StudioWorkspaceView: View {
 
   package var body: some View {
     HStack(spacing: 0) {
-      VStack(spacing: 0) {
-        // Which history the column works on (card 0119), only when there is a choice.
-        if !model.selections.isEmpty {
-          StudioChannelSwitcher(model: model)
-          Divider()
-        }
-        // The pipeline on top of the left column (card 0088), the catalogue under it.
-        if let pipeline = model.pipeline {
-          ScrollView { PipelineSidebarView(model: pipeline) }
-            .frame(maxHeight: 320)
-            .fixedSize(horizontal: false, vertical: true)
-          Divider()
-        }
-        StudioCatalogueView(model: model)
+      // Focused (card 0127), only the image: the viewer keeps its slot, so SwiftUI keeps the
+      // same surface (card 0109) and the zoom survives.
+      if !model.isFocused {
+        leftColumn.frame(width: 260)
+        Divider()
       }
-      .frame(width: 260)
-      Divider()
       ViewerView(
         model: model.viewer.model, renderer: model.viewer.renderer,
-        texture: model.viewer.texture, reference: model.viewer.reference)
-      Divider()
-      StudioSideView(model: model).frame(width: 320)
+        texture: model.viewer.texture, reference: model.viewer.reference
+      )
+      .overlay(alignment: .bottom) {
+        if model.isFocused { StudioFocusHUD(model: model) }
+      }
+      if !model.isFocused {
+        Divider()
+        StudioSideView(model: model).frame(width: 320)
+      }
+    }
+  }
+
+  private var leftColumn: some View {
+    VStack(spacing: 0) {
+      // Which history the column works on (card 0119), only when there is a choice.
+      if !model.selections.isEmpty {
+        StudioChannelSwitcher(model: model)
+        Divider()
+      }
+      // The pipeline on top of the left column (card 0088), the catalogue under it.
+      if let pipeline = model.pipeline {
+        ScrollView { PipelineSidebarView(model: pipeline) }
+          .frame(maxHeight: 320)
+          .fixedSize(horizontal: false, vertical: true)
+        Divider()
+      }
+      StudioCatalogueView(model: model)
     }
   }
 }

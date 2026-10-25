@@ -70,12 +70,26 @@ package final class ViewerModel {
   /// The « View » panel is beside the image (card 0126); display only, the frame never changes.
   package var showsPanel: Bool {
     didSet {
-      panelSetting.showsPanel = showsPanel
+      if remembersPanel { panelSetting.showsPanel = showsPanel }
       panelToggled?()
     }
   }
   /// Where `showsPanel` is remembered.
   @ObservationIgnored private let panelSetting: ViewerPanelSetting
+  /// A change of `showsPanel` is the user's choice, stored (not focus hiding it, card 0127).
+  @ObservationIgnored var remembersPanel = true
+  /// Only the image, filling the view (card 0127): the panel hidden, fitted until the user zooms.
+  package var isFocused = false {
+    didSet { if isFocused != oldValue { focusChanged() } }
+  }
+  /// The panel as it was when focus hid it.
+  @ObservationIgnored var panelBeforeFocus = true
+  /// Each new view size fits the image again, until the user zooms or pans (focus entered).
+  @ObservationIgnored var fitsUntilMoved = false
+  /// Counts pointer moves over the image: the focus HUD shows again on each.
+  package private(set) var pointerMoves = 0
+  /// Called when `isFocused` changes (the surface enters or leaves the window's full screen).
+  @ObservationIgnored package var focusToggled: (@MainActor () -> Void)?
   /// Called when `showsPanel` changes (the surface takes the keyboard back from a hidden panel).
   @ObservationIgnored package var panelToggled: (@MainActor () -> Void)?
   /// Called when `frame` changes (the Metal view redraws on demand).
@@ -183,36 +197,15 @@ package final class ViewerModel {
       viewHeight: viewSize.y)
   }
 
-  /// The view is now `size`: a window resize, the panel hidden or shown.
-  ///
-  /// The image point under the view centre stays there at the same zoom; an image that was whole
-  /// and no longer is is fitted again. An empty size (a collapsing layout) is ignored: the next
-  /// real one is compared with the last real one.
-  package func resizeView(to size: SIMD2<Double>) {
-    guard size.x > 0, size.y > 0 else { return }
-    let old = viewSize
-    viewSize = size
-    // `zoomToFit`'s scale times the view can land a hair under the image: compare relatively.
-    let whole = { (view: SIMD2<Double>) in
-      let shown = view * self.frame.transform.scale * (1 + 1e-9)
-      return shown.x >= Double(self.image.width) && shown.y >= Double(self.image.height)
-    }
-    if whole(old), !whole(size) {
-      zoomToFit()
-      return
-    }
-    let transform = frame.transform
-    frame.transform = ViewTransform(
-      scale: transform.scale, origin: transform.origin + (old - size) / 2 * transform.scale)
-  }
-
   /// 1:1 around the view centre (⌘1).
   package func zoomToActualSize() {
+    fitsUntilMoved = false
     frame.transform = frame.transform.oneToOne(viewWidth: viewSize.x, viewHeight: viewSize.y)
   }
 
   /// Zooms by `factor` (> 1 magnifies) around a view point.
   package func zoom(by factor: Double, atView point: SIMD2<Double>) {
+    fitsUntilMoved = false
     frame.transform = frame.transform.zoomed(by: factor, aroundViewX: point.x, viewY: point.y)
   }
 
@@ -221,6 +214,7 @@ package final class ViewerModel {
   package func drag(from start: SIMD2<Double>, to end: SIMD2<Double>, tool: Tool) {
     switch tool {
     case .pan:
+      fitsUntilMoved = false
       frame.transform = frame.transform.panned(byViewX: end.x - start.x, viewY: end.y - start.y)
     case .region:
       frame.region = frame.transform.region(
@@ -245,6 +239,8 @@ package final class ViewerModel {
 
   /// Reads the pixel under a view point.
   package func hover(atView point: SIMD2<Double>) {
+    // Only the focus HUD reads it: no observation churn outside focus.
+    if isFocused { pointerMoves &+= 1 }
     let position = frame.transform.imagePoint(viewX: point.x, viewY: point.y)
     guard position.x >= 0, position.y >= 0 else {
       readout = nil

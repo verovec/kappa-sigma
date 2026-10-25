@@ -8,14 +8,29 @@ package import SwiftUI
 /// opened, in its side panel) moves the selection.
 package struct ProjectWindowView: View {
   @State var model: ProjectWindowModel
+  /// The journey sidebar as the user left it; the full-screen image hides it over this value.
+  @State private var sidebarStored = NavigationSplitViewVisibility.automatic
 
   /// A window showing the project behind `model`.
   package init(model: ProjectWindowModel) {
     _model = State(initialValue: model)
   }
 
+  /// The sidebar shown: hidden while the Studio's image is focused (card 0127), else as the user
+  /// left it (`stored`, never changed by the focus).
+  package static func sidebar(
+    stored: NavigationSplitViewVisibility, focused: Bool
+  ) -> NavigationSplitViewVisibility {
+    focused ? .detailOnly : stored
+  }
+
   package var body: some View {
-    NavigationSplitView {
+    let focused = model.workspace?.isFocused == true
+    NavigationSplitView(
+      columnVisibility: Binding(
+        get: { Self.sidebar(stored: sidebarStored, focused: focused) },
+        set: { if !focused { sidebarStored = $0 } })
+    ) {
       JourneySidebar(model: model)
         .navigationSplitViewColumnWidth(min: 180, ideal: 210, max: 280)
     } detail: {

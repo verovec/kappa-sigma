@@ -55,6 +55,15 @@ package struct EmissionScreensProcess: ImageProcess {
       .intersection(layerIDs)
   }
 
+  /// The enabled lines `render` lays in (opacity and blend above 0): the broadband a continuum
+  /// subtracts is not laid in.
+  package static func layersMerged(_ params: ParamSet, layerIDs: Set<String>) -> Set<String> {
+    let visible = enabledLines(params).filter {
+      params.number($0.id("Opacity")) * params.number("nbBlend") > 0
+    }
+    return Set(visible.map(\.layerID)).intersection(layerIDs)
+  }
+
   /// Why `params` cannot run with only the `present` layers ("Hα screen needs the Ha layer").
   package static func unavailableReason(params: ParamSet, present: Set<String>) -> String? {
     let missing = EmissionLine.allCases.first {

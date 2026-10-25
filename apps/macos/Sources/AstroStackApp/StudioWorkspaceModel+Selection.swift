@@ -74,6 +74,18 @@ extension StudioWorkspaceModel {
     return StaleNotice(steps: steps, branches: Array(Set(moved)).sorted())
   }
 
+  /// What the combined image holds at its head (card 0131), whichever history is shown; `nil`
+  /// without a switcher (a single-layer bundle) or when it holds no layer.
+  package var combinedContents: CombinedContents? {
+    let ids = selections.compactMap(\.layerID)
+    guard !ids.isEmpty else { return nil }
+    let holds = studio.session.combinedLayers
+    // Nothing to name (a combination whose sources all weigh 0): no line rather than « Holds . ».
+    guard !holds.isEmpty else { return nil }
+    return CombinedContents(
+      holds: ids.filter(holds.contains), missing: ids.filter { !holds.contains($0) })
+  }
+
   /// The other histories whose head lies on the grid of the one shown: what « Compare with… »
   /// offers (the combined image after a crop is on another grid).
   package var comparable: [StudioSelection] {

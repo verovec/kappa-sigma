@@ -10,6 +10,9 @@ package enum EmissionLine: String, CaseIterable, Sendable {
   /// The bundle layer it reads.
   package var layerID: String { rawValue }
 
+  /// The bundle layers of every line.
+  package static let layerIDs = Set(allCases.map(\.layerID))
+
   /// The prefix of its parameter ids (`haBlack`, `oiiiOpacity`…).
   package var prefix: String { rawValue.lowercased() }
 

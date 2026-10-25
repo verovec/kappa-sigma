@@ -315,6 +315,13 @@ To make a process branchable: declare `static let branchable = BranchUse.anyLaye
 `.colourLayers`) — linear, same size, its input alone — and add it to the audit table. A process
 that reads bundle layers declares them in `layersRead`, or its steps never go stale.
 
+- **What « Combined » holds** (card 0131): `StudioSession.combinedLayers` folds the main steps
+  from the base layer — each step's `ImageProcess.layersMerged(_:layerIDs:)` is added, or replaces
+  the set when `replacesInput` (channel combination). Merged ≠ read: a continuum reference, or a
+  layer rewritten beside the head (background extraction on the lines), is read, not merged. A
+  process that lays a bundle layer into its image declares it in `layersMerged` too, or the
+  switcher's line under « Combined » (`CombinedContents`) leaves it out.
+
 ## Geometry (card 0090)
 
 - `GeometryProcess` (`geometry`, stage any): crops (`.px`, as shown: top = the displayed top),

@@ -62,4 +62,23 @@ extension StudioViewsTests {
     host.layoutSubtreeIfNeeded()
     #expect(Self.surface(in: host) === surface)
   }
+
+  @Test("focused, the HUD lays out the pixel under the pointer in each language", .scratchDirectory)
+  func testFocusHUD_Readout() throws {
+    let opened = try StudioModelTests.project()
+    defer { try? opened.package.close() }
+    let workspace = try StudioWorkspaceModelTests.workspace(
+      opened, bundle: StudioModelTests.bundle())
+    workspace.toggleFocus()
+    workspace.viewer.model.frame.transform = ViewTransform(scale: 1, origin: .zero)
+    workspace.viewer.model.hover(atView: SIMD2(1, 1))
+    #expect(workspace.viewer.model.readout != nil)
+    for language in ["fr", "en"] {
+      let ids = Set(
+        AccessibilityAuditTests.entries(StudioWorkspaceView(model: workspace), language: language)
+          .map(\.id))
+      #expect(ids.contains(AccessibilityID.studioFocus("exit").rawValue))
+    }
+    workspace.toggleFocus()
+  }
 }

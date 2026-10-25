@@ -158,6 +158,13 @@ extension ViewerSurfaceTests {
         with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0,
         windowNumber: surface.window.windowNumber, context: nil, characters: "\u{1b}",
         charactersIgnoringModifiers: "\u{1b}", isARepeat: false, keyCode: 53))
+    let other = try #require(
+      NSEvent.keyEvent(
+        with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0,
+        windowNumber: surface.window.windowNumber, context: nil, characters: "a",
+        charactersIgnoringModifiers: "a", isARepeat: false, keyCode: 0))
+    surface.view.keyDown(with: other)
+    #expect(surface.model.isFocused, "another key goes on up the chain")
     surface.view.keyDown(with: escape)
     #expect(!surface.model.isFocused && surface.model.showsPanel)
     #expect(surface.view.validateMenuItem(item))

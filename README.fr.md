@@ -127,7 +127,7 @@ Dans toute l'app :
 - **Aide :** une fiche pour chaque étape, traitement et réglage, qui explique chaque valeur par
   défaut.
 - **Clavier :** plein écran (⇧⌘F), zoom (⌘= / ⌘-), rotation et miroir, afficher ou masquer le
-  panneau Vue (⌥⌘0), un seul ⌘Z pour tout un run de pipeline.
+  panneau Présentation (⌥⌘0), un seul ⌘Z pour tout un run de pipeline.
 - **Langues :** anglais et français.
 
 **Limites connues :** caméras couleur (OSC) seulement (le mono LRGB et les palettes bande étroite

@@ -26,9 +26,9 @@
 </p>
 
 <p align="center">
-  <img src="docs/assets/ngc7000.jpg" width="900" alt="The North America Nebula, NGC 7000, in Hα and OIII over RGB">
+  <img src="docs/assets/m31.jpg" width="900" alt="The Andromeda Galaxy, M 31, with M 32 and M 110">
   <br>
-  <sub>NGC 7000, the North America Nebula: Hα and OIII over RGB.</sub>
+  <sub>M 31, the Andromeda Galaxy, with its companions M 32 and M 110.</sub>
 </p>
 
 ---

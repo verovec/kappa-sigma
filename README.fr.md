@@ -26,9 +26,9 @@
 </p>
 
 <p align="center">
-  <img src="docs/assets/ngc7000.jpg" width="900" alt="La nébuleuse North America, NGC 7000, en Hα et OIII sur RVB">
+  <img src="docs/assets/m31.jpg" width="900" alt="La galaxie d'Andromède, M 31, avec M 32 et M 110">
   <br>
-  <sub>NGC 7000, la nébuleuse North America : Hα et OIII sur RVB.</sub>
+  <sub>M 31, la galaxie d'Andromède, avec ses compagnes M 32 et M 110.</sub>
 </p>
 
 ---

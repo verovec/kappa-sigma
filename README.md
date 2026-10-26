@@ -13,7 +13,7 @@
 <p align="center">
   <a href="#quick-start">Quick start</a> &middot;
   <a href="#how-it-works">How it works</a> &middot;
-  <a href="#status">Status</a> &middot;
+  <a href="#what-works-today">What works today</a> &middot;
   <a href="#tech-stack">Tech stack</a> &middot;
   <a href="#documentation">Documentation</a><br>
   English &middot; <a href="README.fr.md">Français</a>
@@ -29,8 +29,7 @@
 <p align="center">
   <img src="docs/assets/ngc7000.jpg" width="900" alt="The North America Nebula, NGC 7000, in Hα and OIII over RGB">
   <br>
-  <sub>NGC 7000, the North America Nebula: Hα and OIII over RGB, captured and stacked by the author
-  with the pipeline Kappa-Sigma replaces.</sub>
+  <sub>NGC 7000, the North America Nebula: Hα and OIII over RGB.</sub>
 </p>
 
 ---
@@ -40,82 +39,98 @@ into an image means calibrating, rejecting the bad frames, aligning, stacking, t
 colouring a signal that is almost all noise. Existing tools either hide their decisions or bury
 them in hundreds of panels.
 
-**Kappa-Sigma** is a native macOS app that walks one target through that journey, from the capture
-folder to the deliverable. Siril does the pixel math, so a stack is reproducible to the byte. Every
-verdict the app reaches (a rejected frame, a chosen master, a reference frame) is shown and can be
-overruled, and no process quietly changes its own settings: the value you see is the value applied.
+**Kappa-Sigma** is a native macOS app that takes one target from the capture folder to the
+finished image:
+
+- **Reproducible.** Siril does the pixel math, so the same frames and settings give the same stack,
+  to the byte.
+- **Nothing hidden.** Every verdict (a rejected frame, a chosen master, a reference frame) is shown
+  and can be overruled.
+- **The value you see is the value applied.** No process measures the image to quietly change its
+  own settings; measurements only ever fill a suggestion.
+- **Your data stays yours.** Captures, masters and earlier results are read only; the app writes
+  only inside its projects.
 
 The name comes from kappa-sigma clipping, the outlier rejection at the heart of every image stack.
 
 ## Quick start
 
 **Prerequisites:** a Mac on macOS 26 with the Command Line Tools (Swift 6.2 or later) and
-[`just`](https://github.com/casey/just). Siril 1.4 is needed to stack; GraXpert and StarNet2 are
-optional. Xcode is not required.
+[`just`](https://github.com/casey/just). Xcode is not required.
+
+| Host tool | Needed for |
+|-----------|-----------|
+| [Siril](https://siril.org) 1.4 | Stacking, plate solving, colour calibration (required) |
+| [GraXpert](https://graxpert.com) | Background extraction (optional, Siril can do it too) |
+| [StarNet2](https://www.starnetastro.com) | Star separation at export (optional) |
+
+A missing tool greys out the processes that need it, with an install card; nothing falls back
+silently to another algorithm.
 
 ```bash
 git clone https://github.com/verovec/kappa-sigma.git && cd kappa-sigma
-just setup      # install swiftlint and the pre-push hook, then check the host
-just app-run    # build AstroStack.app (debug) and open it
-just app-run-release   # optimized build for real runs (same bundle path, replaces the debug one)
+just setup                              # install swiftlint and the pre-push hook, check the host
+just app-build -c release               # build the optimized AstroStack.app
+open -n apps/macos/.build/AstroStack.app
 ```
 
-The welcome window lists your recent projects and which host tools are found (`just doctor` says
-the same from the terminal). **New Project…** creates a project for a target; **Import Captures…**
-reads a capture folder (it is never written) and shows how each night will be calibrated; then
-follow the stages down the sidebar, from the stack to the Studio and the export.
+Use the release build for real nights: stacking and previews are much faster. For development,
+`just app-run` builds a debug bundle at the same path and opens it (it replaces the release one,
+and the other way round). `just doctor` reports the toolchain, the host tools and the data
+folders from the terminal.
 
 ## How it works
 
-A project is a `.astrostack` package (a SQLite database plus its images). Its window follows the
-order an astrophotographer works in:
+The welcome window lists your recent projects and the host tools it found. **New Project…**
+creates a project for one target; **Import Captures…** reads a capture folder (never writing to it)
+and shows how each night will be calibrated. A project is a `.astrostack` package (a SQLite
+database plus its images), and its sidebar follows the order an astrophotographer works in:
 
 ```
-  Données       capture nights, lights per filter, calibration coverage
+  Data          capture nights, lights per filter, integration time, calibration coverage
      |
   Calibration   the masters each light set uses, their statistics, the gaps
      |
-  Tri           per-frame metrics, blink, keep or reject, reference frame
+  Review        per-frame metrics, blink, keep or reject, the reference frame
      |
-  Empilement    the stacking settings and the Siril run, with its journal
+  Stacking      the settings per lane and the Siril run, with its journal
      |
-  Studio        stretch, emission lines, HDR, colour, star layer, previewed live on the GPU
+  Studio        stretch, emission lines, HDR, colour, stars, previewed live on the GPU
      |
-  Export        the deliverables
+  Export        star separation and the deliverables
 ```
 
-Every stage shows its state (to do, ready, needs a look, done) and you move between them freely:
-nothing jumps ahead on its own. Captures, masters and earlier results stay where they are, read
-only; the app writes only inside its projects.
+Each stage shows its state (to do, ready, needs a look, done) and you move between them freely:
+nothing jumps ahead on its own.
 
-## Status
+## What works today
 
-Kappa-Sigma stacks and finishes a target from end to end; it is validated on the author's M 31
-(broadband and dual-band nights) and IC 1848 captures against the legacy pipeline. What works
-today:
+The full journey runs end to end. It is validated on the author's M 31 (broadband and dual-band
+nights) and IC 1848 captures against the legacy pipeline it replaces.
 
-- Projects: the welcome window (recent projects, host tools), create, save, reopen, and the
-  journey sidebar with each stage's state.
-- Données and Calibration: a capture folder classified by night, filter and frame type; the
-  calibration plan against your master library, every verdict overridable; master inspection and
-  rebuild.
-- Tri: per-frame metrics, blink, keep or reject at a breakpoint after grading, and a pinned
-  registration reference.
-- Empilement: single-night and multi-night preprocessing through Siril, broadband and dual-band
-  lanes, simple and advanced settings over the preset; progress, journal, pause and continue,
-  cancel; the scratch space a run needs is checked before it starts, and what a dead run leaves
-  is reaped.
-- Studio: live GPU previews of stretch (MTF, GHS, arcsinh), histogram transformation, curves,
-  saturation, sky desaturation, colour balance, emission screens, HDR, denoise and geometry;
-  background extraction (GraXpert or Siril), plate solving and colour calibration (PCC, SPCC)
-  through the host tools; a history with undo, pipelines with breakpoints, and profiles.
-- Export: star separation with StarNet2 and the deliverable set.
-- Viewer: FITS images on the GPU with zoom, pan, auto or manual display stretch, histogram, pixel
-  readout with RA/Dec, clipping overlay and before/after compare.
-- Interface in English and French, with a help card for every stage and process.
+| Stage | What you can do |
+|-------|-----------------|
+| **Data** | Classify a capture folder by night, filter and frame type; add a night later and rescan; see, trim and delete stacks never exported. |
+| **Calibration** | Match each light set to your master library by night, every verdict overridable; inspect and rebuild a master. |
+| **Review** | Grade every frame, blink through them, keep or reject at a breakpoint, pin the registration reference; double-click a frame to open it in the viewer. |
+| **Stacking** | Single- and multi-night runs through Siril, broadband and dual-band lanes, simple and advanced settings per lane, one run per object; progress, journal, pause, continue after a reopen, cancel. The scratch space is checked before a run starts, and what a dead run leaves is cleaned up. |
+| **Studio** | Live GPU previews of stretch (MTF, GHS, arcsinh), levels, curves, saturation, sky desaturation, colour balance, emission screens, Hα / OIII line injection, HDR, denoise and geometry (crop, rotate, flip). Background extraction (GraXpert or Siril), plate solving and colour calibration (PCC or SPCC) through the host tools. Switch between the combined image and each channel's branch; one history per layer with undo; pipelines with breakpoints and replay; profiles; masks. |
+| **Export** | Star separation with StarNet2 and the deliverable set, with the recipe that made it. |
 
-Known limitations: one-shot-colour cameras only (mono LRGB and narrowband palettes are planned);
-no drizzle; no signed build yet, so the app is built from source with `just app-run`.
+Across the app:
+
+- **Viewer:** FITS images on the GPU with zoom, pan, full screen, auto or manual display stretch, a
+  histogram that says which image it counts, pixel readout with RA/Dec, clipping overlay and
+  before/after compare.
+- **Sky objects:** a catalogue built from Siril's lists, searchable by any alias, shown in the
+  sidebar and offered to the plate solver.
+- **Help:** a card for every stage, process and setting, explaining each default.
+- **Keyboard:** full screen (⇧⌘F), zoom (⌘= / ⌘-), rotate and flip, show or hide the View panel
+  (⌥⌘0), one ⌘Z for a whole pipeline run.
+- **Languages:** English and French.
+
+**Known limitations:** one-shot-colour cameras only (mono LRGB and narrowband palettes are
+planned); no drizzle; no signed build yet, so the app is built from source.
 
 ## Tech stack
 

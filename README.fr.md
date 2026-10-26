@@ -13,7 +13,7 @@
 <p align="center">
   <a href="#démarrage-rapide">Démarrage rapide</a> &middot;
   <a href="#comment-ça-marche">Comment ça marche</a> &middot;
-  <a href="#état">État</a> &middot;
+  <a href="#ce-qui-marche-aujourdhui">Ce qui marche aujourd'hui</a> &middot;
   <a href="#technologies">Technologies</a> &middot;
   <a href="#documentation">Documentation</a><br>
   <a href="README.md">English</a> &middot; Français
@@ -29,8 +29,7 @@
 <p align="center">
   <img src="docs/assets/ngc7000.jpg" width="900" alt="La nébuleuse North America, NGC 7000, en Hα et OIII sur RVB">
   <br>
-  <sub>NGC 7000, la nébuleuse North America : Hα et OIII sur RVB, capturée et empilée par l'auteur
-  avec la chaîne que Kappa-Sigma remplace.</sub>
+  <sub>NGC 7000, la nébuleuse North America : Hα et OIII sur RVB.</sub>
 </p>
 
 ---
@@ -40,88 +39,99 @@ une image, c'est calibrer, écarter les mauvaises poses, aligner, empiler, puis 
 signal qui n'est presque que du bruit. Les outils existants cachent leurs décisions ou les noient
 dans des centaines de panneaux.
 
-**Kappa-Sigma** est une app macOS native qui mène une cible tout au long de ce parcours, du dossier
-de capture au livrable. Siril fait les calculs sur les pixels, donc un empilement se reproduit à
-l'octet près. Chaque verdict de l'app (une pose rejetée, un master choisi, une pose de référence)
-est montré et peut être renversé, et aucun traitement ne change ses propres réglages en douce : la
-valeur affichée est la valeur appliquée.
+**Kappa-Sigma** est une app macOS native qui mène une cible du dossier de capture à l'image finie :
+
+- **Reproductible.** Siril fait les calculs sur les pixels : mêmes poses et mêmes réglages, même
+  empilement, à l'octet près.
+- **Rien de caché.** Chaque verdict (une pose rejetée, un master choisi, une pose de référence) est
+  montré et peut être renversé.
+- **La valeur affichée est la valeur appliquée.** Aucun traitement ne mesure l'image pour changer
+  ses propres réglages en douce ; une mesure ne remplit jamais qu'une suggestion.
+- **Vos données restent à vous.** Captures, masters et résultats antérieurs sont en lecture seule ;
+  l'app n'écrit que dans ses projets.
 
 Le nom vient du kappa-sigma clipping, le rejet des valeurs aberrantes au cœur de tout empilement.
 
 ## Démarrage rapide
 
 **Prérequis :** un Mac sous macOS 26 avec les Command Line Tools (Swift 6.2 ou plus récent) et
-[`just`](https://github.com/casey/just). Siril 1.4 est nécessaire pour empiler ; GraXpert et
-StarNet2 sont facultatifs. Xcode n'est pas requis.
+[`just`](https://github.com/casey/just). Xcode n'est pas requis.
+
+| Outil hôte | Sert à |
+|------------|--------|
+| [Siril](https://siril.org) 1.4 | Empilement, résolution astrométrique, calibration des couleurs (requis) |
+| [GraXpert](https://graxpert.com) | Extraction de fond (facultatif, Siril sait aussi le faire) |
+| [StarNet2](https://www.starnetastro.com) | Séparation des étoiles à l'export (facultatif) |
+
+Un outil absent grise les traitements qui en ont besoin, avec une fiche d'installation ; rien ne
+bascule en silence sur un autre algorithme.
 
 ```bash
 git clone https://github.com/verovec/kappa-sigma.git && cd kappa-sigma
-just setup      # installe swiftlint et le hook pre-push, puis vérifie l'hôte
-just app-run    # construit AstroStack.app (debug) et l'ouvre
-just app-run-release   # build optimisé pour les vrais runs (même chemin, remplace le debug)
+just setup                              # installe swiftlint et le hook pre-push, vérifie l'hôte
+just app-build -c release               # construit AstroStack.app optimisée
+open -n apps/macos/.build/AstroStack.app
 ```
 
-La fenêtre de bienvenue liste vos projets récents et les outils hôtes trouvés (`just doctor` dit
-la même chose depuis le terminal). **Nouveau projet…** crée un projet pour une cible ;
-**Importer des captures…** lit un dossier de capture (sans jamais y écrire) et montre comment
-chaque nuit sera calibrée ; suivez ensuite les étapes de la barre latérale, de l'empilement au
-Studio puis à l'export.
+Utilisez le build release pour les vraies nuits : empilement et aperçus sont bien plus rapides.
+Pour développer, `just app-run` construit un bundle debug au même chemin et l'ouvre (il remplace
+le release, et inversement). `just doctor` fait le point sur la chaîne d'outils, les outils hôtes
+et les dossiers de données depuis le terminal.
 
 ## Comment ça marche
 
-Un projet est un paquet `.astrostack` (une base SQLite et ses images). Sa fenêtre suit l'ordre
-dans lequel travaille un astrophotographe :
+La fenêtre de bienvenue liste vos projets récents et les outils hôtes trouvés. **Nouveau projet…**
+crée un projet pour une cible ; **Importer des captures…** lit un dossier de capture (sans jamais y
+écrire) et montre comment chaque nuit sera calibrée. Un projet est un paquet `.astrostack` (une
+base SQLite et ses images), et sa barre latérale suit l'ordre dans lequel travaille un
+astrophotographe :
 
 ```
-  Données       nuits de capture, poses par filtre, couverture de calibration
+  Données       nuits de capture, poses par filtre, temps d'intégration, couverture de calibration
      |
   Calibration   les masters de chaque série, leurs statistiques, les manques
      |
   Tri           métriques par pose, blink, garder ou rejeter, pose de référence
      |
-  Empilement    les réglages d'empilement et le run Siril, avec son journal
+  Empilement    les réglages par voie et le run Siril, avec son journal
      |
-  Studio        étirement, raies d'émission, HDR, couleur, couche d'étoiles, en aperçu GPU
+  Studio        étirement, raies d'émission, HDR, couleur, étoiles, en aperçu GPU
      |
-  Export        les livrables
+  Export        séparation des étoiles et livrables
 ```
 
 Chaque étape montre son état (à faire, prête, à regarder, faite) et vous passez librement de
-l'une à l'autre : rien n'avance tout seul. Les captures, les masters et les résultats antérieurs
-restent où ils sont, en lecture seule ; l'app n'écrit que dans ses projets.
+l'une à l'autre : rien n'avance tout seul.
 
-## État
+## Ce qui marche aujourd'hui
 
-Kappa-Sigma empile et finit une cible de bout en bout ; il est validé sur les captures de M 31
-(nuits large bande et dual-band) et d'IC 1848 de l'auteur, face à l'ancienne chaîne. Ce qui
-marche aujourd'hui :
+Le parcours complet tourne de bout en bout. Il est validé sur les captures de M 31 (nuits large
+bande et dual-band) et d'IC 1848 de l'auteur, face à l'ancienne chaîne qu'il remplace.
 
-- Projets : la fenêtre de bienvenue (projets récents, outils hôtes), créer, enregistrer, rouvrir,
-  et la barre du parcours avec l'état de chaque étape.
-- Données et Calibration : un dossier de capture classé par nuit, filtre et type de pose ; le
-  plan de calibration face à votre bibliothèque de masters, chaque verdict modifiable ; inspection
-  et reconstruction d'un master.
-- Tri : métriques par pose, blink, garder ou rejeter à un point d'arrêt après la notation, et une
-  pose de référence d'alignement épinglée.
-- Empilement : prétraitement d'une ou plusieurs nuits par Siril, séries large bande et dual-band,
-  réglages simples et avancés sur le préréglage ; progression, journal, pause et reprise,
-  annulation ; l'espace de travail nécessaire est vérifié avant le run, et ce qu'un run mort
-  laisse derrière lui est nettoyé.
-- Studio : aperçus GPU en direct de l'étirement (MTF, GHS, arcsinh), de la transformation
-  d'histogramme, des courbes, de la saturation, de la désaturation du ciel, de la balance des
-  couleurs, des écrans d'émission, du HDR, du débruitage et de la géométrie ; extraction de fond
-  (GraXpert ou Siril), résolution astrométrique et calibration des couleurs (PCC, SPCC) par les
-  outils hôtes ; un historique avec annulation, des pipelines avec points d'arrêt, et des profils.
-- Export : séparation des étoiles avec StarNet2 et le jeu de livrables.
-- Visionneuse : images FITS sur le GPU avec zoom, déplacement, étirement d'affichage automatique
-  ou manuel, histogramme, lecture des pixels avec AD/Déc, surexpositions en surimpression et
-  comparaison avant/après.
-- Interface en anglais et en français, avec une fiche d'aide pour chaque étape et chaque
-  traitement.
+| Étape | Ce que vous pouvez faire |
+|-------|--------------------------|
+| **Données** | Classer un dossier de capture par nuit, filtre et type de pose ; ajouter une nuit plus tard et relire ; voir, élaguer et supprimer les empilements jamais exportés. |
+| **Calibration** | Associer chaque série à votre bibliothèque de masters par nuit, chaque verdict modifiable ; inspecter et reconstruire un master. |
+| **Tri** | Noter chaque pose, les faire défiler en blink, garder ou rejeter à un point d'arrêt, épingler la référence d'alignement ; double-cliquer une pose pour l'ouvrir dans la visionneuse. |
+| **Empilement** | Runs d'une ou plusieurs nuits par Siril, voies large bande et dual-band, réglages simples et avancés par voie, un run par objet ; progression, journal, pause, reprise après réouverture, annulation. L'espace de travail est vérifié avant le run, et ce qu'un run mort laisse derrière lui est nettoyé. |
+| **Studio** | Aperçus GPU en direct de l'étirement (MTF, GHS, arcsinh), des niveaux, des courbes, de la saturation, de la désaturation du ciel, de la balance des couleurs, des écrans d'émission, de l'injection de raies Hα / OIII, du HDR, du débruitage et de la géométrie (recadrage, rotation, miroir). Extraction de fond (GraXpert ou Siril), résolution astrométrique et calibration des couleurs (PCC ou SPCC) par les outils hôtes. Basculer entre l'image combinée et la branche de chaque canal ; un historique par couche avec annulation ; pipelines avec points d'arrêt et rejeu ; profils ; masques. |
+| **Export** | Séparation des étoiles avec StarNet2 et jeu de livrables, avec la recette qui l'a produit. |
 
-Limites connues : caméras couleur (OSC) seulement (le mono LRGB et les palettes bande étroite sont
-prévus) ; pas de drizzle ; pas encore de build signé, l'app se construit depuis les sources avec
-`just app-run`.
+Dans toute l'app :
+
+- **Visionneuse :** images FITS sur le GPU avec zoom, déplacement, plein écran, étirement
+  d'affichage automatique ou manuel, histogramme qui dit quelle image il compte, lecture des pixels
+  avec AD/Déc, surexpositions en surimpression et comparaison avant/après.
+- **Objets du ciel :** un catalogue tiré des listes de Siril, cherchable par n'importe quel alias,
+  affiché dans la barre latérale et proposé à la résolution astrométrique.
+- **Aide :** une fiche pour chaque étape, traitement et réglage, qui explique chaque valeur par
+  défaut.
+- **Clavier :** plein écran (⇧⌘F), zoom (⌘= / ⌘-), rotation et miroir, afficher ou masquer le
+  panneau Vue (⌥⌘0), un seul ⌘Z pour tout un run de pipeline.
+- **Langues :** anglais et français.
+
+**Limites connues :** caméras couleur (OSC) seulement (le mono LRGB et les palettes bande étroite
+sont prévus) ; pas de drizzle ; pas encore de build signé, l'app se construit depuis les sources.
 
 ## Technologies
 

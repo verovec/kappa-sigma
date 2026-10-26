@@ -13,7 +13,6 @@
 <p align="center">
   <a href="#quick-start">Quick start</a> &middot;
   <a href="#how-it-works">How it works</a> &middot;
-  <a href="#what-works-today">What works today</a> &middot;
   <a href="#tech-stack">Tech stack</a> &middot;
   <a href="#documentation">Documentation</a><br>
   English &middot; <a href="README.fr.md">Français</a>
@@ -81,56 +80,35 @@ folders from the terminal.
 
 ## How it works
 
-The welcome window lists your recent projects and the host tools it found. **New Project…**
-creates a project for one target; **Import Captures…** reads a capture folder (never writing to it)
-and shows how each night will be calibrated. A project is a `.astrostack` package (a SQLite
-database plus its images), and its sidebar follows the order an astrophotographer works in:
+A project is a `.astrostack` package (a SQLite database plus its images) for one target.
+**New Project…** creates it, **Import Captures…** reads your capture folder (never writing to it),
+then the sidebar walks you through six stages, in the order an astrophotographer works. Each stage
+shows its state (to do, ready, needs a look, done) and you move between them freely: nothing jumps
+ahead on its own.
 
-```
-  Data          capture nights, lights per filter, integration time, calibration coverage
-     |
-  Calibration   the masters each light set uses, their statistics, the gaps
-     |
-  Review        per-frame metrics, blink, keep or reject, the reference frame
-     |
-  Stacking      the settings per lane and the Siril run, with its journal
-     |
-  Studio        stretch, emission lines, HDR, colour, stars, previewed live on the GPU
-     |
-  Export        star separation and the deliverables
-```
+| Stage | What you do there |
+|-------|-------------------|
+| **Data** | See your nights sorted by night, filter and frame type, with integration time and calibration coverage; add a night later and rescan; trim or delete stacks never exported. |
+| **Calibration** | Match each light set to the masters of your library, night by night, every choice overridable; inspect a master's statistics and rebuild it. |
+| **Review** | Grade every frame, blink through them, keep or reject, pin the registration reference; double-click a frame to open it in the viewer. |
+| **Stacking** | Stack one or many nights through Siril, broadband and dual-band lanes side by side, with simple or advanced settings per lane. Follow the journal, pause, continue after a reopen, cancel; the scratch space is checked before the run and cleaned up after. |
+| **Studio** | Finish the image with live GPU previews: stretch (MTF, GHS, arcsinh), levels, curves, saturation, sky desaturation, colour balance, emission screens, Hα / OIII line injection, HDR, denoise, crop, rotate and flip. Background extraction (GraXpert or Siril), plate solving and colour calibration (PCC or SPCC). Work on the combined image or each channel's branch, with masks, an undoable history per layer, profiles, and pipelines that replay on a new stack. |
+| **Export** | Separate the stars with StarNet2 and write the deliverables, with the recipe that made them. |
 
-Each stage shows its state (to do, ready, needs a look, done) and you move between them freely:
-nothing jumps ahead on its own.
+Everywhere in the app:
 
-## What works today
-
-The full journey runs end to end. It is validated on the author's M 31 (broadband and dual-band
-nights) and IC 1848 captures against the legacy pipeline it replaces.
-
-| Stage | What you can do |
-|-------|-----------------|
-| **Data** | Classify a capture folder by night, filter and frame type; add a night later and rescan; see, trim and delete stacks never exported. |
-| **Calibration** | Match each light set to your master library by night, every verdict overridable; inspect and rebuild a master. |
-| **Review** | Grade every frame, blink through them, keep or reject at a breakpoint, pin the registration reference; double-click a frame to open it in the viewer. |
-| **Stacking** | Single- and multi-night runs through Siril, broadband and dual-band lanes, simple and advanced settings per lane, one run per object; progress, journal, pause, continue after a reopen, cancel. The scratch space is checked before a run starts, and what a dead run leaves is cleaned up. |
-| **Studio** | Live GPU previews of stretch (MTF, GHS, arcsinh), levels, curves, saturation, sky desaturation, colour balance, emission screens, Hα / OIII line injection, HDR, denoise and geometry (crop, rotate, flip). Background extraction (GraXpert or Siril), plate solving and colour calibration (PCC or SPCC) through the host tools. Switch between the combined image and each channel's branch; one history per layer with undo; pipelines with breakpoints and replay; profiles; masks. |
-| **Export** | Star separation with StarNet2 and the deliverable set, with the recipe that made it. |
-
-Across the app:
-
-- **Viewer:** FITS images on the GPU with zoom, pan, full screen, auto or manual display stretch, a
-  histogram that says which image it counts, pixel readout with RA/Dec, clipping overlay and
+- **Viewer:** FITS on the GPU with zoom, pan and full screen, auto or manual display stretch, a
+  histogram that names the image it counts, pixel readout with RA/Dec, clipping overlay and
   before/after compare.
-- **Sky objects:** a catalogue built from Siril's lists, searchable by any alias, shown in the
-  sidebar and offered to the plate solver.
-- **Help:** a card for every stage, process and setting, explaining each default.
-- **Keyboard:** full screen (⇧⌘F), zoom (⌘= / ⌘-), rotate and flip, show or hide the View panel
-  (⌥⌘0), one ⌘Z for a whole pipeline run.
+- **Sky objects:** a catalogue from Siril's lists, searchable by any alias and offered to the plate
+  solver.
+- **Help:** a card for every stage, process and setting that explains each default.
+- **Keyboard:** full screen (⇧⌘F), zoom (⌘= / ⌘-), rotate and flip, the View panel (⌥⌘0), and one
+  ⌘Z undoes a whole pipeline run.
 - **Languages:** English and French.
 
-**Known limitations:** one-shot-colour cameras only (mono LRGB and narrowband palettes are
-planned); no drizzle; no signed build yet, so the app is built from source.
+Built for one-shot-colour cameras, and validated end to end on M 31 (broadband and dual-band
+nights) and IC 1848 against the pipeline it replaces.
 
 ## Tech stack
 

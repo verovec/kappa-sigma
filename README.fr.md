@@ -13,7 +13,6 @@
 <p align="center">
   <a href="#démarrage-rapide">Démarrage rapide</a> &middot;
   <a href="#comment-ça-marche">Comment ça marche</a> &middot;
-  <a href="#ce-qui-marche-aujourdhui">Ce qui marche aujourd'hui</a> &middot;
   <a href="#technologies">Technologies</a> &middot;
   <a href="#documentation">Documentation</a><br>
   <a href="README.md">English</a> &middot; Français
@@ -80,58 +79,36 @@ et les dossiers de données depuis le terminal.
 
 ## Comment ça marche
 
-La fenêtre de bienvenue liste vos projets récents et les outils hôtes trouvés. **Nouveau projet…**
-crée un projet pour une cible ; **Importer des captures…** lit un dossier de capture (sans jamais y
-écrire) et montre comment chaque nuit sera calibrée. Un projet est un paquet `.astrostack` (une
-base SQLite et ses images), et sa barre latérale suit l'ordre dans lequel travaille un
-astrophotographe :
+Un projet est un paquet `.astrostack` (une base SQLite et ses images) pour une cible.
+**Nouveau projet…** le crée, **Importer des captures…** lit votre dossier de capture (sans jamais y
+écrire), puis la barre latérale vous mène à travers six étapes, dans l'ordre où travaille un
+astrophotographe. Chaque étape montre son état (à faire, prête, à regarder, faite) et vous passez
+librement de l'une à l'autre : rien n'avance tout seul.
 
-```
-  Données       nuits de capture, poses par filtre, temps d'intégration, couverture de calibration
-     |
-  Calibration   les masters de chaque série, leurs statistiques, les manques
-     |
-  Tri           métriques par pose, blink, garder ou rejeter, pose de référence
-     |
-  Empilement    les réglages par voie et le run Siril, avec son journal
-     |
-  Studio        étirement, raies d'émission, HDR, couleur, étoiles, en aperçu GPU
-     |
-  Export        séparation des étoiles et livrables
-```
+| Étape | Ce que vous y faites |
+|-------|----------------------|
+| **Données** | Voir vos poses classées par nuit, filtre et type, avec le temps d'intégration et la couverture de calibration ; ajouter une nuit plus tard et relire ; élaguer ou supprimer les empilements jamais exportés. |
+| **Calibration** | Associer chaque série aux masters de votre bibliothèque, nuit par nuit, chaque choix modifiable ; inspecter les statistiques d'un master et le reconstruire. |
+| **Tri** | Noter chaque pose, les faire défiler en blink, garder ou rejeter, épingler la référence d'alignement ; double-cliquer une pose pour l'ouvrir dans la visionneuse. |
+| **Empilement** | Empiler une ou plusieurs nuits par Siril, voies large bande et dual-band côte à côte, avec des réglages simples ou avancés par voie. Suivre le journal, mettre en pause, reprendre après réouverture, annuler ; l'espace de travail est vérifié avant le run et nettoyé après. |
+| **Studio** | Finir l'image avec des aperçus GPU en direct : étirement (MTF, GHS, arcsinh), niveaux, courbes, saturation, désaturation du ciel, balance des couleurs, écrans d'émission, injection de raies Hα / OIII, HDR, débruitage, recadrage, rotation et miroir. Extraction de fond (GraXpert ou Siril), résolution astrométrique et calibration des couleurs (PCC ou SPCC). Travailler sur l'image combinée ou la branche de chaque canal, avec des masques, un historique annulable par couche, des profils, et des pipelines qui se rejouent sur un nouvel empilement. |
+| **Export** | Séparer les étoiles avec StarNet2 et écrire les livrables, avec la recette qui les a produits. |
 
-Chaque étape montre son état (à faire, prête, à regarder, faite) et vous passez librement de
-l'une à l'autre : rien n'avance tout seul.
+Partout dans l'app :
 
-## Ce qui marche aujourd'hui
-
-Le parcours complet tourne de bout en bout. Il est validé sur les captures de M 31 (nuits large
-bande et dual-band) et d'IC 1848 de l'auteur, face à l'ancienne chaîne qu'il remplace.
-
-| Étape | Ce que vous pouvez faire |
-|-------|--------------------------|
-| **Données** | Classer un dossier de capture par nuit, filtre et type de pose ; ajouter une nuit plus tard et relire ; voir, élaguer et supprimer les empilements jamais exportés. |
-| **Calibration** | Associer chaque série à votre bibliothèque de masters par nuit, chaque verdict modifiable ; inspecter et reconstruire un master. |
-| **Tri** | Noter chaque pose, les faire défiler en blink, garder ou rejeter à un point d'arrêt, épingler la référence d'alignement ; double-cliquer une pose pour l'ouvrir dans la visionneuse. |
-| **Empilement** | Runs d'une ou plusieurs nuits par Siril, voies large bande et dual-band, réglages simples et avancés par voie, un run par objet ; progression, journal, pause, reprise après réouverture, annulation. L'espace de travail est vérifié avant le run, et ce qu'un run mort laisse derrière lui est nettoyé. |
-| **Studio** | Aperçus GPU en direct de l'étirement (MTF, GHS, arcsinh), des niveaux, des courbes, de la saturation, de la désaturation du ciel, de la balance des couleurs, des écrans d'émission, de l'injection de raies Hα / OIII, du HDR, du débruitage et de la géométrie (recadrage, rotation, miroir). Extraction de fond (GraXpert ou Siril), résolution astrométrique et calibration des couleurs (PCC ou SPCC) par les outils hôtes. Basculer entre l'image combinée et la branche de chaque canal ; un historique par couche avec annulation ; pipelines avec points d'arrêt et rejeu ; profils ; masques. |
-| **Export** | Séparation des étoiles avec StarNet2 et jeu de livrables, avec la recette qui l'a produit. |
-
-Dans toute l'app :
-
-- **Visionneuse :** images FITS sur le GPU avec zoom, déplacement, plein écran, étirement
-  d'affichage automatique ou manuel, histogramme qui dit quelle image il compte, lecture des pixels
-  avec AD/Déc, surexpositions en surimpression et comparaison avant/après.
-- **Objets du ciel :** un catalogue tiré des listes de Siril, cherchable par n'importe quel alias,
-  affiché dans la barre latérale et proposé à la résolution astrométrique.
+- **Visionneuse :** FITS sur le GPU avec zoom, déplacement et plein écran, étirement d'affichage
+  automatique ou manuel, histogramme qui nomme l'image qu'il compte, lecture des pixels avec
+  AD/Déc, surexpositions en surimpression et comparaison avant/après.
+- **Objets du ciel :** un catalogue tiré des listes de Siril, cherchable par n'importe quel alias et
+  proposé à la résolution astrométrique.
 - **Aide :** une fiche pour chaque étape, traitement et réglage, qui explique chaque valeur par
   défaut.
-- **Clavier :** plein écran (⇧⌘F), zoom (⌘= / ⌘-), rotation et miroir, afficher ou masquer le
-  panneau Présentation (⌥⌘0), un seul ⌘Z pour tout un run de pipeline.
+- **Clavier :** plein écran (⇧⌘F), zoom (⌘= / ⌘-), rotation et miroir, le panneau Présentation
+  (⌥⌘0), et un seul ⌘Z annule tout un run de pipeline.
 - **Langues :** anglais et français.
 
-**Limites connues :** caméras couleur (OSC) seulement (le mono LRGB et les palettes bande étroite
-sont prévus) ; pas de drizzle ; pas encore de build signé, l'app se construit depuis les sources.
+Conçu pour les caméras couleur (OSC), et validé de bout en bout sur M 31 (nuits large bande et
+dual-band) et IC 1848 face à la chaîne qu'il remplace.
 
 ## Technologies
 

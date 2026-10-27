@@ -7609,18 +7609,18 @@
         }
       }
     },
-    "An example target: %@": {
+    "Your target, %@, is one of its examples": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "An example target: %@"
+            "value": "Your target, %@, is one of its examples"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un objet d'exemple : %@"
+            "value": "Votre cible, %@, fait partie de ses exemples"
           }
         }
       }

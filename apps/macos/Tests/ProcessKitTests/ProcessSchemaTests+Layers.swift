@@ -9,7 +9,7 @@ extension ProcessSchemaTests {
     let params = ParamSet(schema: StretchProcess.schema)
     #expect(StretchProcess.hiddenParameters(params, layerIDs: ["RGB"]).isEmpty)
     #expect(StretchProcess.unavailableReasons(params, layerIDs: ["RGB"]).isEmpty)
-    #expect(StretchProcess.unavailableReasons.isEmpty)
+    #expect(StretchProcess.rowReasons.isEmpty)
     #expect(StretchProcess.schema.specs.allSatisfy { $0.needsLayer == nil })
     #expect(StretchProcess.layersAsked(params).isEmpty)
   }
@@ -91,7 +91,7 @@ extension ProcessSchemaTests {
     for (id, value) in row.values { try params.set(id, value) }
     #expect(type.unavailableReasons(params, layerIDs: row.layers) == row.expected)
     for note in row.expected.values {
-      #expect(type.unavailableReasons.contains(note.reason), "the reason is a catalog key")
+      #expect(type.rowReasons.contains(note.reason), "the reason is a catalog key")
     }
   }
 }

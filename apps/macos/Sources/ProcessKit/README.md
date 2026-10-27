@@ -323,7 +323,7 @@ that reads bundle layers declares them in `layersRead`, or its steps never go st
   `layersRead` (the latter may add bundle-derived layers, a continuum reference, which must not
   keep a row on screen). A row's value that cannot run says why under the row:
   `unavailableReasons(_:layerIDs:)` → `[paramID: RowNote]` (reason = a catalog key listed in the
-  static `unavailableReasons`, subject = the layer's name), set by the workspace on open, on
+  static `rowReasons`, subject = the layer's name), set by the workspace on open, on
   `headChanged` and on every value change. The default covers a process whose rows carry
   `needsLayer`: each asked layer the bundle lacks, on the first row about it, with the first
   listed reason (the screens and the injection add nothing); a process whose rows name layers

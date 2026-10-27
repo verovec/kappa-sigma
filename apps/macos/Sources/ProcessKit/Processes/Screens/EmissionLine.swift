@@ -29,6 +29,12 @@ package struct EmissionLine: Hashable, Sendable, CaseIterable {
   /// The bundle layers of every line.
   package static let layerIDs = Set(allCases.map(\.layerID))
 
+  /// The layer `id` as the panel writes it: a line's name, any other id as is (until 0139 words
+  /// every layer).
+  package static func name(ofLayer id: String) -> String {
+    Filter(rawValue: id).flatMap(Self.init)?.name ?? id
+  }
+
   /// The prefix of its parameter ids (`haBlack`, `oiiiOpacity`…).
   package var prefix: String { filter.rawValue.lowercased() }
 

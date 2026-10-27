@@ -1,4 +1,3 @@
-internal import FilterKit
 package import Metal
 
 /// A Studio process (design §2): a parameter schema, a GPU `render` used for both the preview
@@ -103,8 +102,8 @@ package protocol ImageProcess {
   /// bundle lacks, on the first row about it, with the first reason the process lists.
   static func unavailableReasons(_ params: ParamSet, layerIDs: Set<String>) -> [String: RowNote]
 
-  /// Every reason `unavailableReasons` may give: English keys of the catalog.
-  static var unavailableReasons: [String] { get }
+  /// Every reason `unavailableReasons(_:layerIDs:)` may give: English keys of the catalog.
+  static var rowReasons: [String] { get }
 }
 
 extension ImageProcess {
@@ -177,18 +176,17 @@ extension ImageProcess {
   package static func unavailableReasons(_ params: ParamSet, layerIDs: Set<String>)
     -> [String: RowNote]
   {
-    guard let reason = unavailableReasons.first else { return [:] }
+    guard let reason = rowReasons.first else { return [:] }
     var notes: [String: RowNote] = [:]
     for layer in layersAsked(params).subtracting(layerIDs) {
       guard let spec = schema.specs.first(where: { $0.needsLayer == layer }) else { continue }
-      let name = Filter(rawValue: layer).flatMap(EmissionLine.init)?.name ?? layer
-      notes[spec.id] = RowNote(reason: reason, subject: name)
+      notes[spec.id] = RowNote(reason: reason, subject: EmissionLine.name(ofLayer: layer))
     }
     return notes
   }
 
   /// No row reason.
-  package static var unavailableReasons: [String] { [] }
+  package static var rowReasons: [String] { [] }
 }
 
 /// Where a process belongs in a pipeline.

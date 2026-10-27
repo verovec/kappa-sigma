@@ -66,5 +66,7 @@ extension ProcessPanelModelTests {
     if row.hidden.isEmpty && row.visible.isEmpty {
       #expect(ids.count == type.schema.specs.count)
     }
+    // The « Advanced » toggle exists iff disclosing shows an advanced row.
+    #expect(panel.hasAdvanced == panel.visibleSpecs.contains { $0.level == .advanced })
   }
 }

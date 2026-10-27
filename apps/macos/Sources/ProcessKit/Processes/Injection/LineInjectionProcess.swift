@@ -58,7 +58,7 @@ package struct LineInjectionProcess: ImageProcess {
 
   /// The reason an injecting line's rows carry while its layer is absent (card 0135).
   package static let lineLayerReason = "the injection needs its line layer"
-  package static let unavailableReasons = [lineLayerReason]
+  package static let rowReasons = [lineLayerReason]
 
   /// The lines whose gain is set: what the panel keeps on screen even without the layer.
   ///

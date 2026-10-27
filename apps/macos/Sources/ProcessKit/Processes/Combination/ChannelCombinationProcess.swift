@@ -1,4 +1,3 @@
-internal import FilterKit
 package import Metal
 
 /// Builds the Studio's working RGB image from the bundle layers.
@@ -7,7 +6,7 @@ package import Metal
 /// the luminance at its opacity. The first node of every pipeline; its input only sets the size.
 ///
 /// R2: a source missing from the bundle is an error with the reason, never replaced by another
-/// layer (`unavailableReason` greys the option first).
+/// layer (the slot's row says it first, `unavailableReasons(_:layerIDs:)`).
 package struct ChannelCombinationProcess: ImageProcess {
   package static let id = "channel-combination"
   package static let title = "Channel combination"
@@ -101,15 +100,15 @@ package struct ChannelCombinationProcess: ImageProcess {
 
   /// The reason a slot's row carries while it reads a layer the stack lacks (card 0135).
   package static let missingLayerReason = "the slot needs a layer the stack lacks"
-  package static let unavailableReasons = [missingLayerReason]
+  package static let rowReasons = [missingLayerReason]
 
   /// The layers the slots name, whatever the bundle holds.
   package static func layersAsked(_ params: ParamSet) -> Set<String> {
     Set(layersNeeded(params: params))
   }
 
-  /// Each slot whose source names a layer outside `layerIDs`, with that layer as the panel
-  /// writes it (a line's name; another id as is, until 0139 words every layer).
+  /// Each slot whose source names a layer outside `layerIDs`, every missing layer named as the
+  /// panel writes it.
   package static func unavailableReasons(_ params: ParamSet, layerIDs: Set<String>)
     -> [String: RowNote]
   {
@@ -117,7 +116,7 @@ package struct ChannelCombinationProcess: ImageProcess {
     for slot in slotSources {
       let missing = layers(of: params.choice(slot)).filter { !layerIDs.contains($0) }
       guard !missing.isEmpty else { continue }
-      let names = missing.map { Filter(rawValue: $0).flatMap(EmissionLine.init)?.name ?? $0 }
+      let names = missing.map(EmissionLine.name(ofLayer:))
       notes[slot] = RowNote(reason: missingLayerReason, subject: names.joined(separator: " + "))
     }
     return notes

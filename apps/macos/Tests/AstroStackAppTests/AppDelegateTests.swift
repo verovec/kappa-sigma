@@ -38,8 +38,9 @@ struct AppDelegateTests {
 extension AppDelegateTests {
   @Test("quitting closes every document without bringing the welcome window back")
   func testAppDelegate_willTerminate_clearsWelcomeHook() throws {
+    let controller = NSDocumentController.shared
     let document = try ProjectDocument(type: ProjectPackage.typeIdentifier)
-    NSDocumentController.shared.addDocument(document)
+    controller.addDocument(document)
     let (hook, documents) = (ProjectDocument.lastDocumentClosed, ProjectDocument.openDocuments)
     defer {
       ProjectDocument.lastDocumentClosed = hook
@@ -47,37 +48,28 @@ extension AppDelegateTests {
     }
     var fired = 0
     ProjectDocument.lastDocumentClosed = { fired += 1 }
-    // Every close is the last one here: only the cleared hook keeps the window away.
-    ProjectDocument.openDocuments = { [document] }
+    // This document is the only one that counts: closing it is the last close.
+    ProjectDocument.openDocuments = { controller.documents.filter { $0 === document } }
 
     // Only this test's document: another suite's documents stay open.
     AppDelegate().closeForQuit([document])
 
-    #expect(!NSDocumentController.shared.documents.contains(document))
+    #expect(!controller.documents.contains(document))
     #expect(fired == 0)
   }
 
-  @Test(
-    "launching arms the hook: the last project closed brings back the welcome, and the review"
-  )
-  func testAppDelegate_willFinishLaunching_setsWelcomeHook() async {
+  @Test("launching arms the hook: the last project closed brings the welcome window back")
+  func testAppDelegate_willFinishLaunching_setsWelcomeHook() {
     let hook = ProjectDocument.lastDocumentClosed
     defer { ProjectDocument.lastDocumentClosed = hook }
     var shown = 0
-    let reviewed = AsyncStream<Void>.makeStream()
-    let delegate = AppDelegate(
-      welcome: { shown += 1 }, reviewRetention: { reviewed.continuation.yield() })
+    let delegate = AppDelegate(welcome: { shown += 1 })
 
     delegate.applicationWillFinishLaunching(
       Notification(name: NSApplication.willFinishLaunchingNotification))
     ProjectDocument.lastDocumentClosed()
-    ProjectDocument.lastDocumentClosed()
 
-    #expect(shown == 2)
-    // A launch that restored a project reviews when its last window closes.
-    var reviews = 0
-    for await _ in reviewed.stream.prefix(1) { reviews += 1 }
-    #expect(reviews == 1)
+    #expect(shown == 1)
   }
 }
 
@@ -87,5 +79,18 @@ extension AppDelegateTests {
     // Answers the catalog's action without AppKit's own Open Recent machinery (clearRecentDocuments:).
     #expect(AppDelegate.instancesRespond(to: NSSelectorFromString("clearRecentProjects:")))
     #expect(CommandCatalog.command("file.clearRecent")?.action == "clearRecentProjects:")
+  }
+}
+
+extension AppDelegateTests {
+  @Test("Clear Menu is enabled only with recents to clear; other items stay enabled")
+  func testAppDelegate_validatesClearMenu() {
+    let delegate = AppDelegate()
+    let clear = NSMenuItem(
+      title: "", action: NSSelectorFromString("clearRecentProjects:"), keyEquivalent: "")
+    let other = NSMenuItem(
+      title: "", action: NSSelectorFromString("showWelcome:"), keyEquivalent: "")
+    #expect(delegate.validateMenuItem(clear) == !WelcomeWindow.recentURLs().isEmpty)
+    #expect(delegate.validateMenuItem(other))
   }
 }

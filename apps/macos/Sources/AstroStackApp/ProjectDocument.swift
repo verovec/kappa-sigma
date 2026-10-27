@@ -20,6 +20,15 @@ package final class ProjectDocument: NSDocument {
     NSDocumentController.shared.documents
   }
 
+  /// Closes `documents` without bringing the welcome window back (a quit, a relaunch); the hook
+  /// stays armed for the closes after.
+  package static func closeQuietly(_ documents: [NSDocument]) {
+    let hook = lastDocumentClosed
+    lastDocumentClosed = {}
+    defer { lastDocumentClosed = hook }
+    for document in documents { document.close() }
+  }
+
   private var project: ProjectPackage?
   private var isTemporary = false
   /// The window's model, so closing the project stops a run that writes into it.

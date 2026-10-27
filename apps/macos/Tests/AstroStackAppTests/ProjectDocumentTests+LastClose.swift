@@ -16,7 +16,7 @@ extension ProjectDocumentTests {
       ProjectDocument.openDocuments = documents
     }
     var fired = 0
-    ProjectDocument.lastDocumentClosed = { fired += 1 }
+    ProjectDocument.lastDocumentClosed = { _ in fired += 1 }
     // Other suites may hold documents in the shared controller: only these two count here.
     ProjectDocument.openDocuments = {
       controller.documents.filter { $0 === first || $0 === second }
@@ -42,7 +42,7 @@ extension ProjectDocumentTests {
       ProjectDocument.openDocuments = documents
     }
     var fired = 0
-    ProjectDocument.lastDocumentClosed = { fired += 1 }
+    ProjectDocument.lastDocumentClosed = { _ in fired += 1 }
     ProjectDocument.openDocuments = { controller.documents.filter { $0 === shown } }
 
     shown.close()
@@ -52,23 +52,28 @@ extension ProjectDocumentTests {
     #expect(fired == 1)
   }
 
-  @Test("closing quietly fires nothing and leaves the hook armed for the closes after")
+  @Test("closing quietly says so to the hook; a plain close after does not")
   func testProjectDocument_closeQuietly() throws {
     let controller = NSDocumentController.shared
-    let document = try ProjectDocument(type: Self.type)
-    controller.addDocument(document)
+    let (quiet, plain) = (
+      try ProjectDocument(type: Self.type), try ProjectDocument(type: Self.type)
+    )
     let (hook, documents) = (ProjectDocument.lastDocumentClosed, ProjectDocument.openDocuments)
     defer {
       ProjectDocument.lastDocumentClosed = hook
       ProjectDocument.openDocuments = documents
     }
-    var fired = 0
-    ProjectDocument.lastDocumentClosed = { fired += 1 }
-    ProjectDocument.openDocuments = { controller.documents.filter { $0 === document } }
+    var calls: [Bool] = []
+    ProjectDocument.lastDocumentClosed = { calls.append($0) }
+    ProjectDocument.openDocuments = {
+      controller.documents.filter { $0 === quiet || $0 === plain }
+    }
 
-    ProjectDocument.closeQuietly([document])
-    #expect(fired == 0)
-    ProjectDocument.lastDocumentClosed()
-    #expect(fired == 1)
+    controller.addDocument(quiet)
+    ProjectDocument.closeQuietly([quiet])
+    controller.addDocument(plain)
+    plain.close()
+
+    #expect(calls == [true, false])
   }
 }

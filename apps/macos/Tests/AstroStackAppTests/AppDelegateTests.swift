@@ -48,7 +48,7 @@ extension AppDelegateTests {
       ProjectDocument.openDocuments = documents
     }
     var fired = 0
-    ProjectDocument.lastDocumentClosed = { fired += 1 }
+    ProjectDocument.lastDocumentClosed = { _ in fired += 1 }
     // This document is the only one that counts: closing it is the last close.
     ProjectDocument.openDocuments = { controller.documents.filter { $0 === document } }
 
@@ -68,11 +68,28 @@ extension AppDelegateTests {
 
     delegate.applicationWillFinishLaunching(
       Notification(name: NSApplication.willFinishLaunchingNotification))
-    ProjectDocument.lastDocumentClosed()
+    ProjectDocument.lastDocumentClosed(false)
     // From the Dock afterwards: the welcome window, never a review over the project just closed.
     _ = delegate.applicationOpenUntitledFile(NSApplication.shared)
 
     #expect(shown == 2)
+    #expect(reviews == 0)
+  }
+
+  @Test("a relaunch's quiet closes show no welcome window and disarm the launch review too")
+  func testAppDelegate_quietLastClose_disarmsReview() {
+    let hook = ProjectDocument.lastDocumentClosed
+    defer { ProjectDocument.lastDocumentClosed = hook }
+    var (shown, reviews) = (0, 0)
+    let delegate = AppDelegate(welcome: { shown += 1 }, reviewRetention: { reviews += 1 })
+
+    delegate.applicationWillFinishLaunching(
+      Notification(name: NSApplication.willFinishLaunchingNotification))
+    ProjectDocument.lastDocumentClosed(true)
+    #expect(shown == 0)
+    _ = delegate.applicationOpenUntitledFile(NSApplication.shared)
+
+    #expect(shown == 1)
     #expect(reviews == 0)
   }
 
@@ -104,7 +121,7 @@ extension AppDelegateTests {
 
 extension AppDelegateTests {
   @Test(
-    "Clear Menu is enabled only with a recent project still on disk; other items stay enabled",
+    "Clear Menu is enabled with any recent, a deleted package's too; other items stay enabled",
     .scratchDirectory)
   func testAppDelegate_validatesClearMenu() throws {
     let kept = try ScratchDirectory.url.appendingPathComponent("M 31.astrostack")
@@ -114,7 +131,7 @@ extension AppDelegateTests {
       title: "", action: NSSelectorFromString("clearRecentProjects:"), keyEquivalent: "")
     let other = NSMenuItem(
       title: "", action: NSSelectorFromString("showWelcome:"), keyEquivalent: "")
-    for (recents, enabled) in [([kept, gone], true), ([gone], false), ([], false)] {
+    for (recents, enabled) in [([kept, gone], true), ([gone], true), ([], false)] {
       let delegate = AppDelegate(recentURLs: { recents })
       #expect(delegate.validateMenuItem(clear) == enabled, "\(recents.map(\.lastPathComponent))")
       #expect(delegate.validateMenuItem(other))

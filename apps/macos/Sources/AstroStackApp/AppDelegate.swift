@@ -9,7 +9,8 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
   /// whenever AppKit asks then (restoration may defer it past `applicationDidFinishLaunching`).
   private var askedOnce = false
   /// Armed by a real launch only (a test never runs `applicationWillFinishLaunching`): the
-  /// retention review runs once, the first time the app has no document to show (card 0114).
+  /// retention review runs once, when the app starts with no document to show (card 0114); a
+  /// project closed first disarms it (never a review over a project just closed).
   private var retentionArmed = false
   /// Shows the welcome window (card 0144: also when the last project closes).
   private let welcome: @MainActor () -> Void
@@ -63,14 +64,17 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
   /// last project closes: the app stays, with somewhere to open the next project from.
   package func applicationWillFinishLaunching(_ notification: Notification) {
     retentionArmed = true
-    ProjectDocument.lastDocumentClosed = { [weak self] in self?.lastProjectClosed() }
+    ProjectDocument.lastDocumentClosed = { [weak self] quietly in
+      self?.lastProjectClosed(quietly: quietly)
+    }
   }
 
-  /// The welcome window only: the retention review stays a launch verdict over earlier sessions,
-  /// never one over the project just closed (or one still opening), not even from the Dock later.
-  private func lastProjectClosed() {
+  /// The welcome window after a plain close (a relaunch or a quit closes `quietly`); either way
+  /// the retention review stays a launch verdict over earlier sessions, never one over the project
+  /// just closed (or one still opening), not even from the Dock later.
+  private func lastProjectClosed(quietly: Bool) {
     retentionArmed = false
-    welcome()
+    if !quietly { welcome() }
   }
 
   /// `-openImage <path>` opens that FITS in the viewer at launch; `-openRun <folder>` opens a
@@ -172,8 +176,8 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
 
   /// Closes `documents` for good: none of those closes may bring the welcome window back.
   package func closeForQuit(_ documents: [NSDocument]) {
-    ProjectDocument.lastDocumentClosed = {}
-    for document in documents { document.close() }
+    ProjectDocument.lastDocumentClosed = { _ in }
+    ProjectDocument.closeQuietly(documents)
   }
 
   /// File › Open Recent › Clear Menu: AppKit's recents, which the welcome window lists too.
@@ -187,7 +191,7 @@ extension AppDelegate: NSMenuItemValidation {
   /// Clear Menu is greyed with nothing to clear, as AppKit's own; every other item is enabled.
   package func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
     guard menuItem.action == #selector(clearRecentProjects(_:)) else { return true }
-    // The projects Open Recent and the welcome window list: a deleted one is not shown.
-    return !WelcomeModel.onDisk(recentURLs()).isEmpty
+    // Every AppKit recent, a deleted package's too: a stale list must stay clearable.
+    return !recentURLs().isEmpty
   }
 }

@@ -12,20 +12,21 @@ internal import SwiftUI
 /// of NSDocument's default safe-save, which would rewrite the whole package on every save. An
 /// untitled document lives in a temporary package until its first save moves it.
 package final class ProjectDocument: NSDocument {
-  /// Called once the last project has closed (card 0144): the app brings the welcome window
-  /// back, so ⌘W never leaves it windowless; `AppDelegate` arms it at launch and clears it at quit.
-  package static var lastDocumentClosed: @MainActor () -> Void = {}
+  /// Called once the last project has closed (card 0144), `quietly` for a relaunch's or a quit's
+  /// closes: the app brings the welcome window back after a plain close, so ⌘W never leaves it
+  /// windowless; `AppDelegate` arms it at launch and clears it at quit.
+  package static var lastDocumentClosed: @MainActor (_ quietly: Bool) -> Void = { _ in }
   /// The documents still open after a close: the shared controller's (a test counts only its own).
   package static var openDocuments: @MainActor () -> [NSDocument] = {
     NSDocumentController.shared.documents
   }
+  /// Set while `closeQuietly` closes.
+  private static var closingQuietly = false
 
-  /// Closes `documents` without bringing the welcome window back (a quit, a relaunch); the hook
-  /// stays armed for the closes after.
+  /// Closes `documents` for a relaunch or a quit: the last close says so (`quietly`).
   package static func closeQuietly(_ documents: [NSDocument]) {
-    let hook = lastDocumentClosed
-    lastDocumentClosed = {}
-    defer { lastDocumentClosed = hook }
+    closingQuietly = true
+    defer { closingQuietly = false }
     for document in documents { document.close() }
   }
 
@@ -270,7 +271,7 @@ package final class ProjectDocument: NSDocument {
     if let project { release(project) }
     project = nil
     super.close()
-    if wasOpen, Self.openDocuments().isEmpty { Self.lastDocumentClosed() }
+    if wasOpen, Self.openDocuments().isEmpty { Self.lastDocumentClosed(Self.closingQuietly) }
   }
 
   /// True when the folder opened at `opened` is gone and AppKit now names an existing `current`.

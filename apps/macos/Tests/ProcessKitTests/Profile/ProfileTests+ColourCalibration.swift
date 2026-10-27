@@ -25,8 +25,10 @@ extension ProfileTests {
   @Test(
     "card 0140: a recipe naming its sensor and filter keeps them; one naming none loads unset",
     arguments: [
-      (#"[{"id": "sensor", "value": "Sony IMX571"}, {"id": "filter", "value": "UV/IR Block"}]"#,
-       "Sony IMX571", "UV/IR Block"),
+      (
+        #"[{"id": "sensor", "value": "Sony IMX571"}, {"id": "filter", "value": "UV/IR Block"}]"#,
+        "Sony IMX571", "UV/IR Block"
+      ),
       (#"[{"id": "enabled", "value": true}]"#, "", ""),
     ])
   func testColourCalibrationNamesInRecipes(params: String, sensor: String, filter: String) throws {

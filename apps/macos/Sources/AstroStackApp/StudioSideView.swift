@@ -28,11 +28,7 @@ package struct StudioSideView: View {
             // On a new head Apply previews first, and says so.
             let title: LocalizedStringResource =
               model.isPreviewSuspended ? .app("Preview") : .app("Apply")
-            // A host tool under a mask, or a choice still to make (card 0140), cannot run:
-            // greyed with the reason, not refused after.
-            let blocked =
-              panel.type.runsTool(panel.params)
-              ? model.toolRefusal ?? model.unchosenRefusal(locale: locale) : nil
+            let blocked = blocked(panel)
             Button(title) { applyRecorded() }
               .disabled(model.toolRun != nil || blocked != nil)
               .help(blocked.map { Text($0) } ?? Text(verbatim: ""))
@@ -53,6 +49,13 @@ package struct StudioSideView: View {
       }
       .padding(DesignMetrics.spacingM)
     }
+  }
+
+  /// Why Apply is greyed: a host tool under a mask, or a choice still to make (card 0140) —
+  /// greyed with the reason, not refused after.
+  private func blocked(_ panel: ProcessPanelModel) -> LocalizedStringResource? {
+    guard panel.type.runsTool(panel.params) else { return nil }
+    return model.toolRefusal ?? model.unchosenRefusal(locale: locale)
   }
 
   /// What the panel's process asks for below its parameters: the mask row, or its own rows —

@@ -1,6 +1,8 @@
-/// The SPCC sensor a FITS `INSTRUME` names (card 0140): the camera's model read in the
-/// instrument text, as Siril 1.4.4 lists its sensor (`SPCCNames`). A suggestion only — the panel
-/// offers it, the user takes it (R2); an instrument the table does not know gives none.
+/// The SPCC sensor a FITS `INSTRUME` names (card 0140).
+///
+/// The camera's model read in the instrument text, as Siril 1.4.4 lists its sensor (`SPCCNames`).
+/// A suggestion only — the panel offers it, the user takes it (R2); an instrument the table does
+/// not know gives none.
 package struct SensorHint: Equatable, Sendable {
   /// The sensor as Siril spells it.
   package let sensor: String
@@ -25,7 +27,8 @@ package struct SensorHint: Equatable, Sendable {
   /// Model token → hint: the cameras whose sensor Siril lists (no token holds another, so the
   /// first match is the only one).
   package static let table: [(model: String, hint: Self)] =
-    osc.map { ($0, Self(sensor: $1, mono: false)) } + mono.map { ($0, Self(sensor: $1, mono: true)) }
+    osc.map { ($0, Self(sensor: $1, mono: false)) }
+    + mono.map { ($0, Self(sensor: $1, mono: true)) }
 
   private static let osc = [
     ("ASI071MC", "Sony IMX071"), ("ASI178MC", "Sony IMX178"), ("ASI183MC", "Sony IMX183"),

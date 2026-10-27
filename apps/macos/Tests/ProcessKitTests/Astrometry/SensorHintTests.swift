@@ -35,7 +35,7 @@ struct SensorHintTests {
     let tokens = SensorHint.table.map(\.model)
     #expect(Set(tokens).count == tokens.count)
     for token in tokens {
-      #expect(tokens.filter { $0 != token && $0.contains(token) }.isEmpty, "\(token)")
+      #expect(!tokens.contains { $0 != token && $0.contains(token) }, "\(token)")
     }
   }
 }

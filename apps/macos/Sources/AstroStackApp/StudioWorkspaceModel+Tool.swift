@@ -65,19 +65,15 @@ extension StudioWorkspaceModel {
       failure = toolRefusal ?? UserFacingError(StudioError.needsTool(panel.type.id)).message
       return false
     }
-    if let reason = unchosenRefusal() {
-      failure = reason
-      return false
-    }
     var recorded = false
     toolRunNumber += 1
     let number = toolRunNumber
     let (id, params, head) = (panel.type.id, panel.params, studio.steps.last?.file)
     toolRun = ToolProgress(line: "", percent: nil)
     defer { toolRun = nil }
-    // Refused before the tool runs (an engine's tool missing, card 0092): nothing else runs.
-    // A mask or a pipeline run started while the probe ran is refused too.
-    if let reason = await preflight(id, params: params) ?? toolRefusal {
+    // Refused before the tool runs (an engine's tool missing, card 0092; a choice still to make,
+    // 0140): nothing else runs. A mask or a pipeline run started while the probe ran is refused too.
+    if let reason = unchosenRefusal() ?? (await preflight(id, params: params)) ?? toolRefusal {
       failure = reason
       return false
     }

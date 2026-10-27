@@ -66,8 +66,11 @@ struct LiveColourCalibrationTests {
     let lines = Mutex<[String]>([])
     _ = try await SirilRunner.live(binary: try SirilTool.locate()).run(
       SirilScript(
-        ["oscsensor", "oscfilter", "whiteref", "monosensor", "redfilter", "greenfilter", "bluefilter"]
-          .map(SirilCommand.spccList)),
+        [
+          "oscsensor", "oscfilter", "whiteref", "monosensor", "redfilter", "greenfilter",
+          "bluefilter",
+        ]
+        .map(SirilCommand.spccList)),
       try ScratchDirectory.url
     ) { line in lines.withLock { $0.append(line.text) } }
     let lists = ColourCalibrator.lists(lines.withLock { $0 })

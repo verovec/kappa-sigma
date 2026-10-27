@@ -41,7 +41,8 @@ struct ColourCalibrationRouteTests {
       Row(
         enabled: true, values: ["sensor": "Sony IMX571", "filter": "UV/IR Block"],
         layerIDs: ["RGB"], runsTool: true, unchosen: []),
-      Row(enabled: true, values: ["method": "pcc"], layerIDs: ["RGB"], runsTool: true, unchosen: []),
+      Row(
+        enabled: true, values: ["method": "pcc"], layerIDs: ["RGB"], runsTool: true, unchosen: []),
       Row(
         enabled: true, values: ["sensor": "Sony IMX571", "filter": "UV/IR Block"],
         layerIDs: mono, runsTool: true, unchosen: ["monoSensor", "rFilter", "gFilter", "bFilter"]),
@@ -75,15 +76,19 @@ struct ColourCalibrationRouteTests {
     #expect(ColourCalibrationProcess.schema.problems.isEmpty)
   }
 
+  static func offer(_ paramID: String, _ sensor: String, _ instrume: String) -> [Suggestion] {
+    [
+      Suggestion(
+        paramID: paramID, value: .choice(sensor), reason: ColourCalibrationProcess.fromHeader,
+        subject: instrume)
+    ]
+  }
+
   @Test(
     "the header's camera is offered on the route's sensor, never set; none off the route",
     arguments: [
-      ("ZWO ASI2600MC Air", Set(["RGB"]), [Suggestion(
-        paramID: "sensor", value: .choice("Sony IMX571"),
-        reason: ColourCalibrationProcess.fromHeader, subject: "ZWO ASI2600MC Air")]),
-      ("ZWO ASI1600MM Pro", mono, [Suggestion(
-        paramID: "monoSensor", value: .choice("ZWO ASI1600MM"),
-        reason: ColourCalibrationProcess.fromHeader, subject: "ZWO ASI1600MM Pro")]),
+      ("ZWO ASI2600MC Air", Set(["RGB"]), offer("sensor", "Sony IMX571", "ZWO ASI2600MC Air")),
+      ("ZWO ASI1600MM Pro", mono, offer("monoSensor", "ZWO ASI1600MM", "ZWO ASI1600MM Pro")),
       ("ZWO ASI1600MM Pro", Set(["RGB"]), []),
       ("Canon EOS R6", Set(["RGB"]), []),
     ])

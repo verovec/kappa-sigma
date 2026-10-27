@@ -34,11 +34,14 @@ extension StudioWorkspaceModelTests {
     #expect(panel.rowNotes.isEmpty)
     #expect(!panel.visibleSpecs.contains { $0.id.hasPrefix("sii") })
 
-    // The head moves (an Apply): the panel's layers and notes are read again from the session.
+    // The layers move: the notes follow at once (Hα and OIII are on by default); the head moves
+    // (an Apply): the panel's layers are read again from the session and the notes clear.
     panel.layerIDs = ["RGB"]
+    #expect(panel.rowNotes["haEnabled"]?.subject == "Hα" && panel.rowNotes.count == 2)
     await workspace.previewNow()
     try workspace.apply()
     #expect(workspace.panel === panel && panel.layerIDs == ["RGB", "Ha", "OIII"])
+    #expect(panel.rowNotes.isEmpty)
   }
 
   @Test("the row note is worded in the view's language, with its subject")

@@ -22,6 +22,7 @@ struct ProcessParameterRow: View {
         )
         .font(.caption)
         .foregroundStyle(DesignColor.textSecondary.color)
+        .accessible(.parameter(key, .note), label: label)
       }
       ForEach(Array(suggestions.enumerated()), id: \.offset) { offset, suggestion in
         Button {

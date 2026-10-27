@@ -32,6 +32,14 @@ extension ProcessSchemaTests {
         .isEmpty)
   }
 
+  @Test("every process whose rows carry needsLayer lists a row reason (the default needs one)")
+  func testRowReasons_declared() throws {
+    for type in try ProcessRegistry.standard().types {
+      let hasLayerRows = type.schema.specs.contains { $0.needsLayer != nil }
+      #expect(!hasLayerRows || !type.rowReasons.isEmpty, "\(type.id)")
+    }
+  }
+
   /// One row per process: the values, the layers present, and the reason expected per param.
   struct Reasons: CustomTestStringConvertible, Sendable {
     let name: String

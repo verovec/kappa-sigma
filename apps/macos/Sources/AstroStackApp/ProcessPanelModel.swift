@@ -14,7 +14,7 @@ package final class ProcessPanelModel {
   package private(set) var params: ParamSet {
     didSet {
       measureClipping()
-      hidden = hiddenNow
+      refreshLayerRows()
     }
   }
   /// The advanced parameters are shown.
@@ -43,12 +43,12 @@ package final class ProcessPanelModel {
   /// A line's rows show only while its layer is among them, or while the values still ask for
   /// it; `nil` until the workspace says (a panel built elsewhere hides nothing).
   package var layerIDs: Set<String>? {
-    didSet { hidden = hiddenNow }
+    didSet { refreshLayerRows() }
   }
   /// Why a row's value cannot run on this stack, by parameter id (card 0135).
   ///
-  /// Shown under the row, never greying the process. Set by the workspace with the values.
-  package var rowNotes: [String: RowNote] = [:]
+  /// Shown under the row, never greying the process; kept with the values and the layers.
+  package private(set) var rowNotes: [String: RowNote] = [:]
   /// The head's size in full-resolution pixels (`nil` until the workspace sets it).
   ///
   /// Setting it sizes the sliders the process sizes from the image (`displayRanges`).
@@ -84,8 +84,14 @@ package final class ProcessPanelModel {
   ///
   /// Kept with the values and the layers, not computed per view evaluation.
   private var hidden: Set<String> = []
-  private var hiddenNow: Set<String> {
-    layerIDs.map { type.hiddenParameters(params, layerIDs: $0) } ?? []
+
+  /// The hidden rows and the notes from the values and the layers; an equal result is not
+  /// assigned (every row would redraw).
+  private func refreshLayerRows() {
+    let hiddenNow = layerIDs.map { type.hiddenParameters(params, layerIDs: $0) } ?? []
+    if hiddenNow != hidden { hidden = hiddenNow }
+    let notesNow = layerIDs.map { type.unavailableReasons(params, layerIDs: $0) } ?? [:]
+    if notesNow != rowNotes { rowNotes = notesNow }
   }
 
   /// Whether the « Advanced » disclosure opens onto anything: an advanced row that is not hidden.

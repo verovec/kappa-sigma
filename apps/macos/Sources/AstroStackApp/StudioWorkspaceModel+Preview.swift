@@ -53,7 +53,6 @@ extension StudioWorkspaceModel {
     appliedNothing = false
     if let panel {
       panel.suggestions = offers(for: panel.type, params: panel.params)
-      refreshRowNotes(panel)
     }
     greyUnavailable()
     // The head comes back now: a preview cancelled or refused would leave the model on screen.

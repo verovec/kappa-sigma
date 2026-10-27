@@ -33,27 +33,40 @@ package enum ProcessLibrary {
 
   /// ProcessKit's bundled `Shaders/<file>`, compiled once for several pipelines.
   ///
-  /// `#include "STF.h"` is replaced by RenderKit's header (the runtime compiler has no include
-  /// path): the display, the stretch and the levels share one MTF.
+  /// `#include "STF.h"` is replaced by RenderKit's header and `#include "Lines.h"` by ProcessKit's
+  /// own (the runtime compiler has no include path): the display, the stretch and the levels
+  /// share one MTF; the line kernels share one per-line layout with Swift.
   package static func library(device: MTLDevice, file: String) throws -> MTLLibrary {
     let bundle = ProcessKitResources.bundle
     guard let url = bundle.url(forResource: "Shaders/" + file, withExtension: nil),
       var source = try? String(contentsOf: url, encoding: .utf8)
     else { throw ProcessError.shader("\(file) missing from ProcessKit's resources") }
-    let include = "#include \"\(sharedHeader)\""
-    if source.contains(include) {
-      guard
-        let header = try? String(
-          contentsOf: ShaderLibrary.sourceFolder().appendingPathComponent(sharedHeader),
-          encoding: .utf8)
-      else { throw ProcessError.shader("\(sharedHeader) missing from RenderKit's resources") }
-      source = source.replacingOccurrences(of: include, with: header)
-    }
+    try inline(
+      sharedHeader, from: ShaderLibrary.sourceFolder().appendingPathComponent(sharedHeader),
+      owner: "RenderKit", into: &source)
+    try inline(
+      linesHeader, from: bundle.url(forResource: "Shaders/" + linesHeader, withExtension: nil),
+      owner: "ProcessKit", into: &source)
     do {
       return try device.makeLibrary(source: source, options: ShaderLibrary.compileOptions)
     } catch {
       throw ProcessError.shader("\(file): \(error)")
     }
+  }
+
+  /// ProcessKit's header of the line kernels' per-line structs (`LineKernels`).
+  package static let linesHeader = "Lines.h"
+
+  /// Replaces `#include "<header>"` in `source` by the header at `url`, when `source` includes it.
+  private static func inline(
+    _ header: String, from url: URL?, owner: String, into source: inout String
+  ) throws {
+    let include = "#include \"\(header)\""
+    guard source.contains(include) else { return }
+    guard let url, let text = try? String(contentsOf: url, encoding: .utf8) else {
+      throw ProcessError.shader("\(header) missing from \(owner)'s resources")
+    }
+    source = source.replacingOccurrences(of: include, with: text)
   }
 
   /// The pipeline of `function` in a compiled `library`.

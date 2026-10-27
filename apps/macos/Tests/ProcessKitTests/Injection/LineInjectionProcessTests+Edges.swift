@@ -81,3 +81,24 @@ extension LineInjectionProcessTests {
     #expect(subtracted.params.number("haBlack") == 0, "offered, never applied")
   }
 }
+
+extension LineInjectionProcessTests {
+  @Test(
+    "only the lines that inject are bound, in canonical order from slot 0; the result is the oracle",
+    arguments: [
+      (["siiGain": 2.0], ["SII"]),
+      (["haGain": 1, "siiGain": 2, "oiiiBlack": 0.1, "oiiiContinuumK": 0.3], ["Ha", "SII"]),
+      (["siiGain": 1, "oiiiGain": 1, "haGain": 1, "haRed": 0], ["OIII", "SII"]),
+    ] as [([String: Double], [String])])
+  func testSlotCompactionKeepsOrder(values: [String: Double], slots: [String]) throws {
+    let params = try Self.params(values)
+    #expect(LineInjectionProcess.boundLines(params).map(\.layerID) == slots)
+    let base = Self.planes["RGB"] ?? []
+    let lines = try LineInjectionOracle.lines(
+      params: params, planes: Self.planes, references: Self.references)
+    let expected = LineInjectionOracle.inject(base, lines: lines)
+    let out = try Self.render(values)
+    #expect(zip(out.joined(), expected.joined()).allSatisfy { abs($0 - $1) <= 1e-6 })
+    #expect(out != base)
+  }
+}

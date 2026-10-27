@@ -43,16 +43,14 @@ package struct LineInjectionProcess: ImageProcess {
   /// The line layers that inject, and every broadband layer once one of them subtracts its
   /// continuum (the plane k multiplies is the bundle's fit, unknown from the values alone).
   package static func layersRead(_ params: ParamSet, layerIDs: Set<String>) -> Set<String> {
-    let continuum = EmissionLine.allCases.contains {
-      injects($0, params: params) && subtracts($0, params: params)
-    }
+    let continuum = boundLines(params).contains { subtracts($0, params: params) }
     return layersMerged(params, layerIDs: layerIDs)
       .union(continuum ? layerIDs.subtracting(EmissionLine.layerIDs) : [])
   }
 
   /// The lines that inject: the broadband a continuum subtracts is not added.
   package static func layersMerged(_ params: ParamSet, layerIDs: Set<String>) -> Set<String> {
-    Set(EmissionLine.allCases.filter { injects($0, params: params) }.map(\.layerID))
+    Set(boundLines(params).map(\.layerID))
       .intersection(layerIDs)
   }
 
@@ -67,27 +65,33 @@ package struct LineInjectionProcess: ImageProcess {
     guard output.planes.count == input.planes.count, output.width == input.width,
       output.height == input.height
     else { throw ProcessError.sizeMismatch }
+    let bound = Self.boundLines(params)
     // Nothing to add changes no bit (not even −0.0): the head goes through as it is.
-    guard EmissionLine.allCases.contains(where: { Self.injects($0, params: params) }) else {
+    guard !bound.isEmpty else {
       return try ColourKernel.copy(input, into: output, commands: context.commands)
     }
     guard input.planes.count == 3 else {
       throw ProcessError.invalidParameter("line injection needs an RGB base")
     }
     var textures: [MTLTexture] = []
-    var values: [Float] = []
-    for line in EmissionLine.allCases {
-      // A line that adds nothing needs no layer: the kernel skips zero weights.
-      let (plane, reference) =
-        Self.injects(line, params: params)
-        ? try planes(line, size: input, context: context) : (input.planes[0], input.planes[0])
+    var values: [LineKernels.InjectLine] = []
+    for line in bound {
+      let (plane, reference) = try planes(line, size: input, context: context)
       textures += [plane, reference]
-      values +=
-        Self.weights(line, params: params)
-        + [params.number(line.id("ContinuumK")), params.number(line.id("Black"))]
-        .map(Float.init)
+      let weights = Self.weights(line, params: params)
+      values.append(
+        LineKernels.InjectLine(
+          weight: (weights[0], weights[1], weights[2]),
+          k: Float(params.number(line.id("ContinuumK"))),
+          black: Float(params.number(line.id("Black")))))
     }
     try encode(input, into: output, lines: textures, values: values, context: context)
+  }
+
+  /// The lines the kernel reads, in canonical order: those that inject. A line that adds nothing
+  /// left the base untouched in the unrolled kernel, so leaving it out changes no bit (card 0136).
+  package static func boundLines(_ params: ParamSet) -> [EmissionLine] {
+    EmissionLine.allCases.filter { injects($0, params: params) }
   }
 
   /// The plane of `line` and the plane k multiplies (the line itself when k = 0: no reference
@@ -107,21 +111,30 @@ package struct LineInjectionProcess: ImageProcess {
     return (plane, reference)
   }
 
-  /// Encodes the kernel: base at textures 0–2, output at 3–5, then each line's plane and
-  /// reference from 6; five values per line at buffer 0 (see LineInjection.metal).
+  /// Encodes the kernel: base at textures 0–2, output at 3–5, each bound line's plane and
+  /// reference from 6, the free slots padded with the base; one `InjectLine` per bound line at
+  /// buffer 0 and their count at buffer 1 (see LineInjection.metal).
   private func encode(
-    _ input: GPUImage, into output: GPUImage, lines: [MTLTexture], values: [Float],
-    context: RenderContext
+    _ input: GPUImage, into output: GPUImage, lines: [MTLTexture],
+    values: [LineKernels.InjectLine], context: RenderContext
   ) throws {
+    guard values.count <= LineKernels.maxLines else {
+      throw ProcessError.invalidParameter("more than \(LineKernels.maxLines) lines")
+    }
     guard let encoder = context.commands.makeComputeCommandEncoder() else {
       throw ProcessError.commandFailed("line injection encoder")
     }
-    var values = values
+    var count = UInt32(values.count)
     encoder.setComputePipelineState(pipeline)
     for (index, plane) in input.planes.enumerated() { encoder.setTexture(plane, index: index) }
     for (index, plane) in output.planes.enumerated() { encoder.setTexture(plane, index: 3 + index) }
-    for (index, texture) in lines.enumerated() { encoder.setTexture(texture, index: 6 + index) }
-    unsafe encoder.setBytes(&values, length: values.count * MemoryLayout<Float>.stride, index: 0)
+    for slot in 0..<(2 * LineKernels.maxLines) {
+      encoder.setTexture(slot < lines.count ? lines[slot] : input.planes[0], index: 6 + slot)
+    }
+    var values = values
+    unsafe encoder.setBytes(
+      &values, length: values.count * MemoryLayout<LineKernels.InjectLine>.stride, index: 0)
+    unsafe encoder.setBytes(&count, length: MemoryLayout<UInt32>.stride, index: 1)
     encoder.dispatchThreads(
       MTLSize(width: output.width, height: output.height, depth: 1),
       threadsPerThreadgroup: MTLSize(width: 16, height: 16, depth: 1))

@@ -61,8 +61,9 @@ package struct EmissionScreensProcess: ImageProcess {
     Set(boundLines(params).map(\.layerID)).intersection(layerIDs)
   }
 
-  /// The lines the blend kernel reads, in screen order: the enabled ones with α above 0. An
-  /// invisible line left the base untouched in the unrolled kernel, so leaving it out changes no
+  /// The lines the blend kernel reads, in screen order: the enabled ones with α above 0.
+  ///
+  /// An invisible line left the base untouched in the unrolled kernel, so leaving it out changes no
   /// bit (card 0136).
   package static func boundLines(_ params: ParamSet) -> [EmissionLine] {
     enabledLines(params).filter { alpha($0, params: params) > 0 }

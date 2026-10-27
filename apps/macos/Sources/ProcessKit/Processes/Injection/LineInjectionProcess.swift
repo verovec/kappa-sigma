@@ -88,8 +88,9 @@ package struct LineInjectionProcess: ImageProcess {
     try encode(input, into: output, lines: textures, values: values, context: context)
   }
 
-  /// The lines the kernel reads, in canonical order: those that inject. A line that adds nothing
-  /// left the base untouched in the unrolled kernel, so leaving it out changes no bit (card 0136).
+  /// The lines the kernel reads, in canonical order: those that inject.
+  ///
+  /// A line that adds nothing left the base untouched in the unrolled kernel, so leaving it out changes no bit (card 0136).
   package static func boundLines(_ params: ParamSet) -> [EmissionLine] {
     EmissionLine.allCases.filter { injects($0, params: params) }
   }

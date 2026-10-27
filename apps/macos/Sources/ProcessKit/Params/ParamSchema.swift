@@ -39,6 +39,10 @@ package struct ParamSchema: Equatable, Sendable {
         return options.contains(value) ? nil : "\(spec.id): default \(value) not among its options"
       case .flag:
         return nil
+      case .layer(let value, let allowsNone, let allowsProduct):
+        let formed = LayerPlane.isWellFormed(
+          value, allowsNone: allowsNone, allowsProduct: allowsProduct)
+        return formed ? nil : "\(spec.id): default \(value) is not a layer token"
       case .text(let value, let maxLength):
         return value.count <= maxLength ? nil : "\(spec.id): default longer than \(maxLength)"
       case .points(let value, let maxCount):

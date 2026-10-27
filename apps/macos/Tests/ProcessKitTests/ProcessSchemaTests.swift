@@ -106,6 +106,12 @@ struct ProcessSchemaTests {
         ParamSpec(id: "c", title: "C", level: .simple, choice: "auto", of: ["linear", "log"]),
         "c: default auto not among its options"
       ),
+      (
+        ParamSpec(
+          id: "l", title: "L", level: .simple, layer: "Ha*OIII", allowsNone: true,
+          allowsProduct: false),
+        "l: default Ha*OIII is not a layer token"
+      ),
     ])
   func testSchemaDefaults(spec: ParamSpec, problem: String) {
     #expect(ParamSchema([spec]).problems == [problem])

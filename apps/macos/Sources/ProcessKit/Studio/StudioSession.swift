@@ -68,6 +68,12 @@ package final class StudioSession {
     Set(bundle.layers.keys).union(history.layerRoles.map(\.rawValue))
   }
 
+  /// The planes of each bundle layer (card 0138): what a layer parameter lists — the stack's
+  /// layers, not the step outputs (a mask or a background model is no colour source).
+  package func layerPlanes() -> [String: Int] {
+    bundle.layers.mapValues { $0.planes.count }
+  }
+
   /// The layer the working image starts from: `RGB`, else the first id in order (never the
   /// dictionary's order, which changes from one launch to the next).
   package static func baseLayerID(_ ids: some Collection<String>) -> String? {

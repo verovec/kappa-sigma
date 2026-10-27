@@ -29,6 +29,14 @@ package struct EmissionLine: Hashable, Sendable, CaseIterable {
   /// The bundle layers of every line.
   package static let layerIDs = Set(allCases.map(\.layerID))
 
+  /// Whether the bundle layer `id` is a line layer, known or not (`NII-custom`): StackKit's
+  /// `LinearBundle.Role(filter:)` rule — not a step role, not a broadband filter, not the colour
+  /// base (card 0136).
+  package static func isLineLayer(_ id: String) -> Bool {
+    guard LayerRole(rawValue: id) == nil, !Filter.isColor(id) else { return false }
+    return Filter.token(id).map { !Filter.broadband.contains($0) } ?? true
+  }
+
   /// The prefix of its parameter ids (`haBlack`, `oiiiOpacity`…).
   package var prefix: String { filter.rawValue.lowercased() }
 

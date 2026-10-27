@@ -193,7 +193,10 @@ struct DualbandSplitTests {
       ], out: out)
     #expect(channels == ["RGB": "aligned_RGB", "Ha": "syn_Ha", "OIII": "syn_OIII"])
     #expect(note?.contains("multi-band clip:") == false)
-    #expect(note?.contains("Ha of the multiband lane skipped") == true)
+    #expect(
+      note?.contains("Ha of the multiband lane skipped: another lane already gave it") == true)
+    #expect(
+      note?.contains("OIII of the multiband lane skipped: another lane already gave it") == true)
   }
 
   @Test("a broadband master under a custom filter name stays the base", .scratchDirectory)

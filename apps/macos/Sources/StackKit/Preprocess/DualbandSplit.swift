@@ -131,13 +131,17 @@ package enum DualbandSplit {
     taken held: Set<Filter>, notes: inout [String]
   ) -> [String] {
     guard let lines = set.lines else { return [] }
-    let taken = Set(
-      [lines.red, lines.greenBlue].filter { kept[$0.rawValue] != nil || held.contains($0) })
-    for line in [lines.red, lines.greenBlue] where taken.contains(line) {
-      let why =
-        held.contains(line) ? "the colour base already holds it" : "another lane already gave it"
+    // Each line's fate, decided once: the plane it comes from, or why it is not written.
+    let pair = [(lines.red, "red pixels"), (lines.greenBlue, "max of green/blue")]
+    let skipped = pair.compactMap { line, _ -> (Filter, String)? in
+      if held.contains(line) { return (line, "the colour base already holds it") }
+      if kept[line.rawValue] != nil { return (line, "another lane already gave it") }
+      return nil
+    }
+    for (line, why) in skipped {
       notes.append("\(line.rawValue) of the \(set.rawValue) lane skipped: \(why)")
     }
+    let taken = Set(skipped.map(\.0))
     guard taken.count < 2 else { return [] }
     do {
       let names = try split(

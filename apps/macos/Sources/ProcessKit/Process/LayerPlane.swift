@@ -1,3 +1,4 @@
+internal import FilterKit
 package import Metal
 
 /// One plane of a bundle layer, named as panels and the bundle name it: `R` (a mono layer's
@@ -10,12 +11,14 @@ package struct LayerPlane: Equatable, Sendable {
   /// The name it was made from.
   package let token: String
 
+  /// The plane suffixes of a 3-plane layer, in plane order (`RGB.r` is plane 0).
+  package static let planeNames = ["r", "g", "b"]
+
   /// The plane `token` names.
   package init(_ token: String) {
     self.token = token
-    let planes = ["r": 0, "g": 1, "b": 2]
     if let dot = token.lastIndex(of: "."),
-      let plane = planes[String(token[token.index(after: dot)...])]
+      let plane = Self.planeNames.firstIndex(of: String(token[token.index(after: dot)...]))
     {
       layer = String(token[..<dot])
       self.plane = plane
@@ -27,15 +30,26 @@ package struct LayerPlane: Equatable, Sendable {
 
   /// The plane's texture among the bundle `layers`, which must be `width` × `height`.
   ///
-  /// A missing layer or plane is an error, never another plane (R2); a layer of another size
-  /// would be read at the wrong pixels.
+  /// A missing layer or plane is an error, never another plane (R2). A whole token reads the
+  /// layer's first plane — a mono layer's only one, the red plane of a colour lane tagged as a
+  /// line (an OSC run through an Hα clip), as the screens and the injection read it; a plane
+  /// token (`L.r`) needs a colour layer, never plane 0 of a mono one. One parse for every
+  /// reader: a layer id ending in `.r`, `.g` or `.b` is read as a plane token.
   package func texture(in layers: [String: GPUImage], width: Int, height: Int) throws
     -> MTLTexture
   {
     guard let image = layers[layer] else { throw ProcessError.missingLayer(layer) }
     guard image.width == width, image.height == height else { throw ProcessError.sizeMismatch }
-    guard plane < image.planes.count else { throw ProcessError.missingLayer(token) }
+    guard Self.readable(planes: image.planes.count, whole: token == layer) else {
+      throw ProcessError.missingLayer(token)
+    }
     return image.planes[plane]
+  }
+
+  /// Whether a layer of `planes` planes is read by a whole token (its first plane) or a plane
+  /// token (one of the three colour planes).
+  private static func readable(planes: Int, whole: Bool) -> Bool {
+    whole ? planes >= 1 : planes >= planeNames.count
   }
 
   /// The plane's bundle statistics, if the bundle has them per plane.
@@ -43,9 +57,66 @@ package struct LayerPlane: Equatable, Sendable {
   /// A colour plane (`RGB.r`) needs one entry per plane: a single entry averaged over the planes
   /// is not the red plane's, so it gives none rather than the average.
   package func stats(in layerStats: [String: LayerStats]) -> ChannelStats? {
-    guard let channels = layerStats[layer]?.channels, plane < channels.count,
-      token == layer || channels.count >= 3
+    guard let channels = layerStats[layer]?.channels,
+      Self.readable(planes: channels.count, whole: token == layer)
     else { return nil }
     return channels[plane]
+  }
+
+  // MARK: - Tokens a layer parameter takes (card 0138)
+
+  /// Whether `token` is a layer token by grammar — `none` (when allowed), `<id>` or `<id>.r|g|b`
+  /// for any id the bundle may carry (a FITS filter name kept verbatim: non-empty, trimmed, no
+  /// `*`), or `<a>*<b>` of two different whole layers (when allowed) — the bundle being the only
+  /// judge of whether the layer exists.
+  package static func isWellFormed(_ token: String, allowsNone: Bool, allowsProduct: Bool)
+    -> Bool
+  {
+    if token == "none" { return allowsNone }
+    let parts = token.split(separator: "*", omittingEmptySubsequences: false).map(String.init)
+    switch parts.count {
+    case 1:
+      return isLayerID(Self(parts[0]).layer)
+    case 2 where allowsProduct:
+      // √(A·B) multiplies two whole layers: no plane, no `none`, two different ids.
+      return parts[0] != parts[1]
+        && parts.allSatisfy { isLayerID($0) && Self($0).layer == $0 }
+    default:
+      return false
+    }
+  }
+
+  /// A layer id as the bundle may name one: non-empty, trimmed, without `*`, not `none`.
+  private static func isLayerID(_ id: String) -> Bool {
+    guard let first = id.first, let last = id.last, id != "none" else { return false }
+    return !first.isWhitespace && !last.isWhitespace && !id.contains("*")
+  }
+
+  /// The tokens a bundle of `planes` (planes per layer id) offers a layer parameter.
+  ///
+  /// `none` first when allowed; the colour layer first, then the canonical filter order; a plane
+  /// per 3-plane layer; and, when allowed, the product of every pair of 1-plane lines present (a
+  /// line = neither a broadband filter nor the colour layer, the bundle's own role rule). An id
+  /// the grammar refuses is never offered.
+  package static func options(planes: [String: Int], allowsNone: Bool, allowsProduct: Bool)
+    -> [String]
+  {
+    let ids = planes.keys.filter(isLayerID).sorted { lhs, rhs in
+      if lhs == Filter.color || rhs == Filter.color { return lhs == Filter.color }
+      return Filter.less(lhs, rhs)
+    }
+    var options = allowsNone ? ["none"] : []
+    for id in ids {
+      options += planes[id] == planeNames.count ? planeNames.map { "\(id).\($0)" } : [id]
+    }
+    guard allowsProduct else { return options }
+    // √(A·B) multiplies two whole lines: a 3-plane line (offered by plane) makes no product.
+    let lines = ids.filter { id in
+      planes[id] == 1 && id != Filter.color && !Filter.broadband.contains { $0.rawValue == id }
+    }
+    for (index, first) in lines.enumerated() {
+      options += lines[(index + 1)...].map { "\(first)*\($0)" }
+    }
+    return options
   }
 }

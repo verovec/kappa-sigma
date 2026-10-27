@@ -14,6 +14,16 @@ struct ProcessParameterRow: View {
   var body: some View {
     VStack(alignment: .leading, spacing: DesignMetrics.spacingXS) {
       control
+      // Why this value cannot run on the stack (card 0135): said, never enforced (R2).
+      if let note = model.rowNotes[spec.id] {
+        Text(
+          verbatim: ProcessPanelModel.words(
+            reason: note.reason, subject: note.subject, locale: locale)
+        )
+        .font(.caption)
+        .foregroundStyle(DesignColor.textSecondary.color)
+        .accessible(.parameter(key, .note), label: label)
+      }
       ForEach(Array(suggestions.enumerated()), id: \.offset) { offset, suggestion in
         Button {
           model.take(suggestion)
@@ -50,23 +60,10 @@ struct ProcessParameterRow: View {
         helpButton
       }
     case .choice(_, let options):
-      HStack {
-        Picker(selection: choice) {
-          ForEach(options, id: \.self) { option in
-            if let reason = model.unavailableOptions[spec.id]?[option] {
-              // Greyed with why; a value already chosen stays chosen (R2).
-              Text(.app("\(option) — \(String(localized: reason))")).tag(option)
-                .selectionDisabled()
-            } else {
-              Text(verbatim: option).tag(option)
-            }
-          }
-        } label: {
-          Text(label)
-        }
-        .accessible(.parameter(key, .choice), label: label)
-        helpButton
-      }
+      picker(options)
+    case .layer:
+      // The bundle names the options (card 0138); the value chosen stays listed.
+      picker(model.layerOptions(for: spec.id))
     case .text:
       HStack {
         TextField(text: text) { Text(label) }
@@ -133,6 +130,27 @@ struct ProcessParameterRow: View {
     Binding(
       get: { model.params.text(spec.id) },
       set: { model.set(spec.id, .text($0)) })
+  }
+
+  /// A choice among `options`, each greyed with why when the panel says so.
+  private func picker(_ options: [String]) -> some View {
+    HStack {
+      Picker(selection: choice) {
+        ForEach(options, id: \.self) { option in
+          if let reason = model.unavailableOptions[spec.id]?[option] {
+            // Greyed with why; a value already chosen stays chosen (R2).
+            Text(.app("\(option) — \(String(localized: reason))")).tag(option)
+              .selectionDisabled()
+          } else {
+            Text(verbatim: option).tag(option)
+          }
+        }
+      } label: {
+        Text(label)
+      }
+      .accessible(.parameter(key, .choice), label: label)
+      helpButton
+    }
   }
 
   private var choice: Binding<String> {

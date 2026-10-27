@@ -58,10 +58,29 @@ package struct EmissionScreensProcess: ImageProcess {
   /// The enabled lines `render` lays in (opacity and blend above 0): the broadband a continuum
   /// subtracts is not laid in.
   package static func layersMerged(_ params: ParamSet, layerIDs: Set<String>) -> Set<String> {
-    let visible = enabledLines(params).filter {
-      params.number($0.id("Opacity")) * params.number("nbBlend") > 0
-    }
-    return Set(visible.map(\.layerID)).intersection(layerIDs)
+    Set(boundLines(params).map(\.layerID)).intersection(layerIDs)
+  }
+
+  /// The lines the blend kernel reads, in screen order: the enabled ones with α above 0.
+  ///
+  /// An invisible line left the base untouched in the unrolled kernel, so leaving it out changes no
+  /// bit (card 0136).
+  package static func boundLines(_ params: ParamSet) -> [EmissionLine] {
+    enabledLines(params).filter { alpha($0, params: params) > 0 }
+  }
+
+  /// The opacity of `line` times the narrowband blend.
+  static func alpha(_ line: EmissionLine, params: ParamSet) -> Double {
+    params.number(line.id("Opacity")) * params.number("nbBlend")
+  }
+
+  /// The reason an enabled line's rows carry while its layer is absent (card 0135).
+  package static let lineLayerReason = "the screen needs its line layer"
+  package static let rowReasons = [lineLayerReason]
+
+  /// The lines the values enable: what the panel keeps on screen even without the layer.
+  package static func layersAsked(_ params: ParamSet) -> Set<String> {
+    Set(enabledLines(params).map(\.layerID))
   }
 
   /// Why `params` cannot run with only the `present` layers ("Hα screen needs the Ha layer").
@@ -79,30 +98,41 @@ package struct EmissionScreensProcess: ImageProcess {
       output.height == input.height
     else { throw ProcessError.sizeMismatch }
     let stretches = try lineStretches(layerStats: context.layerStats)
-    var lines: [MTLTexture?] = []
-    var values: [Float] = []
-    for line in EmissionLine.allCases {
-      let alpha = params.number(line.id("Opacity")) * params.number("nbBlend")
-      // An invisible line is not prepared: its screen would add exactly nothing.
-      guard let stretch = stretches[line], alpha > 0 else {
-        lines.append(nil)
-        values += [0, 0, 0, 0]
-        continue
-      }
+    var lines: [MTLTexture] = []
+    var values: [LineKernels.ScreenLine] = []
+    let bound = Self.boundLines(params)
+    try LineKernels.checkSlots(bound.count)
+    for line in bound {
+      // Unreachable: `lineStretches` refuses every enabled line without a stretch.
+      guard let stretch = stretches[line] else { continue }
       lines.append(try prepared(line, stretch: stretch, size: input, context: context))
-      let tint = ScreenTint(rawValue: params.choice(line.id("Tint")))?.rgb ?? [0, 0, 0]
-      values += ([alpha] + tint).map(Float.init)
+      let rgb = ScreenTint(rawValue: params.choice(line.id("Tint")))?.rgb ?? [0, 0, 0]
+      let tint = rgb.map { Float($0) }
+      values.append(
+        LineKernels.ScreenLine(
+          alpha: Float(Self.alpha(line, params: params)), tint: (tint[0], tint[1], tint[2])))
     }
+    try encodeBlend(input, into: output, lines: lines, values: values, context: context)
+  }
+
+  /// Encodes the blend: base at textures 0–2, each bound line's prepared layer from 3
+  /// (`LineKernels.bind`), output after the line slots; one `ScreenLine` per bound line (see
+  /// Screens.metal).
+  private func encodeBlend(
+    _ input: GPUImage, into output: GPUImage, lines: [MTLTexture],
+    values: [LineKernels.ScreenLine], context: RenderContext
+  ) throws {
     guard let encoder = context.commands.makeComputeCommandEncoder() else {
       throw ProcessError.commandFailed("screens encoder")
     }
     encoder.setComputePipelineState(blend)
     for (index, plane) in input.planes.enumerated() { encoder.setTexture(plane, index: index) }
-    for (index, line) in lines.enumerated() {
-      encoder.setTexture(line ?? input.planes[0], index: 3 + index)
+    LineKernels.bind(
+      lines, perLine: 1, from: 3, padding: input.planes[0], values: values,
+      encoder: encoder)
+    for (index, plane) in output.planes.enumerated() {
+      encoder.setTexture(plane, index: 3 + LineKernels.maxLines + index)
     }
-    for (index, plane) in output.planes.enumerated() { encoder.setTexture(plane, index: 6 + index) }
-    unsafe encoder.setBytes(&values, length: values.count * MemoryLayout<Float>.stride, index: 0)
     encoder.dispatchThreads(
       MTLSize(width: output.width, height: output.height, depth: 1),
       threadsPerThreadgroup: MTLSize(width: 16, height: 16, depth: 1))

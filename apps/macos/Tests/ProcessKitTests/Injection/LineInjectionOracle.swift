@@ -1,8 +1,9 @@
+import FilterKit
 import ProcessKit
 import Testing
 
 /// The CPU oracle of `LineInjection.metal`, in Float like the kernel: per target plane `p`,
-/// `base_p + Σ gain · share_p · max(line − k · ref − black, 0)` in Hα, [OIII], [SII] order, then
+/// `base_p + Σ gain · share_p · max(line − k · ref − black, 0)` in the catalogue's line order, then
 /// the generic mask blend `m · processed + (1 − m) · input`.
 enum LineInjectionOracle {
   /// One line's values and planes.
@@ -15,14 +16,16 @@ enum LineInjectionOracle {
     var black: Double
   }
 
-  static let prefixes = ["ha", "oiii", "sii"]
+  /// The lines' parameter prefixes and bundle layers, from the one filter list (card 0136).
+  static let prefixes = Filter.narrowband.map { $0.rawValue.lowercased() }
+  static let layers = Filter.narrowband.map(\.rawValue)
 
   /// The lines `params` inject, read from `planes` (`Ha`, `OIII`, `SII`, `RGB` by plane) with
   /// the reference token of each line; a missing layer or reference fails the test.
   static func lines(
     params: ParamSet, planes: [String: [[Float]]], references: [String: String]
   ) throws -> [Line] {
-    try zip(prefixes, ["Ha", "OIII", "SII"]).compactMap { prefix, layer in
+    try zip(prefixes, layers).compactMap { prefix, layer in
       let gain = params.number(prefix + "Gain")
       let shares = ["Red", "Green", "Blue"].map { params.number(prefix + $0) }
       // The process's rule: a line injects when some gain × share is not 0.

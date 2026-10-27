@@ -102,6 +102,20 @@ struct BackgroundExtractionProcessTests {
     #expect(targets == .init(head: row.head, layers: row.layers))
   }
 
+  @Test(
+    "« lines » corrects every layer whose role is a line, a filter outside the catalogue too",
+    arguments: zip(
+      [
+        ["RGB", "Ha", "OIII"], ["RGB", "Ha", "NII-custom"], ["L", "R", "G", "B", "Ha"],
+        ["RGB", "starless"],
+      ],
+      [["Ha", "OIII"], ["Ha", "NII-custom"], ["Ha"], []]))
+  func testTargets_lines(layers: [String], expected: [String]) throws {
+    let params = try Self.params(["applyTo": .choice("lines")])
+    let targets = BackgroundExtractionProcess.targets(params, layerIDs: layers)
+    #expect(targets == .init(head: false, layers: expected))
+  }
+
   @Test("a scope with nothing to correct is refused with the reason, before any engine runs")
   func testNothingToCorrect() async throws {
     let calls = Calls()

@@ -100,10 +100,9 @@ package struct BackgroundExtractionProcess: ImageProcess {
 
   /// What `params` rewrites over a bundle of `layerIDs`.
   package static func targets(_ params: ParamSet, layerIDs: some Collection<String>) -> Targets {
-    let lines = Set(EmissionLine.allCases.map(\.layerID))
     switch params["applyTo"] {
     case .choice("lines"):
-      return Targets(head: false, layers: layerIDs.filter(lines.contains).sorted())
+      return Targets(head: false, layers: layerIDs.filter(EmissionLine.isLineLayer).sorted())
     case .choice("all"):
       // Image layers only: a layer named as a step role (a bundled `starless`) is not one.
       let images = layerIDs.filter { LayerRole(rawValue: $0) == nil }
@@ -123,7 +122,8 @@ package struct BackgroundExtractionProcess: ImageProcess {
     let images =
       (targets.head ? [input.image] : []) + targets.layers.compactMap { input.layers[$0] }
     guard !images.isEmpty else {
-      throw ProcessError.missingLayer("an emission line layer (Ha, OIII, SII)")
+      let known = EmissionLine.allCases.map(\.layerID).joined(separator: ", ")
+      throw ProcessError.missingLayer("an emission line layer (\(known))")
     }
     var pairs: [(corrected: AstroImage, model: AstroImage)] = []
     for image in images {

@@ -13,6 +13,9 @@ package struct ParamSpec: Equatable, Sendable {
     case points(default: [CurvePoint], maxCount: Int)
     /// Free text, at most `maxLength` characters.
     case text(default: String, maxLength: Int)
+    /// A bundle layer's plane (card 0138): a token well-formed by `LayerPlane.isWellFormed`,
+    /// named by the bundle (the panel lists `LayerPlane.options`), a `.choice` on the wire.
+    case layer(default: String, allowsNone: Bool, allowsProduct: Bool)
   }
 
   /// Stable identifier, used by recipes and history (never renamed once shipped).
@@ -25,6 +28,9 @@ package struct ParamSpec: Equatable, Sendable {
   package let level: ParamLevel
   /// Kind, default and bounds.
   package let kind: Kind
+  /// The bundle layer this parameter is about (a line's rows, card 0135): the panel hides the
+  /// row while that layer is absent and the values do not ask for it; `nil` for every other row.
+  package private(set) var needsLayer: String?
 
   /// A number parameter.
   package init(
@@ -39,6 +45,16 @@ package struct ParamSpec: Equatable, Sendable {
   /// An on/off parameter.
   package init(id: String, title: String, level: ParamLevel, flag: Bool) {
     self.init(id: id, title: title, unit: .none, level: level, kind: .flag(default: flag))
+  }
+
+  /// A parameter naming a bundle layer's plane, `none` or a product `A*B` when allowed.
+  package init(
+    id: String, title: String, level: ParamLevel, layer: String, allowsNone: Bool,
+    allowsProduct: Bool
+  ) {
+    self.init(
+      id: id, title: title, unit: .none, level: level,
+      kind: .layer(default: layer, allowsNone: allowsNone, allowsProduct: allowsProduct))
   }
 
   /// A parameter choosing one of `options`.
@@ -64,13 +80,20 @@ package struct ParamSpec: Equatable, Sendable {
       kind: .text(default: text, maxLength: maxLength))
   }
 
-  /// A parameter of any kind.
+  /// A parameter of any kind; `about(layer:)` makes it a layer's row.
   package init(id: String, title: String, unit: ParamUnit, level: ParamLevel, kind: Kind) {
     self.id = id
     self.title = title
     self.unit = unit
     self.level = level
     self.kind = kind
+  }
+
+  /// This spec, about the bundle layer `layer` (a copy: every other field as it was).
+  package func about(layer: String) -> Self {
+    var copy = self
+    copy.needsLayer = layer
+    return copy
   }
 
   /// The default value.
@@ -81,6 +104,7 @@ package struct ParamSpec: Equatable, Sendable {
     case .choice(let value, _): .choice(value)
     case .points(let value, _): .points(value)
     case .text(let value, _): .text(value)
+    case .layer(let value, _, _): .choice(value)
     }
   }
 
@@ -97,6 +121,10 @@ package struct ParamSpec: Equatable, Sendable {
       guard options.contains(option) else {
         throw ParamError.unknownOption(id: id, option: option)
       }
+      return value
+    case (.layer(_, let allowsNone, let allowsProduct), .choice(let token)):
+      guard LayerPlane.isWellFormed(token, allowsNone: allowsNone, allowsProduct: allowsProduct)
+      else { throw ParamError.unknownOption(id: id, option: token) }
       return value
     case (.points(_, let maxCount), .points(let points)):
       return .points(try Self.validated(points, maxCount: maxCount, id: id))

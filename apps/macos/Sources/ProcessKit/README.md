@@ -10,9 +10,13 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   `render(_:stats:into:context:)`, `suggestions(stats:)`. R2: `render` reads the image, the
   bundle `LayerStats` and `params`, never measures the image to set itself; measurements return
   as `Suggestion`s.
-- `ParamSchema` / `ParamSpec` (number with bounds, flag, choice, curve `points` (card 0053: 2 to
+- `ParamSchema` / `ParamSpec` (number with bounds, flag, choice, `layer` (card 0138: a bundle
+  layer's plane as a token — `none` when allowed, `<id>`, `<id>.r|g|b`, `<a>*<b>` when allowed —
+  well-formed by `LayerPlane.isWellFormed`, a `.choice` on the wire, the bundle naming the options
+  through `LayerPlane.options(planes:allowsNone:allowsProduct:)`; a token naming an absent layer is accepted and
+  fails at render with `missingLayer`), curve `points` (card 0053: 2 to
   `maxCount` `CurvePoint`s, clamped into [0, 1], sorted, one per x; JSON `[[x, y], …]`); `ParamUnit` none/px/sigma/opacity;
-  `ParamLevel` simple/advanced with the display rule `visible(disclosed:promoted:)`), `ParamSet`
+  `ParamLevel` simple/advanced with the display rule `visible(disclosed:promoted:hidden:)`), `ParamSet`
   (schema order, clamped, NaN refused, encoded as ordered JSON; no decoder: stored values come
   back through `ParamSet.loading`, which validates them and returns what it refused).
 - `GPUImage` (r32Float planes, read/write, shared), `ProcessRunner` (synchronous run),
@@ -29,9 +33,9 @@ non-destructive history, recipes and the registry (design §2, §4.1).
 - **ChannelCombinationProcess** (card 0054), the first node of every pipeline: slots R/G/B/L ← bundle
   layer planes (`RenderContext.layers`: `RGB`, `R`, `G`, `B`, `L`, `Ha`, `OIII`, `SII`),
   `w·max(x − black, 0)` per slot, Foraxx's green = √(Hα·OIII), L replaces the luminance at its
-  opacity. `Palette` (natural, HOO, SHO, HOS, Foraxx, LRGB) fills the source slots only;
-  `Palette.resolve(requested:present:)` walks the legacy fallback chain (lines → HOO → natural ⇄
-  LRGB → mono on `Filter.monoSource`) and returns the reason, and `Palette.oiiiAsBlue(present:)`
+  opacity. `Palette` (natural, HOO, SHO, HOS, Foraxx, LRGB, RGB) fills the source slots only;
+  `Palette.resolve(requested:present:)` walks the legacy fallback chain (lines → HOO → natural →
+  LRGB → RGB → mono on `Filter.monoSource`) and returns the reason, and `Palette.oiiiAsBlue(present:)`
   offers OIII in the blue slot without a B filter — both suggestions, never applied (card 0137). A
   missing layer gives `unavailableReason` ("HOO needs an OIII layer") and `ProcessError.missingLayer`
   — never another layer (R2).
@@ -68,6 +72,16 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   header of the display stretch, which `ProcessLibrary` inlines at compile time (the runtime
   compiler has no include path). Its denominator is an explicit `fma`, so a float oracle mirrors
   it exactly.
+- **N-line kernels** (card 0136). `LineInjection.metal` and `Screens.metal` `#include "Lines.h"`
+  (ProcessKit's own header, inlined the same way): `MAX_LINES` slots (8; every
+  `Filter.narrowband` fits, `LinesHeaderTests`) and the per-line structs `InjectLine` /
+  `ScreenLine`, mirrored by `LineKernels`. Each kernel loops over the `count` lines bound at
+  buffer 1, in canonical order; Swift binds only the lines that change pixels
+  (`LineInjectionProcess.boundLines`, `EmissionScreensProcess.boundLines`) and pads the free slots
+  with the base. Dropping a line that left the accumulator untouched keeps every remaining
+  statement and operand, so the outputs are bit-identical to the old unrolled kernels
+  (`LiveKernelTransitionTests`, sha256 recorded with the GPU name; another GPU skips). To add a
+  line: a FilterKit filter + `LinePanelDefaults` row; raise `MAX_LINES` only past 8 lines.
 - **EmissionScreensProcess** (card 0051, id `emission-screens`): astrocomp's HOO-over-broadband
   chain on a stretched RGB base. Per line (`EmissionLine`, a projection of FilterKit's `Filter.narrowband`: Hα, [OIII], [SII]; panel defaults in `LinePanelDefaults`; params
   `<ha|oiii|sii><Enabled|Continuum|ContinuumK|Background|Black|Opacity|Tint|Boost>`) on its own
@@ -173,7 +187,8 @@ non-destructive history, recipes and the registry (design §2, §4.1).
 - `LineInjectionProcess` (`line-injection`, linear, requires colour + emission, registered (menu) right
   after `channel-combination`): per line of `EmissionLine` (params `<ha|oiii|sii><Gain|ContinuumK|Black|
   Red|Green|Blue>`) and base plane `p`, `base_p + gain · share_p · max(line − k·ref − black, 0)`
-  in `LineInjection.metal`, lines added in Hα, [OIII], [SII] order. The reference plane is the
+  in `LineInjection.metal`, lines added in the catalogue's order (only the ones that inject are
+  bound, see « N-line kernels »). The reference plane is the
   bundle's `continuum_ref`, read only when k > 0 (refused by name without one). Shares default to
   Hα/[SII] → red, [OIII] → green and blue half each. No normalisation, no clip: values above 1
   stay for the stretch's headroom (the viewer's histogram and readout show them).
@@ -276,7 +291,7 @@ in en/fr; the English title is the key, resolved with `ProcessKitResources.title
   uploads for the Studio and the pipeline runner alike.
 - **BackgroundExtractionProcess** (`background-extraction`, linear): `engine` graxpert /
   siril-rbf / siril-polynomial (each engine's values advanced, promoted by the choice),
-  `correction`, `applyTo` rgb (the head) / lines (the Hα/OIII/SII layers, the head kept) / all
+  `correction`, `applyTo` rgb (the head) / lines (every line layer by role, `EmissionLine.isLineLayer`: a filter outside the catalogue too; the head kept) / all
   (the head and every bundle layer). `run(_:params:extract:)` runs the engine per target, head
   first; the first target's model is the `backgroundModel` output. The app's
   `BackgroundExtractionTool` wires `extract` to StackKit `BackgroundExtraction`; the workspace
@@ -319,6 +334,21 @@ To give a host tool layers: return them in `StudioToolResult(…outputs:replaced
 To make a process branchable: declare `static let branchable = BranchUse.anyLayer` (or
 `.colourLayers`) — linear, same size, its input alone — and add it to the audit table. A process
 that reads bundle layers declares them in `layersRead`, or its steps never go stale.
+
+- **Layer-aware rows** (card 0135): a spec may declare `needsLayer` (the line specs do); the
+  panel hides it while that layer is absent from the bundle AND the values do not ask for it
+  (`ImageProcess.hiddenParameters`, default rule over `layersAsked(_:)` — the layers the VALUES
+  name, whatever the bundle holds; a screen on by default on a stack without its line stays, with
+  its note, so it can be switched off). A line process implements `layersAsked` beside
+  `layersRead` (the latter may add bundle-derived layers, a continuum reference, which must not
+  keep a row on screen). A row's value that cannot run says why under the row:
+  `unavailableReasons(_:layerIDs:)` → `[paramID: RowNote]` (reason = a catalog key listed in the
+  static `rowReasons`, subject = the layer's name), set by the workspace on open, on
+  `headChanged` and on every value change. The default covers a process whose rows carry
+  `needsLayer`: each asked layer the bundle lacks, on the first row about it, with the first
+  listed reason (the screens and the injection add nothing); a process whose rows name layers
+  by value (the combination's slots) overrides it. The process is never greyed for a value (the
+  catalogue greys on roles only; greying would close its panel).
 
 - **What « Combined » holds** (card 0131): `StudioSession.combinedLayers(after:layerIDs:registry:)` folds the main steps
   from the base layer — each step's `ImageProcess.layersMerged(_:layerIDs:)` is added, or replaces

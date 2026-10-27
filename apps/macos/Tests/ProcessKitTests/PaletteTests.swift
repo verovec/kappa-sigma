@@ -4,8 +4,8 @@ import Testing
 /// A palette resolved against the layers present (card 0137): the legacy `resolvePalette` chain
 /// (`palette.go:98-148`, `palette_test.go`), translated to the Swift palettes.
 ///
-/// The Go natural (R, G, B filters, L optional) is the Swift LRGB template, whose L slot is part
-/// of what it reads; the Swift natural is the one-shot-colour layer. Not translated: hargb (no
+/// The Go natural (R, G, B filters, L optional) is the Swift LRGB template, or RGB without L;
+/// the Swift natural is the one-shot-colour layer. Not translated: hargb (no
 /// such palette: Hα enters by line injection), `isPaletteName` and the unknown name (the palette
 /// is an enum), Foraxx's `$Ha$` substitution (its green is a source of the template).
 @Suite("Palette — the fallback chain to what the layers allow")
@@ -53,13 +53,14 @@ struct PaletteTests {
     Case(
       name: "LRGB on R, G, Hα: mono on Hα before R", requested: .lrgb, present: ["R", "G", "Ha"],
       palette: nil, monoSource: "Ha", reason: ["LRGB", "B", "Ha"]),
-    // TestResolvePalette_NaturalDefault: natural without L is still R, G, B (its L slot empty).
+    // TestResolvePalette_NaturalDefault: natural without L is still R, G, B (the RGB template).
     Case(
-      name: "LRGB on R, G, B without L", requested: .lrgb, present: ["R", "G", "B", "Ha"],
-      palette: .lrgb),
+      name: "LRGB on R, G, B without L falls back to RGB", requested: .lrgb,
+      present: ["R", "G", "B", "Ha"], palette: .rgb, reason: ["LRGB", "L", "RGB"]),
+    Case(name: "RGB", requested: .rgb, present: ["R", "G", "B"], palette: .rgb),
     Case(
-      name: "natural on R, G, B falls back to LRGB", requested: .natural, present: ["R", "G", "B"],
-      palette: .lrgb, reason: ["Natural", "RGB", "LRGB"]),
+      name: "natural on R, G, B walks natural → LRGB → RGB", requested: .natural,
+      present: ["R", "G", "B"], palette: .rgb, reason: ["Natural", "RGB"]),
     // A colour layer passes through whatever was asked of it.
     Case(
       name: "LRGB on a colour bundle falls back to natural", requested: .lrgb,

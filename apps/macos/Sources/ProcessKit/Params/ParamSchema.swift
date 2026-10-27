@@ -15,14 +15,14 @@ package struct ParamSchema: Equatable, Sendable {
   }
 
   /// Display rule (design §2): `simple` parameters always; `advanced` ones when the disclosure
-  /// is open or a profile promotes them — schema order kept.
-  package func visible(disclosed: Bool, promoted: Set<String> = []) -> [ParamSpec] {
-    specs.filter { $0.level == .simple || disclosed || promoted.contains($0.id) }
-  }
-
-  /// Whether the panel needs the "Avancé" disclosure.
-  package var hasAdvanced: Bool {
-    specs.contains { $0.level == .advanced }
+  /// is open or a profile promotes them — schema order kept; never the ids in `hidden` (a line's
+  /// rows while its layer is absent, card 0135).
+  package func visible(disclosed: Bool, promoted: Set<String> = [], hidden: Set<String> = [])
+    -> [ParamSpec]
+  {
+    specs.filter {
+      !hidden.contains($0.id) && ($0.level == .simple || disclosed || promoted.contains($0.id))
+    }
   }
 
   /// What makes a spec unusable: non-finite bounds, or a default the spec itself would refuse
@@ -39,6 +39,10 @@ package struct ParamSchema: Equatable, Sendable {
         return options.contains(value) ? nil : "\(spec.id): default \(value) not among its options"
       case .flag:
         return nil
+      case .layer(let value, let allowsNone, let allowsProduct):
+        let formed = LayerPlane.isWellFormed(
+          value, allowsNone: allowsNone, allowsProduct: allowsProduct)
+        return formed ? nil : "\(spec.id): default \(value) is not a layer token"
       case .text(let value, let maxLength):
         return value.count <= maxLength ? nil : "\(spec.id): default longer than \(maxLength)"
       case .points(let value, let maxCount):

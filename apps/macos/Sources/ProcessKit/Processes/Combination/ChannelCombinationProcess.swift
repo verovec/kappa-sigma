@@ -1,3 +1,4 @@
+internal import FilterKit
 package import Metal
 
 /// Builds the Studio's working RGB image from the bundle layers.
@@ -6,19 +7,12 @@ package import Metal
 /// the luminance at its opacity. The first node of every pipeline; its input only sets the size.
 ///
 /// R2: a source missing from the bundle is an error with the reason, never replaced by another
-/// layer (`unavailableReason` greys the option first).
+/// layer (the slot's row says it first, `unavailableReasons(_:layerIDs:)`).
 package struct ChannelCombinationProcess: ImageProcess {
   package static let id = "channel-combination"
   package static let title = "Channel combination"
   package static let stage = ProcessStage.linear
   package static let previewExactOnlyAt1to1 = false
-
-  /// Layer planes a colour slot can take; `A*B` is √(A·B).
-  package static let colorSources = [
-    "RGB.r", "RGB.g", "RGB.b", "R", "G", "B", "L", "Ha", "OIII", "SII", "Ha*OIII",
-  ]
-  /// What the L slot can take.
-  package static let luminanceSources = ["none", "L", "Ha", "R", "G", "B"]
 
   package static let schema: ParamSchema = {
     // No "palette" parameter: a palette only fills the sources (`Palette.apply(to:)`), and the
@@ -28,8 +22,10 @@ package struct ChannelCombinationProcess: ImageProcess {
       ("r", "Red", "RGB.r"), ("g", "Green", "RGB.g"), ("b", "Blue", "RGB.b"),
     ] {
       specs += [
+        // A colour slot takes any plane the bundle holds, or √(A·B) of two lines (card 0138).
         ParamSpec(
-          id: slot + "Source", title: name, level: .simple, choice: source, of: colorSources),
+          id: slot + "Source", title: name, level: .simple, layer: source, allowsNone: false,
+          allowsProduct: true),
         ParamSpec(
           id: slot + "Weight", title: name + " weight", unit: .none, level: .advanced, number: 1,
           in: 0...4),
@@ -40,7 +36,8 @@ package struct ChannelCombinationProcess: ImageProcess {
     }
     specs += [
       ParamSpec(
-        id: "lSource", title: "Luminance", level: .simple, choice: "none", of: luminanceSources),
+        id: "lSource", title: "Luminance", level: .simple, layer: "none", allowsNone: true,
+        allowsProduct: false),
       ParamSpec(
         id: "lWeight", title: "L weight", unit: .none, level: .advanced, number: 1, in: 0...4),
       ParamSpec(
@@ -63,10 +60,42 @@ package struct ChannelCombinationProcess: ImageProcess {
       device: device, file: "Combination.metal", function: "combineChannels")
   }
 
+  /// The source parameter of each slot, R, G, B, then L.
+  package static let slotSources = ["rSource", "gSource", "bSource", "lSource"]
+
+  /// The combination a bundle opens on (card 0138): the palette its layers spell.
+  ///
+  /// Natural on the colour layer; lrgb on R, G, B with L, rgb without; sho on the three lines;
+  /// hoo on Hα + OIII (L, if any, stays a choice) — else a grey of the base layer. A colour
+  /// bundle gets exactly the schema's defaults: step 0 of an OSC stack keeps its bytes.
+  package static func initialParams(planes: [String: Int]) throws -> ParamSet {
+    var params = ParamSet(schema: schema)
+    let layerIDs = Set(planes.keys)
+    if layerIDs.contains(Filter.color) { return params }
+    // A palette reads whole layers: only the 1-plane ones spell one.
+    let whole = layerIDs.filter { planes[$0] == 1 }
+    if let palette = Palette.spelled(by: Set(whole)) { return try palette.apply(to: params) }
+    // A grey of the base layer (`StudioSession.baseLayerID`, the one rule); a layer name the
+    // grammar refuses is an error the Studio shows, never a silent fallback (R2).
+    guard let base = StudioSession.baseLayerID(layerIDs) else { return params }
+    let colour = planes[base] == LayerPlane.planeNames.count
+    let grey = colour ? LayerPlane.planeNames.map { "\(base).\($0)" } : [base, base, base]
+    try set(sources: grey + ["none"], on: &params)
+    return params
+  }
+
+  /// `params` with `sources` in the R, G, B, L slots (a palette's or a grey); the weights,
+  /// black points and L opacity are kept.
+  package static func set(sources: [String], on params: inout ParamSet) throws {
+    for (slot, source) in zip(slotSources, sources) {
+      try params.set(slot, .choice(source))
+    }
+  }
+
   /// The layers `params` read, in slot order (R, G, B, L).
   package static func layersNeeded(params: ParamSet) -> [String] {
     var needed: [String] = []
-    for slot in ["rSource", "gSource", "bSource", "lSource"] {
+    for slot in slotSources {
       for layer in layers(of: params.choice(slot)) where !needed.contains(layer) {
         needed.append(layer)
       }
@@ -95,6 +124,30 @@ package struct ChannelCombinationProcess: ImageProcess {
   /// Its input only sets the size.
   package static let replacesInput = true
 
+  /// The reason a slot's row carries while it reads a layer the stack lacks (card 0135).
+  package static let missingLayerReason = "the slot needs a layer the stack lacks"
+  package static let rowReasons = [missingLayerReason]
+
+  /// The layers the slots name, whatever the bundle holds.
+  package static func layersAsked(_ params: ParamSet) -> Set<String> {
+    Set(layersNeeded(params: params))
+  }
+
+  /// Each slot whose source names a layer outside `layerIDs`, every missing layer named as the
+  /// panel writes it.
+  package static func unavailableReasons(_ params: ParamSet, layerIDs: Set<String>)
+    -> [String: RowNote]
+  {
+    var notes: [String: RowNote] = [:]
+    for slot in slotSources {
+      let missing = layers(of: params.choice(slot)).filter { !layerIDs.contains($0) }
+      guard !missing.isEmpty else { continue }
+      let names = missing.map(EmissionLine.name(ofLayer:))
+      notes[slot] = RowNote(reason: missingLayerReason, subject: names.joined(separator: " + "))
+    }
+    return notes
+  }
+
   /// Why `params` cannot run with only `present` layers ("HOO needs the OIII layer"), or `nil`.
   package static func unavailableReason(params: ParamSet, present: Set<String>) -> String? {
     guard let missing = layersNeeded(params: params).first(where: { !present.contains($0) }) else {
@@ -109,7 +162,7 @@ package struct ChannelCombinationProcess: ImageProcess {
   ) throws {
     guard output.planes.count == 3 else { throw ProcessError.sizeMismatch }
     let size = (width: output.width, height: output.height)
-    let slots = try ["rSource", "gSource", "bSource"].map {
+    let slots = try Self.slotSources.prefix(3).map {
       try planes(params.choice($0), context, size: size)
     }
     let luminance = try planes(params.choice("lSource"), context, size: size)
@@ -151,17 +204,20 @@ package struct ChannelCombinationProcess: ImageProcess {
   private func planes(
     _ source: String, _ context: RenderContext, size: (width: Int, height: Int)
   ) throws -> SlotPlanes {
-    let textures = try Self.layers(of: source).map { id -> MTLTexture in
-      try LayerPlane(id == "RGB" ? source : id).texture(
-        in: context.layers, width: size.width, height: size.height)
+    // Every token names its own plane (`X.g` of any 3-plane layer, a whole layer otherwise).
+    let textures = try Self.tokens(of: source).map {
+      try LayerPlane($0).texture(in: context.layers, width: size.width, height: size.height)
     }
     return SlotPlanes(first: textures.first, second: textures.count > 1 ? textures[1] : nil)
   }
 
-  /// The layer ids a source token reads.
+  /// The plane tokens a source reads: none, one, or the two whole layers of a product.
+  private static func tokens(of source: String) -> [String] {
+    source == "none" ? [] : source.split(separator: "*").map(String.init)
+  }
+
+  /// The layer ids a source reads.
   static func layers(of source: String) -> [String] {
-    if source == "none" { return [] }
-    if source.hasPrefix("RGB.") { return ["RGB"] }
-    return source.split(separator: "*").map(String.init)
+    tokens(of: source).map { LayerPlane($0).layer }
   }
 }

@@ -73,7 +73,7 @@ package final class WelcomeModel {
     generation += 1
     let current = generation
     let open = openProjects()
-    let urls = recentURLs().filter { FileManager.default.fileExists(atPath: $0.path) }
+    let urls = Self.onDisk(recentURLs())
     let read = await withTaskGroup(of: (URL, ProjectSummary?).self) { group in
       for url in urls where !open.keys.contains(Self.key(url)) {
         group.addTask { (url, await Self.readSummary(url)) }
@@ -86,7 +86,7 @@ package final class WelcomeModel {
     recent = urls.map { url in
       let summary = open[Self.key(url)] ?? read[url] ?? nil
       return RecentProject(
-        url: url, target: url.deletingPathExtension().lastPathComponent, summary: summary)
+        url: url, target: ProjectPackage.target(of: url), summary: summary)
     }
   }
 
@@ -114,6 +114,12 @@ package final class WelcomeModel {
           state: Self.cardState(row.status), check: Self.check(row.tool, hostTools))
       }
     }
+  }
+
+  /// The projects of `urls` still on disk: a deleted recent is left out (welcome window, File ›
+  /// Open Recent).
+  nonisolated package static func onDisk(_ urls: [URL]) -> [URL] {
+    urls.filter { FileManager.default.fileExists(atPath: $0.path) }
   }
 
   /// The key an open project is looked up by: its path with symlinks resolved and no trailing

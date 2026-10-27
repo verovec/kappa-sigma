@@ -12,23 +12,21 @@ extension Palette {
   }
 
   /// The palette tried when one of this one's layers is missing (`palette.go` Fallback): a line
-  /// palette falls to the bicolour, the bicolour to the broadband; the two broadband templates
-  /// (a colour layer, mono filters) try each other before the chain ends mono.
+  /// palette falls to the bicolour, the bicolour to the broadband; the broadband templates (a
+  /// colour layer, mono filters with L, without) try each other before the chain ends mono.
   var fallback: Palette {
     switch self {
     case .sho, .hos, .foraxx: .hoo
-    case .hoo, .lrgb: .natural
+    case .hoo, .rgb: .natural
     case .natural: .lrgb
+    case .lrgb: .rgb
     }
   }
 
-  /// The layers its colour sources read that `present` lacks, in slot order.
-  ///
-  /// The L slot is optional, as in `palette.go` (`UseLum = has("L")`): R, G and B alone are LRGB
-  /// whose L slot the panel leaves empty (card 0139 fills only the sources present).
+  /// The layers its sources read that `present` lacks, in slot order.
   func missing(from present: Set<String>) -> [String] {
     var missing: [String] = []
-    for source in sources.prefix(3) {
+    for source in sources {
       for layer in ChannelCombinationProcess.layers(of: source)
       where !present.contains(layer) && !missing.contains(layer) {
         missing.append(layer)

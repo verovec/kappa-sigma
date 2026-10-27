@@ -78,7 +78,7 @@ package final class StudioModel {
       let params =
         try combination
         ?? ChannelCombinationProcess.initialParams(
-          layerIDs: Set(bundle.layers.keys), planes: bundle.layers.mapValues { $0.planes.count })
+          layerIDs: Set(bundle.layers.keys), planes: session.layerPlanes())
       try apply(ChannelCombinationProcess.id, params: params)
     }
     refresh()

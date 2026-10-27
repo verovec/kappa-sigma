@@ -196,4 +196,19 @@ struct CombinationTests {
       layerIDs: ["RGB", "Ha", "OIII"], planes: ["RGB": 3])
     #expect(osc == ParamSet(schema: ChannelCombinationProcess.schema))
   }
+
+  @Test("a plane token of any 3-plane layer reads that plane, as `RGB.g` does (card 0138)")
+  func testPlaneTokenOfAnyColourLayer() throws {
+    let device = try #require(MTLCreateSystemDefaultDevice())
+    var layers = try Self.layers(device: device, ids: ["RGB"])
+    layers["Ha 7nm"] = layers["RGB"]
+    var params = ParamSet(schema: ChannelCombinationProcess.schema)
+    for (slot, plane) in zip(["rSource", "gSource", "bSource"], LayerPlane.planeNames) {
+      try params.set(slot, .choice("Ha 7nm.\(plane)"))
+    }
+    let custom = try Self.render(params, layers: layers, device: device)
+    let natural = try Self.render(
+      ParamSet(schema: ChannelCombinationProcess.schema), layers: layers, device: device)
+    #expect(custom == natural)
+  }
 }

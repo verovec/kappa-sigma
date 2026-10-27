@@ -45,7 +45,8 @@ package final class ProcessPanelModel {
   package var layerIDs: Set<String>? {
     didSet { refreshLayerRows() }
   }
-  /// The planes of each bundle layer (card 0138), set with `layerIDs`; 1 for a layer unsaid.
+  /// The planes of each bundle layer (card 0138), set with `layerIDs`: the layers a layer
+  /// parameter lists (a step output is readable by hand, never offered).
   package var layerPlanes: [String: Int] = [:] {
     didSet { refreshLayerRows() }
   }
@@ -102,7 +103,7 @@ package final class ProcessPanelModel {
     for spec in type.schema.specs {
       guard case .layer(_, let allowsNone, let allowsProduct) = spec.kind else { continue }
       optionsNow[spec.id] = LayerPlane.options(
-        layerIDs: layerIDs ?? [], planes: layerPlanes, allowsNone: allowsNone,
+        layerIDs: Set(layerPlanes.keys), planes: layerPlanes, allowsNone: allowsNone,
         allowsProduct: allowsProduct)
     }
     if optionsNow != layerOptions { layerOptions = optionsNow }

@@ -29,6 +29,7 @@ struct ParamSpecTests {
     Token(token: "a ", accepted: false),
     Token(token: "*Ha", accepted: false),
     Token(token: "none*Ha", accepted: false),
+    Token(token: "none.r", allowsNone: false, accepted: false),
     Token(token: "RGB.r*Ha", accepted: false),
     Token(token: "Ha*Ha", accepted: false),
     Token(token: "Ha*OIII", allowsNone: false, accepted: true),

@@ -75,9 +75,9 @@ package struct LayerPlane: Equatable, Sendable {
     }
   }
 
-  /// A layer id as the bundle may name one: non-empty, trimmed, without `*`.
+  /// A layer id as the bundle may name one: non-empty, trimmed, without `*`, not `none`.
   private static func isLayerID(_ id: String) -> Bool {
-    guard let first = id.first, let last = id.last else { return false }
+    guard let first = id.first, let last = id.last, id != "none" else { return false }
     return !first.isWhitespace && !last.isWhitespace && !id.contains("*")
   }
 
@@ -93,7 +93,7 @@ package struct LayerPlane: Equatable, Sendable {
     }
     var options = allowsNone ? ["none"] : []
     for id in ids {
-      options += planes[id] == 3 ? planeNames.map { "\(id).\($0)" } : [id]
+      options += planes[id] == planeNames.count ? planeNames.map { "\(id).\($0)" } : [id]
     }
     guard allowsProduct else { return options }
     let lines = ids.filter(Filter.isNarrowband)

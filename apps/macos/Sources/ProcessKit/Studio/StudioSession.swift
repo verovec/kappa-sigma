@@ -68,12 +68,10 @@ package final class StudioSession {
     Set(bundle.layers.keys).union(history.layerRoles.map(\.rawValue))
   }
 
-  /// The planes of each layer the next step can read (card 0138): the bundle's, and the step
-  /// outputs' as the renderer holds them (an output not loadable yet counts as the bundle says).
+  /// The planes of each bundle layer (card 0138): what a layer parameter lists — the stack's
+  /// layers, not the step outputs (a mask or a background model is no colour source).
   package func layerPlanes() -> [String: Int] {
-    let bundlePlanes = bundle.layers.mapValues { $0.planes.count }
-    guard let loaded = try? context().0 else { return bundlePlanes }
-    return bundlePlanes.merging(loaded.mapValues { $0.planes.count }) { $1 }
+    bundle.layers.mapValues { $0.planes.count }
   }
 
   /// The layer the working image starts from: `RGB`, else the first id in order (never the

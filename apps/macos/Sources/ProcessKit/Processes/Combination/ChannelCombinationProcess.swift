@@ -77,8 +77,8 @@ package struct ChannelCombinationProcess: ImageProcess {
     // A grey of the base layer (`StudioSession.baseLayerID`, the one rule); a layer name the
     // grammar refuses is an error the Studio shows, never a silent fallback (R2).
     guard let base = StudioSession.baseLayerID(layerIDs) else { return params }
-    let grey =
-      planes[base] == 3 ? LayerPlane.planeNames.map { "\(base).\($0)" } : [base, base, base]
+    let colour = planes[base] == LayerPlane.planeNames.count
+    let grey = colour ? LayerPlane.planeNames.map { "\(base).\($0)" } : [base, base, base]
     for (slot, source) in zip(slotSources, grey) {
       try params.set(slot, .choice(source))
     }
@@ -197,16 +197,20 @@ package struct ChannelCombinationProcess: ImageProcess {
   private func planes(
     _ source: String, _ context: RenderContext, size: (width: Int, height: Int)
   ) throws -> SlotPlanes {
-    let textures = try Self.layers(of: source).map { id -> MTLTexture in
-      try LayerPlane(id == "RGB" ? source : id).texture(
-        in: context.layers, width: size.width, height: size.height)
+    // Every token names its own plane (`X.g` of any 3-plane layer, a whole layer otherwise).
+    let textures = try Self.tokens(of: source).map {
+      try LayerPlane($0).texture(in: context.layers, width: size.width, height: size.height)
     }
     return SlotPlanes(first: textures.first, second: textures.count > 1 ? textures[1] : nil)
   }
 
-  /// The layer ids a source token reads: a plane's layer, or the two layers of a product.
+  /// The plane tokens a source reads: none, one, or the two whole layers of a product.
+  private static func tokens(of source: String) -> [String] {
+    source == "none" ? [] : source.split(separator: "*").map(String.init)
+  }
+
+  /// The layer ids a source reads.
   private static func layers(of source: String) -> [String] {
-    if source == "none" { return [] }
-    return source.split(separator: "*").map { LayerPlane(String($0)).layer }
+    tokens(of: source).map { LayerPlane($0).layer }
   }
 }

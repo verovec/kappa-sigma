@@ -145,7 +145,7 @@ struct DualbandSplitTests {
       channels == ["RGB": "aligned_RGB", "Ha": "syn_Ha", "OIII": "syn_OIII", "SII": "syn_SII"])
     #expect(try Self.value(out.appendingPathComponent("syn_OIII.fits")).first == 0.20)
     #expect(
-      note?.contains("OIII of the dualband-sii lane skipped: the colour base already holds it")
+      note?.contains("OIII of the dualband-sii lane skipped: another lane already gave it")
         == true)
   }
 
@@ -172,7 +172,9 @@ struct DualbandSplitTests {
       out: out)
     #expect(channels == ["RGB": "aligned_RGB-dualband", "SII": "syn_SII"])
     #expect(note?.contains("RGB-dualband stack is the colour base") == true)
-    #expect(note?.contains("OIII of the dualband-sii lane skipped") == true)
+    #expect(
+      note?.contains("OIII of the dualband-sii lane skipped: the colour base already holds it")
+        == true)
     #expect(
       !FileManager.default.fileExists(atPath: out.appendingPathComponent("syn_OIII.fits").path))
   }

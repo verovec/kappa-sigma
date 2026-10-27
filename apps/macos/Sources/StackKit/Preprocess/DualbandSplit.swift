@@ -134,8 +134,9 @@ package enum DualbandSplit {
     let taken = Set(
       [lines.red, lines.greenBlue].filter { kept[$0.rawValue] != nil || held.contains($0) })
     for line in [lines.red, lines.greenBlue] where taken.contains(line) {
-      notes.append(
-        "\(line.rawValue) of the \(set.rawValue) lane skipped: another lane already gave it")
+      let why =
+        held.contains(line) ? "the colour base already holds it" : "another lane already gave it"
+      notes.append("\(line.rawValue) of the \(set.rawValue) lane skipped: \(why)")
     }
     guard taken.count < 2 else { return [] }
     do {

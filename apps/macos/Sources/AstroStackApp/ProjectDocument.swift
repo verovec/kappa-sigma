@@ -256,10 +256,12 @@ package final class ProjectDocument: NSDocument {
     windowModel?.cancelScan()
     // A Studio load still running would write into a package being released (or deleted).
     windowModel?.dropWorkspace()
+    // A second close, or one of a document never shown, brings nothing back.
+    let wasOpen = Self.openDocuments().contains { $0 === self }
     if let project { release(project) }
     project = nil
     super.close()
-    if Self.openDocuments().isEmpty { Self.lastDocumentClosed() }
+    if wasOpen, Self.openDocuments().isEmpty { Self.lastDocumentClosed() }
   }
 
   /// True when the folder opened at `opened` is gone and AppKit now names an existing `current`.

@@ -28,3 +28,22 @@ extension ProjectDocumentTests {
     #expect(fired == 1)
   }
 }
+
+extension ProjectDocumentTests {
+  @Test("a second close, or the close of a document never shown, brings nothing back")
+  func testProjectDocument_closeAgain_firesNothing() throws {
+    let document = try ProjectDocument(type: Self.type)
+    let (hook, documents) = (ProjectDocument.lastDocumentClosed, ProjectDocument.openDocuments)
+    defer {
+      ProjectDocument.lastDocumentClosed = hook
+      ProjectDocument.openDocuments = documents
+    }
+    var fired = 0
+    ProjectDocument.lastDocumentClosed = { fired += 1 }
+    ProjectDocument.openDocuments = { [] }
+
+    document.close()
+    document.close()
+    #expect(fired == 0)
+  }
+}

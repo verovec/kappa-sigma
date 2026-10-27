@@ -5,12 +5,14 @@ internal import ProjectKit
 /// disk, most recent first, titled by their target, the open ones checked.
 ///
 /// One source of recents, AppKit's (`NSDocumentController.recentDocumentURLs`, noted on every
-/// open, card 0077); « Clear Menu » below the separator is the catalog's `file.clearRecent`. A
+/// open, card 0077); « Clear Menu » below the separator is the catalog's `file.clearRecent`, sent
+/// to `AppDelegate.clearRecentProjects` (an item sending `clearRecentDocuments:` would make AppKit
+/// fill this menu itself). A
 /// project opens like a recent one in the welcome window: an open one only comes forward.
 package final class RecentProjectsMenu: NSObject, NSMenuDelegate {
   /// The app's: AppKit's recents, the projects open in a document, `WelcomeWindow.open`.
   package static let live = RecentProjectsMenu(
-    recentURLs: { NSDocumentController.shared.recentDocumentURLs },
+    recentURLs: WelcomeWindow.recentURLs,
     openKeys: WelcomeWindow.openProjectKeys,
     open: { url in Task { await WelcomeWindow.open(url) } })
 
@@ -34,13 +36,15 @@ package final class RecentProjectsMenu: NSObject, NSMenuDelegate {
   package func menuNeedsUpdate(_ menu: NSMenu) {
     while let first = menu.items.first, !first.isSeparatorItem { menu.removeItem(first) }
     let open = openKeys()
-    let projects = recentURLs().filter { FileManager.default.fileExists(atPath: $0.path) }
+    let projects = WelcomeModel.onDisk(recentURLs())
     for (index, url) in projects.enumerated() {
       let item = NSMenuItem(
         title: ProjectPackage.target(of: url), action: #selector(openProject(_:)),
         keyEquivalent: "")
       item.target = self
       item.representedObject = url
+      // Two targets can share a name in different folders: the path tells them apart.
+      item.toolTip = url.path
       item.state = open.contains(WelcomeModel.key(url)) ? .on : .off
       menu.insertItem(item, at: index)
     }

@@ -52,7 +52,7 @@ nonisolated package enum CommandCatalog {
     AppCommand(
       "file.openRecent", "Open Recent", menu: .file, action: nil, submenu: .recentProjects),
     AppCommand(
-      "file.clearRecent", "Clear Menu", menu: .file, action: "clearRecentDocuments:",
+      "file.clearRecent", "Clear Menu", menu: .file, action: "clearRecentProjects:",
       in: .recentProjects),
     AppCommand("file.openImage", "Open Image…", menu: .file, action: "openImage:", key: "O"),
     AppCommand("file.openRun", "Open Run…", menu: .file, action: "openRun:", key: "r"),

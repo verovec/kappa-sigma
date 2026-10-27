@@ -44,7 +44,7 @@ extension MainMenuTests {
     #expect(submenu.items.map(\.title) == ["M 31", "IC 1848", "", clear])
     #expect(submenu.items.map(\.isSeparatorItem) == [false, false, true, false])
     #expect(submenu.items.map(\.state) == [.off, .on, .off, .off])
-    #expect(submenu.items.last?.action.map(NSStringFromSelector) == "clearRecentDocuments:")
+    #expect(submenu.items.last?.action.map(NSStringFromSelector) == "clearRecentProjects:")
     // Opened again after a project closed: rebuilt, never appended.
     recents.menuNeedsUpdate(submenu)
     #expect(submenu.items.count == 4)

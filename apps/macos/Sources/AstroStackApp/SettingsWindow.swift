@@ -26,7 +26,11 @@ package enum SettingsWindow {
       alert.runModal()
       return
     }
+    // Closing for a relaunch never brings the welcome window back (a failed one keeps the hook).
+    let hook = ProjectDocument.lastDocumentClosed
+    ProjectDocument.lastDocumentClosed = {}
     for document in documents.documents { document.close() }
+    ProjectDocument.lastDocumentClosed = hook
     let configuration = NSWorkspace.OpenConfiguration()
     configuration.createsNewApplicationInstance = true
     Task {

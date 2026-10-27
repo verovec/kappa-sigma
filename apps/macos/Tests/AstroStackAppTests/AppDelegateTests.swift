@@ -48,26 +48,44 @@ extension AppDelegateTests {
     var fired = 0
     ProjectDocument.lastDocumentClosed = { fired += 1 }
     // Every close is the last one here: only the cleared hook keeps the window away.
-    ProjectDocument.openDocuments = { [] }
+    ProjectDocument.openDocuments = { [document] }
 
-    AppDelegate().applicationWillTerminate(
-      Notification(name: NSApplication.willTerminateNotification))
+    // Only this test's document: another suite's documents stay open.
+    AppDelegate().closeForQuit([document])
 
     #expect(!NSDocumentController.shared.documents.contains(document))
     #expect(fired == 0)
   }
 
-  @Test("launching arms the hook: the last project closed brings the welcome window back")
-  func testAppDelegate_willFinishLaunching_setsWelcomeHook() {
+  @Test(
+    "launching arms the hook: the last project closed brings the welcome window back, with the retention review once"
+  )
+  func testAppDelegate_willFinishLaunching_setsWelcomeHook() async {
     let hook = ProjectDocument.lastDocumentClosed
     defer { ProjectDocument.lastDocumentClosed = hook }
     var shown = 0
-    let delegate = AppDelegate(welcome: { shown += 1 })
+    let reviewed = AsyncStream<Void>.makeStream()
+    let delegate = AppDelegate(
+      welcome: { shown += 1 }, reviewRetention: { reviewed.continuation.yield() })
 
     delegate.applicationWillFinishLaunching(
       Notification(name: NSApplication.willFinishLaunchingNotification))
     ProjectDocument.lastDocumentClosed()
+    ProjectDocument.lastDocumentClosed()
 
-    #expect(shown == 1)
+    #expect(shown == 2)
+    // A launch that restored a project reviews when its last window closes.
+    var reviews = 0
+    for await _ in reviewed.stream.prefix(1) { reviews += 1 }
+    #expect(reviews == 1)
+  }
+}
+
+extension AppDelegateTests {
+  @Test("Clear Menu clears AppKit's recents, which the welcome window and Open Recent read")
+  func testAppDelegate_clearRecentProjects() {
+    // Answers the catalog's action without AppKit's own Open Recent machinery (clearRecentDocuments:).
+    #expect(AppDelegate.instancesRespond(to: NSSelectorFromString("clearRecentProjects:")))
+    #expect(CommandCatalog.command("file.clearRecent")?.action == "clearRecentProjects:")
   }
 }

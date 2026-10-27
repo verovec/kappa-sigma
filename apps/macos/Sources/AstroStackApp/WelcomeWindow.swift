@@ -12,16 +12,21 @@ package enum WelcomeWindow {
   private static var window: NSWindow?
   /// The live host-tool client.
   package static let hostTools = HostTools.live()
+  /// The recent projects, most recent first: AppKit's recents, the one source (welcome window,
+  /// File › Open Recent, the retention review).
+  package static func recentURLs() -> [URL] {
+    NSDocumentController.shared.recentDocumentURLs
+  }
+
   /// The recent projects and tool statuses, shared with Settings › Tools.
   package static let model = WelcomeModel(
-    recentURLs: { NSDocumentController.shared.recentDocumentURLs }, tools: hostTools,
+    recentURLs: recentURLs, tools: hostTools,
     openProjects: openProjects)
 
   /// The retention policy's launch review over the recent projects no window has open (0114).
   package static let retention = RetentionReview(
     setting: RetentionSetting(),
-    recentURLs: { NSDocumentController.shared.recentDocumentURLs },
-    openProjects: openProjectKeys)
+    recentURLs: recentURLs, openProjects: openProjectKeys)
 
   /// Runs the launch review (the welcome window is up: no document is open).
   package static func reviewRetention() async {

@@ -30,9 +30,11 @@ package struct LayerPlane: Equatable, Sendable {
 
   /// The plane's texture among the bundle `layers`, which must be `width` × `height`.
   ///
-  /// A missing layer or plane is an error, never another plane (R2): a whole token reads a
-  /// 1-plane layer, a plane token a 3-plane one — `RGB` alone or `L.r` is refused, never plane 0.
-  /// One parse for every reader: a layer id ending in `.r`, `.g` or `.b` is read as a plane token.
+  /// A missing layer or plane is an error, never another plane (R2). A whole token reads the
+  /// layer's first plane — a mono layer's only one, the red plane of a colour lane tagged as a
+  /// line (an OSC run through an Hα clip), as the screens and the injection read it; a plane
+  /// token (`L.r`) needs a colour layer, never plane 0 of a mono one. One parse for every
+  /// reader: a layer id ending in `.r`, `.g` or `.b` is read as a plane token.
   package func texture(in layers: [String: GPUImage], width: Int, height: Int) throws
     -> MTLTexture
   {
@@ -44,10 +46,10 @@ package struct LayerPlane: Equatable, Sendable {
     return image.planes[plane]
   }
 
-  /// Whether a layer of `planes` planes is read by a whole token (1 plane) or a plane token
-  /// (the three colour planes).
+  /// Whether a layer of `planes` planes is read by a whole token (its first plane) or a plane
+  /// token (one of the three colour planes).
   private static func readable(planes: Int, whole: Bool) -> Bool {
-    whole ? planes == 1 : planes >= planeNames.count
+    whole ? planes >= 1 : planes >= planeNames.count
   }
 
   /// The plane's bundle statistics, if the bundle has them per plane.
@@ -78,7 +80,7 @@ package struct LayerPlane: Equatable, Sendable {
     case 2 where allowsProduct:
       // √(A·B) multiplies two whole layers: no plane, no `none`, two different ids.
       return parts[0] != parts[1]
-        && parts.allSatisfy { isLayerID($0) && $0 != "none" && Self($0).layer == $0 }
+        && parts.allSatisfy { isLayerID($0) && Self($0).layer == $0 }
     default:
       return false
     }

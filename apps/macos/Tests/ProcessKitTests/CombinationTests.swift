@@ -188,15 +188,13 @@ struct CombinationTests {
 
   @Test("testInitialParams", arguments: initials)
   func testInitialParams(row: Initial) throws {
-    let params = try ChannelCombinationProcess.initialParams(
-      layerIDs: Set(row.layers.keys), planes: row.layers)
+    let params = try ChannelCombinationProcess.initialParams(planes: row.layers)
     #expect(ChannelCombinationProcess.slotSources.map { params.choice($0) } == row.sources)
   }
 
   @Test("testInitialParams_OSC_isTheSchemaDefault: step 0 of an OSC stack keeps its bytes")
   func testInitialParams_OSC_isTheSchemaDefault() throws {
-    let osc = try ChannelCombinationProcess.initialParams(
-      layerIDs: ["RGB", "Ha", "OIII"], planes: ["RGB": 3])
+    let osc = try ChannelCombinationProcess.initialParams(planes: ["RGB": 3, "Ha": 1, "OIII": 1])
     #expect(osc == ParamSet(schema: ChannelCombinationProcess.schema))
   }
 

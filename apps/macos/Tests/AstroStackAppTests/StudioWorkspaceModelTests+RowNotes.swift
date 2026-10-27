@@ -71,4 +71,18 @@ extension StudioWorkspaceModelTests {
     #expect(panel.visibleSpecs.contains { $0.id == "haOpacity" })
     #expect(!panel.visibleSpecs.contains { $0.id.hasPrefix("sii") })
   }
+
+  @Test(
+    "the workspace hands the panel the bundle's planes with its layers (card 0138)",
+    .scratchDirectory)
+  func testLayerPlanesFollowTheBundle() throws {
+    let opened = try BranchTests.project()
+    defer { try? opened.package.close() }
+    let workspace = try Self.workspace(opened, bundle: BranchTests.bundle())  // RGB, Ha, OIII
+    workspace.choose(ChannelCombinationProcess.id)
+    let panel = try #require(workspace.panel)
+    #expect(panel.layerPlanes == ["RGB": 3, "Ha": 1, "OIII": 1])
+    #expect(
+      panel.layerOptions(for: "rSource") == ["RGB.r", "RGB.g", "RGB.b", "Ha", "OIII", "Ha*OIII"])
+  }
 }

@@ -51,10 +51,9 @@ struct LayerPlaneTests {
     #expect(throws: ProcessError.missingLayer("R.r")) {
       try LayerPlane("R.r").texture(in: layers, width: 4, height: 2)
     }
-    // A whole token never reads plane 0 of a colour layer.
-    #expect(throws: ProcessError.missingLayer("RGB")) {
-      try LayerPlane("RGB").texture(in: layers, width: 4, height: 2)
-    }
+    // A whole token reads the layer's first plane (an OSC lane tagged as a line, read whole).
+    #expect(
+      try LayerPlane("RGB").texture(in: layers, width: 4, height: 2) === layers["RGB"]?.planes[0])
     #expect(throws: ProcessError.sizeMismatch) {
       try LayerPlane("R").texture(in: layers, width: 8, height: 2)
     }

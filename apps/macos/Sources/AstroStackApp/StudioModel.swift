@@ -77,8 +77,7 @@ package final class StudioModel {
       // The palette the bundle's layers spell (card 0138): the schema's defaults on OSC.
       let params =
         try combination
-        ?? ChannelCombinationProcess.initialParams(
-          layerIDs: Set(bundle.layers.keys), planes: session.layerPlanes())
+        ?? ChannelCombinationProcess.initialParams(planes: session.layerPlanes())
       try apply(ChannelCombinationProcess.id, params: params)
     }
     refresh()

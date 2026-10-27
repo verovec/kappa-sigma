@@ -69,4 +69,17 @@ extension ProcessPanelModelTests {
     // The « Advanced » toggle exists iff disclosing shows an advanced row.
     #expect(panel.hasAdvanced == panel.visibleSpecs.contains { $0.level == .advanced })
   }
+
+  @Test("testLayerOptions: the bundle's tokens, the value chosen listed after none (card 0138)")
+  func testLayerOptions() throws {
+    let type = try #require(ProcessRegistry.standard().type(id: ChannelCombinationProcess.id))
+    let panel = ProcessPanelModel(type: type, params: ParamSet(schema: type.schema))
+    #expect(panel.layerOptions(for: "rSource") == ["RGB.r"], "no bundle yet: the value alone")
+    panel.layerPlanes = ["RGB": 3, "Ha": 1]
+    #expect(panel.layerOptions(for: "rSource") == ["RGB.r", "RGB.g", "RGB.b", "Ha"])
+    #expect(panel.layerOptions(for: "lSource") == ["none", "RGB.r", "RGB.g", "RGB.b", "Ha"])
+    panel.set("lSource", .choice("OIII"))
+    #expect(
+      panel.layerOptions(for: "lSource") == ["none", "OIII", "RGB.r", "RGB.g", "RGB.b", "Ha"])
+  }
 }

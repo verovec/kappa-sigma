@@ -37,6 +37,8 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
     case text
     /// A process's suggested value, applied on click only (card 0087).
     case suggestion
+    /// A row's note: why its value cannot run on this stack (card 0135).
+    case note
   }
 
   // MARK: - Shared components

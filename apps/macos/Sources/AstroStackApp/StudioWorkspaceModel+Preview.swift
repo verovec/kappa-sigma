@@ -51,7 +51,9 @@ extension StudioWorkspaceModel {
   func panelChanged() {
     // The notice spoke of the values applied, not of these.
     appliedNothing = false
-    if let panel { panel.suggestions = offers(for: panel.type, params: panel.params) }
+    if let panel {
+      panel.suggestions = offers(for: panel.type, params: panel.params)
+    }
     greyUnavailable()
     // The head comes back now: a preview cancelled or refused would leave the model on screen.
     hideModel()

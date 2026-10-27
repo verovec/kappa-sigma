@@ -72,6 +72,8 @@ extension StudioWorkspaceModel {
   /// histogram of every process that keeps the grid, card 0128) and, for the handles, statistics.
   func refresh(_ panel: ProcessPanelModel) {
     panel.suggestions = offers(for: panel.type, params: panel.params)
+    let layerIDs = studio.session.layerIDs()
+    if panel.layerIDs != layerIDs { panel.layerIDs = layerIDs }
     panel.headSize = (head.width, head.height)
     // A head already solved says so on the plate-solve panel (card 0130); a new solve stays a choice.
     panel.solved =

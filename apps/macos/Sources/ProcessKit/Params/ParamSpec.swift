@@ -25,6 +25,9 @@ package struct ParamSpec: Equatable, Sendable {
   package let level: ParamLevel
   /// Kind, default and bounds.
   package let kind: Kind
+  /// The bundle layer this parameter is about (a line's rows, card 0135): the panel hides the
+  /// row while that layer is absent and the values do not ask for it; `nil` for every other row.
+  package private(set) var needsLayer: String?
 
   /// A number parameter.
   package init(
@@ -64,13 +67,20 @@ package struct ParamSpec: Equatable, Sendable {
       kind: .text(default: text, maxLength: maxLength))
   }
 
-  /// A parameter of any kind.
+  /// A parameter of any kind; `about(layer:)` makes it a layer's row.
   package init(id: String, title: String, unit: ParamUnit, level: ParamLevel, kind: Kind) {
     self.id = id
     self.title = title
     self.unit = unit
     self.level = level
     self.kind = kind
+  }
+
+  /// This spec, about the bundle layer `layer` (a copy: every other field as it was).
+  package func about(layer: String) -> Self {
+    var copy = self
+    copy.needsLayer = layer
+    return copy
   }
 
   /// The default value.

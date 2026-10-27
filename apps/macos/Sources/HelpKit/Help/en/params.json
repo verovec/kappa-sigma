@@ -1,5 +1,5 @@
 {
-  "background-extraction.applyTo": "The working image, the emission-line layers (Hα, OIII, SII) or the image and every layer of the stack.",
+  "background-extraction.applyTo": "The working image, every emission-line layer of the stack (Hα, OIII, SII or another line), or the image and every layer of the stack.",
   "background-extraction.correction": "Subtract removes an additive gradient (light pollution); divide removes a multiplicative one (vignetting), GraXpert only.",
   "background-extraction.degree": "Degree of the Siril polynomial, 1 to 4: 1 is a plane, higher bends with the gradient and may eat a large object.",
   "background-extraction.dither": "Siril RBF dithering of the model, against banding in smooth gradients; on by default.",

@@ -23,6 +23,9 @@ struct LayerPlaneWordsTests {
     Words(token: "L", locale: "en", expected: "Luminance"),
     Words(token: "R", locale: "fr", expected: "Rouge"),
     Words(token: "NII-custom", locale: "fr", expected: "NII-custom"),
+    Words(token: "RGB", locale: "en", expected: "Broadband (RGB)"),
+    Words(token: "Ha.r", locale: "fr", expected: "Hydrogène alpha · rouge"),
+    Words(token: "NII-custom*Ha", locale: "en", expected: "NII-custom × Hydrogen-alpha"),
     Words(token: "none", locale: "en", expected: "None"),
     Words(token: "none", locale: "fr", expected: "Aucun"),
   ]

@@ -102,7 +102,9 @@ struct ProcessParameterRow: View {
     case .number(let number): LocaleNumber.decimal(number, locale: locale, maxFractionDigits: 4)
     case .flag(let flag):
       String(localized: flag ? .app("On", locale: locale) : .app("Off", locale: locale))
-    case .choice(let option): option
+    case .choice(let option):
+      // A layer parameter's suggestion in words, as its menu (card 0139).
+      if case .layer = spec.kind { LayerPlaneWords.words(option, locale: locale) } else { option }
     case .points: ""
     case .text(let text): text
     }

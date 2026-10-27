@@ -61,10 +61,9 @@ struct ProcessParameterRow: View {
       }
     case .choice(_, let options):
       picker(options)
-    case .layer(_, let allowsNone, let allowsProduct):
+    case .layer:
       // The bundle names the options (card 0138); the value chosen stays listed.
-      picker(
-        model.layerOptions(for: spec.id, allowsNone: allowsNone, allowsProduct: allowsProduct))
+      picker(model.layerOptions(for: spec.id))
     case .text:
       HStack {
         TextField(text: text) { Text(label) }

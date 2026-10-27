@@ -23,9 +23,15 @@ struct ParamSpecTests {
     Token(token: "none", accepted: true),
     Token(token: "none", allowsNone: false, accepted: false),
     Token(token: "", accepted: false),
-    Token(token: "RGB.x", accepted: false),
-    Token(token: "a b", accepted: false),
+    Token(token: "RGB.x", accepted: true),  // a custom layer named so; the bundle judges
+    Token(token: "a b", accepted: true),  // a FITS filter name kept verbatim
+    Token(token: " a", accepted: false),
+    Token(token: "a ", accepted: false),
     Token(token: "*Ha", accepted: false),
+    Token(token: "none*Ha", accepted: false),
+    Token(token: "RGB.r*Ha", accepted: false),
+    Token(token: "Ha*Ha", accepted: false),
+    Token(token: "Ha*OIII", allowsNone: false, accepted: true),
     Token(token: "Ha*", accepted: false),
     Token(token: "Ha*OIII*SII", accepted: false),
     Token(token: "Ha*OIII", allowsProduct: false, accepted: false),
@@ -52,8 +58,8 @@ struct ParamSpecTests {
     #expect(spec.defaultValue == .choice("none"))
     #expect(ParamSchema([spec]).problems.isEmpty)
     let malformed = ParamSpec(
-      id: "lSource", title: "Luminance", level: .simple, layer: "RGB.x", allowsNone: true,
-      allowsProduct: false)
-    #expect(ParamSchema([malformed]).problems == ["lSource: default RGB.x is not a layer token"])
+      id: "lSource", title: "Luminance", level: .simple, layer: "Ha*", allowsNone: true,
+      allowsProduct: true)
+    #expect(ParamSchema([malformed]).problems == ["lSource: default Ha* is not a layer token"])
   }
 }

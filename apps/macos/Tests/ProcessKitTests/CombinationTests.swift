@@ -174,20 +174,25 @@ struct CombinationTests {
       sources: ["SII", "Ha", "OIII", "none"]),
     Initial(
       name: "HOO → hoo", layers: ["Ha": 1, "OIII": 1], sources: ["Ha", "OIII", "OIII", "none"]),
-    Initial(name: "L + Hα → grey L", layers: ["L": 1, "Ha": 1], sources: ["L", "L", "L", "none"]),
+    Initial(
+      name: "L + SII → grey of the base, L", layers: ["L": 1, "SII": 1],
+      sources: ["L", "L", "L", "none"]),
+    Initial(
+      name: "a colour-shaped custom layer alone → grey of its planes", layers: ["Ha 7nm": 3],
+      sources: ["Ha 7nm.r", "Ha 7nm.g", "Ha 7nm.b", "none"]),
     Initial(name: "Hα → grey Hα", layers: ["Ha": 1], sources: ["Ha", "Ha", "Ha", "none"]),
   ]
 
   @Test("testInitialParams", arguments: initials)
-  func testInitialParams(row: Initial) {
-    let params = ChannelCombinationProcess.initialParams(
+  func testInitialParams(row: Initial) throws {
+    let params = try ChannelCombinationProcess.initialParams(
       layerIDs: Set(row.layers.keys), planes: row.layers)
     #expect(ChannelCombinationProcess.slotSources.map { params.choice($0) } == row.sources)
   }
 
   @Test("testInitialParams_OSC_isTheSchemaDefault: step 0 of an OSC stack keeps its bytes")
-  func testInitialParams_OSC_isTheSchemaDefault() {
-    let osc = ChannelCombinationProcess.initialParams(
+  func testInitialParams_OSC_isTheSchemaDefault() throws {
+    let osc = try ChannelCombinationProcess.initialParams(
       layerIDs: ["RGB", "Ha", "OIII"], planes: ["RGB": 3])
     #expect(osc == ParamSet(schema: ChannelCombinationProcess.schema))
   }

@@ -68,28 +68,19 @@ package struct ChannelCombinationProcess: ImageProcess {
   /// Natural on the colour layer, lrgb / rgb on R, G, B (with L when present), sho on the three
   /// lines, hoo on Hα + OIII — else a grey of its first layer. A colour bundle gets exactly the
   /// schema's defaults: step 0 of an OSC stack keeps its bytes.
-  package static func initialParams(layerIDs: Set<String>, planes: [String: Int]) -> ParamSet {
+  package static func initialParams(layerIDs: Set<String>, planes: [String: Int]) throws
+    -> ParamSet
+  {
     var params = ParamSet(schema: schema)
-    let ids = Set(layerIDs.compactMap(Filter.init(rawValue:)))
-    let sources: [String]
-    if layerIDs.contains(Filter.color) {
-      return params
-    } else if ids.isSuperset(of: [.red, .green, .blue]) {
-      sources = ids.contains(.luminance) ? Palette.lrgb.sources : ["R", "G", "B", "none"]
-    } else if ids.isSuperset(of: [.sulfurII, .hydrogenAlpha, .oxygenIII]) {
-      sources = Palette.sho.sources
-    } else if ids.isSuperset(of: [.hydrogenAlpha, .oxygenIII]) {
-      sources = Palette.hoo.sources
-    } else if let first = layerIDs.sorted(by: Filter.less).first {
-      let grey =
-        planes[first] == 3 ? ["r", "g", "b"].map { "\(first).\($0)" } : [first, first, first]
-      sources = grey + ["none"]
-    } else {
-      return params
-    }
-    for (slot, source) in zip(slotSources, sources) {
-      // Every source above is a layer token by construction: `set` cannot refuse it.
-      try? params.set(slot, .choice(source))
+    if layerIDs.contains(Filter.color) { return params }
+    if let palette = Palette.spelled(by: layerIDs) { return try palette.apply(to: params) }
+    // A grey of the base layer (`StudioSession.baseLayerID`, the one rule); a layer name the
+    // grammar refuses is an error the Studio shows, never a silent fallback (R2).
+    guard let base = StudioSession.baseLayerID(layerIDs) else { return params }
+    let grey =
+      planes[base] == 3 ? LayerPlane.planeNames.map { "\(base).\($0)" } : [base, base, base]
+    for (slot, source) in zip(slotSources, grey) {
+      try params.set(slot, .choice(source))
     }
     return params
   }
@@ -213,10 +204,9 @@ package struct ChannelCombinationProcess: ImageProcess {
     return SlotPlanes(first: textures.first, second: textures.count > 1 ? textures[1] : nil)
   }
 
-  /// The layer ids a source token reads.
+  /// The layer ids a source token reads: a plane's layer, or the two layers of a product.
   private static func layers(of source: String) -> [String] {
     if source == "none" { return [] }
-    if source.hasPrefix("RGB.") { return ["RGB"] }
-    return source.split(separator: "*").map(String.init)
+    return source.split(separator: "*").map { LayerPlane(String($0)).layer }
   }
 }

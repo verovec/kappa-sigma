@@ -73,7 +73,7 @@ extension StudioWorkspaceModel {
   func refresh(_ panel: ProcessPanelModel) {
     panel.suggestions = offers(for: panel.type, params: panel.params)
     let layerIDs = studio.session.layerIDs()
-    let layerPlanes = studio.session.bundle.layers.mapValues { $0.planes.count }
+    let layerPlanes = studio.session.layerPlanes()
     if panel.layerPlanes != layerPlanes { panel.layerPlanes = layerPlanes }
     if panel.layerIDs != layerIDs { panel.layerIDs = layerIDs }
     panel.headSize = (head.width, head.height)

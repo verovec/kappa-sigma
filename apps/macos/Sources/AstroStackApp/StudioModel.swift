@@ -76,7 +76,7 @@ package final class StudioModel {
     if history.steps.isEmpty && !history.canRedo {
       // The palette the bundle's layers spell (card 0138): the schema's defaults on OSC.
       let params =
-        combination
+        try combination
         ?? ChannelCombinationProcess.initialParams(
           layerIDs: Set(bundle.layers.keys), planes: bundle.layers.mapValues { $0.planes.count })
       try apply(ChannelCombinationProcess.id, params: params)

@@ -11,12 +11,14 @@ package struct LayerPlane: Equatable, Sendable {
   /// The name it was made from.
   package let token: String
 
+  /// The plane suffixes of a 3-plane layer, in plane order (`RGB.r` is plane 0).
+  package static let planeNames = ["r", "g", "b"]
+
   /// The plane `token` names.
   package init(_ token: String) {
     self.token = token
-    let planes = ["r": 0, "g": 1, "b": 2]
     if let dot = token.lastIndex(of: "."),
-      let plane = planes[String(token[token.index(after: dot)...])]
+      let plane = Self.planeNames.firstIndex(of: String(token[token.index(after: dot)...]))
     {
       layer = String(token[..<dot])
       self.plane = plane
@@ -52,19 +54,31 @@ package struct LayerPlane: Equatable, Sendable {
 
   // MARK: - Tokens a layer parameter takes (card 0138)
 
-  /// Whether `token` is a layer token by grammar — `none` (when allowed), `<id>`, `<id>.r|g|b`,
-  /// or `<a>*<b>` of two such (when allowed), ids non-empty without spaces, dots or stars — the
-  /// bundle being the only judge of whether the layer exists.
+  /// Whether `token` is a layer token by grammar — `none` (when allowed), `<id>` or `<id>.r|g|b`
+  /// for any id the bundle may carry (a FITS filter name kept verbatim: non-empty, trimmed, no
+  /// `*`), or `<a>*<b>` of two different whole layers (when allowed) — the bundle being the only
+  /// judge of whether the layer exists.
   package static func isWellFormed(_ token: String, allowsNone: Bool, allowsProduct: Bool)
     -> Bool
   {
     if token == "none" { return allowsNone }
-    let parts = token.split(separator: "*", omittingEmptySubsequences: false)
-    guard parts.count == 1 || (parts.count == 2 && allowsProduct) else { return false }
-    return parts.allSatisfy { part in
-      let layer = Self(String(part)).layer
-      return !layer.isEmpty && layer.allSatisfy { !$0.isWhitespace && $0 != "." && $0 != "*" }
+    let parts = token.split(separator: "*", omittingEmptySubsequences: false).map(String.init)
+    switch parts.count {
+    case 1:
+      return isLayerID(Self(parts[0]).layer)
+    case 2 where allowsProduct:
+      // √(A·B) multiplies two whole layers: no plane, no `none`, two different ids.
+      return parts[0] != parts[1]
+        && parts.allSatisfy { isLayerID($0) && $0 != "none" && Self($0).layer == $0 }
+    default:
+      return false
     }
+  }
+
+  /// A layer id as the bundle may name one: non-empty, trimmed, without `*`.
+  private static func isLayerID(_ id: String) -> Bool {
+    guard let first = id.first, let last = id.last else { return false }
+    return !first.isWhitespace && !last.isWhitespace && !id.contains("*")
   }
 
   /// The tokens a bundle of `layerIDs` (with `planes` per layer, 1 when unsaid) offers: `none`
@@ -79,7 +93,7 @@ package struct LayerPlane: Equatable, Sendable {
     }
     var options = allowsNone ? ["none"] : []
     for id in ids {
-      options += planes[id] == 3 ? ["r", "g", "b"].map { "\(id).\($0)" } : [id]
+      options += planes[id] == 3 ? planeNames.map { "\(id).\($0)" } : [id]
     }
     guard allowsProduct else { return options }
     let lines = ids.filter(Filter.isNarrowband)

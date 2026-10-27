@@ -1,3 +1,4 @@
+internal import FilterKit
 /// A channel-combination preset: which layer feeds each slot.
 ///
 /// From the legacy `docs/architecture.md` palette table. Pure slot templates: weights and black
@@ -15,6 +16,8 @@ package enum Palette: String, CaseIterable, Sendable {
   case foraxx
   /// Mono filters: R, G, B, with L as luminance.
   case lrgb
+  /// Mono filters: R, G, B, no luminance.
+  case rgb
 
   /// The name the panel and the reasons use.
   package var title: String {
@@ -25,7 +28,18 @@ package enum Palette: String, CaseIterable, Sendable {
     case .hos: "HOS"
     case .foraxx: "Foraxx"
     case .lrgb: "LRGB"
+    case .rgb: "RGB"
     }
+  }
+
+  /// The palette a bundle's layers spell (card 0138): lrgb / rgb on R, G, B (with L or not),
+  /// sho on the three lines, hoo on Hα + OIII; none for a colour layer or anything else.
+  package static func spelled(by layerIDs: Set<String>) -> Self? {
+    let ids = Set(layerIDs.compactMap(Filter.init(rawValue:)))
+    if ids.isSuperset(of: [.red, .green, .blue]) { return ids.contains(.luminance) ? .lrgb : .rgb }
+    if ids.isSuperset(of: [.sulfurII, .hydrogenAlpha, .oxygenIII]) { return .sho }
+    if ids.isSuperset(of: [.hydrogenAlpha, .oxygenIII]) { return .hoo }
+    return nil
   }
 
   /// Sources of the R, G, B and L slots, in that order.
@@ -37,6 +51,7 @@ package enum Palette: String, CaseIterable, Sendable {
     case .hos: ["Ha", "OIII", "SII", "none"]
     case .foraxx: ["Ha", "Ha*OIII", "OIII", "none"]
     case .lrgb: ["R", "G", "B", "L"]
+    case .rgb: ["R", "G", "B", "none"]
     }
   }
 

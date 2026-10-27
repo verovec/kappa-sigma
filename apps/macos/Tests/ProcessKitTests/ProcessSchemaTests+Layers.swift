@@ -102,4 +102,22 @@ extension ProcessSchemaTests {
       #expect(type.rowReasons.contains(note.reason), "the reason is a catalog key")
     }
   }
+
+  @Test("unavailableOptions: a value naming an absent layer is greyed with why; none by default")
+  func testUnavailableOptions_layers() throws {
+    #expect(
+      StretchProcess.unavailableOptions(ParamSet(schema: StretchProcess.schema), layerIDs: ["RGB"])
+        .isEmpty)
+    var params = ParamSet(schema: ChannelCombinationProcess.schema)
+    #expect(ChannelCombinationProcess.unavailableOptions(params, layerIDs: ["RGB"]).isEmpty)
+    try params.set("rSource", .choice("Ha"))
+    try params.set("bSource", .choice("Ha*OIII"))
+    #expect(
+      ChannelCombinationProcess.unavailableOptions(params, layerIDs: ["RGB"]) == [
+        "rSource": ["Ha": ChannelCombinationProcess.missingLayerReason],
+        "bSource": ["Ha*OIII": ChannelCombinationProcess.missingLayerReason],
+      ])
+    #expect(
+      ChannelCombinationProcess.unavailableOptions(params, layerIDs: ["RGB", "Ha", "OIII"]).isEmpty)
+  }
 }

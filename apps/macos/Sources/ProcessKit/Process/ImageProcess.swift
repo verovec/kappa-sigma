@@ -104,6 +104,12 @@ package protocol ImageProcess {
 
   /// Every reason `unavailableReasons(_:layerIDs:)` may give: English keys of the catalog.
   static var rowReasons: [String] { get }
+
+  /// The options a bundle of `layerIDs` cannot run, by parameter then option, with the reason
+  /// (a catalog key, listed in `rowReasons`): shown greyed, never switched away from (R2). A
+  /// value naming an absent layer, typically. None by default (card 0139).
+  static func unavailableOptions(_ params: ParamSet, layerIDs: Set<String>)
+    -> [String: [String: String]]
 }
 
 extension ImageProcess {
@@ -187,6 +193,13 @@ extension ImageProcess {
 
   /// No row reason.
   package static var rowReasons: [String] { [] }
+
+  /// Nothing greyed for the layers.
+  package static func unavailableOptions(_ params: ParamSet, layerIDs: Set<String>)
+    -> [String: [String: String]]
+  {
+    [:]
+  }
 }
 
 /// Where a process belongs in a pipeline.

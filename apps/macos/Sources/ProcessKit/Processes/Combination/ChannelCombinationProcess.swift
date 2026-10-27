@@ -148,6 +148,20 @@ package struct ChannelCombinationProcess: ImageProcess {
     return notes
   }
 
+  /// Each slot whose value names a layer outside `layerIDs`: that value, greyed with the slot's
+  /// reason (card 0139), beside the row's note.
+  package static func unavailableOptions(_ params: ParamSet, layerIDs: Set<String>)
+    -> [String: [String: String]]
+  {
+    var greyed: [String: [String: String]] = [:]
+    for slot in slotSources {
+      let token = params.choice(slot)
+      guard layers(of: token).contains(where: { !layerIDs.contains($0) }) else { continue }
+      greyed[slot] = [token: missingLayerReason]
+    }
+    return greyed
+  }
+
   /// Why `params` cannot run with only `present` layers ("HOO needs the OIII layer"), or `nil`.
   package static func unavailableReason(params: ParamSet, present: Set<String>) -> String? {
     guard let missing = layersNeeded(params: params).first(where: { !present.contains($0) }) else {

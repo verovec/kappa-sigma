@@ -33,6 +33,9 @@ package struct ProcessPanel: View {
         ProcessHistogramExtras(model: model, sample: sample)
       }
       takeTogether
+      if !model.paletteOptions.isEmpty {
+        paletteMenu
+      }
       ForEach(model.visibleSpecs, id: \.id) { spec in
         ProcessParameterRow(spec: spec, model: model)
       }
@@ -42,6 +45,29 @@ package struct ProcessPanel: View {
           .accessible(.processAdvanced(model.type.id), label: .app("Advanced"))
       }
     }
+  }
+
+  /// The palettes the stack offers (card 0139): a template that fills the sources on screen;
+  /// « Custom » names any other combination, and a kept palette the stack lacks stays named.
+  private var paletteMenu: some View {
+    let kept = model.palette.map { model.paletteOptions.contains($0) ? [] : [$0] } ?? []
+    return Picker(selection: paletteSelection) {
+      ForEach(model.paletteOptions + kept, id: \.self) { palette in
+        Text(ProcessKitResources.title(palette.title, locale: locale)).tag(palette.rawValue)
+      }
+      Text(.app("Custom")).tag("custom")
+    } label: {
+      Text(.app("Palette"))
+    }
+    .accessible(.parameter("\(model.type.id).palette", .choice), label: .app("Palette"))
+  }
+
+  private var paletteSelection: Binding<String> {
+    Binding(
+      get: { model.palette?.rawValue ?? "custom" },
+      set: { raw in
+        if let palette = Palette(rawValue: raw) { model.choose(palette: palette) }
+      })
   }
 
   /// One button per reason several suggestions share: one click takes them all.

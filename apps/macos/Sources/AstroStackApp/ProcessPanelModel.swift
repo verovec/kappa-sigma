@@ -52,6 +52,11 @@ package final class ProcessPanelModel {
   }
   /// The tokens the bundle offers each layer parameter (card 0138), kept with the layers.
   private var layerOptions: [String: [String]] = [:]
+  /// The palettes the bundle offers (card 0139), in catalogue order; none without a bundle.
+  package private(set) var paletteOptions: [Palette] = []
+  /// The options greyed for the layers (card 0139), by parameter: the keys this model owns in
+  /// `unavailableOptions` (a tool probe owns others).
+  private var greyedByLayers: [String: [String: String]] = [:]
   /// Why a row's value cannot run on this stack, by parameter id (card 0135).
   ///
   /// Shown under the row, never greying the process; kept with the values and the layers.
@@ -99,6 +104,28 @@ package final class ProcessPanelModel {
     if hiddenNow != hidden { hidden = hiddenNow }
     let notesNow = layerIDs.map { type.unavailableReasons(params, layerIDs: $0) } ?? [:]
     if notesNow != rowNotes { rowNotes = notesNow }
+    let greyedNow = layerIDs.map { type.unavailableOptions(params, layerIDs: $0) } ?? [:]
+    guard greyedNow != greyedByLayers else { return }
+    for param in greyedByLayers.keys where greyedNow[param] == nil {
+      unavailableOptions[param] = nil
+    }
+    for (param, options) in greyedNow {
+      unavailableOptions[param] = options.mapValues { ProcessKitResources.title($0) }
+    }
+    greyedByLayers = greyedNow
+  }
+
+  /// The palette the sources match (card 0139), `nil` for a custom combination.
+  package var palette: Palette? { Palette.matching(params) }
+
+  /// Fills the four sources from `palette`.
+  ///
+  /// A palette is a template the rows show, never a hidden setting (R2); a recipe records the
+  /// sources, not the palette.
+  package func choose(palette: Palette) {
+    // A palette's tokens are well-formed by construction (`testPaletteSlots`).
+    guard let filled = try? palette.apply(to: params) else { return }
+    replace(filled)
   }
 
   /// The tokens each layer parameter lists, from the bundle's planes alone.
@@ -110,6 +137,8 @@ package final class ProcessPanelModel {
         planes: layerPlanes, allowsNone: allowsNone, allowsProduct: allowsProduct)
     }
     if optionsNow != layerOptions { layerOptions = optionsNow }
+    let palettesNow = Palette.available(planes: layerPlanes)
+    if palettesNow != paletteOptions { paletteOptions = palettesNow }
   }
 
   /// The tokens the layer parameter `id` lists (card 0138): the bundle's, and the value already
@@ -178,8 +207,8 @@ package final class ProcessPanelModel {
     return seen
   }
 
-  /// Replaces the values (a handle drag) and previews them.
-  func replace(_ params: ParamSet) {
+  /// Replaces the values (a handle drag, a palette) and previews them.
+  package func replace(_ params: ParamSet) {
     guard params != self.params else { return }
     self.params = params
     onChange()

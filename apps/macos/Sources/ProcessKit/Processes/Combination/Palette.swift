@@ -56,6 +56,26 @@ package enum Palette: String, CaseIterable, Sendable {
     }
   }
 
+  /// The layer ids the sources read, once each, in slot order.
+  package var layers: [String] {
+    var ids: [String] = []
+    for source in sources where source != "none" {
+      for part in source.split(separator: "*") {
+        let id = LayerPlane(String(part)).layer
+        if !ids.contains(id) { ids.append(id) }
+      }
+    }
+    return ids
+  }
+
+  /// The palettes a bundle of `planes` offers (card 0139), in catalogue order: those whose every
+  /// source the bundle names (`LayerPlane.options`: a plane needs a colour layer, a product two
+  /// 1-plane lines).
+  package static func available(planes: [String: Int]) -> [Self] {
+    let offered = Set(LayerPlane.options(planes: planes, allowsNone: true, allowsProduct: true))
+    return allCases.filter { $0.sources.allSatisfy(offered.contains) }
+  }
+
   /// The combination's default values with this palette's sources.
   package func params() throws -> ParamSet {
     try apply(to: ParamSet(schema: ChannelCombinationProcess.schema))

@@ -85,4 +85,19 @@ extension StudioWorkspaceModelTests {
     #expect(
       panel.layerOptions(for: "rSource") == ["RGB.r", "RGB.g", "RGB.b", "Ha", "OIII", "Ha*OIII"])
   }
+
+  @Test(
+    "testGreyingFollowsTheHead: an absent layer greys the value with why, until a layer adds it",
+    .scratchDirectory)
+  func testGreyingFollowsTheHead() throws {
+    let opened = try BranchTests.project()
+    defer { try? opened.package.close() }
+    let workspace = try Self.workspace(opened, bundle: BranchTests.bundle())  // RGB, Ha, OIII
+    workspace.choose(ChannelCombinationProcess.id)
+    let panel = try #require(workspace.panel)
+    panel.set("lSource", .choice("SII"))
+    #expect(panel.unavailableOptions["lSource"]?["SII"] != nil)
+    panel.layerIDs = ["RGB", "Ha", "OIII", "SII"]
+    #expect(panel.unavailableOptions["lSource"] == nil)
+  }
 }

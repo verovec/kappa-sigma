@@ -45,6 +45,13 @@ nonisolated package struct AppCommand: Equatable, Sendable {
     ]
   }
 
+  /// A submenu the catalog declares by name, its items filled when it opens (card 0144): data,
+  /// never a closure, so the catalog stays a list of values.
+  package enum Submenu: Sendable {
+    /// File › Open Recent: the recent projects, filled by `RecentProjectsMenu`.
+    case recentProjects
+  }
+
   /// Stable identifier (`file.save`), never shown.
   package let id: String
   /// The catalog key of its title.
@@ -65,12 +72,18 @@ nonisolated package struct AppCommand: Equatable, Sendable {
   package let separatorBefore: Bool
   /// Only in debug builds (the component gallery).
   package let debugOnly: Bool
+  /// The submenu it opens instead of sending an action (File › Open Recent).
+  package let submenu: Submenu?
+  /// The submenu it sits in, after the items that submenu fills (« Clear Menu »); `nil` for an
+  /// item of its menu.
+  package let parent: Submenu?
 
   /// A command; `key` is an AppKit key equivalent (`"O"` means ⇧⌘O with `.command`).
   package init(
     _ id: String, _ titleKey: String.LocalizationValue, menu: CommandMenu?, action: String?,
     key: String = "", modifiers: NSEvent.ModifierFlags = .command, held: Bool = false,
-    stage: JourneyStage? = nil, separatorBefore: Bool = false, debugOnly: Bool = false
+    stage: JourneyStage? = nil, separatorBefore: Bool = false, debugOnly: Bool = false,
+    submenu: Submenu? = nil, in parent: Submenu? = nil
   ) {
     self.id = id
     self.titleKey = titleKey
@@ -83,6 +96,8 @@ nonisolated package struct AppCommand: Equatable, Sendable {
     self.stage = stage
     self.separatorBefore = separatorBefore
     self.debugOnly = debugOnly
+    self.submenu = submenu
+    self.parent = parent
   }
 
   /// Whether this build has the command: debug-only ones exist in debug builds only.

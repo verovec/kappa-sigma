@@ -18,7 +18,7 @@ package struct RetentionCandidate: Equatable, Sendable, Identifiable {
 
   /// « M 31 · stacks/20261022_202418 »: the project and the stack, as the sheet lists them.
   package var label: String {
-    "\(project.deletingPathExtension().lastPathComponent) · \(stack.bundlePath)"
+    "\(ProjectPackage.target(of: project)) · \(stack.bundlePath)"
   }
 
   /// The project and the stack.

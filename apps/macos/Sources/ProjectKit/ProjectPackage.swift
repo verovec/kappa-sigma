@@ -12,6 +12,12 @@ public final class ProjectPackage {
   public static let fileExtension = "astrostack"
   /// The uniform type identifier the app exports for packages (`Info.plist`).
   package static let typeIdentifier = "fr.astrostack.project"
+  /// The target a package at `url` is named after: its folder name without the extension, as
+  /// the welcome window, File › Open Recent and the retention review write it (card 0144).
+  package static func target(of url: URL) -> String {
+    url.deletingPathExtension().lastPathComponent
+  }
+
   /// The database file inside the package.
   private static let databaseName = "project.db"
   /// `PRAGMA application_id` of every project database: "ASTK".

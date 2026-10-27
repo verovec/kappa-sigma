@@ -86,7 +86,7 @@ package final class WelcomeModel {
     recent = urls.map { url in
       let summary = open[Self.key(url)] ?? read[url] ?? nil
       return RecentProject(
-        url: url, target: url.deletingPathExtension().lastPathComponent, summary: summary)
+        url: url, target: ProjectPackage.target(of: url), summary: summary)
     }
   }
 

@@ -13,9 +13,8 @@ extension PreprocessRequest {
   /// The settings `lane` of `plan` stacks with: the run's, with its kind's override when the run
   /// splits — exactly the run's otherwise.
   package func settings(forLane lane: String, in plan: NightPlan) -> PreprocessSettings {
-    guard FilterSetLanes.dualbandLane(in: plan.channels.keys) != nil else { return settings }
-    let kind: FilterSet = FilterSetLanes.baseFilter(of: lane) == lane ? .broadband : .dualband
-    guard let patch = laneOverrides[kind] else { return settings }
+    guard !FilterSetLanes.lineLanes(in: plan.channels.keys).isEmpty else { return settings }
+    guard let patch = laneOverrides[FilterSetLanes.laneKind(of: lane)] else { return settings }
     // Validated on entry (`overrideLane`): every knob is a lane knob and accepts its value.
     return (try? KnobSchema.apply(patch, to: settings)) ?? settings
   }

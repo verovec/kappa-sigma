@@ -57,6 +57,11 @@ struct CalibrationFilterSetTests {
       masters: [flat(nightA, .unknown, frames: 5), flat(nightB, .dualband, frames: 50)],
       expected: "flat_2026-07-29_unknown.fits"),
     Row(
+      testDescription: "two foreign clips are both named, in filter-set order",
+      lightSet: .dualbandSII,
+      masters: [flat(nightB, .dualband, frames: 20), flat(nightA, .broadband, frames: 50)],
+      expected: nil, note: "are broadband/dualband"),
+    Row(
       testDescription: "force applies a cross-set flat", lightSet: .dualband,
       masters: [flat(nightB, .broadband, frames: 50)], expected: "flat_2026-08-02_broadband.fits",
       force: true),

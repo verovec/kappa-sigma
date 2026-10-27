@@ -43,10 +43,12 @@ struct UserFacingErrorTests {
       english: "Siril could not start: pipe busy"),
     Case(
       error: InspectError.unknownFilterSet("uhc"), names: "uhc",
-      english: "“uhc” is not a filter set: use unknown, broadband or dualband."),
+      english:
+        "“uhc” is not a filter set: use unknown, broadband, dualband, dualband-sii, multiband."),
     Case(
       error: FilterSet.ParseError.unknownFilterSet("uhc"), names: "uhc",
-      english: "“uhc” is not a filter set: use unknown, broadband or dualband."),
+      english:
+        "“uhc” is not a filter set: use unknown, broadband, dualband, dualband-sii, multiband."),
     Case(
       error: InspectError.unknownColorChoice("rgb"), names: "rgb",
       english: "“rgb” is not a colour model: use auto, mono or osc."),

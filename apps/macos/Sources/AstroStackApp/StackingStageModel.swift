@@ -100,14 +100,18 @@ package final class StackingStageModel {
     groups.flatMap(\.nights).filter { night in night.series.contains { isChecked($0.id) } }
   }
 
-  /// The lane columns of the Stacking panel (card 0121): broadband and dual-band once a checked
-  /// object's series split into both lanes, none otherwise.
+  /// The lane columns of the Stacking panel (card 0121): the broadband lane and every line clip
+  /// a checked object's series split into (card 0134), in `FilterSet` order; none without a split.
   package var laneColumns: [FilterSet] {
-    scopes.contains(where: splits) ? [.broadband, .dualband] : []
+    guard let inventory else { return [] }
+    let kinds = scopes.filter(splits).flatMap {
+      FilterSetLanes.laneKinds(in: inventory, setIDs: $0.setIDs)
+    }
+    return FilterSet.allCases.filter(Set(kinds).contains)
   }
 
-  /// The run of `scope` stacks a broadband and a dual-band lane: the engine's own split of the
-  /// scoped inventory (a measured broadband AND a measured dual-band set), never a guess.
+  /// The run of `scope` stacks lanes of two different clips (a broadband and a line clip, or two
+  /// line clips): the engine's own split of the scoped inventory, never a guess.
   package func splits(_ scope: RunScope) -> Bool {
     inventory.map { FilterSetLanes.splits($0, setIDs: scope.setIDs) } ?? false
   }

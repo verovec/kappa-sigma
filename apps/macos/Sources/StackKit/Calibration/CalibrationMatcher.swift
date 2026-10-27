@@ -30,7 +30,7 @@ package enum CalibrationMatcher {
     _ ref: LightRef, masters all: [CalibrationMaster], force: Bool
   ) -> CalibrationSelection {
     let light = ref.key
-    let (masters, crossSet) = keepSameFilterSet(ref, all, force: force)
+    let (masters, crossSet, crossSets) = keepSameFilterSet(ref, all, force: force)
     var selection = CalibrationSelection()
     selection.bias = bestBias(light, masters, force: force)
     chooseDark(light, masters, force: force, into: &selection)
@@ -45,7 +45,7 @@ package enum CalibrationMatcher {
     if crossSet > 0 && (selection.flat == nil || selection.flat?.session != light.session) {
       selection.notes.append(
         "\(crossSet) flat(s) excluded — these are \(ref.filterSet.rawValue) lights and those flats "
-          + "are \(opposite(ref.filterSet).rawValue); shoot flats per filter set")
+          + "are \(crossSets.joined(separator: "/")); shoot flats per filter set")
     }
     if selection.bias == nil && selection.dark == nil {
       selection.notes.append("no bias or dark — no read-noise calibration available")
@@ -108,16 +108,16 @@ package enum CalibrationMatcher {
   /// next-best candidate can still be found (`keepSameFilterSet`).
   private static func keepSameFilterSet(
     _ ref: LightRef, _ masters: [CalibrationMaster], force: Bool
-  ) -> ([CalibrationMaster], Int) {
-    guard !force, ref.filterSet.isKnown else { return (masters, 0) }
-    let kept = masters.filter {
-      !($0.type == .flat && $0.filterSet.isKnown && $0.filterSet != ref.filterSet)
+  ) -> (kept: [CalibrationMaster], excluded: Int, sets: [String]) {
+    guard !force, ref.filterSet.isKnown else { return (masters, 0, []) }
+    let crosses = { (master: CalibrationMaster) in
+      master.type == .flat && master.filterSet.isKnown && master.filterSet != ref.filterSet
     }
-    return (kept, masters.count - kept.count)
-  }
-
-  private static func opposite(_ set: FilterSet) -> FilterSet {
-    set == .dualband ? .broadband : .dualband
+    let kept = masters.filter { !crosses($0) }
+    let sets = Set(masters.filter(crosses).map(\.filterSet))
+    return (
+      kept, masters.count - kept.count, FilterSet.allCases.filter(sets.contains).map(\.rawValue)
+    )
   }
 
   /// Names the masters that did not come from this run's own frames (`borrowedNote`).

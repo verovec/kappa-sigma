@@ -112,8 +112,8 @@ package struct IntegrationSummary: Equatable, Sendable {
 extension IntegrationSummary {
   /// The lane a light set stacks in (`FilterSetLanes`), as the row's clip filter.
   ///
-  /// `dualband` for the run's dual-band lane, `unknown` for the plain one: the table never
-  /// splits lights the run stacks together, nor names a clip filter the run does not stack under.
+  /// The line clip of a line-clip lane, `unknown` for the plain one: the table never splits
+  /// lights the run stacks together, nor names a clip filter the run does not stack under.
   package struct Lanes {
     let inventory: Inventory
     let split: Bool
@@ -127,7 +127,7 @@ extension IntegrationSummary {
     /// The clip filter a row shows for `set`.
     package func filterSet(of set: FrameSet) -> FilterSet {
       let lane = FilterSetLanes.lane(for: set, in: inventory, split: split)
-      return FilterSetLanes.baseFilter(of: lane) == lane ? .unknown : .dualband
+      return FilterSetLanes.lineSet(of: lane) ?? .unknown
     }
   }
 }

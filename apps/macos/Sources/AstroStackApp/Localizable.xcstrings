@@ -8593,18 +8593,18 @@
         }
       }
     },
-    "“%@” is not a filter set: use unknown, broadband or dualband.": {
+    "“%@” is not a filter set: use %@.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "“%@” is not a filter set: use unknown, broadband or dualband."
+            "value": "“%@” is not a filter set: use %@."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "« %@ » n’est pas un type de filtre : utilisez unknown, broadband ou dualband."
+            "value": "« %@ » n’est pas un jeu de filtres : utilisez %@."
           }
         }
       }
@@ -9537,18 +9537,18 @@
         }
       }
     },
-    "Per channel: broadband, Hα and OIII processed apart, then combined; one stack.": {
+    "Per channel: each lane processed apart, then combined; one stack.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Per channel: broadband, Hα and OIII processed apart, then combined; one stack."
+            "value": "Per channel: each lane processed apart, then combined; one stack."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Par canal : large bande, Hα et OIII traités séparément puis combinés ; un seul empilement."
+            "value": "Par canal : chaque lane traitée séparément puis combinée ; un seul empilement."
           }
         }
       }

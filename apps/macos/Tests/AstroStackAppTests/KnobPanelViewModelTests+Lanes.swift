@@ -41,6 +41,12 @@ extension KnobPanelViewModelTests {
       Split(name: "BB+DB", verdicts: [.broadband, .dualband], columns: [.broadband, .dualband]),
       // The engine splits only on a measured broadband AND a measured dual-band set.
       Split(name: "unclassified+DB", verdicts: [.unknown, .dualband], columns: []),
+      Split(
+        name: "BB+SII-OIII", verdicts: [.broadband, .dualbandSII],
+        columns: [.broadband, .dualbandSII]),
+      Split(
+        name: "multiband+BB", verdicts: [.multiband, .broadband],
+        columns: [.broadband, .multiband]),
     ])
   func testLaneColumnsOnlyWhenSplit(_ split: Split) throws {
     let series = Self.series(split.verdicts)

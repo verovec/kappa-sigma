@@ -6,8 +6,9 @@ extension ProfileProposal.Inputs {
   /// What the light sets of `inventory` say (card 0060).
   ///
   /// The camera is StackKit's colour model of the lights (mixed → unknown); OSC filters come from
-  /// the clip-filter verdicts (both → the lanes `FilterSetLanes` splits, one only when every light
-  /// set has that verdict), mono filters from the sets' filters (the scan already applied the
+  /// the clip-filter verdicts (two clips → the lanes `FilterSetLanes` splits: broadband + dual-band
+  /// with a broadband night, dual-band otherwise; one only when every light set has that
+  /// verdict), mono filters from the sets' filters (the scan already applied the
   /// filter map); the target when every set names the same one. Nothing is guessed from pixels.
   package nonisolated init(inventory: Inventory) {
     let lights = inventory.sets.filter { $0.key.type == .light }
@@ -33,13 +34,14 @@ extension ProfileProposal.Inputs {
   private nonisolated static func oscFilters(_ inventory: Inventory, lights: [FrameSet])
     -> Profile.Filters?
   {
-    if FilterSetLanes.splits(inventory) { return .broadbandDualband }
     let verdicts = Set(lights.map { inventory.filterSets[$0.key.id] ?? .unknown })
-    switch verdicts {
-    case [.dualband]: return .dualband
-    case [.broadband]: return .broadband
-    default: return nil
+    if FilterSetLanes.splits(inventory) {
+      // Two line clips without a broadband night stay a dual-band capture for the profiles.
+      return verdicts.contains(.broadband) ? .broadbandDualband : .dualband
     }
+    guard verdicts.count == 1, let verdict = verdicts.first, verdict.isKnown else { return nil }
+    // Every line clip takes the dual-band profiles: two lines over a near-black sky.
+    return verdict == .broadband ? .broadband : .dualband
   }
 
   private nonisolated static func monoFilters(_ filters: Set<Filter>) -> Profile.Filters? {

@@ -2,15 +2,20 @@ internal import Foundation
 
 /// Which clip filter a ONE-SHOT-COLOUR session was shot through (`internal/filters/filterset.go`).
 ///
-/// A colour camera has no wheel and no FILTER card; only the pixels say whether a night was
-/// broadband or dual-band, and the two must never be stacked or flat-matched together.
+/// A colour camera has no wheel and no FILTER card; the pixels say whether a night was broadband
+/// or dual-band (the user asserts the other clips), and two clips must never be stacked or
+/// flat-matched together. The `rawValue` is on the wire: lane names, `lane_knobs`, overrides.
 package enum FilterSet: String, CaseIterable, Codable, Sendable {
   /// Not measured, or the signals disagreed: every consumer keeps today's behaviour.
   case unknown
   /// Unfiltered (or UV/IR-cut): full continuum, bright sky.
   case broadband
-  /// A dual-narrowband clip (Ha + OIII): two narrow windows, near-black sky.
+  /// A dual-narrowband clip (Hα + OIII): two narrow windows, near-black sky.
   case dualband
+  /// A dual-narrowband clip passing [SII] and [OIII] instead.
+  case dualbandSII = "dualband-sii"
+  /// A tri- or quad-band clip: Hα (with [SII]) on the red plane, [OIII] (with Hβ) on green/blue.
+  case multiband
 
   /// Whether the verdict carries information (neither empty nor unknown).
   package var isKnown: Bool { self != .unknown }
@@ -39,9 +44,14 @@ package enum FilterSet: String, CaseIterable, Codable, Sendable {
   package var lines: Lines? {
     switch self {
     case .unknown, .broadband: nil
-    case .dualband: (.hydrogenAlpha, .oxygenIII)
+    case .dualband, .multiband: (.hydrogenAlpha, .oxygenIII)
+    case .dualbandSII: (.sulfurII, .oxygenIII)
     }
   }
+
+  /// Whether each plane also carries a second line the sensor cannot separate (a multi-band
+  /// clip: [SII] under Hα, Hβ under [OIII]) — what the run's note says about its layers.
+  package var mixesLines: Bool { self == .multiband }
 }
 
 /// A verdict keys a JSON object by its wire value (`{"dualband": …}`), not a list of pairs.

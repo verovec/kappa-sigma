@@ -78,7 +78,7 @@ struct FilterTests {
     "a filter set parses from its wire value; empty is unknown",
     arguments: [
       ("", FilterSet.unknown), ("unknown", .unknown), (" Broadband ", .broadband),
-      ("DUALBAND", .dualband),
+      ("DUALBAND", .dualband), ("dualband-sii", .dualbandSII), ("Multiband", .multiband),
     ])
   func testFilterSet_parse(raw: String, expected: FilterSet) throws {
     #expect(try FilterSet(parsing: raw) == expected)
@@ -87,8 +87,10 @@ struct FilterTests {
   @Test("an unknown filter set is an error, and only measured sets are known")
   func testFilterSet_known() {
     #expect(throws: FilterSet.ParseError.unknownFilterSet("uhc")) { try FilterSet(parsing: "uhc") }
-    #expect(FilterSet.allCases == [.unknown, .broadband, .dualband])
-    #expect(FilterSet.allCases.filter(\.isKnown) == [.broadband, .dualband])
+    #expect(FilterSet.allCases == [.unknown, .broadband, .dualband, .dualbandSII, .multiband])
+    #expect(
+      FilterSet.allCases.filter(\.isKnown) == [.broadband, .dualband, .dualbandSII, .multiband])
+    #expect(FilterSet.allCases.map(\.rawValue).contains("dualband"), "the wire value stays")
   }
 
   @Test(
@@ -128,10 +130,16 @@ struct FilterTests {
     "a clip filter's planes carry one line each, or none",
     arguments: [
       (FilterSet.unknown, nil, nil), (.broadband, nil, nil),
-      (.dualband, Filter.hydrogenAlpha, Filter.oxygenIII),
+      (.dualband, Filter.hydrogenAlpha, Filter.oxygenIII), (.dualbandSII, .sulfurII, .oxygenIII),
+      (.multiband, .hydrogenAlpha, .oxygenIII),
     ])
   func testFilterSet_lines(set: FilterSet, red: Filter?, greenBlue: Filter?) {
     #expect(set.lines?.red == red)
     #expect(set.lines?.greenBlue == greenBlue)
+  }
+
+  @Test("only the multi-band clip mixes a second line into each plane")
+  func testFilterSet_mixed() {
+    #expect(FilterSet.allCases.filter(\.mixesLines) == [.multiband])
   }
 }

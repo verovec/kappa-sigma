@@ -3,11 +3,11 @@ package import Foundation
 extension Preprocessor {
   /// The assembly's emission step on the cropped combine inputs.
   ///
-  /// `channels` maps a filter to its basename in `out`; `registered` says whether the dual-band
-  /// lane, if any, landed on the broadband grid. A split capture's dual-band lane becomes
-  /// `Ha` + `OIII` (`DualbandSplit`), then every emission layer gets its continuum scale
-  /// (`ContinuumK`). Each decision is a note; a scale that cannot be fitted costs only its
-  /// `continuum_k`.
+  /// `channels` maps a filter to its basename in `out`; `registered` says whether every line-clip
+  /// lane to split landed on the base grid (the broadband master, or the first line lane when
+  /// the run has none). Each line lane becomes its lines (`DualbandSplit`), then every emission
+  /// layer gets its continuum scale (`ContinuumK`) — none with a line base. Each decision is a
+  /// note; a scale that cannot be fitted costs only its `continuum_k`.
   package static func emission(
     _ channels: [String: String], out: URL, registered: Bool = true, notes: inout [String]
   ) -> (channels: [String: String], continuum: [String: Double]) {
@@ -21,6 +21,9 @@ extension Preprocessor {
   ) -> (channels: [String: String], continuum: [String: ContinuumK.Fit]) {
     let (split, note) = DualbandSplit.channels(channels, out: out, registered: registered)
     if let note { notes.append(note) }
+    // A continuum is estimated against broadband light: when a line lane stands in for the
+    // colour base, no scale is fitted at all (the split's note already says why).
+    guard !DualbandSplit.lineBase(in: channels.keys) else { return (split, [:]) }
     let files = split.mapValues { out.appendingPathComponent($0 + ".fits") }
     var continuum: [String: ContinuumK.Fit] = [:]
     for line in ChannelAligner.ordered(split.keys) where ContinuumK.references(of: line) != nil {

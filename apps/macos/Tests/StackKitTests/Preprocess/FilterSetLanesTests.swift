@@ -46,6 +46,10 @@ struct FilterSetLanesTests {
       (twoNights, [.broadband, .broadband], ["RGB"]),
       (twoNights, [.unknown, .unknown], ["RGB"]),
       (twoNights, [.dualband, .unknown], ["RGB"]),
+      (twoNights, [.broadband, .dualbandSII], ["RGB", "RGB-dualband-sii"]),
+      (twoNights, [.multiband, .broadband], ["RGB", "RGB-multiband"]),
+      // Two line clips and no broadband base: still two lanes, never one master.
+      (twoNights, [.dualband, .dualbandSII], ["RGB-dualband", "RGB-dualband-sii"]),
     ])
   func testPartition(sets: [FrameSet], verdicts: [FilterSet], lanes: [String]) throws {
     let plan = try Preprocessor.plan(Self.scan(sets, verdicts))
@@ -70,15 +74,35 @@ struct FilterSetLanesTests {
       (["RGB"], ["RGB"]),
     ])
   func testDualbandLast(order: [String], expected: [String]) {
-    #expect(FilterSetLanes.dualbandLast(order) == expected)
+    #expect(FilterSetLanes.lineLanesLast(order) == expected)
   }
 
   @Test("lane helpers: base filter, the dual-band lane of a channel map")
   func testLaneNames() {
     #expect(FilterSetLanes.baseFilter(of: "RGB-dualband") == "RGB")
     #expect(FilterSetLanes.baseFilter(of: "RGB") == "RGB")
-    #expect(FilterSetLanes.dualbandLane(in: ["RGB", "RGB-dualband"]) == "RGB-dualband")
-    #expect(FilterSetLanes.dualbandLane(in: ["L", "R"]) == nil)
+    #expect(FilterSetLanes.lineLanes(in: ["RGB", "RGB-dualband"]) == ["RGB-dualband"])
+    #expect(FilterSetLanes.lineLanes(in: ["L", "R"]).isEmpty)
+  }
+
+  @Test("lane helpers by clip filter: the set of a lane, the line lanes in set order, last")
+  func testLineLaneHelpers() {
+    #expect(FilterSetLanes.lineSet(of: "RGB-dualband-sii") == .dualbandSII)
+    #expect(FilterSetLanes.lineSet(of: "RGB-dualband") == .dualband)
+    #expect(FilterSetLanes.lineSet(of: "RGB") == nil)
+    #expect(FilterSetLanes.baseFilter(of: "RGB-multiband") == "RGB")
+    #expect(
+      FilterSetLanes.lineLanes(in: ["RGB", "RGB-multiband", "RGB-dualband"]) == [
+        "RGB-dualband", "RGB-multiband",
+      ])
+    #expect(
+      FilterSetLanes.lineLanes(in: ["Z-dualband", "A-dualband"]) == ["A-dualband", "Z-dualband"])
+    #expect(
+      FilterSetLanes.lineLanesLast(["RGB-multiband", "RGB", "RGB-dualband"]) == [
+        "RGB", "RGB-dualband", "RGB-multiband",
+      ])
+    #expect(FilterSetLanes.laneKind(of: "RGB") == .broadband)
+    #expect(FilterSetLanes.laneKind(of: "RGB-multiband") == .multiband)
   }
 
   @Test("non-canonical lanes sort deterministically after the canonical filters")

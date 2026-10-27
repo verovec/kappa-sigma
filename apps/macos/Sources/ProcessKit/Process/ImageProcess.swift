@@ -110,6 +110,10 @@ package protocol ImageProcess {
   /// value naming an absent layer, typically. None by default (card 0139).
   static func unavailableOptions(_ params: ParamSet, layerIDs: Set<String>)
     -> [String: [String: String]]
+
+  /// The palettes a bundle of `planes` offers this process (card 0139): templates that fill
+  /// visible parameters, never a hidden setting. None by default; the channel combination's.
+  static func palettes(planes: [String: Int]) -> [Palette]
 }
 
 extension ImageProcess {
@@ -200,6 +204,9 @@ extension ImageProcess {
   {
     [:]
   }
+
+  /// No palette.
+  package static func palettes(planes: [String: Int]) -> [Palette] { [] }
 }
 
 /// Where a process belongs in a pipeline.

@@ -347,8 +347,10 @@ that reads bundle layers declares them in `layersRead`, or its steps never go st
 
 - **Palette menu and layer greying** (card 0139): `Palette.available(planes:)` lists the palettes
   whose every source the bundle names (0138's `LayerPlane.options` rule); `ImageProcess.unavailableOptions(_:layerIDs:)` → `[param: [option: reasonKey]]`
-  (default none; the combination greys a value naming an absent layer) is merged by the panel
-  model into `unavailableOptions` next to a tool probe's keys. The app words a token with
+  (default none; the combination greys a value naming an absent layer) and `palettes(planes:)`
+  (default none; the combination answers `Palette.available`) are read by the panel model, which
+  merges the layer greying with a tool probe's (`toolOptions`) into `unavailableOptions`. The app
+  words a token with
   `LayerPlaneWords` (glossary words, a line's name, « × » for a product, a custom id verbatim).
 
 - **What « Combined » holds** (card 0131): `StudioSession.combinedLayers(after:layerIDs:registry:)` folds the main steps

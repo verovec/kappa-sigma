@@ -57,11 +57,20 @@ package enum Palette: String, CaseIterable, Sendable {
   }
 
   /// The palettes a bundle of `planes` offers (card 0139), in catalogue order: those whose every
-  /// source the bundle names (`LayerPlane.options`: a plane needs a colour layer, a product two
-  /// 1-plane lines).
+  /// source its slot lists for the bundle (`LayerPlane.options` with the slot's own grammar: a
+  /// plane needs a colour layer, a product two 1-plane lines, `none` where the slot allows it).
   package static func available(planes: [String: Int]) -> [Self] {
-    let offered = Set(LayerPlane.options(planes: planes, allowsNone: true, allowsProduct: true))
-    return allCases.filter { $0.sources.allSatisfy(offered.contains) }
+    let offered = ChannelCombinationProcess.slotSources.map { slot -> Set<String> in
+      guard
+        case .layer(_, let allowsNone, let allowsProduct)? =
+          ChannelCombinationProcess.schema.spec(slot)?.kind
+      else { return [] }
+      return Set(
+        LayerPlane.options(planes: planes, allowsNone: allowsNone, allowsProduct: allowsProduct))
+    }
+    return allCases.filter { palette in
+      zip(palette.sources, offered).allSatisfy { $1.contains($0) }
+    }
   }
 
   /// The combination's default values with this palette's sources.

@@ -35,9 +35,20 @@ package final class ProcessPanelModel {
   /// What the levels send to black and white on the head's sample, per channel (measured once
   /// per change of the values or the sample, shown, never applied); none for another process.
   package internal(set) var clipping: [HeadSample.Clipping] = []
-  /// Choice options that cannot run, by parameter then option, with the reason (an engine
+  /// Choice options a tool probe greys, by parameter then option, with the reason (an engine
   /// whose tool is missing, card 0092): shown greyed, never switched away from (R2).
-  package var unavailableOptions: [String: [String: LocalizedStringResource]] = [:]
+  package var toolOptions: [String: [String: LocalizedStringResource]] = [:]
+  /// Every greyed option (card 0139): a tool's (`toolOptions`) and the layers' (the process's
+  /// `unavailableOptions(_:layerIDs:)`), by parameter then option — read by the rows.
+  package var unavailableOptions: [String: [String: LocalizedStringResource]] {
+    var merged = toolOptions
+    for (param, options) in layerGreyed {
+      for (option, reason) in options {
+        merged[param, default: [:]][option] = ProcessKitResources.title(reason)
+      }
+    }
+    return merged
+  }
   /// The bundle layers the panel's process may read (card 0135).
   ///
   /// A line's rows show only while its layer is among them, or while the values still ask for
@@ -52,12 +63,11 @@ package final class ProcessPanelModel {
   }
   /// The tokens the bundle offers each layer parameter (card 0138), kept with the layers.
   private var layerOptions: [String: [String]] = [:]
-  /// The palettes the bundle offers the channel combination (card 0139), in catalogue order;
-  /// none without a bundle, none for any other process.
+  /// The palettes the process offers for the bundle (card 0139), in catalogue order; none
+  /// without a bundle, none for a process without templates.
   package private(set) var paletteOptions: [Palette] = []
-  /// The options greyed for the layers (card 0139), by parameter then option: what this model
-  /// added to `unavailableOptions`, beside a tool probe's own entries.
-  private var greyedByLayers: [String: [String: String]] = [:]
+  /// The options the layers grey (card 0139), by parameter then option: catalog reason keys.
+  private var layerGreyed: [String: [String: String]] = [:]
   /// Why a row's value cannot run on this stack, by parameter id (card 0135).
   ///
   /// Shown under the row, never greying the process; kept with the values and the layers.
@@ -106,20 +116,7 @@ package final class ProcessPanelModel {
     let notesNow = layerIDs.map { type.unavailableReasons(params, layerIDs: $0) } ?? [:]
     if notesNow != rowNotes { rowNotes = notesNow }
     let greyedNow = layerIDs.map { type.unavailableOptions(params, layerIDs: $0) } ?? [:]
-    guard greyedNow != greyedByLayers else { return }
-    // Per option: a tool probe's entries on the same parameter stay.
-    for (param, options) in greyedByLayers {
-      for option in options.keys where greyedNow[param]?[option] == nil {
-        unavailableOptions[param]?[option] = nil
-      }
-      if unavailableOptions[param]?.isEmpty == true { unavailableOptions[param] = nil }
-    }
-    for (param, options) in greyedNow {
-      for (option, reason) in options {
-        unavailableOptions[param, default: [:]][option] = ProcessKitResources.title(reason)
-      }
-    }
-    greyedByLayers = greyedNow
+    if greyedNow != layerGreyed { layerGreyed = greyedNow }
   }
 
   /// The key the palette menu's control is identified by.
@@ -133,8 +130,8 @@ package final class ProcessPanelModel {
   /// A palette is a template the rows show, never a hidden setting (R2); a recipe records the
   /// sources, not the palette.
   package func choose(palette: Palette) {
-    // Only the combination offers palettes (`paletteOptions`), whose tokens its schema accepts
-    // by construction (`testPaletteSlots`): `apply` cannot fail here, and a binding cannot throw.
+    // A palette the process offers (`palettes(planes:)`) or already matches: its tokens pass the
+    // slots' grammar by construction (`available`), so `apply` cannot fail; a binding cannot throw.
     guard paletteOptions.contains(palette) || palette == self.palette,
       let filled = try? palette.apply(to: params)
     else { return }
@@ -150,8 +147,7 @@ package final class ProcessPanelModel {
         planes: layerPlanes, allowsNone: allowsNone, allowsProduct: allowsProduct)
     }
     if optionsNow != layerOptions { layerOptions = optionsNow }
-    let palettesNow =
-      type == ChannelCombinationProcess.self ? Palette.available(planes: layerPlanes) : []
+    let palettesNow = type.palettes(planes: layerPlanes)
     if palettesNow != paletteOptions { paletteOptions = palettesNow }
   }
 

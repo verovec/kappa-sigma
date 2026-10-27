@@ -59,14 +59,14 @@ extension StudioWorkspaceModel {
         reasons[engine] = reason
       }
     }
-    panel.unavailableOptions["engine"] = reasons
+    panel.toolOptions["engine"] = reasons
     greyUnavailable()
   }
 
   /// Greys what the current values cannot run: dividing with a Siril engine.
   func greyUnavailable() {
     guard let panel, panel.type.id == BackgroundExtractionProcess.id else { return }
-    panel.unavailableOptions["correction"] =
+    panel.toolOptions["correction"] =
       Self.correctionReason(panel.params).map { ["divide": $0] } ?? [:]
   }
 

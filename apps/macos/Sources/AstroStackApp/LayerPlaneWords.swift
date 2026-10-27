@@ -2,8 +2,9 @@ import FilterKit
 package import Foundation
 import ProcessKit
 
-/// A layer token in the view's language (card 0139): the colour layer and the broadband filters
-/// by their glossary words, a line by its name, `A*B` as « A × B », a custom id verbatim.
+/// A layer token in the view's language (card 0139): a layer as the switcher names it
+/// (`StudioSelection.label`: glossary words, a custom id verbatim), `A*B` as « A × B », a plane
+/// by its colour.
 package enum LayerPlaneWords {
   /// `token` worded in `locale`.
   package static func words(_ token: String, locale: Locale) -> String {
@@ -23,9 +24,8 @@ package enum LayerPlaneWords {
     return words + " · " + (colour ?? name)
   }
 
-  /// A layer id in words: a line's name, else what the switcher calls the layer.
+  /// A layer id in words: what the switcher calls the layer, the one naming rule.
   private static func layer(_ id: String, locale: Locale) -> String {
-    if let line = Filter(rawValue: id)?.line { return line.displayName }
-    return StudioSelection.label(.branch(id), locale: locale)
+    StudioSelection.label(.branch(id), locale: locale)
   }
 }

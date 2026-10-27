@@ -25,7 +25,7 @@ extension ProcessPanelModelTests {
   func testUnavailableOptions_currentValueNamingAbsentLayer() throws {
     let type = try #require(ProcessRegistry.standard().type(id: ChannelCombinationProcess.id))
     let panel = ProcessPanelModel(type: type, params: ParamSet(schema: type.schema))
-    panel.unavailableOptions["lSource"] = ["L": .app("kept")]  // a probe's entry on the same row
+    panel.toolOptions["lSource"] = ["L": .app("kept")]  // a probe's entry on the same row
     panel.layerPlanes = ["RGB": 3]
     panel.layerIDs = ["RGB"]
     panel.set("lSource", .choice("Ha"))

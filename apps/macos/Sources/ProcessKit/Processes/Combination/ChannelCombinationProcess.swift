@@ -148,6 +148,11 @@ package struct ChannelCombinationProcess: ImageProcess {
     return notes
   }
 
+  /// The palettes the bundle's layers allow, in catalogue order (card 0139).
+  package static func palettes(planes: [String: Int]) -> [Palette] {
+    Palette.available(planes: planes)
+  }
+
   /// Each slot whose value names a layer outside `layerIDs`: that value, greyed with the slot's
   /// reason (card 0139), beside the row's note.
   package static func unavailableOptions(_ params: ParamSet, layerIDs: Set<String>)

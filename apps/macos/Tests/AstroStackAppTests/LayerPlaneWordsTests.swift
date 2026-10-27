@@ -2,8 +2,8 @@ import AstroStackApp
 import Foundation
 import Testing
 
-/// A layer token in words (card 0139): glossary words for the broadband filters and the colour
-/// layer, a line's name, « × » for a product, verbatim for a custom id.
+/// A layer token in words (card 0139): the switcher's words for a layer (glossary; a custom id
+/// verbatim), « × » for a product, a plane by its colour.
 @MainActor
 @Suite("LayerPlaneWords — a layer token in the view's language")
 struct LayerPlaneWordsTests {
@@ -18,8 +18,8 @@ struct LayerPlaneWordsTests {
     Words(token: "RGB.r", locale: "en", expected: "Broadband (RGB) · red"),
     Words(token: "RGB.r", locale: "fr", expected: "Large bande (RGB) · rouge"),
     Words(token: "RGB.b", locale: "fr", expected: "Large bande (RGB) · bleu"),
-    Words(token: "Ha", locale: "en", expected: "Hα"),
-    Words(token: "Ha*OIII", locale: "fr", expected: "Hα × [OIII]"),
+    Words(token: "Ha", locale: "en", expected: "Hydrogen-alpha"),
+    Words(token: "Ha*OIII", locale: "fr", expected: "Hydrogène alpha × Oxygène III"),
     Words(token: "L", locale: "en", expected: "Luminance"),
     Words(token: "R", locale: "fr", expected: "Rouge"),
     Words(token: "NII-custom", locale: "fr", expected: "NII-custom"),

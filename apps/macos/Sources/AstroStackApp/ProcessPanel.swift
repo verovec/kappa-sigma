@@ -33,7 +33,7 @@ package struct ProcessPanel: View {
         ProcessHistogramExtras(model: model, sample: sample)
       }
       takeTogether
-      if !model.paletteOptions.isEmpty {
+      if !model.paletteOptions.isEmpty || model.palette != nil {
         paletteMenu
       }
       ForEach(model.visibleSpecs, id: \.id) { spec in

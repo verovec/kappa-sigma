@@ -73,6 +73,7 @@ package struct LineInjectionProcess: ImageProcess {
     guard input.planes.count == 3 else {
       throw ProcessError.invalidParameter("line injection needs an RGB base")
     }
+    try LineKernels.checkSlots(bound.count)
     var textures: [MTLTexture] = []
     var values: [LineKernels.InjectLine] = []
     for line in bound {
@@ -126,8 +127,8 @@ package struct LineInjectionProcess: ImageProcess {
     encoder.setComputePipelineState(pipeline)
     for (index, plane) in input.planes.enumerated() { encoder.setTexture(plane, index: index) }
     for (index, plane) in output.planes.enumerated() { encoder.setTexture(plane, index: 3 + index) }
-    try LineKernels.bind(
-      lines, slots: 2 * LineKernels.maxLines, from: 6, padding: input.planes[0], values: values,
+    LineKernels.bind(
+      lines, perLine: 2, from: 6, padding: input.planes[0], values: values,
       encoder: encoder)
     encoder.dispatchThreads(
       MTLSize(width: output.width, height: output.height, depth: 1),

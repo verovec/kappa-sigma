@@ -44,7 +44,7 @@ extension Filter {
   /// Not one-shot colour and not a broadband filter, so a custom name (`NII-custom`) is one.
   /// StackKit's bundle roles and ProcessKit's line layers share this rule (card 0136).
   package static func isLineName(_ name: String) -> Bool {
-    guard !name.trimmingCharacters(in: .whitespaces).isEmpty, !isColor(name) else { return false }
+    guard !isColor(name) else { return false }
     return token(name).map { $0.line != nil } ?? true
   }
 }

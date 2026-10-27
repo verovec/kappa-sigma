@@ -31,17 +31,22 @@ package enum LineKernels {
     }
   }
 
-  /// Binds `textures` from texture index `first` on, padding the `slots` left with `padding`, the
-  /// per-line `values` at buffer 0 and their count at buffer 1; more textures than slots or
-  /// lines than `maxLines` is refused, never truncated.
-  package static func bind<Value: BitwiseCopyable>(
-    _ textures: [MTLTexture], slots: Int, from first: Int, padding: MTLTexture,
-    values: [Value], encoder: MTLComputeCommandEncoder
-  ) throws {
-    guard textures.count <= slots, values.count <= maxLines else {
+  /// Refuses more bound lines than the kernels have slots, before any layer is read.
+  package static func checkSlots(_ count: Int) throws {
+    guard count <= maxLines else {
       throw ProcessError.invalidParameter("more than \(maxLines) lines")
     }
-    for slot in 0..<slots {
+  }
+
+  /// Binds `perLine` textures per line of `values` from texture index `first` on, padding the
+  /// free slots of `maxLines` lines with `padding`, the `values` at buffer 0 and their count at
+  /// buffer 1. The caller has passed `checkSlots` (an encoder that throws half-built is never
+  /// ended).
+  package static func bind<Value: BitwiseCopyable>(
+    _ textures: [MTLTexture], perLine: Int, from first: Int, padding: MTLTexture,
+    values: [Value], encoder: MTLComputeCommandEncoder
+  ) {
+    for slot in 0..<(perLine * maxLines) {
       encoder.setTexture(slot < textures.count ? textures[slot] : padding, index: first + slot)
     }
     // setBytes needs bytes even with no line bound (count 0: the kernel copies the base).

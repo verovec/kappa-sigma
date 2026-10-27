@@ -92,6 +92,7 @@ package struct EmissionScreensProcess: ImageProcess {
     var lines: [MTLTexture] = []
     var values: [LineKernels.ScreenLine] = []
     let bound = Self.boundLines(params)
+    try LineKernels.checkSlots(bound.count)
     for line in bound {
       // Unreachable: `lineStretches` refuses every enabled line without a stretch.
       guard let stretch = stretches[line] else { continue }
@@ -117,8 +118,8 @@ package struct EmissionScreensProcess: ImageProcess {
     }
     encoder.setComputePipelineState(blend)
     for (index, plane) in input.planes.enumerated() { encoder.setTexture(plane, index: index) }
-    try LineKernels.bind(
-      lines, slots: LineKernels.maxLines, from: 3, padding: input.planes[0], values: values,
+    LineKernels.bind(
+      lines, perLine: 1, from: 3, padding: input.planes[0], values: values,
       encoder: encoder)
     for (index, plane) in output.planes.enumerated() {
       encoder.setTexture(plane, index: 3 + LineKernels.maxLines + index)

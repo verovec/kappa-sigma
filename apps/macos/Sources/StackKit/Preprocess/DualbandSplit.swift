@@ -27,10 +27,10 @@ package enum DualbandSplit {
 
   /// Writes `out/syn_<red>.fits` (the red plane) and `out/syn_<greenBlue>.fits` (the per-pixel
   /// maximum of green and blue) from `master` (left untouched), with its descriptive header, for
-  /// the clip's `lines` (the dual-band clip's by default); returns their basenames.
-  package static func split(
-    _ master: URL, out: URL, lines: FilterSet.Lines = (.hydrogenAlpha, .oxygenIII)
-  ) throws -> (red: String, greenBlue: String) {
+  /// the clip's `lines` (`FilterSet.lines`, the one table); returns their basenames.
+  package static func split(_ master: URL, out: URL, lines: FilterSet.Lines) throws -> (
+    red: String, greenBlue: String
+  ) {
     let file = try FITSFile.read(at: master)
     let image = try file.image()
     guard image.planes.count >= 3 else { throw Failure.planes(image.planes.count) }
@@ -57,10 +57,13 @@ package enum DualbandSplit {
       channels: [String: String], note: String?
     )
   {
-    guard let lane = FilterSetLanes.dualbandLane(in: channels.keys), let base = channels[lane],
-      let lines = FilterSet.dualband.lines
+    guard let lane = FilterSetLanes.dualbandLane(in: channels.keys), let base = channels[lane]
     else { return (channels, nil) }
     var kept = channels.filter { $0.key != lane }
+    // The lane is out whatever follows; a clip with no line pair has nothing to split.
+    guard let lines = FilterSet.dualband.lines else {
+      return (kept, "dual-band lane skipped: its clip filter carries no line pair to separate")
+    }
     guard !kept.isEmpty else {
       return (
         [FilterSetLanes.baseFilter(of: lane): base],

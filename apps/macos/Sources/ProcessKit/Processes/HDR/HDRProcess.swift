@@ -19,7 +19,7 @@ package struct HDRProcess: ImageProcess {
   package static let stage = ProcessStage.linear
   package static let previewExactOnlyAt1to1 = true
 
-  /// The PO's final choice on M 31 (2026-10-19): knee 0.00084 above the sky, softness 0.00118.
+  /// Defaults settled on a galaxy core: knee 0.00084 above the sky, softness 0.00118.
   package static let schema = ParamSchema([
     ParamSpec(id: "enabled", title: "Compress the core", level: .simple, flag: false),
     ParamSpec(

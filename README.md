@@ -50,8 +50,6 @@ finished image:
 - **Your data stays yours.** Captures, masters and earlier results are read only; the app writes
   only inside its projects.
 
-The name comes from kappa-sigma clipping, the outlier rejection at the heart of every image stack.
-
 ## Quick start
 
 **Prerequisites:** a Mac on macOS 26 with the Command Line Tools (Swift 6.2 or later) and
@@ -106,9 +104,6 @@ Everywhere in the app:
 - **Keyboard:** full screen (⇧⌘F), zoom (⌘= / ⌘-), rotate and flip, the View panel (⌥⌘0), and one
   ⌘Z undoes a whole pipeline run.
 - **Languages:** English and French.
-
-Built for one-shot-colour cameras, and validated end to end on M 31 (broadband and dual-band
-nights) and IC 1848 against the pipeline it replaces.
 
 ## Tech stack
 

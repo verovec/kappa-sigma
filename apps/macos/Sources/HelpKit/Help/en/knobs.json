@@ -212,7 +212,7 @@
     "label": "Equal"
   },
   "knob.stack_weight.wfwhm": {
-    "definition": "Weights by star sharpness and count; the legacy default.",
+    "definition": "Weights by star sharpness and count; the default.",
     "label": "Sharpness (wFWHM)"
   },
   "knob.star_count_frac": {

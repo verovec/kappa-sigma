@@ -169,7 +169,7 @@ package struct ImportProfileView: View {
     case .camera(.osc): .app("One-shot colour camera", locale: locale)
     case .camera(.mono): .app("Mono camera", locale: locale)
     case .filters(let filters): words(for: filters, locale: locale)
-    case .object(let name): .app("Validated on \(name)", locale: locale)
+    case .object(let name): .app("Your target, \(name), is one of its examples", locale: locale)
     case .onlyMatch: .app("The only profile for these captures", locale: locale)
     }
   }

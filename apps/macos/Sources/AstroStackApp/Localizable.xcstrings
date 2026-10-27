@@ -2609,18 +2609,18 @@
         }
       }
     },
-    "Import a capture night to stack: a legacy run is shown, never stacked again.": {
+    "Import a capture night to stack: an imported run is shown, never stacked again.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Import a capture night to stack: a legacy run is shown, never stacked again."
+            "value": "Import a capture night to stack: an imported run is shown, never stacked again."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Importez une nuit de capture pour empiler : un ancien run s’affiche, il n’est jamais réempilé."
+            "value": "Importez une nuit de capture pour empiler : un run importé s’affiche, il n’est jamais réempilé."
           }
         }
       }
@@ -7609,18 +7609,18 @@
         }
       }
     },
-    "Validated on %@": {
+    "Your target, %@, is one of its examples": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Validated on %@"
+            "value": "Your target, %@, is one of its examples"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Validé sur %@"
+            "value": "Votre cible, %@, fait partie de ses exemples"
           }
         }
       }

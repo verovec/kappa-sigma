@@ -1217,18 +1217,18 @@
         }
       }
     },
-    "IC 1848 \"doux\": colour kept at 0.62": {
+    "a soft finish: colour kept at 0.62": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "IC 1848 \"doux\": colour kept at 0.62"
+            "value": "a soft finish: colour kept at 0.62"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "IC 1848 « doux » : couleur conservée à 0,62"
+            "value": "une finition douce : couleur conservée à 0,62"
           }
         }
       }
@@ -3009,34 +3009,34 @@
         }
       }
     },
-    "star colour 0.25: red giants otherwise render as orange blobs (the validated M31 chain)": {
+    "star colour 0.25: red giants otherwise render as orange blobs": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "star colour 0.25: red giants otherwise render as orange blobs (the validated M31 chain)"
+            "value": "star colour 0.25: red giants otherwise render as orange blobs"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "couleur des étoiles 0,25 : sinon les géantes rouges deviennent des taches orange (la chaîne M31 validée)"
+            "value": "couleur des étoiles 0,25 : sinon les géantes rouges deviennent des taches orange"
           }
         }
       }
     },
-    "the PO's M31 finish: a 0.32 boost": {
+    "a moderate boost of 0.32": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "the PO's M31 finish: a 0.32 boost"
+            "value": "a moderate boost of 0.32"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "la finition M31 validée : renfort de 0,32"
+            "value": "un renfort modéré de 0,32"
           }
         }
       }

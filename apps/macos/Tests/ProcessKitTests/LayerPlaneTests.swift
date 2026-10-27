@@ -51,13 +51,10 @@ struct LayerPlaneTests {
     #expect(throws: ProcessError.missingLayer("R.r")) {
       try LayerPlane("R.r").texture(in: layers, width: 4, height: 2)
     }
-    // A whole token never reads plane 0 of a colour layer; a layer named `Foo.r` is whole.
+    // A whole token never reads plane 0 of a colour layer.
     #expect(throws: ProcessError.missingLayer("RGB")) {
       try LayerPlane("RGB").texture(in: layers, width: 4, height: 2)
     }
-    let named = ["Foo.r": try GPUImage(device: device, width: 4, height: 2, channels: 1)]
-    #expect(
-      try LayerPlane("Foo.r").texture(in: named, width: 4, height: 2) === named["Foo.r"]?.planes[0])
     #expect(throws: ProcessError.sizeMismatch) {
       try LayerPlane("R").texture(in: layers, width: 8, height: 2)
     }
@@ -93,9 +90,10 @@ struct LayerPlaneTests {
       name: "a 3-plane line is offered by plane and makes no product",
       layers: ["Ha": 3, "OIII": 1], expected: ["Ha.r", "Ha.g", "Ha.b", "OIII"]),
     Options(
-      name: "a custom name sorts after the catalogue and makes no product",
-      layers: ["RGB": 3, "NII-custom": 1, "Ha": 1],
-      expected: ["RGB.r", "RGB.g", "RGB.b", "Ha", "NII-custom"]),
+      name:
+        "a custom line sorts after the catalogue and makes its product; a refused id is skipped",
+      layers: ["RGB": 3, "NII-custom": 1, "Ha": 1, "Ha*": 1],
+      expected: ["RGB.r", "RGB.g", "RGB.b", "Ha", "NII-custom", "Ha*NII-custom"]),
   ]
 
   @Test("testOptions", arguments: options)

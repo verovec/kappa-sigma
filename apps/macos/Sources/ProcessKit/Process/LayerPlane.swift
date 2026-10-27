@@ -32,23 +32,16 @@ package struct LayerPlane: Equatable, Sendable {
   ///
   /// A missing layer or plane is an error, never another plane (R2): a whole token reads a
   /// 1-plane layer, a plane token a 3-plane one — `RGB` alone or `L.r` is refused, never plane 0.
-  /// A layer named verbatim as the token (`Foo.r`) is that whole layer.
+  /// One parse for every reader: a layer id ending in `.r`, `.g` or `.b` is read as a plane token.
   package func texture(in layers: [String: GPUImage], width: Int, height: Int) throws
     -> MTLTexture
   {
-    let (id, index) = resolved(among: layers.keys)
-    guard let image = layers[id] else { throw ProcessError.missingLayer(layer) }
+    guard let image = layers[layer] else { throw ProcessError.missingLayer(layer) }
     guard image.width == width, image.height == height else { throw ProcessError.sizeMismatch }
-    guard Self.readable(planes: image.planes.count, whole: id == token) else {
+    guard Self.readable(planes: image.planes.count, whole: token == layer) else {
       throw ProcessError.missingLayer(token)
     }
-    return image.planes[index]
-  }
-
-  /// The layer id and plane index the token reads among `ids`: the layer named verbatim as the
-  /// token, whole, else the parsed layer and plane.
-  private func resolved(among ids: some Collection<String>) -> (String, Int) {
-    ids.contains(token) ? (token, 0) : (layer, plane)
+    return image.planes[plane]
   }
 
   /// Whether a layer of `planes` planes is read by a whole token (1 plane) or a plane token
@@ -62,11 +55,10 @@ package struct LayerPlane: Equatable, Sendable {
   /// A colour plane (`RGB.r`) needs one entry per plane: a single entry averaged over the planes
   /// is not the red plane's, so it gives none rather than the average.
   package func stats(in layerStats: [String: LayerStats]) -> ChannelStats? {
-    let (id, index) = resolved(among: layerStats.keys)
-    guard let channels = layerStats[id]?.channels, index < channels.count,
-      id == token || Self.readable(planes: channels.count, whole: false)
+    guard let channels = layerStats[layer]?.channels,
+      Self.readable(planes: channels.count, whole: token == layer)
     else { return nil }
-    return channels[index]
+    return channels[plane]
   }
 
   // MARK: - Tokens a layer parameter takes (card 0138)
@@ -98,13 +90,16 @@ package struct LayerPlane: Equatable, Sendable {
     return !first.isWhitespace && !last.isWhitespace && !id.contains("*")
   }
 
-  /// The tokens a bundle of `planes` (planes per layer id) offers: `none` first when allowed;
-  /// the colour layer first, then the canonical filter order; a plane per 3-plane layer; and,
-  /// when allowed, the product of every pair of 1-plane lines present.
+  /// The tokens a bundle of `planes` (planes per layer id) offers a layer parameter.
+  ///
+  /// `none` first when allowed; the colour layer first, then the canonical filter order; a plane
+  /// per 3-plane layer; and, when allowed, the product of every pair of 1-plane lines present (a
+  /// line = neither a broadband filter nor the colour layer, the bundle's own role rule). An id
+  /// the grammar refuses is never offered.
   package static func options(planes: [String: Int], allowsNone: Bool, allowsProduct: Bool)
     -> [String]
   {
-    let ids = planes.keys.sorted { lhs, rhs in
+    let ids = planes.keys.filter(isLayerID).sorted { lhs, rhs in
       if lhs == Filter.color || rhs == Filter.color { return lhs == Filter.color }
       return Filter.less(lhs, rhs)
     }
@@ -114,7 +109,9 @@ package struct LayerPlane: Equatable, Sendable {
     }
     guard allowsProduct else { return options }
     // √(A·B) multiplies two whole lines: a 3-plane line (offered by plane) makes no product.
-    let lines = ids.filter { Filter.isNarrowband($0) && planes[$0] != planeNames.count }
+    let lines = ids.filter { id in
+      planes[id] == 1 && id != Filter.color && !Filter.broadband.contains { $0.rawValue == id }
+    }
     for (index, first) in lines.enumerated() {
       options += lines[(index + 1)...].map { "\(first)*\($0)" }
     }

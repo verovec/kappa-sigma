@@ -65,9 +65,9 @@ package struct ChannelCombinationProcess: ImageProcess {
 
   /// The combination a bundle opens on (card 0138): the palette its layers spell.
   ///
-  /// Natural on the colour layer, lrgb / rgb on R, G, B (with L when present), sho on the three
-  /// lines, hoo on Hα + OIII — else a grey of its first layer. A colour bundle gets exactly the
-  /// schema's defaults: step 0 of an OSC stack keeps its bytes.
+  /// Natural on the colour layer; lrgb on R, G, B with L, rgb without; sho on the three lines;
+  /// hoo on Hα + OIII (L, if any, stays a choice) — else a grey of the base layer. A colour
+  /// bundle gets exactly the schema's defaults: step 0 of an OSC stack keeps its bytes.
   package static func initialParams(layerIDs: Set<String>, planes: [String: Int]) throws
     -> ParamSet
   {

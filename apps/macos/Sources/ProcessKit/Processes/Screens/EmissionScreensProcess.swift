@@ -51,7 +51,7 @@ package struct EmissionScreensProcess: ImageProcess {
     let enabled = enabledLines(params)
     let continuum = enabled.contains { params.flag($0.id("Continuum")) }
     return Set(enabled.map(\.layerID))
-      .union(continuum ? layerIDs.subtracting(EmissionLine.layerIDs) : [])
+      .union(continuum ? layerIDs.filter { !EmissionLine.isLineLayer($0) } : [])
       .intersection(layerIDs)
   }
 
@@ -91,7 +91,9 @@ package struct EmissionScreensProcess: ImageProcess {
     let stretches = try lineStretches(layerStats: context.layerStats)
     var lines: [MTLTexture] = []
     var values: [LineKernels.ScreenLine] = []
-    for line in Self.boundLines(params) {
+    let bound = Self.boundLines(params)
+    try LineKernels.checkSlots(bound.count)
+    for line in bound {
       // An invisible line is not prepared: its screen would add exactly nothing.
       guard let stretch = stretches[line] else { continue }
       lines.append(try prepared(line, stretch: stretch, size: input, context: context))
@@ -104,34 +106,24 @@ package struct EmissionScreensProcess: ImageProcess {
     try encodeBlend(input, into: output, lines: lines, values: values, context: context)
   }
 
-  /// Encodes the blend: base at textures 0–2, each bound line's prepared layer from 3, the free
-  /// slots padded with the base, output after them; one `ScreenLine` per bound line at buffer 0
-  /// and their count at buffer 1 (see Screens.metal).
+  /// Encodes the blend: base at textures 0–2, each bound line's prepared layer from 3
+  /// (`LineKernels.bind`), output after the line slots; one `ScreenLine` per bound line (see
+  /// Screens.metal).
   private func encodeBlend(
     _ input: GPUImage, into output: GPUImage, lines: [MTLTexture],
     values: [LineKernels.ScreenLine], context: RenderContext
   ) throws {
-    guard values.count <= LineKernels.maxLines else {
-      throw ProcessError.invalidParameter("more than \(LineKernels.maxLines) lines")
-    }
     guard let encoder = context.commands.makeComputeCommandEncoder() else {
       throw ProcessError.commandFailed("screens encoder")
     }
-    let count = UInt32(values.count)
-    // setBytes needs bytes even when no line is visible (count 0: the kernel copies the base).
-    var values = values.isEmpty ? [LineKernels.ScreenLine(alpha: 0, tint: (0, 0, 0))] : values
     encoder.setComputePipelineState(blend)
     for (index, plane) in input.planes.enumerated() { encoder.setTexture(plane, index: index) }
-    for slot in 0..<LineKernels.maxLines {
-      encoder.setTexture(slot < lines.count ? lines[slot] : input.planes[0], index: 3 + slot)
-    }
+    LineKernels.bind(
+      lines, slots: LineKernels.maxLines, from: 3, padding: input.planes[0], values: values,
+      encoder: encoder)
     for (index, plane) in output.planes.enumerated() {
       encoder.setTexture(plane, index: 3 + LineKernels.maxLines + index)
     }
-    unsafe encoder.setBytes(
-      &values, length: values.count * MemoryLayout<LineKernels.ScreenLine>.stride, index: 0)
-    var countBytes = count
-    unsafe encoder.setBytes(&countBytes, length: MemoryLayout<UInt32>.stride, index: 1)
     encoder.dispatchThreads(
       MTLSize(width: output.width, height: output.height, depth: 1),
       threadsPerThreadgroup: MTLSize(width: 16, height: 16, depth: 1))

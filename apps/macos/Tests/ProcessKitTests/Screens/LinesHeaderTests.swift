@@ -27,18 +27,41 @@ struct LinesHeaderTests {
     #expect(EmissionLine.allCases.count <= LineKernels.maxLines)
   }
 
+  /// One mirror: the header's struct name, the Swift fields in order with their float counts.
+  static let mirrors: [(name: String, fields: [(String, Int)], stride: Int)] = [
+    (
+      "InjectLine",
+      Self.fields(of: LineKernels.InjectLine(weight: (0, 0, 0), k: 0, black: 0)),
+      MemoryLayout<LineKernels.InjectLine>.stride
+    ),
+    (
+      "ScreenLine", Self.fields(of: LineKernels.ScreenLine(alpha: 0, tint: (0, 0, 0))),
+      MemoryLayout<LineKernels.ScreenLine>.stride
+    ),
+  ]
+
+  /// The stored fields of `value` in declaration order, a tuple counting its elements.
+  static func fields(of value: Any) -> [(String, Int)] {
+    Mirror(reflecting: value).children.map { child in
+      (child.label ?? "", max(Mirror(reflecting: child.value).children.count, 1))
+    }
+  }
+
   @Test(
-    "the Swift structs have the header's layouts: plain floats, no padding",
-    arguments: zip(
-      ["InjectLine", "ScreenLine"],
-      [MemoryLayout<LineKernels.InjectLine>.stride, MemoryLayout<LineKernels.ScreenLine>.stride]))
-  func testStructLayouts(name: String, stride: Int) throws {
+    "the Swift structs have the header's fields, in order, as plain floats without padding",
+    arguments: 0..<2)
+  func testStructLayouts(index: Int) throws {
+    let mirror = Self.mirrors[index]
     let header = try Self.header()
     let body = try #require(
-      header.firstMatch(of: try Regex("struct \(name) \\{([^}]*)\\}")), "\(name) in Lines.h")
+      header.firstMatch(of: try Regex("struct \(mirror.name) \\{([^}]*)\\}")),
+      "\(mirror.name) in Lines.h")
     let text = try #require(body.output[1].substring)
-    // Every field is a float or a float array: the size is the float count × 4.
-    let floats = text.matches(of: /float\s+\w+(?:\[(\d+)\])?;/).map { Int($0.1 ?? "1") ?? 0 }
-    #expect(floats.reduce(0, +) * MemoryLayout<Float>.stride == stride)
+    let fields = text.matches(of: /float\s+(\w+)(?:\[(\d+)\])?;/).map {
+      (String($0.1), Int($0.2 ?? "1") ?? 0)
+    }
+    #expect(fields.map(\.0) == mirror.fields.map(\.0))
+    #expect(fields.map(\.1) == mirror.fields.map(\.1))
+    #expect(fields.map(\.1).reduce(0, +) * MemoryLayout<Float>.stride == mirror.stride)
   }
 }

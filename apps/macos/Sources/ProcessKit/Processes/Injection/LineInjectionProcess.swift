@@ -45,7 +45,7 @@ package struct LineInjectionProcess: ImageProcess {
   package static func layersRead(_ params: ParamSet, layerIDs: Set<String>) -> Set<String> {
     let continuum = boundLines(params).contains { subtracts($0, params: params) }
     return layersMerged(params, layerIDs: layerIDs)
-      .union(continuum ? layerIDs.subtracting(EmissionLine.layerIDs) : [])
+      .union(continuum ? layerIDs.filter { !EmissionLine.isLineLayer($0) } : [])
   }
 
   /// The lines that inject: the broadband a continuum subtracts is not added.
@@ -73,6 +73,7 @@ package struct LineInjectionProcess: ImageProcess {
     guard input.planes.count == 3 else {
       throw ProcessError.invalidParameter("line injection needs an RGB base")
     }
+    try LineKernels.checkSlots(bound.count)
     var textures: [MTLTexture] = []
     var values: [LineKernels.InjectLine] = []
     for line in bound {
@@ -113,29 +114,21 @@ package struct LineInjectionProcess: ImageProcess {
   }
 
   /// Encodes the kernel: base at textures 0–2, output at 3–5, each bound line's plane and
-  /// reference from 6, the free slots padded with the base; one `InjectLine` per bound line at
-  /// buffer 0 and their count at buffer 1 (see LineInjection.metal).
+  /// reference from 6 (`LineKernels.bind`), one `InjectLine` per bound line (see
+  /// LineInjection.metal).
   private func encode(
     _ input: GPUImage, into output: GPUImage, lines: [MTLTexture],
     values: [LineKernels.InjectLine], context: RenderContext
   ) throws {
-    guard values.count <= LineKernels.maxLines else {
-      throw ProcessError.invalidParameter("more than \(LineKernels.maxLines) lines")
-    }
     guard let encoder = context.commands.makeComputeCommandEncoder() else {
       throw ProcessError.commandFailed("line injection encoder")
     }
-    var count = UInt32(values.count)
     encoder.setComputePipelineState(pipeline)
     for (index, plane) in input.planes.enumerated() { encoder.setTexture(plane, index: index) }
     for (index, plane) in output.planes.enumerated() { encoder.setTexture(plane, index: 3 + index) }
-    for slot in 0..<(2 * LineKernels.maxLines) {
-      encoder.setTexture(slot < lines.count ? lines[slot] : input.planes[0], index: 6 + slot)
-    }
-    var values = values
-    unsafe encoder.setBytes(
-      &values, length: values.count * MemoryLayout<LineKernels.InjectLine>.stride, index: 0)
-    unsafe encoder.setBytes(&count, length: MemoryLayout<UInt32>.stride, index: 1)
+    LineKernels.bind(
+      lines, slots: 2 * LineKernels.maxLines, from: 6, padding: input.planes[0], values: values,
+      encoder: encoder)
     encoder.dispatchThreads(
       MTLSize(width: output.width, height: output.height, depth: 1),
       threadsPerThreadgroup: MTLSize(width: 16, height: 16, depth: 1))

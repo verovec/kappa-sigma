@@ -18,7 +18,7 @@ package struct LinearBundle: Codable, Equatable, Sendable {
       case .red: self = .red
       case .green: self = .green
       case .blue: self = .blue
-      default: self = Filter.isColor(filter) ? .rgb : .line
+      default: self = Filter.isLineName(filter) ? .line : .rgb
       }
     }
   }

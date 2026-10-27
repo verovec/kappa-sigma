@@ -38,4 +38,12 @@ extension Filter {
 
   /// The broadband filters, in display order.
   package static let broadband = allCases.filter { $0.line == nil }
+
+  /// Whether the channel `name` is an emission line: not one-shot colour and not a broadband
+  /// filter, so a custom name (`NII-custom`) is one. StackKit's bundle roles and ProcessKit's
+  /// line layers share this rule (card 0136).
+  package static func isLineName(_ name: String) -> Bool {
+    guard !isColor(name) else { return false }
+    return token(name).map { $0.line != nil } ?? true
+  }
 }

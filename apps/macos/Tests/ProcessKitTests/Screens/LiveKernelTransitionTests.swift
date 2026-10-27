@@ -12,7 +12,7 @@ struct LineKernelRecording: Codable, Equatable {
   var gpu: String
   var digests: [String: String]
 
-  static var isRecording: Bool { ProcessInfo.processInfo.environment["RECORD"] == "1" }
+  static var isRecording: Bool { ProcessInfo.processInfo.environment["RECORD_LINE_KERNELS"] == "1" }
 
   /// The committed recording, if the bundle has one.
   static var recorded: Self? {
@@ -32,7 +32,8 @@ struct LineKernelRecording: Codable, Equatable {
 /// The line kernels (injection, screens) give the bits they gave before the N-line rewrite (card
 /// 0136): sha256 of every Float32 output on the oracle inputs, recorded on the unrolled kernels
 /// with the GPU's name. Bit-exact only holds on that GPU, so another one skips; CI keeps the
-/// oracle tolerances. `RECORD=1` re-records.
+/// oracle tolerances. Only `RECORD_LINE_KERNELS=1` re-records — never the repo-wide `RECORD=1`:
+/// the baseline is the old kernels', which no longer exist.
 @Suite(
   "Live kernel transition — line kernels bit-identical to the recorded unrolled ones",
   .liveFixtures, .tags(.live),

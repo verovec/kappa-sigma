@@ -48,7 +48,7 @@ package final class ProcessPanelModel {
   /// The planes of each bundle layer (card 0138), set with `layerIDs`: the layers a layer
   /// parameter lists (a step output is readable by hand, never offered).
   package var layerPlanes: [String: Int] = [:] {
-    didSet { refreshLayerRows() }
+    didSet { refreshLayerOptions() }
   }
   /// The tokens the bundle offers each layer parameter (card 0138), kept with the layers.
   private var layerOptions: [String: [String]] = [:]
@@ -99,6 +99,10 @@ package final class ProcessPanelModel {
     if hiddenNow != hidden { hidden = hiddenNow }
     let notesNow = layerIDs.map { type.unavailableReasons(params, layerIDs: $0) } ?? [:]
     if notesNow != rowNotes { rowNotes = notesNow }
+  }
+
+  /// The tokens each layer parameter lists, from the bundle's planes alone.
+  private func refreshLayerOptions() {
     var optionsNow: [String: [String]] = [:]
     for spec in type.schema.specs {
       guard case .layer(_, let allowsNone, let allowsProduct) = spec.kind else { continue }
@@ -114,7 +118,9 @@ package final class ProcessPanelModel {
   package func layerOptions(for id: String) -> [String] {
     var options = layerOptions[id] ?? []
     let current = params.choice(id)
-    if !options.contains(current) { options.insert(current, at: 0) }
+    if !options.contains(current) {
+      options.insert(current, at: options.first == "none" ? 1 : 0)
+    }
     return options
   }
 

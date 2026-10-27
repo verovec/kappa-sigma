@@ -48,6 +48,9 @@ struct LayerPlaneTests {
     #expect(throws: ProcessError.missingLayer("R.g")) {
       try LayerPlane("R.g").texture(in: layers, width: 4, height: 2)
     }
+    #expect(throws: ProcessError.missingLayer("R.r")) {
+      try LayerPlane("R.r").texture(in: layers, width: 4, height: 2)
+    }
     #expect(throws: ProcessError.sizeMismatch) {
       try LayerPlane("R").texture(in: layers, width: 8, height: 2)
     }
@@ -79,6 +82,9 @@ struct LayerPlaneTests {
       name: "OSC + three lines, products refused",
       layers: ["RGB": 3, "Ha": 1, "OIII": 1, "SII": 1], allowsProduct: false,
       expected: ["RGB.r", "RGB.g", "RGB.b", "Ha", "OIII", "SII"]),
+    Options(
+      name: "a 3-plane line is offered by plane and makes no product",
+      layers: ["Ha": 3, "OIII": 1], expected: ["Ha.r", "Ha.g", "Ha.b", "OIII"]),
     Options(
       name: "a custom name sorts after the catalogue and makes no product",
       layers: ["RGB": 3, "NII-custom": 1, "Ha": 1],

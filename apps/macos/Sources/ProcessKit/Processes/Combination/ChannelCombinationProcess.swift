@@ -79,10 +79,16 @@ package struct ChannelCombinationProcess: ImageProcess {
     guard let base = StudioSession.baseLayerID(layerIDs) else { return params }
     let colour = planes[base] == LayerPlane.planeNames.count
     let grey = colour ? LayerPlane.planeNames.map { "\(base).\($0)" } : [base, base, base]
-    for (slot, source) in zip(slotSources, grey) {
+    try set(sources: grey + ["none"], on: &params)
+    return params
+  }
+
+  /// `params` with `sources` in the R, G, B, L slots (a palette's or a grey); the weights,
+  /// black points and L opacity are kept.
+  package static func set(sources: [String], on params: inout ParamSet) throws {
+    for (slot, source) in zip(slotSources, sources) {
       try params.set(slot, .choice(source))
     }
-    return params
   }
 
   /// The layers `params` read, in slot order (R, G, B, L).

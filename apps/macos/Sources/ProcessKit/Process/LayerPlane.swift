@@ -37,7 +37,9 @@ package struct LayerPlane: Equatable, Sendable {
   {
     guard let image = layers[layer] else { throw ProcessError.missingLayer(layer) }
     guard image.width == width, image.height == height else { throw ProcessError.sizeMismatch }
-    guard plane < image.planes.count else { throw ProcessError.missingLayer(token) }
+    // A plane token (`L.r`) of a 1-plane layer is refused like `L.g`, never read as plane 0.
+    guard plane < image.planes.count, token == layer || image.planes.count >= Self.planeNames.count
+    else { throw ProcessError.missingLayer(token) }
     return image.planes[plane]
   }
 
@@ -96,7 +98,8 @@ package struct LayerPlane: Equatable, Sendable {
       options += planes[id] == planeNames.count ? planeNames.map { "\(id).\($0)" } : [id]
     }
     guard allowsProduct else { return options }
-    let lines = ids.filter(Filter.isNarrowband)
+    // √(A·B) multiplies two whole lines: a 3-plane line (offered by plane) makes no product.
+    let lines = ids.filter { Filter.isNarrowband($0) && planes[$0] != planeNames.count }
     for (index, first) in lines.enumerated() {
       options += lines[(index + 1)...].map { "\(first)*\($0)" }
     }

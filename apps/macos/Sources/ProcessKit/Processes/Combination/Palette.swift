@@ -1,4 +1,5 @@
 internal import FilterKit
+
 /// A channel-combination preset: which layer feeds each slot.
 ///
 /// From the legacy `docs/architecture.md` palette table. Pure slot templates: weights and black
@@ -55,9 +56,6 @@ package enum Palette: String, CaseIterable, Sendable {
     }
   }
 
-  /// The slot parameters, in R, G, B, L order.
-  static let slots = ["rSource", "gSource", "bSource", "lSource"]
-
   /// The combination's default values with this palette's sources.
   package func params() throws -> ParamSet {
     try apply(to: ParamSet(schema: ChannelCombinationProcess.schema))
@@ -66,15 +64,13 @@ package enum Palette: String, CaseIterable, Sendable {
   /// `params` with this palette's sources; weights, black points and L opacity are kept.
   package func apply(to params: ParamSet) throws -> ParamSet {
     var params = params
-    for (slot, source) in zip(Self.slots, sources) {
-      try params.set(slot, .choice(source))
-    }
+    try ChannelCombinationProcess.set(sources: sources, on: &params)
     return params
   }
 
   /// The palette whose sources `params` has, or `nil` for a custom combination.
   package static func matching(_ params: ParamSet) -> Self? {
-    let current = slots.map { params.choice($0) }
+    let current = ChannelCombinationProcess.slotSources.map { params.choice($0) }
     return allCases.first { $0.sources == current }
   }
 }

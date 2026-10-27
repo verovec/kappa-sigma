@@ -21,7 +21,7 @@ struct LayerMedianFill: ImageProcess {
     }
     let values = [Float](repeating: Float(median), count: output.width * output.height)
     for plane in output.planes {
-      unsafe values.withUnsafeBytes { bytes in
+      values.withUnsafeBytes { bytes in
         guard let base = bytes.baseAddress else { return }
         unsafe plane.replace(
           region: MTLRegionMake2D(0, 0, output.width, output.height), mipmapLevel: 0,

@@ -7,6 +7,8 @@ set dotenv-load := true
 set export := true
 
 pkg := "apps/macos"
+# The toolchain: the active one, or an installed Xcode when the CLT cannot build SwiftUI.
+DEVELOPER_DIR := `./scripts/developer-dir.sh`
 app := pkg + "/.build/AstroStack.app"
 # Swift Testing search paths SwiftPM forgets on a CLT-only host; empty under Xcode.
 swiftflags := `./scripts/swift-test-flags.sh`

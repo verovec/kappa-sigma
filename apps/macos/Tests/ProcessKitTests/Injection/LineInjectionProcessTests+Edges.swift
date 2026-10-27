@@ -84,7 +84,7 @@ extension LineInjectionProcessTests {
 
 extension LineInjectionProcessTests {
   @Test(
-    "only the lines that inject are bound, in canonical order from slot 0; the result is the oracle",
+    "only the injecting lines are bound, in canonical order from slot 0; the result is the oracle",
     arguments: [
       (["siiGain": 2.0], ["SII"]),
       (["haGain": 1, "siiGain": 2, "oiiiBlack": 0.1, "oiiiContinuumK": 0.3], ["Ha", "SII"]),

@@ -1,3 +1,5 @@
+package import FilterKit
+
 /// What the user asserted about a scan (`inspect.ScanOptions` + the run's colour knob).
 ///
 /// Every override is visible and wins over detection (R2): detection only fills the blanks.

@@ -1,3 +1,5 @@
+package import FilterKit
+
 /// The calibration coverage of a capture, for the Données stage (0078): each light set's dark,
 /// flat and bias exactly as `ImportPlan` (the matcher) decided them, under its night.
 ///

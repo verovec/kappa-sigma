@@ -1,3 +1,4 @@
+import FilterKit
 import StackKit
 import Testing
 

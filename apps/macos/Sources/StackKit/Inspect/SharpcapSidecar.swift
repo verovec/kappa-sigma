@@ -1,3 +1,4 @@
+internal import FilterKit
 internal import Foundation
 
 /// The `<frame>.txt` capture settings SharpCap/ASICAP write beside each FITS

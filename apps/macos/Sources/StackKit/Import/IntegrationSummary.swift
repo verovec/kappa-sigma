@@ -1,3 +1,5 @@
+package import FilterKit
+
 /// What a capture holds, for the Données stage (0078): the lights per target, filter and night,
 /// with the exposures, integration and temperature range of each, and totals.
 ///

@@ -42,7 +42,7 @@ swiftSettings: [
   .enableUpcomingFeature("InferIsolatedConformances"),        // SE-0470
   .treatAllWarnings(as: .error),                               // SE-0480
 ]
-// ImageKit, RenderKit, ProcessKit, ProjectKit, StackKit, HelpKit : même liste SANS defaultIsolation
+// FilterKit, ImageKit, RenderKit, ProcessKit, ProjectKit, StackKit, HelpKit : même liste SANS defaultIsolation
 ```
 
 Sources : https://useyourloaf.com/blog/approachable-concurrency-in-swift-packages/ ,
@@ -78,7 +78,7 @@ des files » : rester sur le binaire main / pas-main ; un `actor` par état rée
   as: .warning)` (SE-0480, https://forums.swift.org/t/se-0480-warning-control-settings-for-swiftpm/79475).
   Ne touche pas les dépendances.
 - **Strict memory safety** (SE-0458) : avertissements seulement, à activer dans ProjectKit,
-  ProcessKit, HelpKit (peu de pointeurs) ; pas dans ImageKit/RenderKit où Accelerate et Metal
+  ProcessKit, HelpKit, FilterKit (peu de pointeurs) ; pas dans ImageKit/RenderKit où Accelerate et Metal
   noieraient le code sous `unsafe`. https://github.com/swiftlang/swift-evolution/blob/main/proposals/0458-strict-memory-safety.md
 - **Migrer une feature plus tard** : `swift package migrate --to-feature …` (SE-0486).
 

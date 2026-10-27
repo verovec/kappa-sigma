@@ -1,3 +1,4 @@
+internal import FilterKit
 internal import StackKit
 internal import SwiftUI
 

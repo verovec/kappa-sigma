@@ -1,3 +1,4 @@
+internal import FilterKit
 internal import HelpKit
 internal import RenderKit
 internal import StackKit

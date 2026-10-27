@@ -19,9 +19,25 @@ package enum FilterSet: String, CaseIterable, Codable, Sendable {
   package init(parsing raw: String) throws {
     let value = raw.trimmingCharacters(in: .whitespaces).lowercased()
     guard let set = value.isEmpty ? .unknown : Self(rawValue: value) else {
-      throw InspectError.unknownFilterSet(raw)
+      throw ParseError.unknownFilterSet(raw)
     }
     self = set
+  }
+
+  /// A wire value naming no filter set.
+  package enum ParseError: Error, Equatable, Sendable {
+    case unknownFilterSet(String)
+  }
+
+  /// The emission lines a clip filter's planes carry on a one-shot-colour sensor.
+  ///
+  /// The red plane and the green/blue pair, each at most one line (`nil` for broadband or
+  /// unknown): what the dual-band split writes as synthetic layers.
+  package var lines: (red: Filter?, greenBlue: Filter?) {
+    switch self {
+    case .unknown, .broadband: (nil, nil)
+    case .dualband: (.hydrogenAlpha, .oxygenIII)
+    }
   }
 }
 

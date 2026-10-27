@@ -1,4 +1,5 @@
 import AstroStackApp
+import FilterKit
 import Foundation
 import ProcessKit
 import ProjectKit

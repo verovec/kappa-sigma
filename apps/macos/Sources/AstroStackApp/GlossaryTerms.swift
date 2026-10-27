@@ -1,3 +1,4 @@
+internal import FilterKit
 package import StackKit
 
 // The glossary's term ids, derived from the catalogs that own each vocabulary (card 0074): a

@@ -3,7 +3,8 @@ internal import Foundation
 /// The ONE canonical list of photometric filters (CLAUDE.md): wheel/display order, aliases,
 /// narrowband flags.
 ///
-/// Port of `internal/filters/filters.go`; never re-declare a filter list.  Frames keep their filter
+/// Port of `internal/filters/filters.go`; never re-declare a filter list — FilterKit is the leaf
+/// module StackKit, ProcessKit and the app all read it from. Frames keep their filter
 /// as a `String`, because a custom filter the user has not mapped yet passes through verbatim; this
 /// type is the vocabulary that string is checked against.
 package enum Filter: String, CaseIterable, Sendable {
@@ -39,8 +40,8 @@ package enum Filter: String, CaseIterable, Sendable {
     "sulphur": .sulfurII,
   ]
 
-  /// Whether the filter is an emission line rather than broadband.
-  package var isNarrowband: Bool { [.hydrogenAlpha, .oxygenIII, .sulfurII].contains(self) }
+  /// Whether the filter is an emission line rather than broadband (`line` says which).
+  package var isNarrowband: Bool { line != nil }
 
   /// The filter `raw` names, if it is one (case and surrounding spaces ignored).
   package static func token(_ raw: String) -> Self? {

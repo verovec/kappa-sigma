@@ -1,4 +1,5 @@
 internal import Accelerate
+package import FilterKit
 
 extension FilterSetClassifier {
   /// Stamps a verdict on every one-shot-colour LIGHT set (`annotateFilterSets`): a bounded sample

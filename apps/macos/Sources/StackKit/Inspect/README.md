@@ -66,7 +66,7 @@ offset, bin, warmer first).
 
 ## How to extend
 
-- A filter name: only in `Filter` (the one list, pinned by `FilterTests`).
+- A filter name: only in FilterKit's `Filter` (the one list, pinned by `FilterKitTests.FilterTests`; `FilterSet` lives there too).
 - Pixels go through `PixelReader` (`.files` uses ImageKit); tests inject planes and samples.
 - A new verdict that reads pixels must be overridable in `InspectOverrides` and stay `unknown`
   when it cannot decide.

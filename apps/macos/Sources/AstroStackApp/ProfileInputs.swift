@@ -1,3 +1,4 @@
+internal import FilterKit
 package import ProcessKit
 package import StackKit
 

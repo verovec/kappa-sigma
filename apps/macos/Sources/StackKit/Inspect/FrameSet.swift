@@ -1,3 +1,5 @@
+package import FilterKit
+
 /// Frames sharing a `SetKey` (`inspect.Set`), in capture order.
 package struct FrameSet: Equatable, Sendable {
   package var key: SetKey

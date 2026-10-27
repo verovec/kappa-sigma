@@ -1,3 +1,5 @@
+internal import FilterKit
+
 extension ChannelDetector {
   /// Step 0 (same filter again: an over-split run) and each skipped filter cost this much.
   static let stayPenalty = 0.20

@@ -1,3 +1,5 @@
+internal import FilterKit
+
 extension FrameSet {
   /// The id a clip-filter override is stored under: the set's id with its night.
   ///

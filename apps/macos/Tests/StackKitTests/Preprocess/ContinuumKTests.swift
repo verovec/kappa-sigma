@@ -1,3 +1,4 @@
+import FilterKit
 import Foundation
 import StackKit
 import TestSupport
@@ -94,5 +95,27 @@ struct ContinuumKTests {
     #expect(try ContinuumK.measure(line: "OIII", layers: colour).plane == "RGB.g")
     let mono = ["R": try Self.write("r", [red]), "Ha": try Self.write("ha", [red])]
     #expect(try ContinuumK.measure(line: "Ha", layers: mono).plane == "R")
+  }
+
+  @Test("the continuum references are FilterKit's line physics, line by line", .scratchDirectory)
+  func testReferencesComeFromFilterKit() throws {
+    for filter in Filter.narrowband {
+      let reference = try #require(filter.line).continuumFilters[0].rawValue
+      let fit = try Self.fit(line: filter.rawValue, against: reference)
+      #expect(fit.reference == reference, "\(filter.rawValue)")
+    }
+    #expect(throws: ContinuumK.Refusal.self) {
+      try ContinuumK.measure(line: "L", layers: ["L": URL(fileURLWithPath: "/dev/null")])
+    }
+  }
+
+  /// A line = 0.5·reference measured against that single reference layer.
+  private static func fit(line: String, against reference: String) throws -> ContinuumK.Fit {
+    let base = Self.ramp()
+    let layers = [
+      reference: try Self.write("ref_\(reference)", [base]),
+      line: try Self.write("line_\(line)", [Self.line(0.5, of: base)]),
+    ]
+    return try ContinuumK.measure(line: line, layers: layers)
   }
 }

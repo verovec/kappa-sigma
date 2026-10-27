@@ -1,3 +1,4 @@
+package import FilterKit
 package import StackKit
 
 /// The panel's values a run applies and records (card 0121): the patch on the preset, the lane

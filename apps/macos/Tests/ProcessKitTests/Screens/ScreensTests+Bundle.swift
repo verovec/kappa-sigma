@@ -84,7 +84,8 @@ extension ScreensTests {
     let curve = { (value: Double) in ScreensOracle.mtf((value - shadows) / (1 - shadows), midtone) }
     let step = madn * 1e-3
     let slope = (curve(median + step) - curve(median - step)) / (2 * step)
-    let sigma = try process.blackInSigma(.hydrogenAlpha, layerStats: stats)
+    let sigma = try process.blackInSigma(
+      try #require(EmissionLine(.hydrogenAlpha)), layerStats: stats)
     #expect(abs(sigma - black / (slope * madn)) <= 1e-4 * sigma)
     let suggested = process.suggestions(stats: LayerStats(channels: []), layers: stats)
     let blackSuggestion = try #require(suggested.first { $0.paramID == "haBlack" })

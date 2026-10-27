@@ -1,3 +1,4 @@
+package import FilterKit
 package import StackKit
 
 /// One column per lane kind (card 0121): a lane-scoped knob may differ per lane, a run-wide one

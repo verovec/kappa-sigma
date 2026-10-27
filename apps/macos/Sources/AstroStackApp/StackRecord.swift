@@ -1,3 +1,4 @@
+package import FilterKit
 internal import Foundation
 package import ProjectKit
 package import StackKit

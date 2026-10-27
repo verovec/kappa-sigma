@@ -226,12 +226,6 @@ struct LineInjectionProcessTests {
     #expect(read == expected)
   }
 
-  @Test("the broadband reference layers are the canonical non-narrowband filters, in their order")
-  func testBroadbandLayersAreTheCanonicalFilters() {
-    let broadband = Filter.allCases.filter { !$0.isNarrowband }.map(\.rawValue)
-    #expect(LineInjectionProcess.broadbandLayers == broadband)
-  }
-
   @Test("a linear process needing colour and emission layers, right after the combination")
   func testRegistered() throws {
     let ids = try ProcessRegistry.standard().ids

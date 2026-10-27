@@ -39,6 +39,9 @@ let package = Package(
       swiftSettings: common),
     .plugin(name: "CatalogPlugin", capability: .buildTool(), dependencies: ["CatalogTool"]),
     .target(
+      name: "FilterKit", dependencies: [],
+      exclude: ["README.md"], swiftSettings: safe),
+    .target(
       name: "ImageKit", dependencies: [],
       exclude: ["README.md"], swiftSettings: common),
     .target(
@@ -46,19 +49,23 @@ let package = Package(
       exclude: ["README.md", "Localizable.xcstrings"], resources: [.copy("Shaders")],
       swiftSettings: common, plugins: ["CatalogPlugin"]),
     .target(
-      name: "ProcessKit", dependencies: ["ImageKit", "RenderKit"],
-      exclude: ["README.md", "Localizable.xcstrings"], resources: [.copy("Shaders"), .copy("Profiles")],
+      name: "ProcessKit", dependencies: ["FilterKit", "ImageKit", "RenderKit"],
+      exclude: ["README.md", "Localizable.xcstrings"],
+      resources: [.copy("Shaders"), .copy("Profiles")],
       swiftSettings: safe, plugins: ["CatalogPlugin"]),
     .target(
-      name: "ProjectKit", dependencies: ["ImageKit", .product(name: "GRDB", package: "GRDB.swift")],
+      name: "ProjectKit",
+      dependencies: ["ImageKit", .product(name: "GRDB", package: "GRDB.swift")],
       exclude: ["README.md", "SCHEMA.md"], resources: [.copy("Migrations")],
       swiftSettings: safe),
     .target(
       name: "StackKit",
       dependencies: [
-        "ImageKit", "ProjectKit", .product(name: "Subprocess", package: "swift-subprocess"),
+        "FilterKit", "ImageKit", "ProjectKit",
+        .product(name: "Subprocess", package: "swift-subprocess"),
       ],
-      exclude: ["README.md", "Siril/README.md", "Inspect/README.md", "Calibration/README.md",
+      exclude: [
+        "README.md", "Siril/README.md", "Inspect/README.md", "Calibration/README.md",
         "Preprocess/README.md", "Import/README.md",
       ], resources: [.copy("Resources/Catalogue")], swiftSettings: common),
     .target(
@@ -66,7 +73,9 @@ let package = Package(
       exclude: ["README.md"], resources: [.copy("Help")], swiftSettings: safe),
     .executableTarget(
       name: "AstroStackApp",
-      dependencies: ["ImageKit", "RenderKit", "ProcessKit", "ProjectKit", "StackKit", "HelpKit"],
+      dependencies: [
+        "FilterKit", "ImageKit", "RenderKit", "ProcessKit", "ProjectKit", "StackKit", "HelpKit",
+      ],
       exclude: ["Localizable.xcstrings"], swiftSettings: app, plugins: ["CatalogPlugin"]),
 
     .target(
@@ -79,6 +88,9 @@ let package = Package(
       name: "StringCatalogTests", dependencies: ["StringCatalog", "TestSupport"],
       resources: [.copy("Fixtures")], swiftSettings: common),
     .testTarget(
+      name: "FilterKitTests", dependencies: ["FilterKit", "TestSupport"],
+      swiftSettings: common),
+    .testTarget(
       name: "ImageKitTests", dependencies: ["ImageKit", "TestSupport"],
       resources: [.copy("Fixtures")], swiftSettings: common),
     .testTarget(
@@ -87,7 +99,8 @@ let package = Package(
     .testTarget(
       name: "ProcessKitTests",
       dependencies: [
-        "ProcessKit", "ImageKit", "RenderKit", "HelpKit", "StackKit", "StringCatalog", "TestSupport",
+        "ProcessKit", "FilterKit", "ImageKit", "RenderKit", "HelpKit", "StackKit", "StringCatalog",
+        "TestSupport",
       ],
       resources: [.copy("Fixtures")], swiftSettings: common),
     .testTarget(
@@ -95,7 +108,8 @@ let package = Package(
       dependencies: ["ProjectKit", "TestSupport", .product(name: "GRDB", package: "GRDB.swift")],
       swiftSettings: common),
     .testTarget(
-      name: "StackKitTests", dependencies: ["StackKit", "ImageKit", "ProjectKit", "TestSupport"],
+      name: "StackKitTests",
+      dependencies: ["StackKit", "FilterKit", "ImageKit", "ProjectKit", "TestSupport"],
       resources: [.copy("Fixtures")], swiftSettings: common),
     .testTarget(
       name: "HelpKitTests", dependencies: ["HelpKit", "TestSupport"],
@@ -103,8 +117,9 @@ let package = Package(
     .testTarget(
       name: "AstroStackAppTests",
       dependencies: [
-        "AstroStackApp", "HelpKit", "ImageKit", "ProcessKit", "ProjectKit", "RenderKit", "StackKit",
-        "StringCatalog", "TestSupport",
+        "AstroStackApp", "FilterKit", "HelpKit", "ImageKit", "ProcessKit", "ProjectKit",
+        "RenderKit",
+        "StackKit", "StringCatalog", "TestSupport",
       ],
       swiftSettings: common),
   ]

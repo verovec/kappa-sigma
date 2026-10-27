@@ -1,0 +1,47 @@
+emission-screens | nbBlend | Narrowband blend | opacity | simple | number 1.0 in 0.0...1.0
+emission-screens | starRadius | Star removal radius | px | simple | number 4.0 in 0.0...32.0
+emission-screens | smooth | Layer smoothing | px | advanced | number 0.0 in 0.0...32.0
+emission-screens | shadowsClip | Shadows clip | sigma | advanced | number -2.5 in -10.0...0.0
+emission-screens | linkLayers | Link layers | none | advanced | flag false
+emission-screens | haEnabled | Hα screen | none | simple | flag true
+emission-screens | haContinuum | Hα continuum subtraction | none | simple | flag false
+emission-screens | haContinuumK | Hα continuum scale k | none | advanced | number 0.0 in 0.0...5.0
+emission-screens | haBackground | Hα background | none | simple | number 0.12 in 0.01...0.6
+emission-screens | haBlack | Hα black point | none | simple | number 0.0 in 0.0...0.9
+emission-screens | haOpacity | Hα opacity | opacity | simple | number 0.85 in 0.0...1.0
+emission-screens | haTint | Hα tint | none | simple | choice red of red,teal,crimson,gold,green,blue
+emission-screens | haBoost | Hα boost | none | advanced | number 1.0 in 1.0...3.0
+emission-screens | oiiiEnabled | [OIII] screen | none | simple | flag true
+emission-screens | oiiiContinuum | [OIII] continuum subtraction | none | simple | flag false
+emission-screens | oiiiContinuumK | [OIII] continuum scale k | none | advanced | number 0.0 in 0.0...5.0
+emission-screens | oiiiBackground | [OIII] background | none | simple | number 0.12 in 0.01...0.6
+emission-screens | oiiiBlack | [OIII] black point | none | simple | number 0.0 in 0.0...0.9
+emission-screens | oiiiOpacity | [OIII] opacity | opacity | simple | number 0.78 in 0.0...1.0
+emission-screens | oiiiTint | [OIII] tint | none | simple | choice teal of red,teal,crimson,gold,green,blue
+emission-screens | oiiiBoost | [OIII] boost | none | advanced | number 1.0 in 1.0...3.0
+emission-screens | siiEnabled | [SII] screen | none | simple | flag false
+emission-screens | siiContinuum | [SII] continuum subtraction | none | simple | flag false
+emission-screens | siiContinuumK | [SII] continuum scale k | none | advanced | number 0.0 in 0.0...5.0
+emission-screens | siiBackground | [SII] background | none | simple | number 0.12 in 0.01...0.6
+emission-screens | siiBlack | [SII] black point | none | simple | number 0.0 in 0.0...0.9
+emission-screens | siiOpacity | [SII] opacity | opacity | simple | number 0.6 in 0.0...1.0
+emission-screens | siiTint | [SII] tint | none | simple | choice gold of red,teal,crimson,gold,green,blue
+emission-screens | siiBoost | [SII] boost | none | advanced | number 1.0 in 1.0...3.0
+line-injection | haGain | Hα gain | none | simple | number 0.0 in 0.0...4.0
+line-injection | haContinuumK | Hα continuum scale k | none | simple | number 0.0 in 0.0...5.0
+line-injection | haBlack | Hα black point | none | simple | number 0.0 in 0.0...1.0
+line-injection | haRed | Hα into red | opacity | advanced | number 1.0 in 0.0...1.0
+line-injection | haGreen | Hα into green | opacity | advanced | number 0.0 in 0.0...1.0
+line-injection | haBlue | Hα into blue | opacity | advanced | number 0.0 in 0.0...1.0
+line-injection | oiiiGain | [OIII] gain | none | simple | number 0.0 in 0.0...4.0
+line-injection | oiiiContinuumK | [OIII] continuum scale k | none | simple | number 0.0 in 0.0...5.0
+line-injection | oiiiBlack | [OIII] black point | none | simple | number 0.0 in 0.0...1.0
+line-injection | oiiiRed | [OIII] into red | opacity | advanced | number 0.0 in 0.0...1.0
+line-injection | oiiiGreen | [OIII] into green | opacity | advanced | number 0.5 in 0.0...1.0
+line-injection | oiiiBlue | [OIII] into blue | opacity | advanced | number 0.5 in 0.0...1.0
+line-injection | siiGain | [SII] gain | none | simple | number 0.0 in 0.0...4.0
+line-injection | siiContinuumK | [SII] continuum scale k | none | simple | number 0.0 in 0.0...5.0
+line-injection | siiBlack | [SII] black point | none | simple | number 0.0 in 0.0...1.0
+line-injection | siiRed | [SII] into red | opacity | advanced | number 1.0 in 0.0...1.0
+line-injection | siiGreen | [SII] into green | opacity | advanced | number 0.0 in 0.0...1.0
+line-injection | siiBlue | [SII] into blue | opacity | advanced | number 0.0 in 0.0...1.0

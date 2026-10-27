@@ -1,3 +1,4 @@
+import FilterKit
 import StackKit
 
 /// Builders shared by the calibration tests, mirroring the Go test helpers (`masters()`,

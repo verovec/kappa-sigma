@@ -1,3 +1,4 @@
+import FilterKit
 import Metal
 import ProcessKit
 import StackKit
@@ -12,12 +13,6 @@ extension ScreensTests {
     LayerStats(channels: [ChannelStats(median: median, madn: madn, minimum: 0, maximum: 1)])
   }
 
-  @Test("the screened lines are the canonical narrowband filters, in their display order")
-  func testLinesAreTheCanonicalFilters() {
-    let narrowband = Filter.allCases.filter(\.isNarrowband).map(\.rawValue)
-    #expect(EmissionLine.allCases.map(\.layerID) == narrowband)
-  }
-
   @Test("linked layers share the first curve, but each line's σ is its own noise")
   func testLinkedSigmaUsesOwnNoise() throws {
     let process = try Self.process([
@@ -26,12 +21,14 @@ extension ScreensTests {
     let layers = [
       "Ha": Self.stats(median: 0.05, madn: 0.002), "OIII": Self.stats(median: 0.05, madn: 0.01),
     ]
-    let ha = try process.lineStretch(.hydrogenAlpha, layerStats: layers)
-    let oiii = try process.lineStretch(.oxygenIII, layerStats: layers)
+    let ha = try process.lineStretch(try #require(EmissionLine(.hydrogenAlpha)), layerStats: layers)
+    let oiii = try process.lineStretch(try #require(EmissionLine(.oxygenIII)), layerStats: layers)
     #expect(oiii.shadows == ha.shadows && oiii.midtone == ha.midtone)
     #expect(abs(oiii.stretchedNoise / ha.stretchedNoise - 5) <= 1e-9)
     #expect(
-      abs(try process.blackInSigma(.oxygenIII, layerStats: layers) - 0.1 / oiii.stretchedNoise)
+      abs(
+        try process.blackInSigma(try #require(EmissionLine(.oxygenIII)), layerStats: layers) - 0.1
+          / oiii.stretchedNoise)
         <= 1e-12)
   }
 
@@ -69,7 +66,7 @@ extension ScreensTests {
       channels: [ChannelStats(median: 0.05, madn: 0.002, minimum: 0, maximum: 1)],
       continuumK: 0.7, continuumReference: "RGB.r")
     #expect {
-      try process.lineStretch(.hydrogenAlpha, layerStats: layers)
+      try process.lineStretch(try #require(EmissionLine(.hydrogenAlpha)), layerStats: layers)
     } throws: { "\($0)".contains("subtracts the whole background") }
   }
 }

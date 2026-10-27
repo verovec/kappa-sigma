@@ -1,29 +1,36 @@
-/// An emission line the screens process can lay over the colour base, with its panel defaults.
-package enum EmissionLine: String, CaseIterable, Sendable {
-  /// Hα, 656 nm.
-  case hydrogenAlpha = "Ha"
-  /// [OIII], 501 nm.
-  case oxygenIII = "OIII"
-  /// [SII], 672 nm.
-  case sulfurII = "SII"
+package import FilterKit
+
+/// An emission line the line processes read: a projection of FilterKit's narrowband filters
+/// (card 0133) — the one list — with the parameter-id prefix, the panel name the schemas use and
+/// the line's panel defaults.
+package struct EmissionLine: Hashable, Sendable, CaseIterable {
+  /// The filter that isolates the line.
+  package let filter: Filter
+  /// Its panel defaults (`LinePanelDefaults`): a line without an entry is not a line here, and
+  /// `LinePanelDefaultsTests` says so.
+  let defaults: LinePanelDefaults
+
+  /// The line of `filter`; `nil` for a broadband filter or a line without panel defaults.
+  package init?(_ filter: Filter) {
+    guard filter.line != nil, let defaults = LinePanelDefaults.table[filter] else { return nil }
+    self.filter = filter
+    self.defaults = defaults
+  }
+
+  /// Every line, in display order.
+  package static let allCases = Filter.narrowband.compactMap(Self.init)
 
   /// The bundle layer it reads.
-  package var layerID: String { rawValue }
+  package var layerID: String { filter.rawValue }
 
   /// The bundle layers of every line.
   package static let layerIDs = Set(allCases.map(\.layerID))
 
   /// The prefix of its parameter ids (`haBlack`, `oiiiOpacity`…).
-  package var prefix: String { rawValue.lowercased() }
+  package var prefix: String { filter.rawValue.lowercased() }
 
   /// How panels write it.
-  package var name: String {
-    switch self {
-    case .hydrogenAlpha: "Hα"
-    case .oxygenIII: "[OIII]"
-    case .sulfurII: "[SII]"
-    }
-  }
+  package var name: String { filter.line?.displayName ?? filter.rawValue }
 
   /// The id of its parameter `name` (`Enabled`, `Black`…).
   package func id(_ name: String) -> String { prefix + name }
@@ -39,24 +46,6 @@ package enum EmissionLine: String, CaseIterable, Sendable {
     return (k, reference)
   }
 
-  /// On by default: the HOO-over-broadband layers; [SII] waits for the user.
-  var enabledByDefault: Bool { self != .sulfurII }
-
-  /// astrocomp's default opacities (`-ha-screen 0.85`, `-oiii-screen 0.78`).
-  var defaultOpacity: Double {
-    switch self {
-    case .hydrogenAlpha: 0.85
-    case .oxygenIII: 0.78
-    case .sulfurII: 0.6
-    }
-  }
-
-  /// Hα red, [OIII] teal (astrocomp), [SII] gold.
-  var defaultTint: ScreenTint {
-    switch self {
-    case .hydrogenAlpha: .red
-    case .oxygenIII: .teal
-    case .sulfurII: .gold
-    }
-  }
+  package static func == (lhs: Self, rhs: Self) -> Bool { lhs.filter == rhs.filter }
+  package func hash(into hasher: inout Hasher) { hasher.combine(filter) }
 }

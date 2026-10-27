@@ -14,21 +14,21 @@ extension Filter {
     package let colourPlane: Int
   }
 
-  /// The line this filter isolates, `nil` for a broadband filter.
+  private static let hydrogenAlphaLine = Line(
+    wavelengthNm: 656.3, displayName: "Hα", continuumFilters: [.red, .luminance], colourPlane: 0)
+  private static let oxygenIIILine = Line(
+    wavelengthNm: 500.7, displayName: "[OIII]", continuumFilters: [.green, .blue, .luminance],
+    colourPlane: 1)
+  private static let sulfurIILine = Line(
+    wavelengthNm: 671.6, displayName: "[SII]", continuumFilters: [.red, .luminance], colourPlane: 0)
+
+  /// The line this filter isolates, `nil` for a broadband filter (a constant: the predicate
+  /// runs per frame in the channel detector).
   package var line: Line? {
     switch self {
-    case .hydrogenAlpha:
-      Line(
-        wavelengthNm: 656.3, displayName: "Hα", continuumFilters: [.red, .luminance],
-        colourPlane: 0)
-    case .oxygenIII:
-      Line(
-        wavelengthNm: 500.7, displayName: "[OIII]", continuumFilters: [.green, .blue, .luminance],
-        colourPlane: 1)
-    case .sulfurII:
-      Line(
-        wavelengthNm: 671.6, displayName: "[SII]", continuumFilters: [.red, .luminance],
-        colourPlane: 0)
+    case .hydrogenAlpha: Self.hydrogenAlphaLine
+    case .oxygenIII: Self.oxygenIIILine
+    case .sulfurII: Self.sulfurIILine
     case .luminance, .red, .green, .blue: nil
     }
   }

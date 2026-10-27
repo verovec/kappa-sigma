@@ -11,6 +11,17 @@ struct LinePanelDefaultsTests {
     #expect(LinePanelDefaults.table[filter] != nil, "\(filter.rawValue) needs an entry")
   }
 
+  @Test("the defaults table keys exactly the narrowband filters: no stray broadband row")
+  func testTableKeysAreTheNarrowbandFilters() {
+    #expect(Set(LinePanelDefaults.table.keys) == Set(Filter.narrowband))
+  }
+
+  @Test("the broadband reference layers are FilterKit's broadband filters, in order")
+  func testBroadbandLayersComeFromFilterKit() {
+    #expect(LineInjectionProcess.broadbandLayers == Filter.broadband.map(\.rawValue))
+    #expect(LineInjectionProcess.broadbandLayers == ["L", "R", "G", "B"])
+  }
+
   @Test("the lines are the narrowband filters, in display order, with their panel names")
   func testLinesProjectTheFilters() {
     #expect(EmissionLine.allCases.map(\.filter) == Filter.narrowband)
@@ -53,6 +64,5 @@ struct LinePanelDefaultsTests {
         try #require(injection.spec(row.prefix + plane)).kind
           == .number(default: share, bounds: 0...1), "\(row.prefix)\(plane)")
     }
-    #expect(LineInjectionProcess.broadbandLayers == ["L", "R", "G", "B"])
   }
 }

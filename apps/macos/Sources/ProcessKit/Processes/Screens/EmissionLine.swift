@@ -6,14 +6,17 @@ package import FilterKit
 package struct EmissionLine: Hashable, Sendable, CaseIterable {
   /// The filter that isolates the line.
   package let filter: Filter
+  /// Its physics (FilterKit).
+  package let line: Filter.Line
   /// Its panel defaults (`LinePanelDefaults`): a line without an entry is not a line here, and
-  /// `LinePanelDefaultsTests` says so.
+  /// `LinePanelDefaultsTests` says so (the table's keys are exactly `Filter.narrowband`).
   let defaults: LinePanelDefaults
 
-  /// The line of `filter`; `nil` for a broadband filter or a line without panel defaults.
+  /// The line of `filter`; `nil` for a filter outside `LinePanelDefaults` (every broadband one).
   package init?(_ filter: Filter) {
-    guard filter.line != nil, let defaults = LinePanelDefaults.table[filter] else { return nil }
+    guard let defaults = LinePanelDefaults.table[filter], let line = filter.line else { return nil }
     self.filter = filter
+    self.line = line
     self.defaults = defaults
   }
 
@@ -30,7 +33,7 @@ package struct EmissionLine: Hashable, Sendable, CaseIterable {
   package var prefix: String { filter.rawValue.lowercased() }
 
   /// How panels write it.
-  package var name: String { filter.line?.displayName ?? filter.rawValue }
+  package var name: String { line.displayName }
 
   /// The id of its parameter `name` (`Enabled`, `Black`…).
   package func id(_ name: String) -> String { prefix + name }

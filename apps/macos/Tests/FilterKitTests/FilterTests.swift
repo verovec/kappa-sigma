@@ -103,6 +103,17 @@ struct FilterTests {
     #expect(line.continuumFilters == filters && line.colourPlane == plane)
   }
 
+  @Test(
+    "a line's rest wavelength and panel name",
+    arguments: [
+      (Filter.hydrogenAlpha, 656.3, "Hα"), (.oxygenIII, 500.7, "[OIII]"),
+      (.sulfurII, 671.6, "[SII]"),
+    ])
+  func testLine_wavelengthAndName(filter: Filter, nm: Double, name: String) throws {
+    let line = try #require(filter.line)
+    #expect(line.wavelengthNm == nm && line.displayName == name)
+  }
+
   @Test("broadband filters have no line; the two lists split the catalogue in order")
   func testLine_broadbandHasNone() {
     for filter in [Filter.luminance, .red, .green, .blue] { #expect(filter.line == nil) }

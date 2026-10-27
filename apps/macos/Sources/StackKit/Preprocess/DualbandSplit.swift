@@ -1,3 +1,4 @@
+internal import FilterKit
 package import Foundation
 internal import ImageKit
 
@@ -9,8 +10,14 @@ internal import ImageKit
 /// weaker one in and cost SNR). The REGISTERED master is split: the layers are composited pixel
 /// for pixel over the broadband base.
 package enum DualbandSplit {
-  package static let haBase = "syn_Ha"
-  package static let oiiiBase = "syn_OIII"
+  /// The lines the dual-band clip's two planes carry (`FilterSet.dualband.lines`, FilterKit): the
+  /// layer ids the split writes under (`DualbandSplitTests` pins `Ha` / `OIII`).
+  static let lineIDs: (red: String, greenBlue: String) = {
+    let lines = FilterSet.dualband.lines
+    return (lines.red?.rawValue ?? "", lines.greenBlue?.rawValue ?? "")
+  }()
+  package static let haBase = "syn_" + lineIDs.red
+  package static let oiiiBase = "syn_" + lineIDs.greenBlue
 
   /// Why a master could not be split.
   package enum Failure: Error, CustomStringConvertible {
@@ -72,7 +79,7 @@ package enum DualbandSplit {
     }
     do {
       let (ha, oiii) = try split(out.appendingPathComponent(base + ".fits"), out: out)
-      (kept["Ha"], kept["OIII"]) = (ha, oiii)
+      (kept[lineIDs.red], kept[lineIDs.greenBlue]) = (ha, oiii)
     } catch {
       return (
         kept,

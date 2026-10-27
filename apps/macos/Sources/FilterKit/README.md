@@ -17,6 +17,11 @@ kit declares a second list.
    `LinePanelDefaults` entry (its test fails otherwise) and the per-line help entries
    (`HelpCoverageTests+Params`).
 
+Two StackKit helpers still spell tokens for their own reasons and are checked by their tests, not
+derived: `CaptureManifest.knownFilters` (a glued-word splitter matched longest-first) and
+`ChannelDetector.Options.order` (a default wheel order that stops at Hα). Revisit them with the
+filter that needs them.
+
 ## Adding a clip filter
 
 A case on `FilterSet` (its `rawValue` is on the wire: lane names, `lane_knobs`) with its `lines`;

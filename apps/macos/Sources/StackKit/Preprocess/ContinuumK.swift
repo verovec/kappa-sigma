@@ -25,7 +25,7 @@ package enum ContinuumK {
   static let minimumSamples = 10_000
 
   /// Broadband filters by line, in order, then the colour plane to fall back on: FilterKit's
-  /// line physics (`Filter.Line.continuum`), the one table.
+  /// line physics (`Filter.Line.continuumFilters` and `colourPlane`), the one table.
   static func references(of line: String) -> (filters: [String], colourPlane: Int)? {
     guard let physics = Filter.token(line)?.line else { return nil }
     return (physics.continuumFilters.map(\.rawValue), physics.colourPlane)

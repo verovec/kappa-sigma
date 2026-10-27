@@ -45,6 +45,9 @@ struct UserFacingErrorTests {
       error: InspectError.unknownFilterSet("uhc"), names: "uhc",
       english: "“uhc” is not a filter set: use unknown, broadband or dualband."),
     Case(
+      error: FilterSet.ParseError.unknownFilterSet("uhc"), names: "uhc",
+      english: "“uhc” is not a filter set: use unknown, broadband or dualband."),
+    Case(
       error: InspectError.unknownColorChoice("rgb"), names: "rgb",
       english: "“rgb” is not a colour model: use auto, mono or osc."),
     Case(

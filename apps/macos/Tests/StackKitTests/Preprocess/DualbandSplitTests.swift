@@ -193,6 +193,7 @@ struct DualbandSplitTests {
       ], out: out)
     #expect(channels == ["RGB": "aligned_RGB", "Ha": "syn_Ha", "OIII": "syn_OIII"])
     #expect(note?.contains("multi-band clip:") == false)
+    #expect(note?.contains("lane split skipped") == false, "the lane master is never read")
     #expect(
       note?.contains("Ha of the multiband lane skipped: another lane already gave it") == true)
     #expect(
@@ -234,5 +235,6 @@ struct DualbandSplitTests {
     #expect(
       note?.contains("OIII of the multiband lane skipped: the colour base already holds it") == true
     )
+    #expect(note?.contains("lane split skipped") == false, "the multiband master is never read")
   }
 }

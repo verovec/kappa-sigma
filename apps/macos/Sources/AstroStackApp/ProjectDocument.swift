@@ -12,6 +12,14 @@ internal import SwiftUI
 /// of NSDocument's default safe-save, which would rewrite the whole package on every save. An
 /// untitled document lives in a temporary package until its first save moves it.
 package final class ProjectDocument: NSDocument {
+  /// Called once the last project has closed (card 0144): the app brings the welcome window
+  /// back, so ⌘W never leaves it windowless; `AppDelegate` arms it at launch and clears it at quit.
+  package static var lastDocumentClosed: @MainActor () -> Void = {}
+  /// The documents still open after a close: the shared controller's (a test counts only its own).
+  package static var openDocuments: @MainActor () -> [NSDocument] = {
+    NSDocumentController.shared.documents
+  }
+
   private var project: ProjectPackage?
   private var isTemporary = false
   /// The window's model, so closing the project stops a run that writes into it.
@@ -251,6 +259,7 @@ package final class ProjectDocument: NSDocument {
     if let project { release(project) }
     project = nil
     super.close()
+    if Self.openDocuments().isEmpty { Self.lastDocumentClosed() }
   }
 
   /// True when the folder opened at `opened` is gone and AppKit now names an existing `current`.

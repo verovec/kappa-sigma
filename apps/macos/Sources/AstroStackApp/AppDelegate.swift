@@ -11,6 +11,14 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
   /// Armed by a real launch only (a test never runs `applicationWillFinishLaunching`): the
   /// retention review runs once, the first time the app has no document to show (card 0114).
   private var retentionArmed = false
+  /// Shows the welcome window when the last project closes (card 0144).
+  private let welcome: @MainActor () -> Void
+
+  /// The app's delegate; `welcome` shows the welcome window (tests substitute a spy).
+  package init(welcome: @escaping @MainActor () -> Void = { WelcomeWindow.show() }) {
+    self.welcome = welcome
+    super.init()
+  }
 
   /// Yes, unless the app is launching with `-openImage`: AppKit then asks
   /// `applicationOpenUntitledFile` (at launch, and from the Dock with no window open).
@@ -32,10 +40,12 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
     return true
   }
 
-  /// Arms the retention review before AppKit can ask for an untitled document: a plain launch
-  /// asks it before `applicationDidFinishLaunching`.
+  /// Arms the retention review before AppKit can ask for an untitled document (a plain launch
+  /// asks it before `applicationDidFinishLaunching`), and the welcome window's return when the
+  /// last project closes: the app stays, with somewhere to open the next project from.
   package func applicationWillFinishLaunching(_ notification: Notification) {
     retentionArmed = true
+    ProjectDocument.lastDocumentClosed = { [welcome] in welcome() }
   }
 
   /// `-openImage <path>` opens that FITS in the viewer at launch; `-openRun <folder>` opens a
@@ -132,6 +142,8 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
   /// AppKit does not close documents on quit; closing them checkpoints each `project.db` and
   /// deletes the temporary package of an untitled project the user chose not to save.
   package func applicationWillTerminate(_ notification: Notification) {
+    // Quitting closes every project: none of those closes may bring the welcome window back.
+    ProjectDocument.lastDocumentClosed = {}
     for document in NSDocumentController.shared.documents {
       document.close()
     }

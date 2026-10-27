@@ -2,6 +2,7 @@ import AppKit
 import AstroStackApp
 import Foundation
 import ProjectKit
+import TestSupport
 import Testing
 
 @MainActor
@@ -62,14 +63,33 @@ extension AppDelegateTests {
   func testAppDelegate_willFinishLaunching_setsWelcomeHook() {
     let hook = ProjectDocument.lastDocumentClosed
     defer { ProjectDocument.lastDocumentClosed = hook }
-    var shown = 0
-    let delegate = AppDelegate(welcome: { shown += 1 })
+    var (shown, reviews) = (0, 0)
+    let delegate = AppDelegate(welcome: { shown += 1 }, reviewRetention: { reviews += 1 })
 
     delegate.applicationWillFinishLaunching(
       Notification(name: NSApplication.willFinishLaunchingNotification))
     ProjectDocument.lastDocumentClosed()
+    // From the Dock afterwards: the welcome window, never a review over the project just closed.
+    _ = delegate.applicationOpenUntitledFile(NSApplication.shared)
 
-    #expect(shown == 1)
+    #expect(shown == 2)
+    #expect(reviews == 0)
+  }
+
+  @Test("a launch without a project reviews the stacks once, from the first welcome window")
+  func testAppDelegate_launchReviewsOnce() {
+    var (shown, reviews) = (0, 0)
+    let hook = ProjectDocument.lastDocumentClosed
+    defer { ProjectDocument.lastDocumentClosed = hook }
+    let delegate = AppDelegate(welcome: { shown += 1 }, reviewRetention: { reviews += 1 })
+
+    delegate.applicationWillFinishLaunching(
+      Notification(name: NSApplication.willFinishLaunchingNotification))
+    _ = delegate.applicationOpenUntitledFile(NSApplication.shared)
+    _ = delegate.applicationOpenUntitledFile(NSApplication.shared)
+
+    #expect(shown == 2)
+    #expect(reviews == 1)
   }
 }
 
@@ -83,14 +103,21 @@ extension AppDelegateTests {
 }
 
 extension AppDelegateTests {
-  @Test("Clear Menu is enabled only with recents to clear; other items stay enabled")
-  func testAppDelegate_validatesClearMenu() {
-    let delegate = AppDelegate()
+  @Test(
+    "Clear Menu is enabled only with a recent project still on disk; other items stay enabled",
+    .scratchDirectory)
+  func testAppDelegate_validatesClearMenu() throws {
+    let kept = try ScratchDirectory.url.appendingPathComponent("M 31.astrostack")
+    try FileManager.default.createDirectory(at: kept, withIntermediateDirectories: true)
+    let gone = try ScratchDirectory.url.appendingPathComponent("Gone.astrostack")
     let clear = NSMenuItem(
       title: "", action: NSSelectorFromString("clearRecentProjects:"), keyEquivalent: "")
     let other = NSMenuItem(
       title: "", action: NSSelectorFromString("showWelcome:"), keyEquivalent: "")
-    #expect(delegate.validateMenuItem(clear) == !WelcomeWindow.recentURLs().isEmpty)
-    #expect(delegate.validateMenuItem(other))
+    for (recents, enabled) in [([kept, gone], true), ([gone], false), ([], false)] {
+      let delegate = AppDelegate(recentURLs: { recents })
+      #expect(delegate.validateMenuItem(clear) == enabled, "\(recents.map(\.lastPathComponent))")
+      #expect(delegate.validateMenuItem(other))
+    }
   }
 }

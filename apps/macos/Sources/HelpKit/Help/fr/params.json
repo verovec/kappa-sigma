@@ -1,5 +1,5 @@
 {
-  "background-extraction.applyTo": "L'image de travail, les couches de raies (Hα, OIII, SII) ou l'image et toutes les couches de la pile.",
+  "background-extraction.applyTo": "L'image de travail, toutes les couches de raies (Hα, OIII, SII ou autre), ou l'image et toutes les couches de la pile.",
   "background-extraction.correction": "Soustraire retire un gradient additif (pollution lumineuse) ; diviser en retire un multiplicatif (vignetage), GraXpert seul.",
   "background-extraction.degree": "Degré du polynôme Siril, de 1 à 4 : 1 est un plan, plus haut épouse le gradient et peut manger un grand objet.",
   "background-extraction.dither": "Tramage du modèle RBF de Siril, contre les bandes dans les gradients doux ; actif par défaut.",

@@ -1,0 +1,23 @@
+{
+  "digests" : {
+    "injection · Hα and SII" : "d57c562d3a3a83398e4f89cec70a7ea0081fea7c5e29231eec67faba0cc39009",
+    "injection · Hα only" : "d8e3ff52261567b09de30236cb300dd782f8a02823108d490f01e671d2f6c5c3",
+    "injection · OIII split" : "0e3d1e988692e85b26d690ef6997d955a7bc511a66a2266a0a667f889365e974",
+    "injection · SII alone" : "720258798959c42730b8f8ea5294718572245a1c5abcb8eb1e7f11a0c9ea9426",
+    "injection · black" : "7552e1ea192c56677130c4538509350cd623a23312db70ba9f7f7bf92ef6a876",
+    "injection · k > 0" : "f28005833ec6e95f1bceff78daee48c7b6499b06846728ef23e1f93d9e98eb6c",
+    "injection · mask" : "906ddaecf1569d8898c4c5e6c00269dcf1b23e251c2a68f093a5df1e122fba82",
+    "injection · three lines" : "854022a0a49378c17dadb6df77813453f900816ab451dfb077ee6ca8f3217bbf",
+    "injection · zero gains" : "a35365492be533eddd51ccdd87f475f88c36b5ec0d5b10a95b103ef25b3e2208",
+    "screens · 0.0 red 0.5" : "0136a0f385c9627b3eb81cc6f09ee15d6fff9f4617299aabbb3d945f4c57f746",
+    "screens · 0.3 crimson 0.9" : "a0c90bbaeb10bbb913628bacb473e575c65de696c1cd0549fbc70c39583ebd60",
+    "screens · 0.5 teal 0.4" : "8cae6b76ebcc8fa8211b22eb1628b3491089350cf1eb5e19ce732bc1dab998f1",
+    "screens · 0.95 red 0.1" : "725b9011a9a1d5a6fb6684c5ff22f59c21ac28fe91b36071ea4034dc44866a51",
+    "screens · 1.0 gold 0.0" : "c3d151ce292a03fb614c2cdcf4700a88502d3042ee2054e0a5c2c0fb519b1fcc",
+    "screens · OIII alone" : "9d908fb54613332759ac36067c6d0bd20412cd4ec0b2eb42c18bbf7aef5afef4",
+    "screens · SII alone" : "0dd93cb8856742823dc1de879da881cf742d4c1cdfc8832cc74f79afdeed7839",
+    "screens · boost" : "19ca18eb038a6db42897cb01610370d46ee26505e954f81cd9bbed484825d30d",
+    "screens · three lines" : "46e3b67717355a561fdd409348333f17a601f4459039e76b057fd5c08716c507"
+  },
+  "gpu" : "Apple M5 Pro"
+}

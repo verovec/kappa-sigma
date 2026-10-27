@@ -102,20 +102,21 @@ struct LineInjectionProcessTests {
     }
   }
 
-  @Test(
-    "the kernel equals the CPU oracle (max |Δ| ≤ 1e-6)",
-    arguments: [
-      Case(name: "Hα only", values: ["haGain": 1.5]),
-      Case(name: "OIII split", values: ["oiiiGain": 2, "oiiiGreen": 0.7, "oiiiBlue": 0.3]),
-      Case(
-        name: "k > 0",
-        values: [
-          "haGain": 1, "haContinuumK": 0.8, "oiiiGain": 1,
-          "oiiiContinuumK": 1.2,
-        ]),
-      Case(name: "black", values: ["haGain": 1, "haBlack": 0.15, "siiGain": 3, "siiBlack": 0.05]),
-      Case(name: "mask", values: ["haGain": 2, "oiiiGain": 4, "oiiiRed": 0.2], masked: true),
-    ])
+  /// The oracle rows, shared with `LiveKernelTransitionTests` (card 0136).
+  static let oracleCases = [
+    Case(name: "Hα only", values: ["haGain": 1.5]),
+    Case(name: "OIII split", values: ["oiiiGain": 2, "oiiiGreen": 0.7, "oiiiBlue": 0.3]),
+    Case(
+      name: "k > 0",
+      values: [
+        "haGain": 1, "haContinuumK": 0.8, "oiiiGain": 1,
+        "oiiiContinuumK": 1.2,
+      ]),
+    Case(name: "black", values: ["haGain": 1, "haBlack": 0.15, "siiGain": 3, "siiBlack": 0.05]),
+    Case(name: "mask", values: ["haGain": 2, "oiiiGain": 4, "oiiiRed": 0.2], masked: true),
+  ]
+
+  @Test("the kernel equals the CPU oracle (max |Δ| ≤ 1e-6)", arguments: oracleCases)
   func testMatchesCPUOracle(row: Case) throws {
     let params = try Self.params(row.values)
     let base = Self.planes["RGB"] ?? []

@@ -6,7 +6,7 @@ import Testing
 /// The catalogs the app ships and the fixtures that prove the gate.
 enum Catalogs {
   /// The targets that carry a `Localizable.xcstrings` (card 0073).
-  static let targets = ["AstroStackApp", "RenderKit", "ProcessKit"]
+  static let targets = ShippedCatalogs.targets
 
   /// The source folder of `target`.
   static func folder(_ target: String) throws -> URL {

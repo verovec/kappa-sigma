@@ -75,7 +75,8 @@ struct StackingStagePane: View {
   /// Why Run is greyed, with the one action that ungreys it; nothing while a run goes.
   @ViewBuilder private var blocker: some View {
     if !running && model.nightPaths.isEmpty && !model.sources.isEmpty {
-      notice(.app("Import a capture night to stack: a legacy run is shown, never stacked again."))
+      notice(
+        .app("Import a capture night to stack: an imported run is shown, never stacked again."))
     } else if !running && model.nightPaths.isEmpty {
       notice(.app("Import a capture night to stack."))
     } else if !running && model.needsSave {

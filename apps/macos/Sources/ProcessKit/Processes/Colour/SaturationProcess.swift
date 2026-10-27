@@ -52,12 +52,12 @@ package struct SaturationProcess: ImageProcess {
 
   /// The reasons the panel shows next to a suggestion: English keys of the catalog.
   package static let suggestionReasons = [
-    "the PO's M31 finish: a 0.32 boost",
+    "a moderate boost of 0.32",
     "the boost skips the sky's chroma noise and tames star cores",
-    "IC 1848 \"doux\": colour kept at 0.62",
+    "a soft finish: colour kept at 0.62",
   ]
 
-  /// The PO's validated values (M31 `-sat 0.32 -sat-masked`, IC 1848 desat 0.62); none applied.
+  /// Two finishes worth offering (a 0.32 boost, a soft finish keeping 62 % of the colour); none applied.
   package func suggestions(stats: LayerStats) -> [Suggestion] {
     let reasons = Self.suggestionReasons
     return [

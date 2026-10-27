@@ -34,8 +34,8 @@
           "fr": "Mono : le vert vient du filtre G."
         },
         "lSource": {
-          "en": "The L layer carries the detail as luminance (weights refined by E18 on the PO's mono data).",
-          "fr": "La couche L porte le détail en luminance (poids affinés par E18 sur les données mono du PO)."
+          "en": "The L layer carries the detail as luminance; set the weights on your data.",
+          "fr": "La couche L porte le détail en luminance ; réglez les poids sur vos données."
         },
         "rSource": {
           "en": "Mono: red from the R filter.",

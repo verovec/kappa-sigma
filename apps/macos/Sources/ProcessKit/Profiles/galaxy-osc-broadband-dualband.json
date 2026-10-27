@@ -17,8 +17,8 @@
     "mode": "deepsky",
     "why": {
       "trail_mask_k": {
-        "en": "The validated v9 dual-band runs stack without the cross-frame trail mask.",
-        "fr": "Les runs bi-bande v9 validés s'empilent sans masque de traînées inter-poses."
+        "en": "The cross-frame trail mask is off by default; raise k when trails remain in the master.",
+        "fr": "Le masque de traînées inter-poses est inactif par défaut ; montez k si des traînées restent dans le master."
       }
     }
   },
@@ -40,8 +40,8 @@
       },
       "why": {
         "enabled": {
-          "en": "The galaxy core saturates after the stretch: the PO's absolute thresholds (0.00084, 0.00118 above the sky) compress it.",
-          "fr": "Le cœur de la galaxie sature après l'étirement : les seuils absolus du PO (0,00084, 0,00118 au-dessus du ciel) le compriment."
+          "en": "The galaxy core saturates after the stretch: absolute thresholds just above the sky (0.00084, 0.00118) compress it.",
+          "fr": "Le cœur de la galaxie sature après l'étirement : des seuils absolus juste au-dessus du ciel (0,00084, 0,00118) le compriment."
         }
       }
     },
@@ -55,12 +55,12 @@
       },
       "why": {
         "shadowsClip": {
-          "en": "astrocomp places the shadows 2.5σ below the background.",
-          "fr": "astrocomp place les ombres 2,5σ sous le fond."
+          "en": "Shadows 2.5σ below the background: the sky stays dark without clipping its noise.",
+          "fr": "Ombres à 2,5σ sous le fond : le ciel reste sombre sans écrêter son bruit."
         },
         "targetBackground": {
-          "en": "The v9 composite's base background (astrocomp -base-bg 0.085): a dark sky under the screens.",
-          "fr": "Le fond de base du composite v9 (astrocomp -base-bg 0,085) : un ciel sombre sous les écrans."
+          "en": "A base background of 0.085: a dark sky under the screens.",
+          "fr": "Un fond de base à 0,085 : un ciel sombre sous les écrans."
         }
       }
     },
@@ -77,24 +77,24 @@
       },
       "why": {
         "haBlack": {
-          "en": "HaPlus, chosen by the PO on 19/10 on M 31: Hα black point 0.115.",
-          "fr": "HaPlus, choisi par le PO le 19/10 sur M 31 : point noir Hα 0,115."
+          "en": "Hα black point 0.115: the line's sky is cut, the arms' Hα regions stay.",
+          "fr": "Point noir Hα 0,115 : le ciel de la raie est coupé, les régions Hα des bras restent."
         },
         "haOpacity": {
-          "en": "HaPlus: Hα screen 0.95. More Hα comes from more dual-band exposure, not a stronger screen.",
-          "fr": "HaPlus : écran Hα 0,95. Plus de Hα vient de plus de poses bi-bande, pas d'un écran plus fort."
+          "en": "Hα screen 0.95. More Hα comes from more dual-band exposure, not a stronger screen.",
+          "fr": "Écran Hα 0,95. Plus de Hα vient de plus de poses bi-bande, pas d'un écran plus fort."
         },
         "oiiiBlack": {
-          "en": "The v9 OIII black point, 0.126.",
-          "fr": "Le point noir OIII v9, 0,126."
+          "en": "OIII black point 0.126: above the line's sky noise.",
+          "fr": "Point noir OIII 0,126 : au-dessus du bruit de ciel de la raie."
         },
         "oiiiBoost": {
-          "en": "The v9 teal boost, 1.25.",
-          "fr": "Le renfort sarcelle v9, 1,25."
+          "en": "A moderate teal boost, 1.25, so OIII reads without turning the core green.",
+          "fr": "Un renfort sarcelle modéré, 1,25, pour lire l'OIII sans verdir le cœur."
         },
         "oiiiOpacity": {
-          "en": "The v9 OIII screen, 0.80.",
-          "fr": "L'écran OIII v9, 0,80."
+          "en": "OIII screen 0.80: under the Hα screen, the weaker line.",
+          "fr": "Écran OIII 0,80 : sous l'écran Hα, la raie la plus faible."
         }
       }
     },
@@ -107,8 +107,8 @@
       },
       "why": {
         "amount": {
-          "en": "The validated M 31 finish: +32 % saturation through the luminosity band (sky and star cores protected).",
-          "fr": "La finition M 31 validée : +32 % de saturation dans la bande de luminosité (ciel et cœurs d'étoiles protégés)."
+          "en": "+32 % saturation through the luminosity band (sky and star cores protected).",
+          "fr": "+32 % de saturation dans la bande de luminosité (ciel et cœurs d'étoiles protégés)."
         }
       }
     },
@@ -121,8 +121,8 @@
       },
       "why": {
         "chroma": {
-          "en": "Star colour 0.25: red giants otherwise render as orange blobs (validated 18/10).",
-          "fr": "Couleur des étoiles 0,25 : sinon les géantes rouges deviennent des taches orange (validé le 18/10)."
+          "en": "Star colour 0.25: red giants otherwise render as orange blobs.",
+          "fr": "Couleur des étoiles 0,25 : sinon les géantes rouges deviennent des taches orange."
         }
       }
     }

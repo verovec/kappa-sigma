@@ -31,7 +31,7 @@ package struct StarRecompositionProcess: ImageProcess {
 
   /// The reasons the panel shows next to a suggestion: English keys of the catalog.
   package static let suggestionReasons = [
-    "star colour 0.25: red giants otherwise render as orange blobs (the validated M31 chain)"
+    "star colour 0.25: red giants otherwise render as orange blobs"
   ]
 
   package let params: ParamSet

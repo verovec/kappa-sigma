@@ -212,7 +212,7 @@
     "label": "Égale"
   },
   "knob.stack_weight.wfwhm": {
-    "definition": "Pondère par la netteté et le nombre d’étoiles ; le réglage historique.",
+    "definition": "Pondère par la netteté et le nombre d’étoiles ; le réglage par défaut.",
     "label": "Netteté (wFWHM)"
   },
   "knob.star_count_frac": {

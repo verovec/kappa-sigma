@@ -17,8 +17,8 @@
     "mode": "nebula",
     "why": {
       "trail_mask_k": {
-        "en": "The validated v9 dual-band runs stack without the cross-frame trail mask.",
-        "fr": "Les runs bi-bande v9 validés s'empilent sans masque de traînées inter-poses."
+        "en": "The cross-frame trail mask is off by default; raise k when trails remain in the master.",
+        "fr": "Le masque de traînées inter-poses est inactif par défaut ; montez k si des traînées restent dans le master."
       }
     }
   },
@@ -69,12 +69,12 @@
       },
       "why": {
         "haBlack": {
-          "en": "The IC 1848 « doux » composite: Hα black point 0.126.",
-          "fr": "Le composite IC 1848 « doux » : point noir Hα 0,126."
+          "en": "A soft emission finish: Hα black point 0.126 keeps the faint shell without lifting the sky.",
+          "fr": "Une finition d'émission douce : point noir Hα 0,126 garde la coquille faible sans relever le ciel."
         },
         "oiiiBoost": {
-          "en": "The marked teal validated on NGC 7000 v9: OIII boost 1.35.",
-          "fr": "Le sarcelle marqué validé sur NGC 7000 v9 : renfort OIII 1,35."
+          "en": "A marked teal for the OIII shell: boost 1.35.",
+          "fr": "Un sarcelle marqué pour la coquille OIII : renfort 1,35."
         }
       }
     },
@@ -87,8 +87,8 @@
       },
       "why": {
         "lumaDesat": {
-          "en": "IC 1848 « doux »: 62 % of the colour kept (validated 28/09); no HDR, there is no galaxy core.",
-          "fr": "IC 1848 « doux » : 62 % de la couleur conservée (validé le 28/09) ; pas de HDR, il n'y a pas de cœur de galaxie."
+          "en": "A soft finish keeps 62 % of the colour; no HDR, there is no galaxy core.",
+          "fr": "Une finition douce garde 62 % de la couleur ; pas de HDR, il n'y a pas de cœur de galaxie."
         }
       }
     }

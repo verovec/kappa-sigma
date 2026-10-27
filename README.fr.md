@@ -49,8 +49,6 @@ dans des centaines de panneaux.
 - **Vos données restent à vous.** Captures, masters et résultats antérieurs sont en lecture seule ;
   l'app n'écrit que dans ses projets.
 
-Le nom vient du kappa-sigma clipping, le rejet des valeurs aberrantes au cœur de tout empilement.
-
 ## Démarrage rapide
 
 **Prérequis :** un Mac sous macOS 26 avec les Command Line Tools (Swift 6.2 ou plus récent) et
@@ -106,9 +104,6 @@ Partout dans l'app :
 - **Clavier :** plein écran (⇧⌘F), zoom (⌘= / ⌘-), rotation et miroir, le panneau Présentation
   (⌥⌘0), et un seul ⌘Z annule tout un run de pipeline.
 - **Langues :** anglais et français.
-
-Conçu pour les caméras couleur (OSC), et validé de bout en bout sur M 31 (nuits large bande et
-dual-band) et IC 1848 face à la chaîne qu'il remplace.
 
 ## Technologies
 

@@ -26,7 +26,7 @@ package enum SettingsWindow {
       alert.runModal()
       return
     }
-    for document in documents.documents { document.close() }
+    ProjectDocument.closeQuietly(documents.documents)
     let configuration = NSWorkspace.OpenConfiguration()
     configuration.createsNewApplicationInstance = true
     Task {
@@ -36,6 +36,8 @@ package enum SettingsWindow {
         NSApp.terminate(nil)
       } catch {
         logger.error("relaunch failed: \(error, privacy: .public)")
+        // The projects are closed: never leave the app without a window.
+        WelcomeWindow.show()
       }
     }
   }

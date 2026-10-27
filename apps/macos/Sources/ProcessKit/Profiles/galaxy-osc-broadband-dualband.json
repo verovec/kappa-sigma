@@ -17,8 +17,8 @@
     "mode": "deepsky",
     "why": {
       "trail_mask_k": {
-        "en": "The profile switches the cross-frame trail mask off (k = 0), as the dual-band reference runs were stacked; raise k when trails remain in the master.",
-        "fr": "Le profil coupe le masque de traînées inter-poses (k = 0), comme les runs bi-bande de référence ont été empilés ; montez k si des traînées restent dans le master."
+        "en": "The profile switches the cross-frame trail mask off (k = 0) and leaves satellite trails to the stack's pixel rejection; raise k when trails remain in the master.",
+        "fr": "Le profil coupe le masque de traînées inter-poses (k = 0) et laisse les traînées de satellites au rejet de pixels de l'empilement ; montez k si des traînées restent dans le master."
       }
     }
   },

@@ -8,36 +8,35 @@ import Testing
 /// reason or app string names a development run, the PO, a legacy tool, the PO's camera or a
 /// validation date — a value's reason is physical, an example is an object name.
 extension HelpCoverageTests {
-  /// A pattern no user-facing text may carry: a whole word (or words), case-insensitive, unless
-  /// the fragment is case-sensitive (« PO » and `stardesat`: « po » starts too many words, the
-  /// parameter id `starDesat` is not a text).
+  /// A pattern no user-facing text may carry, as a regex: stems where a word inflects (« v9 »,
+  /// « validé·e·s »), both initials where a sentence may start with it, case-sensitive where the
+  /// lowercase word is common (« po », the parameter id `starDesat`).
   struct Relic: CustomTestStringConvertible, Sendable {
-    let fragment: String
-    var caseSensitive = false
-    var testDescription: String { fragment }
+    let name: String
+    let pattern: String
+    var testDescription: String { name }
 
-    func found(in text: String) -> Bool {
-      if caseSensitive { return text.contains(fragment) }
-      let escaped = NSRegularExpression.escapedPattern(for: fragment)
-      guard let pattern = try? Regex("(?i)\\b" + escaped + "\\b") else { return false }
-      return text.contains(pattern)
+    init(_ name: String, _ pattern: String) {
+      self.name = name
+      self.pattern = pattern
     }
   }
 
   static let relics = [
-    Relic(fragment: "v9"), Relic(fragment: "the PO", caseSensitive: true),
-    Relic(fragment: "PO's", caseSensitive: true), Relic(fragment: "du PO", caseSensitive: true),
-    Relic(fragment: "le PO", caseSensitive: true), Relic(fragment: "legacy"),
-    Relic(fragment: "ancien moteur"), Relic(fragment: "anciens runs"),
-    Relic(fragment: "réglage historique"), Relic(fragment: "astrocomp"),
-    Relic(fragment: "hdrcomp"), Relic(fragment: "stardesat", caseSensitive: true),
-    Relic(fragment: "run #"), Relic(fragment: "E18", caseSensitive: true),
-    Relic(fragment: "validated"), Relic(fragment: "validé"), Relic(fragment: "validée"),
-    Relic(fragment: "HaPlus"), Relic(fragment: "IMX571"), Relic(fragment: "ASI2600"),
+    Relic("v9", #"\bv9"#), Relic("the PO", #"\b[Tt]he PO\b"#), Relic("PO's", #"\bPO's"#),
+    Relic("du PO", #"\b[Dd]u PO\b"#), Relic("le PO", #"\b[Ll]e PO\b"#),
+    Relic("legacy", #"(?i)\blegacy\b"#), Relic("ancien moteur", #"(?i)\bancien moteur\b"#),
+    Relic("anciens runs", #"(?i)\banciens runs\b"#),
+    Relic("réglage historique", #"(?i)\bréglage historique\b"#),
+    Relic("astrocomp", #"(?i)\bastrocomp\b"#), Relic("hdrcomp", #"(?i)\bhdrcomp\b"#),
+    Relic("stardesat", #"\bstardesat\b"#), Relic("run #", #"(?i)\brun #"#),
+    Relic("E18", #"\bE18\b"#), Relic("validated", #"(?i)\bvalidated\b"#),
+    Relic("validé", #"(?i)\bvalidée?s?\b"#), Relic("HaPlus", #"(?i)\bHaPlus\b"#),
+    Relic("IMX571", #"(?i)\bIMX571\b"#), Relic("ASI2600", #"(?i)\bASI2600\b"#),
+    Relic("reference runs", #"(?i)\breference runs?\b"#),
+    Relic("runs de référence", #"(?i)\bruns? de référence\b"#),
+    Relic("date", #"\b(\d{4}-\d{2}-\d{2}|\d{1,2}/\d{1,2}(/\d{2,4})?)\b"#),
   ]
-
-  /// A validation date (« 19/10 », « 28/09 »): a dev relic whatever the digits.
-  static var datePattern: Regex<Substring> { /\b\d{2}\/\d{2}\b/ }
 
   /// Every user-facing text, by source: the locale folders' help JSON and cards, profile whys
   /// and titles, every value of every shipped string catalog (plural variants included). Read
@@ -46,18 +45,12 @@ extension HelpCoverageTests {
 
   @Test("no user-facing text carries a dev relic", arguments: relics)
   func testNoDevRelicsInUserText(relic: Relic) throws {
-    for (source, lines) in try Self.userTexts.get() {
-      let hits = lines.filter { relic.found(in: $0) }
-      #expect(hits.isEmpty, "\(source) carries « \(relic.fragment) »: \(hits.prefix(2))")
-    }
-  }
-
-  @Test("no user-facing text carries a validation date")
-  func testNoValidationDateInUserText() throws {
-    for (source, lines) in try Self.userTexts.get() {
-      let pattern = Self.datePattern
+    let texts = try Self.userTexts.get()
+    try #require(texts.count > 3, "help, profiles and catalogs must all load")
+    let pattern = try Regex(relic.pattern)
+    for (source, lines) in texts {
       let hits = lines.filter { $0.contains(pattern) }
-      #expect(hits.isEmpty, "\(source) carries a date: \(hits.prefix(2))")
+      #expect(hits.isEmpty, "\(source) carries « \(relic.name) »: \(hits.prefix(2))")
     }
   }
 
@@ -67,7 +60,9 @@ extension HelpCoverageTests {
     var texts: [(String, [String])] = []
     for locale in HelpIndex.locales {
       let help = sources.appendingPathComponent("HelpKit/Help/\(locale)")
-      for file in try files(under: help, extensions: ["json", "md"]) {
+      let files = try files(under: help, extensions: ["json", "md"])
+      guard !files.isEmpty else { throw CorpusError.emptyFolder(help.path) }
+      for file in files {
         let text = try String(contentsOf: file, encoding: .utf8)
         texts.append(
           (
@@ -77,7 +72,9 @@ extension HelpCoverageTests {
       }
     }
     let profiles = sources.appendingPathComponent("ProcessKit/Profiles")
-    for file in try files(under: profiles, extensions: ["json"]) {
+    let profileFiles = try files(under: profiles, extensions: ["json"])
+    guard !profileFiles.isEmpty else { throw CorpusError.emptyFolder(profiles.path) }
+    for file in profileFiles {
       texts.append((file.lastPathComponent, try localizedTexts(in: file)))
     }
     for target in ShippedCatalogs.targets {
@@ -86,6 +83,11 @@ extension HelpCoverageTests {
       texts.append((target + " catalog", values(of: catalog)))
     }
     return texts
+  }
+
+  /// A corpus folder that holds nothing: the guard would pass for want of text.
+  enum CorpusError: Error {
+    case emptyFolder(String)
   }
 
   private static func files(under folder: URL, extensions: Set<String>) throws -> [URL] {

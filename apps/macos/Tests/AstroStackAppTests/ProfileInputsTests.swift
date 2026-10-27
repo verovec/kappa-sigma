@@ -72,6 +72,13 @@ struct ProfileInputsTests {
         ],
         expected: .init(object: "M 31", camera: .osc, filters: .broadbandDualband)),
       Case(
+        name: "OSC two line clips, no broadband",
+        sets: [
+          LightSet("IC 1848", Filter.color, true, .dualband),
+          LightSet("IC 1848", Filter.color, true, .dualbandSII),
+        ],
+        expected: .init(object: "IC 1848", camera: .osc, filters: .dualband)),
+      Case(
         name: "OSC, verdict unknown", sets: [LightSet("M 45", Filter.color, true, .unknown)],
         expected: .init(object: "M 45", camera: .osc, filters: nil)),
       Case(

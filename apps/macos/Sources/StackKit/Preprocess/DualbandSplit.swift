@@ -8,7 +8,8 @@ internal import ImageKit
 /// Hα at 656 nm lands on the red pixels; [OIII] at 500.7 nm on the shoulder between green and
 /// blue, so the per-pixel maximum keeps whichever pixel caught the line (a mean would fold the
 /// weaker one in and cost SNR). The REGISTERED master is split: the layers are composited pixel
-/// for pixel over the broadband base.
+/// for pixel over the colour base — the broadband master, or the first line lane when the run
+/// has none.
 package enum DualbandSplit {
   /// The synthetic layer's file stem of a line (`syn_Ha`).
   private static func stem(_ line: Filter) -> String { "syn_" + line.rawValue }
@@ -71,7 +72,7 @@ package enum DualbandSplit {
       kept = [FilterSetLanes.baseFilter(of: first): base]
       lanes.removeFirst()
       notes.append(
-        "the broadband lane produced no master — the \(first) stack is the colour base, unsplit "
+        "no broadband master in this run — the \(first) stack is the colour base, unsplit "
           + "(nothing to screen its lines onto)")
     }
     // Unregistered layers would sit offset from the base, every star doubled.
@@ -79,8 +80,8 @@ package enum DualbandSplit {
       return (
         kept,
         (notes + [
-          "line-clip master not registered onto the broadband grid — emission layers skipped, "
-            + "finishing on the broadband base alone"
+          "line-clip master not registered onto the base grid — emission layers skipped, "
+            + "finishing on the colour base alone"
         ]).joined(separator: "; ")
       )
     }
@@ -125,13 +126,13 @@ package enum DualbandSplit {
       let names = try split(
         out.appendingPathComponent(master + ".fits"), out: out, lines: lines, skipping: taken)
       var added: [String] = []
-      if !taken.contains(lines.red) {
-        kept[lines.red.rawValue] = names.red
-        added.append("\(lines.red.rawValue) (red pixels)")
-      }
-      if !taken.contains(lines.greenBlue) {
-        kept[lines.greenBlue.rawValue] = names.greenBlue
-        added.append("\(lines.greenBlue.rawValue) (max of green/blue)")
+      let written = [
+        (lines.red, names.red, "red pixels"),
+        (lines.greenBlue, names.greenBlue, "max of green/blue"),
+      ]
+      for (line, name, plane) in written where !taken.contains(line) {
+        kept[line.rawValue] = name
+        added.append("\(line.rawValue) (\(plane))")
       }
       if set.mixesLines {
         notes.append("multi-band clip: its Hα layer also carries [SII], its [OIII] layer Hβ")

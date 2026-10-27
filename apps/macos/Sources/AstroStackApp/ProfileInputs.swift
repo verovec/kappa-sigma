@@ -33,8 +33,11 @@ extension ProfileProposal.Inputs {
   private nonisolated static func oscFilters(_ inventory: Inventory, lights: [FrameSet])
     -> Profile.Filters?
   {
-    if FilterSetLanes.splits(inventory) { return .broadbandDualband }
     let verdicts = Set(lights.map { inventory.filterSets[$0.key.id] ?? .unknown })
+    if FilterSetLanes.splits(inventory) {
+      // Two line clips without a broadband night stay a dual-band capture for the profiles.
+      return verdicts.contains(.broadband) ? .broadbandDualband : .dualband
+    }
     guard verdicts.count == 1, let verdict = verdicts.first, verdict.isKnown else { return nil }
     // Every line clip takes the dual-band profiles: two lines over a near-black sky.
     return verdict == .broadband ? .broadband : .dualband

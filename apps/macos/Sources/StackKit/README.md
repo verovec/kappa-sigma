@@ -107,9 +107,11 @@ Re-recording is a contract change: the PR that commits new fixtures says why (`T
   `<filter>-<set.rawValue>` (`RGB-dualband` unchanged), `FilterSetLanes.lineLanes(in:)` lists them
   in `FilterSet` order, the aligner registers them last onto the broadband grid, and
   `DualbandSplit.channels` writes each lane's lines (`FilterSet.lines`) as `syn_<line>` — a line two
-  lanes carry is kept from the first and noted. Two line clips without a broadband set do not split
-  (nothing to screen onto). They live on the request, not in `PreprocessSettings`: an untouched
-  run's settings, scripts and `LaneRecord` digests are byte-identical.
+  lanes carry is kept from the first and noted. Two line clips without a broadband set split too —
+  never one master: the first lane (`FilterSet` order) is the colour base, the others' lines go over
+  it, and no continuum scale is fitted (no broadband reference). They live on the request, not in
+  `PreprocessSettings`: an untouched run's settings, scripts and `LaneRecord` digests are byte-
+  identical.
 - `KnobSchema.apply(_:to:)` puts a `KnobPatch` on the preset. An unknown id or a refused value
   throws before anything is applied. `patch(from:mode:)` returns only what differs from the
   preset, so a patch of defaults is a no-op and untouched runs stay byte-identical.

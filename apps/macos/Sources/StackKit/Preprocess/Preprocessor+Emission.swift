@@ -1,3 +1,4 @@
+internal import FilterKit
 package import Foundation
 
 extension Preprocessor {
@@ -19,11 +20,23 @@ extension Preprocessor {
   package static func emissionFits(
     _ channels: [String: String], out: URL, registered: Bool = true, notes: inout [String]
   ) -> (channels: [String: String], continuum: [String: ContinuumK.Fit]) {
+    // A continuum is estimated against broadband light: when a line lane stands in for the
+    // colour base (no broadband master, no mono broadband filter), no scale is fitted at all.
+    let lineBase =
+      channels.keys.contains { FilterSetLanes.lineSet(of: $0) != nil }
+      && !channels.keys.contains { lane in
+        Filter.broadband.contains { $0.rawValue == lane }
+          || (Filter.isColor(lane) && FilterSetLanes.lineSet(of: lane) == nil)
+      }
     let (split, note) = DualbandSplit.channels(channels, out: out, registered: registered)
     if let note { notes.append(note) }
     let files = split.mapValues { out.appendingPathComponent($0 + ".fits") }
     var continuum: [String: ContinuumK.Fit] = [:]
     for line in ChannelAligner.ordered(split.keys) where ContinuumK.references(of: line) != nil {
+      guard !lineBase else {
+        notes.append("\(line): continuum scale not fitted — no broadband reference in this run")
+        continue
+      }
       do {
         let fit = try ContinuumK.measure(line: line, layers: files)
         continuum[line] = fit

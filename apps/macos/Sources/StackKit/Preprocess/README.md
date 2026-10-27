@@ -67,10 +67,11 @@ stacked), `04_aligned/` and `pair_<lane>/`. `output/` holds `master_<tag>.fits`,
 
 ## Lanes and emission layers (card 0081)
 
-A one-shot-colour scan holding BOTH a measured broadband and a measured dual-band light set
-(`FilterSetLanes.splits`) stacks two lanes: `RGB` and `RGB-dualband`. The lane renames the
-stack, never the light, so calibration still matches on the real key. One verdict alone, or an
-unclassified set, keeps the single lane (a dual-band-only capture is not split). At the
+A one-shot-colour scan holding light sets of two different known clips (`FilterSetLanes.splits`:
+a broadband and a line clip, or two line clips — card 0134) stacks one lane per clip: `RGB` and
+`RGB-dualband`, `RGB-dualband-sii`, `RGB-multiband`. The lane renames the stack, never the
+light, so calibration still matches on the real key. One verdict alone, or an unclassified set,
+keeps the single lane (a dual-band-only capture is not split). At the
 alignment the broadband master leads and is pinned as the reference
 (`SirilScripts.alignMastersReference`: one pass, `-2pass` would override the pin), then, after
 the crops, the registered dual-band master is separated (`DualbandSplit`): `syn_Ha` = red,

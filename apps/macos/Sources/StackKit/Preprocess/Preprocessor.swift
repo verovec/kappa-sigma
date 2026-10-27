@@ -138,7 +138,8 @@ package actor Preprocessor {
 
   /// Which nights feed which channel (lane).
   ///
-  /// A capture measured both broadband and dual-band stacks two lanes. A mono + colour mix, or
+  /// A capture of two different clips (broadband and dual-band, or two line clips) stacks one
+  /// lane per clip. A mono + colour mix, or
   /// lights of several objects (card 0095: one object per run, scoped by `RunScope`), is refused
   /// before anything runs.
   package static func plan(_ inventory: Inventory) throws -> NightPlan {

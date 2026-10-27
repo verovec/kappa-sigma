@@ -47,16 +47,18 @@ extension AppDelegateTests {
       ProjectDocument.lastDocumentClosed = hook
       ProjectDocument.openDocuments = documents
     }
-    var fired = 0
-    ProjectDocument.lastDocumentClosed = { _ in fired += 1 }
+    var shown = 0
+    let delegate = AppDelegate(welcome: { shown += 1 }, reviewRetention: {})
+    delegate.applicationWillFinishLaunching(
+      Notification(name: NSApplication.willFinishLaunchingNotification))
     // This document is the only one that counts: closing it is the last close.
     ProjectDocument.openDocuments = { controller.documents.filter { $0 === document } }
 
     // Only this test's document: another suite's documents stay open.
-    AppDelegate().closeForQuit([document])
+    delegate.closeForQuit([document])
 
     #expect(!controller.documents.contains(document))
-    #expect(fired == 0)
+    #expect(shown == 0)
   }
 
   @Test("launching arms the hook: the last project closed brings the welcome window back")
@@ -120,13 +122,11 @@ extension AppDelegateTests {
 }
 
 extension AppDelegateTests {
-  @Test(
-    "Clear Menu is enabled with any recent, a deleted package's too; other items stay enabled",
-    .scratchDirectory)
-  func testAppDelegate_validatesClearMenu() throws {
-    let kept = try ScratchDirectory.url.appendingPathComponent("M 31.astrostack")
-    try FileManager.default.createDirectory(at: kept, withIntermediateDirectories: true)
-    let gone = try ScratchDirectory.url.appendingPathComponent("Gone.astrostack")
+  @Test("Clear Menu is enabled with any recent, a deleted package's too; other items stay enabled")
+  func testAppDelegate_validatesClearMenu() {
+    let (kept, gone) = (
+      URL(fileURLWithPath: "/tmp/M 31.astrostack"), URL(fileURLWithPath: "/tmp/Gone.astrostack")
+    )
     let clear = NSMenuItem(
       title: "", action: NSSelectorFromString("clearRecentProjects:"), keyEquivalent: "")
     let other = NSMenuItem(

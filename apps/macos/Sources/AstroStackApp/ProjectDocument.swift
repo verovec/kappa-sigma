@@ -14,7 +14,7 @@ internal import SwiftUI
 package final class ProjectDocument: NSDocument {
   /// Called once the last project has closed (card 0144), `quietly` for a relaunch's or a quit's
   /// closes: the app brings the welcome window back after a plain close, so ⌘W never leaves it
-  /// windowless; `AppDelegate` arms it at launch and clears it at quit.
+  /// windowless; `AppDelegate` arms it at launch.
   package static var lastDocumentClosed: @MainActor (_ quietly: Bool) -> Void = { _ in }
   /// The documents still open after a close: the shared controller's (a test counts only its own).
   package static var openDocuments: @MainActor () -> [NSDocument] = {
@@ -25,8 +25,9 @@ package final class ProjectDocument: NSDocument {
 
   /// Closes `documents` for a relaunch or a quit: the last close says so (`quietly`).
   package static func closeQuietly(_ documents: [NSDocument]) {
+    let outer = closingQuietly
     closingQuietly = true
-    defer { closingQuietly = false }
+    defer { closingQuietly = outer }
     for document in documents { document.close() }
   }
 

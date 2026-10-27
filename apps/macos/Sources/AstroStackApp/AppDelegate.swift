@@ -176,7 +176,6 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
 
   /// Closes `documents` for good: none of those closes may bring the welcome window back.
   package func closeForQuit(_ documents: [NSDocument]) {
-    ProjectDocument.lastDocumentClosed = { _ in }
     ProjectDocument.closeQuietly(documents)
   }
 

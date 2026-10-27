@@ -10,12 +10,11 @@ internal import ImageKit
 /// weaker one in and cost SNR). The REGISTERED master is split: the layers are composited pixel
 /// for pixel over the broadband base.
 package enum DualbandSplit {
-  /// The lines the dual-band clip's two planes carry (`FilterSet.dualband.lines`, FilterKit): the
+  /// The lines the dual-band clip's two planes carry (`FilterSet.dualbandLines`, FilterKit): the
   /// layer ids the split writes under (`DualbandSplitTests` pins `Ha` / `OIII`).
-  static let lineIDs: (red: String, greenBlue: String) = {
-    let lines = FilterSet.dualband.lines
-    return (lines.red?.rawValue ?? "", lines.greenBlue?.rawValue ?? "")
-  }()
+  static let lineIDs = (
+    red: FilterSet.dualbandLines.red.rawValue, greenBlue: FilterSet.dualbandLines.greenBlue.rawValue
+  )
   package static let haBase = "syn_" + lineIDs.red
   package static let oiiiBase = "syn_" + lineIDs.greenBlue
 

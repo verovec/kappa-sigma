@@ -20,7 +20,9 @@ struct LineSchemaFixtureTests {
       let root = URL(fileURLWithPath: try ModuleBoundary.packageRoot(from: #filePath))
       let file = root.appendingPathComponent("Tests/ProcessKitTests/Fixtures/\(Self.fixture)")
       try text.write(to: file, atomically: true, encoding: .utf8)
-      return  // the bundle still holds the copy built before this run
+      // The bundle still holds the copy built before this run: say so instead of passing.
+      Issue.record("fixture re-recorded at \(file.path): review the diff, then run without RECORD")
+      return
     }
     let url = try #require(
       Bundle.module.url(forResource: "Fixtures/\(Self.fixture)", withExtension: nil))

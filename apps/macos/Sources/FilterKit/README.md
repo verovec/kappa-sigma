@@ -17,10 +17,10 @@ kit declares a second list.
    `LinePanelDefaults` entry (its test fails otherwise) and the per-line help entries
    (`HelpCoverageTests+Params`).
 
-Two StackKit helpers still spell tokens for their own reasons and are checked by their tests, not
-derived: `CaptureManifest.knownFilters` (a glued-word splitter matched longest-first) and
-`ChannelDetector.Options.order` (a default wheel order that stops at Hα). Revisit them with the
-filter that needs them.
+One StackKit helper still spells tokens: `CaptureManifest.knownFilters`, the glued-word splitter
+(`LLLRGBHaHa`), lists the short tokens it may split on, longest first within a collision group —
+deriving it from every alias would change what a folder name parses as. Revisit it, with its own
+tests, with the filter that needs it.
 
 ## Adding a clip filter
 

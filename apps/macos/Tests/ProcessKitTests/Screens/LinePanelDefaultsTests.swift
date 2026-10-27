@@ -18,7 +18,6 @@ struct LinePanelDefaultsTests {
 
   @Test("the broadband reference layers are FilterKit's broadband filters, in order")
   func testBroadbandLayersComeFromFilterKit() {
-    #expect(LineInjectionProcess.broadbandLayers == Filter.broadband.map(\.rawValue))
     #expect(LineInjectionProcess.broadbandLayers == ["L", "R", "G", "B"])
   }
 

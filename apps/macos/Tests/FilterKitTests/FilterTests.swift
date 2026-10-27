@@ -100,7 +100,8 @@ struct FilterTests {
     ])
   func testLine_continuum(filter: Filter, filters: [Filter], plane: Int) throws {
     let line = try #require(filter.line)
-    #expect(line.continuumFilters == filters && line.colourPlane == plane)
+    #expect(line.continuumFilters == filters)
+    #expect(line.colourPlane == plane)
   }
 
   @Test(
@@ -111,7 +112,8 @@ struct FilterTests {
     ])
   func testLine_wavelengthAndName(filter: Filter, nm: Double, name: String) throws {
     let line = try #require(filter.line)
-    #expect(line.wavelengthNm == nm && line.displayName == name)
+    #expect(line.wavelengthNm == nm)
+    #expect(line.displayName == name)
   }
 
   @Test("broadband filters have no line; the two lists split the catalogue in order")

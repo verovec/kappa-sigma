@@ -1,3 +1,5 @@
+internal import FilterKit
+
 /// Names unlabeled lights by the wheel's fixed cyclic order (`internal/channeldetect`): frames come
 /// in contiguous same-filter runs that advance through the order; brightness anchors the ends
 /// (L brightest, narrowband faintest) and R/G/B fall out by position, never by brightness.
@@ -73,8 +75,8 @@ package enum ChannelDetector {
 
   /// Segmentation, assignment and transition thresholds.
   package struct Options: Equatable, Sendable {
-    /// Stops at Ha on purpose: the signal cannot tell emission lines apart.
-    package var order = ["L", "R", "G", "B", "Ha"]
+    /// The broadband filters then Hα, on purpose: the signal cannot tell emission lines apart.
+    package var order = (Filter.broadband + [.hydrogenAlpha]).map(\.rawValue)
     /// New run when the time gap exceeds this × the median gap.
     package var timeGapFactor = 4.0
     /// New run when the signal jump exceeds median + this × MAD of the jumps.

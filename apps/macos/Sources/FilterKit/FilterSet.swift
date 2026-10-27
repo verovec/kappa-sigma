@@ -36,9 +36,12 @@ package enum FilterSet: String, CaseIterable, Codable, Sendable {
   package var lines: (red: Filter?, greenBlue: Filter?) {
     switch self {
     case .unknown, .broadband: (nil, nil)
-    case .dualband: (.hydrogenAlpha, .oxygenIII)
+    case .dualband: (Self.dualbandLines.red, Self.dualbandLines.greenBlue)
     }
   }
+
+  /// The dual-band clip's pair, never optional: what the split writes under.
+  package static let dualbandLines: (red: Filter, greenBlue: Filter) = (.hydrogenAlpha, .oxygenIII)
 }
 
 /// A verdict keys a JSON object by its wire value (`{"dualband": …}`), not a list of pairs.

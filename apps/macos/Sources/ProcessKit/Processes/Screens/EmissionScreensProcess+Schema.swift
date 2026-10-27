@@ -25,7 +25,7 @@ extension EmissionScreensProcess {
     return [
       ParamSpec(
         id: line.id("Enabled"), title: name + " screen", level: .simple,
-        flag: line.enabledByDefault),
+        flag: line.defaults.enabled),
       ParamSpec(
         id: line.id("Continuum"), title: name + " continuum subtraction", level: .simple,
         flag: false),
@@ -40,10 +40,10 @@ extension EmissionScreensProcess {
         number: 0, in: 0...0.9),
       ParamSpec(
         id: line.id("Opacity"), title: name + " opacity", unit: .opacity, level: .simple,
-        number: line.defaultOpacity, in: 0...1),
+        number: line.defaults.opacity, in: 0...1),
       ParamSpec(
         id: line.id("Tint"), title: name + " tint", level: .simple,
-        choice: line.defaultTint.rawValue, of: ScreenTint.allCases.map(\.rawValue)),
+        choice: line.defaults.tint.rawValue, of: ScreenTint.allCases.map(\.rawValue)),
       ParamSpec(
         id: line.id("Boost"), title: name + " boost", unit: .none, level: .advanced, number: 1,
         in: 1...3),

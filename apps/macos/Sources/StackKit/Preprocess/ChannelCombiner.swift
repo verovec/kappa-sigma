@@ -1,3 +1,4 @@
+internal import FilterKit
 package import Foundation
 
 /// The linear colour composite (`postprocess.buildCombine` + the neutralization fallback):

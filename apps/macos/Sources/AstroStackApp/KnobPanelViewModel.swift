@@ -1,3 +1,4 @@
+internal import FilterKit
 package import Foundation
 internal import Observation
 package import ProcessKit

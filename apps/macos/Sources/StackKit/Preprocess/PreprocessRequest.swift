@@ -1,3 +1,4 @@
+package import FilterKit
 package import Foundation
 
 /// One preprocessing run of a single night: what to stack, how, and where it lands.

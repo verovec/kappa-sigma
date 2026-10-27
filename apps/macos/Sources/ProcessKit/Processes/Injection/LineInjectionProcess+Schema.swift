@@ -1,3 +1,5 @@
+internal import FilterKit
+
 extension LineInjectionProcess {
   /// One card per line in `EmissionLine` order: gain, continuum scale k, black point, shares.
   package static let schema = ParamSchema(EmissionLine.allCases.flatMap(lineSpecs))
@@ -5,7 +7,7 @@ extension LineInjectionProcess {
   /// One line's card; the gains default to 0 (the identity), the shares to the line's colour.
   private static func lineSpecs(_ line: EmissionLine) -> [ParamSpec] {
     let name = line.name
-    let shares = defaultShares(line)
+    let shares = line.defaults.shares
     return [
       ParamSpec(
         id: line.id("Gain"), title: name + " gain", unit: .none, level: .simple, number: 0,
@@ -24,14 +26,6 @@ extension LineInjectionProcess {
       }
   }
 
-  /// Hα and [SII] go into red; [OIII] into green and blue, half each.
-  private static func defaultShares(_ line: EmissionLine) -> [Double] {
-    switch line {
-    case .hydrogenAlpha, .sulfurII: [1, 0, 0]
-    case .oxygenIII: [0, 0.5, 0.5]
-    }
-  }
-
   /// The reasons the panel shows next to a suggestion: English keys of the catalog.
   ///
   /// The first is the emission screens' own, for a reference plane this list does not name; the
@@ -48,9 +42,8 @@ extension LineInjectionProcess {
     "the line's sky level on the stack, after its continuum: below it nothing is added",
   ]
 
-  /// The broadband layers a continuum is fitted against, in the canonical filter order (pinned
-  /// against StackKit's `Filter` by the tests: ProcessKit cannot import it), as `EmissionLine` is.
-  package static let broadbandLayers = ["L", "R", "G", "B"]
+  /// The broadband layers a continuum is fitted against, in the canonical filter order.
+  package static let broadbandLayers = Filter.broadband.map(\.rawValue)
 
   /// The reason naming the plane `reference` (a `LayerPlane` token: `R`, `RGB.r`…) k was fitted
   /// against: what the user needs to judge it.

@@ -1,3 +1,5 @@
+package import FilterKit
+
 extension PreprocessRequest {
   /// Sets the lane-scoped knobs `patch` for every lane of kind `lane` (card 0121); a run-wide,
   /// unknown or refused knob throws and nothing is recorded.

@@ -1,3 +1,5 @@
+package import FilterKit
+
 /// The light set being calibrated and the clip filter its night was shot through
 /// (`calib.LightRef`).
 ///

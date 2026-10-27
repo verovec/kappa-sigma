@@ -1,3 +1,4 @@
+internal import FilterKit
 internal import Foundation
 
 /// What a capture's file and folder names say (`internal/inspect/filename.go`), for the many

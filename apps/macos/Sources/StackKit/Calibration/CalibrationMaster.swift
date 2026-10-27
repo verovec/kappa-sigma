@@ -1,3 +1,5 @@
+package import FilterKit
+
 /// A built or library master calibration frame (`calib.Master`).
 package struct CalibrationMaster: Codable, Equatable, Sendable {
   package var type: MasterType

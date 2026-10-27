@@ -1,3 +1,4 @@
+internal import FilterKit
 internal import Foundation
 
 /// The user's colour-model knob (`inspect.ColorChoice`): not a `ColorModel` — no `mixed` (nobody

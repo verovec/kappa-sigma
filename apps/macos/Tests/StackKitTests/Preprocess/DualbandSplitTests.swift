@@ -1,3 +1,4 @@
+import FilterKit
 import Foundation
 import ImageKit
 import StackKit
@@ -34,8 +35,9 @@ struct DualbandSplitTests {
   func testSplit(r: Float, g: Float, b: Float, ha: Float, oiii: Float) throws {
     let out = try ScratchDirectory.url
     let names = try DualbandSplit.split(
-      try Self.master("master_RGB", r, g, b, in: out), out: out)
-    #expect(names == (DualbandSplit.haBase, DualbandSplit.oiiiBase))
+      try Self.master("master_RGB", r, g, b, in: out), out: out, lines: (.hydrogenAlpha, .oxygenIII)
+    )
+    #expect(names == ("syn_Ha", "syn_OIII"))
     let (haPlanes, haValue) = try Self.value(out.appendingPathComponent("syn_Ha.fits"))
     let (oiiiPlanes, oiiiValue) = try Self.value(out.appendingPathComponent("syn_OIII.fits"))
     #expect(haPlanes == 1 && oiiiPlanes == 1 && haValue == ha && oiiiValue == oiii)
@@ -48,7 +50,7 @@ struct DualbandSplitTests {
       out.appendingPathComponent("mono.fits"), width: 4, height: 3,
       planes: [[Float](repeating: 0, count: 12)])
     #expect {
-      _ = try DualbandSplit.split(mono, out: out)
+      _ = try DualbandSplit.split(mono, out: out, lines: (.hydrogenAlpha, .oxygenIII))
     } throws: { "\($0)".contains("need 3") }
   }
 
@@ -101,5 +103,15 @@ struct DualbandSplitTests {
       ["RGB-dualband": "aligned_RGB-dualband"], out: out)
     #expect(channels == ["RGB": "aligned_RGB-dualband"] && note?.contains("broadband") == true)
     #expect(!FileManager.default.fileExists(atPath: out.appendingPathComponent("syn_Ha.fits").path))
+  }
+
+  @Test("another clip's pair names the layers after its lines", .scratchDirectory)
+  func testSplitNamesFollowTheLines() throws {
+    let out = try ScratchDirectory.url
+    let names = try DualbandSplit.split(
+      try Self.master("master_RGB", 0.4, 0.2, 0.1, in: out), out: out,
+      lines: (.sulfurII, .oxygenIII))
+    #expect(names == ("syn_SII", "syn_OIII"))
+    #expect(FileManager.default.fileExists(atPath: out.appendingPathComponent("syn_SII.fits").path))
   }
 }

@@ -23,14 +23,15 @@ package struct BoundaryRules: Sendable {
     allowedDependencies: [
       "StringCatalog": [],
       "CatalogTool": ["StringCatalog"],
+      "FilterKit": [],
       "ImageKit": [],
       "RenderKit": ["ImageKit"],
-      "ProcessKit": ["ImageKit", "RenderKit"],
+      "ProcessKit": ["FilterKit", "ImageKit", "RenderKit"],
       "ProjectKit": ["ImageKit", "GRDB"],
-      "StackKit": ["ImageKit", "ProjectKit", "Subprocess"],
+      "StackKit": ["FilterKit", "ImageKit", "ProjectKit", "Subprocess"],
       "HelpKit": [],
       "AstroStackApp": [
-        "ImageKit", "RenderKit", "ProcessKit", "ProjectKit", "StackKit", "HelpKit",
+        "FilterKit", "ImageKit", "RenderKit", "ProcessKit", "ProjectKit", "StackKit", "HelpKit",
       ],
     ],
     uiModules: ["AstroStackApp", "RenderKit"]

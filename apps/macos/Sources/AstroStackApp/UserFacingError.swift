@@ -1,3 +1,4 @@
+internal import FilterKit
 package import Foundation
 package import ProcessKit
 internal import ProjectKit
@@ -58,6 +59,7 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     case let error as Self: self = error
     case let error as SirilError: self = .siril(error)
     case let error as InspectError: self = .inspect(error)
+    case FilterSet.ParseError.unknownFilterSet(let value): self = .inspect(.unknownFilterSet(value))
     case let error as CalibrationError: self = .calibration(error)
     case let error as PreprocessError: self = .preprocess(error)
     case let error as LegacyRunError: self = .legacyRun(error)

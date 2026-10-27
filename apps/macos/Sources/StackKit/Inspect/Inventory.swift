@@ -1,3 +1,5 @@
+package import FilterKit
+
 /// The result of scanning capture folders (`inspect.Inventory`): every classified frame, the sets
 /// calibration and stacking consume, the nights, and the warnings shown to the user.
 package struct Inventory: Equatable, Sendable {

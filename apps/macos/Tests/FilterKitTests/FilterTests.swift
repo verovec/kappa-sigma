@@ -1,4 +1,4 @@
-import StackKit
+import FilterKit
 import Testing
 
 /// Translated from `internal/filters/filters_test.go` — the ONE canonical filter list (CLAUDE.md).
@@ -86,8 +86,52 @@ struct FilterTests {
 
   @Test("an unknown filter set is an error, and only measured sets are known")
   func testFilterSet_known() {
-    #expect(throws: InspectError.self) { try FilterSet(parsing: "uhc") }
+    #expect(throws: FilterSet.ParseError.unknownFilterSet("uhc")) { try FilterSet(parsing: "uhc") }
     #expect(FilterSet.allCases == [.unknown, .broadband, .dualband])
     #expect(FilterSet.allCases.filter(\.isKnown) == [.broadband, .dualband])
+  }
+
+  @Test(
+    "a line's continuum references and colour plane",
+    arguments: [
+      (Filter.hydrogenAlpha, [Filter.red, .luminance], 0),
+      (.oxygenIII, [.green, .blue, .luminance], 1),
+      (.sulfurII, [.red, .luminance], 0),
+    ])
+  func testLine_continuum(filter: Filter, filters: [Filter], plane: Int) throws {
+    let line = try #require(filter.line)
+    #expect(line.continuumFilters == filters)
+    #expect(line.colourPlane == plane)
+  }
+
+  @Test(
+    "a line's rest wavelength and panel name",
+    arguments: [
+      (Filter.hydrogenAlpha, 656.3, "Hα"), (.oxygenIII, 500.7, "[OIII]"),
+      (.sulfurII, 671.6, "[SII]"),
+    ])
+  func testLine_wavelengthAndName(filter: Filter, nm: Double, name: String) throws {
+    let line = try #require(filter.line)
+    #expect(line.wavelengthNm == nm)
+    #expect(line.displayName == name)
+  }
+
+  @Test("broadband filters have no line; the two lists split the catalogue in order")
+  func testLine_broadbandHasNone() {
+    for filter in [Filter.luminance, .red, .green, .blue] { #expect(filter.line == nil) }
+    #expect(Filter.narrowband == [.hydrogenAlpha, .oxygenIII, .sulfurII])
+    #expect(Filter.broadband == [.luminance, .red, .green, .blue])
+    #expect(Set(Filter.narrowband + Filter.broadband) == Set(Filter.allCases))
+  }
+
+  @Test(
+    "a clip filter's planes carry one line each, or none",
+    arguments: [
+      (FilterSet.unknown, nil, nil), (.broadband, nil, nil),
+      (.dualband, Filter.hydrogenAlpha, Filter.oxygenIII),
+    ])
+  func testFilterSet_lines(set: FilterSet, red: Filter?, greenBlue: Filter?) {
+    #expect(set.lines?.red == red)
+    #expect(set.lines?.greenBlue == greenBlue)
   }
 }

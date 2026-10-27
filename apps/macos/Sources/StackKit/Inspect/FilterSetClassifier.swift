@@ -1,3 +1,5 @@
+package import FilterKit
+
 /// Was a one-shot-colour night shot through a dual-band clip (`internal/inspect/filterset.go`)?
 ///
 /// Two signals — the sky rate in electrons and the colour — must BOTH agree, else `unknown`: a

@@ -1,3 +1,5 @@
+internal import FilterKit
+
 /// The linear bundle (`bundle.json`): a run's float layers on one grid with measured stats and
 /// their provenance, what the Studio opens.
 ///

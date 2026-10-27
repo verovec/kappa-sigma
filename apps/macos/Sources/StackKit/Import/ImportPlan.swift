@@ -1,3 +1,5 @@
+package import FilterKit
+
 /// What the Import sheet shows before any run (`/api/inspect` + `/api/calib/preview`): the scan
 /// grouped by night and the calibration every light set would get, gaps included.
 ///

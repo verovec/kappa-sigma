@@ -1,3 +1,5 @@
+internal import FilterKit
+
 /// Naming frames from their physical filter-wheel slot (`internal/inspect/wheelslot.go`): the
 /// slot (sidecar or file name) is ground truth for mono captures without a FILTER card, and a
 /// legend — `info.txt`, else the canonical wheel order — turns it into a filter name.

@@ -1,3 +1,5 @@
+internal import FilterKit
+
 extension PathMeta {
   /// The frame type the nearest explicitly-typed ancestor folder names, matched per word so
   /// `darks_0gain_300s` types and `darkstar` does not.

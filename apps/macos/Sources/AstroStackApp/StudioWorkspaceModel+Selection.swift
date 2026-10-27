@@ -1,3 +1,4 @@
+internal import FilterKit
 package import ImageKit
 package import ProcessKit
 internal import RenderKit

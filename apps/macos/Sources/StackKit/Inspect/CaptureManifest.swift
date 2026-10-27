@@ -1,3 +1,4 @@
+internal import FilterKit
 internal import Foundation
 
 /// A hand-written `info.txt` beside bare-named legacy captures (`internal/inspect/manifest.go`):

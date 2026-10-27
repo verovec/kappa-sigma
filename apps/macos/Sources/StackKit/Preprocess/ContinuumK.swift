@@ -1,3 +1,4 @@
+internal import FilterKit
 package import Foundation
 internal import ImageKit
 
@@ -23,13 +24,11 @@ package enum ContinuumK {
   static let selection = (low: 85.0, high: 99.9)
   static let minimumSamples = 10_000
 
-  /// Broadband filters by line, in order, then the colour plane to fall back on.
+  /// Broadband filters by line, in order, then the colour plane to fall back on: FilterKit's
+  /// line physics (`Filter.Line.continuumFilters` and `colourPlane`), the one table.
   static func references(of line: String) -> (filters: [String], colourPlane: Int)? {
-    switch Filter.token(line) {
-    case .hydrogenAlpha, .sulfurII: (["R", "L"], 0)
-    case .oxygenIII: (["G", "B", "L"], 1)
-    default: nil
-    }
+    guard let physics = Filter.token(line)?.line else { return nil }
+    return (physics.continuumFilters.map(\.rawValue), physics.colourPlane)
   }
 
   /// Why no scale could be fitted: shown as is.

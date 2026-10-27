@@ -66,7 +66,7 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   compiler has no include path). Its denominator is an explicit `fma`, so a float oracle mirrors
   it exactly.
 - **EmissionScreensProcess** (card 0051, id `emission-screens`): astrocomp's HOO-over-broadband
-  chain on a stretched RGB base. Per line (`EmissionLine`: Hα, [OIII], [SII]; params
+  chain on a stretched RGB base. Per line (`EmissionLine`, a projection of FilterKit's `Filter.narrowband`: Hα, [OIII], [SII]; panel defaults in `LinePanelDefaults`; params
   `<ha|oiii|sii><Enabled|Continuum|ContinuumK|Background|Black|Opacity|Tint|Boost>`) on its own
   linear bundle layer: continuum `max(line − k·ref, 0)` (k = the panel value; the bundle's
   `continuum_k` is a suggestion, the reference plane is the bundle's `continuum_ref`), the

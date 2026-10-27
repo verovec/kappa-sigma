@@ -1,5 +1,6 @@
 import AppKit
 import AstroStackApp
+import FilterKit
 import Foundation
 import ProjectKit
 import RenderKit

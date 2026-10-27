@@ -1,3 +1,5 @@
+package import FilterKit
+
 /// What the user chose on the Import sheet: the capture folders, the scan overrides and the
 /// calibration choices — under the legacy `RunRequest` wire keys (`internal/job/manager.go`), Go's
 /// `omitempty` included, so a stored request reads like a legacy job's params.
@@ -58,7 +60,7 @@ extension ImportRequest: Codable {
       parsing: wire.decodeIfPresent(String.self, forKey: .colorModel) ?? "")
     excludeSets = try wire.decodeIfPresent([String].self, forKey: .excludeSets) ?? []
     filterSets = try (wire.decodeIfPresent([String: String].self, forKey: .filterSets) ?? [:])
-      .mapValues(FilterSet.init(parsing:))
+      .mapValues(FilterSet.init(inspecting:))
     calibExclude = try wire.decodeIfPresent([String].self, forKey: .calibExclude) ?? []
     forceCalibration = try wire.decodeIfPresent(Bool.self, forKey: .forceCalibration) ?? false
   }

@@ -1,3 +1,4 @@
+internal import FilterKit
 package import Foundation
 
 /// Co-registers the channel masters onto one grid before the colour combine (`alignChannels`).

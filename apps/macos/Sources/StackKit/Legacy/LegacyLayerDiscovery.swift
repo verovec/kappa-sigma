@@ -1,3 +1,4 @@
+internal import FilterKit
 internal import Foundation
 
 /// Finds a legacy run's layers by file name: `rgb_base` as the colour base when present, then

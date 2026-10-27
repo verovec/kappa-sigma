@@ -7,15 +7,15 @@ with sources, is `docs/engineering/swift-quality-playbook.md` — read it once p
 ## Structure
 
 - SwiftPM is the source of truth (`Package.swift`, `swift-tools-version: 6.2`); one module per
-  responsibility (`ImageKit`, `RenderKit`, `ProcessKit`, `ProjectKit`, `StackKit`, `HelpKit`,
-  `AstroStackApp`). A module never imports the app target; UI lives only in `AstroStackApp` and
+  responsibility (`FilterKit`, `ImageKit`, `RenderKit`, `ProcessKit`, `ProjectKit`, `StackKit`,
+  `HelpKit`, `AstroStackApp`). A module never imports the app target; UI lives only in `AstroStackApp` and
   `RenderKit` views. A kit that accumulates `nonisolated` escapes contains UI: split it.
 - Every target carries the same `swiftSettings`: `.swiftLanguageMode(.v6)`,
   `.enableUpcomingFeature("NonisolatedNonsendingByDefault")`,
   `.enableUpcomingFeature("InferIsolatedConformances")`,
   `.enableUpcomingFeature("InternalImportsByDefault")`, `.treatAllWarnings(as: .error)`,
   `.treatWarning("DeprecatedDeclaration", as: .warning)`. **Only** `AstroStackApp` adds
-  `.defaultIsolation(MainActor.self)`. `.strictMemorySafety()` on ProjectKit, ProcessKit, HelpKit.
+  `.defaultIsolation(MainActor.self)`. `.strictMemorySafety()` on FilterKit, ProjectKit, ProcessKit, HelpKit.
 - Access levels: `package` for what sibling kits and tests need, `public` only for what the app
   consumes, `@testable import` never (reserved for a justified internal seam). Framework imports
   are `internal import` unless a type must appear in the module's API.

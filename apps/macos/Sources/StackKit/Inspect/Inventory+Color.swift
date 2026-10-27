@@ -1,3 +1,5 @@
+internal import FilterKit
+
 extension Inventory {
   /// The colour verdict of the LIGHTS (`colorModel`): calibration frames follow whichever rig
   /// shot them and do not vote, unless there are no lights at all.

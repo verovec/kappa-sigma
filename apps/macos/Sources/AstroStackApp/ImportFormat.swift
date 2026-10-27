@@ -1,3 +1,4 @@
+package import FilterKit
 package import Foundation
 package import RenderKit
 package import StackKit

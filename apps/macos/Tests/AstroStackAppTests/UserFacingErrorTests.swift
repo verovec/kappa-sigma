@@ -1,4 +1,5 @@
 import AstroStackApp
+import FilterKit
 import Foundation
 import StackKit
 import Testing
@@ -42,6 +43,9 @@ struct UserFacingErrorTests {
       english: "Siril could not start: pipe busy"),
     Case(
       error: InspectError.unknownFilterSet("uhc"), names: "uhc",
+      english: "“uhc” is not a filter set: use unknown, broadband or dualband."),
+    Case(
+      error: FilterSet.ParseError.unknownFilterSet("uhc"), names: "uhc",
       english: "“uhc” is not a filter set: use unknown, broadband or dualband."),
     Case(
       error: InspectError.unknownColorChoice("rgb"), names: "rgb",

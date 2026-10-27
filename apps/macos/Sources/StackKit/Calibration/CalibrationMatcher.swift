@@ -1,3 +1,4 @@
+internal import FilterKit
 internal import Foundation
 
 /// Picks the dark, flat and bias for a light set (`calib/match.go`), rule by rule.

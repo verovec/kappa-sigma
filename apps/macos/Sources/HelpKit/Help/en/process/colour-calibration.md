@@ -1,5 +1,5 @@
-Makes the star colours true: Siril's SPCC (or PCC) measures the stars and sets one gain per channel.
-Solve the image first; then pick your **sensor**, the **filter** of the capture and the **white reference**.
-The panel shows the gains Siril applied and the stars it used; nothing else is tried if it fails.
-Pitfall: on dual-band data there is no broadband white, so the dual-band profile ships it off; use **Colour balance** by hand.
-Before **Line injection** (usual order), it sees only the broadband of broadband + dual-band stacks.
+Makes star colours true: Siril's SPCC (or PCC) measures the stars and sets one gain per channel.
+Solve the image first, then choose the **sensor** (the header's camera is offered), **filter** and **white reference**; a mono stack asks for its sensor and red, green, blue filters.
+The panel shows Siril's gains and stars; nothing else is tried on failure.
+Pitfall: dual-band data has no broadband white (profile ships it off); use **Colour balance**.
+Before **Line injection**, it sees only the broadband of BB + dual-band stacks.

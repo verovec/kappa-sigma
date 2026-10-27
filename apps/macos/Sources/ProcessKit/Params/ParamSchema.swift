@@ -36,7 +36,8 @@ package struct ParamSchema: Equatable, Sendable {
         }
         return bounds.contains(value) ? nil : "\(spec.id): default \(value) outside \(bounds)"
       case .choice(let value, let options):
-        return options.contains(value) ? nil : "\(spec.id): default \(value) not among its options"
+        let valid = options.contains(value) || (spec.allowsUnset && value.isEmpty)
+        return valid ? nil : "\(spec.id): default \(value) not among its options"
       case .flag:
         return nil
       case .text(let value, let maxLength):

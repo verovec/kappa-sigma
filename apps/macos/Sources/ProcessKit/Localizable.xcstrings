@@ -657,6 +657,70 @@
         }
       }
     },
+    "Mono sensor (SPCC)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mono sensor (SPCC)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Capteur mono (SPCC)"
+          }
+        }
+      }
+    },
+    "Red filter (SPCC)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Red filter (SPCC)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filtre rouge (SPCC)"
+          }
+        }
+      }
+    },
+    "Green filter (SPCC)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Green filter (SPCC)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filtre vert (SPCC)"
+          }
+        }
+      }
+    },
+    "Blue filter (SPCC)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blue filter (SPCC)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filtre bleu (SPCC)"
+          }
+        }
+      }
+    },
     "Flip horizontally": {
       "localizations": {
         "en": {

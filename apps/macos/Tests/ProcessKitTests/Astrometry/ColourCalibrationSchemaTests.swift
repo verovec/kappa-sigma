@@ -62,11 +62,10 @@ struct ColourCalibrationSchemaTests {
     #expect(replay.history.steps.map(\.processID) == [ColourCalibrationProcess.id])
   }
 
-  @Test("the defaults are names Siril lists: IMX571, UV/IR Block, Average Spiral Galaxy")
+  @Test("the defaults: no camera (card 0140), a white reference Siril lists, SPCC ticked")
   func testDefaults() {
     let params = ParamSet(schema: ColourCalibrationProcess.schema)
-    #expect(SPCCNames.sensors.contains(params.choice("sensor")))
-    #expect(SPCCNames.filters.contains(params.choice("filter")))
+    #expect(params.choice("sensor").isEmpty && params.choice("filter").isEmpty)
     #expect(SPCCNames.whiteReferences.contains(params.choice("whiteReference")))
     #expect(params.choice("method") == "spcc" && params.flag("enabled"))
   }

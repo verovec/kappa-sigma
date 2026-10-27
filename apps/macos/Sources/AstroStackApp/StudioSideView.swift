@@ -28,8 +28,11 @@ package struct StudioSideView: View {
             // On a new head Apply previews first, and says so.
             let title: LocalizedStringResource =
               model.isPreviewSuspended ? .app("Preview") : .app("Apply")
-            // A host tool under a mask cannot run: greyed with the reason, not refused after.
-            let blocked = panel.type.runsTool(panel.params) ? model.toolRefusal : nil
+            // A host tool under a mask, or a choice still to make (card 0140), cannot run:
+            // greyed with the reason, not refused after.
+            let blocked =
+              panel.type.runsTool(panel.params)
+              ? model.toolRefusal ?? model.unchosenRefusal(locale: locale) : nil
             Button(title) { applyRecorded() }
               .disabled(model.toolRun != nil || blocked != nil)
               .help(blocked.map { Text($0) } ?? Text(verbatim: ""))

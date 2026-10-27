@@ -63,8 +63,10 @@ extension UserFacingError {
       .app("Solve the image first (plate solving): colour calibration reads its solution.")
     case .unknownName(let kind, let name):
       switch kind {
-      case .sensor: .app("Siril does not know the sensor “\(name)”: choose one from the list.")
-      case .filter: .app("Siril does not know the filter “\(name)”: choose one from the list.")
+      case .sensor, .monoSensor:
+        .app("Siril does not know the sensor “\(name)”: choose one from the list.")
+      case .filter, .redFilter, .greenFilter, .blueFilter:
+        .app("Siril does not know the filter “\(name)”: choose one from the list.")
       case .whiteReference:
         .app("Siril does not know the white reference “\(name)”: choose one from the list.")
       }

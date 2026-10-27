@@ -10112,6 +10112,22 @@
           }
         }
       }
+    },
+    "Choose “%@” first.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose “%@” first."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez d’abord « %@ »."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

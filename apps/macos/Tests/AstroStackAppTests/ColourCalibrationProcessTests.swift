@@ -33,8 +33,12 @@ struct ColourCalibrationProcessTests {
   /// halved on success).
   final class FakeSiril: Sendable {
     let succeeds: Bool
+    let lists: [String]
     private let scripts = Mutex<[String]>([])
-    init(succeeds: Bool) { self.succeeds = succeeds }
+    init(succeeds: Bool, lists: [String] = ColourCalibrationProcessTests.lists) {
+      self.succeeds = succeeds
+      self.lists = lists
+    }
     var calls: [String] { scripts.withLock { $0 } }
 
     var runner: SirilRunner {
@@ -42,7 +46,7 @@ struct ColourCalibrationProcessTests {
         let text = script.render()
         self.scripts.withLock { $0.append(text) }
         if text.contains("spcc_list") {
-          for line in ColourCalibrationProcessTests.lists { onLine(SirilLine(parsing: line)) }
+          for line in self.lists { onLine(SirilLine(parsing: line)) }
           return ""
         }
         let lines =
@@ -68,10 +72,15 @@ struct ColourCalibrationProcessTests {
     let siril: FakeSiril
   }
 
-  /// A Studio whose head is solved (a plate-solve step whose tool adds the solution) when `solve`.
-  static func open(succeeds: Bool = true, solve: Bool = true) async throws -> Opened {
+  /// A Studio of `bundle` (the stack's `header`, its first `combination`) whose head is solved (a plate-solve step whose
+  /// tool adds the solution) when `solve`, Siril listing `lists`.
+  static func open(
+    succeeds: Bool = true, solve: Bool = true, header: FITSHeader? = nil,
+    bundle: PipelineBundle = StudioModelTests.bundle(), combination: ParamSet? = nil,
+    lists: [String] = lists
+  ) async throws -> Opened {
     let project = try StudioModelTests.project()
-    let siril = FakeSiril(succeeds: succeeds)
+    let siril = FakeSiril(succeeds: succeeds, lists: lists)
     let catalogues = try ScratchDirectory.url.appendingPathComponent("catalogues")
     try FileManager.default.createDirectory(at: catalogues, withIntermediateDirectories: true)
     try Data().write(to: catalogues.appendingPathComponent("siril_cat1_healpix8_xpsamp_0.dat"))
@@ -86,7 +95,7 @@ struct ColourCalibrationProcessTests {
     }
     let studio = try StudioModel(
       store: project.package.store, stackID: project.stackID, packageFolder: project.package.url,
-      stackFolder: project.folder, bundle: StudioModelTests.bundle())
+      stackFolder: project.folder, bundle: bundle, header: header, combination: combination)
     let workspace = try StudioWorkspaceModel(
       studio: studio, base: [.color],
       tools: [PlateSolveProcess.id: solveTool, ColourCalibrationProcess.id: colour])
@@ -95,6 +104,15 @@ struct ColourCalibrationProcessTests {
       await workspace.runTool()
     }
     return Opened(project: project, workspace: workspace, siril: siril)
+  }
+
+  /// Opens the colour-calibration panel with the names the fake Siril lists chosen (card 0140:
+  /// none by default).
+  static func chooseSPCC(_ workspace: StudioWorkspaceModel) throws {
+    workspace.choose(ColourCalibrationProcess.id)
+    let panel = try #require(workspace.panel)
+    panel.set("sensor", .choice("Sony IMX571"))
+    panel.set("filter", .choice("UV/IR Block"))
   }
 
   static func entry(_ workspace: StudioWorkspaceModel) -> StudioWorkspaceModel.Entry? {
@@ -122,7 +140,7 @@ struct ColourCalibrationProcessTests {
     defer { try? opened.project.package.close() }
     let workspace = opened.workspace
     let before = workspace.studio.head.planes
-    workspace.choose(ColourCalibrationProcess.id)
+    try Self.chooseSPCC(workspace)
     #expect(await workspace.runTool())
     #expect(workspace.studio.steps.last?.processID == ColourCalibrationProcess.id)
     #expect(workspace.studio.head.planes == before.map { $0.map { $0 * 0.5 } })
@@ -141,7 +159,7 @@ struct ColourCalibrationProcessTests {
     defer { try? opened.project.package.close() }
     let workspace = opened.workspace
     let (steps, head) = (workspace.studio.steps.count, workspace.studio.head.planes)
-    workspace.choose(ColourCalibrationProcess.id)
+    try Self.chooseSPCC(workspace)
     #expect(await workspace.runTool() == false)
     #expect(workspace.studio.steps.count == steps && workspace.studio.head.planes == head)
     let error = ColourCalibrationError.failed(
@@ -171,6 +189,8 @@ struct ColourCalibrationProcessTests {
   @Test("the panel's values as the request; PCC drops the names")
   func testRequest() throws {
     var params = ParamSet(schema: ColourCalibrationProcess.schema)
+    try params.set("sensor", .choice("Sony IMX571"))
+    try params.set("filter", .choice("UV/IR Block"))
     let spcc = ColourCalibrationTool.request(params)
     #expect(
       spcc.method

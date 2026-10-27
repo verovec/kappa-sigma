@@ -25,6 +25,9 @@ package struct ParamSpec: Equatable, Sendable {
   package let level: ParamLevel
   /// Kind, default and bounds.
   package let kind: Kind
+  /// For a choice: whether no option (`""`, shown « Choose… ») is a value — the default of a
+  /// choice the user must make, never one made for them (card 0140).
+  package let allowsUnset: Bool
 
   /// A number parameter.
   package init(
@@ -41,11 +44,14 @@ package struct ParamSpec: Equatable, Sendable {
     self.init(id: id, title: title, unit: .none, level: level, kind: .flag(default: flag))
   }
 
-  /// A parameter choosing one of `options`.
-  package init(id: String, title: String, level: ParamLevel, choice: String, of options: [String]) {
+  /// A parameter choosing one of `options`, or none yet when `allowsUnset` (`choice: ""`).
+  package init(
+    id: String, title: String, level: ParamLevel, choice: String, of options: [String],
+    allowsUnset: Bool = false
+  ) {
     self.init(
       id: id, title: title, unit: .none, level: level,
-      kind: .choice(default: choice, options: options))
+      kind: .choice(default: choice, options: options), allowsUnset: allowsUnset)
   }
 
   /// A curve of 2 to `maxCount` control points.
@@ -65,12 +71,16 @@ package struct ParamSpec: Equatable, Sendable {
   }
 
   /// A parameter of any kind.
-  package init(id: String, title: String, unit: ParamUnit, level: ParamLevel, kind: Kind) {
+  package init(
+    id: String, title: String, unit: ParamUnit, level: ParamLevel, kind: Kind,
+    allowsUnset: Bool = false
+  ) {
     self.id = id
     self.title = title
     self.unit = unit
     self.level = level
     self.kind = kind
+    self.allowsUnset = allowsUnset
   }
 
   /// The default value.
@@ -94,7 +104,7 @@ package struct ParamSpec: Equatable, Sendable {
     case (.flag, .flag):
       return value
     case (.choice(_, let options), .choice(let option)):
-      guard options.contains(option) else {
+      guard options.contains(option) || (allowsUnset && option.isEmpty) else {
         throw ParamError.unknownOption(id: id, option: option)
       }
       return value

@@ -75,13 +75,16 @@ package enum ChannelDetector {
 
   /// The wheel's default cyclic order.
   ///
-  /// FilterKit's broadband filters, then Hα: the port of `channeldetect.go`'s `L R G B Ha`, pinned
-  /// literally by `ChannelDetectorTests`.
-  package static let defaultOrder = (Filter.broadband + [.hydrogenAlpha]).map(\.rawValue)
+  /// The port of `channeldetect.go`'s `L R G B Ha`, spelled with FilterKit's cases and pinned
+  /// literally by `ChannelDetectorTests`: a wheel order, not the catalogue (a new broadband filter
+  /// does not join it by itself).
+  package static let defaultOrder = [
+    Filter.luminance, .red, .green, .blue, .hydrogenAlpha,
+  ].map(\.rawValue)
 
   /// Segmentation, assignment and transition thresholds.
   package struct Options: Equatable, Sendable {
-    /// The broadband filters then Hα (`defaultOrder`): the signal cannot tell emission lines apart.
+    /// `defaultOrder`, which stops at Hα: the signal cannot tell emission lines apart.
     package var order = ChannelDetector.defaultOrder
     /// New run when the time gap exceeds this × the median gap.
     package var timeGapFactor = 4.0
@@ -101,7 +104,7 @@ package enum ChannelDetector {
   /// walk through the order, and flags unsettled first frames.
   package static func detect(_ samples: [Sample], options: Options = Options()) -> Result {
     var options = options
-    if options.order.isEmpty { options.order = Options().order }
+    if options.order.isEmpty { options.order = defaultOrder }
     guard !samples.isEmpty else { return Result(order: options.order) }
     let ordered = stableSorted(samples)
     let runs = segment(ordered, options: options)

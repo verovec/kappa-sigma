@@ -10,22 +10,17 @@ internal import ImageKit
 /// weaker one in and cost SNR). The REGISTERED master is split: the layers are composited pixel
 /// for pixel over the broadband base.
 package enum DualbandSplit {
-  /// The lines a clip's two planes carry: FilterKit's `FilterSet.lines`, the one table.
-  package typealias Lines = (red: Filter, greenBlue: Filter)
-
   /// The synthetic layer's file stem of a line (`syn_Ha`).
-  package static func stem(_ line: Filter) -> String { "syn_" + line.rawValue }
+  private static func stem(_ line: Filter) -> String { "syn_" + line.rawValue }
 
   /// Why a master could not be split.
   package enum Failure: Error, CustomStringConvertible {
     case planes(Int)
-    case noLines
 
     package var description: String {
       switch self {
       case .planes(let count):
         "colour master has \(count) plane(s), need 3 to separate the two lines"
-      case .noLines: "the clip filter carries no emission line to separate"
       }
     }
   }
@@ -34,9 +29,8 @@ package enum DualbandSplit {
   /// maximum of green and blue) from `master` (left untouched), with its descriptive header, for
   /// the clip's `lines` (the dual-band clip's by default); returns their basenames.
   package static func split(
-    _ master: URL, out: URL, lines: Lines? = FilterSet.dualband.lines
+    _ master: URL, out: URL, lines: FilterSet.Lines = (.hydrogenAlpha, .oxygenIII)
   ) throws -> (red: String, greenBlue: String) {
-    guard let lines else { throw Failure.noLines }
     let file = try FITSFile.read(at: master)
     let image = try file.image()
     guard image.planes.count >= 3 else { throw Failure.planes(image.planes.count) }
@@ -63,7 +57,8 @@ package enum DualbandSplit {
       channels: [String: String], note: String?
     )
   {
-    guard let lane = FilterSetLanes.dualbandLane(in: channels.keys), let base = channels[lane]
+    guard let lane = FilterSetLanes.dualbandLane(in: channels.keys), let base = channels[lane],
+      let lines = FilterSet.dualband.lines
     else { return (channels, nil) }
     var kept = channels.filter { $0.key != lane }
     guard !kept.isEmpty else {
@@ -82,9 +77,8 @@ package enum DualbandSplit {
       )
     }
     do {
-      let lines = FilterSet.dualband.lines
       let names = try split(out.appendingPathComponent(base + ".fits"), out: out, lines: lines)
-      if let lines { (kept[lines.red.rawValue], kept[lines.greenBlue.rawValue]) = names }
+      (kept[lines.red.rawValue], kept[lines.greenBlue.rawValue]) = names
     } catch {
       return (
         kept,

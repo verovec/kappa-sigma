@@ -29,11 +29,14 @@ package enum FilterSet: String, CaseIterable, Codable, Sendable {
     case unknownFilterSet(String)
   }
 
+  /// The line each of a one-shot-colour sensor's planes carries: the red one, the green/blue pair.
+  package typealias Lines = (red: Filter, greenBlue: Filter)
+
   /// The emission lines a clip filter's planes carry on a one-shot-colour sensor.
   ///
   /// The red plane and the green/blue pair, one line each (`nil` for broadband or unknown):
   /// what the dual-band split writes as synthetic layers.
-  package var lines: (red: Filter, greenBlue: Filter)? {
+  package var lines: Lines? {
     switch self {
     case .unknown, .broadband: nil
     case .dualband: (.hydrogenAlpha, .oxygenIII)

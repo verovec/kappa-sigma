@@ -38,10 +38,11 @@ package enum LineKernels {
     }
   }
 
-  /// Binds `perLine` textures per line of `values` from texture index `first` on, padding the
-  /// free slots of `maxLines` lines with `padding`, the `values` at buffer 0 and their count at
-  /// buffer 1. The caller has passed `checkSlots` (an encoder that throws half-built is never
-  /// ended).
+  /// Binds the lines' textures, their values and their count.
+  ///
+  /// `perLine` textures per line of `values` from texture index `first` on, the free slots of
+  /// `maxLines` lines padded with `padding`; the `values` at buffer 0, their count at buffer 1.
+  /// The caller has passed `checkSlots` first: an encoder that throws half-built is never ended.
   package static func bind<Value: BitwiseCopyable>(
     _ textures: [MTLTexture], perLine: Int, from first: Int, padding: MTLTexture,
     values: [Value], encoder: MTLComputeCommandEncoder

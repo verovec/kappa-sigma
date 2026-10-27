@@ -346,8 +346,7 @@ that reads bundle layers declares them in `layersRead`, or its steps never go st
   catalogue greys on roles only; greying would close its panel).
 
 - **Palette menu and layer greying** (card 0139): `Palette.available(planes:)` lists the palettes
-  whose every source the bundle names (0138's `LayerPlane.options` rule), `Palette.layers` the ids
-  a palette reads; `ImageProcess.unavailableOptions(_:layerIDs:)` → `[param: [option: reasonKey]]`
+  whose every source the bundle names (0138's `LayerPlane.options` rule); `ImageProcess.unavailableOptions(_:layerIDs:)` → `[param: [option: reasonKey]]`
   (default none; the combination greys a value naming an absent layer) is merged by the panel
   model into `unavailableOptions` next to a tool probe's keys. The app words a token with
   `LayerPlaneWords` (glossary words, a line's name, « × » for a product, a custom id verbatim).

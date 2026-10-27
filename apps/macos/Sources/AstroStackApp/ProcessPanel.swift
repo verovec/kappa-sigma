@@ -55,11 +55,12 @@ package struct ProcessPanel: View {
       ForEach(model.paletteOptions + kept, id: \.self) { palette in
         Text(ProcessKitResources.title(palette.title, locale: locale)).tag(Optional(palette))
       }
-      Text(.app("Custom")).tag(Palette?.none)
+      // The state of any other combination, never a choice: the sources are edited by hand.
+      Text(.app("Custom")).tag(Palette?.none).selectionDisabled()
     } label: {
       Text(.app("Palette"))
     }
-    .accessible(.parameter("\(model.type.id).palette", .choice), label: .app("Palette"))
+    .accessible(.parameter(model.paletteKey, .choice), label: .app("Palette"))
   }
 
   private var paletteSelection: Binding<Palette?> {

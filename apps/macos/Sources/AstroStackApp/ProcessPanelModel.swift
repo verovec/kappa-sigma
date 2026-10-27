@@ -52,10 +52,11 @@ package final class ProcessPanelModel {
   }
   /// The tokens the bundle offers each layer parameter (card 0138), kept with the layers.
   private var layerOptions: [String: [String]] = [:]
-  /// The palettes the bundle offers (card 0139), in catalogue order; none without a bundle.
+  /// The palettes the bundle offers the channel combination (card 0139), in catalogue order;
+  /// none without a bundle, none for any other process.
   package private(set) var paletteOptions: [Palette] = []
-  /// The options greyed for the layers (card 0139), by parameter: the keys this model owns in
-  /// `unavailableOptions` (a tool probe owns others).
+  /// The options greyed for the layers (card 0139), by parameter then option: what this model
+  /// added to `unavailableOptions`, beside a tool probe's own entries.
   private var greyedByLayers: [String: [String: String]] = [:]
   /// Why a row's value cannot run on this stack, by parameter id (card 0135).
   ///
@@ -106,14 +107,23 @@ package final class ProcessPanelModel {
     if notesNow != rowNotes { rowNotes = notesNow }
     let greyedNow = layerIDs.map { type.unavailableOptions(params, layerIDs: $0) } ?? [:]
     guard greyedNow != greyedByLayers else { return }
-    for param in greyedByLayers.keys where greyedNow[param] == nil {
-      unavailableOptions[param] = nil
+    // Per option: a tool probe's entries on the same parameter stay.
+    for (param, options) in greyedByLayers {
+      for option in options.keys where greyedNow[param]?[option] == nil {
+        unavailableOptions[param]?[option] = nil
+      }
+      if unavailableOptions[param]?.isEmpty == true { unavailableOptions[param] = nil }
     }
     for (param, options) in greyedNow {
-      unavailableOptions[param] = options.mapValues { ProcessKitResources.title($0) }
+      for (option, reason) in options {
+        unavailableOptions[param, default: [:]][option] = ProcessKitResources.title(reason)
+      }
     }
     greyedByLayers = greyedNow
   }
+
+  /// The key the palette menu's control is identified by.
+  package var paletteKey: String { "\(type.id).palette" }
 
   /// The palette the sources match (card 0139), `nil` for a custom combination.
   package var palette: Palette? { Palette.matching(params) }
@@ -123,8 +133,11 @@ package final class ProcessPanelModel {
   /// A palette is a template the rows show, never a hidden setting (R2); a recipe records the
   /// sources, not the palette.
   package func choose(palette: Palette) {
-    // A palette's tokens are well-formed by construction (`testPaletteSlots`).
-    guard let filled = try? palette.apply(to: params) else { return }
+    // Only the combination offers palettes (`paletteOptions`), whose tokens its schema accepts
+    // by construction (`testPaletteSlots`): `apply` cannot fail here, and a binding cannot throw.
+    guard paletteOptions.contains(palette) || palette == self.palette,
+      let filled = try? palette.apply(to: params)
+    else { return }
     replace(filled)
   }
 
@@ -137,7 +150,8 @@ package final class ProcessPanelModel {
         planes: layerPlanes, allowsNone: allowsNone, allowsProduct: allowsProduct)
     }
     if optionsNow != layerOptions { layerOptions = optionsNow }
-    let palettesNow = Palette.available(planes: layerPlanes)
+    let palettesNow =
+      type == ChannelCombinationProcess.self ? Palette.available(planes: layerPlanes) : []
     if palettesNow != paletteOptions { paletteOptions = palettesNow }
   }
 

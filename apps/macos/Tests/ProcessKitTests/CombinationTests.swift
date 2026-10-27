@@ -241,11 +241,4 @@ struct CombinationTests {
   func testPaletteAvailable(row: Available) {
     #expect(Palette.available(planes: row.planes) == row.expected)
   }
-
-  @Test("a palette's layers are the ids its sources read, once each")
-  func testPaletteLayers() {
-    #expect(Palette.natural.layers == ["RGB"])
-    #expect(Palette.foraxx.layers == ["Ha", "OIII"])
-    #expect(Palette.lrgb.layers == ["R", "G", "B", "L"])
-  }
 }

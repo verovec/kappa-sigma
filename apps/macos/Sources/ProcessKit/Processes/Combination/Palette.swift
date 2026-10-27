@@ -56,18 +56,6 @@ package enum Palette: String, CaseIterable, Sendable {
     }
   }
 
-  /// The layer ids the sources read, once each, in slot order.
-  package var layers: [String] {
-    var ids: [String] = []
-    for source in sources where source != "none" {
-      for part in source.split(separator: "*") {
-        let id = LayerPlane(String(part)).layer
-        if !ids.contains(id) { ids.append(id) }
-      }
-    }
-    return ids
-  }
-
   /// The palettes a bundle of `planes` offers (card 0139), in catalogue order: those whose every
   /// source the bundle names (`LayerPlane.options`: a plane needs a colour layer, a product two
   /// 1-plane lines).

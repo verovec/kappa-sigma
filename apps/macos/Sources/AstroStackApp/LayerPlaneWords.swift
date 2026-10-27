@@ -14,11 +14,13 @@ package enum LayerPlaneWords {
     }
     let plane = LayerPlane(token)
     let words = layer(plane.layer, locale: locale)
-    guard plane.token != plane.layer, plane.plane < LayerPlane.planeNames.count else {
-      return words
+    guard plane.token != plane.layer else { return words }
+    // The plane's filter from the one plane list (`r` → `R`): its glossary word, lowercased.
+    let name = LayerPlane.planeNames[plane.plane]
+    let colour = Filter(rawValue: name.uppercased()).map {
+      AppGlossary.label($0.termID, locale: locale).lowercased(with: locale)
     }
-    let colour = [Filter.red, .green, .blue][plane.plane]
-    return words + " · " + AppGlossary.label(colour.termID, locale: locale).lowercased(with: locale)
+    return words + " · " + (colour ?? name)
   }
 
   /// A layer id in words: a line's name, else what the switcher calls the layer.

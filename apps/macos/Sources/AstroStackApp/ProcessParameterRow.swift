@@ -139,7 +139,7 @@ struct ProcessParameterRow: View {
         ForEach(options, id: \.self) { option in
           if let reason = model.unavailableOptions[spec.id]?[option] {
             // Greyed with why; a value already chosen stays chosen (R2).
-            Text(.app("\(words(option)) — \(String(localized: reason))")).tag(option)
+            Text(.app("\(words(option)) — \(reasonWords(reason))")).tag(option)
               .selectionDisabled()
           } else {
             Text(verbatim: words(option)).tag(option)
@@ -151,6 +151,13 @@ struct ProcessParameterRow: View {
       .accessible(.parameter(key, .choice), label: label)
       helpButton
     }
+  }
+
+  /// `reason` in the view's language.
+  private func reasonWords(_ reason: LocalizedStringResource) -> String {
+    var reason = reason
+    reason.locale = locale
+    return String(localized: reason)
   }
 
   private var choice: Binding<String> {

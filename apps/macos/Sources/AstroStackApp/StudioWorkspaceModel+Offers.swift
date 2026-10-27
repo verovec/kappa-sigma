@@ -23,9 +23,7 @@ extension StudioWorkspaceModel {
     }
     if type == DenoiseProcess.self { return suggestions + denoiseOffers() }
     if type == ColourCalibrationProcess.self {
-      return suggestions
-        + ColourCalibrationProcess.suggestions(
-          header: studio.header, layerIDs: session.layerIDs())
+      return suggestions + ColourCalibrationProcess.suggestions(header: studio.header)
     }
     guard type == LevelsProcess.self else { return suggestions }
     return suggestions + Self.displaySuggestions(viewer.model.frame.stf)

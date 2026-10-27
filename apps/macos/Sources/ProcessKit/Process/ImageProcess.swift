@@ -67,9 +67,11 @@ package protocol ImageProcess {
   /// disabled step is the image itself, no tool needed: card 0094); `hostTool` by default.
   static func runsTool(_ params: ParamSet) -> Bool
 
-  /// The choices still to make before Apply may run, by parameter id (card 0140): a spec that
-  /// `allowsUnset` and is still unset, on a bundle of `layerIDs` — never made for the user.
-  static func unchosen(_ params: ParamSet, layerIDs: Set<String>) -> [String]
+  /// The choices `params` still leave to the user before its host tool may run, by parameter id
+  /// (card 0140: a spec that `allowsUnset`, still unset) — never made for the user; none by
+  /// default. Checked before a tool runs, so only a host-tool process may leave a choice unset
+  /// (`ProcessRegistry.problems`).
+  static func unchosen(_ params: ParamSet) -> [String]
 
   /// True when the process reads the image's plate solution (colour calibration): greyed until
   /// the head carries one.
@@ -127,10 +129,8 @@ extension ImageProcess {
   /// A host-tool process always runs its tool.
   package static func runsTool(_ params: ParamSet) -> Bool { hostTool }
 
-  /// Every choice still unset (its spec allows it), in schema order.
-  package static func unchosen(_ params: ParamSet, layerIDs: Set<String>) -> [String] {
-    schema.specs.filter { $0.allowsUnset && params.choice($0.id).isEmpty }.map(\.id)
-  }
+  /// Nothing to choose.
+  package static func unchosen(_ params: ParamSet) -> [String] { [] }
 
   /// No solution needed.
   package static var requiresSolution: Bool { false }

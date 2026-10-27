@@ -2097,6 +2097,22 @@
         }
       }
     },
+    "Camera (SPCC)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Camera (SPCC)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Caméra (SPCC)"
+          }
+        }
+      }
+    },
     "Sensor (SPCC)": {
       "localizations": {
         "en": {

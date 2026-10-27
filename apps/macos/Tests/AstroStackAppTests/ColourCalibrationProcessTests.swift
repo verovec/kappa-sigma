@@ -72,11 +72,10 @@ struct ColourCalibrationProcessTests {
     let siril: FakeSiril
   }
 
-  /// A Studio of `bundle` (the stack's `header`, its first `combination`) whose head is solved (a plate-solve step whose
+  /// A Studio of the stack's `header` whose head is solved (a plate-solve step whose
   /// tool adds the solution) when `solve`, Siril listing `lists`.
   static func open(
     succeeds: Bool = true, solve: Bool = true, header: FITSHeader? = nil,
-    bundle: PipelineBundle = StudioModelTests.bundle(), combination: ParamSet? = nil,
     lists: [String] = lists
   ) async throws -> Opened {
     let project = try StudioModelTests.project()
@@ -95,7 +94,7 @@ struct ColourCalibrationProcessTests {
     }
     let studio = try StudioModel(
       store: project.package.store, stackID: project.stackID, packageFolder: project.package.url,
-      stackFolder: project.folder, bundle: bundle, header: header, combination: combination)
+      stackFolder: project.folder, bundle: StudioModelTests.bundle(), header: header)
     let workspace = try StudioWorkspaceModel(
       studio: studio, base: [.color],
       tools: [PlateSolveProcess.id: solveTool, ColourCalibrationProcess.id: colour])

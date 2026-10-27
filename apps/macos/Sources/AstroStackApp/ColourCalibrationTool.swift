@@ -7,16 +7,14 @@ package import StackKit
 /// `ColourCalibrationRequest`, Siril's SPCC or PCC on the head, Siril's pixels back with the
 /// factors it applied.
 package nonisolated enum ColourCalibrationTool {
-  /// The request the panel's `params` give on a bundle of `layerIDs`, every value as shown: the
-  /// mono route when the bundle is mono (`ColourCalibrationProcess.isMono`, card 0140).
-  package static func request(_ params: ParamSet, layerIDs: Set<String> = ["RGB"])
-    -> ColourCalibrationRequest
-  {
+  /// The request the panel's `params` give, every value as shown: the mono route when its
+  /// `camera` is mono (card 0140).
+  package static func request(_ params: ParamSet) -> ColourCalibrationRequest {
     let reference = params.choice("whiteReference")
     let method: ColourCalibrationRequest.Method =
       if params.choice("method") == "pcc" {
         .pcc
-      } else if ColourCalibrationProcess.isMono(layerIDs: layerIDs) {
+      } else if ColourCalibrationProcess.isMono(params) {
         .monoSPCC(
           sensor: params.choice("monoSensor"), red: params.choice("rFilter"),
           green: params.choice("gFilter"), blue: params.choice("bFilter"),
@@ -37,17 +35,13 @@ package nonisolated enum ColourCalibrationTool {
   package static func tool(
     scratch: URL, calibrator: @escaping @Sendable () throws -> ColourCalibrator
   ) -> StudioTool {
-    StudioTool(step: { input, params, onProgress in
-      // The bundle's layers say the route (OSC or mono); Siril reads the head alone.
-      let request = request(params, layerIDs: Set(input.layers.keys))
-      let head = input.image
-      let image = AstroImage(
-        width: head.width, height: head.height, planes: head.planes, metadata: head.metadata)
+    StudioTool { image, params, onProgress in
+      let request = request(params)
       let calibrated = try await calibrator().calibrate(
         image, request: request, scratch: scratch, onProgress: onProgress)
       let (report, pcc) = (calibrated.report, request.method == .pcc)
       return StudioToolResult(image: calibrated.image) { Self.report(report, pcc: pcc, locale: $0) }
-    })
+    }
   }
 
   /// The tool over the installed Siril and the local catalogues of the astro library.

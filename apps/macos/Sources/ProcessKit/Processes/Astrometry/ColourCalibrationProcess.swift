@@ -11,8 +11,8 @@ package import Metal
 /// itself and runs no tool.
 ///
 /// No sensor nor filter by default (card 0140): Apply waits for them (`unchosen`), the header's
-/// camera is only offered (`suggestions(header:layerIDs:)`). A mono bundle (no OSC `RGB` layer)
-/// takes Siril's mono route: one sensor, a red, a green and a blue filter.
+/// camera is only offered (`suggestions(header:)`). `camera` says the route, as shown: a colour
+/// (OSC) sensor and its filter, or a mono sensor with a red, a green and a blue filter.
 package struct ColourCalibrationProcess: ImageProcess {
   package static let id = "colour-calibration"
   package static let title = "Colour calibration"
@@ -25,7 +25,9 @@ package struct ColourCalibrationProcess: ImageProcess {
   package static let schema = ParamSchema([
     ParamSpec(id: "enabled", title: "Calibrate the colours", level: .simple, flag: true),
     ParamSpec(id: "method", title: "Method", level: .simple, choice: "spcc", of: ["spcc", "pcc"]),
-    // No camera chosen for the user (card 0140): « Choose… » until a name is picked.
+    // The route: a colour (OSC) camera's names or a mono one's (card 0140), shown and chosen.
+    ParamSpec(id: "camera", title: "Camera (SPCC)", level: .simple, choice: "osc", of: cameras),
+    // No sensor chosen for the user (card 0140): « Choose… » until a name is picked.
     ParamSpec(
       id: "sensor", title: "Sensor (SPCC)", level: .simple, choice: "", of: SPCCNames.sensors,
       allowsUnset: true),

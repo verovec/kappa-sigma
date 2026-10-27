@@ -173,8 +173,9 @@ another method. Transcripts in `Tests/StackKitTests/Fixtures/colourcal/` (0.7 s 
 A mono camera's stack takes `.monoSPCC(sensor:red:green:blue:whiteReference:)` (card 0140):
 `"-monosensor=…" "-rfilter=…" "-gfilter=…" "-bfilter=…"`, its names checked against
 `spcc_list monosensor|redfilter|greenfilter|bluefilter` (`Method.names` lists what to check; add
-a route = a case, its `names`, its line). The app picks the route from the bundle's layers
-(`ColourCalibrationProcess.isMono`: no OSC `RGB` layer) and never picks a sensor for the user.
+a route = a case, its `names`, its line). The app's route is the panel's visible `camera` row
+(`osc`/`mono`, the header's `INSTRUME` offered with its sensor) and never a sensor picked for the
+user.
 
 ## Run scope (card 0095)
 

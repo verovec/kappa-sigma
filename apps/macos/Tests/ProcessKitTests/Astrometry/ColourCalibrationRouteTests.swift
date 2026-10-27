@@ -2,17 +2,16 @@ import ImageKit
 import ProcessKit
 import Testing
 
-/// Card 0140: no camera chosen for the user — SPCC waits for its sensor and filters, the route
-/// (OSC or mono) follows the bundle's layers, the header's camera is only a suggestion.
+/// Card 0140: no sensor chosen for the user — SPCC waits for its names, the route (OSC or mono)
+/// is the visible `camera` row, the header's camera is only a suggestion.
 @Suite("ColourCalibrationProcess: no default sensor, the OSC or mono route, INSTRUME offered")
 struct ColourCalibrationRouteTests {
   struct Row: Sendable, CustomTestStringConvertible {
     let enabled: Bool
     let values: [String: String]
-    let layerIDs: Set<String>
     let runsTool: Bool
     let unchosen: [String]
-    var testDescription: String { "\(enabled) \(values) \(layerIDs.sorted())" }
+    var testDescription: String { "\(enabled) \(values.sorted { $0.key < $1.key })" }
   }
 
   static func params(enabled: Bool, _ values: [String: String]) throws -> ParamSet {
@@ -22,81 +21,66 @@ struct ColourCalibrationRouteTests {
     return params
   }
 
-  static let mono: Set<String> = ["L", "R", "G", "B"]
-  static let monoNames = [
-    "monoSensor": "ZWO ASI1600MM", "rFilter": "Baader R", "gFilter": "Baader G",
+  static let osc = ["sensor": "Sony IMX571", "filter": "UV/IR Block"]
+  static let mono = [
+    "camera": "mono", "monoSensor": "ZWO ASI1600MM", "rFilter": "Baader R", "gFilter": "Baader G",
     "bFilter": "Baader B",
   ]
 
   @Test(
     "testRunsTool: unticked runs nothing; ticked runs Siril, Apply waiting for the names to choose",
     arguments: [
-      Row(enabled: false, values: [:], layerIDs: ["RGB"], runsTool: false, unchosen: []),
+      Row(enabled: false, values: [:], runsTool: false, unchosen: []),
+      Row(enabled: true, values: [:], runsTool: true, unchosen: ["sensor", "filter"]),
       Row(
-        enabled: true, values: [:], layerIDs: ["RGB"], runsTool: true,
-        unchosen: ["sensor", "filter"]),
+        enabled: true, values: ["sensor": "Sony IMX571"], runsTool: true, unchosen: ["filter"]),
+      Row(enabled: true, values: osc, runsTool: true, unchosen: []),
+      Row(enabled: true, values: ["method": "pcc"], runsTool: true, unchosen: []),
       Row(
-        enabled: true, values: ["sensor": "Sony IMX571"], layerIDs: ["RGB", "Ha"],
-        runsTool: true, unchosen: ["filter"]),
-      Row(
-        enabled: true, values: ["sensor": "Sony IMX571", "filter": "UV/IR Block"],
-        layerIDs: ["RGB"], runsTool: true, unchosen: []),
-      Row(
-        enabled: true, values: ["method": "pcc"], layerIDs: ["RGB"], runsTool: true, unchosen: []),
-      Row(
-        enabled: true, values: ["sensor": "Sony IMX571", "filter": "UV/IR Block"],
-        layerIDs: mono, runsTool: true, unchosen: ["monoSensor", "rFilter", "gFilter", "bFilter"]),
-      Row(enabled: true, values: monoNames, layerIDs: mono, runsTool: true, unchosen: []),
+        enabled: true, values: osc.merging(["camera": "mono"]) { $1 }, runsTool: true,
+        unchosen: ["monoSensor", "rFilter", "gFilter", "bFilter"]),
+      Row(enabled: true, values: mono, runsTool: true, unchosen: []),
     ])
   func testRunsTool(row: Row) throws {
     let params = try Self.params(enabled: row.enabled, row.values)
     let type = ColourCalibrationProcess.self
     #expect(type.runsTool(params) == row.runsTool)
-    #expect(type.unchosen(params, layerIDs: row.layerIDs) == row.unchosen)
+    #expect(type.unchosen(params) == row.unchosen)
   }
 
-  @Test(
-    "the mono route is a bundle without an OSC colour layer; no layer known reads as OSC",
-    arguments: [
-      (Set(["RGB"]), false), (Set(["RGB", "Ha", "OIII"]), false), (mono, true),
-      (Set(["L", "Ha"]), true), (Set<String>(), false),
-    ])
-  func testMonoRoute(layerIDs: Set<String>, mono: Bool) {
-    #expect(ColourCalibrationProcess.isMono(layerIDs: layerIDs) == mono)
-  }
-
-  @Test("the sensor and filter start unset, the white reference and method keep their defaults")
+  @Test("the sensor and filters start unset, the route, white reference and method set")
   func testNoCameraDefault() {
     let params = ParamSet(schema: ColourCalibrationProcess.schema)
-    for id in ["sensor", "filter", "monoSensor", "rFilter", "gFilter", "bFilter"] {
+    for id in ColourCalibrationProcess.oscNames + ColourCalibrationProcess.monoNames {
       #expect(params.choice(id).isEmpty, "\(id)")
       #expect(ColourCalibrationProcess.schema.spec(id)?.allowsUnset == true, "\(id)")
     }
+    #expect(params.choice("camera") == "osc" && !ColourCalibrationProcess.isMono(params))
     #expect(params.choice("whiteReference") == "Average Spiral Galaxy")
-    #expect(ColourCalibrationProcess.schema.problems.isEmpty)
+    #expect(ProcessRegistry.problems(of: ColourCalibrationProcess.self).isEmpty)
   }
 
-  static func offer(_ paramID: String, _ sensor: String, _ instrume: String) -> [Suggestion] {
-    [
+  static func offer(_ camera: String, _ paramID: String, _ sensor: String, _ instrume: String)
+    -> [Suggestion]
+  {
+    [("camera", camera), (paramID, sensor)].map { id, value in
       Suggestion(
-        paramID: paramID, value: .choice(sensor), reason: ColourCalibrationProcess.fromHeader,
+        paramID: id, value: .choice(value), reason: ColourCalibrationProcess.fromHeader,
         subject: instrume)
-    ]
+    }
   }
 
   @Test(
-    "the header's camera is offered on the route's sensor, never set; none off the route",
+    "the header's camera is offered with its route, never set; nothing for an unknown camera",
     arguments: [
-      ("ZWO ASI2600MC Air", Set(["RGB"]), offer("sensor", "Sony IMX571", "ZWO ASI2600MC Air")),
-      ("ZWO ASI1600MM Pro", mono, offer("monoSensor", "ZWO ASI1600MM", "ZWO ASI1600MM Pro")),
-      ("ZWO ASI1600MM Pro", Set(["RGB"]), []),
-      ("Canon EOS R6", Set(["RGB"]), []),
+      ("ZWO ASI2600MC Air", offer("osc", "sensor", "Sony IMX571", "ZWO ASI2600MC Air")),
+      ("ZWO ASI1600MM Pro", offer("mono", "monoSensor", "ZWO ASI1600MM", "ZWO ASI1600MM Pro")),
+      ("Canon EOS R6", []),
     ])
-  func testHeaderSuggestion(instrume: String, layerIDs: Set<String>, expected: [Suggestion]) {
+  func testHeaderSuggestion(instrume: String, expected: [Suggestion]) {
     let header = FITSHeader(cards: [FITSHeader.Card(keyword: "INSTRUME", value: "'\(instrume)'")])
-    #expect(
-      ColourCalibrationProcess.suggestions(header: header, layerIDs: layerIDs) == expected)
-    #expect(ColourCalibrationProcess.suggestions(header: nil, layerIDs: layerIDs).isEmpty)
+    #expect(ColourCalibrationProcess.suggestions(header: header) == expected)
+    #expect(ColourCalibrationProcess.suggestions(header: nil).isEmpty)
     #expect(ColourCalibrationProcess.suggestionReasons == [ColourCalibrationProcess.fromHeader])
   }
 }

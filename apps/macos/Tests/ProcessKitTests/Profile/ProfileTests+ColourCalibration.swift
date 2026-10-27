@@ -37,7 +37,7 @@ extension ProfileTests {
       Data(json.utf8), registry: try ProcessRegistry([ColourCalibrationProcess.self]))
     #expect(loaded.warnings.isEmpty)
     #expect(loaded.params.choice("sensor") == sensor && loaded.params.choice("filter") == filter)
-    let unchosen = ColourCalibrationProcess.unchosen(loaded.params, layerIDs: ["RGB"])
+    let unchosen = ColourCalibrationProcess.unchosen(loaded.params)
     #expect(unchosen == (sensor.isEmpty ? ColourCalibrationProcess.oscNames : []))
   }
 }

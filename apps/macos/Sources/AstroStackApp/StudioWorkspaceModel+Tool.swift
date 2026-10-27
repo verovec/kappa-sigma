@@ -49,7 +49,7 @@ extension StudioWorkspaceModel {
   /// `locale` (the user's languages when nil) — never one made for the user.
   package func unchosenRefusal(locale: Locale? = nil) -> LocalizedStringResource? {
     guard let panel,
-      let id = panel.type.unchosen(panel.params, layerIDs: studio.session.layerIDs()).first,
+      let id = panel.type.unchosen(panel.params).first,
       let spec = panel.type.schema.spec(id)
     else { return nil }
     let title = String(localized: ProcessKitResources.title(spec.title, locale: locale))

@@ -38,7 +38,8 @@ package struct SensorHint: Equatable, Sendable {
     ("ASI678MC", "Sony IMX678"), ("ASI715MC", "Sony IMX715"), ("ASI2400MC", "Sony IMX410"),
     ("ASI2600MC", "Sony IMX571"), ("ASI6200MC", "Sony IMX455"), ("QHY183C", "Sony IMX183"),
     ("QHY268C", "Sony IMX571"), ("QHY294C", "Sony IMX294"), ("QHY533C", "Sony IMX533"),
-    ("QHY600C", "Sony IMX455"), ("POSEIDONC", "Sony IMX571"), ("ARESC", "Sony IMX533"),
+    ("QHY600C", "Sony IMX455"), ("QHY268PHC", "Sony IMX571"), ("QHY600PHC", "Sony IMX455"),
+    ("QHY294PROC", "Sony IMX294"), ("POSEIDONC", "Sony IMX571"), ("ARESC", "Sony IMX533"),
     ("URANUSC", "Sony IMX585"), ("SEESTARS30", "ZWO Seestar S30"),
     ("SEESTARS50", "ZWO Seestar S50"),
   ]
@@ -48,7 +49,8 @@ package struct SensorHint: Equatable, Sendable {
     ("ASI294MM", "Sony IMX492/294"), ("ASI533MM", monoGroup), ("ASI585MM", "Sony IMX585"),
     ("ASI2600MM", monoGroup), ("ASI6200MM", monoGroup), ("QHY183M", "Sony IMX183"),
     ("QHY268M", monoGroup), ("QHY294M", "Sony IMX492/294"), ("QHY533M", monoGroup),
-    ("QHY600M", monoGroup), ("POSEIDONM", monoGroup), ("ARESM", monoGroup),
+    ("QHY600M", monoGroup), ("QHY268PHM", monoGroup), ("QHY600PHM", monoGroup),
+    ("QHY294PROM", "Sony IMX492/294"), ("POSEIDONM", monoGroup), ("ARESM", monoGroup),
     ("URANUSM", "Sony IMX585"),
   ]
 }

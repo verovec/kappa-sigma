@@ -76,7 +76,9 @@ struct EmissionLayersTests {
     #expect(
       ChannelCombiner.inputs(["RGB": "trim_RGB", "Ha": "syn_Ha", "OIII": "syn_OIII"])
         == .colour("trim_RGB"))
-    #expect(ChannelCombiner.inputs(["Ha": "trim_Ha", "OIII": "trim_OIII"]) == nil)
+    #expect(
+      ChannelCombiner.inputs(["Ha": "trim_Ha", "OIII": "trim_OIII"])
+        == .mono(filter: "Ha", master: "trim_Ha"))
   }
 
   @Test("the bundle records each line layer's continuum_k", .scratchDirectory)

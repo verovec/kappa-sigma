@@ -1,3 +1,4 @@
+internal import FilterKit
 package import ImageKit
 package import Metal
 
@@ -68,15 +69,22 @@ package final class StudioSession {
     Set(bundle.layers.keys).union(history.layerRoles.map(\.rawValue))
   }
 
-  /// The layer the working image starts from: `RGB`, else the first id in order (never the
-  /// dictionary's order, which changes from one launch to the next).
+  /// The layer the working image starts from: `RGB`, else the first filter in the canonical
+  /// order — `L` on a mono LRGB bundle, a custom name after the catalogue (card 0137); never the
+  /// dictionary's order, which changes from one launch to the next.
   package static func baseLayerID(_ ids: some Collection<String>) -> String? {
-    ids.contains("RGB") ? "RGB" : ids.sorted().first
+    ids.contains(Filter.color) ? Filter.color : ids.min(by: Filter.less)
   }
 
   /// The roles present for the next step (a process's `requires` is checked against them).
+  ///
+  /// A step applied that `makesColour` (the combination) made a colour image, whatever it read.
   package func presentRoles(base: Set<LayerRole>) -> Set<LayerRole> {
-    base.union(history.layerRoles)
+    var present = base.union(history.layerRoles)
+    if history.steps.contains(where: { registry.type(id: $0.processID)?.makesColour == true }) {
+      present.insert(.color)
+    }
+    return present
   }
 
   /// The statistics the next step gets.

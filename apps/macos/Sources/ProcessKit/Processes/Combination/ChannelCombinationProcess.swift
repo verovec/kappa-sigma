@@ -159,7 +159,7 @@ package struct ChannelCombinationProcess: ImageProcess {
   }
 
   /// The layer ids a source token reads.
-  private static func layers(of source: String) -> [String] {
+  static func layers(of source: String) -> [String] {
     if source == "none" { return [] }
     if source.hasPrefix("RGB.") { return ["RGB"] }
     return source.split(separator: "*").map(String.init)

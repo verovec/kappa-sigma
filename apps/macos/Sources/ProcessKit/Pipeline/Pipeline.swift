@@ -38,6 +38,7 @@ package struct Pipeline: Equatable, Sendable {
     registry: ProcessRegistry, batch: Set<String> = [], present: Set<LayerRole>
   ) -> [[String]] {
     var stretched = false
+    var present = present
     return steps.map { step in
       let id = step.recipe.processID
       guard let type = registry.type(id: id) else {
@@ -55,6 +56,8 @@ package struct Pipeline: Equatable, Sendable {
         reasons.append("a linear process after a non-linear one")
       }
       stretched = stretched || Self.leavesNonLinear(type)
+      // A combination that can run makes the colour image the next steps need (card 0137).
+      if type.makesColour, reasons.isEmpty { present.insert(.color) }
       return reasons
     }
   }

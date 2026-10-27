@@ -69,6 +69,15 @@ package enum Filter: String, CaseIterable, Sendable {
     return left != right ? left < right : lhs < rhs
   }
 
+  /// The one layer a mono image is made of (`palette.go` resolveMono): L, else Hα, else the first
+  /// of `ids` in the canonical order; nil when there is none.
+  package static func monoSource(in ids: some Collection<String>) -> String? {
+    for preferred in [Self.luminance, .hydrogenAlpha] where ids.contains(preferred.rawValue) {
+      return preferred.rawValue
+    }
+    return ids.min(by: less)
+  }
+
   /// Whether `raw` explicitly says one-shot colour.
   ///
   /// An empty name is unknown, not colour.

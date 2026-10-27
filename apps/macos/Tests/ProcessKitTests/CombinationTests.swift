@@ -241,4 +241,14 @@ struct CombinationTests {
   func testPaletteAvailable(row: Available) {
     #expect(Palette.available(planes: row.planes) == row.expected)
   }
+
+  @Test("every palette has one source per slot, which the schema accepts and matching recovers")
+  func testPaletteSlotsAreComplete() throws {
+    for palette in Palette.allCases {
+      #expect(palette.sources.count == ChannelCombinationProcess.slotSources.count)
+      // The invariant behind the panel's `choose(palette:)`: `apply` cannot refuse a palette.
+      let params = try palette.params()
+      #expect(Palette.matching(params) == palette)
+    }
+  }
 }

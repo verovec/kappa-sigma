@@ -16,12 +16,11 @@ package enum LayerPlaneWords {
     let plane = LayerPlane(token)
     let words = layer(plane.layer, locale: locale)
     guard plane.token != plane.layer else { return words }
-    // The plane's filter from the one plane list (`r` → `R`): its glossary word, lowercased.
+    // The plane's filter from the one plane list (`r` → `R`): its glossary word, lowercased;
+    // never a bare suffix on screen (the layer alone, should the list ever change).
     let name = LayerPlane.planeNames[plane.plane]
-    let colour = Filter(rawValue: name.uppercased()).map {
-      AppGlossary.label($0.termID, locale: locale).lowercased(with: locale)
-    }
-    return words + " · " + (colour ?? name)
+    guard let colour = Filter(rawValue: name.uppercased()) else { return words }
+    return words + " · " + AppGlossary.label(colour.termID, locale: locale).lowercased(with: locale)
   }
 
   /// A layer id in words: what the switcher calls the layer, the one naming rule.

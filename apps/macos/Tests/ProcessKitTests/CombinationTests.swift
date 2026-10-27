@@ -175,6 +175,9 @@ struct CombinationTests {
     Initial(
       name: "HOO → hoo", layers: ["Ha": 1, "OIII": 1], sources: ["Ha", "OIII", "OIII", "none"]),
     Initial(
+      name: "a 3-plane Hα spells no palette: grey of its planes", layers: ["Ha": 3, "OIII": 1],
+      sources: ["Ha.r", "Ha.g", "Ha.b", "none"]),
+    Initial(
       name: "L + SII → grey of the base, L", layers: ["L": 1, "SII": 1],
       sources: ["L", "L", "L", "none"]),
     Initial(

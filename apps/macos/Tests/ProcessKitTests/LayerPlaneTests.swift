@@ -51,6 +51,13 @@ struct LayerPlaneTests {
     #expect(throws: ProcessError.missingLayer("R.r")) {
       try LayerPlane("R.r").texture(in: layers, width: 4, height: 2)
     }
+    // A whole token never reads plane 0 of a colour layer; a layer named `Foo.r` is whole.
+    #expect(throws: ProcessError.missingLayer("RGB")) {
+      try LayerPlane("RGB").texture(in: layers, width: 4, height: 2)
+    }
+    let named = ["Foo.r": try GPUImage(device: device, width: 4, height: 2, channels: 1)]
+    #expect(
+      try LayerPlane("Foo.r").texture(in: named, width: 4, height: 2) === named["Foo.r"]?.planes[0])
     #expect(throws: ProcessError.sizeMismatch) {
       try LayerPlane("R").texture(in: layers, width: 8, height: 2)
     }
@@ -94,8 +101,7 @@ struct LayerPlaneTests {
   @Test("testOptions", arguments: options)
   func testOptions(row: Options) {
     let got = LayerPlane.options(
-      layerIDs: Set(row.layers.keys), planes: row.layers, allowsNone: row.allowsNone,
-      allowsProduct: row.allowsProduct)
+      planes: row.layers, allowsNone: row.allowsNone, allowsProduct: row.allowsProduct)
     #expect(got == row.expected)
   }
 }

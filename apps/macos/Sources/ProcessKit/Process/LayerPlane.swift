@@ -30,17 +30,31 @@ package struct LayerPlane: Equatable, Sendable {
 
   /// The plane's texture among the bundle `layers`, which must be `width` × `height`.
   ///
-  /// A missing layer or plane is an error, never another plane (R2); a layer of another size
-  /// would be read at the wrong pixels.
+  /// A missing layer or plane is an error, never another plane (R2): a whole token reads a
+  /// 1-plane layer, a plane token a 3-plane one — `RGB` alone or `L.r` is refused, never plane 0.
+  /// A layer named verbatim as the token (`Foo.r`) is that whole layer.
   package func texture(in layers: [String: GPUImage], width: Int, height: Int) throws
     -> MTLTexture
   {
-    guard let image = layers[layer] else { throw ProcessError.missingLayer(layer) }
+    let (id, index) = resolved(among: layers.keys)
+    guard let image = layers[id] else { throw ProcessError.missingLayer(layer) }
     guard image.width == width, image.height == height else { throw ProcessError.sizeMismatch }
-    // A plane token (`L.r`) of a 1-plane layer is refused like `L.g`, never read as plane 0.
-    guard plane < image.planes.count, token == layer || image.planes.count >= Self.planeNames.count
-    else { throw ProcessError.missingLayer(token) }
-    return image.planes[plane]
+    guard Self.readable(planes: image.planes.count, whole: id == token) else {
+      throw ProcessError.missingLayer(token)
+    }
+    return image.planes[index]
+  }
+
+  /// The layer id and plane index the token reads among `ids`: the layer named verbatim as the
+  /// token, whole, else the parsed layer and plane.
+  private func resolved(among ids: some Collection<String>) -> (String, Int) {
+    ids.contains(token) ? (token, 0) : (layer, plane)
+  }
+
+  /// Whether a layer of `planes` planes is read by a whole token (1 plane) or a plane token
+  /// (the three colour planes).
+  private static func readable(planes: Int, whole: Bool) -> Bool {
+    whole ? planes == 1 : planes >= planeNames.count
   }
 
   /// The plane's bundle statistics, if the bundle has them per plane.
@@ -48,10 +62,11 @@ package struct LayerPlane: Equatable, Sendable {
   /// A colour plane (`RGB.r`) needs one entry per plane: a single entry averaged over the planes
   /// is not the red plane's, so it gives none rather than the average.
   package func stats(in layerStats: [String: LayerStats]) -> ChannelStats? {
-    guard let channels = layerStats[layer]?.channels, plane < channels.count,
-      token == layer || channels.count >= 3
+    let (id, index) = resolved(among: layerStats.keys)
+    guard let channels = layerStats[id]?.channels, index < channels.count,
+      id == token || Self.readable(planes: channels.count, whole: false)
     else { return nil }
-    return channels[plane]
+    return channels[index]
   }
 
   // MARK: - Tokens a layer parameter takes (card 0138)
@@ -83,13 +98,13 @@ package struct LayerPlane: Equatable, Sendable {
     return !first.isWhitespace && !last.isWhitespace && !id.contains("*")
   }
 
-  /// The tokens a bundle of `layerIDs` (with `planes` per layer, 1 when unsaid) offers: `none`
-  /// first when allowed; the colour layer first, then the canonical filter order; a plane per
-  /// 3-plane layer; and, when allowed, the product of every pair of lines present.
-  package static func options(
-    layerIDs: Set<String>, planes: [String: Int], allowsNone: Bool, allowsProduct: Bool
-  ) -> [String] {
-    let ids = layerIDs.sorted { lhs, rhs in
+  /// The tokens a bundle of `planes` (planes per layer id) offers: `none` first when allowed;
+  /// the colour layer first, then the canonical filter order; a plane per 3-plane layer; and,
+  /// when allowed, the product of every pair of 1-plane lines present.
+  package static func options(planes: [String: Int], allowsNone: Bool, allowsProduct: Bool)
+    -> [String]
+  {
+    let ids = planes.keys.sorted { lhs, rhs in
       if lhs == Filter.color || rhs == Filter.color { return lhs == Filter.color }
       return Filter.less(lhs, rhs)
     }

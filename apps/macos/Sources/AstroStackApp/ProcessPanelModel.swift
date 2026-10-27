@@ -107,8 +107,7 @@ package final class ProcessPanelModel {
     for spec in type.schema.specs {
       guard case .layer(_, let allowsNone, let allowsProduct) = spec.kind else { continue }
       optionsNow[spec.id] = LayerPlane.options(
-        layerIDs: Set(layerPlanes.keys), planes: layerPlanes, allowsNone: allowsNone,
-        allowsProduct: allowsProduct)
+        planes: layerPlanes, allowsNone: allowsNone, allowsProduct: allowsProduct)
     }
     if optionsNow != layerOptions { layerOptions = optionsNow }
   }

@@ -73,7 +73,9 @@ package struct ChannelCombinationProcess: ImageProcess {
   {
     var params = ParamSet(schema: schema)
     if layerIDs.contains(Filter.color) { return params }
-    if let palette = Palette.spelled(by: layerIDs) { return try palette.apply(to: params) }
+    // A palette reads whole layers: only the 1-plane ones spell one.
+    let whole = layerIDs.filter { (planes[$0] ?? 1) == 1 }
+    if let palette = Palette.spelled(by: Set(whole)) { return try palette.apply(to: params) }
     // A grey of the base layer (`StudioSession.baseLayerID`, the one rule); a layer name the
     // grammar refuses is an error the Studio shows, never a silent fallback (R2).
     guard let base = StudioSession.baseLayerID(layerIDs) else { return params }

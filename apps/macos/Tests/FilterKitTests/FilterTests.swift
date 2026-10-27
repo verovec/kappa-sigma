@@ -125,12 +125,13 @@ struct FilterTests {
   }
 
   @Test(
-    "a clip filter's planes carry at most one line each",
+    "a clip filter's planes carry one line each, or none",
     arguments: [
       (FilterSet.unknown, nil, nil), (.broadband, nil, nil),
       (.dualband, Filter.hydrogenAlpha, Filter.oxygenIII),
     ])
   func testFilterSet_lines(set: FilterSet, red: Filter?, greenBlue: Filter?) {
-    #expect(set.lines.red == red && set.lines.greenBlue == greenBlue)
+    #expect(set.lines?.red == red)
+    #expect(set.lines?.greenBlue == greenBlue)
   }
 }

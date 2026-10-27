@@ -73,10 +73,16 @@ package enum ChannelDetector {
     package var overallConfidence = 0.0
   }
 
+  /// The wheel's default cyclic order.
+  ///
+  /// FilterKit's broadband filters, then Hα: the port of `channeldetect.go`'s `L R G B Ha`, pinned
+  /// literally by `ChannelDetectorTests`.
+  package static let defaultOrder = (Filter.broadband + [.hydrogenAlpha]).map(\.rawValue)
+
   /// Segmentation, assignment and transition thresholds.
   package struct Options: Equatable, Sendable {
-    /// The broadband filters then Hα, on purpose: the signal cannot tell emission lines apart.
-    package var order = (Filter.broadband + [.hydrogenAlpha]).map(\.rawValue)
+    /// The broadband filters then Hα (`defaultOrder`): the signal cannot tell emission lines apart.
+    package var order = ChannelDetector.defaultOrder
     /// New run when the time gap exceeds this × the median gap.
     package var timeGapFactor = 4.0
     /// New run when the signal jump exceeds median + this × MAD of the jumps.

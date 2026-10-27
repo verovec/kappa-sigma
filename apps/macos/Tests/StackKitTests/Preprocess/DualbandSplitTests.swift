@@ -35,7 +35,7 @@ struct DualbandSplitTests {
     let out = try ScratchDirectory.url
     let names = try DualbandSplit.split(
       try Self.master("master_RGB", r, g, b, in: out), out: out)
-    #expect(names == (DualbandSplit.haBase, DualbandSplit.oiiiBase))
+    #expect(names == ("syn_Ha", "syn_OIII"))
     let (haPlanes, haValue) = try Self.value(out.appendingPathComponent("syn_Ha.fits"))
     let (oiiiPlanes, oiiiValue) = try Self.value(out.appendingPathComponent("syn_OIII.fits"))
     #expect(haPlanes == 1 && oiiiPlanes == 1 && haValue == ha && oiiiValue == oiii)

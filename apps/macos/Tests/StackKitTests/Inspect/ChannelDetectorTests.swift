@@ -75,6 +75,12 @@ struct ChannelDetectorTests {
     #expect(!settled.assignments.contains { $0.wheelTransition })
   }
 
+  @Test("the default wheel order is the Go port's L R G B Ha, whatever FilterKit adds later")
+  func testChannelDetector_defaultOrder() {
+    #expect(ChannelDetector.defaultOrder == ["L", "R", "G", "B", "Ha"])
+    #expect(ChannelDetector.Options().order == ChannelDetector.defaultOrder)
+  }
+
   @Test("no samples: no assignments, the default order")
   func testChannelDetector_empty() {
     let result = ChannelDetector.detect([])

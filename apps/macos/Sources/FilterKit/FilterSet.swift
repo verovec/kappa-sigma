@@ -31,17 +31,14 @@ package enum FilterSet: String, CaseIterable, Codable, Sendable {
 
   /// The emission lines a clip filter's planes carry on a one-shot-colour sensor.
   ///
-  /// The red plane and the green/blue pair, each at most one line (`nil` for broadband or
-  /// unknown): what the dual-band split writes as synthetic layers.
-  package var lines: (red: Filter?, greenBlue: Filter?) {
+  /// The red plane and the green/blue pair, one line each (`nil` for broadband or unknown):
+  /// what the dual-band split writes as synthetic layers.
+  package var lines: (red: Filter, greenBlue: Filter)? {
     switch self {
-    case .unknown, .broadband: (nil, nil)
-    case .dualband: (Self.dualbandLines.red, Self.dualbandLines.greenBlue)
+    case .unknown, .broadband: nil
+    case .dualband: (.hydrogenAlpha, .oxygenIII)
     }
   }
-
-  /// The dual-band clip's pair, never optional: what the split writes under.
-  package static let dualbandLines: (red: Filter, greenBlue: Filter) = (.hydrogenAlpha, .oxygenIII)
 }
 
 /// A verdict keys a JSON object by its wire value (`{"dualband": …}`), not a list of pairs.

@@ -15,11 +15,15 @@ package struct SensorHint: Equatable, Sendable {
     self.mono = mono
   }
 
-  /// The hint for `instrume`, matched on a model token (spaces, dashes and case ignored).
+  /// The hint for `instrume`, matched on a model token (spaces, dashes and case ignored) that no
+  /// digit follows (« ASI2600MC » is not « ASI2600MC2 »).
   package static func suggest(instrume: String) -> Self? {
     let text = instrume.uppercased().filter { !" -_".contains($0) }
-    guard !text.isEmpty else { return nil }
-    return table.first { text.contains($0.model) }?.hint
+    return table.first { row in
+      text.ranges(of: row.model).contains { range in
+        text[range.upperBound...].first.map { !$0.isNumber } ?? true
+      }
+    }?.hint
   }
 
   private static let monoGroup = "Sony IMX411/455/461/533/571"

@@ -68,8 +68,8 @@ package protocol ImageProcess {
   static func runsTool(_ params: ParamSet) -> Bool
 
   /// The choices `params` still leave to the user before its host tool may run, by parameter id
-  /// (card 0140: a spec that `allowsUnset`, still unset) — never made for the user; none by
-  /// default. Checked before a tool runs, so only a host-tool process may leave a choice unset
+  /// (card 0140: a spec that `allowsUnset`, still unset) — never made for the user. Checked
+  /// before a tool runs, so only a host-tool process may leave a choice unset
   /// (`ProcessRegistry.problems`).
   static func unchosen(_ params: ParamSet) -> [String]
 
@@ -129,8 +129,10 @@ extension ImageProcess {
   /// A host-tool process always runs its tool.
   package static func runsTool(_ params: ParamSet) -> Bool { hostTool }
 
-  /// Nothing to choose.
-  package static func unchosen(_ params: ParamSet) -> [String] { [] }
+  /// Every choice still unset (its spec allows it), in schema order.
+  package static func unchosen(_ params: ParamSet) -> [String] {
+    schema.specs.filter { $0.allowsUnset && params.choice($0.id).isEmpty }.map(\.id)
+  }
 
   /// No solution needed.
   package static var requiresSolution: Bool { false }

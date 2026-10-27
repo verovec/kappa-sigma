@@ -65,8 +65,13 @@ extension UserFacingError {
       switch kind {
       case .sensor, .monoSensor:
         .app("Siril does not know the sensor “\(name)”: choose one from the list.")
-      case .filter, .redFilter, .greenFilter, .blueFilter:
-        .app("Siril does not know the filter “\(name)”: choose one from the list.")
+      case .filter: .app("Siril does not know the filter “\(name)”: choose one from the list.")
+      case .redFilter:
+        .app("Siril does not know the red filter “\(name)”: choose one from the list.")
+      case .greenFilter:
+        .app("Siril does not know the green filter “\(name)”: choose one from the list.")
+      case .blueFilter:
+        .app("Siril does not know the blue filter “\(name)”: choose one from the list.")
       case .whiteReference:
         .app("Siril does not know the white reference “\(name)”: choose one from the list.")
       }

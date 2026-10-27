@@ -40,7 +40,15 @@ struct ParamSchemaTests {
       ProcessRegistry.problems(of: UnsetChoiceGPUProcess.self) == [
         "has unset choices (c): only a host-tool process may"
       ])
-    #expect(UnsetChoiceGPUProcess.unchosen(ParamSet(schema: UnsetChoiceGPUProcess.schema)).isEmpty)
+    #expect(UnsetChoiceGPUProcess.unchosen(ParamSet(schema: UnsetChoiceGPUProcess.schema)) == ["c"])
+  }
+
+  @Test("only a choice may stay unset")
+  func testUnsetOnlyOnChoices() {
+    let spec = ParamSpec(
+      id: "n", title: "N", unit: .none, level: .simple, kind: .number(default: 0, bounds: 0...1),
+      allowsUnset: true)
+    #expect(ParamSchema([spec]).problems == ["n: only a choice may stay unset"])
   }
 
   @Test(

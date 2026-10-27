@@ -17,6 +17,7 @@ struct SensorHintTests {
       ("QHY600PH-M", SensorHint(sensor: "Sony IMX411/455/461/533/571", mono: true)),
       ("QHY294PRO-M", SensorHint(sensor: "Sony IMX492/294", mono: true)),
       ("Seestar S50", SensorHint(sensor: "ZWO Seestar S50", mono: false)),
+      ("ZWO ASI2600MC2", nil),
       ("Canon EOS R6", nil),
       ("", nil),
     ])

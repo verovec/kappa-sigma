@@ -83,6 +83,11 @@ package struct ParamSpec: Equatable, Sendable {
     self.allowsUnset = allowsUnset
   }
 
+  /// True for a choice.
+  package var isChoice: Bool {
+    if case .choice = kind { true } else { false }
+  }
+
   /// The default value.
   package var defaultValue: ParamValue {
     switch kind {

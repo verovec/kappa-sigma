@@ -8,8 +8,8 @@ extension ColourCalibrationProcess {
   package static let oscNames = ["sensor", "filter"]
   /// The names SPCC needs from a mono camera (`-monosensor=`, `-rfilter=`…).
   package static let monoNames = ["monoSensor", "rFilter", "gFilter", "bFilter"]
-  /// The reason of the header's camera: an English key of the catalog.
-  package static let fromHeader = "From the image header"
+  /// The reason of the header's camera: the plate solve's header reason, one catalog key.
+  package static let fromHeader = PlateSolveProcess.fromHeader
   package static let suggestionReasons = [fromHeader]
 
   /// True when `params` take the mono route (`camera`).

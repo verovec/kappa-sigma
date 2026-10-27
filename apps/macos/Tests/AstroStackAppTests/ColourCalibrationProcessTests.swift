@@ -228,6 +228,8 @@ extension ColourCalibrationProcessTests {
     arguments: [
       ColourCalibrationError.unsolved, .unknownName(kind: .sensor, name: "Sony IMX999"),
       .unknownName(kind: .filter, name: "x"), .unknownName(kind: .whiteReference, name: "x"),
+      .unknownName(kind: .monoSensor, name: "x"), .unknownName(kind: .redFilter, name: "x"),
+      .unknownName(kind: .greenFilter, name: "x"), .unknownName(kind: .blueFilter, name: "x"),
       .noFactors,
       .catalogueMissing(path: "/x"), .failed(reason: "no stars"), .noOutput(path: "/x/c.fits"),
     ])

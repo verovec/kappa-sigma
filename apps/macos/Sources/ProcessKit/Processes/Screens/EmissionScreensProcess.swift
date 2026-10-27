@@ -73,17 +73,6 @@ package struct EmissionScreensProcess: ImageProcess {
     Set(enabledLines(params).map(\.layerID))
   }
 
-  /// Each enabled line without its layer, on its on/off row, named as the panel writes it.
-  package static func unavailableReasons(_ params: ParamSet, layerIDs: Set<String>)
-    -> [String: RowNote]
-  {
-    let missing = enabledLines(params).filter { !layerIDs.contains($0.layerID) }
-    return Dictionary(
-      uniqueKeysWithValues: missing.map {
-        ($0.id("Enabled"), RowNote(reason: lineLayerReason, subject: $0.name))
-      })
-  }
-
   /// Why `params` cannot run with only the `present` layers ("Hα screen needs the Ha layer").
   package static func unavailableReason(params: ParamSet, present: Set<String>) -> String? {
     let missing = EmissionLine.allCases.first {

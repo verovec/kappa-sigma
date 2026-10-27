@@ -67,17 +67,13 @@ package struct ParamSpec: Equatable, Sendable {
       kind: .text(default: text, maxLength: maxLength))
   }
 
-  /// A parameter of any kind, about the bundle layer `needsLayer` when it is a layer's row.
-  package init(
-    id: String, title: String, unit: ParamUnit, level: ParamLevel, kind: Kind,
-    needsLayer: String? = nil
-  ) {
+  /// A parameter of any kind; `about(layer:)` makes it a layer's row.
+  package init(id: String, title: String, unit: ParamUnit, level: ParamLevel, kind: Kind) {
     self.id = id
     self.title = title
     self.unit = unit
     self.level = level
     self.kind = kind
-    self.needsLayer = needsLayer
   }
 
   /// This spec, about the bundle layer `layer` (a copy: every other field as it was).

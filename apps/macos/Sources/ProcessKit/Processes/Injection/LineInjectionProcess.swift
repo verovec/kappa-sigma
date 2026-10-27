@@ -60,22 +60,13 @@ package struct LineInjectionProcess: ImageProcess {
   package static let lineLayerReason = "the injection needs its line layer"
   package static let unavailableReasons = [lineLayerReason]
 
-  /// The lines the values inject: what the panel keeps on screen even without the layer.
+  /// The lines whose gain is set: what the panel keeps on screen even without the layer.
+  ///
+  /// The gain is the line's switch (the shares are its colour): shares dragged to 0 inject
+  /// nothing, yet the rows stay so the gain can be reset and the shares restored.
   package static func layersAsked(_ params: ParamSet) -> Set<String> {
-    Set(EmissionLine.allCases.filter { injects($0, params: params) }.map(\.layerID))
-  }
-
-  /// Each injecting line without its layer, on its gain row, named as the panel writes it.
-  package static func unavailableReasons(_ params: ParamSet, layerIDs: Set<String>)
-    -> [String: RowNote]
-  {
-    let missing = EmissionLine.allCases.filter {
-      injects($0, params: params) && !layerIDs.contains($0.layerID)
-    }
-    return Dictionary(
-      uniqueKeysWithValues: missing.map {
-        ($0.id("Gain"), RowNote(reason: lineLayerReason, subject: $0.name))
-      })
+    Set(
+      EmissionLine.allCases.filter { Float(params.number($0.id("Gain"))) != 0 }.map(\.layerID))
   }
 
   /// Whether `line` subtracts its continuum with `params`: k as the kernel reads it (Float).

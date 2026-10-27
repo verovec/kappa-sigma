@@ -26,6 +26,13 @@ extension ProcessPanelModelTests {
       name: "injection on a BB + Hα + OIII stack: no SII row", processID: LineInjectionProcess.id,
       layers: ["RGB", "Ha", "OIII"], visible: ["ha", "oiii"], hidden: ["sii"]),
     Visibility(
+      name: "injection: a gain with every share at 0 keeps the rows (the gain is the switch)",
+      processID: LineInjectionProcess.id, layers: ["RGB", "Ha", "OIII"],
+      values: [
+        "siiGain": .number(1), "siiRed": .number(0), "siiGreen": .number(0),
+        "siiBlue": .number(0),
+      ], visible: ["ha", "oiii", "sii"], hidden: []),
+    Visibility(
       name: "screens on a broadband-only stack: the lines on by default stay, to be switched off",
       processID: EmissionScreensProcess.id, layers: ["RGB"], visible: ["ha", "oiii"],
       hidden: ["sii"]),

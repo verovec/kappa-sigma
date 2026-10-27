@@ -12,7 +12,10 @@ package final class ProcessPanelModel {
   @ObservationIgnored package let type: any ImageProcess.Type
   /// The values the preview and Apply use.
   package private(set) var params: ParamSet {
-    didSet { measureClipping() }
+    didSet {
+      measureClipping()
+      hidden = hiddenNow
+    }
   }
   /// The advanced parameters are shown.
   package var showsAdvanced = false
@@ -39,7 +42,9 @@ package final class ProcessPanelModel {
   ///
   /// A line's rows show only while its layer is among them, or while the values still ask for
   /// it; `nil` until the workspace says (a panel built elsewhere hides nothing).
-  package var layerIDs: Set<String>?
+  package var layerIDs: Set<String>? {
+    didSet { hidden = hiddenNow }
+  }
   /// Why a row's value cannot run on this stack, by parameter id (card 0135).
   ///
   /// Shown under the row, never greying the process. Set by the workspace with the values.
@@ -76,14 +81,16 @@ package final class ProcessPanelModel {
   }
 
   /// The parameters hidden for the bundle (card 0135); none until the workspace sets the layers.
-  private var hidden: Set<String> {
+  ///
+  /// Kept with the values and the layers, not computed per view evaluation.
+  private var hidden: Set<String> = []
+  private var hiddenNow: Set<String> {
     layerIDs.map { type.hiddenParameters(params, layerIDs: $0) } ?? []
   }
 
   /// Whether the « Advanced » disclosure opens onto anything: an advanced row that is not hidden.
   package var hasAdvanced: Bool {
-    let hidden = hidden
-    return type.schema.specs.contains { $0.level == .advanced && !hidden.contains($0.id) }
+    type.schema.specs.contains { $0.level == .advanced && !hidden.contains($0.id) }
   }
 
   /// The arrow step of `id`, when the process gives one.

@@ -59,6 +59,24 @@ extension ProcessSchemaTests {
       expected: ["siiGain": RowNote(reason: "the injection needs its line layer", subject: "[SII]")]
     ),
     Reasons(
+      name: "injection: a gain with every share at 0 still notes the missing line",
+      processID: LineInjectionProcess.id,
+      values: [
+        "siiGain": .number(1), "siiRed": .number(0), "siiGreen": .number(0),
+        "siiBlue": .number(0),
+      ], layers: ["RGB"],
+      expected: ["siiGain": RowNote(reason: "the injection needs its line layer", subject: "[SII]")]
+    ),
+    Reasons(
+      name: "combination: two slots short of two layers, every layer named",
+      processID: ChannelCombinationProcess.id,
+      values: ["rSource": .choice("Ha*OIII"), "lSource": .choice("L")], layers: ["RGB"],
+      expected: [
+        "rSource": RowNote(
+          reason: "the slot needs a layer the stack lacks", subject: "Hα + [OIII]"),
+        "lSource": RowNote(reason: "the slot needs a layer the stack lacks", subject: "L"),
+      ]),
+    Reasons(
       name: "combination: a slot reading a missing layer", processID: ChannelCombinationProcess.id,
       values: ["bSource": .choice("OIII")], layers: ["RGB", "Ha"],
       expected: [

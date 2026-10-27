@@ -1,3 +1,4 @@
+internal import FilterKit
 package import Metal
 
 /// A Studio process (design §2): a parameter schema, a GPU `render` used for both the preview
@@ -98,7 +99,8 @@ package protocol ImageProcess {
   static func hiddenParameters(_ params: ParamSet, layerIDs: Set<String>) -> Set<String>
 
   /// Why a row's value cannot run on a bundle of `layerIDs`, by parameter id: shown under the
-  /// row, never greying the process (the panel would close). None by default.
+  /// row, never greying the process (the panel would close). By default, each asked layer the
+  /// bundle lacks, on the first row about it, with the first reason the process lists.
   static func unavailableReasons(_ params: ParamSet, layerIDs: Set<String>) -> [String: RowNote]
 
   /// Every reason `unavailableReasons` may give: English keys of the catalog.
@@ -170,11 +172,19 @@ extension ImageProcess {
       }.map(\.id))
   }
 
-  /// No row reason.
+  /// Each asked layer absent from `layerIDs`, on the first row about it (`needsLayer`), with the
+  /// first catalog reason and the layer named as the panel writes it (a line's name).
   package static func unavailableReasons(_ params: ParamSet, layerIDs: Set<String>)
     -> [String: RowNote]
   {
-    [:]
+    guard let reason = unavailableReasons.first else { return [:] }
+    var notes: [String: RowNote] = [:]
+    for layer in layersAsked(params).subtracting(layerIDs) {
+      guard let spec = schema.specs.first(where: { $0.needsLayer == layer }) else { continue }
+      let name = Filter(rawValue: layer).flatMap(EmissionLine.init)?.name ?? layer
+      notes[spec.id] = RowNote(reason: reason, subject: name)
+    }
+    return notes
   }
 
   /// No row reason.

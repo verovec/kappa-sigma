@@ -25,11 +25,6 @@ package struct ParamSchema: Equatable, Sendable {
     }
   }
 
-  /// Whether the panel needs the "Avancé" disclosure.
-  package var hasAdvanced: Bool {
-    specs.contains { $0.level == .advanced }
-  }
-
   /// What makes a spec unusable: non-finite bounds, or a default the spec itself would refuse
   /// or clamp (an untouched default must be a value `set` accepts unchanged).
   package var problems: [String] {

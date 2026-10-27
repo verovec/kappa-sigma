@@ -58,7 +58,7 @@ extension AppDelegateTests {
   }
 
   @Test(
-    "launching arms the hook: the last project closed brings the welcome window back, with the retention review once"
+    "launching arms the hook: the last project closed brings back the welcome, and the review"
   )
   func testAppDelegate_willFinishLaunching_setsWelcomeHook() async {
     let hook = ProjectDocument.lastDocumentClosed

@@ -97,13 +97,22 @@ struct MainMenuTests {
     let bar = MainMenu.make(locale: Self.french)
     for (kind, item) in zip(CommandMenu.allCases, bar.items) {
       let items = item.submenu?.items.filter { !$0.isSeparatorItem } ?? []
-      let commands = CommandCatalog.commands(in: kind).filter(\.isBuilt)
+      // A submenu's own commands sit inside it (card 0144), never at the menu's top level.
+      let commands = CommandCatalog.commands(in: kind).filter { $0.isBuilt && $0.parent == nil }
       #expect(
         items.compactMap { $0.identifier?.rawValue }
           == commands.map { "fr.astrostack.command." + $0.id }, "\(kind)")
       for (menuItem, command) in zip(items, commands) {
         #expect(menuItem.keyEquivalent == command.keyEquivalent, "\(command.id)")
-        #expect(menuItem.action.map(NSStringFromSelector) == command.action, "\(command.id)")
+        // A catalog submenu holds only its catalog commands until it opens and fills itself
+        // (AppKit gives its item `submenuAction:`).
+        guard let submenu = command.submenu else {
+          #expect(menuItem.action.map(NSStringFromSelector) == command.action, "\(command.id)")
+          continue
+        }
+        #expect(
+          menuItem.submenu?.items.filter { !$0.isSeparatorItem }.compactMap(\.identifier?.rawValue)
+            == CommandCatalog.commands(in: submenu).map { "fr.astrostack.command." + $0.id })
       }
     }
   }

@@ -13,9 +13,14 @@ nonisolated package enum CommandCatalog {
     commands.first { $0.id == id }
   }
 
-  /// The commands of `menu`, in order.
+  /// The commands of `menu`, in order (those of its submenus included).
   package static func commands(in menu: CommandMenu) -> [AppCommand] {
     commands.filter { $0.menu == menu }
+  }
+
+  /// The commands `submenu` lists after the items it fills, in order.
+  package static func commands(in submenu: AppCommand.Submenu) -> [AppCommand] {
+    commands.filter { $0.parent == submenu }
   }
 
   // MARK: - Menus
@@ -43,6 +48,12 @@ nonisolated package enum CommandCatalog {
     // A project is named after its target: ⌘N raises the welcome window's naming sheet.
     AppCommand("file.newProject", "New Project…", menu: .file, action: "newProject:", key: "n"),
     AppCommand("file.open", "Open…", menu: .file, action: "openDocument:", key: "o"),
+    // AppKit's recents (card 0144): the projects are filled when the submenu opens.
+    AppCommand(
+      "file.openRecent", "Open Recent", menu: .file, action: nil, submenu: .recentProjects),
+    AppCommand(
+      "file.clearRecent", "Clear Menu", menu: .file, action: "clearRecentProjects:",
+      in: .recentProjects),
     AppCommand("file.openImage", "Open Image…", menu: .file, action: "openImage:", key: "O"),
     AppCommand("file.openRun", "Open Run…", menu: .file, action: "openRun:", key: "r"),
     AppCommand(

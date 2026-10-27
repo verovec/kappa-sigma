@@ -1377,6 +1377,22 @@
         }
       }
     },
+    "Clear Menu": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear Menu"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effacer le menu"
+          }
+        }
+      }
+    },
     "Close": {
       "localizations": {
         "en": {
@@ -4093,6 +4109,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ouvrir une image…"
+          }
+        }
+      }
+    },
+    "Open Recent": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Recent"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir récent"
           }
         }
       }

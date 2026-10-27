@@ -26,6 +26,14 @@ struct LinesHeaderTests {
     #expect(Filter.narrowband.count <= LineKernels.maxLines)
   }
 
+  @Test("more lines than the slots are refused by name before any encoder, never truncated")
+  func testCheckSlots() throws {
+    try LineKernels.checkSlots(LineKernels.maxLines)
+    #expect(throws: ProcessError.invalidParameter("more than \(LineKernels.maxLines) lines")) {
+      try LineKernels.checkSlots(LineKernels.maxLines + 1)
+    }
+  }
+
   /// One mirror: the header's struct name, the Swift fields in order with their float counts.
   static let mirrors: [(name: String, fields: [(String, Int)], stride: Int)] = [
     (

@@ -1,3 +1,4 @@
+internal import FilterKit
 package import Metal
 
 /// Builds the Studio's working RGB image from the bundle layers.
@@ -63,10 +64,13 @@ package struct ChannelCombinationProcess: ImageProcess {
       device: device, file: "Combination.metal", function: "combineChannels")
   }
 
+  /// The source parameter of each slot, R, G, B, then L.
+  package static let slotSources = ["rSource", "gSource", "bSource", "lSource"]
+
   /// The layers `params` read, in slot order (R, G, B, L).
   package static func layersNeeded(params: ParamSet) -> [String] {
     var needed: [String] = []
-    for slot in ["rSource", "gSource", "bSource", "lSource"] {
+    for slot in slotSources {
       for layer in layers(of: params.choice(slot)) where !needed.contains(layer) {
         needed.append(layer)
       }
@@ -95,6 +99,30 @@ package struct ChannelCombinationProcess: ImageProcess {
   /// Its input only sets the size.
   package static let replacesInput = true
 
+  /// The reason a slot's row carries while it reads a layer the stack lacks (card 0135).
+  package static let missingLayerReason = "the slot needs a layer the stack lacks"
+  package static let unavailableReasons = [missingLayerReason]
+
+  /// The layers the slots name, whatever the bundle holds.
+  package static func layersAsked(_ params: ParamSet) -> Set<String> {
+    Set(layersNeeded(params: params))
+  }
+
+  /// Each slot whose source names a layer outside `layerIDs`, with that layer as the panel
+  /// writes it (a line's name; another id as is, until 0139 words every layer).
+  package static func unavailableReasons(_ params: ParamSet, layerIDs: Set<String>)
+    -> [String: RowNote]
+  {
+    var notes: [String: RowNote] = [:]
+    for slot in slotSources {
+      let missing = layers(of: params.choice(slot)).filter { !layerIDs.contains($0) }
+      guard !missing.isEmpty else { continue }
+      let names = missing.map { Filter(rawValue: $0).flatMap(EmissionLine.init)?.name ?? $0 }
+      notes[slot] = RowNote(reason: missingLayerReason, subject: names.joined(separator: " + "))
+    }
+    return notes
+  }
+
   /// Why `params` cannot run with only `present` layers ("HOO needs the OIII layer"), or `nil`.
   package static func unavailableReason(params: ParamSet, present: Set<String>) -> String? {
     guard let missing = layersNeeded(params: params).first(where: { !present.contains($0) }) else {
@@ -109,7 +137,7 @@ package struct ChannelCombinationProcess: ImageProcess {
   ) throws {
     guard output.planes.count == 3 else { throw ProcessError.sizeMismatch }
     let size = (width: output.width, height: output.height)
-    let slots = try ["rSource", "gSource", "bSource"].map {
+    let slots = try Self.slotSources.prefix(3).map {
       try planes(params.choice($0), context, size: size)
     }
     let luminance = try planes(params.choice("lSource"), context, size: size)

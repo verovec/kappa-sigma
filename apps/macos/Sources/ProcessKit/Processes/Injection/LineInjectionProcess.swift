@@ -56,6 +56,28 @@ package struct LineInjectionProcess: ImageProcess {
       .intersection(layerIDs)
   }
 
+  /// The reason an injecting line's rows carry while its layer is absent (card 0135).
+  package static let lineLayerReason = "the injection needs its line layer"
+  package static let unavailableReasons = [lineLayerReason]
+
+  /// The lines the values inject: what the panel keeps on screen even without the layer.
+  package static func layersAsked(_ params: ParamSet) -> Set<String> {
+    Set(EmissionLine.allCases.filter { injects($0, params: params) }.map(\.layerID))
+  }
+
+  /// Each injecting line without its layer, on its gain row, named as the panel writes it.
+  package static func unavailableReasons(_ params: ParamSet, layerIDs: Set<String>)
+    -> [String: RowNote]
+  {
+    let missing = EmissionLine.allCases.filter {
+      injects($0, params: params) && !layerIDs.contains($0.layerID)
+    }
+    return Dictionary(
+      uniqueKeysWithValues: missing.map {
+        ($0.id("Gain"), RowNote(reason: lineLayerReason, subject: $0.name))
+      })
+  }
+
   /// Whether `line` subtracts its continuum with `params`: k as the kernel reads it (Float).
   package static func subtracts(_ line: EmissionLine, params: ParamSet) -> Bool {
     Float(params.number(line.id("ContinuumK"))) != 0

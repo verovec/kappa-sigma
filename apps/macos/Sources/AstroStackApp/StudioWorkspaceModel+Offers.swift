@@ -72,6 +72,8 @@ extension StudioWorkspaceModel {
   /// histogram of every process that keeps the grid, card 0128) and, for the handles, statistics.
   func refresh(_ panel: ProcessPanelModel) {
     panel.suggestions = offers(for: panel.type, params: panel.params)
+    panel.layerIDs = studio.session.layerIDs()
+    refreshRowNotes(panel)
     panel.headSize = (head.width, head.height)
     // A head already solved says so on the plate-solve panel (card 0130); a new solve stays a choice.
     panel.solved =
@@ -84,6 +86,17 @@ extension StudioWorkspaceModel {
     panel.sample = sampleOfHead()
     guard panel.type is any HistogramHandled.Type else { return }
     panel.headStats = studio.session.stepStats
+  }
+
+  /// The rows whose value cannot run on this stack, with why (card 0135): from the values and
+  /// the layers, each time either moves.
+  func refreshRowNotes(_ panel: ProcessPanelModel) {
+    // The same layers the rows hide on: a panel the workspace has not opened carries no note.
+    guard let layerIDs = panel.layerIDs else {
+      panel.rowNotes = [:]
+      return
+    }
+    panel.rowNotes = panel.type.unavailableReasons(panel.params, layerIDs: layerIDs)
   }
 
   /// The head's sample, measured once per head: opening another panel or a refused move does

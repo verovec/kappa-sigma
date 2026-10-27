@@ -15,9 +15,14 @@ package struct ParamSchema: Equatable, Sendable {
   }
 
   /// Display rule (design §2): `simple` parameters always; `advanced` ones when the disclosure
-  /// is open or a profile promotes them — schema order kept.
-  package func visible(disclosed: Bool, promoted: Set<String> = []) -> [ParamSpec] {
-    specs.filter { $0.level == .simple || disclosed || promoted.contains($0.id) }
+  /// is open or a profile promotes them — schema order kept; never the ids in `hidden` (a line's
+  /// rows while its layer is absent, card 0135).
+  package func visible(disclosed: Bool, promoted: Set<String> = [], hidden: Set<String> = [])
+    -> [ParamSpec]
+  {
+    specs.filter {
+      !hidden.contains($0.id) && ($0.level == .simple || disclosed || promoted.contains($0.id))
+    }
   }
 
   /// Whether the panel needs the "Avancé" disclosure.

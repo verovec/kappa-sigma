@@ -47,7 +47,7 @@ package protocol ImageProcess {
   static func outputChannels(input: Int) -> Int
 
   /// Advanced parameters `params` makes relevant enough to show without the disclosure
-  /// (`ParamSchema.visible(disclosed:promoted:)`); none by default.
+  /// (`ParamSchema.visible(disclosed:promoted:hidden:)`); none by default.
   static func promoted(_ params: ParamSet) -> Set<String>
 
   /// The arrow step of number parameters that need a finer one than the panel's default (a
@@ -86,6 +86,23 @@ package protocol ImageProcess {
   /// True when its image is made of `layersMerged` alone, its input only setting the size
   /// (channel combination): what the image held before is gone.
   static var replacesInput: Bool { get }
+
+  /// The bundle layers `params` ask for, whatever the bundle holds (card 0135): the lines a
+  /// screen enables, the lines a gain injects, the sources a slot names. None by default.
+  static func layersAsked(_ params: ParamSet) -> Set<String>
+
+  /// The parameters the panel hides for a bundle of `layerIDs` with `params` (card 0135): a row
+  /// about an absent layer, unless the values still ask for that layer (`layersAsked`) — then
+  /// the row stays, with its reason, so the value can be switched off. R2 holds structurally: a
+  /// hidden row is one `render` does not read.
+  static func hiddenParameters(_ params: ParamSet, layerIDs: Set<String>) -> Set<String>
+
+  /// Why a row's value cannot run on a bundle of `layerIDs`, by parameter id: shown under the
+  /// row, never greying the process (the panel would close). None by default.
+  static func unavailableReasons(_ params: ParamSet, layerIDs: Set<String>) -> [String: RowNote]
+
+  /// Every reason `unavailableReasons` may give: English keys of the catalog.
+  static var unavailableReasons: [String] { get }
 }
 
 extension ImageProcess {
@@ -139,6 +156,29 @@ extension ImageProcess {
 
   /// Its input goes into its image.
   package static var replacesInput: Bool { false }
+
+  /// Nothing asked for beyond the input.
+  package static func layersAsked(_ params: ParamSet) -> Set<String> { [] }
+
+  /// A row about an absent layer hides, unless the values ask for that layer.
+  package static func hiddenParameters(_ params: ParamSet, layerIDs: Set<String>) -> Set<String> {
+    guard schema.specs.contains(where: { $0.needsLayer != nil }) else { return [] }
+    let asked = layersAsked(params)
+    return Set(
+      schema.specs.filter { spec in
+        spec.needsLayer.map { !layerIDs.contains($0) && !asked.contains($0) } ?? false
+      }.map(\.id))
+  }
+
+  /// No row reason.
+  package static func unavailableReasons(_ params: ParamSet, layerIDs: Set<String>)
+    -> [String: RowNote]
+  {
+    [:]
+  }
+
+  /// No row reason.
+  package static var unavailableReasons: [String] { [] }
 }
 
 /// Where a process belongs in a pipeline.

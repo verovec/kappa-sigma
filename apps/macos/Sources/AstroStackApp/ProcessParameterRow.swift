@@ -14,6 +14,15 @@ struct ProcessParameterRow: View {
   var body: some View {
     VStack(alignment: .leading, spacing: DesignMetrics.spacingXS) {
       control
+      // Why this value cannot run on the stack (card 0135): said, never enforced (R2).
+      if let note = model.rowNotes[spec.id] {
+        Text(
+          verbatim: ProcessPanelModel.words(
+            reason: note.reason, subject: note.subject, locale: locale)
+        )
+        .font(.caption)
+        .foregroundStyle(DesignColor.textSecondary.color)
+      }
       ForEach(Array(suggestions.enumerated()), id: \.offset) { offset, suggestion in
         Button {
           model.take(suggestion)

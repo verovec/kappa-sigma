@@ -315,6 +315,18 @@ To make a process branchable: declare `static let branchable = BranchUse.anyLaye
 `.colourLayers`) — linear, same size, its input alone — and add it to the audit table. A process
 that reads bundle layers declares them in `layersRead`, or its steps never go stale.
 
+- **Layer-aware rows** (card 0135): a spec may declare `needsLayer` (the line specs do); the
+  panel hides it while that layer is absent from the bundle AND the values do not ask for it
+  (`ImageProcess.hiddenParameters`, default rule over `layersAsked(_:)` — the layers the VALUES
+  name, whatever the bundle holds; a screen on by default on a stack without its line stays, with
+  its note, so it can be switched off). A line process implements `layersAsked` beside
+  `layersRead` (the latter may add bundle-derived layers, a continuum reference, which must not
+  keep a row on screen). A row's value that
+  cannot run says why under the row: `unavailableReasons(_:layerIDs:)` → `[paramID: RowNote]`
+  (reason = a catalog key listed in the static `unavailableReasons`, subject = the layer), set
+  by the workspace on open, on `headChanged` and on every value change. The process is never
+  greyed for a value (the catalogue greys on roles only; greying would close its panel).
+
 - **What « Combined » holds** (card 0131): `StudioSession.combinedLayers(after:layerIDs:registry:)` folds the main steps
   from the base layer — each step's `ImageProcess.layersMerged(_:layerIDs:)` is added, or replaces
   the set when `replacesInput` (channel combination). Merged ≠ read: a continuum reference, or a

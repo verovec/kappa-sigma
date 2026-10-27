@@ -56,13 +56,17 @@ extension StudioWorkspaceModel {
     return .app("Choose “\(title)” first.", locale: locale)
   }
 
+  /// Why the open panel's tool may not start: `toolRefusal`, else a choice still to make (card
+  /// 0140) — refused before anything runs.
+  private var runRefusal: LocalizedStringResource? { toolRefusal ?? unchosenRefusal() }
+
   /// The tool's run: its step recorded on the head it started from, never on another; whether
   /// it was.
   @discardableResult
   package func runTool() async -> Bool {
     guard let panel else { return false }
-    guard let tool = tools[panel.type.id], toolRefusal == nil else {
-      failure = toolRefusal ?? UserFacingError(StudioError.needsTool(panel.type.id)).message
+    guard let tool = tools[panel.type.id], runRefusal == nil else {
+      failure = runRefusal ?? UserFacingError(StudioError.needsTool(panel.type.id)).message
       return false
     }
     var recorded = false
@@ -71,9 +75,9 @@ extension StudioWorkspaceModel {
     let (id, params, head) = (panel.type.id, panel.params, studio.steps.last?.file)
     toolRun = ToolProgress(line: "", percent: nil)
     defer { toolRun = nil }
-    // Refused before the tool runs (an engine's tool missing, card 0092; a choice still to make,
-    // 0140): nothing else runs. A mask or a pipeline run started while the probe ran is refused too.
-    if let reason = unchosenRefusal() ?? (await preflight(id, params: params)) ?? toolRefusal {
+    // Refused before the tool runs (an engine's tool missing, card 0092): nothing else runs.
+    // A mask or a pipeline run started while the probe ran is refused too.
+    if let reason = await preflight(id, params: params) ?? toolRefusal {
       failure = reason
       return false
     }

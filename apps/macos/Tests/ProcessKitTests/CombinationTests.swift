@@ -148,4 +148,47 @@ struct CombinationTests {
       _ = try Self.render(params, layers: layers, device: device)
     }
   }
+
+  /// The combination a bundle opens on (card 0138): the palette its layers spell, else a grey
+  /// of its first layer — an OSC bundle gets exactly the schema's defaults.
+  struct Initial: CustomTestStringConvertible, Sendable {
+    let name: String
+    let layers: [String: Int]
+    let sources: [String]
+    var testDescription: String { name }
+  }
+
+  static let initials: [Initial] = [
+    Initial(
+      name: "OSC → natural", layers: ["RGB": 3], sources: ["RGB.r", "RGB.g", "RGB.b", "none"]),
+    Initial(
+      name: "OSC + Hα + OIII → natural", layers: ["RGB": 3, "Ha": 1, "OIII": 1],
+      sources: ["RGB.r", "RGB.g", "RGB.b", "none"]),
+    Initial(
+      name: "LRGB → lrgb", layers: ["L": 1, "R": 1, "G": 1, "B": 1], sources: ["R", "G", "B", "L"]),
+    Initial(
+      name: "RGB → rgb, no luminance", layers: ["R": 1, "G": 1, "B": 1],
+      sources: ["R", "G", "B", "none"]),
+    Initial(
+      name: "SHO → sho", layers: ["SII": 1, "Ha": 1, "OIII": 1],
+      sources: ["SII", "Ha", "OIII", "none"]),
+    Initial(
+      name: "HOO → hoo", layers: ["Ha": 1, "OIII": 1], sources: ["Ha", "OIII", "OIII", "none"]),
+    Initial(name: "L + Hα → grey L", layers: ["L": 1, "Ha": 1], sources: ["L", "L", "L", "none"]),
+    Initial(name: "Hα → grey Hα", layers: ["Ha": 1], sources: ["Ha", "Ha", "Ha", "none"]),
+  ]
+
+  @Test("testInitialParams", arguments: initials)
+  func testInitialParams(row: Initial) {
+    let params = ChannelCombinationProcess.initialParams(
+      layerIDs: Set(row.layers.keys), planes: row.layers)
+    #expect(ChannelCombinationProcess.slotSources.map { params.choice($0) } == row.sources)
+  }
+
+  @Test("testInitialParams_OSC_isTheSchemaDefault: step 0 of an OSC stack keeps its bytes")
+  func testInitialParams_OSC_isTheSchemaDefault() {
+    let osc = ChannelCombinationProcess.initialParams(
+      layerIDs: ["RGB", "Ha", "OIII"], planes: ["RGB": 3])
+    #expect(osc == ParamSet(schema: ChannelCombinationProcess.schema))
+  }
 }

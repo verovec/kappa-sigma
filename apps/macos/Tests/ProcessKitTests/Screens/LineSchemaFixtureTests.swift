@@ -45,6 +45,8 @@ struct LineSchemaFixtureTests {
     case .choice(let value, let options): "choice \(value) of \(options.joined(separator: ","))"
     case .points(let points, let maxCount): "points \(points.count) max \(maxCount)"
     case .text(let value, let maxLength): "text \(value) max \(maxLength)"
+    case .layer(let value, let allowsNone, let allowsProduct):
+      "layer \(value) none:\(allowsNone) product:\(allowsProduct)"
     }
   }
 }

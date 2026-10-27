@@ -73,6 +73,8 @@ extension StudioWorkspaceModel {
   func refresh(_ panel: ProcessPanelModel) {
     panel.suggestions = offers(for: panel.type, params: panel.params)
     let layerIDs = studio.session.layerIDs()
+    let layerPlanes = studio.session.bundle.layers.mapValues { $0.planes.count }
+    if panel.layerPlanes != layerPlanes { panel.layerPlanes = layerPlanes }
     if panel.layerIDs != layerIDs { panel.layerIDs = layerIDs }
     panel.headSize = (head.width, head.height)
     // A head already solved says so on the plate-solve panel (card 0130); a new solve stays a choice.

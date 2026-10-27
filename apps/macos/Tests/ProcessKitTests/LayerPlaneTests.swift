@@ -52,4 +52,44 @@ struct LayerPlaneTests {
       try LayerPlane("R").texture(in: layers, width: 8, height: 2)
     }
   }
+
+  /// The tokens a bundle offers a layer parameter (card 0138): `none` first when allowed, the
+  /// colour layer first then the canonical filter order, a plane per 3-plane layer, and the
+  /// product of every pair of lines present when allowed.
+  struct Options: CustomTestStringConvertible, Sendable {
+    let name: String
+    let layers: [String: Int]
+    var allowsNone = false
+    var allowsProduct = true
+    let expected: [String]
+    var testDescription: String { name }
+  }
+
+  static let options: [Options] = [
+    Options(
+      name: "OSC + Hα + OIII, with none", layers: ["RGB": 3, "Ha": 1, "OIII": 1], allowsNone: true,
+      expected: ["none", "RGB.r", "RGB.g", "RGB.b", "Ha", "OIII", "Ha*OIII"]),
+    Options(
+      name: "LRGB", layers: ["L": 1, "R": 1, "G": 1, "B": 1], expected: ["L", "R", "G", "B"]),
+    Options(
+      name: "SHO", layers: ["SII": 1, "Ha": 1, "OIII": 1],
+      expected: ["Ha", "OIII", "SII", "Ha*OIII", "Ha*SII", "OIII*SII"]),
+    Options(name: "L only", layers: ["L": 1], expected: ["L"]),
+    Options(
+      name: "OSC + three lines, products refused",
+      layers: ["RGB": 3, "Ha": 1, "OIII": 1, "SII": 1], allowsProduct: false,
+      expected: ["RGB.r", "RGB.g", "RGB.b", "Ha", "OIII", "SII"]),
+    Options(
+      name: "a custom name sorts after the catalogue and makes no product",
+      layers: ["RGB": 3, "NII-custom": 1, "Ha": 1],
+      expected: ["RGB.r", "RGB.g", "RGB.b", "Ha", "NII-custom"]),
+  ]
+
+  @Test("testOptions", arguments: options)
+  func testOptions(row: Options) {
+    let got = LayerPlane.options(
+      layerIDs: Set(row.layers.keys), planes: row.layers, allowsNone: row.allowsNone,
+      allowsProduct: row.allowsProduct)
+    #expect(got == row.expected)
+  }
 }

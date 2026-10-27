@@ -1,3 +1,4 @@
+internal import FilterKit
 package import Metal
 
 /// One plane of a bundle layer, named as panels and the bundle name it: `R` (a mono layer's
@@ -47,5 +48,44 @@ package struct LayerPlane: Equatable, Sendable {
       token == layer || channels.count >= 3
     else { return nil }
     return channels[plane]
+  }
+
+  // MARK: - Tokens a layer parameter takes (card 0138)
+
+  /// Whether `token` is a layer token by grammar — `none` (when allowed), `<id>`, `<id>.r|g|b`,
+  /// or `<a>*<b>` of two such (when allowed), ids non-empty without spaces, dots or stars — the
+  /// bundle being the only judge of whether the layer exists.
+  package static func isWellFormed(_ token: String, allowsNone: Bool, allowsProduct: Bool)
+    -> Bool
+  {
+    if token == "none" { return allowsNone }
+    let parts = token.split(separator: "*", omittingEmptySubsequences: false)
+    guard parts.count == 1 || (parts.count == 2 && allowsProduct) else { return false }
+    return parts.allSatisfy { part in
+      let layer = Self(String(part)).layer
+      return !layer.isEmpty && layer.allSatisfy { !$0.isWhitespace && $0 != "." && $0 != "*" }
+    }
+  }
+
+  /// The tokens a bundle of `layerIDs` (with `planes` per layer, 1 when unsaid) offers: `none`
+  /// first when allowed; the colour layer first, then the canonical filter order; a plane per
+  /// 3-plane layer; and, when allowed, the product of every pair of lines present.
+  package static func options(
+    layerIDs: Set<String>, planes: [String: Int], allowsNone: Bool, allowsProduct: Bool
+  ) -> [String] {
+    let ids = layerIDs.sorted { lhs, rhs in
+      if lhs == Filter.color || rhs == Filter.color { return lhs == Filter.color }
+      return Filter.less(lhs, rhs)
+    }
+    var options = allowsNone ? ["none"] : []
+    for id in ids {
+      options += planes[id] == 3 ? ["r", "g", "b"].map { "\(id).\($0)" } : [id]
+    }
+    guard allowsProduct else { return options }
+    let lines = ids.filter(Filter.isNarrowband)
+    for (index, first) in lines.enumerated() {
+      options += lines[(index + 1)...].map { "\(first)*\($0)" }
+    }
+    return options
   }
 }

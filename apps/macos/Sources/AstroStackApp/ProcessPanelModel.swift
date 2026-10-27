@@ -45,6 +45,8 @@ package final class ProcessPanelModel {
   package var layerIDs: Set<String>? {
     didSet { refreshLayerRows() }
   }
+  /// The planes of each bundle layer (card 0138), set with `layerIDs`; 1 for a layer unsaid.
+  package var layerPlanes: [String: Int] = [:]
   /// Why a row's value cannot run on this stack, by parameter id (card 0135).
   ///
   /// Shown under the row, never greying the process; kept with the values and the layers.
@@ -92,6 +94,17 @@ package final class ProcessPanelModel {
     if hiddenNow != hidden { hidden = hiddenNow }
     let notesNow = layerIDs.map { type.unavailableReasons(params, layerIDs: $0) } ?? [:]
     if notesNow != rowNotes { rowNotes = notesNow }
+  }
+
+  /// The tokens the layer parameter `id` lists (card 0138): the bundle's, and the value already
+  /// chosen when the bundle does not offer it (R2: shown as is, never switched away from).
+  package func layerOptions(for id: String, allowsNone: Bool, allowsProduct: Bool) -> [String] {
+    var options = LayerPlane.options(
+      layerIDs: layerIDs ?? [], planes: layerPlanes, allowsNone: allowsNone,
+      allowsProduct: allowsProduct)
+    let current = params.choice(id)
+    if !options.contains(current) { options.insert(current, at: 0) }
+    return options
   }
 
   /// Whether the « Advanced » disclosure opens onto anything: an advanced row that is not hidden.

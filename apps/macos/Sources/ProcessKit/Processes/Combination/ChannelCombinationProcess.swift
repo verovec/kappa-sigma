@@ -1,3 +1,4 @@
+internal import FilterKit
 package import Metal
 
 /// Builds the Studio's working RGB image from the bundle layers.
@@ -13,13 +14,6 @@ package struct ChannelCombinationProcess: ImageProcess {
   package static let stage = ProcessStage.linear
   package static let previewExactOnlyAt1to1 = false
 
-  /// Layer planes a colour slot can take; `A*B` is √(A·B).
-  package static let colorSources = [
-    "RGB.r", "RGB.g", "RGB.b", "R", "G", "B", "L", "Ha", "OIII", "SII", "Ha*OIII",
-  ]
-  /// What the L slot can take.
-  package static let luminanceSources = ["none", "L", "Ha", "R", "G", "B"]
-
   package static let schema: ParamSchema = {
     // No "palette" parameter: a palette only fills the sources (`Palette.apply(to:)`), and the
     // panel names the one the sources match (`Palette.matching`).
@@ -28,8 +22,10 @@ package struct ChannelCombinationProcess: ImageProcess {
       ("r", "Red", "RGB.r"), ("g", "Green", "RGB.g"), ("b", "Blue", "RGB.b"),
     ] {
       specs += [
+        // A colour slot takes any plane the bundle holds, or √(A·B) of two lines (card 0138).
         ParamSpec(
-          id: slot + "Source", title: name, level: .simple, choice: source, of: colorSources),
+          id: slot + "Source", title: name, level: .simple, layer: source, allowsNone: false,
+          allowsProduct: true),
         ParamSpec(
           id: slot + "Weight", title: name + " weight", unit: .none, level: .advanced, number: 1,
           in: 0...4),
@@ -40,7 +36,8 @@ package struct ChannelCombinationProcess: ImageProcess {
     }
     specs += [
       ParamSpec(
-        id: "lSource", title: "Luminance", level: .simple, choice: "none", of: luminanceSources),
+        id: "lSource", title: "Luminance", level: .simple, layer: "none", allowsNone: true,
+        allowsProduct: false),
       ParamSpec(
         id: "lWeight", title: "L weight", unit: .none, level: .advanced, number: 1, in: 0...4),
       ParamSpec(
@@ -65,6 +62,37 @@ package struct ChannelCombinationProcess: ImageProcess {
 
   /// The source parameter of each slot, R, G, B, then L.
   package static let slotSources = ["rSource", "gSource", "bSource", "lSource"]
+
+  /// The combination a bundle opens on (card 0138): the palette its layers spell.
+  ///
+  /// Natural on the colour layer, lrgb / rgb on R, G, B (with L when present), sho on the three
+  /// lines, hoo on Hα + OIII — else a grey of its first layer. A colour bundle gets exactly the
+  /// schema's defaults: step 0 of an OSC stack keeps its bytes.
+  package static func initialParams(layerIDs: Set<String>, planes: [String: Int]) -> ParamSet {
+    var params = ParamSet(schema: schema)
+    let ids = Set(layerIDs.compactMap(Filter.init(rawValue:)))
+    let sources: [String]
+    if layerIDs.contains(Filter.color) {
+      return params
+    } else if ids.isSuperset(of: [.red, .green, .blue]) {
+      sources = ids.contains(.luminance) ? Palette.lrgb.sources : ["R", "G", "B", "none"]
+    } else if ids.isSuperset(of: [.sulfurII, .hydrogenAlpha, .oxygenIII]) {
+      sources = Palette.sho.sources
+    } else if ids.isSuperset(of: [.hydrogenAlpha, .oxygenIII]) {
+      sources = Palette.hoo.sources
+    } else if let first = layerIDs.sorted(by: Filter.less).first {
+      let grey =
+        planes[first] == 3 ? ["r", "g", "b"].map { "\(first).\($0)" } : [first, first, first]
+      sources = grey + ["none"]
+    } else {
+      return params
+    }
+    for (slot, source) in zip(slotSources, sources) {
+      // Every source above is a layer token by construction: `set` cannot refuse it.
+      try? params.set(slot, .choice(source))
+    }
+    return params
+  }
 
   /// The layers `params` read, in slot order (R, G, B, L).
   package static func layersNeeded(params: ParamSet) -> [String] {

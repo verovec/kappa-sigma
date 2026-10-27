@@ -10,7 +10,11 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   `render(_:stats:into:context:)`, `suggestions(stats:)`. R2: `render` reads the image, the
   bundle `LayerStats` and `params`, never measures the image to set itself; measurements return
   as `Suggestion`s.
-- `ParamSchema` / `ParamSpec` (number with bounds, flag, choice, curve `points` (card 0053: 2 to
+- `ParamSchema` / `ParamSpec` (number with bounds, flag, choice, `layer` (card 0138: a bundle
+  layer's plane as a token — `none` when allowed, `<id>`, `<id>.r|g|b`, `<a>*<b>` when allowed —
+  well-formed by `LayerPlane.isWellFormed`, a `.choice` on the wire, the bundle naming the options
+  through `LayerPlane.options(layerIDs:planes:…)`; a token naming an absent layer is accepted and
+  fails at render with `missingLayer`), curve `points` (card 0053: 2 to
   `maxCount` `CurvePoint`s, clamped into [0, 1], sorted, one per x; JSON `[[x, y], …]`); `ParamUnit` none/px/sigma/opacity;
   `ParamLevel` simple/advanced with the display rule `visible(disclosed:promoted:hidden:)`), `ParamSet`
   (schema order, clamped, NaN refused, encoded as ordered JSON; no decoder: stored values come

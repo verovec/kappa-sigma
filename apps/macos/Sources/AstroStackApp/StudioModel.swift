@@ -74,7 +74,11 @@ package final class StudioModel {
       ?? store.addImage(stackID: stackID, role: Self.imageRole).id
     head = history.current
     if history.steps.isEmpty && !history.canRedo {
-      let params = combination ?? ParamSet(schema: ChannelCombinationProcess.schema)
+      // The palette the bundle's layers spell (card 0138): the schema's defaults on OSC.
+      let params =
+        combination
+        ?? ChannelCombinationProcess.initialParams(
+          layerIDs: Set(bundle.layers.keys), planes: bundle.layers.mapValues { $0.planes.count })
       try apply(ChannelCombinationProcess.id, params: params)
     }
     refresh()

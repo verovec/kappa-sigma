@@ -45,11 +45,13 @@ extension StudioWorkspaceModel {
     return nil
   }
 
-  /// Why the open panel's Apply waits (card 0140): a choice still to make, by its title in
-  /// `locale` (the user's languages when nil) — never one made for the user.
-  package func unchosenRefusal(locale: Locale? = nil) -> LocalizedStringResource? {
-    guard let panel,
-      let id = panel.type.unchosen(panel.params).first,
+  /// Why the Apply of `panel` waits: a choice still to make (card 0140).
+  ///
+  /// Named by its title in `locale` (the user's languages when nil); never made for the user.
+  package func unchosenRefusal(_ panel: ProcessPanelModel, locale: Locale? = nil)
+    -> LocalizedStringResource?
+  {
+    guard let id = panel.type.unchosen(panel.params).first,
       let spec = panel.type.schema.spec(id)
     else { return nil }
     let title = String(localized: ProcessKitResources.title(spec.title, locale: locale))
@@ -58,7 +60,9 @@ extension StudioWorkspaceModel {
 
   /// Why the open panel's tool may not start: `toolRefusal`, else a choice still to make (card
   /// 0140) — refused before anything runs.
-  private var runRefusal: LocalizedStringResource? { toolRefusal ?? unchosenRefusal() }
+  private var runRefusal: LocalizedStringResource? {
+    toolRefusal ?? panel.flatMap { unchosenRefusal($0) }
+  }
 
   /// The tool's run: its step recorded on the head it started from, never on another; whether
   /// it was.

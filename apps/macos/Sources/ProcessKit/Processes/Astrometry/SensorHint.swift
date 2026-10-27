@@ -16,12 +16,23 @@ package struct SensorHint: Equatable, Sendable {
   }
 
   /// The hint for `instrume`, matched on a model token (spaces, dashes and case ignored) that no
-  /// digit follows (« ASI2600MC » is not « ASI2600MC2 »).
+  /// digit follows directly (« ASI2600MC » is not « ASI2600MC2 », but is « QHY268C-3a9f »).
   package static func suggest(instrume: String) -> Self? {
-    let text = instrume.uppercased().filter { !" -_".contains($0) }
+    // The text without separators, and where one stood before each kept character.
+    var text: [Character] = []
+    var afterSeparator: [Bool] = []
+    for character in instrume.uppercased() {
+      if " -_".contains(character) {
+        if !afterSeparator.isEmpty { afterSeparator[afterSeparator.count - 1] = true }
+      } else {
+        text.append(character)
+        afterSeparator.append(false)
+      }
+    }
     return table.first { row in
-      text.ranges(of: row.model).contains { range in
-        text[range.upperBound...].first.map { !$0.isNumber } ?? true
+      text.ranges(of: Array(row.model)).contains { range in
+        let end = range.upperBound
+        return end == text.count || !text[end].isNumber || afterSeparator[end - 1]
       }
     }?.hint
   }

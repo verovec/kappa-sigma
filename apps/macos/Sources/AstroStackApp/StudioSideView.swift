@@ -55,7 +55,7 @@ package struct StudioSideView: View {
   /// greyed with the reason, not refused after.
   private func blocked(_ panel: ProcessPanelModel) -> LocalizedStringResource? {
     guard panel.type.runsTool(panel.params) else { return nil }
-    return model.toolRefusal ?? model.unchosenRefusal(locale: locale)
+    return model.toolRefusal ?? model.unchosenRefusal(panel, locale: locale)
   }
 
   /// What the panel's process asks for below its parameters: the mask row, or its own rows —

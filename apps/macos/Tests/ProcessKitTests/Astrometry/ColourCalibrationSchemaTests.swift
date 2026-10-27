@@ -36,6 +36,10 @@ struct ColourCalibrationSchemaTests {
         ["runs a host tool: apply it in the Studio"]
       ])
     #expect(try pipeline(false).stepProblems(registry: registry, present: [.color]) == [[]])
+    // Card 0140: where a batch tool would run it, an unchosen sensor is refused up front.
+    #expect(
+      try pipeline(true).stepProblems(registry: registry, batch: [type.id], present: [.color])
+        == [["choose sensor first"]])
   }
 
   @Test(

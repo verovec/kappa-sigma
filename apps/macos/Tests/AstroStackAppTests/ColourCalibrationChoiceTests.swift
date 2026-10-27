@@ -21,6 +21,10 @@ struct ColourCalibrationChoiceTests {
     "log: White References", "log: Average Spiral Galaxy",
   ]
 
+  static func panel(_ workspace: StudioWorkspaceModel) throws -> ProcessPanelModel {
+    try #require(workspace.panel)
+  }
+
   static func english(_ resource: LocalizedStringResource?) -> String? {
     resource.map { String(localized: $0) }
   }
@@ -34,20 +38,22 @@ struct ColourCalibrationChoiceTests {
     workspace.choose(ColourCalibrationProcess.id)
     let en = Locale(identifier: "en")
     #expect(
-      Self.english(workspace.unchosenRefusal(locale: en)) == "Choose “Sensor (SPCC)” first.")
+      Self.english(workspace.unchosenRefusal(try Self.panel(workspace), locale: en))
+        == "Choose “Sensor (SPCC)” first.")
     #expect(
-      Self.english(workspace.unchosenRefusal(locale: Locale(identifier: "fr")))
+      Self.english(
+        workspace.unchosenRefusal(try Self.panel(workspace), locale: Locale(identifier: "fr")))
         == "Choisissez d’abord « Capteur (SPCC) ».")
     #expect(await workspace.runTool() == false)
-    #expect(workspace.failure == workspace.unchosenRefusal())
+    #expect(workspace.failure == workspace.unchosenRefusal(try Self.panel(workspace)))
     #expect(workspace.studio.steps.count == steps && opened.siril.calls.isEmpty)
     let panel = try #require(workspace.panel)
     panel.set("sensor", .choice("Sony IMX571"))
     #expect(
-      Self.english(workspace.unchosenRefusal(locale: en))
+      Self.english(workspace.unchosenRefusal(try Self.panel(workspace), locale: en))
         == "Choose “Filter on the camera (SPCC)” first.")
     panel.set("method", .choice("pcc"))
-    #expect(workspace.unchosenRefusal() == nil, "PCC needs no sensor")
+    #expect(workspace.unchosenRefusal(try Self.panel(workspace)) == nil, "PCC needs no sensor")
   }
 
   @Test("the header's camera is offered on the sensor, never set", .scratchDirectory)
@@ -73,7 +79,8 @@ struct ColourCalibrationChoiceTests {
     let panel = try #require(workspace.panel)
     panel.set("camera", .choice("mono"))
     #expect(
-      Self.english(workspace.unchosenRefusal(locale: Locale(identifier: "en")))
+      Self.english(
+        workspace.unchosenRefusal(try Self.panel(workspace), locale: Locale(identifier: "en")))
         == "Choose “Mono sensor (SPCC)” first.")
     for (id, name) in [
       ("monoSensor", "ZWO ASI1600MM"), ("rFilter", "Baader R"), ("gFilter", "Baader G"),
@@ -81,7 +88,7 @@ struct ColourCalibrationChoiceTests {
     ] {
       panel.set(id, .choice(name))
     }
-    #expect(workspace.unchosenRefusal() == nil)
+    #expect(workspace.unchosenRefusal(try Self.panel(workspace)) == nil)
     #expect(await workspace.runTool())
     let line: String =
       #"spcc "-monosensor=ZWO ASI1600MM" "-rfilter=Baader R" "-gfilter=Baader G""#

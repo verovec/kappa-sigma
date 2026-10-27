@@ -153,18 +153,6 @@ package struct ChannelCombinationProcess: ImageProcess {
     Palette.available(planes: planes)
   }
 
-  /// Each slot whose row carries a note (`unavailableReasons`: a layer the stack lacks): its
-  /// value, greyed with the same reason (card 0139) — one rule for the note and the greying.
-  package static func unavailableOptions(_ params: ParamSet, layerIDs: Set<String>)
-    -> [String: [String: String]]
-  {
-    let noted = unavailableReasons(params, layerIDs: layerIDs)
-    return Dictionary(
-      uniqueKeysWithValues: noted.map { slot, note in
-        (slot, [params.choice(slot): note.reason])
-      })
-  }
-
   /// Why `params` cannot run with only `present` layers ("HOO needs the OIII layer"), or `nil`.
   package static func unavailableReason(params: ParamSet, present: Set<String>) -> String? {
     guard let missing = layersNeeded(params: params).first(where: { !present.contains($0) }) else {

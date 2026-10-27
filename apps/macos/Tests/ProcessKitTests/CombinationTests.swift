@@ -237,7 +237,7 @@ struct CombinationTests {
       expected: []),
   ]
 
-  @Test("testPaletteAvailable", arguments: availables)
+  @Test("the palettes a bundle offers, in catalogue order", arguments: availables)
   func testPaletteAvailable(row: Available) {
     #expect(Palette.available(planes: row.planes) == row.expected)
   }

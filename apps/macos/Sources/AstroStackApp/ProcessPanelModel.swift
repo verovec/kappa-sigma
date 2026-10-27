@@ -128,7 +128,7 @@ package final class ProcessPanelModel {
         merged[param, default: [:]][option] = ProcessKitResources.title(reason)
       }
     }
-    unavailableOptions = merged
+    if merged != unavailableOptions { unavailableOptions = merged }
   }
 
   /// The key the palette menu's control is identified by.
@@ -143,8 +143,8 @@ package final class ProcessPanelModel {
   /// A palette is a template the rows show, never a hidden setting (R2); a recipe records the
   /// sources, not the palette.
   package func choose(palette: Palette) {
-    // A palette the process offers (`palettes(planes:)`) or already matches: its tokens pass the
-    // slots' grammar by construction (`available`), so `apply` cannot fail; a binding cannot throw.
+    // A palette the process offers (`palettes(planes:)`): its tokens pass the slots' grammar by
+    // construction (`available`), so `apply` cannot fail; a binding cannot throw.
     guard paletteOptions?.contains(palette) == true, let filled = try? palette.apply(to: params)
     else { return }
     replace(filled)

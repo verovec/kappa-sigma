@@ -51,13 +51,12 @@ package struct ProcessPanel: View {
   /// « Custom » names any other combination; a kept palette the stack lacks stays named, a
   /// state like « Custom », not a choice.
   private func paletteMenu(_ palettes: [Palette]) -> some View {
-    let kept = model.palette.map { palettes.contains($0) ? [] : [$0] } ?? []
-    return Picker(selection: paletteSelection) {
+    Picker(selection: paletteSelection) {
       ForEach(palettes, id: \.self) { palette in
         Text(ProcessKitResources.title(palette.title, locale: locale)).tag(Optional(palette))
       }
-      ForEach(kept, id: \.self) { palette in
-        Text(ProcessKitResources.title(palette.title, locale: locale)).tag(Optional(palette))
+      if let kept = model.palette, !palettes.contains(kept) {
+        Text(ProcessKitResources.title(kept.title, locale: locale)).tag(Optional(kept))
           .selectionDisabled()
       }
       // The state of any other combination, never a choice: the sources are edited by hand.
@@ -66,6 +65,8 @@ package struct ProcessPanel: View {
       Text(.app("Palette"))
     }
     .accessible(.parameter(model.paletteKey, .choice), label: .app("Palette"))
+    // Nothing to choose: the state stays readable, the popup does not open on nothing.
+    .disabled(palettes.isEmpty)
   }
 
   private var paletteSelection: Binding<Palette?> {

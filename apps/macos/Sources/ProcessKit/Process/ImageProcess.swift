@@ -106,8 +106,8 @@ package protocol ImageProcess {
   static var rowReasons: [String] { get }
 
   /// The options a bundle of `layerIDs` cannot run, by parameter then option, with the reason
-  /// (a catalog key, listed in `rowReasons`): shown greyed, never switched away from (R2). A
-  /// value naming an absent layer, typically. None by default (card 0139).
+  /// (a catalog key, listed in `rowReasons`): shown greyed, never switched away from (R2). By
+  /// default, the current value of every layer parameter whose row carries a note (card 0139).
   static func unavailableOptions(_ params: ParamSet, layerIDs: Set<String>)
     -> [String: [String: String]]
 
@@ -199,11 +199,17 @@ extension ImageProcess {
   /// No row reason.
   package static var rowReasons: [String] { [] }
 
-  /// Nothing greyed for the layers.
+  /// The current value of each noted layer parameter, with the note's reason: the one « layer
+  /// missing » rule, worded on the row and greyed on its value.
   package static func unavailableOptions(_ params: ParamSet, layerIDs: Set<String>)
     -> [String: [String: String]]
   {
-    [:]
+    var greyed: [String: [String: String]] = [:]
+    for (id, note) in unavailableReasons(params, layerIDs: layerIDs) {
+      guard case .layer? = schema.spec(id)?.kind else { continue }
+      greyed[id] = [params.choice(id): note.reason]
+    }
+    return greyed
   }
 
   /// No palette menu.

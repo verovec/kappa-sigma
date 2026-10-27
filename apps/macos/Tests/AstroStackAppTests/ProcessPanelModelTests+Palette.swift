@@ -5,7 +5,7 @@ import Testing
 /// The palette menu (card 0139): a template that fills the four visible sources, named when the
 /// sources match one, « Custom » otherwise; and the generic greying of a value the stack lacks.
 extension ProcessPanelModelTests {
-  @Test("testPaletteMenu_replacesSources")
+  @Test("choosing a palette fills the four sources; Custom once none matches")
   func testPaletteMenu_replacesSources() throws {
     let type = try #require(ProcessRegistry.standard().type(id: ChannelCombinationProcess.id))
     let panel = ProcessPanelModel(type: type, params: ParamSet(schema: type.schema))
@@ -21,7 +21,7 @@ extension ProcessPanelModelTests {
     #expect(panel.palette == nil, "no palette matches: Custom")
   }
 
-  @Test("testUnavailableOptions_currentValueNamingAbsentLayer")
+  @Test("a value naming an absent layer is greyed with why, beside a tool probe's entry")
   func testUnavailableOptions_currentValueNamingAbsentLayer() throws {
     let type = try #require(ProcessRegistry.standard().type(id: ChannelCombinationProcess.id))
     let panel = ProcessPanelModel(type: type, params: ParamSet(schema: type.schema))

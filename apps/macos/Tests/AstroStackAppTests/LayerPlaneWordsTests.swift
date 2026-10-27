@@ -27,7 +27,7 @@ struct LayerPlaneWordsTests {
     Words(token: "none", locale: "fr", expected: "Aucun"),
   ]
 
-  @Test("testWords", arguments: words)
+  @Test("a layer token in words, fr and en", arguments: words)
   func testWords(row: Words) {
     #expect(
       LayerPlaneWords.words(row.token, locale: Locale(identifier: row.locale)) == row.expected)

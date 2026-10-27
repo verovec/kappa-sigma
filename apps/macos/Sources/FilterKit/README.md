@@ -24,5 +24,9 @@ tests, with the filter that needs it.
 
 ## Adding a clip filter
 
-A case on `FilterSet` (its `rawValue` is on the wire: lane names, `lane_knobs`) with its `lines`;
-the import picker, the lane split and the Stacking columns follow it (card 0134).
+A case on `FilterSet` (its `rawValue` is on the wire: lane names `<filter>-<rawValue>`,
+`lane_knobs` keys, import overrides) with its `lines` and `mixesLines`; the import picker
+(`FilterSet.allCases`), the lane suffix, the split (`syn_<line>`), the Stacking columns and the
+profile match follow it. Add the glossary term `filterSet.<rawValue>` fr/en (`GlossaryTests`).
+The pixel classifier only ever measures broadband or dual-band: another clip is asserted by the
+user at import.

@@ -140,10 +140,13 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     }
   }
 
+  /// Every clip filter's wire value, as the error lists them.
+  private static let filterSetNames = FilterSet.allCases.map(\.rawValue).joined(separator: ", ")
+
   private static func message(_ error: InspectError) -> LocalizedStringResource {
     switch error {
     case .unknownFilterSet(let value):
-      .app("“\(value)” is not a filter set: use unknown, broadband or dualband.")
+      .app("“\(value)” is not a filter set: use \(Self.filterSetNames).")
     case .unknownColorChoice(let value):
       .app("“\(value)” is not a colour model: use auto, mono or osc.")
     case .noLightsForColorModel(let model, let count):

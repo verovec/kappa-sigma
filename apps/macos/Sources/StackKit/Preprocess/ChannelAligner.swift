@@ -31,8 +31,8 @@ package struct ChannelAligner: Sendable {
     guard masters.count >= 2 else { return unaligned }
     // A split capture pins its broadband master as the reference: it is the colour base, and
     // the narrowband pointing must not define the canvas.
-    let ordered = FilterSetLanes.dualbandLast(Self.ordered(masters.keys))
-    let pinned = FilterSetLanes.dualbandLane(in: ordered) != nil
+    let ordered = FilterSetLanes.lineLanesLast(Self.ordered(masters.keys))
+    let pinned = !FilterSetLanes.lineLanes(in: ordered).isEmpty
     if let mismatch = Self.dimensionMismatch(masters, ordered: ordered) {
       journal.warn(mismatch)
       return unaligned

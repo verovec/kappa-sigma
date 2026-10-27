@@ -35,11 +35,9 @@ extension ProfileProposal.Inputs {
   {
     if FilterSetLanes.splits(inventory) { return .broadbandDualband }
     let verdicts = Set(lights.map { inventory.filterSets[$0.key.id] ?? .unknown })
-    switch verdicts {
-    case [.dualband]: return .dualband
-    case [.broadband]: return .broadband
-    default: return nil
-    }
+    guard verdicts.count == 1, let verdict = verdicts.first, verdict.isKnown else { return nil }
+    // Every line clip takes the dual-band profiles: two lines over a near-black sky.
+    return verdict == .broadband ? .broadband : .dualband
   }
 
   private nonisolated static func monoFilters(_ filters: Set<Filter>) -> Profile.Filters? {

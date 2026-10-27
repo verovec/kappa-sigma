@@ -51,6 +51,14 @@
     "definition": "Couleur derrière un filtre bi-bande (Hα + OIII) : ciel presque noir.",
     "label": "Bi-bande"
   },
+  "filterSet.dualband-sii": {
+    "definition": "Couleur derrière un filtre bi-bande [SII] + [OIII] : ciel presque noir.",
+    "label": "Bi-bande SII+OIII"
+  },
+  "filterSet.multiband": {
+    "definition": "Couleur derrière un filtre tri- ou quadri-bande : Hα (avec SII) et OIII (avec Hβ) sur un seul capteur.",
+    "label": "Multi-bande"
+  },
   "filterSet.unknown": {
     "definition": "Les pixels n’ont pas dit si la nuit était en large bande ou en bi-bande.",
     "label": "Non mesuré"

@@ -98,12 +98,18 @@ Re-recording is a contract change: the PR that commits new fixtures says why (`T
     grading, transient mask, wheel transition), `.run(Shared)` when the shared canvas reads it,
     with why (registration, framing, nights, combine; the frame-review and reference
     breakpoints too, toggled once for the run on the Tri stage, which shows them run-wide).
-- **Lane overrides (card 0121):** `PreprocessRequest.overrideLane(_:with:)` sets a lane kind's
-  (`FilterSet.broadband` / `.dualband`) lane-scoped patch, refusing a run-wide knob
-  (`KnobError.runWide`); `settings(forLane:in:)` resolves it in `stackChannel` and in the lane's
-  checkpoint digest — only in a split run (a dual-band lane exists), so an unsplit run never
-  applies an override. They live on the request, not in `PreprocessSettings`: an untouched run's
-  settings, scripts and `LaneRecord` digests are byte-identical.
+- **Lane overrides (card 0121, every clip filter since 0134):**
+  `PreprocessRequest.overrideLane(_:with:)` sets a lane kind's (`FilterSet`: broadband, or a line
+  clip — dual-band, SII+OIII, multi-band) lane-scoped patch, refusing a run-wide knob
+  (`KnobError.runWide`); `settings(forLane:in:)` resolves it through `FilterSetLanes.laneKind(of:)`
+  in `stackChannel` and in the lane's checkpoint digest — only in a split run (a line-clip lane
+  exists), so an unsplit run never applies an override. Lanes: a line clip's lane is
+  `<filter>-<set.rawValue>` (`RGB-dualband` unchanged), `FilterSetLanes.lineLanes(in:)` lists them
+  in `FilterSet` order, the aligner registers them last onto the broadband grid, and
+  `DualbandSplit.channels` writes each lane's lines (`FilterSet.lines`) as `syn_<line>` — a line two
+  lanes carry is kept from the first and noted. Two line clips without a broadband set do not split
+  (nothing to screen onto). They live on the request, not in `PreprocessSettings`: an untouched
+  run's settings, scripts and `LaneRecord` digests are byte-identical.
 - `KnobSchema.apply(_:to:)` puts a `KnobPatch` on the preset. An unknown id or a refused value
   throws before anything is applied. `patch(from:mode:)` returns only what differs from the
   preset, so a patch of defaults is a no-op and untouched runs stay byte-identical.

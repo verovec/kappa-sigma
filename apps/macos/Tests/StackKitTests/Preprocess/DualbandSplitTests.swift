@@ -114,4 +114,47 @@ struct DualbandSplitTests {
     #expect(names == ("syn_SII", "syn_OIII"))
     #expect(FileManager.default.fileExists(atPath: out.appendingPathComponent("syn_SII.fits").path))
   }
+
+  @Test(
+    "an SII+OIII clip's lane becomes [SII] and [OIII], named after its lines", .scratchDirectory)
+  func testChannelsBySet() throws {
+    let out = try ScratchDirectory.url
+    try Self.master("aligned_RGB", 0.5, 0.5, 0.5, in: out)
+    try Self.master("aligned_RGB-dualband-sii", 0.30, 0.20, 0.10, in: out)
+    let (channels, note) = DualbandSplit.channels(
+      ["RGB": "aligned_RGB", "RGB-dualband-sii": "aligned_RGB-dualband-sii"], out: out)
+    #expect(channels == ["RGB": "aligned_RGB", "SII": "syn_SII", "OIII": "syn_OIII"])
+    #expect(note?.hasPrefix("mixed filter sets") == true)
+    #expect(try Self.value(out.appendingPathComponent("syn_SII.fits")).first == 0.30)
+  }
+
+  @Test(
+    "two line lanes: a line both carry is kept from the first lane, the other noted",
+    .scratchDirectory)
+  func testTwoLineLanesShareALine() throws {
+    let out = try ScratchDirectory.url
+    try Self.master("aligned_RGB", 0.5, 0.5, 0.5, in: out)
+    try Self.master("aligned_RGB-dualband", 0.40, 0.20, 0.10, in: out)
+    try Self.master("aligned_RGB-dualband-sii", 0.30, 0.25, 0.15, in: out)
+    let (channels, note) = DualbandSplit.channels(
+      [
+        "RGB": "aligned_RGB", "RGB-dualband": "aligned_RGB-dualband",
+        "RGB-dualband-sii": "aligned_RGB-dualband-sii",
+      ], out: out)
+    #expect(
+      channels == ["RGB": "aligned_RGB", "Ha": "syn_Ha", "OIII": "syn_OIII", "SII": "syn_SII"])
+    #expect(try Self.value(out.appendingPathComponent("syn_OIII.fits")).first == 0.20)
+    #expect(note?.contains("OIII") == true && note?.contains("dualband-sii") == true)
+  }
+
+  @Test("a multi-band clip's lines are noted as mixed", .scratchDirectory)
+  func testMultibandNote() throws {
+    let out = try ScratchDirectory.url
+    try Self.master("aligned_RGB", 0.5, 0.5, 0.5, in: out)
+    try Self.master("aligned_RGB-multiband", 0.40, 0.20, 0.10, in: out)
+    let (channels, note) = DualbandSplit.channels(
+      ["RGB": "aligned_RGB", "RGB-multiband": "aligned_RGB-multiband"], out: out)
+    #expect(channels == ["RGB": "aligned_RGB", "Ha": "syn_Ha", "OIII": "syn_OIII"])
+    #expect(note?.contains("multi-band") == true)
+  }
 }

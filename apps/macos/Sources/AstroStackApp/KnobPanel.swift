@@ -20,9 +20,9 @@ struct KnobPanel: View {
 
   var body: some View {
     // The series' lanes — a run that does not split applies no lane value, so none is offered —
-    // or both while a frozen run applies lane values the series no longer split into (a paused
-    // run's, on Continue): no value applied is out of sight (R2).
-    let candidates: [FilterSet] = lanes.isEmpty && frozen ? [.broadband, .dualband] : lanes
+    // or every clip while a frozen run applies lane values the series no longer split into (a
+    // paused run's, on Continue): no value applied is out of sight (R2).
+    let candidates = lanes.isEmpty && frozen ? FilterSet.allCases.filter(\.isKnown) : lanes
     // Counted once per render, for the lanes that can show: each count resolves their settings.
     let counts = candidates.reduce(into: [FilterSet: Int]()) { counts, lane in
       let count = model.overrideCount(lane: lane)
@@ -96,7 +96,7 @@ struct KnobPanel: View {
       .accessible(.stackingProcessing, label: .app("After stacking"))
       Text(
         .app(
-          "Per channel: broadband, Hα and OIII processed apart, then combined; one stack."
+          "Per channel: each lane processed apart, then combined; one stack."
         )
       )
       .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)

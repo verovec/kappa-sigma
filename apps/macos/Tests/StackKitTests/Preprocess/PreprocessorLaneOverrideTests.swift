@@ -1,3 +1,4 @@
+import FilterKit
 import Foundation
 import StackKit
 import TestSupport
@@ -134,5 +135,21 @@ extension PreprocessorTests {
       let reason = record.staleReason(lane: lane, plan: plan, request: request)
       #expect(reason == (lane == "L" ? nil : "the settings changed"), "\(lane)")
     }
+  }
+
+  @Test(
+    "an SII+OIII clip's lane takes its own kind of override, the dual-band one stays apart",
+    .scratchDirectory)
+  func testLaneKindBySet() throws {
+    var request = try Self.splitRequest("KIND")
+    for set in request.inventory.sets where set.key.type == .light && set.key.filter == "R" {
+      request.inventory.filterSets[set.key.id] = .dualbandSII
+    }
+    let split = try Preprocessor.plan(request.inventory)
+    #expect(Set(split.channels.keys) == ["L", "R-dualband-sii"])
+    try request.overrideLane(.dualbandSII, with: KnobPatch(values: ["trail_mask_k": .number(2)]))
+    try request.overrideLane(.dualband, with: KnobPatch(values: ["trail_mask_k": .number(5)]))
+    #expect(request.settings(forLane: "R-dualband-sii", in: split).trailMaskK == 2)
+    #expect(request.settings(forLane: "L", in: split) == request.settings)
   }
 }

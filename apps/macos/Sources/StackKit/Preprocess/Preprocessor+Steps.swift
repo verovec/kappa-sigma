@@ -77,11 +77,10 @@ extension Preprocessor {
     ).align(
       masters, folder: request.work.appendingPathComponent("04_aligned"), out: request.output,
       journal: &journal)
-    // Read before the crops rename the inputs: only an aligned dual-band master may be split.
-    let laneRegistered =
-      FilterSetLanes.dualbandLane(in: channels.keys).map {
-        channels[$0]?.hasPrefix("aligned_") == true
-      } ?? true
+    // Read before the crops rename the inputs: only an aligned line-clip master may be split.
+    let laneRegistered = FilterSetLanes.lineLanes(in: channels.keys).allSatisfy {
+      channels[$0]?.hasPrefix("aligned_") == true
+    }
     channels = crop(channels, request: request, journal: &journal, into: &result)
     var notes: [String] = []
     let continuum: [String: ContinuumK.Fit]

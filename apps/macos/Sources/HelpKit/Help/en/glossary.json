@@ -51,6 +51,14 @@
     "definition": "Colour through a dual narrowband clip (Hα + OIII): near-black sky.",
     "label": "Dual-band"
   },
+  "filterSet.dualband-sii": {
+    "definition": "Colour through an [SII] + [OIII] dual narrowband clip: near-black sky.",
+    "label": "Dual-band SII+OIII"
+  },
+  "filterSet.multiband": {
+    "definition": "Colour through a tri- or quad-band clip: Hα (with SII) and OIII (with Hβ) on one sensor.",
+    "label": "Multi-band"
+  },
   "filterSet.unknown": {
     "definition": "The pixels did not say whether the night was broadband or dual-band.",
     "label": "Not measured"

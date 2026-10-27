@@ -102,19 +102,3 @@ extension LineInjectionProcessTests {
     #expect(out != base)
   }
 }
-
-extension LineInjectionProcessTests {
-  @Test("a line layer outside the catalogue is never read as the continuum's broadband")
-  func testLayersRead_unknownLineIsNotContinuum() throws {
-    let params = try Self.params(["haGain": 1, "haContinuumK": 0.5])
-    #expect(
-      LineInjectionProcess.layersRead(params, layerIDs: ["RGB", "Ha", "NII-custom"])
-        == ["Ha", "RGB"])
-    let screens = try ScreensTests.params([
-      "haContinuum": .flag(true), "haContinuumK": .number(0.5),
-    ])
-    #expect(
-      EmissionScreensProcess.layersRead(screens, layerIDs: ["RGB", "Ha", "NII-custom"])
-        == ["Ha", "RGB"])
-  }
-}

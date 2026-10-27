@@ -25,7 +25,9 @@ struct LineKernelRecording: Codable, Equatable {
   /// Whether this Mac's GPU made the recording (or is making it).
   static var onRecordedGPU: Bool {
     guard let device = MTLCreateSystemDefaultDevice() else { return false }
-    return isRecording || recorded?.gpu == device.name
+    // A missing or unreadable recording runs the test, which then fails: only another GPU skips.
+    guard let recorded, !isRecording else { return true }
+    return recorded.gpu == device.name
   }
 }
 

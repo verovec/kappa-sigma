@@ -45,7 +45,7 @@ package struct LineInjectionProcess: ImageProcess {
   package static func layersRead(_ params: ParamSet, layerIDs: Set<String>) -> Set<String> {
     let continuum = boundLines(params).contains { subtracts($0, params: params) }
     return layersMerged(params, layerIDs: layerIDs)
-      .union(continuum ? layerIDs.filter { !EmissionLine.isLineLayer($0) } : [])
+      .union(continuum ? layerIDs.subtracting(EmissionLine.layerIDs) : [])
   }
 
   /// The lines that inject: the broadband a continuum subtracts is not added.

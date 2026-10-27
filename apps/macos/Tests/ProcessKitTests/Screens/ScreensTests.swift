@@ -41,12 +41,14 @@ struct ScreensTests {
     ).read()
   }
 
+  /// The formula rows (α, tint, base), shared with `LiveKernelTransitionTests` (card 0136).
+  static let formulaRows = [
+    (0.95, "red", 0.10), (0.5, "teal", 0.40), (1.0, "gold", 0.0), (0.3, "crimson", 0.9),
+    (0.0, "red", 0.5),
+  ]
+
   @Test(
-    "the screen equals astrocomp's formula within 1/65535 (α, tint, base)",
-    arguments: [
-      (0.95, "red", 0.10), (0.5, "teal", 0.40), (1.0, "gold", 0.0), (0.3, "crimson", 0.9),
-      (0.0, "red", 0.5),
-    ])
+    "the screen equals astrocomp's formula within 1/65535 (α, tint, base)", arguments: formulaRows)
   func testScreenFormula(alpha: Double, tint: String, base: Double) throws {
     let params = try Self.params([
       "haOpacity": .number(alpha), "haTint": .choice(tint), "haBlack": .number(0.115),
@@ -101,5 +103,36 @@ struct ScreensTests {
       layerStats: ["Ha": LayerStats(channels: [Self.haStats])])
     #expect(out[0][1 * Self.width + 3] == out[0][0], "the star is gone")
     #expect(out[0][2 * Self.width + 12] > 0.5, "the nebula stays")
+  }
+}
+
+extension ScreensTests {
+  @Test("only the visible lines are bound, OIII alone at slot 0; the screen is the oracle's")
+  func testCompaction() throws {
+    let params = try Self.params([
+      "haOpacity": .number(0), "oiiiEnabled": .flag(true), "oiiiOpacity": .number(0.8),
+      "oiiiTint": .choice("teal"),
+    ])
+    #expect(EmissionScreensProcess.boundLines(params).map(\.layerID) == ["OIII"])
+    let line = Self.lineRamp()
+    let stats = LayerStats(channels: [Self.haStats])
+    let base: Float = 0.2
+    let out = try Self.render(
+      params, base: Array(repeating: base, count: line.count),
+      layers: ["Ha": [line.reversed()], "OIII": [line]],
+      layerStats: ["Ha": stats, "OIII": stats])
+    let stretch = ScreensOracle.mtfParams(median: 0.05, madn: 0.002, target: 0.12, clip: -2.5)
+    let settings = ScreensOracle.Line(
+      shadows: stretch.shadows, midtone: stretch.midtone,
+      black: params.number("oiiiBlack"), boost: params.number("oiiiBoost"))
+    let tint = try #require(ScreenTint(rawValue: "teal")).rgb
+    for (index, value) in line.enumerated() {
+      let prepared = ScreensOracle.prepare(value, settings)
+      for channel in 0..<3 {
+        let expected = ScreensOracle.screen(
+          base: Double(base), value: prepared, alpha: 0.8, tint: tint[channel])
+        #expect(abs(Double(out[channel][index]) - expected) <= 1.0 / 65535)
+      }
+    }
   }
 }

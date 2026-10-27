@@ -143,3 +143,14 @@ struct FilterTests {
     #expect(FilterSet.allCases.filter(\.mixesLines) == [.multiband])
   }
 }
+
+extension FilterTests {
+  @Test(
+    "a channel name is a line unless it is colour or a broadband filter (custom names are lines)",
+    arguments: zip(
+      ["Ha", "OIII", "SII", "NII-custom", "h-alpha", "L", "R", "g", "RGB", "osc"],
+      [true, true, true, true, true, false, false, false, false, false]))
+  func testFilter_isLineName(name: String, isLine: Bool) {
+    #expect(Filter.isLineName(name) == isLine)
+  }
+}

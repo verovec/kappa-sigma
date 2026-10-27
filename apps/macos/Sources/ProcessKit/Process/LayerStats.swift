@@ -47,7 +47,7 @@ package enum LayerRole: String, Codable, CaseIterable, Sendable {
   case color
   /// A luminance layer.
   case luminance
-  /// An emission-line layer (Hα, OIII, SII).
+  /// An emission-line layer: Hα, OIII, SII or any other line name (`Filter.isLineName`).
   case emission
   /// The starless layer.
   case starless

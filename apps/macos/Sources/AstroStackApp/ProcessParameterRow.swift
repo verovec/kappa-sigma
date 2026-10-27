@@ -60,25 +60,10 @@ struct ProcessParameterRow: View {
         helpButton
       }
     case .choice(_, let options):
-      HStack {
-        Picker(selection: choice) {
-          // A choice left to the user (card 0140): « Choose… » until an option is picked.
-          if spec.allowsUnset { Text(.app("Choose…")).tag("") }
-          ForEach(options, id: \.self) { option in
-            if let reason = model.unavailableOptions[spec.id]?[option] {
-              // Greyed with why; a value already chosen stays chosen (R2).
-              Text(.app("\(option) — \(String(localized: reason))")).tag(option)
-                .selectionDisabled()
-            } else {
-              Text(verbatim: option).tag(option)
-            }
-          }
-        } label: {
-          Text(label)
-        }
-        .accessible(.parameter(key, .choice), label: label)
-        helpButton
-      }
+      picker(options)
+    case .layer:
+      // The bundle names the options (card 0138); the value chosen stays listed.
+      picker(model.layerOptions(for: spec.id))
     case .text:
       HStack {
         TextField(text: text) { Text(label) }
@@ -145,6 +130,29 @@ struct ProcessParameterRow: View {
     Binding(
       get: { model.params.text(spec.id) },
       set: { model.set(spec.id, .text($0)) })
+  }
+
+  /// A choice among `options`, each greyed with why when the panel says so.
+  private func picker(_ options: [String]) -> some View {
+    HStack {
+      Picker(selection: choice) {
+        // A choice left to the user (card 0140): « Choose… » until an option is picked.
+        if spec.allowsUnset { Text(.app("Choose…")).tag("") }
+        ForEach(options, id: \.self) { option in
+          if let reason = model.unavailableOptions[spec.id]?[option] {
+            // Greyed with why; a value already chosen stays chosen (R2).
+            Text(.app("\(option) — \(String(localized: reason))")).tag(option)
+              .selectionDisabled()
+          } else {
+            Text(verbatim: option).tag(option)
+          }
+        }
+      } label: {
+        Text(label)
+      }
+      .accessible(.parameter(key, .choice), label: label)
+      helpButton
+    }
   }
 
   private var choice: Binding<String> {

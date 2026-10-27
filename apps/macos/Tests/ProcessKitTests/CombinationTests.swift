@@ -148,4 +148,68 @@ struct CombinationTests {
       _ = try Self.render(params, layers: layers, device: device)
     }
   }
+
+  /// The combination a bundle opens on (card 0138): the palette its layers spell, else a grey
+  /// of its first layer — an OSC bundle gets exactly the schema's defaults.
+  struct Initial: CustomTestStringConvertible, Sendable {
+    let name: String
+    let layers: [String: Int]
+    let sources: [String]
+    var testDescription: String { name }
+  }
+
+  static let initials: [Initial] = [
+    Initial(
+      name: "OSC → natural", layers: ["RGB": 3], sources: ["RGB.r", "RGB.g", "RGB.b", "none"]),
+    Initial(
+      name: "OSC + Hα + OIII → natural", layers: ["RGB": 3, "Ha": 1, "OIII": 1],
+      sources: ["RGB.r", "RGB.g", "RGB.b", "none"]),
+    Initial(
+      name: "LRGB → lrgb", layers: ["L": 1, "R": 1, "G": 1, "B": 1], sources: ["R", "G", "B", "L"]),
+    Initial(
+      name: "RGB → rgb, no luminance", layers: ["R": 1, "G": 1, "B": 1],
+      sources: ["R", "G", "B", "none"]),
+    Initial(
+      name: "SHO → sho", layers: ["SII": 1, "Ha": 1, "OIII": 1],
+      sources: ["SII", "Ha", "OIII", "none"]),
+    Initial(
+      name: "HOO → hoo", layers: ["Ha": 1, "OIII": 1], sources: ["Ha", "OIII", "OIII", "none"]),
+    Initial(
+      name: "a 3-plane Hα spells no palette: grey of its planes", layers: ["Ha": 3, "OIII": 1],
+      sources: ["Ha.r", "Ha.g", "Ha.b", "none"]),
+    Initial(
+      name: "L + SII → grey of the base, L", layers: ["L": 1, "SII": 1],
+      sources: ["L", "L", "L", "none"]),
+    Initial(
+      name: "a colour-shaped custom layer alone → grey of its planes", layers: ["Ha 7nm": 3],
+      sources: ["Ha 7nm.r", "Ha 7nm.g", "Ha 7nm.b", "none"]),
+    Initial(name: "Hα → grey Hα", layers: ["Ha": 1], sources: ["Ha", "Ha", "Ha", "none"]),
+  ]
+
+  @Test("testInitialParams", arguments: initials)
+  func testInitialParams(row: Initial) throws {
+    let params = try ChannelCombinationProcess.initialParams(planes: row.layers)
+    #expect(ChannelCombinationProcess.slotSources.map { params.choice($0) } == row.sources)
+  }
+
+  @Test("testInitialParams_OSC_isTheSchemaDefault: step 0 of an OSC stack keeps its bytes")
+  func testInitialParams_OSC_isTheSchemaDefault() throws {
+    let osc = try ChannelCombinationProcess.initialParams(planes: ["RGB": 3, "Ha": 1, "OIII": 1])
+    #expect(osc == ParamSet(schema: ChannelCombinationProcess.schema))
+  }
+
+  @Test("a plane token of any 3-plane layer reads that plane, as `RGB.g` does (card 0138)")
+  func testPlaneTokenOfAnyColourLayer() throws {
+    let device = try #require(MTLCreateSystemDefaultDevice())
+    var layers = try Self.layers(device: device, ids: ["RGB"])
+    layers["Ha 7nm"] = layers["RGB"]
+    var params = ParamSet(schema: ChannelCombinationProcess.schema)
+    for (slot, plane) in zip(["rSource", "gSource", "bSource"], LayerPlane.planeNames) {
+      try params.set(slot, .choice("Ha 7nm.\(plane)"))
+    }
+    let custom = try Self.render(params, layers: layers, device: device)
+    let natural = try Self.render(
+      ParamSet(schema: ChannelCombinationProcess.schema), layers: layers, device: device)
+    #expect(custom == natural)
+  }
 }

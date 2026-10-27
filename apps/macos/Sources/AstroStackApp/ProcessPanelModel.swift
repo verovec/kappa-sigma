@@ -45,6 +45,13 @@ package final class ProcessPanelModel {
   package var layerIDs: Set<String>? {
     didSet { refreshLayerRows() }
   }
+  /// The planes of each bundle layer (card 0138), set with `layerIDs`: the layers a layer
+  /// parameter lists (a step output is readable by hand, never offered).
+  package var layerPlanes: [String: Int] = [:] {
+    didSet { refreshLayerOptions() }
+  }
+  /// The tokens the bundle offers each layer parameter (card 0138), kept with the layers.
+  private var layerOptions: [String: [String]] = [:]
   /// Why a row's value cannot run on this stack, by parameter id (card 0135).
   ///
   /// Shown under the row, never greying the process; kept with the values and the layers.
@@ -92,6 +99,28 @@ package final class ProcessPanelModel {
     if hiddenNow != hidden { hidden = hiddenNow }
     let notesNow = layerIDs.map { type.unavailableReasons(params, layerIDs: $0) } ?? [:]
     if notesNow != rowNotes { rowNotes = notesNow }
+  }
+
+  /// The tokens each layer parameter lists, from the bundle's planes alone.
+  private func refreshLayerOptions() {
+    var optionsNow: [String: [String]] = [:]
+    for spec in type.schema.specs {
+      guard case .layer(_, let allowsNone, let allowsProduct) = spec.kind else { continue }
+      optionsNow[spec.id] = LayerPlane.options(
+        planes: layerPlanes, allowsNone: allowsNone, allowsProduct: allowsProduct)
+    }
+    if optionsNow != layerOptions { layerOptions = optionsNow }
+  }
+
+  /// The tokens the layer parameter `id` lists (card 0138): the bundle's, and the value already
+  /// chosen when the bundle does not offer it (R2: shown as is, never switched away from).
+  package func layerOptions(for id: String) -> [String] {
+    var options = layerOptions[id] ?? []
+    let current = params.choice(id)
+    if !options.contains(current) {
+      options.insert(current, at: options.first == "none" ? 1 : 0)
+    }
+    return options
   }
 
   /// Whether the « Advanced » disclosure opens onto anything: an advanced row that is not hidden.

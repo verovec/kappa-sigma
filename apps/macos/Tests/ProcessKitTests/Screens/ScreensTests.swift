@@ -41,12 +41,14 @@ struct ScreensTests {
     ).read()
   }
 
+  /// The formula rows (α, tint, base), shared with `LiveKernelTransitionTests` (card 0136).
+  static let formulaRows = [
+    (0.95, "red", 0.10), (0.5, "teal", 0.40), (1.0, "gold", 0.0), (0.3, "crimson", 0.9),
+    (0.0, "red", 0.5),
+  ]
+
   @Test(
-    "the screen equals astrocomp's formula within 1/65535 (α, tint, base)",
-    arguments: [
-      (0.95, "red", 0.10), (0.5, "teal", 0.40), (1.0, "gold", 0.0), (0.3, "crimson", 0.9),
-      (0.0, "red", 0.5),
-    ])
+    "the screen equals astrocomp's formula within 1/65535 (α, tint, base)", arguments: formulaRows)
   func testScreenFormula(alpha: Double, tint: String, base: Double) throws {
     let params = try Self.params([
       "haOpacity": .number(alpha), "haTint": .choice(tint), "haBlack": .number(0.115),

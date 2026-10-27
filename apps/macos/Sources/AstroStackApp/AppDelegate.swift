@@ -177,6 +177,8 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
   /// Closes `documents` for good: none of those closes may bring the welcome window back.
   package func closeForQuit(_ documents: [NSDocument]) {
     ProjectDocument.closeQuietly(documents)
+    // Nothing that closes later in the quit (a late open) may bring the window back either.
+    ProjectDocument.lastDocumentClosed = { _ in }
   }
 
   /// File › Open Recent › Clear Menu: AppKit's recents, which the welcome window lists too.

@@ -97,6 +97,5 @@ struct ParamSetTests {
     ] as [(Bool, Set<String>, [String])])
   func testLevelDisplayRule(disclosed: Bool, promoted: Set<String>, visible: [String]) {
     #expect(Self.schema.visible(disclosed: disclosed, promoted: promoted).map(\.id) == visible)
-    #expect(Self.schema.hasAdvanced)
   }
 }

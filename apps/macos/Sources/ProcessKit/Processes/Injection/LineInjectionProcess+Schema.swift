@@ -4,8 +4,13 @@ extension LineInjectionProcess {
   /// One card per line in `EmissionLine` order: gain, continuum scale k, black point, shares.
   package static let schema = ParamSchema(EmissionLine.allCases.flatMap(lineSpecs))
 
-  /// One line's card; the gains default to 0 (the identity), the shares to the line's colour.
+  /// One line's card; the gains default to 0 (the identity), the shares to the line's colour —
+  /// every row about the line's layer (`needsLayer`).
   private static func lineSpecs(_ line: EmissionLine) -> [ParamSpec] {
+    specs(of: line).map { $0.about(layer: line.layerID) }
+  }
+
+  private static func specs(of line: EmissionLine) -> [ParamSpec] {
     let name = line.name
     let shares = line.defaults.shares
     return [

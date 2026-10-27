@@ -3137,6 +3137,54 @@
         }
       }
     },
+    "the injection needs its line layer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the injection needs its line layer"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "l’injection a besoin de la couche de sa raie"
+          }
+        }
+      }
+    },
+    "the screen needs its line layer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the screen needs its line layer"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "l’écran a besoin de la couche de sa raie"
+          }
+        }
+      }
+    },
+    "the slot needs a layer the stack lacks": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the slot needs a layer the stack lacks"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "le canal lit une couche que l’empilement n’a pas"
+          }
+        }
+      }
+    },
     "the continuum scale fitted on the stack": {
       "localizations": {
         "en": {

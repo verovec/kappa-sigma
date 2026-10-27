@@ -60,6 +60,25 @@ struct ColourCalibrationRouteTests {
     #expect(ProcessRegistry.problems(of: ColourCalibrationProcess.self).isEmpty)
   }
 
+  @Test(
+    "only the rows Siril is told show: the route's names; under PCC no SPCC row",
+    arguments: [
+      ([String: String](), Set(ColourCalibrationProcess.monoNames)),
+      (["camera": "mono"], Set(ColourCalibrationProcess.oscNames)),
+      (
+        ["method": "pcc"],
+        Set(
+          ["camera", "whiteReference"] + ColourCalibrationProcess.oscNames
+            + ColourCalibrationProcess.monoNames)
+      ),
+    ])
+  func testHiddenRows(values: [String: String], hidden: Set<String>) throws {
+    let params = try Self.params(enabled: true, values)
+    let type = ColourCalibrationProcess.self
+    #expect(type.hiddenParameters(params, layerIDs: ["RGB"]) == hidden)
+    #expect(type.hiddenParameters(params, layerIDs: ["L", "R", "G", "B"]) == hidden)
+  }
+
   static func offer(_ camera: String, _ paramID: String, _ sensor: String, _ instrume: String)
     -> [Suggestion]
   {

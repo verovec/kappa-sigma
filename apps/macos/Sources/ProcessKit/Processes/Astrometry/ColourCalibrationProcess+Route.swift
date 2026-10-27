@@ -23,6 +23,16 @@ extension ColourCalibrationProcess {
     return (isMono(params) ? monoNames : oscNames).filter { params.choice($0).isEmpty }
   }
 
+  /// The rows `params` do not run, hidden (card 0135's hook — the only override that is not
+  /// about a layer): the other route's names, and under PCC every SPCC-only row. R2: what is
+  /// shown is what Siril is told.
+  package static func hiddenParameters(_ params: ParamSet, layerIDs: Set<String>) -> Set<String> {
+    guard params.choice("method") == "spcc" else {
+      return Set(["camera", "whiteReference"] + oscNames + monoNames)
+    }
+    return Set(isMono(params) ? oscNames : monoNames)
+  }
+
   /// The camera the header's `INSTRUME` names (`SensorHint`): its route and its sensor, one
   /// offer with the instrument as subject; none for an unknown camera.
   package static func suggestions(header: FITSHeader?) -> [Suggestion] {

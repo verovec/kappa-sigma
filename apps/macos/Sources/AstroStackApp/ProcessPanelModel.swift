@@ -12,7 +12,10 @@ package final class ProcessPanelModel {
   @ObservationIgnored package let type: any ImageProcess.Type
   /// The values the preview and Apply use.
   package private(set) var params: ParamSet {
-    didSet { measureClipping() }
+    didSet {
+      measureClipping()
+      refreshLayerRows()
+    }
   }
   /// The advanced parameters are shown.
   package var showsAdvanced = false
@@ -35,6 +38,17 @@ package final class ProcessPanelModel {
   /// Choice options that cannot run, by parameter then option, with the reason (an engine
   /// whose tool is missing, card 0092): shown greyed, never switched away from (R2).
   package var unavailableOptions: [String: [String: LocalizedStringResource]] = [:]
+  /// The bundle layers the panel's process may read (card 0135).
+  ///
+  /// A line's rows show only while its layer is among them, or while the values still ask for
+  /// it; `nil` until the workspace says (a panel built elsewhere hides nothing).
+  package var layerIDs: Set<String>? {
+    didSet { refreshLayerRows() }
+  }
+  /// Why a row's value cannot run on this stack, by parameter id (card 0135).
+  ///
+  /// Shown under the row, never greying the process; kept with the values and the layers.
+  package private(set) var rowNotes: [String: RowNote] = [:]
   /// The head's size in full-resolution pixels (`nil` until the workspace sets it).
   ///
   /// Setting it sizes the sliders the process sizes from the image (`displayRanges`).
@@ -63,7 +77,26 @@ package final class ProcessPanelModel {
     // A mono head has no per-channel values to promote.
     let colour = (sample?.planes.count ?? headStats.channels.count) == 3
     return type.schema.visible(
-      disclosed: showsAdvanced, promoted: colour ? type.promoted(params) : [])
+      disclosed: showsAdvanced, promoted: colour ? type.promoted(params) : [], hidden: hidden)
+  }
+
+  /// The parameters hidden for the bundle (card 0135); none until the workspace sets the layers.
+  ///
+  /// Kept with the values and the layers, not computed per view evaluation.
+  private var hidden: Set<String> = []
+
+  /// The hidden rows and the notes from the values and the layers; an equal result is not
+  /// assigned (every row would redraw).
+  private func refreshLayerRows() {
+    let hiddenNow = layerIDs.map { type.hiddenParameters(params, layerIDs: $0) } ?? []
+    if hiddenNow != hidden { hidden = hiddenNow }
+    let notesNow = layerIDs.map { type.unavailableReasons(params, layerIDs: $0) } ?? [:]
+    if notesNow != rowNotes { rowNotes = notesNow }
+  }
+
+  /// Whether the « Advanced » disclosure opens onto anything: an advanced row that is not hidden.
+  package var hasAdvanced: Bool {
+    type.schema.specs.contains { $0.level == .advanced && !hidden.contains($0.id) }
   }
 
   /// The arrow step of `id`, when the process gives one.

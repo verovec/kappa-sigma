@@ -53,11 +53,11 @@ package enum DualbandSplit {
   /// The channel map with every line-clip lane turned into its lines (`dualSetChannels`), and
   /// the note the run shows; the map unchanged (no note) when the run did not split.
   ///
-  /// A lane leaves the map whatever happens: it is not a colour channel. With no broadband
-  /// master left the first lane (`FilterSet` order) becomes the colour base itself, unsplit,
-  /// and the other lanes' lines go over it; an unsplittable master, or one the alignment could
-  /// not register (`registered`), costs only its emission layers. A line two lanes both carry is
-  /// kept from the first lane and the other's is noted.
+  /// A lane leaves the map whatever happens: it is not a colour channel. When the line lanes are
+  /// the only channels (`lineBase`) the first (`FilterSet` order) becomes the colour base itself,
+  /// unsplit, and the other lanes' lines go over it; an unsplittable master, or one the alignment
+  /// could not register (`registered`), costs only its emission layers. A line two lanes both
+  /// carry — or that the base already holds — is kept from the first and the other's is noted.
   package static func channels(_ channels: [String: String], out: URL, registered: Bool = true)
     -> (
       channels: [String: String], note: String?
@@ -67,11 +67,15 @@ package enum DualbandSplit {
     guard let first = lanes.first, let base = channels[first] else { return (channels, nil) }
     var kept = channels.filter { !lanes.contains($0.key) }
     var notes: [String] = []
-    if lineBase(in: channels) {
-      // No broadband master: the first line lane is the colour base, its own lines inside it,
-      // and the other lanes' lines go over it.
-      kept = [FilterSetLanes.baseFilter(of: first): base]
+    // Lines a lane may not write: the base lane's own, when it stands in for the colour base.
+    var taken: Set<Filter> = []
+    if lineBase(in: channels.keys) {
+      // The first line lane is the colour base, its own lines inside it; the others go over it.
+      kept[FilterSetLanes.baseFilter(of: first)] = base
       lanes.removeFirst()
+      if let lines = FilterSetLanes.lineSet(of: first)?.lines {
+        taken = [lines.red, lines.greenBlue]
+      }
       notes.append(
         "no broadband master in this run — the \(first) stack is the colour base, unsplit, its "
           + "lines inside it; no continuum scale can be fitted without a broadband reference")
@@ -91,7 +95,7 @@ package enum DualbandSplit {
       guard let master = channels[lane], let set = FilterSetLanes.lineSet(of: lane) else {
         continue
       }
-      let lines = splitLane(set, master: master, out: out, into: &kept, notes: &notes)
+      let lines = splitLane(set, master: master, out: out, into: &kept, taken: taken, notes: &notes)
       if !lines.isEmpty { added.append((lane, lines)) }
     }
     return (kept, (lead(added) + notes).joined(separator: "; "))
@@ -99,15 +103,12 @@ package enum DualbandSplit {
 
   /// Whether a line-clip lane stands in for the colour base.
   ///
-  /// The map holds line lanes and no broadband master (no plain colour lane, no mono broadband
-  /// filter). The one predicate the split and the continuum fit share.
-  package static func lineBase(in channels: [String: String]) -> Bool {
-    let lanes = channels.keys
-    return lanes.contains { FilterSetLanes.lineSet(of: $0) != nil }
-      && !lanes.contains { lane in
-        Filter.broadband.contains { $0.rawValue == lane }
-          || (Filter.isColor(lane) && FilterSetLanes.lineSet(of: lane) == nil)
-      }
+  /// The line lanes are the only channels, so nothing else could be the base. The one predicate
+  /// the split and the continuum fit share (a custom-named colour or mono channel beside the
+  /// lanes keeps its place).
+  package static func lineBase(in lanes: some Sequence<String>) -> Bool {
+    let lines = FilterSetLanes.lineLanes(in: lanes)
+    return !lines.isEmpty && lanes.allSatisfy(lines.contains)
   }
 
   /// What the lanes that added a layer became, each line with the plane it came from; nothing
@@ -127,10 +128,11 @@ package enum DualbandSplit {
   /// left to add is not read at all; a failed split costs only this lane's layers.
   private static func splitLane(
     _ set: FilterSet, master: String, out: URL, into kept: inout [String: String],
-    notes: inout [String]
+    taken held: Set<Filter>, notes: inout [String]
   ) -> [String] {
     guard let lines = set.lines else { return [] }
-    let taken = Set([lines.red, lines.greenBlue].filter { kept[$0.rawValue] != nil })
+    let taken = Set(
+      [lines.red, lines.greenBlue].filter { kept[$0.rawValue] != nil || held.contains($0) })
     for line in [lines.red, lines.greenBlue] where taken.contains(line) {
       notes.append(
         "\(line.rawValue) of the \(set.rawValue) lane skipped: another lane already gave it")

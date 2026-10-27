@@ -63,7 +63,7 @@ struct EmissionLayersTests {
     let (channels, continuum) = Preprocessor.emission(
       ["RGB-dualband": "trim_RGB-dualband", "RGB-dualband-sii": "trim_RGB-dualband-sii"],
       out: out, notes: &notes)
-    #expect(channels == ["RGB": "trim_RGB-dualband", "SII": "syn_SII", "OIII": "syn_OIII"])
+    #expect(channels == ["RGB": "trim_RGB-dualband", "SII": "syn_SII"])
     #expect(continuum.isEmpty)
     #expect(notes.count == 1)
     #expect(

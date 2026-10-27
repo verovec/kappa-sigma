@@ -168,9 +168,11 @@ struct DualbandSplitTests {
     let (channels, note) = DualbandSplit.channels(
       ["RGB-dualband": "aligned_RGB-dualband", "RGB-dualband-sii": "aligned_RGB-dualband-sii"],
       out: out)
-    #expect(channels == ["RGB": "aligned_RGB-dualband", "SII": "syn_SII", "OIII": "syn_OIII"])
+    #expect(channels == ["RGB": "aligned_RGB-dualband", "SII": "syn_SII"])
     #expect(note?.contains("RGB-dualband stack is the colour base") == true)
-    #expect(try Self.value(out.appendingPathComponent("syn_OIII.fits")).first == 0.25)
+    #expect(note?.contains("OIII of the dualband-sii lane skipped") == true)
+    #expect(
+      !FileManager.default.fileExists(atPath: out.appendingPathComponent("syn_OIII.fits").path))
   }
 
   @Test(
@@ -188,5 +190,18 @@ struct DualbandSplitTests {
     #expect(channels == ["RGB": "aligned_RGB", "Ha": "syn_Ha", "OIII": "syn_OIII"])
     #expect(note?.contains("multi-band clip:") == false)
     #expect(note?.contains("Ha of the multiband lane skipped") == true)
+  }
+
+  @Test("a broadband master under a custom filter name stays the base", .scratchDirectory)
+  func testCustomNamedBroadbandBase() throws {
+    let out = try ScratchDirectory.url
+    try Self.master("aligned_CLS", 0.5, 0.5, 0.5, in: out)
+    try Self.master("aligned_CLS-dualband", 0.40, 0.20, 0.10, in: out)
+    let (channels, note) = DualbandSplit.channels(
+      ["CLS": "aligned_CLS", "CLS-dualband": "aligned_CLS-dualband"], out: out)
+    #expect(channels == ["CLS": "aligned_CLS", "Ha": "syn_Ha", "OIII": "syn_OIII"])
+    #expect(note?.contains("no broadband master") == false)
+    #expect(!DualbandSplit.lineBase(in: ["CLS", "CLS-dualband"]))
+    #expect(DualbandSplit.lineBase(in: ["RGB-dualband", "RGB-multiband"]))
   }
 }

@@ -23,7 +23,7 @@ extension Preprocessor {
     if let note { notes.append(note) }
     // A continuum is estimated against broadband light: when a line lane stands in for the
     // colour base, no scale is fitted at all (the split's note already says why).
-    guard !DualbandSplit.lineBase(in: channels) else { return (split, [:]) }
+    guard !DualbandSplit.lineBase(in: channels.keys) else { return (split, [:]) }
     let files = split.mapValues { out.appendingPathComponent($0 + ".fits") }
     var continuum: [String: ContinuumK.Fit] = [:]
     for line in ChannelAligner.ordered(split.keys) where ContinuumK.references(of: line) != nil {

@@ -19,8 +19,13 @@ extension EmissionScreensProcess {
     return ParamSchema(specs)
   }()
 
-  /// One line's card: on/off, continuum subtraction, stretch, black point, screen.
+  /// One line's card: on/off, continuum subtraction, stretch, black point, screen — every row
+  /// about the line's layer (`needsLayer`).
   private static func lineSpecs(_ line: EmissionLine) -> [ParamSpec] {
+    specs(of: line).map { $0.about(layer: line.layerID) }
+  }
+
+  private static func specs(of line: EmissionLine) -> [ParamSpec] {
     let name = line.name
     return [
       ParamSpec(

@@ -36,7 +36,7 @@ package struct ProcessPanel: View {
       ForEach(model.visibleSpecs, id: \.id) { spec in
         ProcessParameterRow(spec: spec, model: model)
       }
-      if model.type.schema.hasAdvanced {
+      if model.hasAdvanced {
         Toggle(isOn: $model.showsAdvanced) { Text(.app("Advanced")) }
           .toggleStyle(.switch)
           .accessible(.processAdvanced(model.type.id), label: .app("Advanced"))

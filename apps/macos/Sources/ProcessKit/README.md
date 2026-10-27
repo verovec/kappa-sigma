@@ -12,7 +12,7 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   as `Suggestion`s.
 - `ParamSchema` / `ParamSpec` (number with bounds, flag, choice, curve `points` (card 0053: 2 to
   `maxCount` `CurvePoint`s, clamped into [0, 1], sorted, one per x; JSON `[[x, y], …]`); `ParamUnit` none/px/sigma/opacity;
-  `ParamLevel` simple/advanced with the display rule `visible(disclosed:promoted:)`), `ParamSet`
+  `ParamLevel` simple/advanced with the display rule `visible(disclosed:promoted:hidden:)`), `ParamSet`
   (schema order, clamped, NaN refused, encoded as ordered JSON; no decoder: stored values come
   back through `ParamSet.loading`, which validates them and returns what it refused).
 - `GPUImage` (r32Float planes, read/write, shared), `ProcessRunner` (synchronous run),
@@ -314,6 +314,21 @@ To give a host tool layers: return them in `StudioToolResult(…outputs:replaced
 To make a process branchable: declare `static let branchable = BranchUse.anyLayer` (or
 `.colourLayers`) — linear, same size, its input alone — and add it to the audit table. A process
 that reads bundle layers declares them in `layersRead`, or its steps never go stale.
+
+- **Layer-aware rows** (card 0135): a spec may declare `needsLayer` (the line specs do); the
+  panel hides it while that layer is absent from the bundle AND the values do not ask for it
+  (`ImageProcess.hiddenParameters`, default rule over `layersAsked(_:)` — the layers the VALUES
+  name, whatever the bundle holds; a screen on by default on a stack without its line stays, with
+  its note, so it can be switched off). A line process implements `layersAsked` beside
+  `layersRead` (the latter may add bundle-derived layers, a continuum reference, which must not
+  keep a row on screen). A row's value that cannot run says why under the row:
+  `unavailableReasons(_:layerIDs:)` → `[paramID: RowNote]` (reason = a catalog key listed in the
+  static `rowReasons`, subject = the layer's name), set by the workspace on open, on
+  `headChanged` and on every value change. The default covers a process whose rows carry
+  `needsLayer`: each asked layer the bundle lacks, on the first row about it, with the first
+  listed reason (the screens and the injection add nothing); a process whose rows name layers
+  by value (the combination's slots) overrides it. The process is never greyed for a value (the
+  catalogue greys on roles only; greying would close its panel).
 
 - **What « Combined » holds** (card 0131): `StudioSession.combinedLayers(after:layerIDs:registry:)` folds the main steps
   from the base layer — each step's `ImageProcess.layersMerged(_:layerIDs:)` is added, or replaces

@@ -64,6 +64,15 @@ package struct EmissionScreensProcess: ImageProcess {
     return Set(visible.map(\.layerID)).intersection(layerIDs)
   }
 
+  /// The reason an enabled line's rows carry while its layer is absent (card 0135).
+  package static let lineLayerReason = "the screen needs its line layer"
+  package static let rowReasons = [lineLayerReason]
+
+  /// The lines the values enable: what the panel keeps on screen even without the layer.
+  package static func layersAsked(_ params: ParamSet) -> Set<String> {
+    Set(enabledLines(params).map(\.layerID))
+  }
+
   /// Why `params` cannot run with only the `present` layers ("Hα screen needs the Ha layer").
   package static func unavailableReason(params: ParamSet, present: Set<String>) -> String? {
     let missing = EmissionLine.allCases.first {

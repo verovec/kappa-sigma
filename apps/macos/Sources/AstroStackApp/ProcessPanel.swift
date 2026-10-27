@@ -53,20 +53,20 @@ package struct ProcessPanel: View {
     let kept = model.palette.map { model.paletteOptions.contains($0) ? [] : [$0] } ?? []
     return Picker(selection: paletteSelection) {
       ForEach(model.paletteOptions + kept, id: \.self) { palette in
-        Text(ProcessKitResources.title(palette.title, locale: locale)).tag(palette.rawValue)
+        Text(ProcessKitResources.title(palette.title, locale: locale)).tag(Optional(palette))
       }
-      Text(.app("Custom")).tag("custom")
+      Text(.app("Custom")).tag(Palette?.none)
     } label: {
       Text(.app("Palette"))
     }
     .accessible(.parameter("\(model.type.id).palette", .choice), label: .app("Palette"))
   }
 
-  private var paletteSelection: Binding<String> {
+  private var paletteSelection: Binding<Palette?> {
     Binding(
-      get: { model.palette?.rawValue ?? "custom" },
-      set: { raw in
-        if let palette = Palette(rawValue: raw) { model.choose(palette: palette) }
+      get: { model.palette },
+      set: { palette in
+        if let palette { model.choose(palette: palette) }
       })
   }
 

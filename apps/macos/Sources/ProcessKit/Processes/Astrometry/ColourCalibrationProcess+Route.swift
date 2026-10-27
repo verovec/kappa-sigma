@@ -23,9 +23,10 @@ extension ColourCalibrationProcess {
     return (isMono(params) ? monoNames : oscNames).filter { params.choice($0).isEmpty }
   }
 
-  /// The rows `params` do not run, hidden (card 0135's hook — the only override that is not
-  /// about a layer): the other route's names, and under PCC every SPCC-only row. R2: what is
-  /// shown is what Siril is told.
+  /// The rows `params` do not run: the other route's names, and under PCC every SPCC-only row.
+  ///
+  /// Card 0135's hook, the only override not about a layer. R2: what is shown is what Siril is
+  /// told.
   package static func hiddenParameters(_ params: ParamSet, layerIDs: Set<String>) -> Set<String> {
     guard params.choice("method") == "spcc" else {
       return Set(["camera", "whiteReference"] + oscNames + monoNames)

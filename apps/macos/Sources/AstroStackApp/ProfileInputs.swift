@@ -6,8 +6,9 @@ extension ProfileProposal.Inputs {
   /// What the light sets of `inventory` say (card 0060).
   ///
   /// The camera is StackKit's colour model of the lights (mixed → unknown); OSC filters come from
-  /// the clip-filter verdicts (both → the lanes `FilterSetLanes` splits, one only when every light
-  /// set has that verdict), mono filters from the sets' filters (the scan already applied the
+  /// the clip-filter verdicts (two clips → the lanes `FilterSetLanes` splits: broadband + dual-band
+  /// with a broadband night, dual-band otherwise; one only when every light set has that
+  /// verdict), mono filters from the sets' filters (the scan already applied the
   /// filter map); the target when every set names the same one. Nothing is guessed from pixels.
   package nonisolated init(inventory: Inventory) {
     let lights = inventory.sets.filter { $0.key.type == .light }

@@ -72,7 +72,9 @@ a broadband and a line clip, or two line clips — card 0134) stacks one lane pe
 `RGB-dualband`, `RGB-dualband-sii`, `RGB-multiband`. The lane renames the stack, never the
 light, so calibration still matches on the real key. One verdict alone, or an unclassified set,
 keeps the single lane (a dual-band-only capture is not split). At the
-alignment the broadband master leads and is pinned as the reference
+alignment the broadband master leads and is pinned as the reference (the first line lane, in
+`FilterSet` order, when the run has no broadband set: it is then the colour base too, its lines
+inside it, and no continuum scale is fitted)
 (`SirilScripts.alignMastersReference`: one pass, `-2pass` would override the pin), then, after
 the crops, the registered dual-band master is separated (`DualbandSplit`): `syn_Ha` = red,
 `syn_OIII` = max(green, blue). The lane leaves the channel map; with no broadband master left it

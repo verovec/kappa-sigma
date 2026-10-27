@@ -65,7 +65,10 @@ struct EmissionLayersTests {
       out: out, notes: &notes)
     #expect(channels == ["RGB": "trim_RGB-dualband", "SII": "syn_SII", "OIII": "syn_OIII"])
     #expect(continuum.isEmpty)
-    #expect(notes.contains { $0.hasSuffix("no broadband reference in this run") })
+    #expect(notes.count == 1)
+    #expect(
+      notes.first?.contains("no broadband master in this run — the RGB-dualband stack is") == true)
+    #expect(notes.first?.contains("the RGB-dualband-sii lane became SII (red pixels)") == true)
   }
 
   @Test("the composite base: the one colour master, emission layers set aside")

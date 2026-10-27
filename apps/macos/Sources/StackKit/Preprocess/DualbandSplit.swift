@@ -67,13 +67,14 @@ package enum DualbandSplit {
     guard let first = lanes.first, let base = channels[first] else { return (channels, nil) }
     var kept = channels.filter { !lanes.contains($0.key) }
     var notes: [String] = []
-    if kept.isEmpty {
-      // No broadband master: the first line lane is the colour base, the others screen over it.
+    if lineBase(in: channels) {
+      // No broadband master: the first line lane is the colour base, its own lines inside it,
+      // and the other lanes' lines go over it.
       kept = [FilterSetLanes.baseFilter(of: first): base]
       lanes.removeFirst()
       notes.append(
-        "no broadband master in this run — the \(first) stack is the colour base, unsplit "
-          + "(nothing to screen its lines onto)")
+        "no broadband master in this run — the \(first) stack is the colour base, unsplit, its "
+          + "lines inside it; no continuum scale can be fitted without a broadband reference")
     }
     // Unregistered layers would sit offset from the base, every star doubled.
     guard registered else {
@@ -94,6 +95,19 @@ package enum DualbandSplit {
       if !lines.isEmpty { added.append((lane, lines)) }
     }
     return (kept, (lead(added) + notes).joined(separator: "; "))
+  }
+
+  /// Whether a line-clip lane stands in for the colour base.
+  ///
+  /// The map holds line lanes and no broadband master (no plain colour lane, no mono broadband
+  /// filter). The one predicate the split and the continuum fit share.
+  package static func lineBase(in channels: [String: String]) -> Bool {
+    let lanes = channels.keys
+    return lanes.contains { FilterSetLanes.lineSet(of: $0) != nil }
+      && !lanes.contains { lane in
+        Filter.broadband.contains { $0.rawValue == lane }
+          || (Filter.isColor(lane) && FilterSetLanes.lineSet(of: lane) == nil)
+      }
   }
 
   /// What the lanes that added a layer became, each line with the plane it came from; nothing
@@ -140,7 +154,7 @@ package enum DualbandSplit {
       return added
     } catch {
       notes.append(
-        "\(set.rawValue) lane split skipped, finishing on the broadband base alone: "
+        "\(set.rawValue) lane split skipped, finishing on the colour base alone: "
           + ChannelStacker.describe(error))
       return []
     }

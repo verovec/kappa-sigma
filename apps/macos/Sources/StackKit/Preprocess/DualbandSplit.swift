@@ -131,7 +131,7 @@ package enum DualbandSplit {
     taken held: Set<Filter>, notes: inout [String]
   ) -> [String] {
     guard let lines = set.lines else { return [] }
-    // Each line's fate, decided once: the plane it comes from, or why it is not written.
+    // One table of the lines and their planes; a held line is the base's before any lane's.
     let pair = [(lines.red, "red pixels"), (lines.greenBlue, "max of green/blue")]
     let skipped = pair.compactMap { line, _ -> (Filter, String)? in
       if held.contains(line) { return (line, "the colour base already holds it") }
@@ -142,7 +142,7 @@ package enum DualbandSplit {
       notes.append("\(line.rawValue) of the \(set.rawValue) lane skipped: \(why)")
     }
     let taken = Set(skipped.map(\.0))
-    guard taken.count < 2 else { return [] }
+    guard taken.count < pair.count else { return [] }
     do {
       let names = try split(
         out.appendingPathComponent(master + ".fits"), out: out, lines: lines, skipping: taken)

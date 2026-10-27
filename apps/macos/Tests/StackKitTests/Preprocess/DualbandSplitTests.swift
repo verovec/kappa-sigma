@@ -211,4 +211,28 @@ struct DualbandSplitTests {
     #expect(!DualbandSplit.lineBase(in: ["CLS", "CLS-dualband"]))
     #expect(DualbandSplit.lineBase(in: ["RGB-dualband", "RGB-multiband"]))
   }
+
+  @Test(
+    "three line lanes, no broadband: a line the base holds is reported as the base's",
+    .scratchDirectory)
+  func testThreeLineLanesNoBroadband() throws {
+    let out = try ScratchDirectory.url
+    try Self.master("aligned_RGB-dualband", 0.40, 0.20, 0.10, in: out)
+    try Self.master("aligned_RGB-dualband-sii", 0.30, 0.25, 0.15, in: out)
+    // No multiband master on disk: it must not be read (nothing left for it to add).
+    let (channels, note) = DualbandSplit.channels(
+      [
+        "RGB-dualband": "aligned_RGB-dualband", "RGB-dualband-sii": "aligned_RGB-dualband-sii",
+        "RGB-multiband": "aligned_RGB-multiband",
+      ], out: out)
+    #expect(channels == ["RGB": "aligned_RGB-dualband", "SII": "syn_SII"])
+    #expect(
+      note?.contains("OIII of the dualband-sii lane skipped: the colour base already holds it")
+        == true)
+    #expect(
+      note?.contains("Ha of the multiband lane skipped: the colour base already holds it") == true)
+    #expect(
+      note?.contains("OIII of the multiband lane skipped: the colour base already holds it") == true
+    )
+  }
 }

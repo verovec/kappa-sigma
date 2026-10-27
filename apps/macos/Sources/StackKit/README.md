@@ -112,7 +112,7 @@ Re-recording is a contract change: the PR that commits new fixtures says why (`T
   split too — never one master: the first lane (`FilterSet` order) is the colour base, the others'
   lines go over it, and no continuum scale is fitted (no broadband reference). They live on the
   request, not in `PreprocessSettings`: an untouched run's settings, scripts and `LaneRecord`
-  digests are byte- identical.
+  digests are byte-identical.
 - `KnobSchema.apply(_:to:)` puts a `KnobPatch` on the preset. An unknown id or a refused value
   throws before anything is applied. `patch(from:mode:)` returns only what differs from the
   preset, so a patch of defaults is a no-op and untouched runs stay byte-identical.

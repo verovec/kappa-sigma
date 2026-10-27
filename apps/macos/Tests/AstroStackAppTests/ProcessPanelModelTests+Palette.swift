@@ -9,7 +9,7 @@ extension ProcessPanelModelTests {
   func testPaletteMenu_replacesSources() throws {
     let type = try #require(ProcessRegistry.standard().type(id: ChannelCombinationProcess.id))
     let panel = ProcessPanelModel(type: type, params: ParamSet(schema: type.schema))
-    #expect(panel.paletteOptions.isEmpty, "no bundle yet")
+    #expect(panel.paletteOptions == [], "a menu, no palette without a bundle: Custom alone")
     panel.layerPlanes = ["RGB": 3, "Ha": 1, "OIII": 1]
     #expect(panel.paletteOptions == [.natural, .hoo, .foraxx])
     #expect(panel.palette == .natural)
@@ -43,7 +43,8 @@ extension ProcessPanelModelTests {
     let type = try #require(ProcessRegistry.standard().type(id: StretchProcess.id))
     let panel = ProcessPanelModel(type: type, params: ParamSet(schema: type.schema))
     panel.layerPlanes = ["RGB": 3, "Ha": 1, "OIII": 1]
-    #expect(panel.paletteOptions.isEmpty)
+    #expect(panel.paletteOptions == nil, "no menu at all")
+    #expect(panel.palette == nil)
     panel.choose(palette: .hoo)
     #expect(panel.params == ParamSet(schema: type.schema), "nothing to fill")
   }

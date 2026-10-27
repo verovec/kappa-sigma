@@ -112,8 +112,9 @@ package protocol ImageProcess {
     -> [String: [String: String]]
 
   /// The palettes a bundle of `planes` offers this process (card 0139): templates that fill
-  /// visible parameters, never a hidden setting. None by default; the channel combination's.
-  static func palettes(planes: [String: Int]) -> [Palette]
+  /// visible parameters, never a hidden setting. `nil` for a process without a palette menu
+  /// (the default); empty when this bundle allows none (the menu then reads « Custom »).
+  static func palettes(planes: [String: Int]) -> [Palette]?
 }
 
 extension ImageProcess {
@@ -205,8 +206,8 @@ extension ImageProcess {
     [:]
   }
 
-  /// No palette.
-  package static func palettes(planes: [String: Int]) -> [Palette] { [] }
+  /// No palette menu.
+  package static func palettes(planes: [String: Int]) -> [Palette]? { nil }
 }
 
 /// Where a process belongs in a pipeline.

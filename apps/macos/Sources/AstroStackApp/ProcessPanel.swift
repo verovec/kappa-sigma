@@ -33,8 +33,8 @@ package struct ProcessPanel: View {
         ProcessHistogramExtras(model: model, sample: sample)
       }
       takeTogether
-      if !model.paletteOptions.isEmpty || model.palette != nil {
-        paletteMenu
+      if let palettes = model.paletteOptions {
+        paletteMenu(palettes)
       }
       ForEach(model.visibleSpecs, id: \.id) { spec in
         ProcessParameterRow(spec: spec, model: model)
@@ -48,12 +48,17 @@ package struct ProcessPanel: View {
   }
 
   /// The palettes the stack offers (card 0139): a template that fills the sources on screen;
-  /// « Custom » names any other combination, and a kept palette the stack lacks stays named.
-  private var paletteMenu: some View {
-    let kept = model.palette.map { model.paletteOptions.contains($0) ? [] : [$0] } ?? []
+  /// « Custom » names any other combination; a kept palette the stack lacks stays named, a
+  /// state like « Custom », not a choice.
+  private func paletteMenu(_ palettes: [Palette]) -> some View {
+    let kept = model.palette.map { palettes.contains($0) ? [] : [$0] } ?? []
     return Picker(selection: paletteSelection) {
-      ForEach(model.paletteOptions + kept, id: \.self) { palette in
+      ForEach(palettes, id: \.self) { palette in
         Text(ProcessKitResources.title(palette.title, locale: locale)).tag(Optional(palette))
+      }
+      ForEach(kept, id: \.self) { palette in
+        Text(ProcessKitResources.title(palette.title, locale: locale)).tag(Optional(palette))
+          .selectionDisabled()
       }
       // The state of any other combination, never a choice: the sources are edited by hand.
       Text(.app("Custom")).tag(Palette?.none).selectionDisabled()

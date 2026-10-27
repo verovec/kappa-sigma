@@ -29,8 +29,10 @@ package struct EmissionLine: Hashable, Sendable, CaseIterable {
   /// The bundle layers of every line.
   package static let layerIDs = Set(allCases.map(\.layerID))
 
-  /// Whether the bundle layer `id` is a line layer, known or not (`NII-custom`): a line name
-  /// (`Filter.isLineName`, the rule of StackKit's bundle roles) that is not a step role (card 0136).
+  /// Whether the bundle layer `id` is a line layer, known or not (`NII-custom`).
+  ///
+  /// A line name (`Filter.isLineName`, the rule of StackKit's bundle roles) that is not a step
+  /// role (card 0136).
   package static func isLineLayer(_ id: String) -> Bool {
     LayerRole(rawValue: id) == nil && Filter.isLineName(id)
   }

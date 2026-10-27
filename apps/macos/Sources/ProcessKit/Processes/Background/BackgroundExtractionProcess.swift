@@ -122,7 +122,8 @@ package struct BackgroundExtractionProcess: ImageProcess {
     let images =
       (targets.head ? [input.image] : []) + targets.layers.compactMap { input.layers[$0] }
     guard !images.isEmpty else {
-      throw ProcessError.missingLayer("an emission line layer (Ha, OIII, SII)")
+      let known = EmissionLine.allCases.map(\.layerID).joined(separator: ", ")
+      throw ProcessError.missingLayer("an emission line layer (\(known))")
     }
     var pairs: [(corrected: AstroImage, model: AstroImage)] = []
     for image in images {

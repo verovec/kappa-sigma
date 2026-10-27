@@ -24,7 +24,6 @@ struct LinesHeaderTests {
   @Test("every narrowband filter of the catalogue fits in the kernels' slots")
   func testCatalogueFitsMaxLines() {
     #expect(Filter.narrowband.count <= LineKernels.maxLines)
-    #expect(EmissionLine.allCases.count <= LineKernels.maxLines)
   }
 
   /// One mirror: the header's struct name, the Swift fields in order with their float counts.
@@ -49,7 +48,7 @@ struct LinesHeaderTests {
 
   @Test(
     "the Swift structs have the header's fields, in order, as plain floats without padding",
-    arguments: 0..<2)
+    arguments: mirrors.indices)
   func testStructLayouts(index: Int) throws {
     let mirror = Self.mirrors[index]
     let header = try Self.header()

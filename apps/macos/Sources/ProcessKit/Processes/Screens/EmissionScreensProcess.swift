@@ -92,9 +92,8 @@ package struct EmissionScreensProcess: ImageProcess {
     var lines: [MTLTexture] = []
     var values: [LineKernels.ScreenLine] = []
     let bound = Self.boundLines(params)
-    try LineKernels.checkSlots(bound.count)
     for line in bound {
-      // An invisible line is not prepared: its screen would add exactly nothing.
+      // Unreachable: `lineStretches` refuses every enabled line without a stretch.
       guard let stretch = stretches[line] else { continue }
       lines.append(try prepared(line, stretch: stretch, size: input, context: context))
       let rgb = ScreenTint(rawValue: params.choice(line.id("Tint")))?.rgb ?? [0, 0, 0]
@@ -118,7 +117,7 @@ package struct EmissionScreensProcess: ImageProcess {
     }
     encoder.setComputePipelineState(blend)
     for (index, plane) in input.planes.enumerated() { encoder.setTexture(plane, index: index) }
-    LineKernels.bind(
+    try LineKernels.bind(
       lines, slots: LineKernels.maxLines, from: 3, padding: input.planes[0], values: values,
       encoder: encoder)
     for (index, plane) in output.planes.enumerated() {

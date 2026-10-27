@@ -31,19 +31,16 @@ package enum LineKernels {
     }
   }
 
-  /// Refuses more bound lines than the kernels have slots, before any layer is read.
-  package static func checkSlots(_ count: Int) throws {
-    guard count <= maxLines else {
-      throw ProcessError.invalidParameter("more than \(maxLines) lines")
-    }
-  }
-
   /// Binds `textures` from texture index `first` on, padding the `slots` left with `padding`, the
-  /// per-line `values` at buffer 0 and their count at buffer 1.
+  /// per-line `values` at buffer 0 and their count at buffer 1; more textures than slots or
+  /// lines than `maxLines` is refused, never truncated.
   package static func bind<Value: BitwiseCopyable>(
     _ textures: [MTLTexture], slots: Int, from first: Int, padding: MTLTexture,
     values: [Value], encoder: MTLComputeCommandEncoder
-  ) {
+  ) throws {
+    guard textures.count <= slots, values.count <= maxLines else {
+      throw ProcessError.invalidParameter("more than \(maxLines) lines")
+    }
     for slot in 0..<slots {
       encoder.setTexture(slot < textures.count ? textures[slot] : padding, index: first + slot)
     }

@@ -144,7 +144,9 @@ struct DualbandSplitTests {
     #expect(
       channels == ["RGB": "aligned_RGB", "Ha": "syn_Ha", "OIII": "syn_OIII", "SII": "syn_SII"])
     #expect(try Self.value(out.appendingPathComponent("syn_OIII.fits")).first == 0.20)
-    #expect(note?.contains("OIII of the dualband-sii lane skipped") == true)
+    #expect(
+      note?.contains("OIII of the dualband-sii lane skipped: the colour base already holds it")
+        == true)
   }
 
   @Test("a multi-band clip's lines are noted as mixed", .scratchDirectory)

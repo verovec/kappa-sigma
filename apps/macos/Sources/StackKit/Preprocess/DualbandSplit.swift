@@ -69,7 +69,7 @@ package enum DualbandSplit {
     var notes: [String] = []
     // Lines a lane may not write: the base lane's own, when it stands in for the colour base.
     var taken: Set<Filter> = []
-    if lineBase(in: channels.keys) {
+    if lanes.count == channels.count {
       // The first line lane is the colour base, its own lines inside it; the others go over it.
       kept[FilterSetLanes.baseFilter(of: first)] = base
       lanes.removeFirst()
@@ -106,9 +106,9 @@ package enum DualbandSplit {
   /// The line lanes are the only channels, so nothing else could be the base. The one predicate
   /// the split and the continuum fit share (a custom-named colour or mono channel beside the
   /// lanes keeps its place).
-  package static func lineBase(in lanes: some Sequence<String>) -> Bool {
+  package static func lineBase(in lanes: some Collection<String>) -> Bool {
     let lines = FilterSetLanes.lineLanes(in: lanes)
-    return !lines.isEmpty && lanes.allSatisfy(lines.contains)
+    return !lines.isEmpty && lines.count == lanes.count
   }
 
   /// What the lanes that added a layer became, each line with the plane it came from; nothing

@@ -15,10 +15,10 @@ package enum FilterSetLanes {
     set.lines == nil ? nil : "-" + set.rawValue
   }
 
-  /// Whether the scan holds a measured broadband light set AND a line-clip one.
+  /// Whether the scan holds light sets of two different known clips (a broadband and a line
+  /// clip, or two line clips): they must never share a master.
   ///
-  /// One verdict alone says nothing about another set, and unclassified is silence. Two line
-  /// clips without a broadband base do not split: there is nothing to screen the lines onto.
+  /// One verdict alone says nothing about another set, and unclassified is silence.
   package static func splits(_ inventory: Inventory) -> Bool {
     splits(inventory, setIDs: inventory.sets.filter { $0.key.type == .light }.map(\.key.id))
   }
@@ -26,8 +26,7 @@ package enum FilterSetLanes {
   /// Whether the light sets `setIDs` of `inventory` split (a run scoped to them, card 0121),
   /// without building the scoped inventory.
   package static func splits(_ inventory: Inventory, setIDs: some Sequence<String>) -> Bool {
-    let kinds = laneKinds(in: inventory, setIDs: setIDs)
-    return kinds.contains(.broadband) && kinds.count > 1
+    laneKinds(in: inventory, setIDs: setIDs).count > 1
   }
 
   /// The lane kinds the light sets `setIDs` of `inventory` would stack in, in `FilterSet` order:
@@ -67,10 +66,11 @@ package enum FilterSetLanes {
     return String(lane.dropLast(suffix.count))
   }
 
-  /// The line-clip lanes among `lanes`, in `FilterSet` order (the dual-band lane first).
+  /// The line-clip lanes among `lanes`, in `FilterSet` order (the dual-band lane first), two
+  /// lanes of one clip by name: the same first lane whatever the map's order.
   package static func lineLanes(in lanes: some Sequence<String>) -> [String] {
     let lines = lanes.compactMap { lane in lineSet(of: lane).map { (lane, order(of: $0)) } }
-    return lines.sorted { $0.1 < $1.1 }.map(\.0)
+    return lines.sorted { ($0.1, $0.0) < ($1.1, $1.0) }.map(\.0)
   }
 
   /// A clip's rank in `FilterSet` order.

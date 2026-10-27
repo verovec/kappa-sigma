@@ -53,82 +53,95 @@ package enum DualbandSplit {
   /// the note the run shows; the map unchanged (no note) when the run did not split.
   ///
   /// A lane leaves the map whatever happens: it is not a colour channel. With no broadband
-  /// master left the first lane becomes the colour channel itself, unsplit (nothing to screen
-  /// the lines onto); an unsplittable master, or one the alignment could not register
-  /// (`registered`), costs only its emission layers. A line two lanes both carry is kept from
-  /// the first lane (`FilterSet` order) and the other's is noted.
+  /// master left the first lane (`FilterSet` order) becomes the colour base itself, unsplit,
+  /// and the other lanes' lines go over it; an unsplittable master, or one the alignment could
+  /// not register (`registered`), costs only its emission layers. A line two lanes both carry is
+  /// kept from the first lane and the other's is noted.
   package static func channels(_ channels: [String: String], out: URL, registered: Bool = true)
     -> (
       channels: [String: String], note: String?
     )
   {
-    let lanes = FilterSetLanes.lineLanes(in: channels.keys)
+    var lanes = FilterSetLanes.lineLanes(in: channels.keys)
     guard let first = lanes.first, let base = channels[first] else { return (channels, nil) }
     var kept = channels.filter { !lanes.contains($0.key) }
-    guard !kept.isEmpty else {
-      let dropped = lanes.dropFirst().map { "\($0) dropped" }
-      return (
-        [FilterSetLanes.baseFilter(of: first): base],
-        "the broadband lane produced no master — finishing the \(first) stack as an ordinary "
-          + "colour run (no broadband base to screen the emission lines onto)"
-          + (dropped.isEmpty ? "" : "; " + dropped.joined(separator: ", "))
-      )
+    var notes: [String] = []
+    if kept.isEmpty {
+      // No broadband master: the first line lane is the colour base, the others screen over it.
+      kept = [FilterSetLanes.baseFilter(of: first): base]
+      lanes.removeFirst()
+      notes.append(
+        "the broadband lane produced no master — the \(first) stack is the colour base, unsplit "
+          + "(nothing to screen its lines onto)")
     }
     // Unregistered layers would sit offset from the base, every star doubled.
     guard registered else {
       return (
         kept,
-        "line-clip master not registered onto the broadband grid — emission layers skipped, "
-          + "finishing on the broadband base alone"
+        (notes + [
+          "line-clip master not registered onto the broadband grid — emission layers skipped, "
+            + "finishing on the broadband base alone"
+        ]).joined(separator: "; ")
       )
     }
-    var notes: [String] = []
+    var added: [(lane: String, lines: [String])] = []
     for lane in lanes {
       guard let master = channels[lane], let set = FilterSetLanes.lineSet(of: lane) else {
         continue
       }
-      splitLane(set, master: master, out: out, into: &kept, notes: &notes)
+      let lines = splitLane(set, master: master, out: out, into: &kept, notes: &notes)
+      if !lines.isEmpty { added.append((lane, lines)) }
     }
-    let added = kept.keys.filter { Filter.isNarrowband($0) }.sorted(by: Filter.less)
-    let sets = lanes.compactMap { FilterSetLanes.lineSet(of: $0)?.rawValue }
-    // The lead names what the lanes became; with nothing added, the skip reasons say it all.
-    let plural = sets.count > 1 ? "s" : ""
-    let lead =
-      added.isEmpty
-      ? []
-      : [
-        "mixed filter sets: the \(sets.joined(separator: " and ")) lane\(plural) became "
-          + "\(added.joined(separator: " + ")) over the broadband base"
-      ]
-    return (kept, (lead + notes).joined(separator: "; "))
+    return (kept, (lead(added) + notes).joined(separator: "; "))
   }
 
-  /// Splits one line-clip lane's `master` into `kept`: a line another lane already gave is not
-  /// written again and is noted; a failed split costs only this lane's layers.
+  /// What the lanes that added a layer became, each line with the plane it came from; nothing
+  /// when no lane added one (the skip reasons say it all).
+  private static func lead(_ added: [(lane: String, lines: [String])]) -> [String] {
+    guard !added.isEmpty else { return [] }
+    let words = added.map { entry in
+      "the \(entry.lane) lane became " + entry.lines.joined(separator: " + ")
+    }
+    return ["mixed filter sets: " + words.joined(separator: ", ") + " over the colour base"]
+  }
+
+  /// Splits one line-clip lane's `master` into `kept`; returns what it added, each line with its
+  /// plane.
+  ///
+  /// A line another lane already gave is not written again and is noted; a lane with nothing
+  /// left to add is not read at all; a failed split costs only this lane's layers.
   private static func splitLane(
     _ set: FilterSet, master: String, out: URL, into kept: inout [String: String],
     notes: inout [String]
-  ) {
-    guard let lines = set.lines else { return }
+  ) -> [String] {
+    guard let lines = set.lines else { return [] }
     let taken = Set([lines.red, lines.greenBlue].filter { kept[$0.rawValue] != nil })
+    for line in [lines.red, lines.greenBlue] where taken.contains(line) {
+      notes.append(
+        "\(line.rawValue) of the \(set.rawValue) lane skipped: another lane already gave it")
+    }
+    guard taken.count < 2 else { return [] }
     do {
       let names = try split(
         out.appendingPathComponent(master + ".fits"), out: out, lines: lines, skipping: taken)
-      for (line, name) in [(lines.red, names.red), (lines.greenBlue, names.greenBlue)] {
-        if taken.contains(line) {
-          notes.append(
-            "\(line.rawValue) of the \(set.rawValue) lane skipped: another lane already gave it")
-        } else {
-          kept[line.rawValue] = name
-        }
+      var added: [String] = []
+      if !taken.contains(lines.red) {
+        kept[lines.red.rawValue] = names.red
+        added.append("\(lines.red.rawValue) (red pixels)")
+      }
+      if !taken.contains(lines.greenBlue) {
+        kept[lines.greenBlue.rawValue] = names.greenBlue
+        added.append("\(lines.greenBlue.rawValue) (max of green/blue)")
       }
       if set.mixesLines {
         notes.append("multi-band clip: its Hα layer also carries [SII], its [OIII] layer Hβ")
       }
+      return added
     } catch {
       notes.append(
         "\(set.rawValue) lane split skipped, finishing on the broadband base alone: "
           + ChannelStacker.describe(error))
+      return []
     }
   }
 }

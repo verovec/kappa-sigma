@@ -48,8 +48,8 @@ struct FilterSetLanesTests {
       (twoNights, [.dualband, .unknown], ["RGB"]),
       (twoNights, [.broadband, .dualbandSII], ["RGB", "RGB-dualband-sii"]),
       (twoNights, [.multiband, .broadband], ["RGB", "RGB-multiband"]),
-      // Two line clips and no broadband base: nothing to screen the lines onto, one lane.
-      (twoNights, [.dualband, .dualbandSII], ["RGB"]),
+      // Two line clips and no broadband base: still two lanes, never one master.
+      (twoNights, [.dualband, .dualbandSII], ["RGB-dualband", "RGB-dualband-sii"]),
     ])
   func testPartition(sets: [FrameSet], verdicts: [FilterSet], lanes: [String]) throws {
     let plan = try Preprocessor.plan(Self.scan(sets, verdicts))
@@ -95,6 +95,8 @@ struct FilterSetLanesTests {
       FilterSetLanes.lineLanes(in: ["RGB", "RGB-multiband", "RGB-dualband"]) == [
         "RGB-dualband", "RGB-multiband",
       ])
+    #expect(
+      FilterSetLanes.lineLanes(in: ["Z-dualband", "A-dualband"]) == ["A-dualband", "Z-dualband"])
     #expect(
       FilterSetLanes.lineLanesLast(["RGB-multiband", "RGB", "RGB-dualband"]) == [
         "RGB", "RGB-dualband", "RGB-multiband",

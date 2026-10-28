@@ -35,7 +35,8 @@ package struct ProjectSwitcher: View {
   /// Where the switcher's projects come from: the catalog, its reload, the actions — the live
   /// welcome window's, or a stub for a window built in tests (no machine read).
   package struct Source {
-    let catalog: ProjectCatalog
+    /// The projects listed.
+    package let catalog: ProjectCatalog
     let actions: Actions
     let reload: () async -> Void
 
@@ -137,21 +138,8 @@ package struct ProjectSwitcher: View {
     if !entries.isEmpty {
       Section {
         ForEach(entries) { entry in
-          Button {
-            source.actions.open(entry.url)
-          } label: {
-            // The project this window shows: checked; chosen again it only comes forward.
-            if entry.key == currentKey {
-              Label {
-                Text(verbatim: entry.target)
-              } icon: {
-                Image(systemName: "checkmark")
-              }
-            } else {
-              Text(verbatim: entry.target)
-            }
-          }
-          .accessible(.projectSwitcherProject(entry.key), verbatim: entry.target)
+          ProjectSwitcherItem(
+            entry: entry, isCurrent: entry.key == currentKey, open: source.actions.open)
         }
       } header: {
         Text(title)

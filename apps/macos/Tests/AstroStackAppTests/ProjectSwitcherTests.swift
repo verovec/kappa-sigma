@@ -77,4 +77,13 @@ struct ProjectSwitcherTests {
       services: { _ in ImportServices(planning: ImportPlanningStub.empty) }, isSaved: { false })
     #expect(untitled.head == ProjectWindowModel.Head(target: "", current: nil))
   }
+
+  @Test("the live source reads the welcome window's catalog; the empty one lists nothing")
+  func testSources() {
+    #expect(ProjectSwitcher.Source.live.catalog === WelcomeWindow.model.catalog)
+    #expect(ProjectSwitcher.Source.empty.catalog.entries.isEmpty)
+    #expect(
+      ProjectSwitcher.Items.make(entries: ProjectSwitcher.Source.empty.catalog.entries).open.isEmpty
+    )
+  }
 }

@@ -207,4 +207,29 @@ struct ProjectDocumentTests {
     #expect(window.title.hasPrefix("M31"))
     document.close()
   }
+
+  @Test(
+    "testProjectDocument_read_openElsewhereMessage: a package another instance holds says so",
+    .scratchDirectory)
+  func testProjectDocument_read_openElsewhereMessage() throws {
+    let url = try ScratchDirectory.url.appendingPathComponent("M31.astrostack")
+    try ProjectPackage.create(at: url).close()
+    // The parent (the test runner) stands for the other running AstroStack.
+    let other = try #require(ProcessLiveness.stamp(of: getppid()))
+    try ProjectOwner(process: other, bundlePath: "/Applications/AstroStack.app", startedAtMs: 1)
+      .write(in: url)
+    let error = #expect(throws: (any Error).self) {
+      try ProjectDocument(contentsOf: url, ofType: Self.type)
+    }
+    let message = error?.localizedDescription ?? ""
+    #expect(
+      message.contains("another instance of AstroStack") || message.contains("autre instance"))
+    #expect(message.contains(url.path))
+    #expect(ProjectOwner.read(in: url)?.process == other, "the other owner keeps its marker")
+  }
+
+  @Test("the project owner marker is not the scratch owner's file: the sweep never meets it")
+  func testOwnerMarkerNames() {
+    #expect(ProjectOwner.fileName != ScratchOwner.fileName)
+  }
 }

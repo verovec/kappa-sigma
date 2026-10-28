@@ -1,5 +1,6 @@
 internal import Darwin
 internal import Foundation
+internal import ProjectKit
 
 /// What the sweep may ask of the system's processes.
 ///
@@ -48,14 +49,12 @@ package struct ProcessTable: Sendable {
   /// This process.
   package static var current: ProcessIdentity? { live.identity(getpid()) }
 
+  /// The one liveness rule is ProjectKit's (`ProcessLiveness`, card 0147): pid and start time.
   private static func liveIdentity(_ pid: Int32) -> ProcessIdentity? {
-    var info = proc_bsdinfo()
-    let size = Int32(MemoryLayout<proc_bsdinfo>.size)
-    guard pid > 0, proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, &info, size) == size else { return nil }
-    // A zombie keeps its pid until reaped but runs nothing: it owns nothing any more.
-    guard info.pbi_status != UInt32(SZOMB) else { return nil }
-    return ProcessIdentity(
-      pid: pid, startSeconds: info.pbi_start_tvsec, startMicroseconds: info.pbi_start_tvusec)
+    ProcessLiveness.stamp(of: pid).map {
+      ProcessIdentity(
+        pid: $0.pid, startSeconds: $0.startSeconds, startMicroseconds: $0.startMicroseconds)
+    }
   }
 
   private static func liveExecutable(_ pid: Int32) -> String? {

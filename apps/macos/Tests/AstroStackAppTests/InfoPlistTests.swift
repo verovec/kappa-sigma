@@ -42,6 +42,12 @@ struct InfoPlistTests {
     #expect(plist["CFBundleDevelopmentRegion"] as? String == "en")
   }
 
+  @Test("one running app: a relaunch brings the instance forward, never a second one (card 0147)")
+  func testSingleInstance() throws {
+    let plist = try Self.plist()
+    #expect(plist["LSMultipleInstancesProhibited"] as? Bool == true)
+  }
+
   @Test("the bundle runs the executable the bundle script installs, on macOS 26")
   func testInfoPlist_bundle() throws {
     let plist = try Self.plist()

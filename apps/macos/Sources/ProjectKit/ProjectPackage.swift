@@ -1,5 +1,6 @@
 public import Foundation
 internal import GRDB
+internal import OSLog
 
 /// An AstroStack project on disk: a `.astrostack` folder holding `project.db` (design §4.5).
 ///
@@ -25,6 +26,8 @@ public final class ProjectPackage {
 
   /// The folder the package lives in.
   public let url: URL
+  /// Whether this instance wrote the owner marker (`open(at:owning:)`), to remove it on close.
+  private var owns = false
   /// Typed access to `project.db`.
   package let store: ProjectStore
   private let pool: DatabasePool
@@ -55,7 +58,12 @@ public final class ProjectPackage {
   }
 
   /// Opens the package at `url`, refusing anything AstroStack did not create.
-  public static func open(at url: URL) throws -> ProjectPackage {
+  ///
+  /// When `owning`, a package another running process holds is refused too (card 0147): the
+  /// marker is taken (a stale one, from a crash, is replaced and logged; this process's own is
+  /// rewritten) and released by `close()`. A short opener (`owning: false`, the retention
+  /// review) leaves the marker as it finds it.
+  public static func open(at url: URL, owning: Bool = true) throws -> ProjectPackage {
     guard (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true else {
       throw ProjectPackageError.notAPackage(path: url.path)
     }
@@ -66,14 +74,34 @@ public final class ProjectPackage {
     guard try applicationID(of: database) == applicationID else {
       throw ProjectPackageError.foreignDatabase(path: url.path)
     }
+    if owning { try claim(url) }
     let pool = try DatabasePool(path: database.path)
     do {
-      return try ProjectPackage(url: url, pool: pool)
+      let package = try ProjectPackage(url: url, pool: pool)
+      package.owns = owning
+      return package
     } catch {
       try? pool.close()
+      if owning { ProjectOwner.remove(in: url) }
       throw error
     }
   }
+
+  /// Takes the owner marker of `url` for this process, or refuses: another process still runs.
+  private static func claim(_ url: URL) throws {
+    guard let mine = ProjectOwner.current() else { return }
+    if let other = ProjectOwner.read(in: url), other.process != mine.process {
+      if other.isLive {
+        throw ProjectPackageError.openElsewhere(path: url.path, pid: other.process.pid)
+      }
+      let stale = other.process.pid
+      logger.notice(
+        "replacing the stale owner marker of \(url.path, privacy: .public) (pid \(stale))")
+    }
+    try mine.write(in: url)
+  }
+
+  private static let logger = Logger(subsystem: "fr.astrostack", category: "ProjectKit/owner")
 
   /// The counts of the package at `url`, read without opening it: a read-only connection that
   /// neither migrates, checkpoints nor removes the WAL, so a project open elsewhere is untouched.
@@ -143,8 +171,9 @@ public final class ProjectPackage {
 
   private func writeContents(to destination: URL) throws {
     let manager = FileManager.default
+    // Neither the database files (backed up below) nor the owner marker: a copy is nobody's yet.
     for item in try manager.contentsOfDirectory(atPath: url.path)
-    where !item.hasPrefix(Self.databaseName) {
+    where !item.hasPrefix(Self.databaseName) && item != ProjectOwner.fileName {
       try manager.copyItem(
         at: url.appendingPathComponent(item), to: destination.appendingPathComponent(item))
     }
@@ -162,7 +191,10 @@ public final class ProjectPackage {
   /// for whoever closes the project last. A checkpoint another connection blocks stays passive.
   package func closeKeepingWAL() throws {
     // The pool closes even when both checkpoints fail: never a connection left behind.
-    defer { try? pool.close() }
+    defer {
+      try? pool.close()
+      if owns { ProjectOwner.remove(in: url) }
+    }
     try pool.writeWithoutTransaction { db in
       if (try? db.checkpoint(.truncate)) == nil { _ = try db.checkpoint(.passive) }
     }
@@ -175,6 +207,8 @@ public final class ProjectPackage {
   /// one self-contained `project.db` (safe to copy in the Finder or back up). The pool is closed
   /// even when the checkpoint fails; the WAL then stays, and the checkpoint error is rethrown.
   public func close() throws {
+    // The marker goes whatever the checkpoint does: a closed package is nobody's.
+    defer { if owns { ProjectOwner.remove(in: url) } }
     var checkpointError: (any Error)?
     do { try save() } catch { checkpointError = error }
     try pool.close()

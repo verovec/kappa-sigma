@@ -76,7 +76,7 @@ package final class ProjectDocument: NSDocument {
     try MainActor.assumeIsolated {
       // A project left among the captures before card 0101 would get its runs written there.
       try refuseReadOnly(url)
-      let opened = try ProjectPackage.open(at: url)
+      let opened = try Self.openOwned(url)
       if let project { release(project) }
       project = opened
     }

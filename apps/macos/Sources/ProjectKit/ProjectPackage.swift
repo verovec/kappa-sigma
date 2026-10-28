@@ -1,5 +1,6 @@
 public import Foundation
 internal import GRDB
+internal import OSLog
 
 /// An AstroStack project on disk: a `.astrostack` folder holding `project.db` (design §4.5).
 ///
@@ -25,6 +26,9 @@ public final class ProjectPackage {
 
   /// The folder the package lives in.
   public let url: URL
+  /// The token of the owner marker this instance wrote (`open(at:owning:)`), released on close;
+  /// `nil` for a short opener or a process that could not be stamped.
+  private var ownerToken: UUID?
   /// Typed access to `project.db`.
   package let store: ProjectStore
   private let pool: DatabasePool
@@ -55,7 +59,12 @@ public final class ProjectPackage {
   }
 
   /// Opens the package at `url`, refusing anything AstroStack did not create.
-  public static func open(at url: URL) throws -> ProjectPackage {
+  ///
+  /// When `owning`, a package another running process holds is refused too (card 0147): the
+  /// marker is taken (a stale one, from a crash, is replaced and logged; this process's own is
+  /// rewritten) and released by `close()`. A short opener (`owning: false`, the retention
+  /// review) leaves the marker as it finds it.
+  public static func open(at url: URL, owning: Bool = true) throws -> ProjectPackage {
     guard (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true else {
       throw ProjectPackageError.notAPackage(path: url.path)
     }
@@ -66,14 +75,51 @@ public final class ProjectPackage {
     guard try applicationID(of: database) == applicationID else {
       throw ProjectPackageError.foreignDatabase(path: url.path)
     }
-    let pool = try DatabasePool(path: database.path)
+    let token = owning ? try claim(url) : nil
     do {
-      return try ProjectPackage(url: url, pool: pool)
+      let pool = try DatabasePool(path: database.path)
+      do {
+        let package = try ProjectPackage(url: url, pool: pool)
+        package.ownerToken = token
+        return package
+      } catch {
+        try? pool.close()
+        throw error
+      }
     } catch {
-      try? pool.close()
+      // Nothing opened: the marker just written goes (another opening's stays).
+      if let token { ProjectOwner.release(token, in: url) }
       throw error
     }
   }
+
+  /// Takes the owner marker of `url` for this process, or refuses: another process still runs.
+  ///
+  /// One read, one stamp: a live owner elsewhere refuses (whether or not this process can be
+  /// stamped); a stale one (a crash) is replaced and logged, this process's own rewritten. The
+  /// marker is re-read after the write: an opener that wrote in the same instant holds it now,
+  /// and this one refuses. Returns the token written, `nil` when this process cannot be stamped.
+  private static func claim(_ url: URL) throws -> UUID? {
+    let existing = ProjectOwner.read(in: url)
+    let mine = ProjectOwner.current()
+    if let other = existing?.heldElsewhere(from: mine?.process) {
+      throw ProjectPackageError.openElsewhere(path: url.path, pid: other.process.pid)
+    }
+    guard let mine else { return nil }
+    if let existing, existing.process != mine.process {
+      let stale = existing.process.pid
+      logger.notice(
+        "replacing the stale owner marker of \(url.path, privacy: .public) (pid \(stale))")
+    }
+    try mine.write(in: url)
+    let written = ProjectOwner.read(in: url)
+    guard written?.token == mine.token else {
+      throw ProjectPackageError.openElsewhere(path: url.path, pid: written?.process.pid ?? 0)
+    }
+    return mine.token
+  }
+
+  private static let logger = Logger(subsystem: "fr.astrostack", category: "ProjectKit/owner")
 
   /// The counts of the package at `url`, read without opening it: a read-only connection that
   /// neither migrates, checkpoints nor removes the WAL, so a project open elsewhere is untouched.
@@ -143,8 +189,9 @@ public final class ProjectPackage {
 
   private func writeContents(to destination: URL) throws {
     let manager = FileManager.default
+    // Neither the database files (backed up below) nor the owner marker: a copy is nobody's yet.
     for item in try manager.contentsOfDirectory(atPath: url.path)
-    where !item.hasPrefix(Self.databaseName) {
+    where !item.hasPrefix(Self.databaseName) && item != ProjectOwner.fileName {
       try manager.copyItem(
         at: url.appendingPathComponent(item), to: destination.appendingPathComponent(item))
     }
@@ -162,7 +209,10 @@ public final class ProjectPackage {
   /// for whoever closes the project last. A checkpoint another connection blocks stays passive.
   package func closeKeepingWAL() throws {
     // The pool closes even when both checkpoints fail: never a connection left behind.
-    defer { try? pool.close() }
+    defer {
+      try? pool.close()
+      if let ownerToken { ProjectOwner.release(ownerToken, in: url) }
+    }
     try pool.writeWithoutTransaction { db in
       if (try? db.checkpoint(.truncate)) == nil { _ = try db.checkpoint(.passive) }
     }
@@ -175,6 +225,9 @@ public final class ProjectPackage {
   /// one self-contained `project.db` (safe to copy in the Finder or back up). The pool is closed
   /// even when the checkpoint fails; the WAL then stays, and the checkpoint error is rethrown.
   public func close() throws {
+    // The marker goes whatever the checkpoint does: a closed package is nobody's — unless this
+    // process reopened it meanwhile (its own token on disk then).
+    defer { if let ownerToken { ProjectOwner.release(ownerToken, in: url) } }
     var checkpointError: (any Error)?
     do { try save() } catch { checkpointError = error }
     try pool.close()

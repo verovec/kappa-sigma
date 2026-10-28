@@ -817,6 +817,38 @@
         }
       }
     },
+    "%@ is open in another instance of AstroStack: use that window or quit it first.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is open in another instance of AstroStack: use that window or quit it first."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ est ouvert dans une autre instance d’AstroStack : utilisez cette fenêtre-là ou quittez-la d’abord."
+          }
+        }
+      }
+    },
+    "%@ is open in another window: close it before saving over it.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is open in another window: close it before saving over it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ est ouvert dans une autre fenêtre : fermez-la avant d’enregistrer par-dessus."
+          }
+        }
+      }
+    },
     "Advanced": {
       "localizations": {
         "en": {

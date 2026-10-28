@@ -1,6 +1,7 @@
 import AstroStackApp
 import FilterKit
 import Foundation
+import ProjectKit
 import StackKit
 import Testing
 
@@ -173,6 +174,15 @@ struct UserFacingErrorTests {
     let broken = UserFacingError(BrokenFrame(path: "/c/M31/L_0042.fits"))
     #expect(broken.message.text("fr").contains("/c/M31/L_0042.fits"), "the frame stays named")
     #expect(UserFacingError(UserFacingError.projectClosed) == .projectClosed)
+    let elsewhere = UserFacingError(
+      ProjectPackageError.openElsewhere(path: "/p/M31.astrostack", pid: 42))
+    #expect(elsewhere == .projectOpenElsewhere(path: "/p/M31.astrostack"))
+    #expect(elsewhere.message.text("en").contains("another instance of AstroStack"))
+    #expect(elsewhere.message.text("fr").contains("autre instance d’AstroStack"))
+    #expect(elsewhere.message.text("fr").contains("/p/M31.astrostack"), "the path stays named")
+    let window = UserFacingError.projectOpenInWindow(path: "/p/M31.astrostack")
+    #expect(window.message.text("en").contains("another window"))
+    #expect(window.message.text("fr").contains("autre fenêtre"))
     #expect(UserFacingError.projectClosed.message.text("fr").contains("rouvrez"))
   }
 

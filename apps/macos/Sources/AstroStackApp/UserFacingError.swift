@@ -36,6 +36,10 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
   case plateSolveInput(PlateSolveTool.InputError)
   /// The document was closed under an open sheet.
   case projectClosed
+  /// Another running AstroStack holds the package open (card 0147).
+  case projectOpenElsewhere(path: String)
+  /// Another window of this AstroStack shows the package a Save As would replace (card 0147).
+  case projectOpenInWindow(path: String)
   /// A new project's name has nothing left once cleaned for the file system.
   case projectName
   /// macOS (or the folder's permissions) refuses the app a folder it only reads: what to allow.
@@ -72,6 +76,7 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     case let error as ColourCalibrationError: self = .colourCalibration(error)
     case let error as PlateSolveTool.InputError: self = .plateSolveInput(error)
     case ProjectStoreError.stackOpen(_): self = .stackOpen
+    case ProjectPackageError.openElsewhere(let path, _): self = .projectOpenElsewhere(path: path)
     case let error as LocalizedError where error.errorDescription != nil:
       self = .other(error.errorDescription ?? "")
     // A system error has a sentence of its own; a Swift error without one would read
@@ -96,6 +101,10 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     case .exportReadOnlyFolder(let path):
       .app("AstroStack never writes into \(path): it is a read-only source. Choose another folder.")
     case .exportNothingChosen: .app("Choose at least one file and one format to export.")
+    case .projectOpenInWindow(let path):
+      .app("\(path) is open in another window: close it before saving over it.")
+    case .projectOpenElsewhere(let path):
+      .app("\(path) is open in another instance of AstroStack: use that window or quit it first.")
     case .exportWouldOverwrite(let path):
       .app("\(path) already exists: choose another folder or file name.")
     case .pipeline(let error): Self.message(error)

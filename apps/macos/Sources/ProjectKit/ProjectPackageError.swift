@@ -8,4 +8,6 @@ public enum ProjectPackageError: Error, Equatable, Sendable {
   case foreignDatabase(path: String)
   /// Something already exists where a new package was to be created.
   case alreadyExists(path: String)
+  /// Another running process holds the package open (card 0147): its pid.
+  case openElsewhere(path: String, pid: Int32)
 }

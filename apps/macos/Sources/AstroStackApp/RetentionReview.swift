@@ -183,7 +183,7 @@ package final class RetentionReview {
     guard !current.isEmpty else { return [] }
     let package: ProjectPackage
     do {
-      package = try ProjectPackage.open(at: project)
+      package = try ProjectPackage.open(at: project, owning: false)
     } catch {
       logger.error("could not open \(project.path) to delete stacks: \(error)")
       return []
@@ -210,7 +210,7 @@ package final class RetentionReview {
   @concurrent
   private nonisolated static func keepOffMain(_ ids: Set<Int64>, in project: URL) async {
     do {
-      let package = try ProjectPackage.open(at: project)
+      let package = try ProjectPackage.open(at: project, owning: false)
       defer { try? package.closeKeepingWAL() }
       try package.store.keepStacks(ids)
     } catch {

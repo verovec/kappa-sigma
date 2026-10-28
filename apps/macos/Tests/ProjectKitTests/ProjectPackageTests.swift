@@ -136,6 +136,8 @@ extension ProjectPackageError {
     case .missingDatabase(let path): .missingDatabase(path: (path as NSString).lastPathComponent)
     case .foreignDatabase(let path): .foreignDatabase(path: (path as NSString).lastPathComponent)
     case .alreadyExists(let path): .alreadyExists(path: (path as NSString).lastPathComponent)
+    case .openElsewhere(let path, let pid):
+      .openElsewhere(path: (path as NSString).lastPathComponent, pid: pid)
     }
   }
 }

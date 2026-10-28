@@ -6,6 +6,9 @@
 # Xcode is used instead — its compiler is the same Swift — with no `sudo xcode-select`.
 set -euo pipefail
 dev="${DEVELOPER_DIR:-$(xcode-select -p 2>/dev/null || true)}"
+# None selected: the CLT's default place, never an empty DEVELOPER_DIR exported to every recipe.
+[ -n "$dev" ] || dev=/Library/Developer/CommandLineTools
+[ -d "$dev" ] || { echo "developer-dir: no developer tools at $dev (xcode-select --install)" >&2; exit 1; }
 case "$dev" in
   */CommandLineTools)
     if [ ! -e "$dev/usr/lib/swift/host/plugins/libSwiftUIMacros.dylib" ]; then

@@ -52,8 +52,8 @@ struct LiveMonoSyntheticTests {
     let bundle = try #require(first.bundle)
     #expect(first.combinedPath?.hasSuffix("/combined.fits") == true)
     #expect(hashes["combined.fits"] != nil)
-    let unstable = hashes.keys.filter { hashes[$0] != again[$0] }.sorted()
-    #expect(!hashes.isEmpty && unstable.isEmpty, "not stable twice: \(unstable)")
+    let unstable = Set(hashes.keys).union(again.keys).filter { hashes[$0] != again[$0] }.sorted()
+    #expect(!hashes.isEmpty && hashes == again, "not stable twice: \(unstable)")
     let ids = Set(bundle.layers.map(\.id))
     switch scenario {
     case .lrgbHa: #expect(ids == ["L", "R", "G", "B", "Ha"])

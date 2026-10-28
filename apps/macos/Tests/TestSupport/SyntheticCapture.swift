@@ -16,7 +16,8 @@ package struct SyntheticCapture: Sendable {
     case sho
     /// Mono luminance alone.
     case lOnly = "l-only"
-    /// One-shot colour: a broadband night and a SII + OIII clip night (asserted at import).
+    /// One-shot colour: a broadband set and a SII + OIII clip set of the same night, the clip
+    /// asserted at import (it shares the night's flats).
     case oscSIIOIII = "osc-sii-oiii"
 
     /// The light filters, in capture order (`RGB` for a one-shot-colour set).
@@ -31,6 +32,9 @@ package struct SyntheticCapture: Sendable {
 
     /// True for a one-shot-colour rig (a Bayer mosaic and its `BAYERPAT` card).
     package var isColour: Bool { self == .oscSIIOIII }
+
+    /// The `INSTRUME` card's value: a camera no sensor table knows (no SPCC suggestion).
+    package var instrument: String { isColour ? "Synthetic OSC" : "Synthetic Mono" }
 
     /// The exposure of each light set, in seconds (the clip night is longer: a set of its own).
     package var exposures: [Int] { isColour ? [120, 300] : filters.map { _ in 120 } }
@@ -127,7 +131,7 @@ package struct SyntheticCapture: Sendable {
       FITSHeader.Card(keyword: "YBINNING", number: 1),
       FITSHeader.Card(keyword: "EGAIN", number: 0.8),
       FITSHeader.Card(
-        keyword: "INSTRUME", value: scenario.isColour ? "'Synthetic OSC'" : "'Synthetic Mono'"),
+        keyword: "INSTRUME", value: "'\(scenario.instrument)'"),
       FITSHeader.Card(keyword: "OBJECT", value: "'SYNTH'"),
       FITSHeader.Card(keyword: "DATE-OBS", value: "'\(Self.dateObs(index))'"),
     ]
@@ -143,11 +147,12 @@ package struct SyntheticCapture: Sendable {
     return url
   }
 
-  /// A frame's start, one minute apart from the night of 2026-10-01 (UTC).
+  /// A frame's start in the night of 2026-10-01 (UTC).
   static func dateObs(_ index: Int) -> String {
-    let (hour, minute) = (22 + index / 60, index % 60)
-    let day = hour >= 24 ? "02" : "01"
-    return String(format: "2026-10-%@T%02d:%02d:00", day, hour % 24, minute)
+    // Six minutes apart: a 300 s exposure ends before the next frame starts.
+    let minutes = 22 * 60 + 6 * index
+    let (day, hour, minute) = (1 + minutes / (24 * 60), minutes / 60 % 24, minutes % 60)
+    return String(format: "2026-10-%02dT%02d:%02d:00", day, hour, minute)
   }
 
   // MARK: - Pixels

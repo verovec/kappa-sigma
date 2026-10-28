@@ -70,7 +70,9 @@ struct MonoScenarioStudioTests {
     let studio = try StudioModel(
       store: opened.package.store, stackID: opened.stackID, packageFolder: opened.package.url,
       stackFolder: opened.folder, bundle: Self.bundle(expected.planes))
-    let base: Set<LayerRole> = expected.planes.keys.contains("RGB") ? [.color] : []
+    // The roles the app derives from the bundle (`StudioBundle`), never chosen here.
+    let base = Set(
+      expected.planes.keys.map { StudioBundle.role(of: LinearBundle.Role(filter: $0)) })
     return (try StudioWorkspaceModel(studio: studio, base: base), opened)
   }
 
@@ -102,7 +104,7 @@ struct MonoScenarioStudioTests {
     "testSPCCRefusedUntilChosen: a synthetic rig suggests no sensor; Apply waits for one",
     .scratchDirectory, arguments: SyntheticCapture.Scenario.allCases)
   func testSPCCRefusedUntilChosen(scenario: SyntheticCapture.Scenario) throws {
-    let instrument = scenario.isColour ? "Synthetic OSC" : "Synthetic Mono"
+    let instrument = scenario.instrument
     let header = FITSHeader(cards: [
       FITSHeader.Card(keyword: "INSTRUME", value: "'\(instrument)'")
     ])

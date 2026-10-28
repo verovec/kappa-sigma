@@ -61,8 +61,6 @@ struct MonoScenarioTests {
   /// set id (`InspectOverrides`), then the run with `siril`.
   struct Run {
     let root: URL
-    let inventory: Inventory
-    let lanes: [String]
     let siril: PipelineSiril
     let result: PreprocessResult
   }
@@ -77,10 +75,7 @@ struct MonoScenarioTests {
       work: root.appendingPathComponent("work/run_R1"), runID: "R1")
     let preprocessor = Preprocessor(tools: PreprocessorTests.tools(siril))
     let result = try await preprocessor.perform(request) { _ in }
-    return Run(
-      root: root, inventory: inventory,
-      lanes: try Preprocessor.plan(inventory).channels.keys.sorted(), siril: siril,
-      result: result)
+    return Run(root: root, siril: siril, result: result)
   }
 
   static func scan(_ scenario: SyntheticCapture.Scenario, root: URL) throws -> Inventory {
@@ -141,9 +136,11 @@ struct MonoScenarioTests {
       try FileManager.default.createDirectory(
         at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
       try text.write(to: file, atomically: true, encoding: .utf8)
+      // The bundle still holds the copy built before: read back what was written.
+      #expect(try String(contentsOf: file, encoding: .utf8) == text)
+      return
     }
     let url = try #require(Bundle.module.url(forResource: name, withExtension: nil))
-    let recorded = try String(contentsOf: url, encoding: .utf8)
-    #expect(recorded.split(separator: "\n") == text.split(separator: "\n"))
+    #expect(try String(contentsOf: url, encoding: .utf8) == text)
   }
 }

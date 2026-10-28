@@ -54,11 +54,15 @@ package enum WelcomeWindow {
   }
 
   /// Closes the window if it is up: a project window just opened.
+  ///
+  /// Up = on screen, in the Dock, or ordered out with a hidden app. Nothing to do when it was
+  /// never shown (a project opened from the Finder, a switcher's pick).
   package static func dismiss() {
+    guard let window, window.isVisible || window.isMiniaturized || NSApp.isHidden else { return }
     model.isNaming = false
     // The sheet's list would be stale by the next time the window shows: asked again next launch.
     retention.postpone()
-    window?.close()
+    window.close()
   }
 
   /// Whether the window is on screen.
@@ -116,10 +120,8 @@ package enum WelcomeWindow {
   ) async {
     do {
       _ = try await NSDocumentController.shared.openDocument(withContentsOf: url, display: true)
-      // An already open project only comes forward: its window was made long ago. The welcome
-      // window closes if it is up (on screen, in the Dock, or ordered out with a hidden app);
-      // from a project window's switcher there is nothing to close.
-      if let window, window.isVisible || window.isMiniaturized || NSApp.isHidden { dismiss() }
+      // An already open project only comes forward: its window was made long ago.
+      dismiss()
     } catch {
       logger.error("cannot open \(url.path, privacy: .public): \(error, privacy: .public)")
       report(error)

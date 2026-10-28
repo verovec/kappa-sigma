@@ -145,6 +145,8 @@ package final class ProjectDocument: NSDocument {
     let reopened = try ProjectPackage.open(at: url)
     release(project)
     self.project = reopened
+    // The window's head follows the package (card 0146).
+    windowModel?.refresh()
   }
 
   /// Help › First-Stack Guide: opens this project's guide (card 0061), the only way it opens.

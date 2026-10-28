@@ -88,6 +88,6 @@ package struct ProjectWindowView: View {
 
   /// The switcher at the head of the sidebar (card 0146), over the model's observable head.
   private var switcher: ProjectSwitcher {
-    ProjectSwitcher(target: model.head.target, current: model.head.current, source: projects)
+    ProjectSwitcher(target: model.head.target, currentKey: model.head.key, source: projects)
   }
 }

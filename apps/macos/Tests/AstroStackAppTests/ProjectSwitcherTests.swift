@@ -71,6 +71,7 @@ struct ProjectSwitcherTests {
       store: { project.store }, folder: { project.url }, planning: { _ in ImportPlanningStub.empty }
     )
     #expect(saved.head == ProjectWindowModel.Head(target: "M31", current: project.url))
+    #expect(saved.head.key == WelcomeModel.key(project.url))
     let untitled = ProjectWindowModel(
       store: { project.store }, folder: { project.url },
       services: { _ in ImportServices(planning: ImportPlanningStub.empty) }, isSaved: { false })

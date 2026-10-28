@@ -77,13 +77,11 @@ package struct ProjectSwitcher: View {
   @Environment(\.controlActiveState) private var activeState
   @Environment(\.locale) private var locale
 
-  /// The switcher of the window showing `current`, named `target`, over `source`.
-  ///
-  /// `current` is `nil` and `target` empty for an untitled project; the current project's key is
-  /// resolved here, once.
-  package init(target: String, current: URL?, source: Source) {
+  /// The switcher of the window whose project has the path key `currentKey` (the model's
+  /// `head.key`; `nil`, with an empty `target`, for an untitled project), over `source`.
+  package init(target: String, currentKey: String?, source: Source) {
     self.target = target
-    currentKey = current.map(WelcomeModel.key)
+    self.currentKey = currentKey
     self.source = source
   }
 

@@ -74,12 +74,12 @@ struct AccessibilityAuditTests {
   @Test("the project switcher: its menu is named after the project, « Projets » when untitled")
   func testProjectSwitcher() {
     let named = Self.entries(
-      ProjectSwitcher(target: "M31", current: nil, source: .empty), language: "fr")
+      ProjectSwitcher(target: "M31", currentKey: nil, source: .empty), language: "fr")
     #expect(AccessibilityAudit.problems(named) == [])
     #expect(named.map(\.id) == ["fr.astrostack.journey.projects"])
     #expect(named.first?.label == "M31")
     let untitled = Self.entries(
-      ProjectSwitcher(target: "", current: nil, source: .empty), language: "fr")
+      ProjectSwitcher(target: "", currentKey: nil, source: .empty), language: "fr")
     #expect(untitled.first?.label == "Projets")
   }
 

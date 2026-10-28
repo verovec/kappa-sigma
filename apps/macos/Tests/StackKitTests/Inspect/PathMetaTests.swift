@@ -80,6 +80,9 @@ struct PathMetaTests {
       ("input/2020_05_06/m81_m82_LRGB_0gain_Ha_180gain_120s/autorun/x.fit", ""),
       ("input/ngc6992/flats_0gain_Ha/autorun/x.fit", "Ha"),
       ("input/sess/darks_0gain_300s/x.fit", ""),
+      ("captures/Hb 5/2026-10-01/x.fit", ""), ("captures/Hb_12/Light/x.fit", ""),
+      ("captures/Hb 5/Hb/x.fit", "Hb"), ("captures/NGC 7000/NII_600s/x.fit", "NII"),
+      ("input/sess/Ha 1/x.fit", "Ha"), ("input/sess/L_2/x.fit", "L"),
     ])
   func testPathMeta_filterFromFolders(path: String, expected: String) {
     #expect(PathMeta.filterFromFolders(path) == expected)

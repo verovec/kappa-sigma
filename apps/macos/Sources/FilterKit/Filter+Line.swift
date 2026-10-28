@@ -22,6 +22,13 @@ extension Filter {
   private static let sulfurIILine = Line(
     wavelengthNm: 671.6, displayName: "[SII]", continuumFilters: [.red, .luminance], colourPlane: 0)
 
+  private static let hydrogenBetaLine = Line(
+    wavelengthNm: 486.1, displayName: "Hβ", continuumFilters: [.blue, .green, .luminance],
+    colourPlane: 2)
+  private static let nitrogenIILine = Line(
+    wavelengthNm: 658.3, displayName: "[NII]", continuumFilters: [.red, .luminance],
+    colourPlane: 0)
+
   /// The line this filter isolates, `nil` for a broadband filter (a constant: the predicate
   /// runs per frame in the channel detector).
   package var line: Line? {
@@ -29,9 +36,17 @@ extension Filter {
     case .hydrogenAlpha: Self.hydrogenAlphaLine
     case .oxygenIII: Self.oxygenIIILine
     case .sulfurII: Self.sulfurIILine
+    case .hydrogenBeta: Self.hydrogenBetaLine
+    case .nitrogenII: Self.nitrogenIILine
     case .luminance, .red, .green, .blue: nil
     }
   }
+
+  /// The positions of the 7-slot filter wheel the legacy engine assumes when nothing names the
+  /// slots — a physical convention, not the catalogue: a filter added here adds no slot.
+  package static let legacyWheel: [Self] = [
+    .luminance, .red, .green, .blue, .hydrogenAlpha, .oxygenIII, .sulfurII,
+  ]
 
   /// The emission lines, in display order.
   package static let narrowband = allCases.filter { $0.line != nil }

@@ -1,7 +1,7 @@
 # FilterKit
 
-The ONE filter list (CLAUDE.md): `Filter` (L R G B Ha OIII SII — cases, aliases, display order,
-`rank`/`less`, colour aliases), its line physics (`Filter.Line`: wavelength, panel name, continuum
+The ONE filter list (CLAUDE.md): `Filter` (cases, aliases, display order, `rank`/`less`, colour
+aliases), its line physics (`Filter.Line`: wavelength, panel name, continuum
 references) and the one-shot-colour clip filters (`FilterSet`: unknown, broadband, dual-band, with
 the lines each plane carries). A leaf module with no dependency: StackKit (lanes, continuum fit,
 bundle roles), ProcessKit (line processes) and the app (glossary words, pickers) all read it, so no
@@ -14,8 +14,17 @@ kit declares a second list.
    references) — `narrowband`/`broadband` follow.
 3. `FilterKitTests.FilterTests` rows (list, aliases, rank, continuum).
 4. Consumers: the app's glossary term `filter.<token>` fr/en (`GlossaryTests`), ProcessKit's
-   `LinePanelDefaults` entry (its test fails otherwise) and the per-line help entries
-   (`HelpCoverageTests+Params`).
+   `LinePanelDefaults` entry (its test fails otherwise; gain 0 keeps untouched defaults a copy),
+   the per-line catalog titles (12 in `ProcessKit/Localizable.xcstrings`,
+   `ProcessTitleCatalogTests`) and help entries (14 per locale in `params.json`,
+   `HelpCoverageTests+Params`); re-record `Fixtures/schemas/line-schemas.txt` (`RECORD=1`) and
+   the history digest of `StudioModelTests+Branches` — both only gain the new line's defaults.
+
+Card 0141 (Hβ, [NII]) learned two more: the filter-wheel legend is NOT the catalogue
+(`WheelSlots.defaultLegend` is the 7-position wheel, a new filter adds no slot), and an alias is
+also a folder word (`PathMeta.filterFromFolders` reads a folder's first word): `n2` would read a
+night folder as [NII], so it is not an alias — pick aliases a capture tree would not use by
+accident. The glued-word splitter (`CaptureManifest.knownFilters`) lists each new short token.
 
 One StackKit helper still spells tokens: `CaptureManifest.knownFilters`, the glued-word splitter
 (`LLLRGBHaHa`), lists the short tokens it may split on, longest first within a collision group —

@@ -121,7 +121,8 @@ struct BackgroundExtractionProcessTests {
     let calls = Calls()
     let batch = Self.batch(Self.fake(calls))
     let params = try Self.params(["applyTo": .choice("lines")])
-    await #expect(throws: ProcessError.missingLayer("an emission line layer (Ha, OIII, SII)")) {
+    let missing = ProcessError.missingLayer("an emission line layer (Ha, OIII, SII, Hb, NII)")
+    await #expect(throws: missing) {
       _ = try await batch.step(
         .init(image: Self.image(5, planes: 3), layers: ["RGB": Self.image(4, planes: 3)]), params
       ) { _ in }

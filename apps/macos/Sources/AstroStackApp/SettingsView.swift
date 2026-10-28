@@ -10,7 +10,7 @@ package struct SettingsView: View {
   private let relaunch: () -> Void
   private let tools: WelcomeModel?
   private let scratch: ScratchSetting
-  private let astro: AstroFolderSetting
+  private let astro: AstroFolderModel
   private let retention: RetentionSetting
   /// The choice the app was launched with: Relaunch is offered once the choice differs.
   private let launched: LanguageSetting.Choice
@@ -20,13 +20,6 @@ package struct SettingsView: View {
   @State private var scratchFolder: URL
   /// The last folder chosen was under the read-only sources (R7) and was not kept.
   @State private var scratchRefused = false
-  /// The astro folder, as last read (card 0148).
-  @State private var astroFolder: URL
-  /// The last astro folder chosen was no folder, or one the app writes under; not kept.
-  @State private var astroRefused = false
-  /// Which subfolders the root holds, read off the main thread when the root is set (a slow or
-  /// unmounted volume never blocks the window), never on each render.
-  @State private var astroLines: [(name: String, found: Bool)] = []
   /// The retention policy as edited; written back on every change.
   @State private var policy: RetentionPolicy
 
@@ -35,7 +28,7 @@ package struct SettingsView: View {
   package init(
     setting: LanguageSetting, relaunch: @escaping () -> Void,
     tools: WelcomeModel? = nil, scratch: ScratchSetting = ScratchSetting(),
-    astro: AstroFolderSetting = AstroFolderSetting(),
+    astro: AstroFolderModel = AstroFolderModel(),
     retention: RetentionSetting = RetentionSetting()
   ) {
     self.setting = setting
@@ -44,7 +37,6 @@ package struct SettingsView: View {
     self.scratch = scratch
     _scratchFolder = State(initialValue: scratch.folder)
     self.astro = astro
-    _astroFolder = State(initialValue: astro.folder)
     self.retention = retention
     _policy = State(initialValue: retention.policy)
     launched = setting.choice
@@ -76,9 +68,7 @@ package struct SettingsView: View {
     }
     .formStyle(.grouped)
     .frame(width: 460)
-    .task(id: astroFolder) {
-      astroLines = await Self.astroLines(under: astroFolder)
-    }
+    .task(id: astro.folder) { await astro.refresh() }
   }
 
   /// Where Siril's work files go during a run; the next run reads it.
@@ -107,25 +97,11 @@ package struct SettingsView: View {
     }
   }
 
-  /// The root as Settings shows it: `~` for the home folder.
-  package nonisolated static func astroPath(_ folder: URL) -> String {
-    (folder.path as NSString).abbreviatingWithTildeInPath
-  }
-
-  /// The subfolders of the astro root and whether each exists (R2: shown, never decided from).
-  @concurrent package nonisolated static func astroLines(
-    under root: URL
-  ) async -> [(name: String, found: Bool)] {
-    AstroFolderSetting.shown.map {
-      ($0, AstroFolderSetting.isFolder(root.appendingPathComponent($0, isDirectory: true)))
-    }
-  }
-
   /// The read-only data root (card 0148): captures, runs, library, fixtures; every path follows.
   private var astroSection: some View {
     Section {
       LabeledContent {
-        Text(verbatim: Self.astroPath(astroFolder))
+        Text(verbatim: astro.path)
           .lineLimit(1).truncationMode(.middle).textSelection(.enabled)
       } label: {
         Text(.app("Astro folder"))
@@ -135,13 +111,13 @@ package struct SettingsView: View {
           .font(.caption).foregroundStyle(.secondary)
         Spacer()
         Button(.app("Choose…"), action: chooseAstro)
-        Button(.app("Default")) { pickAstro(nil) }.disabled(astro.chosen == nil)
+        Button(.app("Default")) { astro.pick(nil) }.disabled(!astro.chosen)
       }
-      ForEach(astroLines, id: \.name) { line in
+      ForEach(astro.lines, id: \.name) { line in
         Text(line.found ? .app("\(line.name) — present") : .app("\(line.name) — absent"))
           .font(.caption).foregroundStyle(.secondary)
       }
-      if astroRefused {
+      if astro.refused {
         Text(.app("Choose an existing folder the app does not write under."))
           .font(.caption).foregroundStyle(DesignColor.statusError.color)
       }
@@ -172,11 +148,9 @@ package struct SettingsView: View {
   }
 
   private func chooseScratch() {
-    let panel = NSOpenPanel()
-    panel.canChooseDirectories = true
-    panel.canChooseFiles = false
-    panel.canCreateDirectories = true
-    guard panel.runModal() == .OK, let url = panel.url else { return }
+    guard let url = FolderPanel.pick(FolderPanel.make(startingIn: nil, canCreate: true)) else {
+      return
+    }
     pickScratch(url)
   }
 
@@ -186,16 +160,10 @@ package struct SettingsView: View {
   }
 
   private func chooseAstro() {
-    let panel = NSOpenPanel()
-    panel.canChooseDirectories = true
-    panel.canChooseFiles = false
-    panel.directoryURL = astroFolder
-    guard panel.runModal() == .OK, let url = panel.url else { return }
-    pickAstro(url)
-  }
-
-  private func pickAstro(_ url: URL?) {
-    astroRefused = !astro.choose(url)
-    astroFolder = astro.folder
+    guard let url = FolderPanel.pick(FolderPanel.make(startingIn: astro.folder, canCreate: false))
+    else {
+      return
+    }
+    astro.pick(url)
   }
 }

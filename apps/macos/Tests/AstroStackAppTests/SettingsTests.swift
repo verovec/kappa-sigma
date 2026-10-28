@@ -45,20 +45,32 @@ struct SettingsTests {
     let root = try ScratchDirectory.url.appendingPathComponent("astro")
     try FileManager.default.createDirectory(
       at: root.appendingPathComponent("captures"), withIntermediateDirectories: true)
-    let astro = AstroFolderSetting(defaults: defaults, home: URL(fileURLWithPath: "/Users/x"))
-    #expect(astro.choose(root))
-    #expect(!astro.choose(root.appendingPathComponent("missing")), "a refused pick keeps the root")
-    let home = URL(fileURLWithPath: NSHomeDirectory())
-    #expect(
-      SettingsView.astroPath(home.appendingPathComponent("Documents/astro")) == "~/Documents/astro")
-    let found = await SettingsView.astroLines(under: astro.folder).map(\.found)
-    #expect(found == [true, false, false, false, false])
+    let astro = AstroFolderModel(
+      setting: AstroFolderSetting(defaults: defaults, home: URL(fileURLWithPath: NSHomeDirectory()))
+    )
+    #expect(astro.path == "~/Documents/astro" && !astro.chosen, "the default, spelled with ~")
+    astro.pick(root)
+    #expect(astro.folder.path == root.path && astro.chosen && !astro.refused)
+    astro.pick(root.appendingPathComponent("missing"))
+    #expect(astro.refused && astro.folder.path == root.path, "a refused pick keeps the root")
+    await astro.refresh()
+    #expect(astro.lines.map(\.found) == [true, false, false, false, false])
     let view = SettingsView(
       setting: LanguageSetting(defaults: defaults, domain: name), relaunch: {}, astro: astro)
     let host = NSHostingView(rootView: view.environment(\.locale, Locale(identifier: language)))
     host.layoutSubtreeIfNeeded()
     #expect(host.fittingSize.width >= 460)
     #expect(host.fittingSize.height > 0)
+  }
+
+  @Test("the folder pickers choose folders only, opened where asked; Open Run… starts in runs")
+  func testFolderPanel() {
+    let folder = URL(fileURLWithPath: "/Volumes/SSD/astro", isDirectory: true)
+    let panel = FolderPanel.make(startingIn: folder, canCreate: true)
+    #expect(panel.canChooseDirectories && !panel.canChooseFiles && panel.canCreateDirectories)
+    #expect(panel.directoryURL == folder)
+    #expect(FolderPanel.make(startingIn: nil, canCreate: false).canCreateDirectories == false)
+    #expect(LegacyRunWindow.runPanel().directoryURL?.lastPathComponent == "runs")
   }
 
   @Test("Settings… shows one window, titled from the catalog, reused")

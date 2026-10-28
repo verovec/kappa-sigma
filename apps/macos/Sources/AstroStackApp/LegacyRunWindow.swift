@@ -34,11 +34,7 @@ package final class LegacyRunWindow: NSWindowController, NSWindowDelegate {
 
   /// The folder picker: folders only, starting in the astro folder's `runs` (Settings, 0148).
   package static func runPanel() -> NSOpenPanel {
-    let panel = NSOpenPanel()
-    panel.canChooseDirectories = true
-    panel.canChooseFiles = false
-    panel.directoryURL = AstroFolderSetting().runs
-    return panel
+    FolderPanel.make(startingIn: AstroFolderSetting().runs, canCreate: false)
   }
 
   /// Opens the run, handing a failure to `report` (an alert in the app): never swallowed.

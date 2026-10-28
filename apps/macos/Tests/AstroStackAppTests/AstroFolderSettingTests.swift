@@ -123,7 +123,7 @@ struct AstroFolderSettingTests {
       at: base.appendingPathComponent("link"), withDestinationURL: root)
     let setting = AstroFolderSetting(defaults: defaults, home: URL(fileURLWithPath: "/Users/x"))
     #expect(setting.choose(base.appendingPathComponent("link")), "a link to a folder is a folder")
-    let lines = await SettingsView.astroLines(under: setting.folder)
+    let lines = await AstroFolderModel.lines(under: setting.folder)
     #expect(lines.map(\.name) == ["captures", "runs", "library", "fixtures", "library/catalogues"])
     #expect(lines.map(\.found) == [false, true, true, false, true], "a linked subfolder counts")
   }

@@ -49,12 +49,13 @@ struct ProjectSwitcherTests {
 
   @Test("testItems_fromCatalog", arguments: rows)
   func testItems_fromCatalog(row: Row) {
-    let items = ProjectSwitcher.Items.make(entries: row.entries, current: row.current)
+    let items = ProjectSwitcher.Items.make(
+      entries: row.entries, currentKey: row.current.map(WelcomeModel.key))
     #expect(items.open.map(\.target) == row.open)
     #expect(items.recent.map(\.target) == row.recent)
     #expect(items.folder.map(\.target) == row.folder)
     let all = items.open + items.recent + items.folder
-    #expect(all.first { $0.isCurrent }?.target == row.checked)
+    #expect(all.first { items.isCurrent($0) }?.target == row.checked)
     #expect(all.allSatisfy { $0.key == WelcomeModel.key($0.url) })
   }
 

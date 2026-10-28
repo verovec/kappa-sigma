@@ -58,6 +58,6 @@ package struct ProjectListSection: View {
       .contentShape(Rectangle())
     }
     .buttonStyle(.plain)
-    .accessible(.welcomeProject(WelcomeModel.key(project.url)), verbatim: project.target)
+    .accessible(.welcomeProject(project.key), verbatim: project.target)
   }
 }

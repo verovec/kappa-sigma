@@ -71,13 +71,16 @@ struct AccessibilityAuditTests {
     #expect(rows.first?.label == "Données")
   }
 
-  @Test("the project switcher: its menu carries a label and an id, in the view's language")
+  @Test("the project switcher: its menu is named after the project, « Projets » when untitled")
   func testProjectSwitcher() {
-    let switcher = ProjectSwitcher(target: "M31", current: nil, source: .empty)
-    let entries = Self.entries(switcher, language: "fr")
-    #expect(AccessibilityAudit.problems(entries) == [])
-    #expect(entries.map(\.id) == ["fr.astrostack.journey.projects"])
-    #expect(entries.first?.label == "Projets")
+    let named = Self.entries(
+      ProjectSwitcher(target: "M31", current: nil, source: .empty), language: "fr")
+    #expect(AccessibilityAudit.problems(named) == [])
+    #expect(named.map(\.id) == ["fr.astrostack.journey.projects"])
+    #expect(named.first?.label == "M31")
+    let untitled = Self.entries(
+      ProjectSwitcher(target: "", current: nil, source: .empty), language: "fr")
+    #expect(untitled.first?.label == "Projets")
   }
 
   @Test("the workspace: the Stacking stage's preset and Run", .scratchDirectory)

@@ -55,14 +55,13 @@ package enum WelcomeWindow {
 
   /// Closes the window if it is up: a project window just opened.
   ///
-  /// Up = on screen, in the Dock, or ordered out with a hidden app. Nothing to do when it was
-  /// never shown (a project opened from the Finder, a switcher's pick).
+  /// The naming sheet and the pending retention list are reset whether the window is up or not:
+  /// a project opening makes both stale (the list may name its stacks).
   package static func dismiss() {
-    guard let window, window.isVisible || window.isMiniaturized || NSApp.isHidden else { return }
     model.isNaming = false
     // The sheet's list would be stale by the next time the window shows: asked again next launch.
     retention.postpone()
-    window.close()
+    window?.close()
   }
 
   /// Whether the window is on screen.

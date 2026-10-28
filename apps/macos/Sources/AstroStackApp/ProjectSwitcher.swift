@@ -11,11 +11,16 @@ package import SwiftUI
 package struct ProjectSwitcher: View {
   /// The closures behind the menu's items, wired by the window.
   package struct Actions {
+    /// Opens the project at the URL (adds a window, or brings its window forward).
     package let open: (URL) -> Void
+    /// Open…: the Open panel.
     package let choose: () -> Void
+    /// New Project…: the welcome window's naming sheet.
     package let newProject: () -> Void
+    /// Welcome Window.
     package let welcome: () -> Void
 
+    /// The four closures.
     package init(
       open: @escaping (URL) -> Void, choose: @escaping () -> Void,
       newProject: @escaping () -> Void, welcome: @escaping () -> Void
@@ -59,8 +64,11 @@ package struct ProjectSwitcher: View {
   /// The menu's projects by section: the catalog's entries (already one per package, first
   /// origin kept), split once.
   package struct Items: Equatable {
+    /// The projects a window shows, in document order.
     package let open: [ProjectCatalog.Entry]
+    /// The recent projects not open, in AppKit's order.
     package let recent: [ProjectCatalog.Entry]
+    /// The rest of the projects folder, by target.
     package let folder: [ProjectCatalog.Entry]
 
     package static func make(entries: [ProjectCatalog.Entry]) -> Self {
@@ -106,6 +114,8 @@ package struct ProjectSwitcher: View {
       }
     }
     .menuStyle(.borderlessButton)
+    // The head draws its own chevron.
+    .menuIndicator(.hidden)
     .accessible(.projectSwitcher, verbatim: name)
     // Fresh each time this window is (or becomes) key — on appear included; another window
     // closed or opened meanwhile shows at once. The reload drops a stale generation itself.

@@ -314,11 +314,14 @@ package final class ProjectWindowModel {
   package func refresh() {
     do {
       let store = store()
-      needsSave = !isSaved()
       let saved = isSaved()
-      let headNow =
-        saved ? Head(target: targetName, current: folder()) : Head(target: "", current: nil)
-      if headNow != head { head = headNow }
+      needsSave = !saved
+      // The head (and its resolved key) is rebuilt only when the package or its state moved.
+      let current = saved ? folder() : nil
+      let target = saved ? targetName : ""
+      if current != head.current || target != head.target {
+        head = Head(target: target, current: current)
+      }
       sources = try store?.sources() ?? []
       // The profile kept at import (0060) words the knobs' help; it is applied by nothing here.
       // Every night must have kept the same profile (a night without one counts, a legacy run

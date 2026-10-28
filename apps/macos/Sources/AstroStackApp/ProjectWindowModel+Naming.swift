@@ -17,8 +17,11 @@ extension ProjectWindowModel {
   /// package's path key (`WelcomeModel.key`, resolved once here — the switcher checks its entry
   /// by it).
   package struct Head: Equatable, Sendable {
+    /// The target the project is named after; empty for an untitled window.
     package let target: String
+    /// The package shown; `nil` for an untitled window.
     package let current: URL?
+    /// The path key of the package shown, resolved once.
     package let key: String?
 
     package init(target: String, current: URL?) {

@@ -49,33 +49,19 @@ struct ProjectSwitcherTests {
 
   @Test("testItems_fromCatalog", arguments: rows)
   func testItems_fromCatalog(row: Row) {
-    let items = ProjectSwitcher.Items.make(
-      entries: row.entries, currentKey: row.current.map(WelcomeModel.key))
+    let items = ProjectSwitcher.Items.make(entries: row.entries)
     #expect(items.open.map(\.target) == row.open)
     #expect(items.recent.map(\.target) == row.recent)
     #expect(items.folder.map(\.target) == row.folder)
+    // The window checks the entry whose key is its own, as the menu does.
+    let currentKey = row.current.map(WelcomeModel.key)
     let all = items.open + items.recent + items.folder
-    #expect(all.first { items.isCurrent($0) }?.target == row.checked)
+    #expect(all.first { $0.key == currentKey }?.target == row.checked)
     #expect(all.allSatisfy { $0.key == WelcomeModel.key($0.url) })
   }
 
-  @Test("testActions: each item is one closure the window wires, nothing else")
-  func testActions() {
-    var log: [String] = []
-    let actions = ProjectSwitcher.Actions(
-      open: { log.append("open \($0.lastPathComponent)") },
-      choose: { log.append("choose") },
-      newProject: { log.append("new") },
-      welcome: { log.append("welcome") })
-    actions.open(Self.url("M45"))
-    actions.choose()
-    actions.newProject()
-    actions.welcome()
-    #expect(log == ["open M45.astrostack", "choose", "new", "welcome"])
-  }
-
   @Test(
-    "the head names a saved project; an untitled one shows no UUID and checks nothing",
+    "the model's head names a saved project; an untitled one shows no UUID and checks nothing",
     .scratchDirectory)
   func testHead_untitledShowsNoTarget() throws {
     let project = try ProjectPackage.create(
@@ -84,10 +70,10 @@ struct ProjectSwitcherTests {
     let saved = ProjectWindowModel(
       store: { project.store }, folder: { project.url }, planning: { _ in ImportPlanningStub.empty }
     )
-    #expect(ProjectWindowView.head(for: saved) == ("M31", project.url))
+    #expect(saved.head == ProjectWindowModel.Head(target: "M31", current: project.url))
     let untitled = ProjectWindowModel(
       store: { project.store }, folder: { project.url },
       services: { _ in ImportServices(planning: ImportPlanningStub.empty) }, isSaved: { false })
-    #expect(ProjectWindowView.head(for: untitled) == ("", nil))
+    #expect(untitled.head == ProjectWindowModel.Head(target: "", current: nil))
   }
 }

@@ -117,9 +117,9 @@ package enum WelcomeWindow {
     do {
       _ = try await NSDocumentController.shared.openDocument(withContentsOf: url, display: true)
       // An already open project only comes forward: its window was made long ago. The welcome
-      // window closes if it is up (on screen or in the Dock); from a project window's switcher
-      // there is nothing to close.
-      if let window, window.isVisible || window.isMiniaturized { dismiss() }
+      // window closes if it is up (on screen, in the Dock, or ordered out with a hidden app);
+      // from a project window's switcher there is nothing to close.
+      if let window, window.isVisible || window.isMiniaturized || NSApp.isHidden { dismiss() }
     } catch {
       logger.error("cannot open \(url.path, privacy: .public): \(error, privacy: .public)")
       report(error)

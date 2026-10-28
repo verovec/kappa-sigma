@@ -20,12 +20,6 @@ package struct ProjectWindowView: View {
     self.projects = projects
   }
 
-  /// What the switcher's head says for `model`: the target of a saved project, nothing for an
-  /// untitled one (its temporary package is named by a UUID, never shown).
-  package static func head(for model: ProjectWindowModel) -> (target: String, current: URL?) {
-    model.isSaved() ? (model.targetName, model.folder()) : ("", nil)
-  }
-
   /// The sidebar shown: hidden while the Studio's image is focused (card 0127), else as the user
   /// left it (`stored`, never changed by the focus).
   package static func sidebar(
@@ -92,9 +86,8 @@ package struct ProjectWindowView: View {
     .environment(\.guideTarget, model.guideTarget)
   }
 
-  /// The switcher at the head of the sidebar (card 0146).
+  /// The switcher at the head of the sidebar (card 0146), over the model's observable head.
   private var switcher: ProjectSwitcher {
-    let head = Self.head(for: model)
-    return ProjectSwitcher(target: head.target, current: head.current, source: projects)
+    ProjectSwitcher(target: model.head.target, current: model.head.current, source: projects)
   }
 }

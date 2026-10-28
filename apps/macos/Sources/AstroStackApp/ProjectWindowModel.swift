@@ -90,6 +90,23 @@ package final class ProjectWindowModel {
   package internal(set) var guideStep: Int?
   /// The project is the untitled temporary package: a run needs it saved first (read on refresh).
   package private(set) var needsSave = false
+  /// What names this window's project (card 0146).
+  ///
+  /// The saved package's target and folder, nothing for an untitled one (its temporary package
+  /// is named by a UUID, never shown). Observable, refreshed with the sources: a first save or a
+  /// move renames the head.
+  package private(set) var head = Head(target: "", current: nil)
+
+  /// The head of a project window: its target and the package it shows.
+  package struct Head: Equatable, Sendable {
+    package let target: String
+    package let current: URL?
+
+    package init(target: String, current: URL?) {
+      self.target = target
+      self.current = current
+    }
+  }
   /// Stack folders no stack records, kept because they hold files (finished masters of a
   /// failed or cancelled run): listed at open and when a queue ends, deleted only by the user.
   package internal(set) var leftoverStacks: [LeftoverStack] = []
@@ -308,6 +325,8 @@ package final class ProjectWindowModel {
     do {
       let store = store()
       needsSave = !isSaved()
+      head =
+        isSaved() ? Head(target: targetName, current: folder()) : Head(target: "", current: nil)
       sources = try store?.sources() ?? []
       // The profile kept at import (0060) words the knobs' help; it is applied by nothing here.
       // Every night must have kept the same profile (a night without one counts, a legacy run

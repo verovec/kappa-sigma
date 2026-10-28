@@ -56,23 +56,19 @@ package struct ProjectSwitcher: View {
       actions: Actions(open: { _ in }, choose: {}, newProject: {}, welcome: {}), reload: {})
   }
 
-  /// The menu's projects by section — the catalog's entries (already one per package, first
-  /// origin kept) — and the key of the project this window shows.
+  /// The menu's projects by section: the catalog's entries (already one per package, first
+  /// origin kept), split once.
   package struct Items: Equatable {
     package let open: [ProjectCatalog.Entry]
     package let recent: [ProjectCatalog.Entry]
     package let folder: [ProjectCatalog.Entry]
-    package let currentKey: String?
 
-    package static func make(entries: [ProjectCatalog.Entry], currentKey: String?) -> Self {
-      Self(
-        open: entries.filter { $0.origin == .open },
-        recent: entries.filter { $0.origin == .recent },
-        folder: entries.filter { $0.origin == .folder }, currentKey: currentKey)
+    package static func make(entries: [ProjectCatalog.Entry]) -> Self {
+      let byOrigin = Dictionary(grouping: entries, by: \.origin)
+      return Self(
+        open: byOrigin[.open] ?? [], recent: byOrigin[.recent] ?? [],
+        folder: byOrigin[.folder] ?? [])
     }
-
-    /// The project this window shows: checked, chosen again it only comes forward.
-    package func isCurrent(_ entry: ProjectCatalog.Entry) -> Bool { entry.key == currentKey }
   }
 
   let target: String
@@ -92,11 +88,11 @@ package struct ProjectSwitcher: View {
   }
 
   package var body: some View {
-    let items = Items.make(entries: source.catalog.entries, currentKey: currentKey)
+    let items = Items.make(entries: source.catalog.entries)
     Menu {
-      section(.app("Open projects"), items.open, items)
-      section(.app("Recent projects"), items.recent, items)
-      section(.app("In the projects folder"), items.folder, items)
+      section(.app("Open projects"), items.open)
+      section(.app("Recent projects"), items.recent)
+      section(.app("In the projects folder"), items.folder)
       Divider()
       Button(.app("Open…")) { source.actions.choose() }
         .accessible(.projectSwitcherOpen, label: .app("Open…"))
@@ -113,9 +109,8 @@ package struct ProjectSwitcher: View {
     }
     .menuStyle(.borderlessButton)
     .accessible(.projectSwitcher, verbatim: name)
-    // Fresh when the window appears and each time it becomes key again (another window closed
-    // or opened meanwhile); the reload drops a stale generation itself.
-    .task { await source.reload() }
+    // Fresh each time this window is (or becomes) key — on appear included; another window
+    // closed or opened meanwhile shows at once. The reload drops a stale generation itself.
     .task(id: activeState == .key) {
       if activeState == .key { await source.reload() }
     }
@@ -128,16 +123,17 @@ package struct ProjectSwitcher: View {
 
   /// One section of projects, absent when empty.
   @ViewBuilder
-  private func section(
-    _ title: LocalizedStringResource, _ entries: [ProjectCatalog.Entry], _ items: Items
-  ) -> some View {
+  private func section(_ title: LocalizedStringResource, _ entries: [ProjectCatalog.Entry])
+    -> some View
+  {
     if !entries.isEmpty {
       Section {
         ForEach(entries) { entry in
           Button {
             source.actions.open(entry.url)
           } label: {
-            if items.isCurrent(entry) {
+            // The project this window shows: checked; chosen again it only comes forward.
+            if entry.key == currentKey {
               Label {
                 Text(verbatim: entry.target)
               } icon: {

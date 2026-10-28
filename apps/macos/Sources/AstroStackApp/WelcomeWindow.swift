@@ -79,26 +79,27 @@ package enum WelcomeWindow {
     return window
   }
 
-  /// Every saved project open in a document, in the documents' order, by its file URL — there
-  /// before the package finishes opening; an untitled one's temporary package has none.
-  package static func openDocuments() -> [(document: ProjectDocument, url: URL)] {
-    NSDocumentController.shared.documents.compactMap { document in
-      guard let document = document as? ProjectDocument, let url = document.fileURL else {
-        return nil
-      }
-      return (document, url)
-    }
-  }
-
   /// The key (`WelcomeModel.key`) of every project open in a document; reads no database.
   package static func openProjectKeys() -> Set<String> {
-    Set(openDocuments().map { WelcomeModel.key($0.url) })
+    Set(
+      NSDocumentController.shared.documents.compactMap {
+        guard let document = $0 as? ProjectDocument else { return nil }
+        // The file URL is there before the package finishes opening.
+        return (document.packageURL ?? document.fileURL).map(WelcomeModel.key)
+      })
   }
 
-  /// Every project open in a document with that document's counts, in the documents' order; one
-  /// still opening has none yet and is left to the catalog's read-only disk read.
+  /// Every saved project open in a document, in the documents' order, with its counts.
+  ///
+  /// The counts are the document's, none while it is still opening (it is never re-read from
+  /// disk meanwhile). An untitled document has no file URL: its temporary package is no project.
   package static func openProjects() -> [(URL, ProjectSummary?)] {
-    openDocuments().compactMap { open in open.document.projectSummary().map { (open.url, $0) } }
+    NSDocumentController.shared.documents.compactMap { document in
+      guard let document = document as? ProjectDocument, document.fileURL != nil,
+        let url = document.packageURL ?? document.fileURL
+      else { return nil }
+      return (url, document.projectSummary())
+    }
   }
 
   /// Open…: the projects picked in the Open panel, opened like a recent one.

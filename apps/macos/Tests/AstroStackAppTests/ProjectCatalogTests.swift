@@ -89,6 +89,21 @@ struct ProjectCatalogTests {
     #expect(catalog.entries.map(\.origin) == [.open])
   }
 
+  @Test(
+    "an open project still opening stays open, without counts, never re-read from disk",
+    .scratchDirectory)
+  func testReload_openingProjectIsNotReadFromDisk() async throws {
+    // A readable package: read from disk, it would have counts.
+    let url = try NewProject.create(target: "M 31", in: try ScratchDirectory.url)
+    let catalog = ProjectCatalog(
+      openProjects: { [(url, nil)] }, recentURLs: { [url] }, folderURLs: { [url] })
+
+    await catalog.reload()
+
+    #expect(catalog.entries.map(\.origin) == [.open])
+    #expect(catalog.entries.first?.summary == nil)
+  }
+
   @Test("a folder project read from disk has its counts, an unreadable one none", .scratchDirectory)
   func testReload_readsFolderProjects() async throws {
     let folder = try ScratchDirectory.url

@@ -63,7 +63,9 @@ package final class ProjectCatalog {
     generation += 1
     let current = generation
     // A package deleted or moved under its open document has nothing left to open.
-    let open = openProjects().filter { FileManager.default.fileExists(atPath: $0.0.path) }
+    let all = openProjects()
+    let present = Set(WelcomeModel.onDisk(all.map(\.0)))
+    let open = all.filter { present.contains($0.0) }
     var seen = Set(open.map { WelcomeModel.key($0.0) })
     let recent = WelcomeModel.onDisk(recentURLs()).filter {
       seen.insert(WelcomeModel.key($0)).inserted
@@ -96,7 +98,7 @@ package final class ProjectCatalog {
         at: folder, includingPropertiesForKeys: [.isDirectoryKey],
         options: [.skipsHiddenFiles])) ?? []
     return listed.filter { url in
-      url.pathExtension == ProjectPackage.fileExtension
+      url.pathExtension.lowercased() == ProjectPackage.fileExtension
         && (try? url.resolvingSymlinksInPath().resourceValues(forKeys: [.isDirectoryKey])
           .isDirectory) == true
     }

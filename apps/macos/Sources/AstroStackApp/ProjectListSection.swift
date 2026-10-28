@@ -49,8 +49,11 @@ package struct ProjectListSection: View {
       HStack {
         Text(verbatim: project.target).font(.headline)
         Spacer()
-        Text(WelcomeView.counts(project.summary))
-          .font(DesignMetrics.captionFont).foregroundStyle(DesignColor.textSecondary.color)
+        // An open project still opening has no counts yet: nothing is said, it is no error.
+        if project.summary != nil || project.origin != .open {
+          Text(WelcomeView.counts(project.summary))
+            .font(DesignMetrics.captionFont).foregroundStyle(DesignColor.textSecondary.color)
+        }
       }
       .contentShape(Rectangle())
     }

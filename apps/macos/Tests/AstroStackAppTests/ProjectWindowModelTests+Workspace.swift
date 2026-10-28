@@ -47,7 +47,8 @@ struct ProjectWindowWorkspaceTests {
     await Self.settle { window.workspace != nil }
     let workspace = try #require(window.workspace)
     #expect(workspace.studio.steps.map(\.processID) == ["channel-combination"])
-    let ids = AccessibilityAuditTests.entries(ProjectWindowView(model: window)).map(\.id)
+    let ids = AccessibilityAuditTests.entries(ProjectWindowView(model: window, projects: .empty))
+      .map(\.id)
     #expect(ids.contains("fr.astrostack.stage.studio.undo"), "\(ids)")
     window.retryWorkspace()
     #expect(window.workspace === workspace, "a loaded workspace is kept")

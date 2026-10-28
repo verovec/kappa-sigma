@@ -11,9 +11,13 @@ package struct ProjectWindowView: View {
   /// The journey sidebar as the user left it; the full-screen image hides it over this value.
   @State private var sidebarStored = NavigationSplitViewVisibility.automatic
 
+  /// Where the project switcher's projects come from (card 0146): `.live` in the app.
+  let projects: ProjectSwitcher.Source
+
   /// A window showing the project behind `model`.
-  package init(model: ProjectWindowModel) {
+  package init(model: ProjectWindowModel, projects: ProjectSwitcher.Source) {
     _model = State(initialValue: model)
+    self.projects = projects
   }
 
   /// The sidebar shown: hidden while the Studio's image is focused (card 0127), else as the user
@@ -31,7 +35,7 @@ package struct ProjectWindowView: View {
         get: { Self.sidebar(stored: sidebarStored, focused: focused) },
         set: { if !focused { sidebarStored = $0 } })
     ) {
-      JourneySidebar(model: model)
+      JourneySidebar(model: model, switcher: switcher)
         .navigationSplitViewColumnWidth(min: 180, ideal: 210, max: 280)
     } detail: {
       VStack(spacing: 0) {
@@ -80,5 +84,10 @@ package struct ProjectWindowView: View {
       }
     }
     .environment(\.guideTarget, model.guideTarget)
+  }
+
+  /// The switcher at the head of the sidebar (card 0146), over the model's observable head.
+  private var switcher: ProjectSwitcher {
+    ProjectSwitcher(target: model.head.target, currentKey: model.head.key, source: projects)
   }
 }

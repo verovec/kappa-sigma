@@ -99,8 +99,10 @@ struct LiveFrameReviewTests {
   /// The project window on the Tri stage, laid out offscreen and attached.
   static func capture(_ window: ProjectWindowModel, name: String) throws {
     let host = ImportSheetTests.host(
-      ProjectWindowView(model: window).environment(\.locale, Locale(identifier: "fr"))
-        .background(Color(nsColor: .windowBackgroundColor)))
+      ProjectWindowView(model: window, projects: .empty).environment(
+        \.locale, Locale(identifier: "fr")
+      )
+      .background(Color(nsColor: .windowBackgroundColor)))
     host.appearance = NSAppearance(named: .aqua)
     host.layoutSubtreeIfNeeded()
     host.sizingOptions = [.minSize]

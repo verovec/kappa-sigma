@@ -60,7 +60,7 @@ struct ImportSheetTests {
     defer { try? project.close() }
     let window = ProjectWindowModel(
       store: { project.store }, planning: { _ in ImportPlanningStub.empty })
-    let host = Self.host(ProjectWindowView(model: window))
+    let host = Self.host(ProjectWindowView(model: window, projects: .empty))
     window.startImport()
     host.layoutSubtreeIfNeeded()
     window.add(ImportRequest(paths: ["/c/M31-DB"]))

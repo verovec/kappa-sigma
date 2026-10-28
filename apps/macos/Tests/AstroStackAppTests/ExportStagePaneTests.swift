@@ -55,7 +55,8 @@ struct ExportStagePaneTests {
     await export.export()
     #expect(export.exports.count == 1)
 
-    let entries = AccessibilityAuditTests.entries(ProjectWindowView(model: opened.window))
+    let entries = AccessibilityAuditTests.entries(
+      ProjectWindowView(model: opened.window, projects: .empty))
     #expect(AccessibilityAudit.problems(entries) == [])
     let ids = Set(entries.map(\.id))
     let expected = [
@@ -105,7 +106,8 @@ struct ExportStagePaneTests {
     defer { try? empty.close() }
     let window = ProjectWindowModel(store: { empty.store })
     window.select(.export)
-    let ids = AccessibilityAuditTests.entries(ProjectWindowView(model: window)).map(\.id)
+    let ids = AccessibilityAuditTests.entries(ProjectWindowView(model: window, projects: .empty))
+      .map(\.id)
     #expect(ids == ["fr.astrostack.help.stage.export"])
   }
 }

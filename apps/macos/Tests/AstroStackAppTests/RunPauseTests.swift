@@ -219,8 +219,10 @@ struct RunPauseTests {
     let window = fixture.window
     window.select(.stacking)
     let host = ImportSheetTests.host(
-      ProjectWindowView(model: window).environment(\.locale, Locale(identifier: language))
-        .background(Color(nsColor: .windowBackgroundColor)))
+      ProjectWindowView(model: window, projects: .empty).environment(
+        \.locale, Locale(identifier: language)
+      )
+      .background(Color(nsColor: .windowBackgroundColor)))
     host.appearance = NSAppearance(named: .aqua)
     host.layoutSubtreeIfNeeded()
     #expect(host.fittingSize.width >= 640 && host.fittingSize.height >= 400)

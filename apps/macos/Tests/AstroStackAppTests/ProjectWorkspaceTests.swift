@@ -36,12 +36,15 @@ struct ProjectWorkspaceTests {
     let project = try Self.project()
     defer { try? project.close() }
     try project.store.addSource(kind: .night, path: "/captures/M31/2026-10-18")
+    // The project's folder names the switcher at the head of the sidebar (card 0146).
     let model = ProjectWindowModel(
-      store: { project.store }, planning: { _ in ImportPlanningStub.empty })
+      store: { project.store }, folder: { project.url },
+      planning: { _ in ImportPlanningStub.empty })
     model.select(variant.stage)
+    #expect(model.targetName == "M31")
 
     let host = ImportSheetTests.host(
-      ProjectWindowView(model: model)
+      ProjectWindowView(model: model, projects: .empty)
         .environment(\.locale, Locale(identifier: variant.language)))
     host.appearance = variant.appearance.nsAppearance
     host.layoutSubtreeIfNeeded()

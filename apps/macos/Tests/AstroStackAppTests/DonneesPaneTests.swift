@@ -48,7 +48,7 @@ struct DonneesPaneTests {
     }
 
     let host = ImportSheetTests.host(
-      ProjectWindowView(model: model)
+      ProjectWindowView(model: model, projects: .empty)
         .environment(\.locale, Locale(identifier: variant.language)))
     host.appearance = variant.appearance.nsAppearance
     host.layoutSubtreeIfNeeded()

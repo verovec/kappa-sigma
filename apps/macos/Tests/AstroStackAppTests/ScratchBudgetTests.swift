@@ -3,8 +3,8 @@ import AstroStackApp
 import Foundation
 import ProjectKit
 import StackKit
-import TestSupport
 import SwiftUI
+import TestSupport
 import Testing
 
 /// Card 0098 through the window model: the Stacking stage shows what the next run needs against
@@ -128,7 +128,8 @@ struct ScratchBudgetTests {
     window.select(.stacking)
     #expect(window.scratchBudget != nil)
     let host = ImportSheetTests.host(
-      ProjectWindowView(model: window).environment(\.locale, Locale(identifier: language)))
+      ProjectWindowView(model: window, projects: .empty).environment(
+        \.locale, Locale(identifier: language)))
     host.layoutSubtreeIfNeeded()
     #expect(host.fittingSize.width >= 640)
   }

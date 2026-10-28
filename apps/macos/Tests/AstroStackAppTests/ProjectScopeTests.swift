@@ -197,7 +197,8 @@ struct ProjectScopeTests {
     let (project, window, _) = try await Self.twoObjects()
     defer { try? project.close() }
     window.select(.stacking)
-    let stacking = AccessibilityAuditTests.entries(ProjectWindowView(model: window))
+    let stacking = AccessibilityAuditTests.entries(
+      ProjectWindowView(model: window, projects: .empty))
     #expect(AccessibilityAudit.problems(stacking) == [])
     let series = stacking.map(\.id).filter { $0.hasPrefix("fr.astrostack.stage.stacking.series.") }
     #expect(series.count == 2, "\(stacking.map(\.id))")
@@ -207,7 +208,7 @@ struct ProjectScopeTests {
     window.startRun()
     await Self.queueSettled(window)
     window.select(.studio)
-    let studio = AccessibilityAuditTests.entries(ProjectWindowView(model: window))
+    let studio = AccessibilityAuditTests.entries(ProjectWindowView(model: window, projects: .empty))
     #expect(AccessibilityAudit.problems(studio) == [])
     #expect(studio.contains { $0.id == "fr.astrostack.stage.studio.stack" })
   }

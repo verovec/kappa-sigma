@@ -44,7 +44,7 @@ struct LiveDonneesPaneTests {
     #expect(model.statuses[.calibration] == .done)
 
     let host = NSHostingView(
-      rootView: ProjectWindowView(model: model)
+      rootView: ProjectWindowView(model: model, projects: .empty)
         .environment(\.locale, Locale(identifier: "fr"))
         .background(Color(nsColor: .windowBackgroundColor)))
     // Offscreen there is no window to paint behind the text: pin a light, opaque rendering.

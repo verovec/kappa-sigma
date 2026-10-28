@@ -373,6 +373,21 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
   /// The projects-folder line of the welcome window (card 0145).
   package static let welcomeFolder = stageControl("welcome", "folder")
 
+  // MARK: - Project switcher (card 0146)
+
+  /// The switcher menu at the head of the journey sidebar.
+  package static let projectSwitcher = Self("journey", "projects")
+  /// A project item of the switcher, by its package's path key.
+  package static func projectSwitcherProject(_ key: String) -> Self {
+    Self("journey", "projects", "project." + key)
+  }
+  /// The switcher's Open… item.
+  package static let projectSwitcherOpen = Self("journey", "projects", "open")
+  /// The switcher's New Project… item.
+  package static let projectSwitcherNew = Self("journey", "projects", "new")
+  /// The switcher's Welcome Window item.
+  package static let projectSwitcherWelcome = Self("journey", "projects", "welcome")
+
   /// An id for a test fixture only (`fr.astrostack.test.<name>`).
   package static func fixture(_ name: String) -> Self {
     Self("test", name)

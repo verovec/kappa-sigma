@@ -145,6 +145,8 @@ package final class ProjectDocument: NSDocument {
     let reopened = try ProjectPackage.open(at: url)
     release(project)
     self.project = reopened
+    // The window's head follows the package (card 0146).
+    windowModel?.refresh()
   }
 
   /// Help › First-Stack Guide: opens this project's guide (card 0061), the only way it opens.
@@ -356,7 +358,8 @@ package final class ProjectDocument: NSDocument {
       save: { [weak self] in self?.save(nil) })
     model.undoManager = { [weak self] in self?.undoManager }
     windowModel = model
-    let content = NSHostingView(rootView: ProjectWindowView(model: model).interfaceLocale())
+    let content = NSHostingView(
+      rootView: ProjectWindowView(model: model, projects: .live).interfaceLocale())
     // Only the minimum size comes from SwiftUI; the window keeps its own frame.
     content.sizingOptions = [.minSize]
     window.contentView = content

@@ -142,7 +142,7 @@ struct JourneyFlowTests {
     for stage in [JourneyStage.calibration, .stacking] {
       model.select(stage)
       let host = ImportSheetTests.host(
-        ProjectWindowView(model: model)
+        ProjectWindowView(model: model, projects: .empty)
           .environment(\.locale, Locale(identifier: variant.language)))
       host.layoutSubtreeIfNeeded()
       #expect(host.fittingSize.width >= 640 && host.fittingSize.height >= 400)

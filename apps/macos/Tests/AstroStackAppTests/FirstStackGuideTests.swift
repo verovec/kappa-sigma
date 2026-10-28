@@ -30,7 +30,10 @@ struct FirstStackGuideTests {
       let target = try #require(model.guideTarget)
       let profiles = await ImportProfileTests.model()
       let views: [AnyView] =
-        [AnyView(ProjectWindowView(model: model)), AnyView(ImportProfileView(model: profiles))]
+        [
+          AnyView(ProjectWindowView(model: model, projects: .empty)),
+          AnyView(ImportProfileView(model: profiles)),
+        ]
         + JourneyStage.allCases.map { AnyView(JourneySidebarRow(stage: $0, status: .toDo)) }
       for view in views {
         let entries = AccessibilityAuditTests.entries(view.environment(\.guideTarget, target))

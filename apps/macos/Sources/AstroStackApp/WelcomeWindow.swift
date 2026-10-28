@@ -54,6 +54,9 @@ package enum WelcomeWindow {
   }
 
   /// Closes the window if it is up: a project window just opened.
+  ///
+  /// The naming sheet and the pending retention list are reset whether the window is up or not:
+  /// a project opening makes both stale (the list may name its stacks).
   package static func dismiss() {
     model.isNaming = false
     // The sheet's list would be stale by the next time the window shows: asked again next launch.
@@ -102,8 +105,9 @@ package enum WelcomeWindow {
     }
   }
 
-  /// Open…: the projects picked in the Open panel, opened like a recent one.
-  private static func choose() {
+  /// Open…: the projects picked in the Open panel, opened like a recent one — the one Open…
+  /// path of the welcome window and the project switcher (card 0146).
+  package static func choose() {
     let urls = NSDocumentController.shared.urlsFromRunningOpenPanel() ?? []
     Task { for url in urls { await open(url) } }
   }

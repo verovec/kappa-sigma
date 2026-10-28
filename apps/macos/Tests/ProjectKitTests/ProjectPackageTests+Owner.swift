@@ -105,4 +105,22 @@ extension ProjectPackageTests {
     try ProjectOwner(process: parent).write(in: url)
     #expect(ProjectOwner.heldElsewhere(in: url)?.process == parent)
   }
+
+  @Test(
+    "a reopen by this process keeps the newer token: the older instance's close removes nothing",
+    .scratchDirectory)
+  func testOwner_tokenPerOpening() throws {
+    let url = try ScratchDirectory.url.appendingPathComponent("P.astrostack")
+    try ProjectPackage.create(at: url).close()
+    let first = try ProjectPackage.open(at: url)
+    let firstToken = try #require(ProjectOwner.read(in: url)?.token)
+    // A reopen by this process (a move, a Save As, a revert) rewrites the marker with its token.
+    let reopened = ProjectOwner(process: try #require(ProcessLiveness.current))
+    try reopened.write(in: url)
+    #expect(reopened.token != firstToken)
+    try first.close()
+    #expect(ProjectOwner.read(in: url)?.token == reopened.token, "the window keeps its marker")
+    ProjectOwner.release(reopened.token, in: url)
+    #expect(ProjectOwner.read(in: url) == nil)
+  }
 }

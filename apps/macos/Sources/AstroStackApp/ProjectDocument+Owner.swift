@@ -14,7 +14,10 @@ extension ProjectDocument {
     if ProjectOwner.heldElsewhere(in: url) != nil {
       throw refusal(.fileWriteNoPermission, .projectOpenElsewhere(path: url.path))
     }
-    if NSDocumentController.shared.document(for: url) != nil {
+    // By resolved path: a symlinked or unstandardised spelling of an open window's package.
+    let key = WelcomeModel.key(url)
+    let windows = NSDocumentController.shared.documents.compactMap { $0 as? ProjectDocument }
+    if windows.contains(where: { $0.packageURL.map(WelcomeModel.key) == key }) {
       throw refusal(.fileWriteNoPermission, .projectOpenInWindow(path: url.path))
     }
   }

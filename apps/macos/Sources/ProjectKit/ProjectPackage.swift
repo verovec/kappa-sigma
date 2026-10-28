@@ -112,9 +112,9 @@ public final class ProjectPackage {
         "replacing the stale owner marker of \(url.path, privacy: .public) (pid \(stale))")
     }
     try mine.write(in: url)
-    guard let written = ProjectOwner.read(in: url), written.token == mine.token else {
-      let winner = ProjectOwner.read(in: url)?.process.pid ?? 0
-      throw ProjectPackageError.openElsewhere(path: url.path, pid: winner)
+    let written = ProjectOwner.read(in: url)
+    guard written?.token == mine.token else {
+      throw ProjectPackageError.openElsewhere(path: url.path, pid: written?.process.pid ?? 0)
     }
     return mine.token
   }

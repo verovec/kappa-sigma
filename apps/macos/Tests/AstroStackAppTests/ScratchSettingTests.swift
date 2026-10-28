@@ -37,7 +37,7 @@ struct ScratchSettingTests {
 
   @Test(
     "a folder whose work folder lies inside the astro folder is refused, nothing stored (R7)",
-    arguments: ["captures/M31", "library", "Runs", "", "exports"],
+    arguments: ["captures/M31", "library", "Runs", "", "exports", "../Astro", "../ASTRO/Runs"],
     ["/Users/someone/Documents/astro", "/Volumes/SSD/astro"])
   func testReadOnlySourcesRefused(relative: String, root: String) throws {
     let (defaults, name) = try Self.suite()
@@ -45,6 +45,23 @@ struct ScratchSettingTests {
     let astro = URL(fileURLWithPath: root)
     let setting = ScratchSetting(defaults: defaults, astro: astro)
     #expect(!setting.choose(astro.appendingPathComponent(relative)))
+    #expect(setting.chosen == nil)
+  }
+
+  @Test(
+    "a link to the astro folder is the astro folder, its work folder not yet there",
+    .scratchDirectory)
+  func testLinkedRootRefused() throws {
+    let (defaults, name) = try Self.suite()
+    defer { defaults.removePersistentDomain(forName: name) }
+    let base = try ScratchDirectory.url
+    let astro = base.appendingPathComponent("astro")
+    try FileManager.default.createDirectory(at: astro, withIntermediateDirectories: true)
+    let link = base.appendingPathComponent("astro-link")
+    try FileManager.default.createSymbolicLink(at: link, withDestinationURL: astro)
+    let setting = ScratchSetting(defaults: defaults, astro: astro)
+    #expect(!setting.choose(link))
+    #expect(!setting.choose(link.appendingPathComponent("scratch")))
     #expect(setting.chosen == nil)
   }
 

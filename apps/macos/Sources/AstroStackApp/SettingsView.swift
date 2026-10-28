@@ -76,6 +76,9 @@ package struct SettingsView: View {
     }
     .formStyle(.grouped)
     .frame(width: 460)
+    .task(id: astroFolder) {
+      astroLines = await Self.astroLines(under: astroFolder)
+    }
   }
 
   /// Where Siril's work files go during a run; the next run reads it.
@@ -145,9 +148,6 @@ package struct SettingsView: View {
     } header: {
       SectionHeader(
         .app("Astro folder"), help: SettingHelp.help(SettingHelp.astroFolder, locale: locale))
-    }
-    .task(id: astroFolder) {
-      astroLines = await Self.astroLines(under: astroFolder)
     }
   }
 

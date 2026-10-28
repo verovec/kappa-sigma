@@ -32,6 +32,7 @@ while [ $# -gt 0 ]; do
   shift
 done
 
+echo "catalogues folder: $DIR"
 mkdir -p "$DIR"
 
 # fetch <url> <out.bz2> [sha_url] — resumable download, optional published-checksum verify of the

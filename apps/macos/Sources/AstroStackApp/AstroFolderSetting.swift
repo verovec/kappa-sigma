@@ -22,25 +22,27 @@ package nonisolated struct AstroFolderSetting {
     defaultFolder(under: URL(fileURLWithPath: NSHomeDirectory()))
   }
 
-  /// The default root under `home`: its `Documents/astro`.
+  /// The default root under `home`: its `Documents/astro`, the sweep's floor.
   package static func defaultFolder(under home: URL) -> URL {
-    home.appendingPathComponent("Documents/astro", isDirectory: true)
+    LeftoverSweep.dataFolder(under: home)
   }
 
   private static let key = "astroFolder"
   private let defaults: UserDefaults
   private let home: URL
   private let scratch: URL?
+  private let temporary: URL
 
-  /// The setting stored in `defaults`; `home` and `scratch` locate what the app writes under —
-  /// the scratch folder of the same defaults when `nil`.
+  /// The setting stored in `defaults`; `home`, `scratch` and `temporary` locate what the app
+  /// writes under — the scratch folder of the same defaults when `nil`.
   package init(
     defaults: UserDefaults = .standard, home: URL = URL(fileURLWithPath: NSHomeDirectory()),
-    scratch: URL? = nil
+    scratch: URL? = nil, temporary: URL = FileManager.default.temporaryDirectory
   ) {
     self.defaults = defaults
     self.home = home
     self.scratch = scratch
+    self.temporary = temporary
   }
 
   /// Where the app itself writes: never the read-only root. `~/AstroStack` (the projects) and
@@ -51,7 +53,7 @@ package nonisolated struct AstroFolderSetting {
   private var appOwned: [URL] {
     let work = scratch ?? ScratchSetting(defaults: defaults).folder
     return [home.appendingPathComponent("AstroStack", isDirectory: true)]
-      + AppDelegate.leftoverRoots(work: work).map(\.folder)
+      + AppDelegate.leftoverRoots(work: work, temporary: temporary).map(\.folder)
   }
 
   /// The folder the user chose, `nil` for the default.

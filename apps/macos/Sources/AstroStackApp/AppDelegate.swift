@@ -104,9 +104,10 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
   /// The app's scratch roots with the runs' work folder `work` (Settings, card 0098); the default
   /// one too when another was chosen, where the runs before the choice worked.
   package nonisolated static func leftoverRoots(
-    work: URL, defaultWork: URL = ScratchSetting.defaultFolder
+    work: URL, defaultWork: URL = ScratchSetting.defaultFolder,
+    temporary: URL = FileManager.default.temporaryDirectory
   ) -> [LeftoverSweep.Root] {
-    var roots = LeftoverSweep.appRoots(work: work)
+    var roots = LeftoverSweep.appRoots(temporary: temporary, work: work)
     if work.standardizedFileURL != defaultWork.standardizedFileURL {
       roots.append(LeftoverSweep.Root(folder: defaultWork, prefix: "run_"))
     }

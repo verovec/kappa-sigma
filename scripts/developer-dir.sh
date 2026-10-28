@@ -8,7 +8,8 @@ set -euo pipefail
 dev="${DEVELOPER_DIR:-$(xcode-select -p 2>/dev/null || true)}"
 # None selected: the CLT's default place, never an empty DEVELOPER_DIR exported to every recipe.
 [ -n "$dev" ] || dev=/Library/Developer/CommandLineTools
-[ -d "$dev" ] || { echo "developer-dir: no developer tools at $dev (xcode-select --install)" >&2; exit 1; }
+# Missing: still a path (`just --list`, `just doctor` must load); the build says what is missing.
+[ -d "$dev" ] || echo "developer-dir: no developer tools at $dev (xcode-select --install)" >&2
 case "$dev" in
   */CommandLineTools)
     if [ ! -e "$dev/usr/lib/swift/host/plugins/libSwiftUIMacros.dylib" ]; then

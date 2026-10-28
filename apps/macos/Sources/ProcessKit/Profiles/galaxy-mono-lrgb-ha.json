@@ -60,8 +60,8 @@
       },
       "why": {
         "haContinuum": {
-          "en": "Hα minus its red continuum, screened over the galaxy (k from the bundle).",
-          "fr": "Hα moins son continuum rouge, en écran sur la galaxie (k issu du bundle)."
+          "en": "Hα minus its red continuum, screened over the galaxy (k suggested from your stack when it can be fitted).",
+          "fr": "Hα moins son continuum rouge, en écran sur la galaxie (k proposé depuis votre pile quand il peut être ajusté)."
         },
         "oiiiEnabled": {
           "en": "LRGB + Hα: no OIII layer.",

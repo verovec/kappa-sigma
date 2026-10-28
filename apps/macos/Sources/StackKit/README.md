@@ -177,6 +177,21 @@ a route = a case, its `names`, its line). The app's route is the panel's visible
 (`osc`/`mono`, the header's `INSTRUME` offered with its sensor) and never a sensor picked for the
 user.
 
+## Synthetic scenarios (card 0142)
+
+No mono capture exists on the PO's Mac, so mono and clip-filter rigs run on frames generated at
+run time: `TestSupport/SyntheticCapture` (a seeded 256×256 star field with a per-frame dither,
+sky, noise, an RGGB mosaic for OSC, the headers a capture program writes; flats per filter,
+darks per exposure, bias) — never committed (R7). Scenarios: LRGB + Hα, SHO, L only, OSC
+broadband + an SII + OIII clip night (asserted like the import: a default scan, then
+`InspectOverrides.filterSets` by set id). `MonoScenarioTests` (CI) pins the colour model, the
+lanes, the bundle layers and the emitted scripts (`Fixtures/synthetic/<scenario>.ssf.txt`,
+`RECORD=1` rewrites them — read them before committing); `LiveMonoSyntheticTests` stacks each
+scenario twice with the real Siril (~40 s for the four) and wants the same master bytes twice
+and the OSC clip split into its lines. Add a scenario = a case with its filters, exposures and
+clips, a row in both tables, a recorded snapshot. Gotcha: a scratch folder named after a filter
+(`b`, `r`, `l`, `v`) types a one-shot-colour night's frames (`PathMeta.filterFromFolders`).
+
 ## Run scope (card 0095)
 
 `Preprocess/RunScope.swift`: `RunScope(object:setIDs:lights:listed:)` names the light sets one run

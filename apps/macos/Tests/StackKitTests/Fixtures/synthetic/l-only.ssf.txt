@@ -1,0 +1,44 @@
+### 1 cal_master_BIAS_g100o50_b1
+requires 1.2.0
+setext fits
+set32bits
+convert cal -out=.
+stack cal rej percentile 0.2 0.1 -nonorm -out=<ROOT>/work/run_R1/masters/master_BIAS_g100o50_b1
+
+### 2 cal_master_DARK_120000ms_g100o50_b1_-10C
+requires 1.2.0
+setext fits
+set32bits
+convert cal -out=.
+stack cal rej percentile 0.2 0.1 -nonorm -out=<ROOT>/work/run_R1/masters/master_DARK_120000ms_g100o50_b1_-10C
+
+### 3 cal_master_FLAT_L_2000ms_g100o50_b1_0C
+requires 1.2.0
+setext fits
+set32bits
+convert cal -out=.
+calibrate cal -bias=<ROOT>/work/run_R1/masters/master_BIAS_g100o50_b1.fits -prefix=pp_
+stack pp_cal rej percentile 0.2 0.1 -norm=mul -out=<ROOT>/work/run_R1/masters/master_FLAT_L_2000ms_g100o50_b1_0C
+
+### 4 light_L
+requires 1.2.0
+setext fits
+set32bits
+link light -out=.
+calibrate light -dark=<ROOT>/work/run_R1/masters/master_DARK_120000ms_g100o50_b1_-10C.fits -flat=<ROOT>/work/run_R1/masters/master_FLAT_L_2000ms_g100o50_b1_0C.fits -cc=dark -prefix=pp_
+register pp_light
+
+### 5 light_L
+requires 1.2.0
+setext fits
+set32bits
+select r_pp_light_ 1 3
+stack r_pp_light_ rej percentile 0.2 0.1 -norm=addscale -output_norm -weight=wfwhm -filter-incl -out=<ROOT>/out/SYNTH/R1/master_L
+
+### 6 R1
+requires 1.2.0
+setext fits
+set32bits
+load trim_L
+subsky 1
+save combined

@@ -42,6 +42,12 @@ extension Filter {
     }
   }
 
+  /// The positions of the 7-slot filter wheel the legacy engine assumes when nothing names the
+  /// slots — a physical convention, not the catalogue: a filter added here adds no slot.
+  package static let legacyWheel: [Self] = [
+    .luminance, .red, .green, .blue, .hydrogenAlpha, .oxygenIII, .sulfurII,
+  ]
+
   /// The emission lines, in display order.
   package static let narrowband = allCases.filter { $0.line != nil }
 

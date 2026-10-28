@@ -126,6 +126,12 @@ struct FilterTests {
     #expect(line.displayName == name)
   }
 
+  @Test("the legacy 7-slot wheel is the first seven filters; a new filter adds no slot")
+  func testLegacyWheel() {
+    #expect(Filter.legacyWheel.map(\.rawValue) == ["L", "R", "G", "B", "Ha", "OIII", "SII"])
+    #expect(Filter.legacyWheel == Array(Filter.allCases.prefix(7)))
+  }
+
   @Test("broadband filters have no line; the two lists split the catalogue in order")
   func testLine_broadbandHasNone() {
     for filter in [Filter.luminance, .red, .green, .blue] { #expect(filter.line == nil) }

@@ -9,9 +9,7 @@ package enum WheelSlots {
   /// L R G B Ha OIII SII, so its narrowband positions resolve instead of becoming placeholders.
   /// A physical convention, not the catalogue: a filter added to `Filter` (Hβ, [NII], card 0141)
   /// adds no slot — slot 8 stays `S8`.
-  package static let defaultLegend = [
-    Filter.luminance, .red, .green, .blue, .hydrogenAlpha, .oxygenIII, .sulfurII,
-  ].map(\.rawValue)
+  package static let defaultLegend = Filter.legacyWheel.map(\.rawValue)
 
   /// The filter of a 1-based slot, or a stable `S<n>` placeholder past the legend.
   package static func filter(slot: Int, legend: [String]) -> String {

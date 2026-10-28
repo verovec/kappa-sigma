@@ -69,7 +69,7 @@ struct StudioModelBranchTests {
     try Self.finish(model)
 
     let manifest = try Data(contentsOf: opened.folder.appendingPathComponent("history.json"))
-    let digest = SHA256.hash(data: manifest).map { String(format: "%02x", $0) }.joined()
+    let digest = Self.sha256(manifest)
     #expect(digest == Self.recordedManifestSHA256)
     // Card 0141 grew the screens' defaults: without its Hβ / [NII] entries the manifest is still
     // the 0118 one, byte for byte.

@@ -26,6 +26,9 @@ extension PathMeta {
         if let filter = words.lazy.compactMap(Filter.token).first { return filter.rawValue }
         continue
       }
+      // A filter word then a bare number is a catalogue designation (`Hb 5`, `Hb_12`: Hubble's
+      // planetary nebulae, card 0141), not a filter folder; `Ha_300s` keeps its unit.
+      if words.count > 1, words[1].allSatisfy(\.isASCIIDigit) { continue }
       if let filter = Filter.token(first) { return filter.rawValue }
     }
     return ""

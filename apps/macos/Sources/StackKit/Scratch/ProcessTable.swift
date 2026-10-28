@@ -51,10 +51,7 @@ package struct ProcessTable: Sendable {
 
   /// The one liveness rule is ProjectKit's (`ProcessLiveness`, card 0147): pid and start time.
   private static func liveIdentity(_ pid: Int32) -> ProcessIdentity? {
-    ProcessLiveness.stamp(of: pid).map {
-      ProcessIdentity(
-        pid: $0.pid, startSeconds: $0.startSeconds, startMicroseconds: $0.startMicroseconds)
-    }
+    ProcessLiveness.stamp(of: pid)
   }
 
   private static func liveExecutable(_ pid: Int32) -> String? {

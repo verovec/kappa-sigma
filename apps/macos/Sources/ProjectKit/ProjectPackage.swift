@@ -26,8 +26,9 @@ public final class ProjectPackage {
 
   /// The folder the package lives in.
   public let url: URL
-  /// Whether this instance wrote the owner marker (`open(at:owning:)`), to remove it on close.
-  private var owns = false
+  /// The token of the owner marker this instance wrote (`open(at:owning:)`), released on close;
+  /// `nil` for a short opener or a process that could not be stamped.
+  private var ownerToken: UUID?
   /// Typed access to `project.db`.
   package let store: ProjectStore
   private let pool: DatabasePool
@@ -74,22 +75,29 @@ public final class ProjectPackage {
     guard try applicationID(of: database) == applicationID else {
       throw ProjectPackageError.foreignDatabase(path: url.path)
     }
-    if owning { try claim(url) }
-    let pool = try DatabasePool(path: database.path)
+    let token = owning ? try claim(url) : nil
     do {
-      let package = try ProjectPackage(url: url, pool: pool)
-      package.owns = owning
-      return package
+      let pool = try DatabasePool(path: database.path)
+      do {
+        let package = try ProjectPackage(url: url, pool: pool)
+        package.ownerToken = token
+        return package
+      } catch {
+        try? pool.close()
+        throw error
+      }
     } catch {
-      try? pool.close()
-      if owning { ProjectOwner.remove(in: url) }
+      // Nothing opened: the marker just written goes (another opening's stays).
+      if let token { ProjectOwner.release(token, in: url) }
       throw error
     }
   }
 
   /// Takes the owner marker of `url` for this process, or refuses: another process still runs.
-  private static func claim(_ url: URL) throws {
-    guard let mine = ProjectOwner.current() else { return }
+  ///
+  /// Returns the token written, `nil` when this process cannot be stamped (nothing to release).
+  private static func claim(_ url: URL) throws -> UUID? {
+    guard let mine = ProjectOwner.current() else { return nil }
     if let other = ProjectOwner.read(in: url), other.process != mine.process {
       if other.isLive {
         throw ProjectPackageError.openElsewhere(path: url.path, pid: other.process.pid)
@@ -99,6 +107,7 @@ public final class ProjectPackage {
         "replacing the stale owner marker of \(url.path, privacy: .public) (pid \(stale))")
     }
     try mine.write(in: url)
+    return mine.token
   }
 
   private static let logger = Logger(subsystem: "fr.astrostack", category: "ProjectKit/owner")
@@ -193,7 +202,7 @@ public final class ProjectPackage {
     // The pool closes even when both checkpoints fail: never a connection left behind.
     defer {
       try? pool.close()
-      if owns { ProjectOwner.remove(in: url) }
+      if let ownerToken { ProjectOwner.release(ownerToken, in: url) }
     }
     try pool.writeWithoutTransaction { db in
       if (try? db.checkpoint(.truncate)) == nil { _ = try db.checkpoint(.passive) }
@@ -207,8 +216,9 @@ public final class ProjectPackage {
   /// one self-contained `project.db` (safe to copy in the Finder or back up). The pool is closed
   /// even when the checkpoint fails; the WAL then stays, and the checkpoint error is rethrown.
   public func close() throws {
-    // The marker goes whatever the checkpoint does: a closed package is nobody's.
-    defer { if owns { ProjectOwner.remove(in: url) } }
+    // The marker goes whatever the checkpoint does: a closed package is nobody's — unless this
+    // process reopened it meanwhile (its own token on disk then).
+    defer { if let ownerToken { ProjectOwner.release(ownerToken, in: url) } }
     var checkpointError: (any Error)?
     do { try save() } catch { checkpointError = error }
     try pool.close()

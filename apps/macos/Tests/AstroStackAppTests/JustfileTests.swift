@@ -23,7 +23,8 @@ struct JustfileTests {
       #expect(rest.prefix(200).contains("scripts/app-run.sh"), "\(recipe) runs the script")
     }
     let script = try Self.text("scripts/app-run.sh")
-    #expect(script.contains("tell application \"AstroStack\" to quit"))
+    #expect(script.contains("tell application id \"fr.astrostack.AstroStack\" to quit"))
+    #expect(script.contains("exit 1"), "a quit that never happens fails, never opens the old build")
     #expect(script.contains("open -W -a") && !script.contains("open -W -n"))
     #expect(!script.contains("pkill") && !script.contains("kill -"), "asked to quit, never killed")
   }

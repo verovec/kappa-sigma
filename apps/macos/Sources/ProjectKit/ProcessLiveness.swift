@@ -2,10 +2,10 @@ internal import Darwin
 
 /// Whether a process still runs (card 0147): the one `proc_pidinfo` rule, read by the project
 /// owner marker here and by StackKit's scratch owners.
-public enum ProcessLiveness {
+package enum ProcessLiveness {
   /// The stamp of `pid` while it runs; `nil` for a pid that is not one, a process gone, or a
   /// zombie (it keeps its pid until reaped but runs nothing: it owns nothing any more).
-  public static func stamp(of pid: Int32) -> ProcessStamp? {
+  package static func stamp(of pid: Int32) -> ProcessStamp? {
     var info = proc_bsdinfo()
     let size = Int32(MemoryLayout<proc_bsdinfo>.size)
     // The kernel fills `info` for the pid; a reused buffer of the exact struct size (unsafe API).
@@ -18,10 +18,10 @@ public enum ProcessLiveness {
   }
 
   /// This process.
-  public static var current: ProcessStamp? { stamp(of: getpid()) }
+  package static var current: ProcessStamp? { stamp(of: getpid()) }
 
   /// Whether the process `stamp` names still runs: same pid, same start.
-  public static func isRunning(_ stamp: ProcessStamp) -> Bool {
+  package static func isRunning(_ stamp: ProcessStamp) -> Bool {
     self.stamp(of: stamp.pid) == stamp
   }
 }

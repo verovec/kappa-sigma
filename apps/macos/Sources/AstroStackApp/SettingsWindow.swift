@@ -1,5 +1,6 @@
 package import AppKit
 internal import OSLog
+internal import StackKit
 internal import SwiftUI
 
 /// AstroStack › Settings… (⌘,): one window, reused.
@@ -14,7 +15,15 @@ package enum SettingsWindow {
     }
   }
 
-  /// Opens a new instance of the app, then quits this one (the language is read at launch).
+  /// The shell line that reopens the bundle once this process is gone (card 0147): one instance
+  /// is allowed, so the relaunch waits for the quit from outside — `kill -0` only probes the pid,
+  /// `open` without `-n` starts the one instance; the subshell outlives this process.
+  package static func relaunchScript(pid: Int32, bundle: String) -> String {
+    "(while kill -0 \(pid) 2>/dev/null; do sleep 0.2; done; open \"\(bundle)\") >/dev/null 2>&1 &"
+  }
+
+  /// Quits this instance and has the app reopened once it is gone (the language is read at
+  /// launch).
   ///
   /// The projects are closed first, so the new instance never opens a `project.db` this one is
   /// still checkpointing; with unsaved changes nothing relaunches and the user is told why.
@@ -27,12 +36,11 @@ package enum SettingsWindow {
       return
     }
     ProjectDocument.closeQuietly(documents.documents)
-    let configuration = NSWorkspace.OpenConfiguration()
-    configuration.createsNewApplicationInstance = true
+    let script = relaunchScript(pid: getpid(), bundle: Bundle.main.bundlePath)
     Task {
       do {
-        _ = try await NSWorkspace.shared.openApplication(
-          at: Bundle.main.bundleURL, configuration: configuration)
+        // The outer shell returns at once; its backgrounded subshell waits for our exit.
+        _ = try await ToolProcess.runLines("/bin/sh", arguments: ["-c", script]) { _ in }
         NSApp.terminate(nil)
       } catch {
         logger.error("relaunch failed: \(error, privacy: .public)")

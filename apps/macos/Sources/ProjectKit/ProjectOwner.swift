@@ -16,20 +16,32 @@ package struct ProjectOwner: Codable, Equatable, Sendable {
   package let bundlePath: String
   /// When it took the package, Unix milliseconds.
   package let startedAtMs: Int64
+  /// This opening of the package: `close()` removes the marker only while it still carries its
+  /// own token — a reopen by this process (a move, a Save As, a revert) rewrites the marker and
+  /// the old instance's close must not take it away.
+  package let token: UUID
 
-  package init(process: ProcessStamp, bundlePath: String, startedAtMs: Int64) {
+  package init(process: ProcessStamp, bundlePath: String, startedAtMs: Int64, token: UUID = UUID())
+  {
     self.process = process
     self.bundlePath = bundlePath
     self.startedAtMs = startedAtMs
+    self.token = token
   }
 
-  /// This process, now.
+  /// This process, now, a fresh token.
   static func current() -> Self? {
     ProcessLiveness.current.map {
       Self(
         process: $0, bundlePath: Bundle.main.bundlePath,
         startedAtMs: Int64(Date().timeIntervalSince1970 * 1000))
     }
+  }
+
+  /// Removes the marker from `package` when it is the one `token` wrote; another opening's stays.
+  package static func release(_ token: UUID, in package: URL) {
+    guard read(in: package)?.token == token else { return }
+    remove(in: package)
   }
 
   /// Whether the owner's process still runs.

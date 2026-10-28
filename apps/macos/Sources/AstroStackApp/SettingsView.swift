@@ -10,7 +10,8 @@ package struct SettingsView: View {
   private let relaunch: () -> Void
   private let tools: WelcomeModel?
   private let scratch: ScratchSetting
-  private let astro: AstroFolderModel
+  /// Settings › Astro folder (card 0148), owned by the view: a rebuild keeps its lines.
+  @State private var astro: AstroFolderModel
   private let retention: RetentionSetting
   /// The choice the app was launched with: Relaunch is offered once the choice differs.
   private let launched: LanguageSetting.Choice
@@ -36,7 +37,7 @@ package struct SettingsView: View {
     self.tools = tools
     self.scratch = scratch
     _scratchFolder = State(initialValue: scratch.folder)
-    self.astro = astro
+    _astro = State(initialValue: astro)
     self.retention = retention
     _policy = State(initialValue: retention.policy)
     launched = setting.choice

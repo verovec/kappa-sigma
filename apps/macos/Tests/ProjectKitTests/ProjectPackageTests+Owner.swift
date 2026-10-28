@@ -17,7 +17,6 @@ extension ProjectPackageTests {
     let package = try ProjectPackage.open(at: url)
     let owner = try #require(ProjectOwner.read(in: url))
     #expect(owner.process == ProcessLiveness.current)
-    #expect(owner.bundlePath == Bundle.main.bundlePath)
     try package.close()
     #expect(ProjectOwner.read(in: url) == nil)
   }
@@ -49,7 +48,7 @@ extension ProjectPackageTests {
     let url = try ScratchDirectory.url.appendingPathComponent("P.astrostack")
     try ProjectPackage.create(at: url).close()
     let process = try #require(row.process)
-    try ProjectOwner(process: process, bundlePath: "/Applications/Other.app", startedAtMs: 1).write(
+    try ProjectOwner(process: process).write(
       in: url)
     if row.refused {
       #expect(throws: ProjectPackageError.openElsewhere(path: url.path, pid: process.pid)) {
@@ -91,5 +90,22 @@ extension ProjectPackageTests {
     #expect(
       ProjectOwner.read(in: url)?.process == ProcessLiveness.current, "untouched by the summary")
     try package.close()
+  }
+
+  @Test(
+    "the marker is created exclusively: a second writer in the same instant is refused",
+    .scratchDirectory)
+  func testOwner_exclusiveWrite() throws {
+    let url = try ScratchDirectory.url.appendingPathComponent("P.astrostack")
+    try ProjectPackage.create(at: url).close()
+    let first = try #require(ProcessLiveness.current)
+    try ProjectOwner(process: first).write(in: url, exclusive: true)
+    #expect(throws: (any Error).self) {
+      try ProjectOwner(process: first).write(in: url, exclusive: true)
+    }
+    #expect(ProjectOwner.heldElsewhere(in: url) == nil, "ours is not elsewhere")
+    let parent = try #require(ProcessLiveness.stamp(of: getppid()))
+    try ProjectOwner(process: parent).write(in: url)
+    #expect(ProjectOwner.heldElsewhere(in: url)?.process == parent)
   }
 }

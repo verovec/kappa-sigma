@@ -107,7 +107,7 @@ package final class ProjectDocument: NSDocument {
     try Self.copy(project, replacing: url)
     guard saveOperation == .saveOperation || saveOperation == .saveAsOperation else { return }
     // Open the copy before letting go of the original: a failure leaves the document intact.
-    let moved = try ProjectPackage.open(at: url)
+    let moved = try Self.openOwned(url)
     release(project)
     self.project = moved
     // An untitled project just got its name: the window offers Run now.
@@ -142,7 +142,7 @@ package final class ProjectDocument: NSDocument {
   /// derives its WAL paths from the path it opened, so the old pool must not be used any more.
   private func followMove(to url: URL) throws {
     guard let project, !isTemporary, Self.wasMoved(project.url, to: url) else { return }
-    let reopened = try ProjectPackage.open(at: url)
+    let reopened = try Self.openOwned(url)
     release(project)
     self.project = reopened
     // The window's head follows the package (card 0146).
@@ -292,6 +292,8 @@ package final class ProjectDocument: NSDocument {
   /// Copies the package next to `url`, then swaps it in, so a failed copy never destroys the
   /// package the user chose to replace.
   private static func copy(_ project: ProjectPackage, replacing url: URL) throws {
+    // Never over a package another running AstroStack holds (card 0147).
+    try refuseHeldElsewhere(url)
     let manager = FileManager.default
     guard manager.fileExists(atPath: url.path) else {
       try project.copy(to: url)

@@ -47,7 +47,7 @@ package struct ProcessTable: Sendable {
     })
 
   /// This process.
-  package static var current: ProcessIdentity? { live.identity(getpid()) }
+  package static var current: ProcessIdentity? { ProcessLiveness.current }
 
   /// The one liveness rule is ProjectKit's (`ProcessLiveness`, card 0147): pid and start time.
   private static func liveIdentity(_ pid: Int32) -> ProcessIdentity? {

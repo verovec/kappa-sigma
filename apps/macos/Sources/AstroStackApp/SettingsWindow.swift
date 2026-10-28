@@ -15,11 +15,15 @@ package enum SettingsWindow {
     }
   }
 
-  /// The shell line that reopens the bundle once this process is gone (card 0147): one instance
-  /// is allowed, so the relaunch waits for the quit from outside — `kill -0` only probes the pid,
-  /// `open` without `-n` starts the one instance; the subshell outlives this process.
-  package static func relaunchScript(pid: Int32, bundle: String) -> String {
-    "(while kill -0 \(pid) 2>/dev/null; do sleep 0.2; done; open \"\(bundle)\") >/dev/null 2>&1 &"
+  /// The shell line that reopens the bundle (`$1`, never interpolated) once this process is gone.
+  ///
+  /// One instance is allowed (card 0147), so the relaunch waits for the quit from outside:
+  /// `kill -0` only probes the pid, `open` without `-n` starts the one instance. The backgrounded
+  /// subshell outlives this process and gives up after a minute: a quit the user cancelled must
+  /// not relaunch the app hours later.
+  package static func relaunchScript(pid: Int32) -> String {
+    "(for _ in $(seq 1 300); do kill -0 \(pid) 2>/dev/null || { open \"$1\"; exit 0; }; "
+      + "sleep 0.2; done) >/dev/null 2>&1 &"
   }
 
   /// Quits this instance and has the app reopened once it is gone (the language is read at
@@ -36,11 +40,12 @@ package enum SettingsWindow {
       return
     }
     ProjectDocument.closeQuietly(documents.documents)
-    let script = relaunchScript(pid: getpid(), bundle: Bundle.main.bundlePath)
+    let script = relaunchScript(pid: getpid())
+    let arguments = ["-c", script, "_", Bundle.main.bundlePath]
     Task {
       do {
         // The outer shell returns at once; its backgrounded subshell waits for our exit.
-        _ = try await ToolProcess.runLines("/bin/sh", arguments: ["-c", script]) { _ in }
+        _ = try await ToolProcess.runLines("/bin/sh", arguments: arguments) { _ in }
         NSApp.terminate(nil)
       } catch {
         logger.error("relaunch failed: \(error, privacy: .public)")

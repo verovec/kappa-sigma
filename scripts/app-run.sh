@@ -10,7 +10,8 @@ set -euo pipefail
 app="$1"
 shift
 
-running() { pgrep -xq AstroStack; }
+# This bundle's process only: another user's session or an installed copy is not ours to quit.
+running() { pgrep -fq "$app/Contents/MacOS/AstroStack"; }
 
 if running; then
   # By bundle id: the running app, not whatever LaunchServices would resolve by name.

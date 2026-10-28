@@ -10,38 +10,21 @@ package struct ProjectOwner: Codable, Equatable, Sendable {
   /// The marker's file name inside the package.
   package static let fileName = "project-owner.json"
 
-  /// The process holding the package.
+  /// The process holding the package: pid and start time (a reused pid is another process).
   package let process: ProcessStamp
-  /// The app bundle that process runs (a hint for the message, never a rule).
-  package let bundlePath: String
-  /// When it took the package, Unix milliseconds.
-  package let startedAtMs: Int64
   /// This opening of the package: `close()` removes the marker only while it still carries its
   /// own token — a reopen by this process (a move, a Save As, a revert) rewrites the marker and
   /// the old instance's close must not take it away.
   package let token: UUID
 
-  package init(process: ProcessStamp, bundlePath: String, startedAtMs: Int64, token: UUID = UUID())
-  {
+  package init(process: ProcessStamp, token: UUID = UUID()) {
     self.process = process
-    self.bundlePath = bundlePath
-    self.startedAtMs = startedAtMs
     self.token = token
   }
 
-  /// This process, now, a fresh token.
+  /// This process, a fresh token; `nil` when this process cannot be stamped.
   static func current() -> Self? {
-    ProcessLiveness.current.map {
-      Self(
-        process: $0, bundlePath: Bundle.main.bundlePath,
-        startedAtMs: Int64(Date().timeIntervalSince1970 * 1000))
-    }
-  }
-
-  /// Removes the marker from `package` when it is the one `token` wrote; another opening's stays.
-  package static func release(_ token: UUID, in package: URL) {
-    guard read(in: package)?.token == token else { return }
-    remove(in: package)
+    ProcessLiveness.current.map { Self(process: $0) }
   }
 
   /// Whether the owner's process still runs.
@@ -56,15 +39,34 @@ package struct ProjectOwner: Codable, Equatable, Sendable {
     return try? JSONDecoder().decode(Self.self, from: data)
   }
 
-  /// Writes the marker into `package`, atomically, keys sorted (a stable file).
-  package func write(in package: URL) throws {
+  /// The live owner of `package` that is not this process, if any.
+  ///
+  /// What refuses an open and a Save As over it; a marker whose process is gone, or ours, holds
+  /// nothing.
+  package static func heldElsewhere(in package: URL) -> Self? {
+    guard let owner = read(in: package), owner.isLive,
+      owner.process != ProcessLiveness.current
+    else { return nil }
+    return owner
+  }
+
+  /// Writes the marker into `package`, atomically, keys sorted (a stable file); `exclusive`
+  /// refuses to overwrite one already there (two openers in the same instant: one wins).
+  package func write(in package: URL, exclusive: Bool = false) throws {
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
-    try encoder.encode(self).write(to: Self.url(in: package), options: .atomic)
+    let options: Data.WritingOptions = exclusive ? [.withoutOverwriting] : [.atomic]
+    try encoder.encode(self).write(to: Self.url(in: package), options: options)
   }
 
   /// Removes the marker from `package`, if any.
   package static func remove(in package: URL) {
     try? FileManager.default.removeItem(at: url(in: package))
+  }
+
+  /// Removes the marker from `package` when it is the one `token` wrote; another opening's stays.
+  package static func release(_ token: UUID, in package: URL) {
+    guard read(in: package)?.token == token else { return }
+    remove(in: package)
   }
 }

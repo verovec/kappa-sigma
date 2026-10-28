@@ -10,9 +10,11 @@ import Testing
 struct SettingsTests {
   @Test("relaunch waits for this instance to be gone, then opens the one instance (card 0147)")
   func testRelaunchScript() {
-    let script = SettingsWindow.relaunchScript(pid: 4242, bundle: "/Apps/Astro Stack.app")
+    let script = SettingsWindow.relaunchScript(pid: 4242)
     #expect(script.contains("kill -0 4242"), "a probe of the pid, never a signal")
-    #expect(script.contains("open \"/Apps/Astro Stack.app\""))
+    #expect(script.contains("open \"$1\""), "the bundle path is a positional, never interpolated")
+    #expect(
+      script.contains("seq 1 300"), "a minute at most: a cancelled quit never relaunches later")
     #expect(!script.contains("open -n") && !script.contains("-9") && !script.contains("TERM"))
     #expect(script.hasSuffix("&"), "the subshell outlives this process")
   }

@@ -1,0 +1,122 @@
+### 1 cal_master_BIAS_g100o50_b1
+requires 1.2.0
+setext fits
+set32bits
+convert cal -out=.
+stack cal rej percentile 0.2 0.1 -nonorm -out=<ROOT>/work/run_R1/masters/master_BIAS_g100o50_b1
+
+### 2 cal_master_DARK_120000ms_g100o50_b1_-10C
+requires 1.2.0
+setext fits
+set32bits
+convert cal -out=.
+stack cal rej percentile 0.2 0.1 -nonorm -out=<ROOT>/work/run_R1/masters/master_DARK_120000ms_g100o50_b1_-10C
+
+### 3 cal_master_FLAT_Ha_2000ms_g100o50_b1_0C
+requires 1.2.0
+setext fits
+set32bits
+convert cal -out=.
+calibrate cal -bias=<ROOT>/work/run_R1/masters/master_BIAS_g100o50_b1.fits -prefix=pp_
+stack pp_cal rej percentile 0.2 0.1 -norm=mul -out=<ROOT>/work/run_R1/masters/master_FLAT_Ha_2000ms_g100o50_b1_0C
+
+### 4 cal_master_FLAT_OIII_2000ms_g100o50_b1_0C
+requires 1.2.0
+setext fits
+set32bits
+convert cal -out=.
+calibrate cal -bias=<ROOT>/work/run_R1/masters/master_BIAS_g100o50_b1.fits -prefix=pp_
+stack pp_cal rej percentile 0.2 0.1 -norm=mul -out=<ROOT>/work/run_R1/masters/master_FLAT_OIII_2000ms_g100o50_b1_0C
+
+### 5 cal_master_FLAT_SII_2000ms_g100o50_b1_0C
+requires 1.2.0
+setext fits
+set32bits
+convert cal -out=.
+calibrate cal -bias=<ROOT>/work/run_R1/masters/master_BIAS_g100o50_b1.fits -prefix=pp_
+stack pp_cal rej percentile 0.2 0.1 -norm=mul -out=<ROOT>/work/run_R1/masters/master_FLAT_SII_2000ms_g100o50_b1_0C
+
+### 6 light_Ha
+requires 1.2.0
+setext fits
+set32bits
+link light -out=.
+calibrate light -dark=<ROOT>/work/run_R1/masters/master_DARK_120000ms_g100o50_b1_-10C.fits -flat=<ROOT>/work/run_R1/masters/master_FLAT_Ha_2000ms_g100o50_b1_0C.fits -cc=dark -prefix=pp_
+register pp_light
+
+### 7 light_Ha
+requires 1.2.0
+setext fits
+set32bits
+select r_pp_light_ 1 3
+stack r_pp_light_ rej percentile 0.2 0.1 -norm=addscale -output_norm -weight=wfwhm -filter-incl -out=<ROOT>/out/SYNTH/R1/master_Ha
+
+### 8 light_OIII
+requires 1.2.0
+setext fits
+set32bits
+link light -out=.
+calibrate light -dark=<ROOT>/work/run_R1/masters/master_DARK_120000ms_g100o50_b1_-10C.fits -flat=<ROOT>/work/run_R1/masters/master_FLAT_OIII_2000ms_g100o50_b1_0C.fits -cc=dark -prefix=pp_
+register pp_light
+
+### 9 light_OIII
+requires 1.2.0
+setext fits
+set32bits
+select r_pp_light_ 1 3
+stack r_pp_light_ rej percentile 0.2 0.1 -norm=addscale -output_norm -weight=wfwhm -filter-incl -out=<ROOT>/out/SYNTH/R1/master_OIII
+
+### 10 light_SII
+requires 1.2.0
+setext fits
+set32bits
+link light -out=.
+calibrate light -dark=<ROOT>/work/run_R1/masters/master_DARK_120000ms_g100o50_b1_-10C.fits -flat=<ROOT>/work/run_R1/masters/master_FLAT_SII_2000ms_g100o50_b1_0C.fits -cc=dark -prefix=pp_
+register pp_light
+
+### 11 light_SII
+requires 1.2.0
+setext fits
+set32bits
+select r_pp_light_ 1 3
+stack r_pp_light_ rej percentile 0.2 0.1 -norm=addscale -output_norm -weight=wfwhm -filter-incl -out=<ROOT>/out/SYNTH/R1/master_SII
+
+### 12 R1
+requires 1.2.0
+setext fits
+set32bits
+load master_Ha
+platesolve -noflip
+save _parity_probe
+
+### 13 R1
+requires 1.2.0
+setext fits
+set32bits
+load master_OIII
+platesolve -noflip
+save _parity_probe
+
+### 14 R1
+requires 1.2.0
+setext fits
+set32bits
+load master_SII
+platesolve -noflip
+save _parity_probe
+
+### 15 04_aligned
+requires 1.2.0
+setext fits
+set32bits
+link ch -out=.
+register ch -2pass
+seqapplyreg ch -framing=min
+
+### 16 R1
+requires 1.2.0
+setext fits
+set32bits
+load trim_Ha
+subsky 1
+save combined

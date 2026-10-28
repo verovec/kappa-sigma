@@ -15,6 +15,8 @@ package enum Filter: String, CaseIterable, Sendable {
   case hydrogenAlpha = "Ha"
   case oxygenIII = "OIII"
   case sulfurII = "SII"
+  case hydrogenBeta = "Hb"
+  case nitrogenII = "NII"
 
   /// The channel name of a one-shot-colour frame.
   ///
@@ -38,6 +40,9 @@ package enum Filter: String, CaseIterable, Sendable {
     "oiii": .oxygenIII, "o3": .oxygenIII, "o-iii": .oxygenIII, "oxygen": .oxygenIII,
     "sii": .sulfurII, "s2": .sulfurII, "s-ii": .sulfurII, "sulfur": .sulfurII,
     "sulphur": .sulfurII,
+    "hb": .hydrogenBeta, "h-beta": .hydrogenBeta, "hbeta": .hydrogenBeta, "h_beta": .hydrogenBeta,
+    "hydrogen-beta": .hydrogenBeta,
+    "nii": .nitrogenII, "n2": .nitrogenII, "n-ii": .nitrogenII, "nitrogen": .nitrogenII,
   ]
 
   /// Whether the filter is an emission line rather than broadband (`line` says which).

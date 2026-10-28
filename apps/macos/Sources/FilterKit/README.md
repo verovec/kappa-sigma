@@ -1,6 +1,6 @@
 # FilterKit
 
-The ONE filter list (CLAUDE.md): `Filter` (L R G B Ha OIII SII — cases, aliases, display order,
+The ONE filter list (CLAUDE.md): `Filter` (L R G B Ha OIII SII Hb NII — cases, aliases, display order,
 `rank`/`less`, colour aliases), its line physics (`Filter.Line`: wavelength, panel name, continuum
 references) and the one-shot-colour clip filters (`FilterSet`: unknown, broadband, dual-band, with
 the lines each plane carries). A leaf module with no dependency: StackKit (lanes, continuum fit,

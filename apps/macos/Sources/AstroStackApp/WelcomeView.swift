@@ -5,8 +5,8 @@ package import SwiftUI
 
 /// The welcome window's content, shown at launch instead of an untitled project.
 ///
-/// Recent projects, a new project named after its target, Open…, and the host tools; never
-/// modal (R3).
+/// Every project on disk (`ProjectListSection`), a new project named after its target, Open…, and
+/// the host tools; never modal (R3).
 package struct WelcomeView: View {
   private let model: WelcomeModel
   private let actions: Actions
@@ -50,7 +50,8 @@ package struct WelcomeView: View {
         Button(.app("Open…"), action: actions.choose)
       }
       if let retention { RetentionNotice(review: retention) }
-      recentList
+      ProjectListSection(
+        catalog: model.catalog, folder: NewProject.projectsFolder, open: actions.open)
       ToolStrip(model: model)
     }
     .padding(DesignMetrics.spacingXL)
@@ -71,29 +72,7 @@ package struct WelcomeView: View {
       set: { if !$0 { retention?.postpone() } })
   }
 
-  @ViewBuilder
-  private var recentList: some View {
-    SectionHeader(.app("Recent projects"))
-    if model.recent.isEmpty {
-      Text(.app("No recent project")).foregroundStyle(DesignColor.textSecondary.color)
-    }
-    ForEach(model.recent) { project in
-      Button {
-        actions.open(project.url)
-      } label: {
-        HStack {
-          Text(verbatim: project.target).font(.headline)
-          Spacer()
-          Text(Self.counts(project.summary))
-            .font(DesignMetrics.captionFont).foregroundStyle(DesignColor.textSecondary.color)
-        }
-        .contentShape(Rectangle())
-      }
-      .buttonStyle(.plain)
-    }
-  }
-
-  /// A recent project's counts, or that it cannot be read.
+  /// A listed project's counts, or that it cannot be read.
   nonisolated package static func counts(_ summary: ProjectSummary?) -> LocalizedStringResource {
     guard let summary else { return .app("Cannot be read") }
     return .app("Sources: \(summary.sources) · Stacks: \(summary.stacks)")

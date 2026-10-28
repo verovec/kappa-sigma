@@ -27,8 +27,10 @@ struct WelcomeViewTests {
     .scratchDirectory, arguments: ["en", "fr"])
   func testLaysOutInEveryVariant(_ language: String) async throws {
     let project = try NewProject.create(target: "M 31", in: try ScratchDirectory.url)
-    for urls in [[], [project]] {
-      let model = WelcomeModel(recentURLs: { urls }, tools: Self.mixedTools)
+    let folderOnly = try NewProject.create(target: "IC 1848", in: try ScratchDirectory.url)
+    for (urls, folder) in [([], []), ([project], []), ([project], [folderOnly])] {
+      let model = WelcomeModel(
+        recentURLs: { urls }, tools: Self.mixedTools, folderURLs: { folder })
       let host = LocalisedScreensTests.host(
         WelcomeView(model: model, actions: Self.noActions), language)
       host.layoutSubtreeIfNeeded()
@@ -36,8 +38,15 @@ struct WelcomeViewTests {
       await model.recheckTools()
       host.layoutSubtreeIfNeeded()
       #expect(host.fittingSize.width >= 520)
-      #expect(model.recent.count == urls.count)
+      #expect(model.catalog.entries.count == urls.count + folder.count)
     }
+  }
+
+  @Test(
+    "the projects folder has its own section title, in each language",
+    arguments: [("en", "In the projects folder"), ("fr", "Dans le dossier des projets")])
+  func testFolderSectionWords(_ language: String, _ title: String) {
+    #expect(LocalizedStringResource.app("In the projects folder").text(language) == title)
   }
 
   @Test("a recent project shows its counts, or that it cannot be read", arguments: ["en", "fr"])
@@ -205,7 +214,8 @@ struct WelcomeViewTests {
 
     let open = WelcomeWindow.openProjects()
 
-    #expect(open[WelcomeModel.key(url)] == .some(document.projectSummary()))
+    let found = open.first { WelcomeModel.key($0.0) == WelcomeModel.key(url) }
+    #expect(found.map(\.1) == .some(document.projectSummary()))
   }
 
   @Test("a recent project that cannot be opened is reported, not swallowed", .scratchDirectory)

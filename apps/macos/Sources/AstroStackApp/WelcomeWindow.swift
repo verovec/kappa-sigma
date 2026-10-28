@@ -18,10 +18,10 @@ package enum WelcomeWindow {
     NSDocumentController.shared.recentDocumentURLs
   }
 
-  /// The recent projects and tool statuses, shared with Settings › Tools.
+  /// Every project on disk and the tool statuses, shared with Settings › Tools.
   package static let model = WelcomeModel(
-    recentURLs: recentURLs, tools: hostTools,
-    openProjects: openProjects)
+    recentURLs: recentURLs, tools: hostTools, openProjects: openProjects,
+    folderURLs: { ProjectCatalog.folderListing(of: NewProject.projectsFolder) })
 
   /// The retention policy's launch review over the recent projects no window has open (0114).
   package static let retention = RetentionReview(
@@ -89,14 +89,15 @@ package enum WelcomeWindow {
       })
   }
 
-  /// The counts of every project open in a document, keyed like `WelcomeModel` looks them up.
-  package static func openProjects() -> [String: ProjectSummary?] {
-    var open: [String: ProjectSummary?] = [:]
-    for case let document as ProjectDocument in NSDocumentController.shared.documents {
-      guard let url = document.packageURL else { continue }
-      open[WelcomeModel.key(url)] = document.projectSummary()
+  /// Every project open in a document, in the documents' order, with that document's counts.
+  package static func openProjects() -> [(URL, ProjectSummary?)] {
+    NSDocumentController.shared.documents.compactMap { document in
+      // The file URL is there before the package finishes opening (as in `openProjectKeys`).
+      guard let document = document as? ProjectDocument,
+        let url = document.packageURL ?? document.fileURL
+      else { return nil }
+      return (url, document.projectSummary())
     }
-    return open
   }
 
   /// Open…: the projects picked in the Open panel, opened like a recent one.

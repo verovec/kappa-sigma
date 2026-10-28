@@ -4,26 +4,12 @@ package import ProjectKit
 package import RenderKit
 package import StackKit
 
-/// What the welcome window shows: the recent projects and the host tools' status.
+/// What the welcome window shows: every project on disk (`catalog`, card 0145) and the host
+/// tools' status.
 ///
-/// It reads and reports only: opening, creating and installing are the window's buttons. A recent
-/// project is read through a read-only connection (never migrated nor checkpointed); one open in
-/// a document is counted by that document.
+/// It reads and reports only: opening, creating and installing are the window's buttons.
 @Observable
 package final class WelcomeModel {
-  /// A recent project as listed: its target and, when it could be read, its counts.
-  package struct RecentProject: Equatable, Identifiable {
-    /// The package.
-    package let url: URL
-    /// The target the project is named after (the package name).
-    package let target: String
-    /// Sources and stacks recorded; `nil` when the package cannot be read.
-    package let summary: ProjectSummary?
-
-    /// The package's URL.
-    package var id: URL { url }
-  }
-
   /// One host tool and what was found of it.
   package struct ToolRow: Equatable, Identifiable {
     /// The tool.
@@ -41,8 +27,8 @@ package final class WelcomeModel {
     package var id: HostTool { tool }
   }
 
-  /// The recent projects, most recent first; deleted ones are left out.
-  package private(set) var recent: [RecentProject] = []
+  /// The projects listed: open, recent, then the rest of the projects folder.
+  package let catalog: ProjectCatalog
   /// Every host tool, once checked; empty before the first check.
   package private(set) var tools: [ToolRow] = []
   /// The install card of each tool, kept across redraws and shared by every window showing it.
@@ -50,44 +36,25 @@ package final class WelcomeModel {
   /// Whether the « New Project… » sheet is up (File › New Project raises it too).
   package var isNaming = false
 
-  private let recentURLs: @MainActor () -> [URL]
-  private let openProjects: @MainActor () -> [String: ProjectSummary?]
   private let hostTools: HostTools
   private var isChecking = false
-  /// The latest `reload()`: an older one finishing late does not overwrite it.
-  private var generation = 0
 
-  /// A model listing `recentURLs` (the document controller's) and checking `tools`;
-  /// `openProjects` gives the counts of the projects open in a document, by `key(_:)`.
+  /// A model listing `recentURLs` (the document controller's), `folderURLs` (the projects
+  /// folder's packages) and `openProjects` (each open document's package and counts), and checking
+  /// `tools`.
   package init(
     recentURLs: @escaping @MainActor () -> [URL], tools: HostTools,
-    openProjects: @escaping @MainActor () -> [String: ProjectSummary?] = { [:] }
+    openProjects: @escaping @MainActor () -> [(URL, ProjectSummary?)] = { [] },
+    folderURLs: @escaping @Sendable () -> [URL] = { [] }
   ) {
-    self.recentURLs = recentURLs
-    self.openProjects = openProjects
+    catalog = ProjectCatalog(
+      openProjects: openProjects, recentURLs: recentURLs, folderURLs: folderURLs)
     self.hostTools = tools
   }
 
-  /// Reads the recent projects again; packages are read off the main actor, side by side.
+  /// Lists the projects again (`ProjectCatalog.reload`).
   package func reload() async {
-    generation += 1
-    let current = generation
-    let open = openProjects()
-    let urls = Self.onDisk(recentURLs())
-    let read = await withTaskGroup(of: (URL, ProjectSummary?).self) { group in
-      for url in urls where !open.keys.contains(Self.key(url)) {
-        group.addTask { (url, await Self.readSummary(url)) }
-      }
-      var read: [URL: ProjectSummary?] = [:]
-      for await (url, summary) in group { read[url] = summary }
-      return read
-    }
-    guard current == generation else { return }
-    recent = urls.map { url in
-      let summary = open[Self.key(url)] ?? read[url] ?? nil
-      return RecentProject(
-        url: url, target: ProjectPackage.target(of: url), summary: summary)
-    }
+    await catalog.reload()
   }
 
   /// Probes every host tool at once; a check already running is not doubled.
@@ -155,12 +122,5 @@ package final class WelcomeModel {
   {
     if tool == .starnet { return StarSeparation.check(hostTools) }
     return { @concurrent in cardState(await hostTools.locate(tool)) }
-  }
-
-  /// The counts of the package at `url`, read-only (never migrated nor checkpointed), or `nil`
-  /// when unreadable.
-  @concurrent
-  private nonisolated static func readSummary(_ url: URL) async -> ProjectSummary? {
-    try? ProjectPackage.readSummary(at: url)
   }
 }

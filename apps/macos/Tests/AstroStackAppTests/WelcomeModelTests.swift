@@ -24,9 +24,9 @@ struct WelcomeModelTests {
     let model = WelcomeModel(recentURLs: { [ic1848, gone, m31] }, tools: Self.noTools)
     await model.reload()
 
-    #expect(model.recent.map(\.target) == ["IC 1848", "M 31"])
-    #expect(model.recent.map(\.summary?.sources) == [0, 2])
-    #expect(model.recent.map(\.url) == [ic1848, m31])
+    #expect(model.catalog.entries.map(\.target) == ["IC 1848", "M 31"])
+    #expect(model.catalog.entries.map(\.summary?.sources) == [0, 2])
+    #expect(model.catalog.entries.map(\.url) == [ic1848, m31])
   }
 
   @Test("a recent project that cannot be read is listed without counts", .scratchDirectory)
@@ -38,8 +38,8 @@ struct WelcomeModelTests {
     let model = WelcomeModel(recentURLs: { [broken] }, tools: Self.noTools)
     await model.reload()
 
-    #expect(model.recent.map(\.target) == ["Broken"])
-    #expect(model.recent.first?.summary == nil)
+    #expect(model.catalog.entries.map(\.target) == ["Broken"])
+    #expect(model.catalog.entries.first?.summary == nil)
   }
 
   @Test("each tool's status comes from the host-tool client, in the catalogue's order")
@@ -55,24 +55,6 @@ struct WelcomeModelTests {
     #expect(model.tools.map(\.tool) == HostTool.allCases)
     #expect(model.tools.first?.status == .found(path: "/siril", version: "1.4.4"))
     #expect(model.tools.dropFirst().allSatisfy { !$0.status.isUsable })
-  }
-
-  @Test(
-    "a project open in a document is counted by that document, never reopened from disk",
-    .scratchDirectory)
-  func testOpenProjectIsNotReopened() async throws {
-    // Not SQLite: reading it from disk would give no counts.
-    let open = try ScratchDirectory.url.appendingPathComponent("M 31.astrostack")
-    try FileManager.default.createDirectory(at: open, withIntermediateDirectories: true)
-    try Data("not sqlite".utf8).write(to: open.appendingPathComponent("project.db"))
-    let counted = ProjectSummary(sources: 3, stacks: 1)
-
-    let model = WelcomeModel(
-      recentURLs: { [open] }, tools: Self.noTools,
-      openProjects: { [WelcomeModel.key(open.appendingPathComponent("")): counted] })
-    await model.reload()
-
-    #expect(model.recent.first?.summary == counted)
   }
 
   @Test("each unusable tool gets one install card in the state it was found in")

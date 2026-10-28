@@ -4,7 +4,7 @@ internal import ProjectKit
 /// A new project named after its target (« M 31 »), in the projects folder (design §4.5).
 package enum NewProject {
   /// Where projects are created: `~/AstroStack/Projects`.
-  package static var projectsFolder: URL {
+  nonisolated package static var projectsFolder: URL {
     FileManager.default.homeDirectoryForCurrentUser
       .appendingPathComponent("AstroStack/Projects", isDirectory: true)
   }

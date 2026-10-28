@@ -1,0 +1,70 @@
+Siril is started as macOS application
+log: Welcome to siril 1.4.4 for macos (aarch64) - CLI
+log: Supported file types: BMP images, PIC images (IRIS), PGM and PPM binary images, RAW images, FITS-CFA images, Films, SER sequences, TIFF images, XISF images, JPG images, JPEG XL images, PNG images, HEIF images, AVIF images.
+log: Setting CWD (Current Working Directory) to '<WORK>/work'
+log: Color management active.
+log: Running command: requires
+log: OK! This script is compatible with this version of Siril.
+log: Running command: spcc_list
+log: Mono Sensors
+log: Generic mono sensor
+log: ICX694
+log: KAF1603ME
+log: KAF16200
+log: KAF16803
+log: KAF3200
+log: KAF8300
+log: KAI-11000M
+log: Sony IMX178
+log: Sony IMX183
+log: Sony IMX411/455/461/533/571
+log: Sony IMX492/294
+log: Sony IMX585
+log: ZWO ASI1600MM
+log: onsemi KAF-09000
+log: Running command: spcc_list
+log: Red Filters
+log: Antlia R
+log: Astrodon Red (E series)
+log: Astrodon Red (I series)
+log: Astronomik Deep Sky RGB Red
+log: Astronomik Typ 2 c Red
+log: Baader R
+log: Chroma Red
+log: Johnson-Cousins R
+log: Optolong Red
+log: SDSS i
+log: SDSS r
+log: ToupTek R
+log: ZWO Optimized for CMOS Red
+log: Running command: spcc_list
+log: Green Filters
+log: Antlia G
+log: Astrodon Green (E series)
+log: Astrodon Green (I series)
+log: Astronomik Deep Sky RGB Green
+log: Astronomik Typ 2 c Green
+log: Baader G
+log: Chroma Green
+log: Johnson-Cousins V
+log: Optolong Green
+log: SDSS g
+log: SDSS r
+log: ToupTek G
+log: ZWO Optimized for CMOS Green
+log: Running command: spcc_list
+log: Blue Filters
+log: Antlia B
+log: Astrodon Blue (E / I series)
+log: Astronomik Deep Sky RGB Blue
+log: Astronomik Typ 2 c Blue
+log: Baader B
+log: Chroma Blue
+log: Johnson-Cousins B
+log: Optolong Blue
+log: SDSS g
+log: ToupTek B
+log: ZWO Optimized for CMOS Blue
+log: Setting CWD (Current Working Directory) to '<WORK>/work'
+log: Script execution finished successfully.
+log: Total execution time: 33.75 ms

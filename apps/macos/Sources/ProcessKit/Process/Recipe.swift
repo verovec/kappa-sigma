@@ -131,4 +131,9 @@ extension Recipe {
     // A GPU process never does: its values need not be read.
     type.hostTool && type.runsTool(ParamSet.loading(params, onto: type.schema).params)
   }
+
+  /// The choices this recipe still leaves to the user, read on the schema of `type` (card 0140).
+  package func unchosen(as type: any ImageProcess.Type) -> [String] {
+    type.unchosen(ParamSet.loading(params, onto: type.schema).params)
+  }
 }

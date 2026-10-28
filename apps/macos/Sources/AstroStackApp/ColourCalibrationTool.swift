@@ -7,14 +7,23 @@ package import StackKit
 /// `ColourCalibrationRequest`, Siril's SPCC or PCC on the head, Siril's pixels back with the
 /// factors it applied.
 package nonisolated enum ColourCalibrationTool {
-  /// The request the panel's `params` give, every value as shown.
+  /// The request the panel's `params` give, every value as shown: the mono route when its
+  /// `camera` is mono (card 0140).
   package static func request(_ params: ParamSet) -> ColourCalibrationRequest {
+    let reference = params.choice("whiteReference")
     let method: ColourCalibrationRequest.Method =
-      params.choice("method") == "pcc"
-      ? .pcc
-      : .spcc(
-        sensor: params.choice("sensor"), filter: params.choice("filter"),
-        whiteReference: params.choice("whiteReference"))
+      if params.choice("method") == "pcc" {
+        .pcc
+      } else if ColourCalibrationProcess.isMono(params) {
+        .monoSPCC(
+          sensor: params.choice("monoSensor"), red: params.choice("rFilter"),
+          green: params.choice("gFilter"), blue: params.choice("bFilter"),
+          whiteReference: reference)
+      } else {
+        .spcc(
+          sensor: params.choice("sensor"), filter: params.choice("filter"),
+          whiteReference: reference)
+      }
     let limit = params.number("limitMag")
     return ColourCalibrationRequest(
       method: method, limitMag: limit > 0 ? limit : nil,

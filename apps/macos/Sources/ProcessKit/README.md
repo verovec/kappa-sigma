@@ -335,6 +335,12 @@ To make a process branchable: declare `static let branchable = BranchUse.anyLaye
 `.colourLayers`) — linear, same size, its input alone — and add it to the audit table. A process
 that reads bundle layers declares them in `layersRead`, or its steps never go stale.
 
+- **Choices left to the user** (card 0140): a choice spec may be `allowsUnset` (default `""`,
+  « Choose… »; only on a host-tool process, `ProcessRegistry.problems`); `unchosen(_:)` lists
+  the ones still to make (default: every unset one) and the Studio greys Apply with « Choose
+  “<title>” first. ». Colour calibration overrides it with its route (`camera` osc/mono) and
+  overrides `hiddenParameters` too — the one override not about a layer: the other route's
+  names, and every SPCC row under PCC, are hidden (shown = what Siril is told).
 - **Layer-aware rows** (card 0135): a spec may declare `needsLayer` (the line specs do); the
   panel hides it while that layer is absent from the bundle AND the values do not ask for it
   (`ImageProcess.hiddenParameters`, default rule over `layersAsked(_:)` — the layers the VALUES

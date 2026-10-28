@@ -6,6 +6,8 @@ script) with an app-owned `-i` config pointing at `~/Documents/astro/library/cat
 - `m31-crop-pcc.log`: `pcc -catalog=localgaia`
 - `m31-crop-unsolved.log`: the same `spcc` on the crop with its WCS cards removed
 - `m31-crop-lists.log`: `spcc_list oscsensor`, `oscfilter`, `whiteref`, `osclpf`
+- `mono-lists.log` (2026-10-27, card 0140, no image loaded): `spcc_list monosensor`, `redfilter`,
+  `greenfilter`, `bluefilter`
 
 Progress-bar redraw lines and paths are stripped (`<WORK>`). Note: Siril 1.4.4 runs `spcc` with an
 unknown sensor name (« Sony IMX999 ») as if it were the previous one — `ColourCalibrator` checks

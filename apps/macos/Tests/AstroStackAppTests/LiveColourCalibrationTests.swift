@@ -7,9 +7,10 @@ import Synchronization
 import TestSupport
 import Testing
 
-/// Card 0094 for real: run #78's crop solved (0093), then Siril 1.4 SPCC with the panel's
-/// defaults (IMX571, UV/IR Block, Average Spiral Galaxy) on the local Gaia spectra; and every
-/// name the panel offers is one the installed Siril lists.
+/// Card 0094 for real: run #78's crop solved (0093), then Siril 1.4 SPCC with the recorded
+/// names (IMX571, UV/IR Block — chosen, no default since card 0140 — and the default Average
+/// Spiral Galaxy) on the local Gaia spectra; and every name the panel offers is one the
+/// installed Siril lists.
 @Suite(
   "Live colour calibration — SPCC on run #78's crop, Siril's names", .liveFixtures, .tags(.live),
   .serialized, .timeLimit(.minutes(5)))
@@ -41,11 +42,12 @@ struct LiveColourCalibrationTests {
     image.metadata.wcs = solved.wcs
     let calibrator = ColourCalibrator.live(
       binary: binary, support: support, catalogues: Self.catalogues)
+    var params = ParamSet(schema: ColourCalibrationProcess.schema)
+    try params.set("sensor", .choice("Sony IMX571"))
+    try params.set("filter", .choice("UV/IR Block"))
     let started = ContinuousClock.now
     let calibrated = try await calibrator.calibrate(
-      image,
-      request: ColourCalibrationTool.request(ParamSet(schema: ColourCalibrationProcess.schema)),
-      scratch: scratch
+      image, request: ColourCalibrationTool.request(params), scratch: scratch
     ) { _ in }
     let elapsed = ContinuousClock.now - started
     let report = calibrated.report
@@ -63,12 +65,22 @@ struct LiveColourCalibrationTests {
   func testNamesAreSiril() async throws {
     let lines = Mutex<[String]>([])
     _ = try await SirilRunner.live(binary: try SirilTool.locate()).run(
-      SirilScript([.spccList("oscsensor"), .spccList("oscfilter"), .spccList("whiteref")]),
+      SirilScript(
+        [
+          "oscsensor", "oscfilter", "whiteref", "monosensor", "redfilter", "greenfilter",
+          "bluefilter",
+        ]
+        .map(SirilCommand.spccList)),
       try ScratchDirectory.url
     ) { line in lines.withLock { $0.append(line.text) } }
     let lists = ColourCalibrator.lists(lines.withLock { $0 })
     #expect(Set(SPCCNames.sensors).subtracting(lists["oscsensor"] ?? []).isEmpty)
     #expect(Set(SPCCNames.filters).subtracting(lists["oscfilter"] ?? []).isEmpty)
     #expect(Set(SPCCNames.whiteReferences).subtracting(lists["whiteref"] ?? []).isEmpty)
+    // Card 0140: the mono lists equal the recorded ones.
+    #expect(lists["monosensor"] == SPCCNames.monoSensors)
+    #expect(lists["redfilter"] == SPCCNames.redFilters)
+    #expect(lists["greenfilter"] == SPCCNames.greenFilters)
+    #expect(lists["bluefilter"] == SPCCNames.blueFilters)
   }
 }

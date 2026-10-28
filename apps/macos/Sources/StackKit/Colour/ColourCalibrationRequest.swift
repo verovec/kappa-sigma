@@ -6,8 +6,26 @@ package struct ColourCalibrationRequest: Sendable {
     /// Spectrophotometric: the OSC sensor, its filter and the white reference, as Siril names
     /// them (`spcc_list`).
     case spcc(sensor: String, filter: String, whiteReference: String)
+    /// Spectrophotometric on a mono camera's colour image (card 0140): the mono sensor, the red,
+    /// green and blue filters it was shot through, and the white reference.
+    case monoSPCC(
+      sensor: String, red: String, green: String, blue: String, whiteReference: String)
     /// Photometric: star colours from the catalogue.
     case pcc
+
+    /// The spectral names Siril must list before it runs, by `spcc_list` kind; none for PCC.
+    package var names: [ColourCalibrationError.NameKind: String] {
+      switch self {
+      case .spcc(let sensor, let filter, let reference):
+        [.sensor: sensor, .filter: filter, .whiteReference: reference]
+      case .monoSPCC(let sensor, let red, let green, let blue, let reference):
+        [
+          .monoSensor: sensor, .redFilter: red, .greenFilter: green, .blueFilter: blue,
+          .whiteReference: reference,
+        ]
+      case .pcc: [:]
+      }
+    }
   }
 
   /// SPCC or PCC.
@@ -44,6 +62,12 @@ package struct ColourCalibrationRequest: Sendable {
       return .spcc(
         [
           "\"-oscsensor=\(sensor)\"", "\"-oscfilter=\(filter)\"", "\"-whiteref=\(reference)\"",
+        ] + options)
+    case .monoSPCC(let sensor, let red, let green, let blue, let reference):
+      return .spcc(
+        [
+          "\"-monosensor=\(sensor)\"", "\"-rfilter=\(red)\"", "\"-gfilter=\(green)\"",
+          "\"-bfilter=\(blue)\"", "\"-whiteref=\(reference)\"",
         ] + options)
     case .pcc:
       return .pcc(options)

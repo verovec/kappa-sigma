@@ -53,8 +53,9 @@ package struct ProcessRegistry {
 
   /// The rules the declaration of `type` breaks.
   ///
-  /// An empty id or title, or `.px` parameters without `previewExactOnlyAt1to1` (pixel
-  /// operators do not commute with the preview pyramid).
+  /// An empty id or title, `.px` parameters without `previewExactOnlyAt1to1` (pixel
+  /// operators do not commute with the preview pyramid), or a choice that may stay unset on a
+  /// process running no host tool (nothing would refuse its Apply).
   package static func problems(of type: any ImageProcess.Type) -> [String] {
     var problems: [String] = []
     if type.id.isEmpty || type.title.isEmpty { problems.append("empty id or title") }
@@ -63,6 +64,12 @@ package struct ProcessRegistry {
     if !pixels.isEmpty, !type.previewExactOnlyAt1to1 {
       problems.append(
         "has .px parameters (\(pixels.joined(separator: ", "))): declare previewExactOnlyAt1to1")
+    }
+    // An unset choice is refused only before a host tool runs (`unchosen`, card 0140).
+    let unset = type.schema.specs.filter(\.allowsUnset).map(\.id)
+    if !unset.isEmpty, !type.hostTool {
+      problems.append(
+        "has unset choices (\(unset.joined(separator: ", "))): only a host-tool process may")
     }
     return problems
   }

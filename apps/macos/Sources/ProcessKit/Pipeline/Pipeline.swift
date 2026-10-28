@@ -49,8 +49,13 @@ package struct Pipeline: Equatable, Sendable {
         reasons.append(reason)
       }
       // A host tool's step runs only through its injected tool (card 0093): never its preview.
-      if step.recipe.runsTool(as: type), !batch.contains(id) {
-        reasons.append("runs a host tool: apply it in the Studio")
+      if step.recipe.runsTool(as: type) {
+        // A batch tool runs it here: a choice still to make (card 0140) is refused up front.
+        if !batch.contains(id) {
+          reasons.append("runs a host tool: apply it in the Studio")
+        } else if let unchosen = step.recipe.unchosen(as: type).first {
+          reasons.append("choose \(unchosen) first")
+        }
       }
       if type.stage == .linear, stretched {
         reasons.append("a linear process after a non-linear one")

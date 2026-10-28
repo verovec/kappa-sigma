@@ -36,6 +36,10 @@ struct ColourCalibrationSchemaTests {
         ["runs a host tool: apply it in the Studio"]
       ])
     #expect(try pipeline(false).stepProblems(registry: registry, present: [.color]) == [[]])
+    // Card 0140: where a batch tool would run it, an unchosen sensor is refused up front.
+    #expect(
+      try pipeline(true).stepProblems(registry: registry, batch: [type.id], present: [.color])
+        == [["choose sensor first"]])
   }
 
   @Test(
@@ -62,11 +66,10 @@ struct ColourCalibrationSchemaTests {
     #expect(replay.history.steps.map(\.processID) == [ColourCalibrationProcess.id])
   }
 
-  @Test("the defaults are names Siril lists: IMX571, UV/IR Block, Average Spiral Galaxy")
+  @Test("the defaults: no camera (card 0140), a white reference Siril lists, SPCC ticked")
   func testDefaults() {
     let params = ParamSet(schema: ColourCalibrationProcess.schema)
-    #expect(SPCCNames.sensors.contains(params.choice("sensor")))
-    #expect(SPCCNames.filters.contains(params.choice("filter")))
+    #expect(params.choice("sensor").isEmpty && params.choice("filter").isEmpty)
     #expect(SPCCNames.whiteReferences.contains(params.choice("whiteReference")))
     #expect(params.choice("method") == "spcc" && params.flag("enabled"))
   }

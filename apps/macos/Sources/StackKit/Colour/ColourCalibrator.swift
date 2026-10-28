@@ -44,7 +44,8 @@ package struct ColourCalibrator: Sendable {
   /// `spcc_list` headings, by the kind each lists.
   private static let headings = [
     "OSC Sensors": "oscsensor", "OSC Filters": "oscfilter", "White References": "whiteref",
-    "OSC Low-Pass Filters": "osclpf",
+    "OSC Low-Pass Filters": "osclpf", "Mono Sensors": "monosensor", "Red Filters": "redfilter",
+    "Green Filters": "greenfilter", "Blue Filters": "bluefilter",
   ]
 
   /// Calibrates `image` with `request`, working in a fresh folder under `scratch` (removed after).
@@ -58,10 +59,10 @@ package struct ColourCalibrator: Sendable {
     let folder = scratch.appendingPathComponent("colour-" + UUID().uuidString)
     try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
     defer { try? FileManager.default.removeItem(at: folder) }
-    if case .spcc(let sensor, let filter, let reference) = request.method {
+    let names = request.method.names
+    if !names.isEmpty {
       try SirilAppSettings.write(to: configFile, catalogues: catalogues)
-      try await checkNames(
-        [.sensor: sensor, .filter: filter, .whiteReference: reference], in: folder)
+      try await checkNames(names, in: folder)
     }
     // Siril reads the solution from the file it loads.
     try FITSFile.create(
@@ -128,7 +129,7 @@ package struct ColourCalibrator: Sendable {
 
   private func checkCatalogue(_ request: ColourCalibrationRequest) throws {
     guard request.catalogue == .localGaia else { return }
-    if case .spcc = request.method {
+    if !request.method.names.isEmpty {
       let files = (try? FileManager.default.contentsOfDirectory(atPath: catalogues.path)) ?? []
       guard files.contains(where: { $0.hasPrefix(Self.spectraPrefix) }) else {
         throw ColourCalibrationError.catalogueMissing(path: catalogues.path)

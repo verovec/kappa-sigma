@@ -55,6 +55,23 @@ struct FilterTests {
   }
 
   @Test(
+    "the mono source (palette.go resolveMono): L, else Hα, else the first in the canonical order",
+    arguments: [
+      (["L", "R", "G", "B"], "L"), (["R", "G", "Ha"], "Ha"), (["R", "G", "B"], "R"),
+      (["SII", "Ha", "OIII"], "Ha"), (["SII", "OIII"], "OIII"), (["zeta", "alpha"], "alpha"),
+      (["NII-custom", "SII"], "SII"),
+    ] as [([String], String)])
+  func testFilter_monoSource(ids: [String], expected: String) {
+    #expect(Filter.monoSource(in: ids) == expected)
+    #expect(Filter.monoSource(in: ids.reversed()) == expected)
+  }
+
+  @Test("no layer, no mono source")
+  func testFilter_monoSource_empty() {
+    #expect(Filter.monoSource(in: []) == nil)
+  }
+
+  @Test(
     "colour aliases are not mono; empty is neither; a custom name is mono",
     arguments: [
       ("RGB", true, false), ("rgb", true, false), ("OSC", true, false), ("Color", true, false),

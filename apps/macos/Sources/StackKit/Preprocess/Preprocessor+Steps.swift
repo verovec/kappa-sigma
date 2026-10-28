@@ -92,8 +92,13 @@ extension Preprocessor {
     try Task.checkCancellation()
     emitter.begin("combining channels (Siril)")
     let combiner = ChannelCombiner(runner: reporting(emitter), settings: request.settings)
-    if let combined = try await combiner.combine(channels, out: request.output) {
+    if let inputs = ChannelCombiner.inputs(channels) {
+      let combined = try await combiner.combine(inputs, out: request.output)
       result.combinedPath = combined.path
+      if let note = ChannelCombiner.note(inputs) {
+        journal.line(note)
+        result.notes.append(note)
+      }
       preview(combined, emitter: emitter)
     }
     try Task.checkCancellation()

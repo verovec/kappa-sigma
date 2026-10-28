@@ -187,6 +187,10 @@ extension ImageProcess {
 
   /// No row reason.
   package static var rowReasons: [String] { [] }
+
+  /// Whether its image is a colour image whatever it read (card 0137): it replaces its input
+  /// with three planes — a mono layer combined in grey is honest input for a colour process.
+  package static var makesColour: Bool { replacesInput && outputChannels(input: 1) == 3 }
 }
 
 /// Where a process belongs in a pipeline.

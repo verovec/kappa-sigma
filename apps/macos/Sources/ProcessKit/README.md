@@ -33,7 +33,10 @@ non-destructive history, recipes and the registry (design §2, §4.1).
 - **ChannelCombinationProcess** (card 0054), the first node of every pipeline: slots R/G/B/L ← bundle
   layer planes (`RenderContext.layers`: `RGB`, `R`, `G`, `B`, `L`, `Ha`, `OIII`, `SII`),
   `w·max(x − black, 0)` per slot, Foraxx's green = √(Hα·OIII), L replaces the luminance at its
-  opacity. `Palette` (natural, HOO, SHO, HOS, Foraxx, LRGB) fills the source slots only. A
+  opacity. `Palette` (natural, HOO, SHO, HOS, Foraxx, LRGB, RGB) fills the source slots only;
+  `Palette.resolve(requested:present:)` walks the legacy fallback chain (lines → HOO → natural →
+  LRGB → RGB → the palette the layers spell → mono on `Filter.monoSource`) and returns the reason, and `Palette.oiiiAsBlue(present:)`
+  offers OIII in the blue slot without a B filter — both suggestions, never applied (card 0137). A
   missing layer gives `unavailableReason` ("HOO needs an OIII layer") and `ProcessError.missingLayer`
   — never another layer (R2).
 - **Masks** (card 0054): `Mask` = `MaskSource` (luminosity range with linear soft edges; stars
@@ -307,7 +310,9 @@ To give a host tool layers: return them in `StudioToolResult(…outputs:replaced
   continuum fit kept: a branch moves no pixel) → the main history's `writtenFiles`.
   `StudioSession.bundle` is the overlaid bundle (the pipeline runner reads it too),
   `stackBundle` the one as stacked; the main history starts from the base layer's branch head
-  (`History.rebase(onto:)`).
+  (`History.rebase(onto:)`). The base layer (`StudioSession.baseLayerID`, card 0137) is `RGB`, else
+  the first filter by `Filter.less` (`L` on mono LRGB, a custom name after the catalogue); after a
+  `replacesInput` step that left three planes, `presentRoles` holds `.color` whatever was read.
 - A branch takes only `ImageProcess.branchable` processes (`BranchUse`: `.anyLayer`,
   `.colourLayers` on three-plane layers), never a `GeometricProcess`; anything else is refused
   with `StudioError.notBranchable(processID:reason:)`, a host tool with `needsTool` (its branch

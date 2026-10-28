@@ -56,7 +56,7 @@ struct AstroFolderSettingTests {
     .scratchDirectory,
     arguments: [
       "scratch/AstroStack/Work", "home/AstroStack", "home/AstroStack/Projects", "home", "scratch",
-      "",
+      "", "tmp",
     ])
   func testAppOwnedFoldersRefused(relative: String) throws {
     let (defaults, name) = try Self.suite()
@@ -64,7 +64,10 @@ struct AstroFolderSettingTests {
     let base = try ScratchDirectory.url
     let home = base.appendingPathComponent("home")
     let scratch = base.appendingPathComponent("scratch/AstroStack/Work")
-    let folder = base.appendingPathComponent(relative)
+    // "tmp": the sweep's own roots (Siril's folders, the untitled projects) under the real
+    // temporary folder — the app's, never a test's.
+    let temporary = FileManager.default.temporaryDirectory.appendingPathComponent("AstroStack")
+    let folder = relative == "tmp" ? temporary : base.appendingPathComponent(relative)
     try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
     try FileManager.default.createDirectory(at: scratch, withIntermediateDirectories: true)
     let setting = AstroFolderSetting(defaults: defaults, home: home, scratch: scratch)

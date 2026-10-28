@@ -7,7 +7,13 @@
 # downloads resume.
 #
 # Usage: download-catalogues.sh [--spcc] [--dir <catalogues-dir>]
+# The library is ASTRO_LIBRARY_DIR when set, else <astro folder>/library — the folder chosen in
+# the app's Settings › Astro folder (card 0148), else ~/Documents/astro.
 set -euo pipefail
+
+astro_folder() {
+  defaults read fr.astrostack.AstroStack astroFolder 2>/dev/null || echo "$HOME/Documents/astro"
+}
 
 ASTRO_NAME="siril_cat_healpix8_astro.dat"
 ASTRO_URL="https://zenodo.org/records/14692304/files/${ASTRO_NAME}.bz2?download=1"
@@ -15,7 +21,7 @@ ASTRO_SHA_URL="https://zenodo.org/records/14692304/files/${ASTRO_NAME}.bz2.sha25
 SPCC_API="https://zenodo.org/api/records/14738271"
 SPCC_DL_BASE="https://zenodo.org/records/14738271/files"
 
-DIR="${ASTRO_LIBRARY_DIR:-library}/catalogues"
+DIR="${ASTRO_LIBRARY_DIR:-$(astro_folder)/library}/catalogues"
 SPCC=false
 while [ $# -gt 0 ]; do
   case "$1" in

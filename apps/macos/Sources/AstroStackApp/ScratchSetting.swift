@@ -1,4 +1,5 @@
 package import Foundation
+internal import StackKit
 
 /// The scratch folder Settings chose for preprocessing runs (card 0098), kept as a path in the
 /// app's defaults.
@@ -34,18 +35,22 @@ package nonisolated struct ScratchSetting {
     chosen?.appendingPathComponent(Self.work, isDirectory: true) ?? Self.defaultFolder
   }
 
-  /// Chooses `folder` (`nil` = back to the default); false, nothing stored, for a folder inside
-  /// — or around — the astro folder (R7: the app never writes under the data root, and the
-  /// leftover sweep would refuse such a work folder as protected and never clean it).
+  /// Chooses `folder` (`nil` = back to the default); false, nothing stored, for a work folder
+  /// inside the astro folder.
+  ///
+  /// The work folder is `<folder>/AstroStack/Work`: the app never writes under the data root (R7),
+  /// and the sweep would refuse that work folder and never clean it. The root's parents are fine:
+  /// `~/Documents` works in `~/Documents/AstroStack/Work`.
   @discardableResult
   package func choose(_ folder: URL?) -> Bool {
     guard let folder else {
       defaults.removeObject(forKey: Self.key)
       return true
     }
-    // The scratch folder is what the astro setting refuses, never the reverse: no recursion.
-    let root = astro ?? AstroFolderSetting(defaults: defaults, scratch: self.folder).folder
-    guard !AstroFolderSetting.overlap(folder, root) else { return false }
+    // Reading the astro root never reads the scratch setting back: no recursion.
+    let root = astro ?? AstroFolderSetting(defaults: defaults).folder
+    let work = folder.appendingPathComponent(Self.work, isDirectory: true)
+    guard !LeftoverSweep.overlaps(work, root) else { return false }
     defaults.set(folder.standardizedFileURL.path, forKey: Self.key)
     return true
   }

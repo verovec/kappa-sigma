@@ -44,7 +44,8 @@ package struct LeftoverSweep: Sendable {
   /// Folders no root may be inside or around.
   package var protected: [URL]
 
-  /// A sweep of `roots`, asking `table` who runs.
+  /// A sweep of `roots`, asking `table` who runs; `protected` defaults to the default data folder
+  /// only — the app adds the folder Settings chose (`AppDelegate.protectedFolders`).
   package init(roots: [Root], table: ProcessTable = .live, protected: [URL] = [Self.dataFolder]) {
     self.roots = roots
     self.table = table
@@ -115,14 +116,18 @@ package struct LeftoverSweep: Sendable {
   /// True when the sweep may look into `root`: not `/`, neither inside nor around a protected
   /// folder.
   package func allows(_ root: Root) -> Bool {
-    let path = Self.canonical(root.folder)
     let refused =
-      path == "/"
-      || protected.map(Self.canonical).contains { folder in
-        path == folder || path.hasPrefix(folder + "/") || folder.hasPrefix(path + "/")
-      }
+      Self.canonical(root.folder) == "/" || protected.contains { Self.overlaps(root.folder, $0) }
     if refused { Self.logger.error("refused to sweep \(root.folder.path): not a scratch folder") }
     return !refused
+  }
+
+  /// Whether one folder is the other or lies inside it, links resolved: the rule the sweep
+  /// applies to its roots, and Settings to the scratch and astro folders it accepts.
+  package static func overlaps(_ lhs: URL, _ rhs: URL) -> Bool {
+    let left = canonical(lhs)
+    let right = canonical(rhs)
+    return left == right || left.hasPrefix(right + "/") || right.hasPrefix(left + "/")
   }
 
   private static func canonical(_ url: URL) -> String {

@@ -124,7 +124,7 @@ ci: check
 # Download the offline Gaia catalogues Siril needs into <astro folder>/library/catalogues — the
 # folder chosen in Settings › Astro folder (card 0148), else ~/Documents/astro. Args: [--spcc].
 download-catalogues *args:
-    ASTRO_LIBRARY_DIR="$(defaults read fr.astrostack.AstroStack astroFolder 2>/dev/null || echo "$HOME/Documents/astro")/library" ./scripts/download-catalogues.sh {{args}}
+    ./scripts/download-catalogues.sh {{args}}
 
 # Refresh the gitnexus code-graph (incremental).
 gitnexus-sync:

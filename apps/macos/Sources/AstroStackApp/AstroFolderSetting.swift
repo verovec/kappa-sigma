@@ -1,4 +1,6 @@
 package import Foundation
+internal import ProcessKit
+internal import StackKit
 
 /// The astro folder Settings chose (card 0148): the read-only data root (R7).
 ///
@@ -10,8 +12,8 @@ package import Foundation
 /// `~/AstroStack`) is refused. Nothing else is judged: an astro folder without `captures/` is a
 /// fresh disk, and Settings only *shows* which subfolders exist (R2).
 package nonisolated struct AstroFolderSetting {
-  /// The subfolders the root is made of, in the order Settings lists them.
-  package static let subfolders = ["captures", "runs", "library", "fixtures"]
+  /// The subfolders the root is made of (the export guard's read-only list), as Settings lists them.
+  package static let subfolders = ExportGuard.readOnly
   /// What Settings reports on: the four subfolders and the star catalogues of the plate solve.
   package static let shown = subfolders + ["library/catalogues"]
 
@@ -41,14 +43,15 @@ package nonisolated struct AstroFolderSetting {
     self.scratch = scratch
   }
 
-  /// Where the app itself writes: never the read-only root.
+  /// Where the app itself writes: never the read-only root. `~/AstroStack` (the projects) and
+  /// every folder the leftover sweep takes entries from (Siril's, the runs' work, the untitled
+  /// projects, the default work folder), so an accepted root never silences the sweep.
   ///
   /// Read by `choose` only: the readers of the root never touch the scratch setting.
   private var appOwned: [URL] {
-    [
-      home.appendingPathComponent("AstroStack", isDirectory: true),
-      scratch ?? ScratchSetting(defaults: defaults).folder,
-    ]
+    let work = scratch ?? ScratchSetting(defaults: defaults).folder
+    return [home.appendingPathComponent("AstroStack", isDirectory: true)]
+      + AppDelegate.leftoverRoots(work: work).map(\.folder)
   }
 
   /// The folder the user chose, `nil` for the default.
@@ -70,11 +73,6 @@ package nonisolated struct AstroFolderSetting {
   /// The local star catalogues (`library/catalogues`), for the plate solve and SPCC.
   package var catalogues: URL { library.appendingPathComponent("catalogues", isDirectory: true) }
 
-  /// Whether the subfolder `name` exists under the root: shown by Settings, decided by nobody.
-  package func has(_ name: String) -> Bool {
-    Self.isFolder(folder.appendingPathComponent(name))
-  }
-
   /// Whether `url` is an existing folder, a symbolic link to one included.
   package static func isFolder(_ url: URL) -> Bool {
     var isDirectory: ObjCBool = false
@@ -82,33 +80,20 @@ package nonisolated struct AstroFolderSetting {
       && isDirectory.boolValue
   }
 
-  /// Whether one of the folders lies inside — or is — the other, links resolved, case folded
-  /// (APFS is case-insensitive): the rule the leftover sweep applies to its roots.
-  package static func overlap(_ lhs: URL, _ rhs: URL) -> Bool {
-    let left = resolved(lhs)
-    let right = resolved(rhs)
-    return left.starts(with: right) || right.starts(with: left)
-  }
-
   /// Chooses `folder` (`nil` = back to the default); false, nothing stored, for a path that is
   /// not an existing folder, or one under — or around — what the app writes (the scratch folder,
-  /// `~/AstroStack`): the same rule as the leftover sweep, which refuses a root inside or around a
-  /// protected folder, so an accepted root never silences the sweep.
+  /// `~/AstroStack`), by the sweep's own containment rule (`LeftoverSweep.overlaps`).
   @discardableResult
   package func choose(_ folder: URL?) -> Bool {
     guard let folder else {
       defaults.removeObject(forKey: Self.key)
       return true
     }
-    guard Self.isFolder(folder), !appOwned.contains(where: { Self.overlap(folder, $0) }) else {
+    guard Self.isFolder(folder), !appOwned.contains(where: { LeftoverSweep.overlaps(folder, $0) })
+    else {
       return false
     }
     defaults.set(folder.standardizedFileURL.path, forKey: Self.key)
     return true
-  }
-
-  /// The path components of `url`, links resolved, case folded (APFS is case-insensitive).
-  private static func resolved(_ url: URL) -> [String] {
-    url.resolvingSymlinksInPath().standardizedFileURL.pathComponents.map { $0.lowercased() }
   }
 }

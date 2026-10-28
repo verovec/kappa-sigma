@@ -36,8 +36,8 @@ struct ScratchSettingTests {
   }
 
   @Test(
-    "a folder inside or around the astro folder is refused, nothing stored (R7), wherever the root",
-    arguments: ["captures/M31", "library", "Runs", "", "..", "exports"],
+    "a folder whose work folder lies inside the astro folder is refused, nothing stored (R7)",
+    arguments: ["captures/M31", "library", "Runs", "", "exports"],
     ["/Users/someone/Documents/astro", "/Volumes/SSD/astro"])
   func testReadOnlySourcesRefused(relative: String, root: String) throws {
     let (defaults, name) = try Self.suite()
@@ -46,6 +46,18 @@ struct ScratchSettingTests {
     let setting = ScratchSetting(defaults: defaults, astro: astro)
     #expect(!setting.choose(astro.appendingPathComponent(relative)))
     #expect(setting.chosen == nil)
+  }
+
+  @Test(
+    "a folder beside or above the astro folder is fine: its work folder is outside the root",
+    arguments: ["..", "../elsewhere", "../../Volumes/SSD"])
+  func testFoldersAroundTheRootAccepted(relative: String) throws {
+    let (defaults, name) = try Self.suite()
+    defer { defaults.removePersistentDomain(forName: name) }
+    let astro = URL(fileURLWithPath: "/Users/someone/Documents/astro")
+    let setting = ScratchSetting(defaults: defaults, astro: astro)
+    #expect(setting.choose(astro.appendingPathComponent(relative)))
+    #expect(setting.chosen != nil)
   }
 
   @Test("RunServices reads the folder when a run starts, not when the window opens")

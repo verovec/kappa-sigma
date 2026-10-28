@@ -38,6 +38,13 @@ struct ExportStageModelTests {
       services: services, onExported: onExported)
   }
 
+  @Test("the services' defaults read the astro folder at each use and reveal nothing")
+  func testDefaultServicesReadTheSetting() {
+    let services = ExportServices(tools: HostTools { _ in .missing(path: "/none") })
+    #expect(services.astro().path == AstroFolderSetting().folder.path)
+    services.reveal([])
+  }
+
   @Test("testStarSeparationBatchStep", .scratchDirectory)
   func testStarSeparationBatchStep() async throws {
     let opened = try StudioModelTests.project()

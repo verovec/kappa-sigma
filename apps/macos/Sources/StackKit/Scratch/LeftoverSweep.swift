@@ -120,7 +120,9 @@ package struct LeftoverSweep: Sendable {
   /// True when the sweep may look into `root`: not `/`, neither inside nor around a protected
   /// folder.
   package func allows(_ root: Root) -> Bool {
-    let refused = protected.contains { Self.overlaps(root.folder, $0) }
+    // `/` is refused whatever `protected` holds (24/10: a sweep of a wrong root emptied /opt).
+    let refused =
+      Self.canonical(root.folder) == ["/"] || protected.contains { Self.overlaps(root.folder, $0) }
     if refused { Self.logger.error("refused to sweep \(root.folder.path): not a scratch folder") }
     return !refused
   }

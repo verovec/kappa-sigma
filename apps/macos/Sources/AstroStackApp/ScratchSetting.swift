@@ -39,8 +39,9 @@ package nonisolated struct ScratchSetting {
   /// inside the astro folder.
   ///
   /// The work folder is `<folder>/AstroStack/Work`: the app never writes under the data root (R7),
-  /// and the sweep would refuse that work folder and never clean it. The root's parents are fine:
-  /// `~/Documents` works in `~/Documents/AstroStack/Work`.
+  /// and the sweep would refuse that work folder and never clean it — so the folders judged are
+  /// the sweep's protected ones, the default data folder included whatever root was chosen. The
+  /// root's parents are fine: `~/Documents` works in `~/Documents/AstroStack/Work`.
   @discardableResult
   package func choose(_ folder: URL?) -> Bool {
     guard let folder else {
@@ -50,7 +51,8 @@ package nonisolated struct ScratchSetting {
     // Reading the astro root never reads the scratch setting back: no recursion.
     let root = astro ?? AstroFolderSetting(defaults: defaults).folder
     let work = folder.appendingPathComponent(Self.work, isDirectory: true)
-    guard !LeftoverSweep.overlaps(work, root) else { return false }
+    let protected = [root, LeftoverSweep.dataFolder]
+    guard !protected.contains(where: { LeftoverSweep.overlaps(work, $0) }) else { return false }
     defaults.set(folder.standardizedFileURL.path, forKey: Self.key)
     return true
   }

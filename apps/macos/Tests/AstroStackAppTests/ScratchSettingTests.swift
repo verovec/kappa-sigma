@@ -1,5 +1,6 @@
 import AstroStackApp
 import Foundation
+import StackKit
 import TestSupport
 import Testing
 
@@ -62,6 +63,16 @@ struct ScratchSettingTests {
     let setting = ScratchSetting(defaults: defaults, astro: astro)
     #expect(!setting.choose(link))
     #expect(!setting.choose(link.appendingPathComponent("scratch")))
+    #expect(setting.chosen == nil)
+  }
+
+  @Test("the default data folder stays refused once another root is chosen: the sweep protects it")
+  func testDefaultDataFolderStaysRefused() throws {
+    let (defaults, name) = try Self.suite()
+    defer { defaults.removePersistentDomain(forName: name) }
+    let setting = ScratchSetting(
+      defaults: defaults, astro: URL(fileURLWithPath: "/Volumes/SSD/astro"))
+    #expect(!setting.choose(LeftoverSweep.dataFolder.appendingPathComponent("tmp")))
     #expect(setting.chosen == nil)
   }
 

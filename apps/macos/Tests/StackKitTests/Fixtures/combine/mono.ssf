@@ -1,0 +1,6 @@
+requires 1.2.0
+setext fits
+set32bits
+load trim_L
+subsky 1
+save combined

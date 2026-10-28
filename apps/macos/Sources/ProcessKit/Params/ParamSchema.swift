@@ -26,9 +26,11 @@ package struct ParamSchema: Equatable, Sendable {
   }
 
   /// What makes a spec unusable: non-finite bounds, or a default the spec itself would refuse
-  /// or clamp (an untouched default must be a value `set` accepts unchanged).
+  /// or clamp (an untouched default must be a value `set` accepts unchanged), or a non-choice
+  /// that `allowsUnset`.
   package var problems: [String] {
     specs.compactMap { spec -> String? in
+      if spec.allowsUnset, !spec.isChoice { return "\(spec.id): only a choice may stay unset" }
       switch spec.kind {
       case .number(let value, let bounds):
         guard bounds.lowerBound.isFinite, bounds.upperBound.isFinite else {
@@ -36,7 +38,8 @@ package struct ParamSchema: Equatable, Sendable {
         }
         return bounds.contains(value) ? nil : "\(spec.id): default \(value) outside \(bounds)"
       case .choice(let value, let options):
-        return options.contains(value) ? nil : "\(spec.id): default \(value) not among its options"
+        let valid = options.contains(value) || (spec.allowsUnset && value.isEmpty)
+        return valid ? nil : "\(spec.id): default \(value) not among its options"
       case .flag:
         return nil
       case .layer(let value, let allowsNone, let allowsProduct):

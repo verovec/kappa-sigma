@@ -10144,6 +10144,70 @@
           }
         }
       }
+    },
+    "Choose “%@” first.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose “%@” first."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez d’abord « %@ »."
+          }
+        }
+      }
+    },
+    "Siril does not know the red filter “%@”: choose one from the list.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril does not know the red filter “%@”: choose one from the list."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril ne connaît pas le filtre rouge « %@ » : choisissez-en un dans la liste."
+          }
+        }
+      }
+    },
+    "Siril does not know the green filter “%@”: choose one from the list.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril does not know the green filter “%@”: choose one from the list."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril ne connaît pas le filtre vert « %@ » : choisissez-en un dans la liste."
+          }
+        }
+      }
+    },
+    "Siril does not know the blue filter “%@”: choose one from the list.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril does not know the blue filter “%@”: choose one from the list."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siril ne connaît pas le filtre bleu « %@ » : choisissez-en un dans la liste."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -1,7 +1,8 @@
 /// The names Siril 1.4.4 lists for SPCC (`spcc_list`, recorded in
-/// `Tests/StackKitTests/Fixtures/colourcal/m31-crop-lists.log`): the panel's choices, exactly as
-/// Siril spells them. `LiveColourCalibrationTests` checks each against the installed Siril; the
-/// calibrator checks the chosen one again before running (an unknown name is never sent).
+/// `Tests/StackKitTests/Fixtures/colourcal/m31-crop-lists.log`, the mono ones in
+/// `mono-lists.log`): the panel's choices, exactly as Siril spells them.
+/// `LiveColourCalibrationTests` checks each against the installed Siril; the calibrator checks
+/// the chosen one again before running (an unknown name is never sent).
 package enum SPCCNames {
   /// OSC sensors.
   package static let sensors = [
@@ -109,5 +110,73 @@ package enum SPCCNames {
     "Galaxy, starburst (M82)",
     "Galaxy, starburst (NGC6090)",
     "Star, type G2(v)",
+  ]
+
+  /// Mono sensors (`-monosensor=`).
+  package static let monoSensors = [
+    "Generic mono sensor",
+    "ICX694",
+    "KAF1603ME",
+    "KAF16200",
+    "KAF16803",
+    "KAF3200",
+    "KAF8300",
+    "KAI-11000M",
+    "Sony IMX178",
+    "Sony IMX183",
+    "Sony IMX411/455/461/533/571",
+    "Sony IMX492/294",
+    "Sony IMX585",
+    "ZWO ASI1600MM",
+    "onsemi KAF-09000",
+  ]
+
+  /// Red filters of a mono camera (`-rfilter=`).
+  package static let redFilters = [
+    "Antlia R",
+    "Astrodon Red (E series)",
+    "Astrodon Red (I series)",
+    "Astronomik Deep Sky RGB Red",
+    "Astronomik Typ 2 c Red",
+    "Baader R",
+    "Chroma Red",
+    "Johnson-Cousins R",
+    "Optolong Red",
+    "SDSS i",
+    "SDSS r",
+    "ToupTek R",
+    "ZWO Optimized for CMOS Red",
+  ]
+
+  /// Green filters of a mono camera (`-gfilter=`).
+  package static let greenFilters = [
+    "Antlia G",
+    "Astrodon Green (E series)",
+    "Astrodon Green (I series)",
+    "Astronomik Deep Sky RGB Green",
+    "Astronomik Typ 2 c Green",
+    "Baader G",
+    "Chroma Green",
+    "Johnson-Cousins V",
+    "Optolong Green",
+    "SDSS g",
+    "SDSS r",
+    "ToupTek G",
+    "ZWO Optimized for CMOS Green",
+  ]
+
+  /// Blue filters of a mono camera (`-bfilter=`).
+  package static let blueFilters = [
+    "Antlia B",
+    "Astrodon Blue (E / I series)",
+    "Astronomik Deep Sky RGB Blue",
+    "Astronomik Typ 2 c Blue",
+    "Baader B",
+    "Chroma Blue",
+    "Johnson-Cousins B",
+    "Optolong Blue",
+    "SDSS g",
+    "ToupTek B",
+    "ZWO Optimized for CMOS Blue",
   ]
 }

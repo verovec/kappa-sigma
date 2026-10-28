@@ -136,6 +136,8 @@ struct ProcessParameterRow: View {
   private func picker(_ options: [String]) -> some View {
     HStack {
       Picker(selection: choice) {
+        // A choice left to the user (card 0140): « Choose… » until an option is picked.
+        if spec.allowsUnset { Text(.app("Choose…")).tag("") }
         ForEach(options, id: \.self) { option in
           if let reason = model.unavailableOptions[spec.id]?[option] {
             // Greyed with why; a value already chosen stays chosen (R2).

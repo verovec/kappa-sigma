@@ -20,3 +20,24 @@ extension ProfileTests {
     #expect(colour < stretch, "on linear data")
   }
 }
+
+extension ProfileTests {
+  @Test(
+    "card 0140: a recipe naming its sensor and filter keeps them; one naming none loads unset",
+    arguments: [
+      (
+        #"[{"id": "sensor", "value": "Sony IMX571"}, {"id": "filter", "value": "UV/IR Block"}]"#,
+        "Sony IMX571", "UV/IR Block"
+      ),
+      (#"[{"id": "enabled", "value": true}]"#, "", ""),
+    ])
+  func testColourCalibrationNamesInRecipes(params: String, sensor: String, filter: String) throws {
+    let json = #"{"schemaVersion": 1, "process": "colour-calibration", "params": "# + params + "}"
+    let loaded = try Recipe.load(
+      Data(json.utf8), registry: try ProcessRegistry([ColourCalibrationProcess.self]))
+    #expect(loaded.warnings.isEmpty)
+    #expect(loaded.params.choice("sensor") == sensor && loaded.params.choice("filter") == filter)
+    let unchosen = ColourCalibrationProcess.unchosen(loaded.params)
+    #expect(unchosen == (sensor.isEmpty ? ColourCalibrationProcess.oscNames : []))
+  }
+}

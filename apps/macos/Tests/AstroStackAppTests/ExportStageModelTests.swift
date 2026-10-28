@@ -23,7 +23,7 @@ struct ExportStageModelTests {
   ) throws -> ExportServices {
     let root = try ScratchDirectory.url
     return ExportServices(
-      tools: tools, scratch: root.appendingPathComponent("work"), home: root,
+      tools: tools, scratch: root.appendingPathComponent("work"), astro: root,
       now: { Self.noon }, timeZone: try #require(TimeZone(identifier: "UTC")))
   }
 
@@ -140,7 +140,7 @@ struct ExportStageModelTests {
     defer { try? opened.package.close() }
     let studio = try Self.separated(opened)
     let model = try Self.model(opened, studio: studio, services: try Self.services())
-    let runs = try ScratchDirectory.url.appendingPathComponent("Documents/astro/runs/M_31/out")
+    let runs = try ScratchDirectory.url.appendingPathComponent("runs/M_31/out")
     model.folder = runs
 
     await model.export()

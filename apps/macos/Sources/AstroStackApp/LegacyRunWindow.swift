@@ -37,8 +37,7 @@ package final class LegacyRunWindow: NSWindowController, NSWindowDelegate {
     let panel = NSOpenPanel()
     panel.canChooseDirectories = true
     panel.canChooseFiles = false
-    panel.directoryURL = FileManager.default.homeDirectoryForCurrentUser
-      .appendingPathComponent("Documents/astro/runs")
+    panel.directoryURL = AstroFolderSetting().runs
     return panel
   }
 

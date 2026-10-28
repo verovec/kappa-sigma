@@ -88,7 +88,17 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
   /// at launch, off the main actor; a folder whose owner still runs is never touched (0113).
   @concurrent
   package nonisolated static func sweepLeftovers(roots: [LeftoverSweep.Root]? = nil) async {
-    LeftoverSweep(roots: roots ?? leftoverRoots(work: RunServices.live.scratch)).run()
+    LeftoverSweep(
+      roots: roots ?? leftoverRoots(work: RunServices.live.scratch), protected: protectedFolders()
+    ).run()
+  }
+
+  /// What the sweep never touches (card 0148): the astro folder Settings chose, and the default
+  /// one whatever the choice (a project may still point into it).
+  package nonisolated static func protectedFolders(
+    _ setting: AstroFolderSetting = AstroFolderSetting()
+  ) -> [URL] {
+    [setting.folder, LeftoverSweep.dataFolder]
   }
 
   /// The app's scratch roots with the runs' work folder `work` (Settings, card 0098); the default

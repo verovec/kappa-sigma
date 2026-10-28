@@ -20,7 +20,8 @@ extension ExportTests {
     let image = Self.image()
 
     let written = try DeliverableExport(device: device).write(
-      original: image, starless: nil, settings: settings, to: folder)
+      original: image, starless: nil, settings: settings, to: folder,
+      astro: try ScratchDirectory.url)
 
     #expect(written.map(\.lastPathComponent) == ["final.fits"])
     let read = try FITSFile.read(at: written[0]).image()
@@ -29,7 +30,8 @@ extension ExportTests {
     settings.deliverables = [.final, .stars50]
     #expect(throws: DeliverableExport.ExportError.needsStarless([.stars50])) {
       try DeliverableExport(device: device).write(
-        original: image, starless: nil, settings: settings, to: folder)
+        original: image, starless: nil, settings: settings, to: folder,
+        astro: try ScratchDirectory.url)
     }
   }
 

@@ -218,7 +218,7 @@ package final class ExportStageModel {
     failure = nil
     written = []
     let folder = self.folder
-    guard ExportGuard.refusal(for: folder, home: services.home) == nil else {
+    guard ExportGuard.refusal(for: folder, astro: services.astro) == nil else {
       failure = .exportReadOnlyFolder(path: folder.path)
       return
     }
@@ -251,7 +251,7 @@ package final class ExportStageModel {
       let urls = try await Self.write(
         original: Self.detached(studio.session.history.current),
         starless: starless(),
-        settings: settings, to: folder, home: services.home, device: studio.session.device)
+        settings: settings, to: folder, astro: services.astro, device: studio.session.device)
       let json = String(bytes: try JSONEncoder().encode(settings), encoding: .utf8) ?? "{}"
       try store.addExport(
         stackID: stack.id, imageID: studio.imageID, headStepID: head, folder: folder.path,
@@ -298,7 +298,7 @@ package final class ExportStageModel {
   @concurrent
   private nonisolated static func write(
     original: sending AstroImage, starless: sending Starless, settings: ExportSettings,
-    to folder: URL, home: URL, device: any MTLDevice
+    to folder: URL, astro: URL, device: any MTLDevice
   ) async throws -> [URL] {
     let image: AstroImage? =
       switch starless {
@@ -307,7 +307,7 @@ package final class ExportStageModel {
       case .none: nil
       }
     return try DeliverableExport(device: device).write(
-      original: original, starless: image, settings: settings, to: folder, home: home)
+      original: original, starless: image, settings: settings, to: folder, astro: astro)
   }
 
   /// Rereads this stack's exports.

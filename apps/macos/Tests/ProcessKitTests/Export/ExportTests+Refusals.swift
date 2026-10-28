@@ -27,7 +27,7 @@ extension ExportTests {
     #expect(throws: error) {
       try DeliverableExport(device: device).write(
         original: Self.image(), starless: Self.image(), settings: settings, to: folder,
-        home: try ScratchDirectory.url)
+        astro: try ScratchDirectory.url)
     }
     #expect(!FileManager.default.fileExists(atPath: folder.path))
     var nan = settings
@@ -47,19 +47,30 @@ extension ExportTests {
       try DeliverableExport(device: device).write(
         original: bottomUp, starless: Self.image(), settings: ExportSettings(),
         to: try ScratchDirectory.url.appendingPathComponent("export"),
-        home: try ScratchDirectory.url)
+        astro: try ScratchDirectory.url)
     }
   }
 
   @Test(
     "the library, the fixtures and a differently-cased captures folder are read-only too",
     .scratchDirectory,
-    arguments: [
-      "Documents/astro/library/darks", "Documents/astro/fixtures/finish",
-      "Documents/Astro/Captures/M31",
-    ])
+    arguments: ["library/darks", "fixtures/finish", "Captures/M31"])
   func testReadOnlyFolders(relative: String) throws {
-    let home = try ScratchDirectory.url
-    #expect(ExportGuard.refusal(for: home.appendingPathComponent(relative), home: home) != nil)
+    let astro = try ScratchDirectory.url
+    #expect(ExportGuard.refusal(for: astro.appendingPathComponent(relative), astro: astro) != nil)
+  }
+
+  @Test(
+    "testRefusalFollowsAstroRoot: a moved root is refused, the old default no longer",
+    .scratchDirectory)
+  func testRefusalFollowsAstroRoot() throws {
+    let base = try ScratchDirectory.url
+    let moved = base.appendingPathComponent("Volumes/SSD/astro")
+    #expect(
+      ExportGuard.refusal(for: moved.appendingPathComponent("captures/M31"), astro: moved) != nil)
+    let old = base.appendingPathComponent("home/Documents/astro/captures/M31")
+    #expect(
+      ExportGuard.refusal(for: old, astro: moved) == nil, "the old default is just a folder now")
+    #expect(ExportGuard.readOnly == ["captures", "runs", "library", "fixtures"])
   }
 }

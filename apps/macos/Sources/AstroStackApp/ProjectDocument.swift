@@ -35,8 +35,9 @@ package final class ProjectDocument: NSDocument {
   private var isTemporary = false
   /// The window's model, so closing the project stops a run that writes into it.
   package private(set) var windowModel: ProjectWindowModel?
-  /// The home whose `~/Documents/astro` folders never receive a project (R7); tests use a fake.
-  package var home = FileManager.default.homeDirectoryForCurrentUser
+  /// The astro folder whose captures, runs, library and fixtures never receive a project (R7,
+  /// Settings' choice — card 0148); tests use a fake.
+  package var astro = AstroFolderSetting().folder
 
   /// The folder of the package the document currently edits.
   package var packageURL: URL? { project?.url }
@@ -115,9 +116,9 @@ package final class ProjectDocument: NSDocument {
   }
 
   /// Throws the export's refusal when the package at `url` (links resolved, the link itself
-  /// included) lies under `~/Documents/astro/{captures,runs,library,fixtures}`.
+  /// included) lies under the astro folder's captures, runs, library or fixtures.
   private func refuseReadOnly(_ url: URL) throws {
-    guard let reason = ExportGuard.refusal(for: url, home: home) else { return }
+    guard let reason = ExportGuard.refusal(for: url, astro: astro) else { return }
     throw CocoaError(.fileWriteNoPermission, userInfo: [NSLocalizedDescriptionKey: reason])
   }
 

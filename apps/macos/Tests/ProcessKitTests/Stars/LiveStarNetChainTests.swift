@@ -50,7 +50,8 @@ struct LiveStarNetChainTests {
     let device = try #require(MTLCreateSystemDefaultDevice())
     let written = try DeliverableExport(device: device).write(
       original: original, starless: starless, settings: ExportSettings(),
-      to: scratch.appendingPathComponent("deliverables"))
+      to: scratch.appendingPathComponent("deliverables"),
+      astro: scratch.appendingPathComponent("astro"))
     #expect(
       written.map(\.lastPathComponent) == [
         "final.png", "final-starless.png", "final-75-stars.png", "final-50-stars.png",

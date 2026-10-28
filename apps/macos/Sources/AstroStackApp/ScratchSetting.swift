@@ -16,14 +16,13 @@ package nonisolated struct ScratchSetting {
   private static let work = "AstroStack/Work"
   private static let key = "scratchFolder"
   private let defaults: UserDefaults
-  private let home: URL
+  private let astro: URL?
 
-  /// The setting stored in `defaults`; `home` locates the read-only sources (R7).
-  package init(
-    defaults: UserDefaults = .standard, home: URL = URL(fileURLWithPath: NSHomeDirectory())
-  ) {
+  /// The setting stored in `defaults`; `astro` is the read-only root (R7), Settings' astro folder
+  /// read from the same defaults when `nil`.
+  package init(defaults: UserDefaults = .standard, astro: URL? = nil) {
     self.defaults = defaults
-    self.home = home
+    self.astro = astro
   }
 
   /// The folder the user chose, `nil` for the default.
@@ -44,7 +43,9 @@ package nonisolated struct ScratchSetting {
       defaults.removeObject(forKey: Self.key)
       return true
     }
-    guard ExportGuard.refusal(for: folder, home: home) == nil else { return false }
+    // The scratch folder is what the astro setting refuses, never the reverse: no recursion.
+    let root = astro ?? AstroFolderSetting(defaults: defaults, scratch: self.folder).folder
+    guard ExportGuard.refusal(for: folder, astro: root) == nil else { return false }
     defaults.set(folder.standardizedFileURL.path, forKey: Self.key)
     return true
   }

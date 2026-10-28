@@ -13,6 +13,8 @@ extension ProjectDocumentTests {
     let folder: String
     let viaLink: Bool
     let refused: Bool
+    /// The astro root, relative to the fake home; the default when `nil` (card 0148).
+    var astro: String?
     var testDescription: String { "\(viaLink ? "link → " : "")\(folder)" }
   }
 
@@ -25,6 +27,12 @@ extension ProjectDocumentTests {
     SaveCase(folder: "Documents/astro/captures/IC1848", viaLink: true, refused: true),
     SaveCase(folder: "Documents/astro/projects", viaLink: false, refused: false),
     SaveCase(folder: "AstroStack/Projects", viaLink: false, refused: false),
+    SaveCase(
+      folder: "Volumes/SSD/astro/captures/M31", viaLink: false, refused: true,
+      astro: "Volumes/SSD/astro"),
+    SaveCase(
+      folder: "Documents/astro/captures/IC1848", viaLink: false, refused: false,
+      astro: "Volumes/SSD/astro"),
   ]
 
   @Test(
@@ -45,7 +53,7 @@ extension ProjectDocumentTests {
 
     for operation in [NSDocument.SaveOperationType.saveOperation, .saveAsOperation] {
       let document = try ProjectDocument(type: Self.type)
-      document.home = home
+      document.astro = home.appendingPathComponent(row.astro ?? "Documents/astro")
       let untitled = try #require(document.packageURL)
       if row.refused {
         let error = #expect(throws: (any Error).self) {
@@ -78,7 +86,7 @@ extension ProjectDocumentTests {
     let stray = folder.appendingPathComponent("test-build.astrostack")
     try ProjectPackage.create(at: stray).close()
     let document = try ProjectDocument(type: Self.type)
-    document.home = home
+    document.astro = home.appendingPathComponent("Documents/astro")
     let untitled = try #require(document.packageURL)
     defer { document.close() }
 

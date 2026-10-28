@@ -61,7 +61,7 @@ struct ExportTests {
     let starless = Self.image()
     let written = try DeliverableExport(device: device).write(
       original: Self.image(offset: 0.1), starless: starless, settings: settings, to: folder,
-      home: try ScratchDirectory.url)
+      astro: try ScratchDirectory.url)
     let names = ["final", "final-starless", "final-75-stars", "final-50-stars", "final-25-stars"]
     let expected: [String] = names.flatMap { name in
       ["png", "tif", "fits"].map { "\(name).\($0)" }
@@ -79,15 +79,15 @@ struct ExportTests {
   @Test(
     "an export into the captures or the runs is refused before anything is written",
     .scratchDirectory, .enabled(if: MTLCreateSystemDefaultDevice() != nil),
-    arguments: ["Documents/astro/runs/M_31/20261018_191749", "Documents/astro/captures/M31"])
+    arguments: ["runs/M_31/20261018_191749", "captures/M31"])
   func testNeverWritesIntoOutputOrInput(relative: String) throws {
     let device = try #require(MTLCreateSystemDefaultDevice())
-    let home = try ScratchDirectory.url
-    let folder = home.appendingPathComponent(relative).appendingPathComponent("export")
+    let astro = try ScratchDirectory.url
+    let folder = astro.appendingPathComponent(relative).appendingPathComponent("export")
     #expect {
       try DeliverableExport(device: device).write(
         original: Self.image(), starless: Self.image(), settings: ExportSettings(), to: folder,
-        home: home)
+        astro: astro)
     } throws: { error in
       guard case DeliverableExport.ExportError.readOnlyTarget(let reason) = error else {
         return false
@@ -99,12 +99,13 @@ struct ExportTests {
 
   @Test("a folder that reaches the runs through a link is refused too", .scratchDirectory)
   func testRefusesThroughLink() throws {
-    let home = try ScratchDirectory.url
-    let runs = home.appendingPathComponent("Documents/astro/runs")
+    let astro = try ScratchDirectory.url
+    let runs = astro.appendingPathComponent("runs")
     try FileManager.default.createDirectory(at: runs, withIntermediateDirectories: true)
-    let link = home.appendingPathComponent("deliverables")
+    let link = astro.appendingPathComponent("deliverables")
     try FileManager.default.createSymbolicLink(at: link, withDestinationURL: runs)
-    #expect(ExportGuard.refusal(for: link.appendingPathComponent("M31"), home: home) != nil)
-    #expect(ExportGuard.refusal(for: home.appendingPathComponent("elsewhere"), home: home) == nil)
+    #expect(ExportGuard.refusal(for: link.appendingPathComponent("M31"), astro: astro) != nil)
+    #expect(
+      ExportGuard.refusal(for: astro.appendingPathComponent("elsewhere"), astro: astro) == nil)
   }
 }

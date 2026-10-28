@@ -148,6 +148,11 @@ package struct ChannelCombinationProcess: ImageProcess {
     return notes
   }
 
+  /// The palettes the bundle's layers allow, in catalogue order (card 0139).
+  package static func palettes(planes: [String: Int]) -> [Palette]? {
+    Palette.available(planes: planes)
+  }
+
   /// Why `params` cannot run with only `present` layers ("HOO needs the OIII layer"), or `nil`.
   package static func unavailableReason(params: ParamSet, present: Set<String>) -> String? {
     guard let missing = layersNeeded(params: params).first(where: { !present.contains($0) }) else {

@@ -60,10 +60,10 @@ struct ProcessParameterRow: View {
         helpButton
       }
     case .choice(_, let options):
-      picker(options)
+      picker(options) { $0 }
     case .layer:
-      // The bundle names the options (card 0138); the value chosen stays listed.
-      picker(model.layerOptions(for: spec.id))
+      // The bundle names the options (card 0138), in words (card 0139); the value chosen stays.
+      picker(model.layerOptions(for: spec.id)) { LayerPlaneWords.words($0, locale: locale) }
     case .text:
       HStack {
         TextField(text: text) { Text(label) }
@@ -102,7 +102,9 @@ struct ProcessParameterRow: View {
     case .number(let number): LocaleNumber.decimal(number, locale: locale, maxFractionDigits: 4)
     case .flag(let flag):
       String(localized: flag ? .app("On", locale: locale) : .app("Off", locale: locale))
-    case .choice(let option): option
+    case .choice(let option):
+      // A layer parameter's suggestion in words, as its menu (card 0139).
+      if case .layer = spec.kind { LayerPlaneWords.words(option, locale: locale) } else { option }
     case .points: ""
     case .text(let text): text
     }
@@ -132,8 +134,8 @@ struct ProcessParameterRow: View {
       set: { model.set(spec.id, .text($0)) })
   }
 
-  /// A choice among `options`, each greyed with why when the panel says so.
-  private func picker(_ options: [String]) -> some View {
+  /// A choice among `options`, each worded by `words` and greyed with why when the panel says so.
+  private func picker(_ options: [String], words: @escaping (String) -> String) -> some View {
     HStack {
       Picker(selection: choice) {
         // A choice left to the user (card 0140): « Choose… » until an option is picked.
@@ -141,10 +143,10 @@ struct ProcessParameterRow: View {
         ForEach(options, id: \.self) { option in
           if let reason = model.unavailableOptions[spec.id]?[option] {
             // Greyed with why; a value already chosen stays chosen (R2).
-            Text(.app("\(option) — \(String(localized: reason))")).tag(option)
+            Text(.app("\(words(option)) — \(reasonWords(reason))")).tag(option)
               .selectionDisabled()
           } else {
-            Text(verbatim: option).tag(option)
+            Text(verbatim: words(option)).tag(option)
           }
         }
       } label: {
@@ -153,6 +155,13 @@ struct ProcessParameterRow: View {
       .accessible(.parameter(key, .choice), label: label)
       helpButton
     }
+  }
+
+  /// `reason` in the view's language.
+  private func reasonWords(_ reason: LocalizedStringResource) -> String {
+    var reason = reason
+    reason.locale = locale
+    return String(localized: reason)
   }
 
   private var choice: Binding<String> {

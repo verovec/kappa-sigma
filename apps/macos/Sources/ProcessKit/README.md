@@ -356,6 +356,15 @@ that reads bundle layers declares them in `layersRead`, or its steps never go st
   by value (the combination's slots) overrides it. The process is never greyed for a value (the
   catalogue greys on roles only; greying would close its panel).
 
+- **Palette menu and layer greying** (card 0139): `Palette.available(planes:)` lists the palettes
+  whose every source its slot lists for the bundle (0138's `LayerPlane.options` rule);
+  `ImageProcess.palettes(planes:)` answers `nil` by default (no menu) and, for the combination,
+  that list (empty = « Custom » alone); `ImageProcess.unavailableOptions(_:layerIDs:)` →
+  `[param: [option: reasonKey]]` greys, by default, the current value of every layer parameter
+  whose row carries a note. The panel model merges the layer greying with a tool probe's
+  (`toolOptions`) into `unavailableOptions`; the app words a token with `LayerPlaneWords`
+  (the switcher's glossary words, « × » for a product, a plane by its colour).
+
 - **What « Combined » holds** (card 0131): `StudioSession.combinedLayers(after:layerIDs:registry:)` folds the main steps
   from the base layer — each step's `ImageProcess.layersMerged(_:layerIDs:)` is added, or replaces
   the set when `replacesInput` (channel combination). Merged ≠ read: a continuum reference, or a

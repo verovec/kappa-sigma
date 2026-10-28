@@ -33,6 +33,9 @@ package struct ProcessPanel: View {
         ProcessHistogramExtras(model: model, sample: sample)
       }
       takeTogether
+      if let palettes = model.paletteOptions {
+        paletteMenu(palettes)
+      }
       ForEach(model.visibleSpecs, id: \.id) { spec in
         ProcessParameterRow(spec: spec, model: model)
       }
@@ -42,6 +45,36 @@ package struct ProcessPanel: View {
           .accessible(.processAdvanced(model.type.id), label: .app("Advanced"))
       }
     }
+  }
+
+  /// The palettes the stack offers (card 0139): a template that fills the sources on screen;
+  /// « Custom » names any other combination; a kept palette the stack lacks stays named, a
+  /// state like « Custom », not a choice.
+  private func paletteMenu(_ palettes: [Palette]) -> some View {
+    Picker(selection: paletteSelection) {
+      ForEach(palettes, id: \.self) { palette in
+        Text(ProcessKitResources.title(palette.title, locale: locale)).tag(Optional(palette))
+      }
+      if let kept = model.palette, !palettes.contains(kept) {
+        Text(ProcessKitResources.title(kept.title, locale: locale)).tag(Optional(kept))
+          .selectionDisabled()
+      }
+      // The state of any other combination, never a choice: the sources are edited by hand.
+      Text(.app("Custom")).tag(Palette?.none).selectionDisabled()
+    } label: {
+      Text(.app("Palette"))
+    }
+    .accessible(.parameter(model.paletteKey, .choice), label: .app("Palette"))
+    // Nothing to choose: the state stays readable, the popup does not open on nothing.
+    .disabled(palettes.isEmpty)
+  }
+
+  private var paletteSelection: Binding<Palette?> {
+    Binding(
+      get: { model.palette },
+      set: { palette in
+        if let palette { model.choose(palette: palette) }
+      })
   }
 
   /// One button per reason several suggestions share: one click takes them all.

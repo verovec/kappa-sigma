@@ -35,9 +35,17 @@ package final class ProcessPanelModel {
   /// What the levels send to black and white on the head's sample, per channel (measured once
   /// per change of the values or the sample, shown, never applied); none for another process.
   package internal(set) var clipping: [HeadSample.Clipping] = []
-  /// Choice options that cannot run, by parameter then option, with the reason (an engine
+  /// Choice options a tool probe greys, by parameter then option, with the reason (an engine
   /// whose tool is missing, card 0092): shown greyed, never switched away from (R2).
-  package var unavailableOptions: [String: [String: LocalizedStringResource]] = [:]
+  package var toolOptions: [String: [String: LocalizedStringResource]] = [:] {
+    didSet { refreshGreyed() }
+  }
+  /// Every greyed option (card 0139), by parameter then option: read by the rows.
+  ///
+  /// A tool's (`toolOptions`) and the layers' (the process's `unavailableOptions(_:layerIDs:)`),
+  /// kept with its two sources. On the same option the layers' reason wins (the stack lacks the
+  /// layer, whatever the tool).
+  package private(set) var unavailableOptions: [String: [String: LocalizedStringResource]] = [:]
   /// The bundle layers the panel's process may read (card 0135).
   ///
   /// A line's rows show only while its layer is among them, or while the values still ask for
@@ -52,6 +60,11 @@ package final class ProcessPanelModel {
   }
   /// The tokens the bundle offers each layer parameter (card 0138), kept with the layers.
   private var layerOptions: [String: [String]] = [:]
+  /// The palettes the process offers for the bundle (card 0139), in catalogue order: `nil` for
+  /// a process without a palette menu, empty when the bundle allows none (« Custom » alone).
+  package private(set) var paletteOptions: [Palette]?
+  /// The options the layers grey (card 0139), by parameter then option: catalog reason keys.
+  private var layerGreyed: [String: [String: String]] = [:]
   /// Why a row's value cannot run on this stack, by parameter id (card 0135).
   ///
   /// Shown under the row, never greying the process; kept with the values and the layers.
@@ -76,6 +89,8 @@ package final class ProcessPanelModel {
     self.type = type
     self.params = params
     self.suggestions = suggestions
+    // No bundle yet: the layer options are empty, the palette menu exists or not by process.
+    refreshLayerOptions()
   }
 
   /// The parameters the panel shows: simple ones, advanced ones once disclosed or promoted by
@@ -99,6 +114,40 @@ package final class ProcessPanelModel {
     if hiddenNow != hidden { hidden = hiddenNow }
     let notesNow = layerIDs.map { type.unavailableReasons(params, layerIDs: $0) } ?? [:]
     if notesNow != rowNotes { rowNotes = notesNow }
+    let greyedNow = layerIDs.map { type.unavailableOptions(params, layerIDs: $0) } ?? [:]
+    guard greyedNow != layerGreyed else { return }
+    layerGreyed = greyedNow
+    refreshGreyed()
+  }
+
+  /// `unavailableOptions` from its two sources.
+  private func refreshGreyed() {
+    var merged = toolOptions
+    for (param, options) in layerGreyed {
+      for (option, reason) in options {
+        merged[param, default: [:]][option] = ProcessKitResources.title(reason)
+      }
+    }
+    if merged != unavailableOptions { unavailableOptions = merged }
+  }
+
+  /// The key the palette menu's control is identified by.
+  package var paletteKey: String { "\(type.id).palette" }
+
+  /// The palette the sources match (card 0139), `nil` for a custom combination — or for a
+  /// process without a palette menu.
+  package var palette: Palette? { paletteOptions == nil ? nil : Palette.matching(params) }
+
+  /// Fills the four sources from `palette`.
+  ///
+  /// A palette is a template the rows show, never a hidden setting (R2); a recipe records the
+  /// sources, not the palette.
+  package func choose(palette: Palette) {
+    // A palette the process offers (`palettes(planes:)`): its tokens pass the slots' grammar by
+    // construction (`available`), so `apply` cannot fail; a binding cannot throw.
+    guard paletteOptions?.contains(palette) == true, let filled = try? palette.apply(to: params)
+    else { return }
+    replace(filled)
   }
 
   /// The tokens each layer parameter lists, from the bundle's planes alone.
@@ -110,6 +159,8 @@ package final class ProcessPanelModel {
         planes: layerPlanes, allowsNone: allowsNone, allowsProduct: allowsProduct)
     }
     if optionsNow != layerOptions { layerOptions = optionsNow }
+    let palettesNow = type.palettes(planes: layerPlanes)
+    if palettesNow != paletteOptions { paletteOptions = palettesNow }
   }
 
   /// The tokens the layer parameter `id` lists (card 0138): the bundle's, and the value already
@@ -178,8 +229,8 @@ package final class ProcessPanelModel {
     return seen
   }
 
-  /// Replaces the values (a handle drag) and previews them.
-  func replace(_ params: ParamSet) {
+  /// Replaces the values (a handle drag, a palette) and previews them.
+  package func replace(_ params: ParamSet) {
     guard params != self.params else { return }
     self.params = params
     onChange()

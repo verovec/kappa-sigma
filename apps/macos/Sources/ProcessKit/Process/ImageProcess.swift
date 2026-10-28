@@ -110,6 +110,17 @@ package protocol ImageProcess {
 
   /// Every reason `unavailableReasons(_:layerIDs:)` may give: English keys of the catalog.
   static var rowReasons: [String] { get }
+
+  /// The options a bundle of `layerIDs` cannot run, by parameter then option, with the reason
+  /// (a catalog key, listed in `rowReasons`): shown greyed, never switched away from (R2). By
+  /// default, the current value of every layer parameter whose row carries a note (card 0139).
+  static func unavailableOptions(_ params: ParamSet, layerIDs: Set<String>)
+    -> [String: [String: String]]
+
+  /// The palettes a bundle of `planes` offers this process (card 0139): templates that fill
+  /// visible parameters, never a hidden setting. `nil` for a process without a palette menu
+  /// (the default); empty when this bundle allows none (the menu then reads « Custom »).
+  static func palettes(planes: [String: Int]) -> [Palette]?
 }
 
 extension ImageProcess {
@@ -198,6 +209,22 @@ extension ImageProcess {
 
   /// No row reason.
   package static var rowReasons: [String] { [] }
+
+  /// The current value of each noted layer parameter, with the note's reason: the one « layer
+  /// missing » rule, worded on the row and greyed on its value.
+  package static func unavailableOptions(_ params: ParamSet, layerIDs: Set<String>)
+    -> [String: [String: String]]
+  {
+    var greyed: [String: [String: String]] = [:]
+    for (id, note) in unavailableReasons(params, layerIDs: layerIDs) {
+      guard case .layer? = schema.spec(id)?.kind else { continue }
+      greyed[id] = [params.choice(id): note.reason]
+    }
+    return greyed
+  }
+
+  /// No palette menu.
+  package static func palettes(planes: [String: Int]) -> [Palette]? { nil }
 
   /// Whether its image is a colour image whatever it read (card 0137): it replaces its input
   /// with three planes — a mono layer combined in grey is honest input for a colour process.

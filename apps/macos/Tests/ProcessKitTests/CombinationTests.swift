@@ -212,4 +212,43 @@ struct CombinationTests {
       ParamSet(schema: ChannelCombinationProcess.schema), layers: layers, device: device)
     #expect(custom == natural)
   }
+
+  /// The palettes a bundle offers (card 0139): every source token among the bundle's (a plane
+  /// needs a colour layer, a product two 1-plane lines), in catalogue order.
+  struct Available: CustomTestStringConvertible, Sendable {
+    let name: String
+    let planes: [String: Int]
+    let expected: [Palette]
+    var testDescription: String { name }
+  }
+
+  static let availables: [Available] = [
+    Available(name: "OSC", planes: ["RGB": 3], expected: [.natural]),
+    Available(
+      name: "OSC + Hα + OIII", planes: ["RGB": 3, "Ha": 1, "OIII": 1],
+      expected: [.natural, .hoo, .foraxx]),
+    Available(name: "LRGB", planes: ["L": 1, "R": 1, "G": 1, "B": 1], expected: [.lrgb, .rgb]),
+    Available(name: "RGB", planes: ["R": 1, "G": 1, "B": 1], expected: [.rgb]),
+    Available(
+      name: "SHO", planes: ["SII": 1, "Ha": 1, "OIII": 1], expected: [.hoo, .sho, .hos, .foraxx]),
+    Available(name: "L + Hα", planes: ["L": 1, "Ha": 1], expected: []),
+    Available(
+      name: "a 3-plane Hα + OIII: a palette reads whole lines", planes: ["Ha": 3, "OIII": 1],
+      expected: []),
+  ]
+
+  @Test("the palettes a bundle offers, in catalogue order", arguments: availables)
+  func testPaletteAvailable(row: Available) {
+    #expect(Palette.available(planes: row.planes) == row.expected)
+  }
+
+  @Test("every palette has one source per slot, which the schema accepts and matching recovers")
+  func testPaletteSlotsAreComplete() throws {
+    for palette in Palette.allCases {
+      #expect(palette.sources.count == ChannelCombinationProcess.slotSources.count)
+      // The invariant behind the panel's `choose(palette:)`: `apply` cannot refuse a palette.
+      let params = try palette.params()
+      #expect(Palette.matching(params) == palette)
+    }
+  }
 }

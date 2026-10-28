@@ -10,12 +10,15 @@ set -euo pipefail
 app="$1"
 shift
 
-# This bundle's process only: another user's session or an installed copy is not ours to quit.
-running() { pgrep -fq "$app/Contents/MacOS/AstroStack"; }
+# By bundle id through LaunchServices: the app this user runs, whatever its path; a process-list
+# regex on the path would match a debugger or an editor holding it, or miss a path with
+# metacharacters.
+running() { osascript -e 'application id "fr.astrostack.AstroStack" is running' 2>/dev/null | grep -q true; }
 
 if running; then
   # By bundle id: the running app, not whatever LaunchServices would resolve by name.
-  osascript -e 'tell application id "fr.astrostack.AstroStack" to quit' >/dev/null
+  # A quit the user cancels makes osascript fail: the loop below judges, not `set -e`.
+  osascript -e 'tell application id "fr.astrostack.AstroStack" to quit' >/dev/null 2>&1 || true
   # Documents close and checkpoint on quit; give them up to 30 s.
   for _ in $(seq 1 300); do
     running || break

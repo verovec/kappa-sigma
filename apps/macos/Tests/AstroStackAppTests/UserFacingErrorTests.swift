@@ -180,6 +180,9 @@ struct UserFacingErrorTests {
     #expect(elsewhere.message.text("en").contains("another instance of AstroStack"))
     #expect(elsewhere.message.text("fr").contains("autre instance d’AstroStack"))
     #expect(elsewhere.message.text("fr").contains("/p/M31.astrostack"), "the path stays named")
+    let window = UserFacingError.projectOpenInWindow(path: "/p/M31.astrostack")
+    #expect(window.message.text("en").contains("another window"))
+    #expect(window.message.text("fr").contains("autre fenêtre"))
     #expect(UserFacingError.projectClosed.message.text("fr").contains("rouvrez"))
   }
 

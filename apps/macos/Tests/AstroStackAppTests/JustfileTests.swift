@@ -24,6 +24,9 @@ struct JustfileTests {
     }
     let script = try Self.text("scripts/app-run.sh")
     #expect(script.contains("tell application id \"fr.astrostack.AstroStack\" to quit"))
+    #expect(
+      script.contains("to quit' >/dev/null 2>&1 || true"), "a cancelled quit is judged by the loop")
+    #expect(!script.contains("pgrep"), "the running app is found by bundle id, not by a path regex")
     #expect(script.contains("exit 1"), "a quit that never happens fails, never opens the old build")
     #expect(script.contains("open -W -a") && !script.contains("open -W -n"))
     #expect(!script.contains("pkill") && !script.contains("kill -"), "asked to quit, never killed")

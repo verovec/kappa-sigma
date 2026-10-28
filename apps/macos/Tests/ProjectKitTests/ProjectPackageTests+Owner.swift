@@ -92,18 +92,15 @@ extension ProjectPackageTests {
     try package.close()
   }
 
-  @Test(
-    "the marker is created exclusively: a second writer in the same instant is refused",
-    .scratchDirectory)
-  func testOwner_exclusiveWrite() throws {
+  @Test("a live owner elsewhere is held; ours or a dead one is not", .scratchDirectory)
+  func testOwner_heldElsewhere() throws {
     let url = try ScratchDirectory.url.appendingPathComponent("P.astrostack")
     try ProjectPackage.create(at: url).close()
-    let first = try #require(ProcessLiveness.current)
-    try ProjectOwner(process: first).write(in: url, exclusive: true)
-    #expect(throws: (any Error).self) {
-      try ProjectOwner(process: first).write(in: url, exclusive: true)
-    }
+    try ProjectOwner(process: try #require(ProcessLiveness.current)).write(in: url)
     #expect(ProjectOwner.heldElsewhere(in: url) == nil, "ours is not elsewhere")
+    try ProjectOwner(process: ProcessStamp(pid: 999_999, startSeconds: 1, startMicroseconds: 0))
+      .write(in: url)
+    #expect(ProjectOwner.heldElsewhere(in: url) == nil, "a dead owner holds nothing")
     let parent = try #require(ProcessLiveness.stamp(of: getppid()))
     try ProjectOwner(process: parent).write(in: url)
     #expect(ProjectOwner.heldElsewhere(in: url)?.process == parent)

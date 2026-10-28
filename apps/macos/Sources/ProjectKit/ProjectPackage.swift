@@ -95,31 +95,26 @@ public final class ProjectPackage {
 
   /// Takes the owner marker of `url` for this process, or refuses: another process still runs.
   ///
-  /// The foreign marker is judged first, whether or not this process can be stamped; a stale
-  /// one (a crash) or this process's own is replaced; the write is exclusive, so two openers in
-  /// the same instant leave one owner. Returns the token written, `nil` when this process cannot
-  /// be stamped (nothing to release then).
+  /// One read, one stamp: a live owner elsewhere refuses (whether or not this process can be
+  /// stamped); a stale one (a crash) is replaced and logged, this process's own rewritten. The
+  /// marker is re-read after the write: an opener that wrote in the same instant holds it now,
+  /// and this one refuses. Returns the token written, `nil` when this process cannot be stamped.
   private static func claim(_ url: URL) throws -> UUID? {
-    if let other = ProjectOwner.heldElsewhere(in: url) {
+    let existing = ProjectOwner.read(in: url)
+    let mine = ProjectOwner.current()
+    if let other = existing?.heldElsewhere(from: mine?.process) {
       throw ProjectPackageError.openElsewhere(path: url.path, pid: other.process.pid)
     }
-    guard let mine = ProjectOwner.current() else { return nil }
-    if let existing = ProjectOwner.read(in: url) {
-      if existing.process != mine.process {
-        let stale = existing.process.pid
-        logger.notice(
-          "replacing the stale owner marker of \(url.path, privacy: .public) (pid \(stale))")
-      }
-      ProjectOwner.remove(in: url)
+    guard let mine else { return nil }
+    if let existing, existing.process != mine.process {
+      let stale = existing.process.pid
+      logger.notice(
+        "replacing the stale owner marker of \(url.path, privacy: .public) (pid \(stale))")
     }
-    do {
-      try mine.write(in: url, exclusive: true)
-    } catch {
-      // Lost the race to another opener this instant: whoever wrote the marker holds it.
-      if let other = ProjectOwner.heldElsewhere(in: url) {
-        throw ProjectPackageError.openElsewhere(path: url.path, pid: other.process.pid)
-      }
-      throw error
+    try mine.write(in: url)
+    guard let written = ProjectOwner.read(in: url), written.token == mine.token else {
+      let winner = ProjectOwner.read(in: url)?.process.pid ?? 0
+      throw ProjectPackageError.openElsewhere(path: url.path, pid: winner)
     }
     return mine.token
   }

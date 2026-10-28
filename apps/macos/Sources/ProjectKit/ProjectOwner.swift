@@ -44,19 +44,20 @@ package struct ProjectOwner: Codable, Equatable, Sendable {
   /// What refuses an open and a Save As over it; a marker whose process is gone, or ours, holds
   /// nothing.
   package static func heldElsewhere(in package: URL) -> Self? {
-    guard let owner = read(in: package), owner.isLive,
-      owner.process != ProcessLiveness.current
-    else { return nil }
-    return owner
+    read(in: package).flatMap { $0.heldElsewhere(from: ProcessLiveness.current) }
   }
 
-  /// Writes the marker into `package`, atomically, keys sorted (a stable file); `exclusive`
-  /// refuses to overwrite one already there (two openers in the same instant: one wins).
-  package func write(in package: URL, exclusive: Bool = false) throws {
+  /// This owner when it is live and not `me` (nil when this process cannot be stamped: every
+  /// live owner is then elsewhere), else `nil`.
+  func heldElsewhere(from me: ProcessStamp?) -> Self? {
+    isLive && process != me ? self : nil
+  }
+
+  /// Writes the marker into `package`, atomically, keys sorted (a stable file).
+  package func write(in package: URL) throws {
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
-    let options: Data.WritingOptions = exclusive ? [.withoutOverwriting] : [.atomic]
-    try encoder.encode(self).write(to: Self.url(in: package), options: options)
+    try encoder.encode(self).write(to: Self.url(in: package), options: .atomic)
   }
 
   /// Removes the marker from `package`, if any.

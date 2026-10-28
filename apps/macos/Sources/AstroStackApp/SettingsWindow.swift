@@ -19,11 +19,11 @@ package enum SettingsWindow {
   ///
   /// One instance is allowed (card 0147), so the relaunch waits for the quit from outside:
   /// `kill -0` only probes the pid, `open` without `-n` starts the one instance. The backgrounded
-  /// subshell outlives this process and gives up after a minute: a quit the user cancelled must
-  /// not relaunch the app hours later.
+  /// subshell outlives this process and gives up after 15 s: a quit the user cancelled must not
+  /// relaunch the app later. What `open` says lands in a log file, not nowhere.
   package static func relaunchScript(pid: Int32) -> String {
-    "(for _ in $(seq 1 300); do kill -0 \(pid) 2>/dev/null || { open \"$1\"; exit 0; }; "
-      + "sleep 0.2; done) >/dev/null 2>&1 &"
+    "(for _ in $(seq 1 75); do kill -0 \(pid) 2>/dev/null || { open \"$1\"; exit 0; }; "
+      + "sleep 0.2; done) >>\"${TMPDIR:-/tmp}/AstroStack-relaunch.log\" 2>&1 &"
   }
 
   /// Quits this instance and has the app reopened once it is gone (the language is read at

@@ -12,7 +12,7 @@ GRDB 7), and later `images/`, `recipes/`, `history/` (design §4.5). No UI, no A
   `-shm` files GRDB's persistent WAL leaves behind.
 - `ProjectPackageError` names the path in every case.
 - One owner per project (card 0147): `open(at:owning:)` writes `project-owner.json` (the process's
-  `ProcessStamp` — pid and start time —, bundle path, time) and refuses with `openElsewhere(path:pid:)`
+  `ProcessStamp` — pid and start time — and a token per opening) and refuses with `openElsewhere(path:pid:)`
   while another running process holds it; a stale marker (a crash) is replaced and logged, this
   process's own is rewritten (a move, a Save As); `close()` removes it; a short opener
   (`owning: false`, the retention review) leaves it alone; `copy(to:)` never copies it;

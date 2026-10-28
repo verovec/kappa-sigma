@@ -833,6 +833,22 @@
         }
       }
     },
+    "%@ is open in another window: close it before saving over it.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is open in another window: close it before saving over it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ est ouvert dans une autre fenêtre : fermez-la avant d’enregistrer par-dessus."
+          }
+        }
+      }
+    },
     "Advanced": {
       "localizations": {
         "en": {

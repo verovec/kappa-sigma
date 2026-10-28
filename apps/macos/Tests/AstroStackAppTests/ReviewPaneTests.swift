@@ -118,8 +118,10 @@ struct ReviewPaneTests {
     #expect(window.reviewLanes.first === review)
 
     let host = ImportSheetTests.host(
-      ProjectWindowView(model: window).environment(\.locale, Locale(identifier: language))
-        .background(Color(nsColor: .windowBackgroundColor)))
+      ProjectWindowView(model: window, projects: .empty).environment(
+        \.locale, Locale(identifier: language)
+      )
+      .background(Color(nsColor: .windowBackgroundColor)))
     host.appearance = NSAppearance(named: .aqua)
     host.layoutSubtreeIfNeeded()
     #expect(host.fittingSize.width >= 640 && host.fittingSize.height >= 400)
@@ -163,7 +165,8 @@ struct ReviewPaneTests {
     #expect(window.reviewLanes.isEmpty)
     window.select(.review)
     let host = ImportSheetTests.host(
-      ProjectWindowView(model: window).environment(\.locale, Locale(identifier: "fr")))
+      ProjectWindowView(model: window, projects: .empty).environment(
+        \.locale, Locale(identifier: "fr")))
     host.layoutSubtreeIfNeeded()
     #expect(host.fittingSize.width >= 640)
     window.knobs.set(KnobSchema.frameReviewID, to: .flag(true))
@@ -242,8 +245,10 @@ struct ReviewPaneTests {
     #expect(ran.all.first?.settings.referenceBreakpoint == true, "the knob reaches the run")
     window.select(.review)
     let host = ImportSheetTests.host(
-      ProjectWindowView(model: window).environment(\.locale, Locale(identifier: language))
-        .background(Color(nsColor: .windowBackgroundColor)))
+      ProjectWindowView(model: window, projects: .empty).environment(
+        \.locale, Locale(identifier: language)
+      )
+      .background(Color(nsColor: .windowBackgroundColor)))
     host.appearance = NSAppearance(named: .aqua)
     host.layoutSubtreeIfNeeded()
     #expect(host.fittingSize.width >= 640 && host.fittingSize.height >= 400)

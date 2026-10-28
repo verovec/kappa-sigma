@@ -31,6 +31,9 @@ package final class ProjectCatalog {
     package let summary: ProjectSummary?
     /// Where it was found.
     package let origin: Origin
+    /// The package's path key (`WelcomeModel.key`), resolved once here: what identifies the
+    /// project across the list, the open windows and the switcher (card 0146).
+    package let key: String
 
     /// The package's URL.
     package var id: URL { url }
@@ -41,6 +44,7 @@ package final class ProjectCatalog {
       self.target = target
       self.summary = summary
       self.origin = origin
+      key = WelcomeModel.key(url)
     }
   }
 

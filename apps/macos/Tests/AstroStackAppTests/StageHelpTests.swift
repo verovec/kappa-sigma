@@ -40,7 +40,8 @@ struct StageHelpTests {
       store: { project.store }, planning: { _ in ImportPlanningStub.empty })
     for stage in JourneyStage.allCases {
       model.select(stage)
-      let ids = AccessibilityAuditTests.entries(ProjectWindowView(model: model)).map(\.id)
+      let ids = AccessibilityAuditTests.entries(ProjectWindowView(model: model, projects: .empty))
+        .map(\.id)
       #expect(ids.contains(StageHelp.key(stage).rawValue), "\(stage): \(ids)")
     }
   }

@@ -11,9 +11,19 @@ package struct ProjectWindowView: View {
   /// The journey sidebar as the user left it; the full-screen image hides it over this value.
   @State private var sidebarStored = NavigationSplitViewVisibility.automatic
 
+  /// Where the project switcher's projects come from (card 0146): `.live` in the app.
+  let projects: ProjectSwitcher.Source
+
   /// A window showing the project behind `model`.
-  package init(model: ProjectWindowModel) {
+  package init(model: ProjectWindowModel, projects: ProjectSwitcher.Source) {
     _model = State(initialValue: model)
+    self.projects = projects
+  }
+
+  /// What the switcher's head says for `model`: the target of a saved project, nothing for an
+  /// untitled one (its temporary package is named by a UUID, never shown).
+  package static func head(for model: ProjectWindowModel) -> (target: String, current: URL?) {
+    model.isSaved() ? (model.targetName, model.folder()) : ("", nil)
   }
 
   /// The sidebar shown: hidden while the Studio's image is focused (card 0127), else as the user
@@ -82,16 +92,9 @@ package struct ProjectWindowView: View {
     .environment(\.guideTarget, model.guideTarget)
   }
 
-  /// The switcher over the live catalog (card 0146), wired to the welcome window's statics:
-  /// another project opens in its own window, this one keeps running.
+  /// The switcher at the head of the sidebar (card 0146).
   private var switcher: ProjectSwitcher {
-    ProjectSwitcher(
-      target: model.targetName, catalog: WelcomeWindow.model.catalog, current: model.folder(),
-      actions: ProjectSwitcher.Actions(
-        open: { url in Task { await WelcomeWindow.open(url) } },
-        choose: { WelcomeWindow.choose() },
-        newProject: { WelcomeWindow.showNewProject() },
-        welcome: { WelcomeWindow.show() }),
-      reload: { await WelcomeWindow.model.reload() })
+    let head = Self.head(for: model)
+    return ProjectSwitcher(target: head.target, current: head.current, source: projects)
   }
 }

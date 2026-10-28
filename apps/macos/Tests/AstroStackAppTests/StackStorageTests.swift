@@ -137,7 +137,7 @@ struct StackStorageTests {
     window.select(.data)
 
     let entries = AccessibilityAuditTests.entries(
-      ProjectWindowView(model: window), language: language)
+      ProjectWindowView(model: window, projects: .empty), language: language)
 
     for stack in stacks {
       let delete = try #require(

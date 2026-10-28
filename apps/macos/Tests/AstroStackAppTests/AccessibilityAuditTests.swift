@@ -57,7 +57,7 @@ struct AccessibilityAuditTests {
     let model = ProjectWindowModel(
       store: { project.store }, planning: { _ in ImportPlanningStub.empty })
     model.select(.data)
-    let window = Self.entries(ProjectWindowView(model: model))
+    let window = Self.entries(ProjectWindowView(model: model, projects: .empty))
     // The stage's « ? » (card 0086) and its Import button.
     #expect(
       window.map(\.id) == ["fr.astrostack.help.stage.data", "fr.astrostack.stage.data.import"])
@@ -73,11 +73,7 @@ struct AccessibilityAuditTests {
 
   @Test("the project switcher: its menu carries a label and an id, in the view's language")
   func testProjectSwitcher() {
-    let catalog = ProjectCatalog(openProjects: { [] }, recentURLs: { [] }, folderURLs: { [] })
-    let switcher = ProjectSwitcher(
-      target: "M31", catalog: catalog, current: nil,
-      actions: ProjectSwitcher.Actions(open: { _ in }, choose: {}, newProject: {}, welcome: {}),
-      reload: {})
+    let switcher = ProjectSwitcher(target: "M31", current: nil, source: .empty)
     let entries = Self.entries(switcher, language: "fr")
     #expect(AccessibilityAudit.problems(entries) == [])
     #expect(entries.map(\.id) == ["fr.astrostack.journey.projects"])
@@ -92,7 +88,7 @@ struct AccessibilityAuditTests {
     let model = ProjectWindowModel(
       store: { project.store }, planning: { _ in ImportPlanningStub.empty })
     model.select(.stacking)
-    let entries = Self.entries(ProjectWindowView(model: model))
+    let entries = Self.entries(ProjectWindowView(model: model, projects: .empty))
     #expect(AccessibilityAudit.problems(entries) == [])
     #expect(
       Set(entries.map(\.id)).isSuperset(of: [

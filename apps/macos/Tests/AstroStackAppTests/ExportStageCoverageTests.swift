@@ -85,7 +85,8 @@ struct ExportStageCoverageTests {
     let window = opened.window
     window.select(.studio)
     let studio = try #require(window.workspace?.studio)
-    let studioPane = AccessibilityAuditTests.entries(ProjectWindowView(model: window))
+    let studioPane = AccessibilityAuditTests.entries(
+      ProjectWindowView(model: window, projects: .empty))
     #expect(studioPane.contains { $0.id == "fr.astrostack.stage.export.separate" })
 
     window.separateStarsFromStudio()

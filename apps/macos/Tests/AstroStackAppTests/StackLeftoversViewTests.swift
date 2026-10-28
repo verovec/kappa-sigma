@@ -30,7 +30,7 @@ struct StackLeftoversViewTests {
     window.select(.stacking)
 
     let entries = AccessibilityAuditTests.entries(
-      ProjectWindowView(model: window), language: language)
+      ProjectWindowView(model: window, projects: .empty), language: language)
 
     let delete = try #require(
       entries.first { $0.id == AccessibilityID.stackingDeleteLeftover("20261020_220000").rawValue })
@@ -45,7 +45,8 @@ struct StackLeftoversViewTests {
     let window = Self.window(project)
     window.select(.stacking)
 
-    let ids = AccessibilityAuditTests.entries(ProjectWindowView(model: window)).map(\.id)
+    let ids = AccessibilityAuditTests.entries(ProjectWindowView(model: window, projects: .empty))
+      .map(\.id)
 
     #expect(ids.contains(AccessibilityID.stackingRun.rawValue), "the Stacking pane is shown")
     #expect(!ids.contains { $0.contains("deleteLeftover") })

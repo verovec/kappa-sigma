@@ -356,7 +356,8 @@ package final class ProjectDocument: NSDocument {
       save: { [weak self] in self?.save(nil) })
     model.undoManager = { [weak self] in self?.undoManager }
     windowModel = model
-    let content = NSHostingView(rootView: ProjectWindowView(model: model).interfaceLocale())
+    let content = NSHostingView(
+      rootView: ProjectWindowView(model: model, projects: .live).interfaceLocale())
     // Only the minimum size comes from SwiftUI; the window keeps its own frame.
     content.sizingOptions = [.minSize]
     window.contentView = content

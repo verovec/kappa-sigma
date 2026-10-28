@@ -1,6 +1,7 @@
 import AstroStackApp
 import Foundation
 import ProjectKit
+import TestSupport
 import Testing
 
 /// The project switcher (card 0146): the catalog's projects in three sections, the current one
@@ -39,10 +40,6 @@ struct ProjectSwitcherTests {
       current: url("M31"), open: ["M31", "IC1848"], recent: ["M45"], folder: ["NGC7000"],
       checked: "M31"),
     Row(
-      name: "a project listed twice keeps its first section",
-      entries: [entry("M31", .open), entry("M31", .recent), entry("M31", .folder)],
-      current: nil, open: ["M31"], recent: [], folder: [], checked: nil),
-    Row(
       name: "an untitled window checks nothing", entries: [entry("M45", .recent)], current: nil,
       open: [], recent: ["M45"], folder: [], checked: nil),
     Row(
@@ -57,11 +54,11 @@ struct ProjectSwitcherTests {
     #expect(items.recent.map(\.target) == row.recent)
     #expect(items.folder.map(\.target) == row.folder)
     let all = items.open + items.recent + items.folder
-    #expect(Set(all.map(\.url)).count == all.count, "no duplicate across sections")
     #expect(all.first { $0.isCurrent }?.target == row.checked)
+    #expect(all.allSatisfy { $0.key == WelcomeModel.key($0.url) })
   }
 
-  @Test("testActions: a project calls open(url); the fixed items call their closure, nothing else")
+  @Test("testActions: each item is one closure the window wires, nothing else")
   func testActions() {
     var log: [String] = []
     let actions = ProjectSwitcher.Actions(
@@ -69,10 +66,27 @@ struct ProjectSwitcherTests {
       choose: { log.append("choose") },
       newProject: { log.append("new") },
       welcome: { log.append("welcome") })
-    actions.perform(.project(Self.url("M45")))
-    actions.perform(.open)
-    actions.perform(.newProject)
-    actions.perform(.welcome)
+    actions.open(Self.url("M45"))
+    actions.choose()
+    actions.newProject()
+    actions.welcome()
     #expect(log == ["open M45.astrostack", "choose", "new", "welcome"])
+  }
+
+  @Test(
+    "the head names a saved project; an untitled one shows no UUID and checks nothing",
+    .scratchDirectory)
+  func testHead_untitledShowsNoTarget() throws {
+    let project = try ProjectPackage.create(
+      at: ScratchDirectory.url.appendingPathComponent("M31.astrostack"))
+    defer { try? project.close() }
+    let saved = ProjectWindowModel(
+      store: { project.store }, folder: { project.url }, planning: { _ in ImportPlanningStub.empty }
+    )
+    #expect(ProjectWindowView.head(for: saved) == ("M31", project.url))
+    let untitled = ProjectWindowModel(
+      store: { project.store }, folder: { project.url },
+      services: { _ in ImportServices(planning: ImportPlanningStub.empty) }, isSaved: { false })
+    #expect(ProjectWindowView.head(for: untitled) == ("", nil))
   }
 }

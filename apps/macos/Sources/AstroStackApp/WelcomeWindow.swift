@@ -116,8 +116,9 @@ package enum WelcomeWindow {
   ) async {
     do {
       _ = try await NSDocumentController.shared.openDocument(withContentsOf: url, display: true)
-      // An already open project only comes forward: its window was made long ago.
-      dismiss()
+      // An already open project only comes forward: its window was made long ago. The welcome
+      // window closes if it is up; from a project window's switcher there is nothing to close.
+      if isVisible { dismiss() }
     } catch {
       logger.error("cannot open \(url.path, privacy: .public): \(error, privacy: .public)")
       report(error)

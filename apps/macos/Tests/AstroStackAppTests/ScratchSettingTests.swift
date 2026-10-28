@@ -1,5 +1,6 @@
 import AstroStackApp
 import Foundation
+import StackKit
 import TestSupport
 import Testing
 
@@ -20,31 +21,71 @@ struct ScratchSettingTests {
   func testChoicePersists() throws {
     let (defaults, name) = try Self.suite()
     defer { defaults.removePersistentDomain(forName: name) }
-    let home = URL(fileURLWithPath: "/Users/someone")
-    let setting = ScratchSetting(defaults: defaults, home: home)
+    let astro = URL(fileURLWithPath: "/Users/someone/Documents/astro")
+    let setting = ScratchSetting(defaults: defaults, astro: astro)
     #expect(setting.chosen == nil)
     #expect(setting.folder == ScratchSetting.defaultFolder)
     #expect(ScratchSetting.defaultFolder.path.hasSuffix("AstroStack/Work"))
 
     #expect(setting.choose(URL(fileURLWithPath: "/Volumes/SSD")))
-    let reread = ScratchSetting(defaults: defaults, home: home)
+    let reread = ScratchSetting(defaults: defaults, astro: astro)
     #expect(reread.chosen?.path == "/Volumes/SSD")
     #expect(reread.folder.path == "/Volumes/SSD/AstroStack/Work", "never the user's folder itself")
 
     #expect(setting.choose(nil))
-    #expect(ScratchSetting(defaults: defaults, home: home).folder == ScratchSetting.defaultFolder)
+    #expect(ScratchSetting(defaults: defaults, astro: astro).folder == ScratchSetting.defaultFolder)
   }
 
   @Test(
-    "a folder under the read-only sources is refused and nothing is stored (R7)",
-    arguments: ["Documents/astro/captures/M31", "Documents/astro/library", "Documents/Astro/Runs"])
-  func testReadOnlySourcesRefused(relative: String) throws {
+    "a folder whose work folder lies inside the astro folder is refused, nothing stored (R7)",
+    arguments: ["captures/M31", "library", "Runs", "", "exports", "../Astro", "../ASTRO/Runs"],
+    ["/Users/someone/Documents/astro", "/Volumes/SSD/astro"])
+  func testReadOnlySourcesRefused(relative: String, root: String) throws {
     let (defaults, name) = try Self.suite()
     defer { defaults.removePersistentDomain(forName: name) }
-    let home = URL(fileURLWithPath: "/Users/someone")
-    let setting = ScratchSetting(defaults: defaults, home: home)
-    #expect(!setting.choose(home.appendingPathComponent(relative)))
+    let astro = URL(fileURLWithPath: root)
+    let setting = ScratchSetting(defaults: defaults, astro: astro)
+    #expect(!setting.choose(astro.appendingPathComponent(relative)))
     #expect(setting.chosen == nil)
+  }
+
+  @Test(
+    "a link to the astro folder is the astro folder, its work folder not yet there",
+    .scratchDirectory)
+  func testLinkedRootRefused() throws {
+    let (defaults, name) = try Self.suite()
+    defer { defaults.removePersistentDomain(forName: name) }
+    let base = try ScratchDirectory.url
+    let astro = base.appendingPathComponent("astro")
+    try FileManager.default.createDirectory(at: astro, withIntermediateDirectories: true)
+    let link = base.appendingPathComponent("astro-link")
+    try FileManager.default.createSymbolicLink(at: link, withDestinationURL: astro)
+    let setting = ScratchSetting(defaults: defaults, astro: astro)
+    #expect(!setting.choose(link))
+    #expect(!setting.choose(link.appendingPathComponent("scratch")))
+    #expect(setting.chosen == nil)
+  }
+
+  @Test("the default data folder stays refused once another root is chosen: the sweep protects it")
+  func testDefaultDataFolderStaysRefused() throws {
+    let (defaults, name) = try Self.suite()
+    defer { defaults.removePersistentDomain(forName: name) }
+    let setting = ScratchSetting(
+      defaults: defaults, astro: URL(fileURLWithPath: "/Volumes/SSD/astro"))
+    #expect(!setting.choose(LeftoverSweep.dataFolder.appendingPathComponent("tmp")))
+    #expect(setting.chosen == nil)
+  }
+
+  @Test(
+    "a folder beside or above the astro folder is fine: its work folder is outside the root",
+    arguments: ["..", "../elsewhere", "../../Volumes/SSD"])
+  func testFoldersAroundTheRootAccepted(relative: String) throws {
+    let (defaults, name) = try Self.suite()
+    defer { defaults.removePersistentDomain(forName: name) }
+    let astro = URL(fileURLWithPath: "/Users/someone/Documents/astro")
+    let setting = ScratchSetting(defaults: defaults, astro: astro)
+    #expect(setting.choose(astro.appendingPathComponent(relative)))
+    #expect(setting.chosen != nil)
   }
 
   @Test("RunServices reads the folder when a run starts, not when the window opens")

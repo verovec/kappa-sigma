@@ -88,15 +88,32 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
   /// at launch, off the main actor; a folder whose owner still runs is never touched (0113).
   @concurrent
   package nonisolated static func sweepLeftovers(roots: [LeftoverSweep.Root]? = nil) async {
-    LeftoverSweep(roots: roots ?? leftoverRoots(work: RunServices.live.scratch)).run()
+    LeftoverSweep(
+      roots: roots ?? leftoverRoots(work: RunServices.live.scratch), protected: protectedFolders()
+    ).run()
+  }
+
+  /// What the sweep never touches (card 0148): the astro folder Settings chose, and the default
+  /// one whatever the choice (a project may still point into it).
+  package nonisolated static func protectedFolders(
+    _ setting: AstroFolderSetting = AstroFolderSetting()
+  ) -> [URL] {
+    protectedFolders(root: setting.folder)
+  }
+
+  /// The protected folders for the astro root `root`: the one list the sweep and the scratch
+  /// picker judge by.
+  package nonisolated static func protectedFolders(root: URL) -> [URL] {
+    [root, LeftoverSweep.dataFolder]
   }
 
   /// The app's scratch roots with the runs' work folder `work` (Settings, card 0098); the default
   /// one too when another was chosen, where the runs before the choice worked.
   package nonisolated static func leftoverRoots(
-    work: URL, defaultWork: URL = ScratchSetting.defaultFolder
+    work: URL, defaultWork: URL? = nil, temporary: URL = FileManager.default.temporaryDirectory
   ) -> [LeftoverSweep.Root] {
-    var roots = LeftoverSweep.appRoots(work: work)
+    let defaultWork = defaultWork ?? ScratchSetting.defaultFolder(under: temporary)
+    var roots = LeftoverSweep.appRoots(temporary: temporary, work: work)
     if work.standardizedFileURL != defaultWork.standardizedFileURL {
       roots.append(LeftoverSweep.Root(folder: defaultWork, prefix: "run_"))
     }

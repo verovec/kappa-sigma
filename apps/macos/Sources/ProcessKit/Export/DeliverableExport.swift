@@ -37,14 +37,14 @@ package struct DeliverableExport {
   /// Writes the deliverables of `settings` into `folder` and returns the files in write order.
   ///
   /// They come from `original` (with stars) and its `starless`. Everything is checked before a
-  /// file is written: a folder under the read-only sources of `home`, a crop or a name template
+  /// file is written: a folder under the read-only sources of `astro`, a crop or a name template
   /// that cannot work, two images that do not pair pixel for pixel. Without a starless (never
   /// separated) only `.final` can be written: the original itself, shaped.
   package func write(
     original: AstroImage, starless: AstroImage?, settings: ExportSettings, to folder: URL,
-    home: URL = FileManager.default.homeDirectoryForCurrentUser
+    astro: URL
   ) throws -> [URL] {
-    if let reason = ExportGuard.refusal(for: folder, home: home) {
+    if let reason = ExportGuard.refusal(for: folder, astro: astro) {
       throw ExportError.readOnlyTarget(reason)
     }
     try Self.validate(settings)

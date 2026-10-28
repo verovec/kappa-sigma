@@ -60,7 +60,7 @@ package nonisolated enum PlateSolveTool {
     tool(scratch: scratch) {
       PlateSolver.live(
         binary: try SirilTool.locate(), support: PlateSolver.supportFolder,
-        catalogues: ImportPlanning.libraryFolder.appendingPathComponent("catalogues"))
+        catalogues: AstroFolderSetting().catalogues)
     }
   }
 

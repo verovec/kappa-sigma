@@ -10,6 +10,8 @@ package struct SettingsView: View {
   private let relaunch: () -> Void
   private let tools: WelcomeModel?
   private let scratch: ScratchSetting
+  /// Settings › Astro folder (card 0148), owned by the view: a rebuild keeps its lines.
+  @State private var astro: AstroFolderModel
   private let retention: RetentionSetting
   /// The choice the app was launched with: Relaunch is offered once the choice differs.
   private let launched: LanguageSetting.Choice
@@ -27,6 +29,7 @@ package struct SettingsView: View {
   package init(
     setting: LanguageSetting, relaunch: @escaping () -> Void,
     tools: WelcomeModel? = nil, scratch: ScratchSetting = ScratchSetting(),
+    astro: AstroFolderModel = AstroFolderModel(),
     retention: RetentionSetting = RetentionSetting()
   ) {
     self.setting = setting
@@ -34,6 +37,7 @@ package struct SettingsView: View {
     self.tools = tools
     self.scratch = scratch
     _scratchFolder = State(initialValue: scratch.folder)
+    _astro = State(initialValue: astro)
     self.retention = retention
     _policy = State(initialValue: retention.policy)
     launched = setting.choice
@@ -57,6 +61,7 @@ package struct SettingsView: View {
         Button(.app("Relaunch"), action: relaunch).disabled(choice == launched)
       }
       scratchSection
+      astroSection
       storageSection
       if let tools {
         Section { ToolStrip(model: tools) }
@@ -64,6 +69,7 @@ package struct SettingsView: View {
     }
     .formStyle(.grouped)
     .frame(width: 460)
+    .task(id: astro.folder) { await astro.refresh() }
   }
 
   /// Where Siril's work files go during a run; the next run reads it.
@@ -83,9 +89,42 @@ package struct SettingsView: View {
         Button(.app("Default")) { pickScratch(nil) }.disabled(scratch.chosen == nil)
       }
       if scratchRefused {
-        Text(.app("AstroStack never writes under ~/Documents/astro: choose a folder outside it."))
+        Text(
+          .app(
+            "AstroStack never writes under the astro folder: choose a scratch folder outside it.")
+        )
+        .font(.caption).foregroundStyle(DesignColor.statusError.color)
+      }
+    }
+  }
+
+  /// The read-only data root (card 0148): captures, runs, library, fixtures; every path follows.
+  private var astroSection: some View {
+    Section {
+      LabeledContent {
+        Text(verbatim: astro.path)
+          .lineLimit(1).truncationMode(.middle).textSelection(.enabled)
+      } label: {
+        Text(.app("Astro folder"))
+      }
+      HStack {
+        Text(.app("Captures, runs, library and fixtures: read here, never written."))
+          .font(.caption).foregroundStyle(.secondary)
+        Spacer()
+        Button(.app("Choose…"), action: chooseAstro)
+        Button(.app("Default")) { astro.pick(nil) }.disabled(!astro.chosen)
+      }
+      ForEach(astro.lines, id: \.name) { line in
+        Text(line.found ? .app("\(line.name) — present") : .app("\(line.name) — absent"))
+          .font(.caption).foregroundStyle(.secondary)
+      }
+      if astro.refused {
+        Text(.app("Choose an existing folder the app does not write under."))
           .font(.caption).foregroundStyle(DesignColor.statusError.color)
       }
+    } header: {
+      SectionHeader(
+        .app("Astro folder"), help: SettingHelp.help(SettingHelp.astroFolder, locale: locale))
     }
   }
 
@@ -110,16 +149,22 @@ package struct SettingsView: View {
   }
 
   private func chooseScratch() {
-    let panel = NSOpenPanel()
-    panel.canChooseDirectories = true
-    panel.canChooseFiles = false
-    panel.canCreateDirectories = true
-    guard panel.runModal() == .OK, let url = panel.url else { return }
+    guard let url = FolderPanel.pick(FolderPanel.make(startingIn: nil, canCreate: true)) else {
+      return
+    }
     pickScratch(url)
   }
 
   private func pickScratch(_ url: URL?) {
     scratchRefused = !scratch.choose(url)
     scratchFolder = scratch.folder
+  }
+
+  private func chooseAstro() {
+    guard let url = FolderPanel.pick(FolderPanel.make(startingIn: astro.folder, canCreate: false))
+    else {
+      return
+    }
+    astro.pick(url)
   }
 }

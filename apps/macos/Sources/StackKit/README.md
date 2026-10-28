@@ -223,8 +223,10 @@ root it takes only the folders with the root's prefix **and a marker** whose own
 launch, started when recorded; a Siril left running keeps its folder). Markers are best effort: a
 folder that could not be marked is never swept, never a run that cannot start. An unmarked entry, a file or a symbolic link is
 never taken, whatever its age: nothing proves the app made it (24/10: an age rule run on a wrong
-root deleted most of /opt/homebrew). A root that is `/`, inside or around `~/Documents/astro` is
-refused (R7); tests check that with `allows`, never by sweeping a real path. `ProcessTable` is the
+root deleted most of /opt/homebrew). A root that is `/`, inside or around a protected folder — the
+default `~/Documents/astro` (`dataFolder`) and the astro folder Settings chose, which the app
+passes (card 0148) — is refused (R7, `overlaps`: links resolved to the nearest existing ancestor,
+case ignored); tests check that with `allows`, never by sweeping a real path. `ProcessTable` is the
 only door to the process table; tests pass a fake one.
 
 Stack folders (`StackLeftovers`): a failed or cancelled run's `stacks/<id>/` goes unless it holds a

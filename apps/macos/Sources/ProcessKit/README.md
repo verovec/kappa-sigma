@@ -121,9 +121,10 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   `final-{75,50,25}-stars` (the star tiers rendered by `StarRecompositionProcess`), PNG16 /
   TIFF16 (`ImageExport`) / FITS32 (`FITSFile.create`), crop fraction per edge (astrocomp
   rounding), hflip/vflip, `{name}` template (one file name containing `{name}`); everything is
-  checked before a file is written. `ExportGuard` refuses a folder under
-  `~/Documents/astro/{captures,runs,library,fixtures}` (links resolved, case ignored, R7); the
-  same refusal guards the scratch folder setting and a project's Save / Save As (card 0101).
+  checked before a file is written. `ExportGuard.refusal(for:astro:)` refuses a folder under
+  `<astro>/{captures,runs,library,fixtures}` (links resolved, case ignored, R7) — the root is the
+  caller's, Settings' astro folder since card 0148; the same refusal guards a project's Save /
+  Save As (card 0101), and the scratch folder setting applies the sweep's containment rule.
   Card 0091: `starless: nil` (never separated) writes `.final` only, the shaped original, and
   refuses a star tier with `.needsStarless`; `ExportSettings` is `Codable` (the app's `exports`
   record keeps it).

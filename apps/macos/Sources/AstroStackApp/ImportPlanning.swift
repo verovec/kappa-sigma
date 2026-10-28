@@ -5,14 +5,11 @@ package import StackKit
 /// The planner the Import sheet runs: the calibration library indexed into the project, then the
 /// capture scanned and matched, all off the main actor.
 package enum ImportPlanning {
-  /// Where captures are suggested from (R7: read-only, outside every repo).
-  package nonisolated static var capturesFolder: URL { astro.appendingPathComponent("captures") }
-  /// The calibration library reused as is.
-  package nonisolated static var libraryFolder: URL { astro.appendingPathComponent("library") }
-
-  private nonisolated static var astro: URL {
-    URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Documents/astro")
-  }
+  /// Where captures are suggested from (R7: read-only, outside every repo): Settings' astro
+  /// folder (card 0148), read at each use like the scratch folder.
+  package nonisolated static var capturesFolder: URL { AstroFolderSetting().captures }
+  /// The calibration library reused as is, under the same root.
+  package nonisolated static var libraryFolder: URL { AstroFolderSetting().library }
 
   /// A planning closure over the project's `store` and the library at `library`; the library is
   /// indexed once per closure (one Import sheet), not on every rescan.

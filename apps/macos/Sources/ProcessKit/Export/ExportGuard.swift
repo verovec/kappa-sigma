@@ -1,24 +1,23 @@
 package import Foundation
 
-/// Where an export may not write: everything the app reads from `~/Documents/astro` is
-/// read-only (rule R7) — captures, legacy runs, the calibration library and the test fixtures.
+/// Where an export may not write: the astro folder's read-only subfolders (rule R7).
+///
+/// Captures, legacy runs, the calibration library and the test fixtures. The root is the
+/// caller's (Settings' astro folder, card 0148): ProcessKit knows no home.
 package enum ExportGuard {
-  /// The read-only folders under the user's home.
-  static let readOnly = [
-    "Documents/astro/captures", "Documents/astro/runs", "Documents/astro/library",
-    "Documents/astro/fixtures",
-  ]
+  /// The read-only folders under the astro root.
+  package static let readOnly = ["captures", "runs", "library", "fixtures"]
 
   /// Why `folder` may not receive an export, or `nil`.
   ///
   /// Links are resolved first and names compared without case (APFS is case-insensitive), so
-  /// `~/Documents/Astro/Captures` or a link into the runs is refused too.
-  package static func refusal(for folder: URL, home: URL) -> String? {
+  /// `<astro>/Captures` or a link into the runs is refused too.
+  package static func refusal(for folder: URL, astro: URL) -> String? {
     let target = resolved(folder)
     for relative in readOnly {
-      let root = resolved(home.appendingPathComponent(relative))
+      let root = resolved(astro.appendingPathComponent(relative))
       if target.starts(with: root) {
-        return "\(folder.path) is inside ~/\(relative), which the app never writes: "
+        return "\(folder.path) is inside \(astro.path)/\(relative), which the app never writes: "
           + "choose a folder outside it"
       }
     }

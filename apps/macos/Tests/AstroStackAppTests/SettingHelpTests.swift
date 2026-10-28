@@ -19,6 +19,9 @@ struct SettingHelpTests {
       }
     }
     #expect(SettingHelp.card("storage", locale: Locale(identifier: "fr"))?.contains("Go") == true)
+    #expect(
+      SettingHelp.card("astro-folder", locale: Locale(identifier: "fr"))?.contains("captures")
+        == true)
     #expect(AppGlossary.help.coverageProblems(settings: ["nope"]).count == 2)
   }
 }

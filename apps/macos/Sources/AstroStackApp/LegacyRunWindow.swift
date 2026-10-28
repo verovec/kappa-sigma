@@ -4,7 +4,7 @@ import RenderKit
 import SwiftUI
 import os
 
-/// File › Open Run…: a finished legacy run (`~/Documents/astro/runs/<Object>/<run_id>/`) opened
+/// File › Open Run…: a finished legacy run (`<astro folder>/runs/<Object>/<run_id>/`) opened
 /// read-only, its layers in a sidebar and the selected one in the viewer.
 package final class LegacyRunWindow: NSWindowController, NSWindowDelegate {
   private nonisolated static let logger = Logger(
@@ -32,14 +32,9 @@ package final class LegacyRunWindow: NSWindowController, NSWindowDelegate {
     return projects.count == 1 ? projects.first : nil
   }
 
-  /// The folder picker: folders only, starting in `~/Documents/astro/runs`.
+  /// The folder picker: folders only, starting in the astro folder's `runs` (Settings, 0148).
   package static func runPanel() -> NSOpenPanel {
-    let panel = NSOpenPanel()
-    panel.canChooseDirectories = true
-    panel.canChooseFiles = false
-    panel.directoryURL = FileManager.default.homeDirectoryForCurrentUser
-      .appendingPathComponent("Documents/astro/runs")
-    return panel
+    FolderPanel.make(startingIn: AstroFolderSetting().runs, canCreate: false)
   }
 
   /// Opens the run, handing a failure to `report` (an alert in the app): never swallowed.

@@ -7,8 +7,10 @@ internal import SwiftUI
 package enum SettingHelp {
   /// Settings › Storage (card 0114).
   package static let storage = "storage"
+  /// Settings › Astro folder (card 0148).
+  package static let astroFolder = "astro-folder"
   /// The settings with a card, by HelpKit id.
-  package static let ids = [storage]
+  package static let ids = [astroFolder, storage]
 
   /// The card of setting `id` in the language of `locale`, or `nil` (the gate keeps it present).
   package static func card(_ id: String, locale: Locale) -> String? {

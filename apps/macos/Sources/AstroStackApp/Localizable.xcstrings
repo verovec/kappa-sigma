@@ -849,6 +849,102 @@
         }
       }
     },
+    "AstroStack never writes under the astro folder: choose a scratch folder outside it.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AstroStack never writes under the astro folder: choose a scratch folder outside it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AstroStack n’écrit jamais sous le dossier astro : choisissez un dossier de travail en dehors."
+          }
+        }
+      }
+    },
+    "Astro folder": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Astro folder"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dossier astro"
+          }
+        }
+      }
+    },
+    "Captures, runs, library and fixtures: read here, never written.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Captures, runs, library and fixtures: read here, never written."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Captures, runs, library et fixtures : lus ici, jamais écrits."
+          }
+        }
+      }
+    },
+    "%@ — present": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ — present"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ — présent"
+          }
+        }
+      }
+    },
+    "%@ — absent": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ — absent"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ — absent"
+          }
+        }
+      }
+    },
+    "Choose an existing folder the app does not write under.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose an existing folder the app does not write under."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez un dossier existant où l’app n’écrit pas."
+          }
+        }
+      }
+    },
     "Advanced": {
       "localizations": {
         "en": {
@@ -8909,22 +9005,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Par défaut"
-          }
-        }
-      }
-    },
-    "AstroStack never writes under ~/Documents/astro: choose a folder outside it.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "AstroStack never writes under ~/Documents/astro: choose a folder outside it."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "AstroStack n’écrit jamais sous ~/Documents/astro : choisissez un dossier en dehors."
           }
         }
       }

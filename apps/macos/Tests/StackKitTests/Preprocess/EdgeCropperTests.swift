@@ -101,7 +101,9 @@ struct EdgeCropperTests {
     #expect(measured.rect == EdgeRect(x0: 0, y0: 0, x1: 256, y1: 256))
   }
 
-  @Test("L+R+G+B, R+G+B, a colour master; nothing else makes a composite", .scratchDirectory)
+  @Test(
+    "L+R+G+B, R+G+B, a colour master make a composite; one mono master is copied",
+    .scratchDirectory)
   func testCombiner() async throws {
     #expect(
       ChannelCombiner.inputs(["L": "l", "R": "r", "G": "g", "B": "b"])
@@ -111,8 +113,8 @@ struct EdgeCropperTests {
         == .rgb(r: "r", g: "g", b: "b"))
     #expect(ChannelCombiner.inputs(["RGB": "c"]) == .colour("c"))
     #expect(
-      ChannelCombiner.inputs(["L": "l"]) == nil
-        && ChannelCombiner.inputs(["Ha": "h", "OIII": "o"]) == nil)
+      ChannelCombiner.inputs(["L": "l"]) == .mono(filter: "L", master: "l")
+        && ChannelCombiner.inputs(["Ha": "h", "OIII": "o"]) == .mono(filter: "Ha", master: "h"))
     let siril = PipelineSiril()
     let out = try ScratchDirectory.url.appendingPathComponent("out")
     let combined = try await ChannelCombiner(runner: siril.runner).combine(
@@ -121,6 +123,6 @@ struct EdgeCropperTests {
     #expect(
       siril.calls.map(\.script).last?.hasSuffix(
         "load combined\nsubsky 1\nrmgreen 0\nsave combined\n") == true)
-    #expect(try await ChannelCombiner(runner: siril.runner).combine(["L": "l"], out: out) == nil)
+    #expect(try await ChannelCombiner(runner: siril.runner).combine([:], out: out) == nil)
   }
 }

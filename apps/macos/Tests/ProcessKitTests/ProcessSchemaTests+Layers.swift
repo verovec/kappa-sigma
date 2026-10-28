@@ -20,16 +20,18 @@ extension ProcessSchemaTests {
     #expect(try #require(screens.spec("haEnabled")).needsLayer == "Ha")
     #expect(try #require(screens.spec("nbBlend")).needsLayer == nil)
     var params = ParamSet(schema: screens)
-    // Hα and OIII are on by default: they still ask for their layer, SII does not.
+    // Hα and OIII are on by default: they still ask for their layer, SII, Hβ and NII do not.
     let hidden = EmissionScreensProcess.hiddenParameters(params, layerIDs: ["RGB"])
-    #expect(hidden.allSatisfy { $0.hasPrefix("sii") } && !hidden.isEmpty)
+    #expect(
+      hidden.allSatisfy { ["sii", "hb", "nii"].contains(where: $0.hasPrefix) } && !hidden.isEmpty)
     try params.set("haEnabled", .flag(false))
     try params.set("oiiiEnabled", .flag(false))
     let allHidden = EmissionScreensProcess.hiddenParameters(params, layerIDs: ["RGB"])
     #expect(allHidden.contains("haEnabled") && allHidden.contains("oiiiOpacity"))
     #expect(
-      EmissionScreensProcess.hiddenParameters(params, layerIDs: ["RGB", "Ha", "OIII", "SII"])
-        .isEmpty)
+      EmissionScreensProcess.hiddenParameters(
+        params, layerIDs: ["RGB", "Ha", "OIII", "SII", "Hb", "NII"]
+      ).isEmpty)
   }
 
   @Test("every process whose rows carry needsLayer lists a row reason (the default needs one)")

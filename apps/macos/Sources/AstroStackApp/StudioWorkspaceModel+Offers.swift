@@ -7,7 +7,8 @@ extension StudioWorkspaceModel {
   /// What `type` with `params` proposes on the head, for the levels the viewer's display
   /// stretch (the STF → HT handoff, card 0089), for plate solving the stack header's pointing and
   /// optics (0093) then the catalogue object's position (0130), for the denoise the head's
-  /// measured noise (0115): offered, never set (R2).
+  /// measured noise (0115), for colour calibration the header's camera (0140): offered, never
+  /// set (R2).
   package func offers(for type: any ImageProcess.Type, params: ParamSet) -> [Suggestion] {
     let session = studio.session
     let measured =
@@ -21,6 +22,9 @@ extension StudioWorkspaceModel {
       return suggestions + PlateSolveProcess.suggestions(header: studio.header) + (object ?? [])
     }
     if type == DenoiseProcess.self { return suggestions + denoiseOffers() }
+    if type == ColourCalibrationProcess.self {
+      return suggestions + ColourCalibrationProcess.suggestions(header: studio.header)
+    }
     guard type == LevelsProcess.self else { return suggestions }
     return suggestions + Self.displaySuggestions(viewer.model.frame.stf)
   }

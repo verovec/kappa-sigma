@@ -13,8 +13,16 @@ script **and** pipe mode and gets byte-identical masters, aligned channels and t
 | 1 | building master calibration frames | `MasterBuilder` (0047) | `BuildMasters` |
 | 2… | grading + stacking `<object> <lane>` (one per lane, canonical filter order) | `ChannelStacker` → `ChannelGrading` → `Grader`, then `maskRegistered` (`SaturationRepair`, `ChannelTrailMask`) | `processChannel`, `finishStackedChannel`, `gradeChannel`, `applyTrailMask`, `stackSelectedOrCopy`, `finishLinearMaster` (BAYERPAT strip) |
 | n+1 | aligning channels | `ChannelAligner` (+ `ParityNormalizer`), `CoverageCrop`, `EdgeCropper` (`EdgeTrim`), then `emission` (`DualbandSplit`, `ContinuumK`) | `alignChannels`, `normalizeMasterParity`, `retryPairAlign`, `applyAlignPolicy`, `applyEdgeCrop`, `measureEdgeTrim`, `dualSetChannels`, `lineContinuumSubtract` (k only) |
-| n+2 | combining channels (Siril) | `ChannelCombiner` | `buildCombine` + `NeutralizeScript` |
+| n+2 | combining channels (Siril) | `ChannelCombiner` | `buildCombine` + `NeutralizeScript`; mono: `resolveMono` |
 | n+3 | writing the linear bundle | `BundleWriter` | new (E04 design) |
+
+The combine inputs (`ChannelCombiner.inputs`, card 0137): L+R+G+B → `rgbcomp -lum`, R+G+B →
+`rgbcomp`, one colour master → loaded as is (the emission layers beside it set aside); with no
+colour layer at all → `.mono`, the one master `Filter.monoSource` names (L, else Hα, else the first
+in the canonical order — `palette.go` resolveMono, so OIII+SII is OIII and R+G+Hα is Hα), loaded
+and sky-flattened (`subsky`) like `buildCombine`'s mono branch but with no `rmgreen` (a colour
+step), and the journal says « combined = L alone (mono: no colour composite to build) ». A colour
+master beside a broadband layer makes none (that mix is refused before the run starts).
 
 Each step emits `.progress(step, steps, title, percent, line)` and each master and the composite
 emit `.preview(stage, pngPath)` (`PreviewRenderer`: an asinh display stretch, display only). The

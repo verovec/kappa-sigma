@@ -15,6 +15,8 @@ package enum Filter: String, CaseIterable, Sendable {
   case hydrogenAlpha = "Ha"
   case oxygenIII = "OIII"
   case sulfurII = "SII"
+  case hydrogenBeta = "Hb"
+  case nitrogenII = "NII"
 
   /// The channel name of a one-shot-colour frame.
   ///
@@ -38,6 +40,10 @@ package enum Filter: String, CaseIterable, Sendable {
     "oiii": .oxygenIII, "o3": .oxygenIII, "o-iii": .oxygenIII, "oxygen": .oxygenIII,
     "sii": .sulfurII, "s2": .sulfurII, "s-ii": .sulfurII, "sulfur": .sulfurII,
     "sulphur": .sulfurII,
+    "hb": .hydrogenBeta, "h-beta": .hydrogenBeta, "hbeta": .hydrogenBeta, "h_beta": .hydrogenBeta,
+    "hydrogen-beta": .hydrogenBeta,
+    // No "n2" (unlike s2 / o3): `n1/n2` night folders would read as the filter (card 0141).
+    "nii": .nitrogenII, "n-ii": .nitrogenII, "nitrogen": .nitrogenII,
   ]
 
   /// Whether the filter is an emission line rather than broadband (`line` says which).
@@ -67,6 +73,15 @@ package enum Filter: String, CaseIterable, Sendable {
   package static func less(_ lhs: String, _ rhs: String) -> Bool {
     let (left, right) = (rank(lhs), rank(rhs))
     return left != right ? left < right : lhs < rhs
+  }
+
+  /// The one layer a mono image is made of (`palette.go` resolveMono): L, else Hα, else the first
+  /// of `ids` in the canonical order; nil when there is none.
+  package static func monoSource(in ids: some Collection<String>) -> String? {
+    for preferred in [Self.luminance, .hydrogenAlpha] where ids.contains(preferred.rawValue) {
+      return preferred.rawValue
+    }
+    return ids.min(by: less)
   }
 
   /// Whether `raw` explicitly says one-shot colour.

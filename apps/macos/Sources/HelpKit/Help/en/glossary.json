@@ -27,9 +27,17 @@
     "definition": "Narrowband filter on the 656 nm line of ionised hydrogen.",
     "label": "Hydrogen-alpha"
   },
+  "filter.hb": {
+    "definition": "Narrowband filter on the 486 nm line of ionised hydrogen (H-beta).",
+    "label": "Hydrogen-beta"
+  },
   "filter.l": {
     "definition": "Broadband clear filter of a mono camera.",
     "label": "Luminance"
+  },
+  "filter.nii": {
+    "definition": "Narrowband filter on the 658 nm line of ionised nitrogen, next to Hα.",
+    "label": "Nitrogen II"
   },
   "filter.oiii": {
     "definition": "Narrowband filter on the 501 nm line of doubly ionised oxygen.",

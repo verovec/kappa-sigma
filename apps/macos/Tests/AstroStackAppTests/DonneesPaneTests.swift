@@ -64,8 +64,11 @@ struct DonneesPaneTests {
   @Test(
     "a filter reads in the glossary's words, colour and clip filter included",
     arguments: zip(
-      [("Ha", FilterSet.unknown, "en"), ("RGB", .dualband, "en"), ("Hb", .unknown, "fr")],
-      ["Hydrogen-alpha", "Colour · Dual-band", "Hb"]))
+      [
+        ("Ha", FilterSet.unknown, "en"), ("RGB", .dualband, "en"), ("Hd", .unknown, "fr"),
+        ("Hb", .unknown, "fr"),
+      ],
+      ["Hydrogen-alpha", "Colour · Dual-band", "Hd", "Hydrogène bêta"]))
   func testFilterWords(_ input: (String, FilterSet, String), expected: String) {
     #expect(
       ImportFormat.filter(input.0, filterSet: input.1, locale: Locale(identifier: input.2))

@@ -4,10 +4,11 @@ import Testing
 /// Translated from `internal/filters/filters_test.go` — the ONE canonical filter list (CLAUDE.md).
 @Suite("Filter — the one canonical list, its aliases and order")
 struct FilterTests {
-  @Test("the list is exactly L, R, G, B, Ha, OIII, SII in display order")
+  @Test("the list is exactly L, R, G, B, Ha, OIII, SII, Hb, NII in display order")
   func testCanonicalListAndAliases_list() {
-    #expect(Filter.allCases.map(\.rawValue) == ["L", "R", "G", "B", "Ha", "OIII", "SII"])
-    #expect(Filter.allCases.count == 7)
+    #expect(
+      Filter.allCases.map(\.rawValue) == ["L", "R", "G", "B", "Ha", "OIII", "SII", "Hb", "NII"])
+    #expect(Filter.allCases.count == 9)
   }
 
   @Test(
@@ -16,13 +17,16 @@ struct FilterTests {
       ("Luminance", "L"), ("clear", "L"), ("RED", "R"), ("V", "G"), (" blue ", "B"), ("Ha", "Ha"),
       ("H-alpha", "Ha"), ("h_alpha", "Ha"), ("oiii", "OIII"), ("O3", "OIII"), ("O-III", "OIII"),
       ("oxygen", "OIII"), ("sii", "SII"), ("S2", "SII"), ("S-II", "SII"), ("sulfur", "SII"),
-      ("SULPHUR", "SII"),
+      ("SULPHUR", "SII"), ("Hb", "Hb"), ("H-beta", "Hb"), ("hbeta", "Hb"), ("h_beta", "Hb"),
+      ("NII", "NII"), ("N-II", "NII"), ("nitrogen", "NII"),
     ])
   func testCanonicalListAndAliases_token(raw: String, expected: String) {
     #expect(Filter.token(raw)?.rawValue == expected)
   }
 
-  @Test("a non-filter is not a token", arguments: ["Baader", "", "RGB"])
+  @Test(
+    "a non-filter is not a token (n2 is a night folder, not [NII])",
+    arguments: ["Baader", "", "RGB", "n2"])
   func testFilter_token_unknown(raw: String) {
     #expect(Filter.token(raw) == nil)
   }
@@ -36,7 +40,7 @@ struct FilterTests {
 
   @Test("only the emission lines are narrowband")
   func testFilter_isNarrowband() {
-    for name in ["Ha", "OIII", "SII"] { #expect(Filter.isNarrowband(name), "\(name)") }
+    for name in ["Ha", "OIII", "SII", "Hb", "NII"] { #expect(Filter.isNarrowband(name), "\(name)") }
     for name in ["L", "R", "G", "B", "", "Baader"] { #expect(!Filter.isNarrowband(name)) }
   }
 
@@ -45,13 +49,32 @@ struct FilterTests {
     #expect(Filter.rank("L") == 0)
     #expect(Filter.rank("Ha") == 4)
     #expect(Filter.rank("SII") == 6)
-    #expect(Filter.rank("Baader") == 7)
+    #expect(Filter.rank("NII") == 8)
+    #expect(Filter.rank("Baader") == 9)
   }
 
   @Test("sorting is canonical, then alphabetical")
   func testFilter_less() {
-    let sorted = ["SII", "zeta", "B", "Ha", "alpha", "L", "OIII", "R", "G"].sorted(by: Filter.less)
-    #expect(sorted == ["L", "R", "G", "B", "Ha", "OIII", "SII", "alpha", "zeta"])
+    let sorted = ["NII", "SII", "zeta", "B", "Hb", "Ha", "alpha", "L", "OIII", "R", "G"]
+      .sorted(by: Filter.less)
+    #expect(sorted == ["L", "R", "G", "B", "Ha", "OIII", "SII", "Hb", "NII", "alpha", "zeta"])
+  }
+
+  @Test(
+    "the mono source (palette.go resolveMono): L, else Hα, else the first in the canonical order",
+    arguments: [
+      (["L", "R", "G", "B"], "L"), (["R", "G", "Ha"], "Ha"), (["R", "G", "B"], "R"),
+      (["SII", "Ha", "OIII"], "Ha"), (["SII", "OIII"], "OIII"), (["zeta", "alpha"], "alpha"),
+      (["NII-custom", "SII"], "SII"),
+    ] as [([String], String)])
+  func testFilter_monoSource(ids: [String], expected: String) {
+    #expect(Filter.monoSource(in: ids) == expected)
+    #expect(Filter.monoSource(in: ids.reversed()) == expected)
+  }
+
+  @Test("no layer, no mono source")
+  func testFilter_monoSource_empty() {
+    #expect(Filter.monoSource(in: []) == nil)
   }
 
   @Test(
@@ -99,6 +122,8 @@ struct FilterTests {
       (Filter.hydrogenAlpha, [Filter.red, .luminance], 0),
       (.oxygenIII, [.green, .blue, .luminance], 1),
       (.sulfurII, [.red, .luminance], 0),
+      (.hydrogenBeta, [.blue, .green, .luminance], 2),
+      (.nitrogenII, [.red, .luminance], 0),
     ])
   func testLine_continuum(filter: Filter, filters: [Filter], plane: Int) throws {
     let line = try #require(filter.line)
@@ -110,7 +135,7 @@ struct FilterTests {
     "a line's rest wavelength and panel name",
     arguments: [
       (Filter.hydrogenAlpha, 656.3, "Hα"), (.oxygenIII, 500.7, "[OIII]"),
-      (.sulfurII, 671.6, "[SII]"),
+      (.sulfurII, 671.6, "[SII]"), (.hydrogenBeta, 486.1, "Hβ"), (.nitrogenII, 658.3, "[NII]"),
     ])
   func testLine_wavelengthAndName(filter: Filter, nm: Double, name: String) throws {
     let line = try #require(filter.line)
@@ -118,10 +143,17 @@ struct FilterTests {
     #expect(line.displayName == name)
   }
 
+  @Test("the legacy 7-slot wheel is the first seven filters; a new filter adds no slot")
+  func testLegacyWheel() {
+    #expect(Filter.legacyWheel.map(\.rawValue) == ["L", "R", "G", "B", "Ha", "OIII", "SII"])
+    #expect(Filter.legacyWheel == Array(Filter.allCases.prefix(7)))
+  }
+
   @Test("broadband filters have no line; the two lists split the catalogue in order")
   func testLine_broadbandHasNone() {
     for filter in [Filter.luminance, .red, .green, .blue] { #expect(filter.line == nil) }
-    #expect(Filter.narrowband == [.hydrogenAlpha, .oxygenIII, .sulfurII])
+    #expect(
+      Filter.narrowband == [.hydrogenAlpha, .oxygenIII, .sulfurII, .hydrogenBeta, .nitrogenII])
     #expect(Filter.broadband == [.luminance, .red, .green, .blue])
     #expect(Set(Filter.narrowband + Filter.broadband) == Set(Filter.allCases))
   }

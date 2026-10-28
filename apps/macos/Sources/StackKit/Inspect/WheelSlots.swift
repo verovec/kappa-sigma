@@ -4,9 +4,12 @@ internal import FilterKit
 /// slot (sidecar or file name) is ground truth for mono captures without a FILTER card, and a
 /// legend — `info.txt`, else the canonical wheel order — turns it into a filter name.
 package enum WheelSlots {
-  /// The conventional wheel order when nothing names the slots: every canonical filter, so a
-  /// 7-slot wheel's narrowband positions resolve instead of becoming placeholders.
-  package static let defaultLegend = Filter.allCases.map(\.rawValue)
+  /// The conventional wheel order when nothing names the slots: the Go port's 7-position wheel.
+  ///
+  /// L R G B Ha OIII SII, so its narrowband positions resolve instead of becoming placeholders.
+  /// A physical convention, not the catalogue: a filter added to `Filter` (Hβ, [NII], card 0141)
+  /// adds no slot — slot 8 stays `S8`.
+  package static let defaultLegend = Filter.legacyWheel.map(\.rawValue)
 
   /// The filter of a 1-based slot, or a stable `S<n>` placeholder past the legend.
   package static func filter(slot: Int, legend: [String]) -> String {

@@ -136,3 +136,32 @@ extension ScreensTests {
     }
   }
 }
+
+extension ScreensTests {
+  @Test("Hβ visible alone (card 0141): bound alone, blue by default, the screen is the oracle's")
+  func testHydrogenBetaAlone() throws {
+    let params = try Self.params(["haOpacity": .number(0), "hbEnabled": .flag(true)])
+    #expect(EmissionScreensProcess.boundLines(params).map(\.layerID) == ["Hb"])
+    #expect(params.choice("hbTint") == "blue" && params.choice("niiTint") == "crimson")
+    let line = Self.lineRamp()
+    let stats = LayerStats(channels: [Self.haStats])
+    let base: Float = 0.2
+    let out = try Self.render(
+      params, base: Array(repeating: base, count: line.count),
+      layers: ["Ha": [line.reversed()], "Hb": [line]], layerStats: ["Ha": stats, "Hb": stats])
+    let stretch = ScreensOracle.mtfParams(
+      median: 0.05, madn: 0.002, target: params.number("hbBackground"), clip: -2.5)
+    let settings = ScreensOracle.Line(
+      shadows: stretch.shadows, midtone: stretch.midtone, black: params.number("hbBlack"),
+      boost: params.number("hbBoost"))
+    let alpha = params.number("hbOpacity")
+    for (index, value) in line.enumerated() {
+      let prepared = ScreensOracle.prepare(value, settings)
+      for channel in 0..<3 {
+        let expected = ScreensOracle.screen(
+          base: Double(base), value: prepared, alpha: alpha, tint: ScreenTint.blue.rgb[channel])
+        #expect(abs(Double(out[channel][index]) - expected) <= 1.0 / 65535)
+      }
+    }
+  }
+}

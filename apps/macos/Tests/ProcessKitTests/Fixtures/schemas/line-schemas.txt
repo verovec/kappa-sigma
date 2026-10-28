@@ -27,6 +27,22 @@ emission-screens | siiBlack | [SII] black point | none | simple | number 0.0 in 
 emission-screens | siiOpacity | [SII] opacity | opacity | simple | number 0.6 in 0.0...1.0
 emission-screens | siiTint | [SII] tint | none | simple | choice gold of red,teal,crimson,gold,green,blue
 emission-screens | siiBoost | [SII] boost | none | advanced | number 1.0 in 1.0...3.0
+emission-screens | hbEnabled | Hβ screen | none | simple | flag false
+emission-screens | hbContinuum | Hβ continuum subtraction | none | simple | flag false
+emission-screens | hbContinuumK | Hβ continuum scale k | none | advanced | number 0.0 in 0.0...5.0
+emission-screens | hbBackground | Hβ background | none | simple | number 0.12 in 0.01...0.6
+emission-screens | hbBlack | Hβ black point | none | simple | number 0.0 in 0.0...0.9
+emission-screens | hbOpacity | Hβ opacity | opacity | simple | number 0.6 in 0.0...1.0
+emission-screens | hbTint | Hβ tint | none | simple | choice blue of red,teal,crimson,gold,green,blue
+emission-screens | hbBoost | Hβ boost | none | advanced | number 1.0 in 1.0...3.0
+emission-screens | niiEnabled | [NII] screen | none | simple | flag false
+emission-screens | niiContinuum | [NII] continuum subtraction | none | simple | flag false
+emission-screens | niiContinuumK | [NII] continuum scale k | none | advanced | number 0.0 in 0.0...5.0
+emission-screens | niiBackground | [NII] background | none | simple | number 0.12 in 0.01...0.6
+emission-screens | niiBlack | [NII] black point | none | simple | number 0.0 in 0.0...0.9
+emission-screens | niiOpacity | [NII] opacity | opacity | simple | number 0.6 in 0.0...1.0
+emission-screens | niiTint | [NII] tint | none | simple | choice crimson of red,teal,crimson,gold,green,blue
+emission-screens | niiBoost | [NII] boost | none | advanced | number 1.0 in 1.0...3.0
 line-injection | haGain | Hα gain | none | simple | number 0.0 in 0.0...4.0
 line-injection | haContinuumK | Hα continuum scale k | none | simple | number 0.0 in 0.0...5.0
 line-injection | haBlack | Hα black point | none | simple | number 0.0 in 0.0...1.0
@@ -45,3 +61,15 @@ line-injection | siiBlack | [SII] black point | none | simple | number 0.0 in 0.
 line-injection | siiRed | [SII] into red | opacity | advanced | number 1.0 in 0.0...1.0
 line-injection | siiGreen | [SII] into green | opacity | advanced | number 0.0 in 0.0...1.0
 line-injection | siiBlue | [SII] into blue | opacity | advanced | number 0.0 in 0.0...1.0
+line-injection | hbGain | Hβ gain | none | simple | number 0.0 in 0.0...4.0
+line-injection | hbContinuumK | Hβ continuum scale k | none | simple | number 0.0 in 0.0...5.0
+line-injection | hbBlack | Hβ black point | none | simple | number 0.0 in 0.0...1.0
+line-injection | hbRed | Hβ into red | opacity | advanced | number 0.0 in 0.0...1.0
+line-injection | hbGreen | Hβ into green | opacity | advanced | number 0.0 in 0.0...1.0
+line-injection | hbBlue | Hβ into blue | opacity | advanced | number 1.0 in 0.0...1.0
+line-injection | niiGain | [NII] gain | none | simple | number 0.0 in 0.0...4.0
+line-injection | niiContinuumK | [NII] continuum scale k | none | simple | number 0.0 in 0.0...5.0
+line-injection | niiBlack | [NII] black point | none | simple | number 0.0 in 0.0...1.0
+line-injection | niiRed | [NII] into red | opacity | advanced | number 1.0 in 0.0...1.0
+line-injection | niiGreen | [NII] into green | opacity | advanced | number 0.0 in 0.0...1.0
+line-injection | niiBlue | [NII] into blue | opacity | advanced | number 0.0 in 0.0...1.0

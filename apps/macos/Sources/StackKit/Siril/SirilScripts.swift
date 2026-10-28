@@ -11,6 +11,9 @@ package enum SirilScripts {
     case rgb(r: String, g: String, b: String)
     /// A colour master already (OSC): loaded as is.
     case colour(String)
+    /// One mono master, no colour to build (card 0137, `palette.go` resolveMono): `master` of
+    /// the channel `filter`, loaded as is like `buildCombine`'s mono branch.
+    case mono(filter: String, master: String)
   }
 
   /// A bias or dark master (`StackMasterScript`).
@@ -213,6 +216,8 @@ package enum SirilScripts {
     case .rgb(let r, let g, let b):
       commands = [.rgbcomp(r: r, g: g, b: b, lum: nil, out: "combined"), .load("combined")]
     case .colour(let master):
+      commands = [.load(master)]
+    case .mono(_, let master):
       commands = [.load(master)]
     }
     if let degree = backgroundDegree { commands.append(.subsky(degree: max(degree, 1))) }

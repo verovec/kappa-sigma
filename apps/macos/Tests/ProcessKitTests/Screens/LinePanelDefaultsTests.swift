@@ -24,8 +24,8 @@ struct LinePanelDefaultsTests {
   @Test("the lines are the narrowband filters, in display order, with their panel names")
   func testLinesProjectTheFilters() {
     #expect(EmissionLine.allCases.map(\.filter) == Filter.narrowband)
-    #expect(EmissionLine.allCases.map(\.name) == ["Hα", "[OIII]", "[SII]"])
-    #expect(EmissionLine.allCases.map(\.prefix) == ["ha", "oiii", "sii"])
+    #expect(EmissionLine.allCases.map(\.name) == ["Hα", "[OIII]", "[SII]", "Hβ", "[NII]"])
+    #expect(EmissionLine.allCases.map(\.prefix) == ["ha", "oiii", "sii", "hb", "nii"])
     #expect(EmissionLine(.red) == nil)
     #expect(EmissionLine(.hydrogenAlpha)?.layerID == "Ha")
   }

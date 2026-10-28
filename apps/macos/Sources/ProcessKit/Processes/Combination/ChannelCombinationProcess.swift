@@ -222,7 +222,7 @@ package struct ChannelCombinationProcess: ImageProcess {
   }
 
   /// The layer ids a source reads.
-  private static func layers(of source: String) -> [String] {
+  static func layers(of source: String) -> [String] {
     tokens(of: source).map { LayerPlane($0).layer }
   }
 }

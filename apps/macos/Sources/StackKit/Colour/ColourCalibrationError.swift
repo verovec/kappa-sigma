@@ -4,6 +4,10 @@ package enum ColourCalibrationError: Error, Equatable, Sendable {
   package enum NameKind: String, CaseIterable, Sendable {
     case sensor = "oscsensor"
     case filter = "oscfilter"
+    case monoSensor = "monosensor"
+    case redFilter = "redfilter"
+    case greenFilter = "greenfilter"
+    case blueFilter = "bluefilter"
     case whiteReference = "whiteref"
   }
 

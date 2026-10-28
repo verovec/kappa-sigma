@@ -28,6 +28,9 @@ package struct ParamSpec: Equatable, Sendable {
   package let level: ParamLevel
   /// Kind, default and bounds.
   package let kind: Kind
+  /// For a choice: whether no option (`""`, shown « Choose… ») is a value — the default of a
+  /// choice the user must make, never one made for them (card 0140).
+  package let allowsUnset: Bool
   /// The bundle layer this parameter is about (a line's rows, card 0135): the panel hides the
   /// row while that layer is absent and the values do not ask for it; `nil` for every other row.
   package private(set) var needsLayer: String?
@@ -57,11 +60,14 @@ package struct ParamSpec: Equatable, Sendable {
       kind: .layer(default: layer, allowsNone: allowsNone, allowsProduct: allowsProduct))
   }
 
-  /// A parameter choosing one of `options`.
-  package init(id: String, title: String, level: ParamLevel, choice: String, of options: [String]) {
+  /// A parameter choosing one of `options`, or none yet when `allowsUnset` (`choice: ""`).
+  package init(
+    id: String, title: String, level: ParamLevel, choice: String, of options: [String],
+    allowsUnset: Bool = false
+  ) {
     self.init(
       id: id, title: title, unit: .none, level: level,
-      kind: .choice(default: choice, options: options))
+      kind: .choice(default: choice, options: options), allowsUnset: allowsUnset)
   }
 
   /// A curve of 2 to `maxCount` control points.
@@ -81,12 +87,21 @@ package struct ParamSpec: Equatable, Sendable {
   }
 
   /// A parameter of any kind; `about(layer:)` makes it a layer's row.
-  package init(id: String, title: String, unit: ParamUnit, level: ParamLevel, kind: Kind) {
+  package init(
+    id: String, title: String, unit: ParamUnit, level: ParamLevel, kind: Kind,
+    allowsUnset: Bool = false
+  ) {
     self.id = id
     self.title = title
     self.unit = unit
     self.level = level
     self.kind = kind
+    self.allowsUnset = allowsUnset
+  }
+
+  /// True for a choice.
+  package var isChoice: Bool {
+    if case .choice = kind { true } else { false }
   }
 
   /// This spec, about the bundle layer `layer` (a copy: every other field as it was).
@@ -118,7 +133,7 @@ package struct ParamSpec: Equatable, Sendable {
     case (.flag, .flag):
       return value
     case (.choice(_, let options), .choice(let option)):
-      guard options.contains(option) else {
+      guard options.contains(option) || (allowsUnset && option.isEmpty) else {
         throw ParamError.unknownOption(id: id, option: option)
       }
       return value

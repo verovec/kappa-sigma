@@ -67,6 +67,12 @@ package protocol ImageProcess {
   /// disabled step is the image itself, no tool needed: card 0094); `hostTool` by default.
   static func runsTool(_ params: ParamSet) -> Bool
 
+  /// The choices `params` still leave to the user before its host tool may run, by parameter id
+  /// (card 0140: a spec that `allowsUnset`, still unset) — never made for the user. Checked
+  /// before a tool runs, so only a host-tool process may leave a choice unset
+  /// (`ProcessRegistry.problems`).
+  static func unchosen(_ params: ParamSet) -> [String]
+
   /// True when the process reads the image's plate solution (colour calibration): greyed until
   /// the head carries one.
   static var requiresSolution: Bool { get }
@@ -152,6 +158,11 @@ extension ImageProcess {
   /// A host-tool process always runs its tool.
   package static func runsTool(_ params: ParamSet) -> Bool { hostTool }
 
+  /// Every choice still unset (its spec allows it), in schema order.
+  package static func unchosen(_ params: ParamSet) -> [String] {
+    schema.specs.filter { $0.allowsUnset && params.choice($0.id).isEmpty }.map(\.id)
+  }
+
   /// No solution needed.
   package static var requiresSolution: Bool { false }
 
@@ -214,6 +225,10 @@ extension ImageProcess {
 
   /// No palette menu.
   package static func palettes(planes: [String: Int]) -> [Palette]? { nil }
+
+  /// Whether its image is a colour image whatever it read (card 0137): it replaces its input
+  /// with three planes — a mono layer combined in grey is honest input for a colour process.
+  package static var makesColour: Bool { replacesInput && outputChannels(input: 1) == 3 }
 }
 
 /// Where a process belongs in a pipeline.

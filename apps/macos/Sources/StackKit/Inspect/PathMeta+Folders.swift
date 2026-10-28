@@ -26,7 +26,11 @@ extension PathMeta {
         if let filter = words.lazy.compactMap(Filter.token).first { return filter.rawValue }
         continue
       }
-      if let filter = Filter.token(first) { return filter.rawValue }
+      guard let filter = Filter.token(first) else { continue }
+      // `Hb` then a bare number is a catalogue designation (`Hb 5`, `Hb_12`: Hubble's planetary
+      // nebulae, card 0141), not the Hβ folder; `Ha 1` (a session number) stays Hα.
+      if filter == .hydrogenBeta, words.count > 1, words[1].allSatisfy(\.isASCIIDigit) { continue }
+      return filter.rawValue
     }
     return ""
   }

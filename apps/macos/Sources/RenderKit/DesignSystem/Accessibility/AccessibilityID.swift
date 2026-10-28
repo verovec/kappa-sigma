@@ -362,6 +362,17 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
     Self("guide", name)
   }
 
+  // MARK: - Welcome window
+
+  /// A project row of the welcome window, by its package's path key (card 0145): two packages
+  /// of the same name in two folders stay apart.
+  package static func welcomeProject(_ key: String) -> Self {
+    stageControl("welcome", "project." + key)
+  }
+
+  /// The projects-folder line of the welcome window (card 0145).
+  package static let welcomeFolder = stageControl("welcome", "folder")
+
   /// An id for a test fixture only (`fr.astrostack.test.<name>`).
   package static func fixture(_ name: String) -> Self {
     Self("test", name)

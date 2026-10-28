@@ -4705,6 +4705,22 @@
         }
       }
     },
+    "In the projects folder": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In the projects folder"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dans le dossier des projets"
+          }
+        }
+      }
+    },
     "Recent projects": {
       "localizations": {
         "en": {
@@ -4717,6 +4733,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Projets récents"
+          }
+        }
+      }
+    },
+    "Show the projects folder in the Finder": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show the projects folder in the Finder"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher le dossier des projets dans le Finder"
           }
         }
       }

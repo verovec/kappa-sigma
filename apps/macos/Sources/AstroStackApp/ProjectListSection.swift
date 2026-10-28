@@ -58,14 +58,3 @@ package struct ProjectListSection: View {
     .accessible(.welcomeProject(WelcomeModel.key(project.url)), verbatim: project.target)
   }
 }
-
-extension AccessibilityID {
-  /// A project row of the welcome window, by its package's path key (card 0145): two packages
-  /// of the same name in two folders stay apart.
-  static func welcomeProject(_ key: String) -> Self {
-    stageControl("welcome", "project." + key)
-  }
-
-  /// The projects-folder line of the welcome window (card 0145).
-  static let welcomeFolder = stageControl("welcome", "folder")
-}

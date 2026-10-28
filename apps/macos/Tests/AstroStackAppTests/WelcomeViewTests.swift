@@ -205,17 +205,27 @@ struct WelcomeViewTests {
     #expect(model.isNaming)
   }
 
-  @Test("a project open in a document is counted by that document, by its resolved path")
+  @Test(
+    "a saved project open in a document is counted by that document; an untitled one is no project",
+    .scratchDirectory)
   func testOpenProjectsCountsOpenDocuments() throws {
-    let document = try ProjectDocument(type: ProjectPackage.typeIdentifier)
-    let url = try #require(document.packageURL)
+    let url = try NewProject.create(target: "M 31", in: try ScratchDirectory.url)
+    let document = try ProjectDocument(contentsOf: url, ofType: ProjectPackage.typeIdentifier)
+    let untitled = try ProjectDocument(type: ProjectPackage.typeIdentifier)
+    let temporary = try #require(untitled.packageURL)
     NSDocumentController.shared.addDocument(document)
-    defer { document.close() }
+    NSDocumentController.shared.addDocument(untitled)
+    defer {
+      document.close()
+      untitled.close()
+    }
 
     let open = WelcomeWindow.openProjects()
 
     let found = open.first { WelcomeModel.key($0.0) == WelcomeModel.key(url) }
     #expect(found.map(\.1) == .some(document.projectSummary()))
+    #expect(!open.contains { WelcomeModel.key($0.0) == WelcomeModel.key(temporary) })
+    #expect(WelcomeWindow.openProjectKeys().contains(WelcomeModel.key(url)))
   }
 
   @Test("a recent project that cannot be opened is reported, not swallowed", .scratchDirectory)

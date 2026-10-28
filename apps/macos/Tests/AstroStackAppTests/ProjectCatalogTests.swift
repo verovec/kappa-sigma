@@ -37,6 +37,9 @@ struct ProjectCatalogTests {
     Case(
       name: "a deleted recent is dropped", recent: ["Gone", "M 31"],
       expected: [("M 31", .recent)]),
+    Case(
+      name: "an open project deleted under its document is dropped", open: ["Gone", "M 31"],
+      expected: [("M 31", .open)]),
     Case(name: "nothing anywhere", expected: []),
   ]
 
@@ -118,9 +121,15 @@ struct ProjectCatalogTests {
     try Data().write(to: folder.appendingPathComponent("Fake.astrostack"))
     try FileManager.default.createDirectory(
       at: folder.appendingPathComponent(".Hidden.astrostack"), withIntermediateDirectories: true)
+    // A package elsewhere, linked into the folder, is listed by its link.
+    let elsewhere = try NewProject.create(
+      target: "M 45", in: folder.appendingPathComponent("captures"))
+    try FileManager.default.createSymbolicLink(
+      at: folder.appendingPathComponent("M 45.astrostack"), withDestinationURL: elsewhere)
 
     #expect(
-      ProjectCatalog.folderListing(of: folder).map(\.lastPathComponent) == [m31.lastPathComponent])
+      Set(ProjectCatalog.folderListing(of: folder).map(\.lastPathComponent))
+        == [m31.lastPathComponent, "M 45.astrostack"])
     #expect(ProjectCatalog.folderListing(of: folder.appendingPathComponent("none")).isEmpty)
   }
 }

@@ -79,25 +79,26 @@ package enum WelcomeWindow {
     return window
   }
 
-  /// The key (`WelcomeModel.key`) of every project open in a document; reads no database.
-  package static func openProjectKeys() -> Set<String> {
-    Set(
-      NSDocumentController.shared.documents.compactMap {
-        guard let document = $0 as? ProjectDocument else { return nil }
-        // The file URL is there before the package finishes opening.
-        return (document.packageURL ?? document.fileURL).map(WelcomeModel.key)
-      })
+  /// Every saved project open in a document, in the documents' order, by its file URL — there
+  /// before the package finishes opening; an untitled one's temporary package has none.
+  package static func openDocuments() -> [(document: ProjectDocument, url: URL)] {
+    NSDocumentController.shared.documents.compactMap { document in
+      guard let document = document as? ProjectDocument, let url = document.fileURL else {
+        return nil
+      }
+      return (document, url)
+    }
   }
 
-  /// Every project open in a document, in the documents' order, with that document's counts.
+  /// The key (`WelcomeModel.key`) of every project open in a document; reads no database.
+  package static func openProjectKeys() -> Set<String> {
+    Set(openDocuments().map { WelcomeModel.key($0.url) })
+  }
+
+  /// Every project open in a document with that document's counts, in the documents' order; one
+  /// still opening has none yet and is left to the catalog's read-only disk read.
   package static func openProjects() -> [(URL, ProjectSummary?)] {
-    NSDocumentController.shared.documents.compactMap { document in
-      // The file URL is there before the package finishes opening (as in `openProjectKeys`).
-      guard let document = document as? ProjectDocument,
-        let url = document.packageURL ?? document.fileURL
-      else { return nil }
-      return (url, document.projectSummary())
-    }
+    openDocuments().compactMap { open in open.document.projectSummary().map { (open.url, $0) } }
   }
 
   /// Open…: the projects picked in the Open panel, opened like a recent one.

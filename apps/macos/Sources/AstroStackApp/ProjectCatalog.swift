@@ -62,7 +62,8 @@ package final class ProjectCatalog {
   package func reload() async {
     generation += 1
     let current = generation
-    let open = openProjects()
+    // A package deleted or moved under its open document has nothing left to open.
+    let open = openProjects().filter { FileManager.default.fileExists(atPath: $0.0.path) }
     var seen = Set(open.map { WelcomeModel.key($0.0) })
     let recent = WelcomeModel.onDisk(recentURLs()).filter {
       seen.insert(WelcomeModel.key($0)).inserted
@@ -87,8 +88,8 @@ package final class ProjectCatalog {
       + folder.map { Self.entry($0, read[$0] ?? nil, .folder) }
   }
 
-  /// The project packages directly in `folder`: `*.astrostack` directories, hidden ones left out;
-  /// nothing for a missing folder.
+  /// The project packages directly in `folder`: `*.astrostack` directories (a symlink to one
+  /// included), hidden ones left out; nothing for a missing folder.
   nonisolated package static func folderListing(of folder: URL) -> [URL] {
     let listed =
       (try? FileManager.default.contentsOfDirectory(
@@ -96,7 +97,8 @@ package final class ProjectCatalog {
         options: [.skipsHiddenFiles])) ?? []
     return listed.filter { url in
       url.pathExtension == ProjectPackage.fileExtension
-        && (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
+        && (try? url.resolvingSymlinksInPath().resourceValues(forKeys: [.isDirectoryKey])
+          .isDirectory) == true
     }
   }
 

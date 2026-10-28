@@ -37,7 +37,7 @@ package final class ProjectDocument: NSDocument {
   package private(set) var windowModel: ProjectWindowModel?
   /// The astro folder whose captures, runs, library and fixtures never receive a project (R7,
   /// Settings' choice — card 0148); tests use a fake.
-  package var astro = AstroFolderSetting().folder
+  package var astro: () -> URL = { AstroFolderSetting().folder }
 
   /// The folder of the package the document currently edits.
   package var packageURL: URL? { project?.url }
@@ -118,7 +118,7 @@ package final class ProjectDocument: NSDocument {
   /// Throws the export's refusal when the package at `url` (links resolved, the link itself
   /// included) lies under the astro folder's captures, runs, library or fixtures.
   private func refuseReadOnly(_ url: URL) throws {
-    guard let reason = ExportGuard.refusal(for: url, astro: astro) else { return }
+    guard let reason = ExportGuard.refusal(for: url, astro: astro()) else { return }
     throw CocoaError(.fileWriteNoPermission, userInfo: [NSLocalizedDescriptionKey: reason])
   }
 

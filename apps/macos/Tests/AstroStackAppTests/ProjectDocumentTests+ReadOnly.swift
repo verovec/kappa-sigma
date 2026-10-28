@@ -53,7 +53,8 @@ extension ProjectDocumentTests {
 
     for operation in [NSDocument.SaveOperationType.saveOperation, .saveAsOperation] {
       let document = try ProjectDocument(type: Self.type)
-      document.astro = home.appendingPathComponent(row.astro ?? "Documents/astro")
+      let astro = home.appendingPathComponent(row.astro ?? "Documents/astro")
+      document.astro = { astro }
       let untitled = try #require(document.packageURL)
       if row.refused {
         let error = #expect(throws: (any Error).self) {
@@ -86,7 +87,8 @@ extension ProjectDocumentTests {
     let stray = folder.appendingPathComponent("test-build.astrostack")
     try ProjectPackage.create(at: stray).close()
     let document = try ProjectDocument(type: Self.type)
-    document.astro = home.appendingPathComponent("Documents/astro")
+    let astro = home.appendingPathComponent("Documents/astro")
+    document.astro = { astro }
     let untitled = try #require(document.packageURL)
     defer { document.close() }
 

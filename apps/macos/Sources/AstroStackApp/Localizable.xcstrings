@@ -849,18 +849,18 @@
         }
       }
     },
-    "AstroStack never writes under %@: choose a folder outside it.": {
+    "This is one of the astro folder's data folders: AstroStack never writes there.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "AstroStack never writes under %@: choose a folder outside it."
+            "value": "This is one of the astro folder's data folders: AstroStack never writes there."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "AstroStack n’écrit jamais sous %@ : choisissez un dossier en dehors."
+            "value": "C’est un des dossiers de données du dossier astro : AstroStack n’y écrit jamais."
           }
         }
       }

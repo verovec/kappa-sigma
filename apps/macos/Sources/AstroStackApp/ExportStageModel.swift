@@ -218,7 +218,7 @@ package final class ExportStageModel {
     failure = nil
     written = []
     let folder = self.folder
-    guard ExportGuard.refusal(for: folder, astro: services.astro) == nil else {
+    guard ExportGuard.refusal(for: folder, astro: services.astro()) == nil else {
       failure = .exportReadOnlyFolder(path: folder.path)
       return
     }
@@ -251,7 +251,7 @@ package final class ExportStageModel {
       let urls = try await Self.write(
         original: Self.detached(studio.session.history.current),
         starless: starless(),
-        settings: settings, to: folder, astro: services.astro, device: studio.session.device)
+        settings: settings, to: folder, astro: services.astro(), device: studio.session.device)
       let json = String(bytes: try JSONEncoder().encode(settings), encoding: .utf8) ?? "{}"
       try store.addExport(
         stackID: stack.id, imageID: studio.imageID, headStepID: head, folder: folder.path,

@@ -24,6 +24,8 @@ package struct SettingsView: View {
   @State private var astroFolder: URL
   /// The last astro folder chosen was no folder, or one the app writes under; not kept.
   @State private var astroRefused = false
+  /// Which subfolders the root holds, read when the root is set (never on each render).
+  @State private var astroLines: [(name: String, found: Bool)]
   /// The retention policy as edited; written back on every change.
   @State private var policy: RetentionPolicy
 
@@ -42,6 +44,7 @@ package struct SettingsView: View {
     _scratchFolder = State(initialValue: scratch.folder)
     self.astro = astro
     _astroFolder = State(initialValue: astro.folder)
+    _astroLines = State(initialValue: Self.astroLines(astro))
     self.retention = retention
     _policy = State(initialValue: retention.policy)
     launched = setting.choice
@@ -92,7 +95,7 @@ package struct SettingsView: View {
         Button(.app("Default")) { pickScratch(nil) }.disabled(scratch.chosen == nil)
       }
       if scratchRefused {
-        Text(.app("AstroStack never writes under \(astroFolder.path): choose a folder outside it."))
+        Text(.app("This is one of the astro folder's data folders: AstroStack never writes there."))
           .font(.caption).foregroundStyle(DesignColor.statusError.color)
       }
     }
@@ -126,7 +129,7 @@ package struct SettingsView: View {
         Button(.app("Choose…"), action: chooseAstro)
         Button(.app("Default")) { pickAstro(nil) }.disabled(astro.chosen == nil)
       }
-      ForEach(Self.astroLines(astro), id: \.name) { line in
+      ForEach(astroLines, id: \.name) { line in
         Text(line.found ? .app("\(line.name) — present") : .app("\(line.name) — absent"))
           .font(.caption).foregroundStyle(.secondary)
       }
@@ -186,5 +189,6 @@ package struct SettingsView: View {
   private func pickAstro(_ url: URL?) {
     astroRefused = !astro.choose(url)
     astroFolder = astro.folder
+    astroLines = Self.astroLines(astro)
   }
 }

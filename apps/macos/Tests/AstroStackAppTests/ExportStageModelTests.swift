@@ -23,7 +23,7 @@ struct ExportStageModelTests {
   ) throws -> ExportServices {
     let root = try ScratchDirectory.url
     return ExportServices(
-      tools: tools, scratch: root.appendingPathComponent("work"), astro: root,
+      tools: tools, scratch: root.appendingPathComponent("work"), astro: { root },
       now: { Self.noon }, timeZone: try #require(TimeZone(identifier: "UTC")))
   }
 

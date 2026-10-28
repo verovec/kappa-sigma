@@ -12,7 +12,7 @@ package struct ExportServices: Sendable {
   package var scratch: URL
   /// The astro folder (Settings, card 0148): its captures, runs, library and fixtures are never
   /// written.
-  package var astro: URL
+  package var astro: @Sendable () -> URL
   /// Today, for `exports/<stack>/<yyyy-MM-dd>/`.
   package var now: @Sendable () -> Date
   /// The zone the date is written in: the user's.
@@ -25,7 +25,7 @@ package struct ExportServices: Sendable {
     tools: HostTools,
     scratch: URL = FileManager.default.temporaryDirectory
       .appendingPathComponent("AstroStack/Work/starnet", isDirectory: true),
-    astro: URL = AstroFolderSetting().folder,
+    astro: @escaping @Sendable () -> URL = { AstroFolderSetting().folder },
     now: @escaping @Sendable () -> Date = { Date() }, timeZone: TimeZone = .current,
     reveal: @escaping @MainActor @Sendable ([URL]) -> Void = { _ in }
   ) {

@@ -49,7 +49,7 @@ package nonisolated enum ColourCalibrationTool {
     tool(scratch: scratch) {
       ColourCalibrator.live(
         binary: try SirilTool.locate(), support: PlateSolver.supportFolder,
-        catalogues: ImportPlanning.libraryFolder.appendingPathComponent("catalogues"))
+        catalogues: AstroFolderSetting().catalogues)
     }
   }
 

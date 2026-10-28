@@ -7,19 +7,9 @@ package import StackKit
 package enum ImportPlanning {
   /// Where captures are suggested from (R7: read-only, outside every repo): Settings' astro
   /// folder (card 0148), read at each use like the scratch folder.
-  package nonisolated static var capturesFolder: URL { captures(of: AstroFolderSetting()) }
+  package nonisolated static var capturesFolder: URL { AstroFolderSetting().captures }
   /// The calibration library reused as is, under the same root.
-  package nonisolated static var libraryFolder: URL { library(of: AstroFolderSetting()) }
-
-  /// The captures folder under the root of `setting`.
-  package nonisolated static func captures(of setting: AstroFolderSetting) -> URL {
-    setting.captures
-  }
-
-  /// The library folder under the root of `setting`.
-  package nonisolated static func library(of setting: AstroFolderSetting) -> URL {
-    setting.library
-  }
+  package nonisolated static var libraryFolder: URL { AstroFolderSetting().library }
 
   /// A planning closure over the project's `store` and the library at `library`; the library is
   /// indexed once per closure (one Import sheet), not on every rescan.

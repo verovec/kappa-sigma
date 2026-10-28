@@ -54,7 +54,10 @@ struct AstroFolderSettingTests {
   @Test(
     "testAppOwnedFoldersRefused: a root the app writes under cannot be the read-only root",
     .scratchDirectory,
-    arguments: ["scratch/AstroStack/Work", "home/AstroStack", "home/AstroStack/Projects"])
+    arguments: [
+      "scratch/AstroStack/Work", "home/AstroStack", "home/AstroStack/Projects", "home", "scratch",
+      "",
+    ])
   func testAppOwnedFoldersRefused(relative: String) throws {
     let (defaults, name) = try Self.suite()
     defer { defaults.removePersistentDomain(forName: name) }
@@ -90,8 +93,9 @@ struct AstroFolderSettingTests {
     defer { defaults.removePersistentDomain(forName: name) }
     let home = URL(fileURLWithPath: "/Users/someone")
     let setting = AstroFolderSetting(defaults: defaults, home: home)
-    #expect(ImportPlanning.captures(of: setting).path == "/Users/someone/Documents/astro/captures")
-    #expect(ImportPlanning.library(of: setting).path == "/Users/someone/Documents/astro/library")
+    #expect(setting.captures.path == "/Users/someone/Documents/astro/captures")
+    #expect(setting.library.path == "/Users/someone/Documents/astro/library")
+    #expect(setting.catalogues.path == "/Users/someone/Documents/astro/library/catalogues")
     #expect(AppDelegate.protectedFolders(setting).first == setting.folder)
     #expect(AppDelegate.protectedFolders(setting).contains(LeftoverSweep.dataFolder))
   }

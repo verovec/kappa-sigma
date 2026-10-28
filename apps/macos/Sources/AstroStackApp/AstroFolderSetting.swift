@@ -17,8 +17,12 @@ package nonisolated struct AstroFolderSetting {
 
   /// The root when nothing is chosen: `~/Documents/astro`.
   package static var defaultFolder: URL {
-    URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(
-      "Documents/astro", isDirectory: true)
+    defaultFolder(under: URL(fileURLWithPath: NSHomeDirectory()))
+  }
+
+  /// The default root under `home`: its `Documents/astro`.
+  package static func defaultFolder(under home: URL) -> URL {
+    home.appendingPathComponent("Documents/astro", isDirectory: true)
   }
 
   private static let key = "astroFolder"
@@ -43,9 +47,7 @@ package nonisolated struct AstroFolderSetting {
   }
 
   /// The root now: the chosen folder, else `~/Documents/astro` under `home`.
-  package var folder: URL {
-    chosen ?? home.appendingPathComponent("Documents/astro", isDirectory: true)
-  }
+  package var folder: URL { chosen ?? Self.defaultFolder(under: home) }
 
   /// The captures, by target then night (read-only).
   package var captures: URL { folder.appendingPathComponent("captures", isDirectory: true) }
@@ -65,7 +67,9 @@ package nonisolated struct AstroFolderSetting {
   }
 
   /// Chooses `folder` (`nil` = back to the default); false, nothing stored, for a path that is
-  /// not an existing folder or one under what the app writes (the scratch folder, `~/AstroStack`).
+  /// not an existing folder, or one under — or around — what the app writes (the scratch folder,
+  /// `~/AstroStack`): the same rule as the leftover sweep, which refuses a root inside or around a
+  /// protected folder, so an accepted root never silences the sweep.
   @discardableResult
   package func choose(_ folder: URL?) -> Bool {
     guard let folder else {
@@ -76,7 +80,8 @@ package nonisolated struct AstroFolderSetting {
       return false
     }
     let target = Self.resolved(folder)
-    guard !appOwned.contains(where: { target.starts(with: Self.resolved($0)) }) else {
+    let owned = appOwned.map(Self.resolved)
+    guard !owned.contains(where: { target.starts(with: $0) || $0.starts(with: target) }) else {
       return false
     }
     defaults.set(folder.standardizedFileURL.path, forKey: Self.key)

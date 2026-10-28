@@ -92,6 +92,7 @@ struct CaptureManifestTests {
     arguments: [
       ("LLLRGBHaHa", Optional(["L", "L", "L", "R", "G", "B", "Ha", "Ha"])), ("Ha", ["Ha"]),
       ("OIII", ["OIII"]), ("RVB", ["R", "G", "B"]), ("gain", nil), ("moon", nil), ("L200", nil),
+      ("HbHbNII", ["Hb", "Hb", "NII"]), ("HaHbB", ["Ha", "Hb", "B"]),
     ])
   func testCaptureManifest_expandFilterWord(word: String, expected: [String]?) {
     #expect(CaptureManifest.expandFilterWord(word) == expected)

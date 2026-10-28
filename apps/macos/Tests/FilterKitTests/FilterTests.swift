@@ -18,13 +18,15 @@ struct FilterTests {
       ("H-alpha", "Ha"), ("h_alpha", "Ha"), ("oiii", "OIII"), ("O3", "OIII"), ("O-III", "OIII"),
       ("oxygen", "OIII"), ("sii", "SII"), ("S2", "SII"), ("S-II", "SII"), ("sulfur", "SII"),
       ("SULPHUR", "SII"), ("Hb", "Hb"), ("H-beta", "Hb"), ("hbeta", "Hb"), ("h_beta", "Hb"),
-      ("NII", "NII"), ("n2", "NII"), ("N-II", "NII"), ("nitrogen", "NII"),
+      ("NII", "NII"), ("N-II", "NII"), ("nitrogen", "NII"),
     ])
   func testCanonicalListAndAliases_token(raw: String, expected: String) {
     #expect(Filter.token(raw)?.rawValue == expected)
   }
 
-  @Test("a non-filter is not a token", arguments: ["Baader", "", "RGB"])
+  @Test(
+    "a non-filter is not a token (n2 is a night folder, not [NII])",
+    arguments: ["Baader", "", "RGB", "n2"])
   func testFilter_token_unknown(raw: String) {
     #expect(Filter.token(raw) == nil)
   }

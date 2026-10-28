@@ -21,7 +21,9 @@ package struct CaptureManifest: Equatable, Sendable {
   package var warnings: [String] = []
 
   /// Matched longest-first so `Ha`/`OIII` win over single letters; aliases normalized after.
-  private static let knownFilters = ["OIII", "O3", "SII", "S2", "Ha", "L", "R", "G", "B", "V"]
+  private static let knownFilters = [
+    "OIII", "NII", "O3", "SII", "S2", "Ha", "Hb", "L", "R", "G", "B", "V",
+  ]
 
   /// A glued filter word split into normalized tokens (`LLLRGBHaHa`); `nil` if any character is
   /// not a filter, so metadata words (`gain`, `moon`) are never mistaken for filters.

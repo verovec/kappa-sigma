@@ -1,7 +1,7 @@
 # FilterKit
 
-The ONE filter list (CLAUDE.md): `Filter` (L R G B Ha OIII SII Hb NII — cases, aliases, display order,
-`rank`/`less`, colour aliases), its line physics (`Filter.Line`: wavelength, panel name, continuum
+The ONE filter list (CLAUDE.md): `Filter` (cases, aliases, display order, `rank`/`less`, colour
+aliases), its line physics (`Filter.Line`: wavelength, panel name, continuum
 references) and the one-shot-colour clip filters (`FilterSet`: unknown, broadband, dual-band, with
 the lines each plane carries). A leaf module with no dependency: StackKit (lanes, continuum fit,
 bundle roles), ProcessKit (line processes) and the app (glossary words, pickers) all read it, so no
@@ -22,9 +22,9 @@ kit declares a second list.
 
 Card 0141 (Hβ, [NII]) learned two more: the filter-wheel legend is NOT the catalogue
 (`WheelSlots.defaultLegend` is the 7-position wheel, a new filter adds no slot), and an alias is
-also a folder word (`PathMeta.filterFromFolders` reads a folder's first word): `n2` names [NII],
-so a capture folder named `n2` now reads as that filter — pick aliases a capture tree would not
-use by accident.
+also a folder word (`PathMeta.filterFromFolders` reads a folder's first word): `n2` would read a
+night folder as [NII], so it is not an alias — pick aliases a capture tree would not use by
+accident. The glued-word splitter (`CaptureManifest.knownFilters`) lists each new short token.
 
 One StackKit helper still spells tokens: `CaptureManifest.knownFilters`, the glued-word splitter
 (`LLLRGBHaHa`), lists the short tokens it may split on, longest first within a collision group —

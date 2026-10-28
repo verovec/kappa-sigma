@@ -67,7 +67,7 @@
   "emission-screens.hbEnabled": "Pose la couche Hβ sur l'image ; désactivé laisse l'image couleur telle quelle.",
   "emission-screens.hbOpacity": "À quel point la couche Hβ éclaircit l'image : 1 entièrement, 0 pas du tout.",
   "emission-screens.hbTint": "La couleur dans laquelle la couche Hβ est écranée ; le bleu est sa couleur naturelle.",
-  "emission-screens.linkLayers": "Étire les trois couches avec une seule courbe ; désactivé, chacune depuis ses propres statistiques.",
+  "emission-screens.linkLayers": "Étire toutes les couches de raie avec une seule courbe ; désactivé, chacune depuis ses propres statistiques.",
   "emission-screens.nbBlend": "Part des écrans posée sur l'image couleur : 1 tous, 0 aucun.",
   "emission-screens.niiBackground": "Où la médiane de la couche [NII] arrive après son étirement ; plus bas garde le ciel sombre.",
   "emission-screens.niiBlack": "Le point noir de la couche [NII] après son étirement : ce qui est dessous est caché.",

@@ -42,7 +42,8 @@ package enum Filter: String, CaseIterable, Sendable {
     "sulphur": .sulfurII,
     "hb": .hydrogenBeta, "h-beta": .hydrogenBeta, "hbeta": .hydrogenBeta, "h_beta": .hydrogenBeta,
     "hydrogen-beta": .hydrogenBeta,
-    "nii": .nitrogenII, "n2": .nitrogenII, "n-ii": .nitrogenII, "nitrogen": .nitrogenII,
+    // No "n2" (unlike s2 / o3): `n1/n2` night folders would read as the filter (card 0141).
+    "nii": .nitrogenII, "n-ii": .nitrogenII, "nitrogen": .nitrogenII,
   ]
 
   /// Whether the filter is an emission line rather than broadband (`line` says which).

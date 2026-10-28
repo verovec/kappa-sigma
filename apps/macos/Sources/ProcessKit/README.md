@@ -80,7 +80,7 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   (`LiveKernelTransitionTests`, sha256 recorded with the GPU name; another GPU skips). To add a
   line: a FilterKit filter + `LinePanelDefaults` row; raise `MAX_LINES` only past 8 lines.
 - **EmissionScreensProcess** (card 0051, id `emission-screens`): astrocomp's HOO-over-broadband
-  chain on a stretched RGB base. Per line (`EmissionLine`, a projection of FilterKit's `Filter.narrowband`: Hα, [OIII], [SII]; panel defaults in `LinePanelDefaults`; params
+  chain on a stretched RGB base. Per line (`EmissionLine`, a projection of FilterKit's `Filter.narrowband`, every catalogued line; panel defaults in `LinePanelDefaults`; params
   `<ha|oiii|sii><Enabled|Continuum|ContinuumK|Background|Black|Opacity|Tint|Boost>`) on its own
   linear bundle layer: continuum `max(line − k·ref, 0)` (k = the panel value; the bundle's
   `continuum_k` is a suggestion, the reference plane is the bundle's `continuum_ref`), the

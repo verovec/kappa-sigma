@@ -30,6 +30,37 @@ struct StudioModelBranchTests {
   static let recordedManifestSHA256 =
     "b33d1729613299c584c467998a3847bfb3ad0741b263659b1bddd5691dd19f63"
 
+  /// The 0118 digest, before card 0141 added the Hβ and [NII] defaults.
+  static let digest0118 = "3410e49cd61a9b40d33b861323480e6b8185705586be7f331f3042f9638e534f"
+
+  static func sha256(_ data: Data) -> String {
+    SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+  }
+
+  /// `manifest` without the parameter entries whose id starts with one of `prefixes`, as the
+  /// encoder wrote it before those parameters existed.
+  static func withoutLines(_ prefixes: [String], _ manifest: Data) -> Data {
+    let lines = String(decoding: manifest, as: UTF8.self).components(separatedBy: "\n")
+    var kept: [String] = []
+    var index = 0
+    while index < lines.count {
+      let next = index + 1 < lines.count ? lines[index + 1] : ""
+      let id = prefixes.contains { next.contains("\"id\" : \"" + $0) }
+      if lines[index].trimmingCharacters(in: .whitespaces) == "{", id {
+        while !["}", "},"].contains(lines[index].trimmingCharacters(in: .whitespaces)) {
+          index += 1
+        }
+        index += 1
+        continue
+      }
+      kept.append(lines[index])
+      index += 1
+    }
+    // The entry before a removed last one lost its comma's follower.
+    let text = kept.joined(separator: "\n").replacing(/\},\n(\s*)\]/) { "}\n" + $0.1 + "]" }
+    return Data(text.utf8)
+  }
+
   @Test("testNoBranchStepKeepsMainByteIdentical", .scratchDirectory)
   func testNoBranchStepKeepsMainByteIdentical() async throws {
     let opened = try BranchTests.project()
@@ -40,6 +71,9 @@ struct StudioModelBranchTests {
     let manifest = try Data(contentsOf: opened.folder.appendingPathComponent("history.json"))
     let digest = SHA256.hash(data: manifest).map { String(format: "%02x", $0) }.joined()
     #expect(digest == Self.recordedManifestSHA256)
+    // Card 0141 grew the screens' defaults: without its Hβ / [NII] entries the manifest is still
+    // the 0118 one, byte for byte.
+    #expect(Self.sha256(Self.withoutLines(["hb", "nii"], manifest)) == Self.digest0118)
     let branches = opened.folder.appendingPathComponent("branches")
     #expect(!FileManager.default.fileExists(atPath: branches.path), "no branch folder written")
     // The same steps through the pipeline runner on the bare bundle (no branch seam): the same

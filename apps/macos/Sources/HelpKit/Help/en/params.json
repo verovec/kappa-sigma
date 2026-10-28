@@ -67,7 +67,7 @@
   "emission-screens.hbEnabled": "Lays the Hβ layer over the image; off leaves the colour image as it is.",
   "emission-screens.hbOpacity": "How much the Hβ layer brightens the image: 1 fully, 0 not at all.",
   "emission-screens.hbTint": "The colour the Hβ layer is screened in; blue is its natural colour.",
-  "emission-screens.linkLayers": "Stretches the three layers with one curve; off stretches each from its own statistics.",
+  "emission-screens.linkLayers": "Stretches every line layer with one curve; off stretches each from its own statistics.",
   "emission-screens.nbBlend": "How much of the screens is laid over the colour image: 1 all of them, 0 none.",
   "emission-screens.niiBackground": "Where the [NII] layer's median lands after its stretch; lower keeps the sky dark.",
   "emission-screens.niiBlack": "The [NII] layer's black point after its stretch: what lies below is hidden.",

@@ -9,8 +9,30 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
   /// whenever AppKit asks then (restoration may defer it past `applicationDidFinishLaunching`).
   private var askedOnce = false
   /// Armed by a real launch only (a test never runs `applicationWillFinishLaunching`): the
-  /// retention review runs once, the first time the app has no document to show (card 0114).
+  /// retention review runs once, when the app starts with no document to show (card 0114); a
+  /// project closed first disarms it (never a review over a project just closed).
   private var retentionArmed = false
+  /// Shows the welcome window (card 0144: also when the last project closes).
+  private let welcome: @MainActor () -> Void
+  /// Starts the review of stacks never exported (card 0114).
+  private let reviewRetention: @MainActor () -> Void
+  /// The recent projects Clear Menu would clear.
+  private let recentURLs: @MainActor () -> [URL]
+
+  /// The app's delegate: `welcome` shows the welcome window, `reviewRetention` starts the
+  /// retention review, `recentURLs` are AppKit's recents (tests substitute spies).
+  package init(
+    welcome: @escaping @MainActor () -> Void = { WelcomeWindow.show() },
+    reviewRetention: @escaping @MainActor () -> Void = {
+      Task { await WelcomeWindow.reviewRetention() }
+    },
+    recentURLs: @escaping @MainActor () -> [URL] = WelcomeWindow.recentURLs
+  ) {
+    self.welcome = welcome
+    self.reviewRetention = reviewRetention
+    self.recentURLs = recentURLs
+    super.init()
+  }
 
   /// Yes, unless the app is launching with `-openImage`: AppKit then asks
   /// `applicationOpenUntitledFile` (at launch, and from the Dock with no window open).
@@ -24,18 +46,35 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
   /// AppKit calls it once restoration is over and no document opened: the first time after a
   /// launch, stacks never exported are reviewed — never while a project is restoring or opening.
   package func applicationOpenUntitledFile(_ sender: NSApplication) -> Bool {
-    WelcomeWindow.show()
-    if retentionArmed {
-      retentionArmed = false
-      Task { await WelcomeWindow.reviewRetention() }
-    }
+    presentWelcome()
     return true
   }
 
-  /// Arms the retention review before AppKit can ask for an untitled document: a plain launch
-  /// asks it before `applicationDidFinishLaunching`.
+  /// The welcome window, and the first time after a launch the review of stacks never exported.
+  private func presentWelcome() {
+    welcome()
+    if retentionArmed {
+      retentionArmed = false
+      reviewRetention()
+    }
+  }
+
+  /// Arms the retention review before AppKit can ask for an untitled document (a plain launch
+  /// asks it before `applicationDidFinishLaunching`), and the welcome window's return when the
+  /// last project closes: the app stays, with somewhere to open the next project from.
   package func applicationWillFinishLaunching(_ notification: Notification) {
     retentionArmed = true
+    ProjectDocument.lastDocumentClosed = { [weak self] quietly in
+      self?.lastProjectClosed(quietly: quietly)
+    }
+  }
+
+  /// The welcome window after a plain close (a relaunch or a quit closes `quietly`); either way
+  /// the retention review stays a launch verdict over earlier sessions, never one over the project
+  /// just closed (or one still opening), not even from the Dock later.
+  private func lastProjectClosed(quietly: Bool) {
+    retentionArmed = false
+    if !quietly { welcome() }
   }
 
   /// `-openImage <path>` opens that FITS in the viewer at launch; `-openRun <folder>` opens a
@@ -132,8 +171,28 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
   /// AppKit does not close documents on quit; closing them checkpoints each `project.db` and
   /// deletes the temporary package of an untitled project the user chose not to save.
   package func applicationWillTerminate(_ notification: Notification) {
-    for document in NSDocumentController.shared.documents {
-      document.close()
-    }
+    closeForQuit(NSDocumentController.shared.documents)
+  }
+
+  /// Closes `documents` for good: none of those closes may bring the welcome window back.
+  package func closeForQuit(_ documents: [NSDocument]) {
+    ProjectDocument.closeQuietly(documents)
+    // Nothing that closes later in the quit (a late open) may bring the window back either.
+    ProjectDocument.lastDocumentClosed = { _ in }
+  }
+
+  /// File › Open Recent › Clear Menu: AppKit's recents, which the welcome window lists too.
+  @objc package func clearRecentProjects(_ sender: Any?) {
+    NSDocumentController.shared.clearRecentDocuments(sender)
+    Task { await WelcomeWindow.model.reload() }
+  }
+}
+
+extension AppDelegate: NSMenuItemValidation {
+  /// Clear Menu is greyed with nothing to clear, as AppKit's own; every other item is enabled.
+  package func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+    guard menuItem.action == #selector(clearRecentProjects(_:)) else { return true }
+    // Every AppKit recent, a deleted package's too: a stale list must stay clearable.
+    return !recentURLs().isEmpty
   }
 }

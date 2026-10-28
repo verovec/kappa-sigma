@@ -89,15 +89,24 @@ extension StudioWorkspaceModelTests {
   @Test(
     "testGreyingFollowsTheHead: an absent layer greys the value with why, until a layer adds it",
     .scratchDirectory)
-  func testGreyingFollowsTheHead() throws {
+  func testGreyingFollowsTheHead() async throws {
     let opened = try BranchTests.project()
     defer { try? opened.package.close() }
     let workspace = try Self.workspace(opened, bundle: BranchTests.bundle())  // RGB, Ha, OIII
     workspace.choose(ChannelCombinationProcess.id)
     let panel = try #require(workspace.panel)
+    panel.set("lSource", .choice("Ha"))
+    #expect(panel.unavailableOptions["lSource"] == nil, "Hα is in the stack")
     panel.set("lSource", .choice("SII"))
     #expect(panel.unavailableOptions["lSource"]?["SII"] != nil)
+    // The layers come back: the greying clears at once.
     panel.layerIDs = ["RGB", "Ha", "OIII", "SII"]
     #expect(panel.unavailableOptions["lSource"] == nil)
+    // The head moves (an Apply): the workspace reads the stack's layers again — SII still absent.
+    panel.set("lSource", .choice("none"))
+    await workspace.previewNow()
+    try workspace.apply()
+    panel.set("lSource", .choice("SII"))
+    #expect(workspace.panel === panel && panel.unavailableOptions["lSource"]?["SII"] != nil)
   }
 }

@@ -40,7 +40,7 @@ struct StudioModelBranchTests {
   /// `manifest` without the parameter entries whose id starts with one of `prefixes`, as the
   /// encoder wrote it before those parameters existed.
   static func withoutLines(_ prefixes: [String], _ manifest: Data) -> Data {
-    let lines = String(decoding: manifest, as: UTF8.self).components(separatedBy: "\n")
+    let lines = (String(bytes: manifest, encoding: .utf8) ?? "").components(separatedBy: "\n")
     var kept: [String] = []
     var index = 0
     while index < lines.count {

@@ -5,7 +5,7 @@
 # and the test bundle cannot load lib_TestingInterop.dylib. Verified 2026-10-20 with Swift 6.3.3.
 # Prints nothing when the active developer directory is an Xcode (CI): its SwiftPM needs no help.
 set -euo pipefail
-dev="$(xcode-select -p 2>/dev/null || true)"
+dev="$("$(dirname "$0")/developer-dir.sh")"
 case "$dev" in
   */CommandLineTools) ;;
   *) exit 0 ;;

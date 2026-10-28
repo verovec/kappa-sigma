@@ -56,7 +56,7 @@ struct AstroFolderSettingTests {
     .scratchDirectory,
     arguments: [
       "scratch/AstroStack/Work", "home/AstroStack", "home/AstroStack/Projects", "home", "scratch",
-      "", "tmp/AstroStack", "tmp/AstroStack/Untitled", "/",
+      "", "tmp/AstroStack", "tmp/AstroStack/Untitled", "tmp/AstroStack/Work/run_1", "/",
     ])
   func testAppOwnedFoldersRefused(relative: String) throws {
     let (defaults, name) = try Self.suite()
@@ -126,5 +126,18 @@ struct AstroFolderSettingTests {
     let lines = await AstroFolderModel.lines(under: setting.folder)
     #expect(lines.map(\.name) == ["captures", "runs", "library", "fixtures", "library/catalogues"])
     #expect(lines.map(\.found) == [false, true, true, false, true], "a linked subfolder counts")
+  }
+
+  @Test("the catalogue script reads the same key in the same defaults domain as the app")
+  func testCatalogueScriptReadsTheSetting() throws {
+    let package = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+      .deletingLastPathComponent().deletingLastPathComponent()
+    let script = try String(
+      contentsOf: package.appendingPathComponent("../../scripts/download-catalogues.sh"),
+      encoding: .utf8)
+    let plist = try String(
+      contentsOf: package.appendingPathComponent("App/Info.plist"), encoding: .utf8)
+    #expect(script.contains("defaults read fr.astrostack.AstroStack \(AstroFolderSetting.key)"))
+    #expect(plist.contains("<string>fr.astrostack.AstroStack</string>"))
   }
 }

@@ -98,15 +98,21 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
   package nonisolated static func protectedFolders(
     _ setting: AstroFolderSetting = AstroFolderSetting()
   ) -> [URL] {
-    [setting.folder, LeftoverSweep.dataFolder]
+    protectedFolders(root: setting.folder)
+  }
+
+  /// The protected folders for the astro root `root`: the one list the sweep and the scratch
+  /// picker judge by.
+  package nonisolated static func protectedFolders(root: URL) -> [URL] {
+    [root, LeftoverSweep.dataFolder]
   }
 
   /// The app's scratch roots with the runs' work folder `work` (Settings, card 0098); the default
   /// one too when another was chosen, where the runs before the choice worked.
   package nonisolated static func leftoverRoots(
-    work: URL, defaultWork: URL = ScratchSetting.defaultFolder,
-    temporary: URL = FileManager.default.temporaryDirectory
+    work: URL, defaultWork: URL? = nil, temporary: URL = FileManager.default.temporaryDirectory
   ) -> [LeftoverSweep.Root] {
+    let defaultWork = defaultWork ?? ScratchSetting.defaultFolder(under: temporary)
     var roots = LeftoverSweep.appRoots(temporary: temporary, work: work)
     if work.standardizedFileURL != defaultWork.standardizedFileURL {
       roots.append(LeftoverSweep.Root(folder: defaultWork, prefix: "run_"))

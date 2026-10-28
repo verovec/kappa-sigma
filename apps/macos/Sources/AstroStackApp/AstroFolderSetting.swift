@@ -27,7 +27,8 @@ package nonisolated struct AstroFolderSetting {
     LeftoverSweep.dataFolder(under: home)
   }
 
-  private static let key = "astroFolder"
+  /// The defaults key — `scripts/download-catalogues.sh` reads it too.
+  package static let key = "astroFolder"
   private let defaults: UserDefaults
   private let home: URL
   private let scratch: URL?

@@ -10,7 +10,12 @@ internal import StackKit
 package nonisolated struct ScratchSetting {
   /// Where runs work when nothing is chosen: the user's temporary folder, on the system volume.
   package static var defaultFolder: URL {
-    FileManager.default.temporaryDirectory.appendingPathComponent(work, isDirectory: true)
+    defaultFolder(under: FileManager.default.temporaryDirectory)
+  }
+
+  /// Where runs work when nothing is chosen, under `temporary`.
+  package static func defaultFolder(under temporary: URL) -> URL {
+    temporary.appendingPathComponent(work, isDirectory: true)
   }
 
   private static let work = "AstroStack/Work"
@@ -51,7 +56,7 @@ package nonisolated struct ScratchSetting {
     // Reading the astro root never reads the scratch setting back: no recursion.
     let root = astro ?? AstroFolderSetting(defaults: defaults).folder
     let work = folder.appendingPathComponent(Self.work, isDirectory: true)
-    let protected = [root, LeftoverSweep.dataFolder]
+    let protected = AppDelegate.protectedFolders(root: root)
     guard !protected.contains(where: { LeftoverSweep.overlaps(work, $0) }) else { return false }
     defaults.set(folder.standardizedFileURL.path, forKey: Self.key)
     return true

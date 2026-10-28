@@ -37,7 +37,11 @@ package final class AstroFolderModel {
   /// Reads which subfolders the root holds, off the main thread: an unmounted or slow volume
   /// never blocks the window.
   package func refresh() async {
-    lines = await Self.lines(under: folder)
+    let root = folder
+    let read = await Self.lines(under: root)
+    // A slow read of a root picked earlier never lands under the root picked since.
+    guard root == folder, !Task.isCancelled else { return }
+    lines = read
   }
 
   /// The subfolders of `root` and whether each exists.

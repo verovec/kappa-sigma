@@ -35,7 +35,7 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   `w·max(x − black, 0)` per slot, Foraxx's green = √(Hα·OIII), L replaces the luminance at its
   opacity. `Palette` (natural, HOO, SHO, HOS, Foraxx, LRGB, RGB) fills the source slots only;
   `Palette.resolve(requested:present:)` walks the legacy fallback chain (lines → HOO → natural →
-  LRGB → RGB → mono on `Filter.monoSource`) and returns the reason, and `Palette.oiiiAsBlue(present:)`
+  LRGB → RGB → the palette the layers spell → mono on `Filter.monoSource`) and returns the reason, and `Palette.oiiiAsBlue(present:)`
   offers OIII in the blue slot without a B filter — both suggestions, never applied (card 0137). A
   missing layer gives `unavailableReason` ("HOO needs an OIII layer") and `ProcessError.missingLayer`
   — never another layer (R2).

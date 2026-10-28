@@ -36,7 +36,8 @@ extension Palette {
   }
 
   /// `requested` if `present` has every layer it reads, else the first palette of its fallback
-  /// chain that does, else mono on `Filter.monoSource` — with the reason, never applied (R2).
+  /// chain that does, else the one the layers spell (`spelled(by:)`, what the combination starts
+  /// from), else mono on `Filter.monoSource` — with the reason, never applied (R2).
   package static func resolve(requested: Palette, present: Set<String>) -> Resolution {
     var tried: [Palette] = []
     var candidate = requested
@@ -49,6 +50,11 @@ extension Palette {
       }
       tried.append(candidate)
       candidate = candidate.fallback
+    }
+    if let spelled = spelled(by: present) {
+      return Resolution(
+        palette: spelled, monoSource: nil,
+        reason: requested.reason(present, outcome: spelled.title + " instead"))
     }
     let mono = Filter.monoSource(in: present)
     let outcome = mono.map { "\($0) alone, in grey" } ?? "nothing to combine"

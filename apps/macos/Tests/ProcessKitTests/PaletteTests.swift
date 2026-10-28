@@ -46,6 +46,11 @@ struct PaletteTests {
     Case(
       name: "SHO on Hα alone ends mono", requested: .sho, present: ["Ha"], palette: nil,
       monoSource: "Ha", reason: ["SHO", "SII", "OIII", "Ha"]),
+    // The broadband chain ends on the palette the layers spell before mono (one rule with the
+    // combination's start, `Palette.spelled(by:)`).
+    Case(
+      name: "natural on Hα + OIII: HOO, as the combination starts", requested: .natural,
+      present: ["Ha", "OIII"], palette: .hoo, reason: ["Natural", "RGB", "HOO"]),
     // TestResolvePalette_Mono, through the chain's end.
     Case(
       name: "LRGB without B: mono on L", requested: .lrgb, present: ["L", "R", "G"], palette: nil,

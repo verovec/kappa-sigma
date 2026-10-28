@@ -22,7 +22,7 @@ package final class ProjectCatalog {
   }
 
   /// A project as listed: its target, where it was found and, when it could be read, its counts.
-  package struct Entry: Equatable, Identifiable {
+  package struct Entry: Equatable, Identifiable, Sendable {
     /// The package.
     package let url: URL
     /// The target the project is named after (the package name).
@@ -34,6 +34,14 @@ package final class ProjectCatalog {
 
     /// The package's URL.
     package var id: URL { url }
+
+    /// An entry as the catalog lists one.
+    nonisolated package init(url: URL, target: String, summary: ProjectSummary?, origin: Origin) {
+      self.url = url
+      self.target = target
+      self.summary = summary
+      self.origin = origin
+    }
   }
 
   /// Open projects (document order), then recents (AppKit's order), then the rest of the folder

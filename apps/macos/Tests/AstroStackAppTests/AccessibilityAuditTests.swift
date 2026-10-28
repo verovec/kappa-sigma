@@ -71,6 +71,19 @@ struct AccessibilityAuditTests {
     #expect(rows.first?.label == "Données")
   }
 
+  @Test("the project switcher: its menu carries a label and an id, in the view's language")
+  func testProjectSwitcher() {
+    let catalog = ProjectCatalog(openProjects: { [] }, recentURLs: { [] }, folderURLs: { [] })
+    let switcher = ProjectSwitcher(
+      target: "M31", catalog: catalog, current: nil,
+      actions: ProjectSwitcher.Actions(open: { _ in }, choose: {}, newProject: {}, welcome: {}),
+      reload: {})
+    let entries = Self.entries(switcher, language: "fr")
+    #expect(AccessibilityAudit.problems(entries) == [])
+    #expect(entries.map(\.id) == ["fr.astrostack.journey.projects"])
+    #expect(entries.first?.label == "Projets")
+  }
+
   @Test("the workspace: the Stacking stage's preset and Run", .scratchDirectory)
   func testStackingStage() throws {
     let project = try ProjectPackage.create(
@@ -138,6 +151,7 @@ struct AccessibilityAuditTests {
     "AstroStackApp/StarSeparationSheet.swift", "AstroStackApp/StudioChannelSwitcher.swift",
     "AstroStackApp/ObjectsSection.swift", "AstroStackApp/ObjectCard.swift",
     "AstroStackApp/ProjectListSection.swift",
+    "AstroStackApp/ProjectSwitcher.swift",
   ]
 
   @Test("no raw control: each audited source has as many `.accessible` as controls")

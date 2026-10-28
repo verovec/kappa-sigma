@@ -102,8 +102,9 @@ package enum WelcomeWindow {
     }
   }
 
-  /// Open…: the projects picked in the Open panel, opened like a recent one.
-  private static func choose() {
+  /// Open…: the projects picked in the Open panel, opened like a recent one — the one Open…
+  /// path of the welcome window and the project switcher (card 0146).
+  package static func choose() {
     let urls = NSDocumentController.shared.urlsFromRunningOpenPanel() ?? []
     Task { for url in urls { await open(url) } }
   }

@@ -31,7 +31,7 @@ package struct ProjectWindowView: View {
         get: { Self.sidebar(stored: sidebarStored, focused: focused) },
         set: { if !focused { sidebarStored = $0 } })
     ) {
-      JourneySidebar(model: model)
+      JourneySidebar(model: model, switcher: switcher)
         .navigationSplitViewColumnWidth(min: 180, ideal: 210, max: 280)
     } detail: {
       VStack(spacing: 0) {
@@ -80,5 +80,18 @@ package struct ProjectWindowView: View {
       }
     }
     .environment(\.guideTarget, model.guideTarget)
+  }
+
+  /// The switcher over the live catalog (card 0146), wired to the welcome window's statics:
+  /// another project opens in its own window, this one keeps running.
+  private var switcher: ProjectSwitcher {
+    ProjectSwitcher(
+      target: model.targetName, catalog: WelcomeWindow.model.catalog, current: model.folder(),
+      actions: ProjectSwitcher.Actions(
+        open: { url in Task { await WelcomeWindow.open(url) } },
+        choose: { WelcomeWindow.choose() },
+        newProject: { WelcomeWindow.showNewProject() },
+        welcome: { WelcomeWindow.show() }),
+      reload: { await WelcomeWindow.model.reload() })
   }
 }

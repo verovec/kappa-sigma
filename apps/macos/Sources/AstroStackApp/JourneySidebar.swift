@@ -8,6 +8,8 @@ internal import SwiftUI
 /// Under them, the Objects of Siril's catalogue, searched from the sidebar's field (card 0130).
 struct JourneySidebar: View {
   var model: ProjectWindowModel
+  /// The project switcher at the head of the list (card 0146); none in a bare sidebar.
+  var switcher: ProjectSwitcher?
 
   var body: some View {
     @Bindable var objects = model.objects
@@ -21,6 +23,9 @@ struct JourneySidebar: View {
           model.select(stage)
         })
     ) {
+      if let switcher {
+        Section { switcher }
+      }
       Section {
         ForEach(JourneyStage.allCases, id: \.self) { stage in
           JourneySidebarRow(stage: stage, status: model.statuses[stage] ?? .toDo)

@@ -46,7 +46,7 @@ package struct CurvesProcess: ImageProcess {
     guard let texture = device.makeTexture(descriptor: descriptor) else {
       throw ProcessError.commandFailed("curves LUT texture")
     }
-    unsafe values.withUnsafeBytes { bytes in
+    values.withUnsafeBytes { bytes in
       guard let base = bytes.baseAddress else { return }
       unsafe texture.replace(
         region: MTLRegionMake2D(0, 0, Self.lutSize, Self.curves.count), mipmapLevel: 0,

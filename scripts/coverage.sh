@@ -8,13 +8,25 @@ pkg="${1:?package dir}"; shift || true
 cd "$pkg"
 swift test --parallel --enable-code-coverage "$@"
 bin="$(swift build --show-bin-path)"
-xctest="$(find "$bin" -maxdepth 1 -name '*PackageTests.xctest' | head -1)"
-[ -n "$xctest" ] || { echo "no PackageTests.xctest under $bin"; exit 1; }
-exe="$xctest/Contents/MacOS/$(basename "$xctest" .xctest)"
+# The CLT's SwiftPM builds one PackageTests.xctest; Xcode's (Swift Build) one bundle per test
+# target: llvm-cov reads them all, the first positional, the others as -object.
+bundles=()
+while IFS= read -r bundle; do bundles+=("$bundle"); done < <(
+  find "$bin" -maxdepth 1 -name '*PackageTests.xctest' | head -1)
+if [ ${#bundles[@]} -eq 0 ]; then
+  while IFS= read -r bundle; do bundles+=("$bundle"); done < <(
+    find "$bin" -maxdepth 1 -name '*Tests.xctest' | sort)
+fi
+[ ${#bundles[@]} -gt 0 ] || { echo "no test bundle (*Tests.xctest) under $bin"; exit 1; }
+objects=()
+for bundle in "${bundles[@]}"; do
+  exe="$bundle/Contents/MacOS/$(basename "$bundle" .xctest)"
+  if [ ${#objects[@]} -eq 0 ]; then objects+=("$exe"); else objects+=(-object "$exe"); fi
+done
 prof="$bin/codecov/default.profdata"
 mkdir -p .build/coverage
-xcrun llvm-cov export -format=lcov "$exe" -instr-profile "$prof" -ignore-filename-regex='Tests|\.build' > .build/coverage/lcov.info
-xcrun llvm-cov report "$exe" -instr-profile "$prof" -ignore-filename-regex='Tests|\.build' | tee .build/coverage/summary.txt
+xcrun llvm-cov export -format=lcov "${objects[@]}" -instr-profile "$prof" -ignore-filename-regex='Tests|\.build' > .build/coverage/lcov.info
+xcrun llvm-cov report "${objects[@]}" -instr-profile "$prof" -ignore-filename-regex='Tests|\.build' | tee .build/coverage/summary.txt
 total="$(awk '/^TOTAL/ { print $(NF-3) }' .build/coverage/summary.txt)"
 echo "$total" > .build/coverage/lines.txt
 echo "line coverage: $total"

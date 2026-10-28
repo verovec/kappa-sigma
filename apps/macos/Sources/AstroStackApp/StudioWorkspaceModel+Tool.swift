@@ -74,10 +74,10 @@ extension StudioWorkspaceModel {
       var layers: [String: AstroImage] = [:]
       for (id, layer) in source.layers { layers[id] = Self.detached(layer) }
       let input = PipelineRunner.BatchInput(image: Self.detached(source.image), layers: layers)
-      let result = try await tool.step(input, params) { progress in
+      let result = try await tool.step(input, params) { [weak self] progress in
         // A line arriving after its run ended must not bring the spinner back, nor land in the
         // next run's.
-        Task { @MainActor [weak self] in
+        Task { @MainActor in
           guard let self, self.toolRunNumber == number, self.toolRun != nil else { return }
           self.toolRun = progress
         }

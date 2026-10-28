@@ -54,6 +54,22 @@ struct ContinuumKTests {
     #expect(abs(oiii.k - 0.25) <= 0.01 && oiii.reference == "RGB")
   }
 
+  @Test(
+    "a colour base (card 0141): Hβ against its blue plane, [NII] against its red",
+    .scratchDirectory)
+  func testColourBaseNewLines() throws {
+    let (red, blue) = (Self.ramp(), Self.ramp(0.6))
+    let layers = [
+      "RGB": try Self.write("trim_RGB", [red, Self.ramp(0.8), blue]),
+      "Hb": try Self.write("syn_Hb", [Self.line(0.3, of: blue)]),
+      "NII": try Self.write("syn_NII", [Self.line(0.2, of: red)]),
+    ]
+    let hb = try ContinuumK.measure(line: "Hb", layers: layers)
+    let nii = try ContinuumK.measure(line: "NII", layers: layers)
+    #expect(abs(hb.k - 0.3) <= 0.01 && hb.reference == "RGB" && hb.plane == "RGB.b")
+    #expect(abs(nii.k - 0.2) <= 0.01 && nii.reference == "RGB" && nii.plane == "RGB.r")
+  }
+
   @Test("a mono R wins over a colour base for Hα", .scratchDirectory)
   func testMonoFirst() throws {
     let red = Self.ramp()

@@ -95,3 +95,42 @@ extension PipelineDiffTests {
     #expect(problems[3].count == 1 && problems[4] == ["unknown process nope"])
   }
 }
+
+extension PipelineDiffTests {
+  @Test(
+    "testNewDefaultsAreNotDifferences: a pipeline saved before Hβ/[NII] loads with their defaults")
+  func testNewDefaultsAreNotDifferences() throws {
+    let registry = try ProcessRegistry([EmissionScreensProcess.self, LineInjectionProcess.self])
+    let types: [any ImageProcess.Type] = [EmissionScreensProcess.self, LineInjectionProcess.self]
+    let current = Pipeline(
+      name: "finish",
+      steps: types.map { type in
+        PipelineStep(recipe: Recipe(processID: type.id, params: ParamSet(schema: type.schema)))
+      })
+    // The same file as written before card 0141: no hb… / nii… entries.
+    let data = try current.json()
+    var object = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+    let steps = try #require(object["steps"] as? [[String: Any]])
+    object["steps"] = try steps.map { step in
+      var step = step
+      var recipe = try #require(step["recipe"] as? [String: Any])
+      let params = try #require(recipe["params"] as? [[String: Any]])
+      recipe["params"] = params.filter { entry in
+        let id = entry["id"] as? String ?? ""
+        return !id.hasPrefix("hb") && !id.hasPrefix("nii")
+      }
+      step["recipe"] = recipe
+      return step
+    }
+    let old = try Pipeline.load(
+      try JSONSerialization.data(withJSONObject: object), registry: registry)
+    #expect(old.warnings.isEmpty)
+    #expect(PipelineDiff.entries(old.pipeline, current).isEmpty)
+    // Not vacuous: the old file had 28 fewer entries (8 screens + 6 injection, per line).
+    let count = { (steps: [[String: Any]]) in
+      steps.map { (($0["recipe"] as? [String: Any])?["params"] as? [Any])?.count ?? 0 }
+        .reduce(0, +)
+    }
+    #expect(count(steps) - count(object["steps"] as? [[String: Any]] ?? []) == 28)
+  }
+}

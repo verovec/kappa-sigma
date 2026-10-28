@@ -27,9 +27,17 @@
     "definition": "Filtre bande étroite sur la raie à 656 nm de l’hydrogène ionisé.",
     "label": "Hydrogène alpha"
   },
+  "filter.hb": {
+    "definition": "Filtre bande étroite sur la raie à 486 nm de l’hydrogène ionisé (H bêta).",
+    "label": "Hydrogène bêta"
+  },
   "filter.l": {
     "definition": "Filtre large bande sans couleur d’une caméra mono.",
     "label": "Luminance"
+  },
+  "filter.nii": {
+    "definition": "Filtre bande étroite sur la raie à 658 nm de l’azote ionisé, à côté de Hα.",
+    "label": "Azote II"
   },
   "filter.oiii": {
     "definition": "Filtre bande étroite sur la raie à 501 nm de l’oxygène deux fois ionisé.",

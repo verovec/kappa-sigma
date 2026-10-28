@@ -62,7 +62,7 @@ struct ProjectWindowModelTests {
     defer { try? project.close() }
     let scratch = try ScratchDirectory.url
     let library = scratch.appendingPathComponent("library")
-    let capture = scratch.appendingPathComponent("n1/n2/n3/capture")
+    let capture = scratch.appendingPathComponent("pad1/pad2/pad3/capture")
     for folder in [library, capture] {
       try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
     }
@@ -87,7 +87,7 @@ struct ProjectWindowModelTests {
     .scratchDirectory)
   func testLivePlannerWithoutLibrary() async throws {
     let scratch = try ScratchDirectory.url
-    let capture = scratch.appendingPathComponent("n1/n2/n3/capture")
+    let capture = scratch.appendingPathComponent("pad1/pad2/pad3/capture")
     try FileManager.default.createDirectory(at: capture, withIntermediateDirectories: true)
     let plan = try await ImportPlanning.plan(
       ImportRequest(paths: [capture.path]),

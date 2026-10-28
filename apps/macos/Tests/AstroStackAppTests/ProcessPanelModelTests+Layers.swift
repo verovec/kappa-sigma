@@ -45,6 +45,18 @@ extension ProcessPanelModelTests {
       name: "every line in the stack: every row", processID: EmissionScreensProcess.id,
       layers: ["RGB", "Ha", "OIII", "SII"], visible: ["ha", "oiii", "sii"], hidden: []),
     Visibility(
+      name: "screens on a BB + Hα + OIII stack: no Hβ or [NII] row (card 0141)",
+      processID: EmissionScreensProcess.id, layers: ["RGB", "Ha", "OIII"],
+      visible: ["ha", "oiii"], hidden: ["hb", "nii"]),
+    Visibility(
+      name: "injection on a BB + Hα + OIII stack: no Hβ or [NII] row (card 0141)",
+      processID: LineInjectionProcess.id, layers: ["RGB", "Ha", "OIII"],
+      visible: ["ha", "oiii"], hidden: ["hb", "nii"]),
+    Visibility(
+      name: "five lines in the stack: every line's rows (card 0141)",
+      processID: EmissionScreensProcess.id, layers: ["RGB", "Ha", "OIII", "SII", "Hb", "NII"],
+      visible: ["ha", "oiii", "sii", "hb", "nii"], hidden: []),
+    Visibility(
       name: "a process without layer rows hides nothing", processID: StretchProcess.id,
       layers: ["RGB"], visible: [], hidden: []),
   ]

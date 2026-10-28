@@ -14,7 +14,7 @@ struct InventoryBuilderFallbackTests {
   /// `/var/folders/xx/r_…`, whose first word reads as a filter) fall outside the six-level
   /// folder lookup.
   static func folder(_ name: String) throws -> URL {
-    try ScratchDirectory.url.appendingPathComponent("n1/n2/n3/\(name)")
+    try ScratchDirectory.url.appendingPathComponent("pad1/pad2/pad3/\(name)")
   }
 
   @Test(

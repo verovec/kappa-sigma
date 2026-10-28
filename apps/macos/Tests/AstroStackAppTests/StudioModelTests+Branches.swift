@@ -24,9 +24,11 @@ struct StudioModelBranchTests {
   }
 
   /// SHA-256 of `history.json` after combination + stretch + screens on `BranchTests.bundle()`,
-  /// recorded with the code before card 0118 (254 lines, no `branchHeads` key).
+  /// recorded with the code before card 0118 (254 lines, no `branchHeads` key), re-recorded by
+  /// card 0141: the screens' Hβ and [NII] defaults added (318 lines); without those 16 entries
+  /// the file still hashes to the 0118 digest `3410e49c…534f`.
   static let recordedManifestSHA256 =
-    "3410e49cd61a9b40d33b861323480e6b8185705586be7f331f3042f9638e534f"
+    "b33d1729613299c584c467998a3847bfb3ad0741b263659b1bddd5691dd19f63"
 
   @Test("testNoBranchStepKeepsMainByteIdentical", .scratchDirectory)
   func testNoBranchStepKeepsMainByteIdentical() async throws {

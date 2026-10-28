@@ -129,7 +129,8 @@ struct ImportViewModelTests {
   func testMappableFilters() async {
     let model = await Self.model(FakePlanner())
     #expect(model.lightFilters == ["Ha", "RGB"])
-    #expect(ImportViewModel.channels == ["L", "R", "G", "B", "Ha", "OIII", "SII", "ignore"])
+    #expect(
+      ImportViewModel.channels == ["L", "R", "G", "B", "Ha", "OIII", "SII", "Hb", "NII", "ignore"])
   }
 
   @Test("a calibration-only choice replans the last scan; a scan override rescans")

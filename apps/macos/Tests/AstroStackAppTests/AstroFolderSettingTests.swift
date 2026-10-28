@@ -103,16 +103,24 @@ struct AstroFolderSettingTests {
   @Test(
     "the Settings lines name each subfolder and whether it exists, nothing decided",
     .scratchDirectory)
-  func testAstroLines() throws {
+  func testAstroLines() async throws {
     let (defaults, name) = try Self.suite()
     defer { defaults.removePersistentDomain(forName: name) }
-    let root = try ScratchDirectory.url.appendingPathComponent("astro")
+    let base = try ScratchDirectory.url
+    let root = base.appendingPathComponent("astro")
     try FileManager.default.createDirectory(
       at: root.appendingPathComponent("library/catalogues"), withIntermediateDirectories: true)
+    try FileManager.default.createDirectory(
+      at: base.appendingPathComponent("elsewhere/runs"), withIntermediateDirectories: true)
+    try FileManager.default.createSymbolicLink(
+      at: root.appendingPathComponent("runs"),
+      withDestinationURL: base.appendingPathComponent("elsewhere/runs"))
+    try FileManager.default.createSymbolicLink(
+      at: base.appendingPathComponent("link"), withDestinationURL: root)
     let setting = AstroFolderSetting(defaults: defaults, home: URL(fileURLWithPath: "/Users/x"))
-    #expect(setting.choose(root))
-    let lines = SettingsView.astroLines(setting)
+    #expect(setting.choose(base.appendingPathComponent("link")), "a link to a folder is a folder")
+    let lines = await SettingsView.astroLines(under: setting.folder)
     #expect(lines.map(\.name) == ["captures", "runs", "library", "fixtures", "library/catalogues"])
-    #expect(lines.map(\.found) == [false, false, true, false, true])
+    #expect(lines.map(\.found) == [false, true, true, false, true], "a linked subfolder counts")
   }
 }

@@ -1,5 +1,4 @@
 package import Foundation
-internal import ProcessKit
 
 /// The scratch folder Settings chose for preprocessing runs (card 0098), kept as a path in the
 /// app's defaults.
@@ -35,8 +34,9 @@ package nonisolated struct ScratchSetting {
     chosen?.appendingPathComponent(Self.work, isDirectory: true) ?? Self.defaultFolder
   }
 
-  /// Chooses `folder` (`nil` = back to the default); false, nothing stored, for a folder under
-  /// the read-only sources (R7: the guard exports use).
+  /// Chooses `folder` (`nil` = back to the default); false, nothing stored, for a folder inside
+  /// — or around — the astro folder (R7: the app never writes under the data root, and the
+  /// leftover sweep would refuse such a work folder as protected and never clean it).
   @discardableResult
   package func choose(_ folder: URL?) -> Bool {
     guard let folder else {
@@ -45,7 +45,7 @@ package nonisolated struct ScratchSetting {
     }
     // The scratch folder is what the astro setting refuses, never the reverse: no recursion.
     let root = astro ?? AstroFolderSetting(defaults: defaults, scratch: self.folder).folder
-    guard ExportGuard.refusal(for: folder, astro: root) == nil else { return false }
+    guard !AstroFolderSetting.overlap(folder, root) else { return false }
     defaults.set(folder.standardizedFileURL.path, forKey: Self.key)
     return true
   }

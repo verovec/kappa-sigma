@@ -28,17 +28,27 @@ package nonisolated struct AstroFolderSetting {
   private static let key = "astroFolder"
   private let defaults: UserDefaults
   private let home: URL
-  /// Where the app itself writes: never the read-only root.
-  private let appOwned: [URL]
+  private let scratch: URL?
 
-  /// The setting stored in `defaults`; `home` and `scratch` locate what the app writes under.
+  /// The setting stored in `defaults`; `home` and `scratch` locate what the app writes under —
+  /// the scratch folder of the same defaults when `nil`.
   package init(
     defaults: UserDefaults = .standard, home: URL = URL(fileURLWithPath: NSHomeDirectory()),
-    scratch: URL = ScratchSetting().folder
+    scratch: URL? = nil
   ) {
     self.defaults = defaults
     self.home = home
-    appOwned = [home.appendingPathComponent("AstroStack", isDirectory: true), scratch]
+    self.scratch = scratch
+  }
+
+  /// Where the app itself writes: never the read-only root.
+  ///
+  /// Read by `choose` only: the readers of the root never touch the scratch setting.
+  private var appOwned: [URL] {
+    [
+      home.appendingPathComponent("AstroStack", isDirectory: true),
+      scratch ?? ScratchSetting(defaults: defaults).folder,
+    ]
   }
 
   /// The folder the user chose, `nil` for the default.
@@ -62,8 +72,22 @@ package nonisolated struct AstroFolderSetting {
 
   /// Whether the subfolder `name` exists under the root: shown by Settings, decided by nobody.
   package func has(_ name: String) -> Bool {
-    (try? folder.appendingPathComponent(name).resourceValues(forKeys: [.isDirectoryKey]))?
-      .isDirectory == true
+    Self.isFolder(folder.appendingPathComponent(name))
+  }
+
+  /// Whether `url` is an existing folder, a symbolic link to one included.
+  package static func isFolder(_ url: URL) -> Bool {
+    var isDirectory: ObjCBool = false
+    return FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory)
+      && isDirectory.boolValue
+  }
+
+  /// Whether one of the folders lies inside — or is — the other, links resolved, case folded
+  /// (APFS is case-insensitive): the rule the leftover sweep applies to its roots.
+  package static func overlap(_ lhs: URL, _ rhs: URL) -> Bool {
+    let left = resolved(lhs)
+    let right = resolved(rhs)
+    return left.starts(with: right) || right.starts(with: left)
   }
 
   /// Chooses `folder` (`nil` = back to the default); false, nothing stored, for a path that is
@@ -76,12 +100,7 @@ package nonisolated struct AstroFolderSetting {
       defaults.removeObject(forKey: Self.key)
       return true
     }
-    guard (try? folder.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true else {
-      return false
-    }
-    let target = Self.resolved(folder)
-    let owned = appOwned.map(Self.resolved)
-    guard !owned.contains(where: { target.starts(with: $0) || $0.starts(with: target) }) else {
+    guard Self.isFolder(folder), !appOwned.contains(where: { Self.overlap(folder, $0) }) else {
       return false
     }
     defaults.set(folder.standardizedFileURL.path, forKey: Self.key)

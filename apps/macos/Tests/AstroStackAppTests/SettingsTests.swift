@@ -38,7 +38,7 @@ struct SettingsTests {
   @Test(
     "testAstroFolderSection: the chosen root with ~, one line per subfolder, lays out (card 0148)",
     .scratchDirectory, arguments: ["en", "fr"])
-  func testAstroFolderSection(_ language: String) throws {
+  func testAstroFolderSection(_ language: String) async throws {
     let name = "fr.astrostack.tests.settings.\(UUID().uuidString)"
     let defaults = try #require(UserDefaults(suiteName: name))
     defer { defaults.removePersistentDomain(forName: name) }
@@ -51,7 +51,8 @@ struct SettingsTests {
     let home = URL(fileURLWithPath: NSHomeDirectory())
     #expect(
       SettingsView.astroPath(home.appendingPathComponent("Documents/astro")) == "~/Documents/astro")
-    #expect(SettingsView.astroLines(astro).map(\.found) == [true, false, false, false, false])
+    let found = await SettingsView.astroLines(under: astro.folder).map(\.found)
+    #expect(found == [true, false, false, false, false])
     let view = SettingsView(
       setting: LanguageSetting(defaults: defaults, domain: name), relaunch: {}, astro: astro)
     let host = NSHostingView(rootView: view.environment(\.locale, Locale(identifier: language)))

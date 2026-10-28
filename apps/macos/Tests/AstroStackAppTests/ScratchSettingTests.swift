@@ -36,8 +36,8 @@ struct ScratchSettingTests {
   }
 
   @Test(
-    "a folder under the read-only sources is refused and nothing is stored (R7), wherever the root",
-    arguments: ["captures/M31", "library", "Runs"],
+    "a folder inside or around the astro folder is refused, nothing stored (R7), wherever the root",
+    arguments: ["captures/M31", "library", "Runs", "", "..", "exports"],
     ["/Users/someone/Documents/astro", "/Volumes/SSD/astro"])
   func testReadOnlySourcesRefused(relative: String, root: String) throws {
     let (defaults, name) = try Self.suite()

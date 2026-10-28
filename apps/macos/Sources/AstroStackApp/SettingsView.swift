@@ -24,8 +24,9 @@ package struct SettingsView: View {
   @State private var astroFolder: URL
   /// The last astro folder chosen was no folder, or one the app writes under; not kept.
   @State private var astroRefused = false
-  /// Which subfolders the root holds, read when the root is set (never on each render).
-  @State private var astroLines: [(name: String, found: Bool)]
+  /// Which subfolders the root holds, read off the main thread when the root is set (a slow or
+  /// unmounted volume never blocks the window), never on each render.
+  @State private var astroLines: [(name: String, found: Bool)] = []
   /// The retention policy as edited; written back on every change.
   @State private var policy: RetentionPolicy
 
@@ -44,7 +45,6 @@ package struct SettingsView: View {
     _scratchFolder = State(initialValue: scratch.folder)
     self.astro = astro
     _astroFolder = State(initialValue: astro.folder)
-    _astroLines = State(initialValue: Self.astroLines(astro))
     self.retention = retention
     _policy = State(initialValue: retention.policy)
     launched = setting.choice
@@ -95,8 +95,11 @@ package struct SettingsView: View {
         Button(.app("Default")) { pickScratch(nil) }.disabled(scratch.chosen == nil)
       }
       if scratchRefused {
-        Text(.app("This is one of the astro folder's data folders: AstroStack never writes there."))
-          .font(.caption).foregroundStyle(DesignColor.statusError.color)
+        Text(
+          .app(
+            "AstroStack never writes under the astro folder: choose a scratch folder outside it.")
+        )
+        .font(.caption).foregroundStyle(DesignColor.statusError.color)
       }
     }
   }
@@ -107,10 +110,12 @@ package struct SettingsView: View {
   }
 
   /// The subfolders of the astro root and whether each exists (R2: shown, never decided from).
-  package nonisolated static func astroLines(
-    _ setting: AstroFolderSetting
-  ) -> [(name: String, found: Bool)] {
-    AstroFolderSetting.shown.map { ($0, setting.has($0)) }
+  @concurrent package nonisolated static func astroLines(
+    under root: URL
+  ) async -> [(name: String, found: Bool)] {
+    AstroFolderSetting.shown.map {
+      ($0, AstroFolderSetting.isFolder(root.appendingPathComponent($0, isDirectory: true)))
+    }
   }
 
   /// The read-only data root (card 0148): captures, runs, library, fixtures; every path follows.
@@ -140,6 +145,9 @@ package struct SettingsView: View {
     } header: {
       SectionHeader(
         .app("Astro folder"), help: SettingHelp.help(SettingHelp.astroFolder, locale: locale))
+    }
+    .task(id: astroFolder) {
+      astroLines = await Self.astroLines(under: astroFolder)
     }
   }
 
@@ -189,6 +197,5 @@ package struct SettingsView: View {
   private func pickAstro(_ url: URL?) {
     astroRefused = !astro.choose(url)
     astroFolder = astro.folder
-    astroLines = Self.astroLines(astro)
   }
 }

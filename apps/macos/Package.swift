@@ -36,7 +36,7 @@ let package = Package(
       exclude: ["README.md"], swiftSettings: safe),
     .executableTarget(
       name: "CatalogTool", dependencies: ["StringCatalog"],
-      swiftSettings: common),
+      exclude: ["README.md"], swiftSettings: common),
     .plugin(name: "CatalogPlugin", capability: .buildTool(), dependencies: ["CatalogTool"]),
     .target(
       name: "FilterKit", dependencies: [],
@@ -66,7 +66,7 @@ let package = Package(
       ],
       exclude: [
         "README.md", "Siril/README.md", "Inspect/README.md", "Calibration/README.md",
-        "Preprocess/README.md", "Import/README.md",
+        "Preprocess/README.md", "Import/README.md", "Legacy/README.md", "Transient/README.md",
       ], resources: [.copy("Resources/Catalogue")], swiftSettings: common),
     .target(
       name: "HelpKit", dependencies: [],

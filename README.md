@@ -28,7 +28,7 @@
 <p align="center">
   <img src="docs/assets/ngc7000.jpg" width="900" alt="The North America Nebula, NGC 7000, with the Pelican Nebula, IC 5070, stars removed">
   <br>
-  <sub>NGC 7000, the North America Nebula, with the Pelican Nebula, IC 5070 — starless.</sub>
+  <sub>NGC 7000, the North America Nebula, with the Pelican Nebula, IC 5070 - starless.</sub>
 </p>
 
 ---

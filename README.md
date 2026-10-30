@@ -31,6 +31,12 @@
   <sub>M 31, the Andromeda Galaxy, with its companions M 32 and M 110.</sub>
 </p>
 
+<p align="center">
+  <img src="docs/assets/ngc7000.jpg" width="900" alt="The North America Nebula, NGC 7000, with the Pelican Nebula, IC 5070">
+  <br>
+  <sub>NGC 7000, the North America Nebula, with the Pelican Nebula, IC 5070.</sub>
+</p>
+
 ---
 
 A night of deep-sky imaging leaves hundreds of raw frames, darks, flats and offsets. Turning them

@@ -31,6 +31,12 @@
   <sub>M 31, la galaxie d'Andromède, avec ses compagnes M 32 et M 110.</sub>
 </p>
 
+<p align="center">
+  <img src="docs/assets/ngc7000.jpg" width="900" alt="La nébuleuse North America, NGC 7000, avec la nébuleuse du Pélican, IC 5070">
+  <br>
+  <sub>NGC 7000, la nébuleuse North America, avec la nébuleuse du Pélican, IC 5070.</sub>
+</p>
+
 ---
 
 Une nuit de ciel profond laisse des centaines de brutes, de darks, de flats et d'offsets. En tirer

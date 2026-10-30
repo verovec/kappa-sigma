@@ -377,8 +377,5 @@ package final class ProjectDocument: NSDocument {
     Self.logger.info("project window opened: \(window.title, privacy: .public)")
   }
 
-  /// The tab group of project windows: viewers and legacy runs keep their own windows.
-  package static let tabbingIdentifier = "fr.astrostack.project"
-
   private static let logger = Logger(subsystem: "fr.astrostack", category: "App/document")
 }

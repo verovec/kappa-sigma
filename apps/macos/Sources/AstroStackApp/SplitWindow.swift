@@ -20,4 +20,15 @@ package enum SplitWindow {
   package static func contentRect(panes: NSSize) -> NSRect {
     NSRect(x: 0, y: 0, width: panes.width, height: panes.height + titleBarHeight)
   }
+
+  /// The smallest panes of a project window, below the title bar.
+  package static let minPanes = NSSize(width: 640, height: 400)
+
+  /// The project window's minimum content size, set once on the window.
+  ///
+  /// Left to the hosting view (`sizingOptions = [.minSize]`), it was published again on every
+  /// layout pass between the split view's own column minimums, and enlarging a window could loop
+  /// until AppKit raised « more Update Constraints in Window passes than there are views »
+  /// (29/10 crashes).
+  package static var contentMinSize: NSSize { contentRect(panes: minPanes).size }
 }

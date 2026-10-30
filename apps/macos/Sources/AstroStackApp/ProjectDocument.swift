@@ -363,9 +363,10 @@ package final class ProjectDocument: NSDocument {
     windowModel = model
     let content = NSHostingView(
       rootView: ProjectWindowView(model: model, projects: .live).interfaceLocale())
-    // Only the minimum size comes from SwiftUI; the window keeps its own frame.
-    content.sizingOptions = [.minSize]
+    // The window keeps its own frame and a fixed minimum: SwiftUI sizes nothing (SplitWindow).
+    content.sizingOptions = []
     window.contentView = content
+    window.contentMinSize = SplitWindow.contentMinSize
     // Projects share one window as tabs, whatever « Prefer tabs » says; nothing else joins them.
     window.tabbingMode = .preferred
     window.tabbingIdentifier = Self.tabbingIdentifier

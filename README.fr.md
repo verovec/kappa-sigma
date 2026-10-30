@@ -26,15 +26,9 @@
 </p>
 
 <p align="center">
-  <img src="docs/assets/m31.jpg" width="900" alt="La galaxie d'Andromède, M 31, avec M 32 et M 110">
+  <img src="docs/assets/ngc7000.jpg" width="900" alt="La nébuleuse North America, NGC 7000, avec la nébuleuse du Pélican, IC 5070, sans étoiles">
   <br>
-  <sub>M 31, la galaxie d'Andromède, avec ses compagnes M 32 et M 110.</sub>
-</p>
-
-<p align="center">
-  <img src="docs/assets/ngc7000.jpg" width="900" alt="La nébuleuse North America, NGC 7000, avec la nébuleuse du Pélican, IC 5070">
-  <br>
-  <sub>NGC 7000, la nébuleuse North America, avec la nébuleuse du Pélican, IC 5070.</sub>
+  <sub>NGC 7000, la nébuleuse North America, avec la nébuleuse du Pélican, IC 5070 — sans étoiles.</sub>
 </p>
 
 ---

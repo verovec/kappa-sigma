@@ -26,15 +26,9 @@
 </p>
 
 <p align="center">
-  <img src="docs/assets/m31.jpg" width="900" alt="The Andromeda Galaxy, M 31, with M 32 and M 110">
+  <img src="docs/assets/ngc7000.jpg" width="900" alt="The North America Nebula, NGC 7000, with the Pelican Nebula, IC 5070, stars removed">
   <br>
-  <sub>M 31, the Andromeda Galaxy, with its companions M 32 and M 110.</sub>
-</p>
-
-<p align="center">
-  <img src="docs/assets/ngc7000.jpg" width="900" alt="The North America Nebula, NGC 7000, with the Pelican Nebula, IC 5070">
-  <br>
-  <sub>NGC 7000, the North America Nebula, with the Pelican Nebula, IC 5070.</sub>
+  <sub>NGC 7000, the North America Nebula, with the Pelican Nebula, IC 5070 — starless.</sub>
 </p>
 
 ---

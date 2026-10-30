@@ -346,7 +346,7 @@ package final class ProjectDocument: NSDocument {
 
   // MARK: - Window
 
-  /// One window per project, centred; the window controller cascades further ones.
+  /// One window per project, centred; a further project opens as a tab of the frontmost one.
   override package func makeWindowControllers() {
     // A Studio move is refused, not consumed, while a run moves the history (card 0117).
     if !(undoManager is ProjectUndoManager) { undoManager = ProjectUndoManager() }
@@ -366,12 +366,18 @@ package final class ProjectDocument: NSDocument {
     // Only the minimum size comes from SwiftUI; the window keeps its own frame.
     content.sizingOptions = [.minSize]
     window.contentView = content
+    // Projects share one window as tabs, whatever « Prefer tabs » says; nothing else joins them.
+    window.tabbingMode = .preferred
+    window.tabbingIdentifier = Self.tabbingIdentifier
     window.center()
     addWindowController(NSWindowController(window: window))
     // A project is open, however it was opened (welcome, ⌘O, Open Recent, Finder, -openRun).
     WelcomeWindow.dismiss()
     Self.logger.info("project window opened: \(window.title, privacy: .public)")
   }
+
+  /// The tab group of project windows: viewers and legacy runs keep their own windows.
+  package static let tabbingIdentifier = "fr.astrostack.project"
 
   private static let logger = Logger(subsystem: "fr.astrostack", category: "App/document")
 }

@@ -68,7 +68,7 @@ package struct ProjectWindowView: View {
           .inspectorColumnWidth(min: 220, ideal: 260, max: 340)
       }
     }
-    .frame(minWidth: 640, minHeight: 400)
+    .frame(minWidth: SplitWindow.minPanes.width, minHeight: SplitWindow.minPanes.height)
     .sheet(
       isPresented: Binding(
         get: { model.importing != nil }, set: { if !$0 { model.closeImport() } })

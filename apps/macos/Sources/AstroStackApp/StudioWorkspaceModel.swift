@@ -63,6 +63,17 @@ package final class StudioWorkspaceModel {
   @ObservationIgnored var stretches: [StudioSelection: ViewerStretch] = [:]
   /// A Replay of the stale steps is running (card 0119): a second one waits for it.
   package internal(set) var isReplaying = false
+  /// The applied step being edited (card 0158, set by 0159): the preview draws the chain from it.
+  package var editing: Int? {
+    didSet {
+      guard editing != oldValue else { return }
+      // The chain's cached input (a full-resolution context) is not kept past the edit.
+      if editing == nil { studio.session.endChainPreview() }
+      if panel != nil { schedulePreview() }
+    }
+  }
+  /// The host-tool step the chain preview stopped before, if any (the banner names it).
+  package internal(set) var chainStoppedBefore: Int?
   /// The other history whose head compare shows, if any (card 0119).
   package internal(set) var comparingWith: StudioSelection?
   /// The step compare shows, if any.
@@ -175,6 +186,8 @@ package final class StudioWorkspaceModel {
     panel.onChange = { [weak self] in self?.panelChanged() }
     hideModel()
     self.panel = panel
+    // Another panel ends the edit (0159 sets `editing` after choosing the step's process).
+    editing = nil
     toolReport = nil
     appliedNothing = false
     // A moved preview leaves the screen at once; another stays until the new one replaces it.
@@ -187,6 +200,7 @@ package final class StudioWorkspaceModel {
   /// Closes the panel: the viewer shows the head again.
   package func closePanel() {
     panel = nil
+    editing = nil
     appliedNothing = false
     isPreviewSuspended = false
     hideModel()

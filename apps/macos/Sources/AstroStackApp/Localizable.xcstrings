@@ -11696,6 +11696,22 @@
           }
         }
       }
+    },
+    "Preview stopped before %@ (step %lld) — computed when applied": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preview stopped before %@ (step %lld) — computed when applied"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aperçu arrêté avant %@ (étape %lld) — recalculé à la validation"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

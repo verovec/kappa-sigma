@@ -282,6 +282,29 @@ in en/fr; the English title is the key, resolved with `ProcessKitResources.title
 - `.text` parameters (`ParamSpec(id:title:level:text:maxLength:)`): free text, trimmed, empty by
   default — a coordinate the user types or takes from a suggestion; JSON stores a string.
 
+## Chain preview (card 0158)
+
+- `StudioSession.previewChain(from: k, params:)` renders applied step k with new values, then
+  k+1… with their recorded ones, **in memory** at full resolution — the pixels a revise (0157,
+  `PipelineRunner.run`) writes, the history untouched (`ChainPreview { image, stoppedBefore }`).
+  Each step is `ProcessRunner.applied` (the one Apply step: image + moved layers, shared with
+  `StudioSession.apply` and `PipelineRunner`), its values read by `PipelineRunner.values`, its
+  statistics those of its input (the bundle's for the original).
+- What a chain step reads is a `ChainState`: step k's input comes from
+  `History.context(…, before: k)` (the overlay of the steps before k only), then each step's
+  written layers overlay it by the same rule (`History.note` + `History.stats(ofWritten:…)`, the
+  continuum fit kept for a layer only moved). The input of k and the recorded masks of the
+  steps it renders are cached in a `ChainInput`, keyed on k, its stop and the history's step
+  files, dropped on a branch move and by `endChainPreview` when the edit ends.
+- `toolStep(from:revising:params:)` is the one stop rule (the revise's replay end, the chain's
+  `stoppedBefore`); `movedMaskStep(_:params:until:)` the one moved-mask refusal of both.
+- The chain stops before the first host-tool step (k included; a process the registry cannot
+  render counts as one): `stoppedBefore` names it, the image is its input. Each step renders
+  under its recorded mask (0160, k included) like the revise's replay; a crop, turn or flip k
+  with a masked step after it throws `PipelineError.maskMoved`, as the revise refuses it.
+- App: `StudioWorkspaceModel.editing` (set by 0159) switches the debounced preview to the chain
+  (main history only), `chainStoppedBefore` + `chainStopNotice(locale:)` word the banner.
+
 ## Host-tool processes with layers (card 0092)
 
 - Background extraction is a host-tool process like plate solving (`hostTool = true`, card

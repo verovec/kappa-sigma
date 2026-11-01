@@ -1,3 +1,4 @@
+package import Foundation
 internal import ImageKit
 internal import ProcessKit
 
@@ -11,20 +12,21 @@ extension StudioWorkspaceModel {
   func drawPreview() {
     guard let panel else { return }
     do {
-      let preview = try studio.preview(
-        panel.type.id, params: panel.params, on: selection, mask: maskImage())
+      let (preview, isChain) = try previewImage(panel)
       // Through the head's display stretch: an auto-stretch fitted to the preview would hide
       // the very change the process makes (what is shown is what Apply records, R2).
       let same = preview.planes.count == headStatistics.count
       willShow(panel.type.id, panel.params)
       try show(preview, statistics: same ? headStatistics : nil, subject: .preview)
       isPreviewing = true
-      shown = (panel.type.id, panel.params, mask)
+      // A chain is not the panel's values on the head: Apply never records it as such.
+      shown = isChain ? nil : (panel.type.id, panel.params, mask)
       // A preview clears only a preview's failure: an Apply or Undo failure stays in view.
       if previewFailed { failure = nil }
       previewFailed = false
     } catch {
       shown = nil
+      chainStoppedBefore = nil
       failure = UserFacingError(error).message
       previewFailed = true
       if isPreviewing {
@@ -32,6 +34,43 @@ extension StudioWorkspaceModel {
         try? show(head, statistics: headStatistics)
       }
     }
+  }
+
+  /// The panel's values on the head; while a main step of the panel's process is edited (card
+  /// 0158), that step with them and the steps after it, up to the first host tool, each under
+  /// its recorded mask (0160) — and whether it is that chain.
+  private func previewImage(_ panel: ProcessPanelModel) throws -> (AstroImage, isChain: Bool) {
+    guard let editing = editedStep else {
+      chainStoppedBefore = nil
+      let image = try studio.preview(
+        panel.type.id, params: panel.params, on: selection, mask: maskImage())
+      return (image, false)
+    }
+    let chain = try studio.previewChain(from: editing, params: panel.params)
+    chainStoppedBefore = chain.stoppedBefore
+    return (chain.image, true)
+  }
+
+  /// The main step the open panel edits (card 0158): `editing` when the panel is that step's
+  /// process — another process's panel never reads its values onto the edited step's schema,
+  /// and previews and applies on the head as usual.
+  var editedStep: Int? {
+    guard let editing, let panel, selection == .main else { return nil }
+    let steps = studio.session.history.steps
+    guard steps.indices.contains(editing), steps[editing].processID == panel.type.id else {
+      return nil
+    }
+    return editing
+  }
+
+  /// The banner of a chain preview stopped before a host tool, in `locale`, or `nil`.
+  package func chainStopNotice(locale: Locale? = nil) -> LocalizedStringResource? {
+    // The steps `editedStep` and the chain read: the session's history.
+    let steps = studio.session.history.steps
+    guard let index = chainStoppedBefore, steps.indices.contains(index) else { return nil }
+    let title = String(localized: stepTitle(of: steps[index].processID, locale: locale))
+    return .app(
+      "Preview stopped before \(title) (step \(index + 1)) — computed when applied", locale: locale)
   }
 
   /// Whether the viewer shows the current values and mask of `panel`.
@@ -74,6 +113,7 @@ extension StudioWorkspaceModel {
   func stopPreview() {
     previewTask?.cancel()
     shown = nil
+    chainStoppedBefore = nil
     guard isPreviewing else { return }
     isPreviewing = false
     try? show(head)
@@ -90,6 +130,10 @@ extension StudioWorkspaceModel {
       if panel != nil, !isPreviewSuspended { schedulePreview() }
       return
     }
+    // The step edited is gone or another one now: the edit ends with the move (before the
+    // preview it schedules is cancelled).
+    editing = nil
+    chainStoppedBefore = nil
     previewTask?.cancel()
     previewTask = nil
     isPreviewSuspended = panel.map { !$0.type.runsTool($0.params) } ?? false

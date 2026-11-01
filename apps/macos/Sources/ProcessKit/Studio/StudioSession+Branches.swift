@@ -141,6 +141,7 @@ extension StudioSession {
     BranchSet.overlay(head, of: layerID, onto: &bundle, stack: stackBundle, baseID: baseID)
     bundleLayers[layerID] = try GPUImage(device: device, image: head ?? layer)
     overlay = nil
+    chainInput = nil
     if layerID == baseID { history.rebase(onto: head ?? layer) }
   }
 }

@@ -127,10 +127,7 @@ package struct StudioSideView: View {
 
   /// One applied step: its number and title, a click compares the viewer with its output.
   private func stepRow(_ index: Int, _ step: History.Step) -> some View {
-    // A host-tool step has no ProcessKit title: its own, in the view's language.
-    let title =
-      StarSeparation.title(of: step.processID, locale: locale)
-      ?? ProcessKitResources.title(model.title(of: step.processID), locale: locale)
+    let title = model.stepTitle(of: step.processID, locale: locale)
     return Button {
       model.toggleCompare(index)
     } label: {

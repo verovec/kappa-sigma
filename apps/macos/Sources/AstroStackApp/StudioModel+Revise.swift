@@ -25,10 +25,8 @@ extension StudioModel {
     if isTool, tool == nil { throw PipelineError.toolMissing(processID) }
     var recipes = replayRecipes
     recipes[index] = PipelineStep(recipe: Recipe(processID: processID, params: params))
-    // The replay stops before the first host tool after `index`.
-    let end =
-      steps.indices.dropFirst(index + 1).first { runsTool(steps[$0].processID, steps[$0].params) }
-      ?? recipes.count
+    // The replay stops before the first host tool after `index` (the chain preview's rule).
+    let end = session.toolStep(from: index + 1, revising: index, params: params) ?? recipes.count
     try refuseMovedMask(index, params: params, until: end)
     let replayed = Array(recipes[..<end])
     let session = session
@@ -51,17 +49,18 @@ extension StudioModel {
     return steps.count
   }
 
+  /// Applied step `index` with `params` and the steps after it, rendered in memory (card 0158):
+  /// what `reviseStep` would write, up to the first host tool; nothing recorded.
+  package func previewChain(from index: Int, params: ParamSet) throws -> ChainPreview {
+    try session.previewChain(from: index, params: params)
+  }
+
   /// Refuses a revise of step `index` with `params` that moves the pixels (under its recorded or
   /// its new values) while a masked step before `end` would replay on them: its recorded mask
   /// would land on other pixels (card 0160).
   private func refuseMovedMask(_ index: Int, params: ParamSet, until end: Int) throws {
-    let step = steps[index]
-    let registry = session.registry
-    guard
-      registry.movesPixels(step.processID, params: params)
-        || registry.movesPixels(step.processID, params: step.params)
-    else { return }
-    if let masked = steps.indices[(index + 1)..<end].first(where: { steps[$0].mask != nil }) {
+    // The chain preview refuses by the same rule (card 0158).
+    if let masked = session.movedMaskStep(index, params: params, until: end) {
       throw PipelineError.maskMoved(step: masked)
     }
   }

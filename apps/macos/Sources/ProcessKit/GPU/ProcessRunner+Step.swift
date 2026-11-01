@@ -29,6 +29,24 @@ extension ProcessRunner {
       width: output.width, height: output.height, planes: output.read(), metadata: metadata)
   }
 
+  /// `process` applied to `input` at full resolution: its image and the layers it moves.
+  ///
+  /// The one step of the Studio's Apply, the pipeline runner and the chain preview (card 0158),
+  /// reading the context `layers` (`movedLayers` says what moves).
+  package func applied(
+    _ process: any ImageProcess, input: AstroImage, stats: LayerStats,
+    layers: [String: GPUImage], layerStats: [String: LayerStats], roles: Set<LayerRole>,
+    mask: AstroImage? = nil
+  ) throws -> (
+    result: AstroImage, outputs: [LayerRole: AstroImage], replacing: [String: AstroImage]
+  ) {
+    let result = try image(
+      process, input: input, stats: stats, layers: layers, layerStats: layerStats, mask: mask)
+    let moved = try movedLayers(
+      process, layers: layers, input: input, result: result, roles: roles)
+    return (result, moved.outputs, moved.replacing)
+  }
+
   /// The layers an applied `process` step moves with its image (card 0090): every context layer
   /// of a geometric step, as the step's outputs of the roles earlier steps wrote (`roles`) and as
   /// replaced bundle layers otherwise; nothing for any other process or at the identity.

@@ -1,3 +1,4 @@
+internal import ImageKit
 package import ProcessKit
 
 // MARK: - Branches (card 0118)
@@ -25,8 +26,8 @@ extension StudioModel {
   /// Re-applies the main steps from `staleFrom` on with the values they recorded.
   ///
   /// Over the branch heads as they are now, only when asked (R2), through the pipeline runner
-  /// like a replay (card 0088: a recipe has no mask, so a masked step replays unmasked). A
-  /// host-tool step refuses the replay before anything moves (`PipelineError.toolMissing`).
+  /// like a replay, each masked step under its recorded mask (card 0160). A host-tool step
+  /// refuses the replay before anything moves (`PipelineError.toolMissing`).
   /// Returns the number of steps kept before the first one re-applied, or `nil` when nothing
   /// was stale.
   @discardableResult
@@ -40,26 +41,40 @@ extension StudioModel {
     }
     // Made before anything is undone, for the same reason.
     let runner = try replayRunner()
+    let masks = try replayMasks(start..<steps.count)
     try await moving { history in
       while history.steps.count > start { try history.undo() }
-      try await replay(recipes, from: start, on: history, with: runner)
+      try await replay(recipes, from: start, on: history, with: runner, masks: masks)
     }
     return start
   }
 
   /// Applies `recipes` from `start` to `history` through the pipeline runner, over the bundle as
   /// it is now (its branch heads): the one replay of the Studio, for a stale tail (card 0118) or
-  /// a revised step (card 0157).
+  /// a revised step (card 0157). `masks` are the steps' recorded masks by index (`replayMasks`).
   func replay(
-    _ recipes: [PipelineStep], from start: Int, on history: History, with runner: PipelineRunner
+    _ recipes: [PipelineStep], from start: Int, on history: History, with runner: PipelineRunner,
+    masks: [Int: AstroImage]
   ) async throws {
     _ = try await runner.run(
-      Pipeline(name: "replay", steps: recipes), on: history, bundle: session.bundle, from: start)
+      Pipeline(name: "replay", steps: recipes), on: history, bundle: session.bundle, from: start,
+      masks: masks)
   }
 
-  /// The applied steps as the recipes a replay applies (a recipe has no mask).
+  /// The applied steps as the recipes a replay applies (a recipe has no mask: `replayMasks`).
   var replayRecipes: [PipelineStep] {
     steps.map { PipelineStep(recipe: Recipe(processID: $0.processID, params: $0.params)) }
+  }
+
+  /// The masks the applied steps in `range` were applied under, by index (card 0160): read
+  /// before a replay moves anything, only for the steps it replays, the recorded pixels reused as
+  /// they are — never recomputed on the new image.
+  func replayMasks(_ range: Range<Int>) throws -> [Int: AstroImage] {
+    var masks: [Int: AstroImage] = [:]
+    for index in range where steps[index].mask != nil {
+      masks[index] = try session.history.mask(ofStep: index)
+    }
+    return masks
   }
 
   /// The runner of a replay, over the Studio's registry and device.

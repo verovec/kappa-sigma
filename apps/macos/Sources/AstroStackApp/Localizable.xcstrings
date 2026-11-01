@@ -11296,6 +11296,22 @@
           }
         }
       }
+    },
+    "Step %lld is masked: revising an earlier crop, turn or flip moves its mask.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Step %lld is masked: revising an earlier crop, turn or flip moves its mask."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’étape %lld est masquée : modifier un recadrage, une rotation ou un retournement plus tôt déplace son masque."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

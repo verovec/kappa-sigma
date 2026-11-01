@@ -66,9 +66,12 @@ package struct InventoryBuilder: Sendable {
     return merged
   }
 
-  /// Whether `path` names a FITS file by its extension.
+  /// A FITS frame by its extension; a macOS AppleDouble companion (`._name.fit`, written on
+  /// exFAT/SMB volumes) is binary metadata, never a frame.
   package static func isFITS(_ path: String) -> Bool {
-    fitsExtensions.contains((path as NSString).pathExtension.lowercased())
+    let name = path as NSString
+    return !name.lastPathComponent.hasPrefix("._")
+      && fitsExtensions.contains(name.pathExtension.lowercased())
   }
 
   /// One folder: read, then the per-folder fallbacks, in the legacy order.

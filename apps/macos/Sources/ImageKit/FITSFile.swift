@@ -34,10 +34,14 @@ package struct FITSFile: Sendable {
     var cards: [FITSHeader.Card] = []
     var offset = data.startIndex
     while offset + cardLength <= data.endIndex {
-      // FITS headers are ASCII (FITS 4.0 §4.1.1): anything else is not a FITS file.
-      guard let raw = String(bytes: data[offset..<offset + cardLength], encoding: .ascii) else {
-        throw FITSError.nonASCIIHeader
-      }
+      let bytes = data[offset..<offset + cardLength]
+      // FITS headers are ASCII (FITS 4.0 §4.1.1): a first card that is not is not a FITS file.
+      // Later cards are read the way cfitsio (and so Siril) reads them: capture software writes
+      // `°C` or an accented name in comments, and one such byte must not lose the frame.
+      let ascii = String(bytes: bytes, encoding: .ascii)
+      guard offset != data.startIndex || ascii != nil else { throw FITSError.nonASCIIHeader }
+      // Every mapped byte is ASCII, so the fallback decode cannot fail.
+      let raw = ascii ?? String(bytes: bytes.map(asciiOrQuestionMark), encoding: .ascii) ?? ""
       offset += cardLength
       if raw.hasPrefix("END") && raw.dropFirst(3).allSatisfy({ $0 == " " }) {
         let consumed = offset - data.startIndex
@@ -85,6 +89,12 @@ package struct FITSFile: Sendable {
       try out.write(to: url, options: .atomic)
     }
   }
+
+  /// A header byte as read: ASCII as is, anything else `?`.
+  ///
+  /// One column per byte, so the card keeps 80. Rewriting such a header keeps the `?` (captures
+  /// are read-only; the app's own files are ASCII).
+  static func asciiOrQuestionMark(_ byte: UInt8) -> UInt8 { byte < 0x80 ? byte : UInt8(ascii: "?") }
 
   /// Bytes needed to reach the next block boundary.
   static func padding(_ count: Int) -> Int { (block - count % block) % block }

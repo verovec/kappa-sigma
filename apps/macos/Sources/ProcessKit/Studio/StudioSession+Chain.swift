@@ -14,37 +14,51 @@ extension StudioSession {
   package func previewChain(from k: Int, params: ParamSet) throws -> ChainPreview {
     let steps = history.steps
     guard steps.indices.contains(k) else { throw HistoryError.noStep(k) }
-    // Its recorded mask would land on other pixels after a k that moves them.
-    let movesMasks =
-      registry.movesPixels(steps[k].processID, params: params)
-      || registry.movesPixels(steps[k].processID, params: steps[k].params)
-    var state = try chainInput(k)
-    for index in k..<steps.count {
+    // A process the registry cannot render counts as a tool, as in the revise.
+    let stop = steps.indices[k...].first { index in
       let recipe = Recipe(
         processID: steps[index].processID, params: index == k ? params : steps[index].params)
-      // A process the registry cannot render counts as a tool, as in the revise.
-      guard let type = registry.type(id: recipe.processID), !recipe.runsTool(as: type) else {
-        return ChainPreview(image: state.image, stoppedBefore: index)
-      }
+      return registry.type(id: recipe.processID).map(recipe.runsTool(as:)) ?? true
+    }
+    if let masked = movedMaskStep(k, params: params, until: stop ?? steps.count) {
+      throw PipelineError.maskMoved(step: masked)
+    }
+    let input = try chainInput(k)
+    var state = input.state
+    for index in k..<(stop ?? steps.count) {
+      let recipe = Recipe(
+        processID: steps[index].processID, params: index == k ? params : steps[index].params)
+      guard let type = registry.type(id: recipe.processID) else { break }
       // The recorded values as the replay reads them: a refused value stops it with its name.
       let values = try PipelineRunner.values(
         of: PipelineStep(recipe: recipe), schema: type.schema, at: index)
-      if index > k, movesMasks, steps[index].mask != nil {
-        throw PipelineError.maskMoved(step: index)
-      }
       let step = try runner.applied(
         type.init(params: values, device: device), input: state.image,
         stats: state.stats ?? LayerStats.measured(state.image), layers: state.layers,
-        layerStats: state.layerStats, roles: state.roles,
-        mask: try steps[index].mask.map(history.layer(file:)))
+        layerStats: state.layerStats, roles: state.roles, mask: input.masks[index])
       try state.advance(
         past: step, of: recipe.processID, moving: registry.movingIDs, stack: bundle.layerStats,
         device: device)
     }
-    return ChainPreview(image: state.image, stoppedBefore: nil)
+    return ChainPreview(image: state.image, stoppedBefore: stop)
   }
 
-  /// The files of the steps before the cached chain input, or `nil` when none is kept.
+  /// The first masked step after `k` and before `end` when step `k` moves the pixels under its
+  /// recorded values or under `params`: its recorded mask would land on other pixels (card
+  /// 0160). The one rule of the revise's refusal and of the chain preview's.
+  package func movedMaskStep(_ k: Int, params: ParamSet, until end: Int) -> Int? {
+    let steps = history.steps
+    guard steps.indices.contains(k) else { return nil }
+    let step = steps[k]
+    guard
+      registry.movesPixels(step.processID, params: params)
+        || registry.movesPixels(step.processID, params: step.params)
+    else { return nil }
+    return steps.indices[(k + 1)..<max(k + 1, min(end, steps.count))]
+      .first { steps[$0].mask != nil }
+  }
+
+  /// The files of the steps when the chain input was cached, or `nil` when none is kept.
   package var chainInputFiles: [String]? { chainInput?.files }
 
   /// Drops the cached input of the chain preview: the edit is over.
@@ -52,11 +66,15 @@ extension StudioSession {
     chainInput = nil
   }
 
-  /// What step `k` reads, read from the history once per set of files before it.
-  func chainInput(_ k: Int) throws -> ChainState {
-    let before = Array(history.steps.prefix(k))
-    let files = before.map(\.file)
-    if let chainInput, chainInput.files == files { return chainInput.state }
+  /// What step `k` reads and the recorded masks of the steps from it, read from the history
+  /// once per edit (the same `k` over the same step files).
+  func chainInput(_ k: Int) throws -> (state: ChainState, masks: [Int: AstroImage]) {
+    let steps = history.steps
+    let files = steps.map(\.file)
+    if let chainInput, chainInput.k == k, chainInput.files == files {
+      return (chainInput.state, chainInput.masks)
+    }
+    let before = Array(steps.prefix(k))
     let moving = registry.movingIDs
     let image = try history.image(file: before.last?.file)
     let context = try history.contextAndMoves(
@@ -65,7 +83,11 @@ extension StudioSession {
       image: image, stats: k == 0 ? bundle.stats : LayerStats.measured(image),
       layers: context.layers, layerStats: context.stats, onlyMoved: context.onlyMoved,
       roles: Set(before.flatMap { $0.outputs.keys }))
-    chainInput = (files, state)
-    return state
+    var masks: [Int: AstroImage] = [:]
+    for index in steps.indices[k...] where steps[index].mask != nil {
+      masks[index] = try history.mask(ofStep: index)
+    }
+    chainInput = (k, files, state, masks)
+    return (state, masks)
   }
 }

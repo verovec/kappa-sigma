@@ -61,13 +61,8 @@ extension StudioModel {
   /// its new values) while a masked step before `end` would replay on them: its recorded mask
   /// would land on other pixels (card 0160).
   private func refuseMovedMask(_ index: Int, params: ParamSet, until end: Int) throws {
-    let step = steps[index]
-    let registry = session.registry
-    guard
-      registry.movesPixels(step.processID, params: params)
-        || registry.movesPixels(step.processID, params: step.params)
-    else { return }
-    if let masked = steps.indices[(index + 1)..<end].first(where: { steps[$0].mask != nil }) {
+    // The chain preview refuses by the same rule (card 0158).
+    if let masked = session.movedMaskStep(index, params: params, until: end) {
       throw PipelineError.maskMoved(step: masked)
     }
   }

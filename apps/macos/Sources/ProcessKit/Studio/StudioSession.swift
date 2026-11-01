@@ -30,9 +30,10 @@ package final class StudioSession {
   /// same — the pipeline keeps its steps — but worth saying, since undoing it shows nothing.
   package internal(set) var lastApplyChangedNothing = false
   var overlay: Overlay?
-  /// The input of the last step a chain preview started from, keyed on the files of the steps
-  /// before it (card 0158): a drag re-renders the chain, not the disk read.
-  var chainInput: (files: [String], state: ChainState)?
+  /// The input of the step a chain preview starts from and the masks of the steps from it,
+  /// keyed on that step and the history's step files (card 0158): a drag re-renders the chain,
+  /// not the disk reads.
+  var chainInput: (k: Int, files: [String], state: ChainState, masks: [Int: AstroImage])?
 
   /// A session over `history` and `bundle`, running the processes of `registry` on `device`;
   /// `branches` are those beside the history's folder unless given.

@@ -37,8 +37,8 @@ extension StudioWorkspaceModel {
   }
 
   /// The panel's values on the head; while a main step of the panel's process is edited (card
-  /// 0158), that step with them and the steps after it, up to the first host tool (a recipe has
-  /// no mask) — and whether it is that chain.
+  /// 0158), that step with them and the steps after it, up to the first host tool, each under
+  /// its recorded mask (0160) — and whether it is that chain.
   private func previewImage(_ panel: ProcessPanelModel) throws -> (AstroImage, isChain: Bool) {
     guard let editing = editedStep else {
       chainStoppedBefore = nil

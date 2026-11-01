@@ -53,7 +53,7 @@ package struct ExportStageView: View {
           "Written outside the stack; each export records what, where and from which step."),
         help: StageHelp.help(.export, locale: locale))
       Spacer()
-      Button(.app("Export")) { Task { await model.export() } }
+      Button(.app("Export")) { model.startExport() }
         .disabled(!model.canExport)
         .accessible(.stageControl("export", "export"), label: .app("Export"))
     }

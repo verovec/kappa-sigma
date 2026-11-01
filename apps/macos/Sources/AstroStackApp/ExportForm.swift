@@ -20,6 +20,7 @@ package struct ExportForm: View {
       formats
       values
       folder
+      ExportTargetsForm(model: model)
     }
   }
 
@@ -86,12 +87,16 @@ package struct ExportForm: View {
         .accessible(.stageControl("export", "folder.template"), label: .app("Sub-folders"))
       Text(.app("Tokens: \(ExportPathTemplate.listed)"))
         .font(.caption).foregroundStyle(.secondary)
-      if let resolved = Self.resolved(model) {
-        Text(verbatim: resolved).font(.caption).textSelection(.enabled)
-          .lineLimit(2).truncationMode(.middle)
-      } else if let refusal = model.folderRefusal {
+      if let refusal = model.folderRefusal {
         Text(UserFacingError.exportTemplate(refusal).message)
           .font(.caption).foregroundStyle(DesignColor.statusError.color)
+      } else if !model.local {
+        // Shown = written (R2): nothing stays in this folder when the copy goes to S3 only.
+        Text(.app("Not kept on this Mac: written to a scratch folder, uploaded, then removed."))
+          .font(.caption).foregroundStyle(.secondary)
+      } else if let resolved = Self.resolved(model) {
+        Text(verbatim: resolved).font(.caption).textSelection(.enabled)
+          .lineLimit(2).truncationMode(.middle)
       }
     }
   }

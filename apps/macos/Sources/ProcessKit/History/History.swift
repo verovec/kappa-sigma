@@ -27,6 +27,9 @@ package final class History {
     package var movesPixels = false
     /// The branch heads it read, by layer id (card 0118): it is stale once one of them moved.
     package var branchHeads: [String: String] = [:]
+    /// The mask it was applied under, a file in the history folder (card 0160): a replay or a
+    /// re-edit applies it under the same pixels; `nil` when it was applied unmasked.
+    package var mask: String?
   }
 
   /// A named state ("v9"): the output of a step, or the original (`file == nil`).
@@ -125,11 +128,12 @@ package final class History {
 
   /// Records `result` as the output of `processID` with `params`, `outputs` as the layers it
   /// wrote and `replacing` as the bundle layers it rewrote; what was undone is dropped.
-  /// `movesPixels` says the step moved the pixels (`ProcessRegistry.movesPixels`).
+  /// `movesPixels` says the step moved the pixels (`ProcessRegistry.movesPixels`); `mask` is the
+  /// mask it was applied under, recorded as `<step>-mask.fits` (card 0160).
   package func apply(
     processID: String, params: ParamSet, result: AstroImage,
     outputs: [LayerRole: AstroImage] = [:], replacing: [String: AstroImage] = [:],
-    movesPixels: Bool = false
+    movesPixels: Bool = false, mask: AstroImage? = nil
   ) throws {
     let moved = movesPixels || steps.contains(where: \.movesPixels)
     let digits = String(nextNumber)
@@ -149,9 +153,14 @@ package final class History {
       try write(image, name, moved: moved)
       replaced[id] = name
     }
+    let maskFile = try mask.map { mask in
+      try write(mask, stem + "-mask.fits", moved: moved)
+      return stem + "-mask.fits"
+    }
     let step = Step(
       processID: processID, params: params, file: file, outputs: written, replaced: replaced,
-      movesPixels: movesPixels, branchHeads: branchHeadsRead(processID, params, steps.count))
+      movesPixels: movesPixels, branchHeads: branchHeadsRead(processID, params, steps.count),
+      mask: maskFile)
     try writeManifest(steps: steps + [step], undone: [], snapshots: snapshots)
     steps.append(step)
     undone.removeAll()
@@ -235,7 +244,7 @@ package final class History {
     let kept = steps + undone + versions.flatMap(\.steps)
     return Set(
       kept.map(\.file) + kept.flatMap { $0.outputs.values } + kept.flatMap { $0.replaced.values }
-        + snapshots.compactMap(\.file))
+        + kept.compactMap(\.mask) + snapshots.compactMap(\.file))
   }
 
   /// Bytes of the reachable outputs, counted against the project's disk budget (0068).

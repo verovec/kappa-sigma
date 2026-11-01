@@ -95,14 +95,52 @@ struct DualbandSplitTests {
     #expect(!FileManager.default.fileExists(atPath: out.appendingPathComponent("syn_Ha.fits").path))
   }
 
-  @Test("no broadband master left: the lane becomes the colour channel, unsplit", .scratchDirectory)
+  @Test(
+    "no broadband master: the lane stays the colour base whole and also gives Hα + [OIII]",
+    .scratchDirectory)
   func testNoBroadbandBase() throws {
     let out = try ScratchDirectory.url
     try Self.master("aligned_RGB-dualband", 0.40, 0.20, 0.10, in: out)
     let (channels, note) = DualbandSplit.channels(
       ["RGB-dualband": "aligned_RGB-dualband"], out: out)
-    #expect(channels == ["RGB": "aligned_RGB-dualband"] && note?.contains("broadband") == true)
-    #expect(!FileManager.default.fileExists(atPath: out.appendingPathComponent("syn_Ha.fits").path))
+    #expect(channels == ["RGB": "aligned_RGB-dualband", "Ha": "syn_Ha", "OIII": "syn_OIII"])
+    #expect(note?.contains("the RGB-dualband stack is the colour base, kept whole") == true)
+    #expect(note?.contains("Ha (red pixels) + OIII (max of green/blue)") == true)
+    #expect(note?.contains("no continuum scale") == true)
+    #expect(note?.contains("mixed filter sets") == false)
+    #expect(try Self.value(out.appendingPathComponent("syn_Ha.fits")).first == 0.40)
+    #expect(try Self.value(out.appendingPathComponent("syn_OIII.fits")).first == 0.20)
+    // The base itself is never rewritten: still three planes.
+    #expect(try Self.value(out.appendingPathComponent("aligned_RGB-dualband.fits")).planes == 3)
+  }
+
+  @Test(
+    "no broadband master, the base lane unregistered elsewhere: the base's own lines still come",
+    .scratchDirectory)
+  func testNoBroadbandBaseUnregisteredLanes() throws {
+    let out = try ScratchDirectory.url
+    try Self.master("aligned_RGB-dualband", 0.40, 0.20, 0.10, in: out)
+    try Self.master("master_RGB-dualband-sii", 0.30, 0.25, 0.15, in: out)
+    let (channels, note) = DualbandSplit.channels(
+      ["RGB-dualband": "aligned_RGB-dualband", "RGB-dualband-sii": "master_RGB-dualband-sii"],
+      out: out, registered: false)
+    // The base lane IS the grid: its lines need no registration; the other lane's do.
+    #expect(channels == ["RGB": "aligned_RGB-dualband", "Ha": "syn_Ha", "OIII": "syn_OIII"])
+    #expect(note?.contains("not registered") == true)
+    #expect(note?.contains("their emission layers skipped, the base's own kept") == true)
+    #expect(
+      !FileManager.default.fileExists(atPath: out.appendingPathComponent("syn_SII.fits").path))
+  }
+
+  @Test(
+    "no broadband master, an unreadable base: the base stays, only its layers are lost",
+    .scratchDirectory)
+  func testNoBroadbandBaseUnsplittable() throws {
+    let (channels, note) = DualbandSplit.channels(
+      ["RGB-dualband": "missing_master"], out: try ScratchDirectory.url)
+    #expect(channels == ["RGB": "missing_master"])
+    #expect(note?.contains("dualband lane split skipped") == true)
+    #expect(note?.contains("also gives") == false)
   }
 
   @Test("another clip's pair names the layers after its lines", .scratchDirectory)
@@ -161,7 +199,7 @@ struct DualbandSplitTests {
   }
 
   @Test(
-    "no broadband master, two line lanes: the first is the base, the other screens over it",
+    "no broadband master, two line lanes: the base gives its lines, the other adds",
     .scratchDirectory)
   func testNoBroadbandTwoLineLanes() throws {
     let out = try ScratchDirectory.url
@@ -170,13 +208,16 @@ struct DualbandSplitTests {
     let (channels, note) = DualbandSplit.channels(
       ["RGB-dualband": "aligned_RGB-dualband", "RGB-dualband-sii": "aligned_RGB-dualband-sii"],
       out: out)
-    #expect(channels == ["RGB": "aligned_RGB-dualband", "SII": "syn_SII"])
+    #expect(
+      channels == [
+        "RGB": "aligned_RGB-dualband", "Ha": "syn_Ha", "OIII": "syn_OIII", "SII": "syn_SII",
+      ])
     #expect(note?.contains("RGB-dualband stack is the colour base") == true)
     #expect(
-      note?.contains("OIII of the dualband-sii lane skipped: the colour base already holds it")
+      note?.contains("OIII of the dualband-sii lane skipped: the colour base already gave it")
         == true)
-    #expect(
-      !FileManager.default.fileExists(atPath: out.appendingPathComponent("syn_OIII.fits").path))
+    // [OIII] is the base's (max of green/blue of the dual-band master), never the SII clip's.
+    #expect(try Self.value(out.appendingPathComponent("syn_OIII.fits")).first == 0.20)
   }
 
   @Test(
@@ -214,7 +255,7 @@ struct DualbandSplitTests {
   }
 
   @Test(
-    "three line lanes, no broadband: a line the base holds is reported as the base's",
+    "three line lanes, no broadband: a line the base gave is reported as the base's",
     .scratchDirectory)
   func testThreeLineLanesNoBroadband() throws {
     let out = try ScratchDirectory.url
@@ -226,14 +267,17 @@ struct DualbandSplitTests {
         "RGB-dualband": "aligned_RGB-dualband", "RGB-dualband-sii": "aligned_RGB-dualband-sii",
         "RGB-multiband": "aligned_RGB-multiband",
       ], out: out)
-    #expect(channels == ["RGB": "aligned_RGB-dualband", "SII": "syn_SII"])
     #expect(
-      note?.contains("OIII of the dualband-sii lane skipped: the colour base already holds it")
+      channels == [
+        "RGB": "aligned_RGB-dualband", "Ha": "syn_Ha", "OIII": "syn_OIII", "SII": "syn_SII",
+      ])
+    #expect(
+      note?.contains("OIII of the dualband-sii lane skipped: the colour base already gave it")
         == true)
     #expect(
-      note?.contains("Ha of the multiband lane skipped: the colour base already holds it") == true)
+      note?.contains("Ha of the multiband lane skipped: the colour base already gave it") == true)
     #expect(
-      note?.contains("OIII of the multiband lane skipped: the colour base already holds it") == true
+      note?.contains("OIII of the multiband lane skipped: the colour base already gave it") == true
     )
     #expect(note?.contains("lane split skipped") == false, "the multiband master is never read")
   }

@@ -232,6 +232,12 @@ in en/fr; the English title is the key, resolved with `ProcessKitResources.title
   files `step-NNNN-<role>.fits`); `layers()` overlays them, latest per role, for the steps after
   it; undo removes them. `<folder>.json` beside the history folder records steps, undone steps
   and snapshots: `History.reopen(directory:original:header:schema:)` finds the history again.
+- A step applied under a mask records it (card 0160): `apply(…, mask:)` writes
+  `step-NNNN-mask.fits`, `Step.mask` names it (manifest key `mask`, absent when unmasked so older
+  manifests stay byte-identical), `mask(ofStep:)` reads it back, `referencedFiles` keeps it. The
+  Studio's replays (`replayMain`, `reviseStep`) pass the recorded masks to
+  `PipelineRunner.run(…, masks: [index: mask])`: the recorded pixels are reused, never recomputed
+  on the new image. A `Recipe` stays mask-free: a pipeline run on another image is unmasked.
 - `StudioSession` (history + bundle + registry + GPU): `render` (the preview and Apply both come
   from it, a mask applied after the process), `apply`, step outputs overlaid as context layers
   (`role.rawValue` ids), `unavailableReason` (the `Pipeline.problems` rule over the steps so far,

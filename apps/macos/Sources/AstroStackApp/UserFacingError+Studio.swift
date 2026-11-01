@@ -34,6 +34,8 @@ extension UserFacingError {
       .app("Step \(step + 1) has values its process refuses: \(ids.joined(separator: ", ")).")
     case .toolMissing(let id):
       .app("Step “\(id)” runs a host tool: apply it in the Studio, then continue.")
+    case .maskMoved(let step):
+      .app("Step \(step + 1) is masked: revising an earlier crop, turn or flip moves its mask.")
     }
   }
 

@@ -9,7 +9,7 @@ internal import ImageKit
 /// blue, so the per-pixel maximum keeps whichever pixel caught the line (a mean would fold the
 /// weaker one in and cost SNR). The REGISTERED master is split: the layers are composited pixel
 /// for pixel over the colour base — the broadband master, or the first line lane when the run
-/// has none.
+/// has none (that lane then gives its own lines too).
 package enum DualbandSplit {
   /// The synthetic layer's file stem of a line (`syn_Ha`).
   private static func stem(_ line: Filter) -> String { "syn_" + line.rawValue }
@@ -54,10 +54,11 @@ package enum DualbandSplit {
   /// the note the run shows; the map unchanged (no note) when the run did not split.
   ///
   /// A lane leaves the map whatever happens: it is not a colour channel. When the line lanes are
-  /// the only channels (`lineBase`) the first (`FilterSet` order) becomes the colour base itself,
-  /// unsplit, and the other lanes' lines go over it; an unsplittable master, or one the alignment
+  /// the only channels (`lineBase`) the first (`FilterSet` order) also becomes the colour base
+  /// itself, kept whole, and still gives its lines as layers (it is the grid: no registration to
+  /// wait for); the other lanes' lines go over it. An unsplittable master, or one the alignment
   /// could not register (`registered`), costs only its emission layers. A line two lanes both
-  /// carry — or that the base already holds — is kept from the first and the other's is noted.
+  /// carry — or that the base already gave — is kept from the first and the other's is noted.
   package static func channels(_ channels: [String: String], out: URL, registered: Bool = true)
     -> (
       channels: [String: String], note: String?
@@ -67,27 +68,23 @@ package enum DualbandSplit {
     guard let first = lanes.first, let base = channels[first] else { return (channels, nil) }
     var kept = channels.filter { !lanes.contains($0.key) }
     var notes: [String] = []
-    // Lines a lane may not write: the base lane's own, when it stands in for the colour base.
+    // Lines a lane may not write: the ones the base lane gave, when it stands in for the base.
     var taken: Set<Filter> = []
     if lanes.count == channels.count {
-      // The first line lane is the colour base, its own lines inside it; the others go over it.
       kept[FilterSetLanes.baseFilter(of: first)] = base
       lanes.removeFirst()
-      if let lines = FilterSetLanes.lineSet(of: first)?.lines {
-        taken = [lines.red, lines.greenBlue]
-      }
-      notes.append(
-        "no broadband master in this run — the \(first) stack is the colour base, unsplit, its "
-          + "lines inside it; no continuum scale can be fitted without a broadband reference")
+      taken = baseLines(first, master: base, out: out, into: &kept, notes: &notes)
     }
     // Unregistered layers would sit offset from the base, every star doubled.
     guard registered else {
+      let skipped =
+        taken.isEmpty
+        ? "emission layers skipped, finishing on the colour base alone"
+        : "their emission layers skipped, the base's own kept"
       return (
         kept,
-        (notes + [
-          "line-clip master not registered onto the base grid — emission layers skipped, "
-            + "finishing on the colour base alone"
-        ]).joined(separator: "; ")
+        (notes + ["line-clip master not registered onto the base grid — " + skipped])
+          .joined(separator: "; ")
       )
     }
     var added: [(lane: String, lines: [String])] = []
@@ -96,9 +93,31 @@ package enum DualbandSplit {
         continue
       }
       let lines = splitLane(set, master: master, out: out, into: &kept, taken: taken, notes: &notes)
-      if !lines.isEmpty { added.append((lane, lines)) }
+      if !lines.isEmpty { added.append((lane, lines.map(\.label))) }
     }
     return (kept, (lead(added) + notes).joined(separator: "; "))
+  }
+
+  /// Splits the lane that stands in for the colour base into `kept`, its note first in `notes`;
+  /// returns the lines it gave (the other lanes skip them).
+  private static func baseLines(
+    _ lane: String, master: String, out: URL, into kept: inout [String: String],
+    notes: inout [String]
+  ) -> Set<Filter> {
+    guard let set = FilterSetLanes.lineSet(of: lane) else { return [] }
+    var laneNotes: [String] = []
+    let added = splitLane(set, master: master, out: out, into: &kept, taken: [], notes: &laneNotes)
+    // A failed split says why in its own note: the base's note only says what it gave.
+    let layers =
+      added.isEmpty
+      ? ""
+      : " and also gives " + added.map(\.label).joined(separator: " + ")
+        + " as layers"
+    notes.append(
+      "no broadband master in this run — the \(lane) stack is the colour base, kept whole"
+        + layers + "; no continuum scale can be fitted without a broadband reference")
+    notes += laneNotes
+    return Set(added.map(\.line))
   }
 
   /// Whether a line-clip lane stands in for the colour base.
@@ -121,20 +140,20 @@ package enum DualbandSplit {
     return ["mixed filter sets: " + words.joined(separator: ", ") + " over the colour base"]
   }
 
-  /// Splits one line-clip lane's `master` into `kept`; returns what it added, each line with its
-  /// plane.
+  /// Splits one line-clip lane's `master` into `kept`; returns the lines it added, each with
+  /// its label (the line and the plane it came from).
   ///
   /// A line another lane already gave is not written again and is noted; a lane with nothing
   /// left to add is not read at all; a failed split costs only this lane's layers.
   private static func splitLane(
     _ set: FilterSet, master: String, out: URL, into kept: inout [String: String],
     taken held: Set<Filter>, notes: inout [String]
-  ) -> [String] {
+  ) -> [(line: Filter, label: String)] {
     guard let lines = set.lines else { return [] }
     // One table of the lines and their planes; a held line is the base's before any lane's.
     let pair = [(lines.red, "red pixels"), (lines.greenBlue, "max of green/blue")]
     let skipped = pair.compactMap { line, _ -> (Filter, String)? in
-      if held.contains(line) { return (line, "the colour base already holds it") }
+      if held.contains(line) { return (line, "the colour base already gave it") }
       if kept[line.rawValue] != nil { return (line, "another lane already gave it") }
       return nil
     }
@@ -146,14 +165,11 @@ package enum DualbandSplit {
     do {
       let names = try split(
         out.appendingPathComponent(master + ".fits"), out: out, lines: lines, skipping: taken)
-      var added: [String] = []
-      let written = [
-        (lines.red, names.red, "red pixels"),
-        (lines.greenBlue, names.greenBlue, "max of green/blue"),
-      ]
-      for (line, name, plane) in written where !taken.contains(line) {
-        kept[line.rawValue] = name
-        added.append("\(line.rawValue) (\(plane))")
+      var added: [(line: Filter, label: String)] = []
+      let files = [lines.red: names.red, lines.greenBlue: names.greenBlue]
+      for (line, plane) in pair where !taken.contains(line) {
+        kept[line.rawValue] = files[line]
+        added.append((line, "\(line.rawValue) (\(plane))"))
       }
       if set.mixesLines {
         notes.append("multi-band clip: its Hα layer also carries [SII], its [OIII] layer Hβ")

@@ -61,6 +61,8 @@ struct LiveMonoSyntheticTests {
     case .lOnly: #expect(ids == ["L"])
     // Siril's debayered masters have three planes: the SII + OIII clip splits into its lines.
     case .oscSIIOIII: #expect(ids == ["RGB", "SII", "OIII"], "\(first.notes)")
+    // No broadband set: the clip lane is the colour base and still gives its lines (card 0162).
+    case .oscDualband: #expect(ids == ["RGB", "Ha", "OIII"], "\(first.notes)")
     }
   }
 }

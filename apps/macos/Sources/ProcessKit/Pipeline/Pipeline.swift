@@ -116,4 +116,7 @@ package enum PipelineError: Error, Equatable, Sendable {
   case invalidValues(step: Int, ids: [String])
   /// A host-tool process (plate solving…) whose tool the caller did not inject.
   case toolMissing(String)
+  /// Step `step` was applied under a mask drawn on pixels a revised crop, turn or flip before it
+  /// would move (card 0160): its recorded mask would land on other pixels, so nothing moves.
+  case maskMoved(step: Int)
 }

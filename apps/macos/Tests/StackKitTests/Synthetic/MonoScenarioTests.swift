@@ -55,6 +55,16 @@ struct MonoScenarioTests {
         "dualband-sii lane split skipped, finishing on the colour base alone: colour master has 1 "
           + "plane(s), need 3 to separate the two lines"
       ]),
+    // The fake Siril's 1-plane master cannot give the lines: the live suite checks they come.
+    .oscDualband: Expected(
+      colorModel: .osc, lights: ["RGB 300 dualband"], lanes: ["RGB"],
+      layers: ["RGB:rgb"],
+      notes: [
+        "no broadband master in this run — the RGB-dualband stack is the colour base, kept "
+          + "whole; no continuum scale can be fitted without a broadband reference; dualband "
+          + "lane split skipped, finishing on the colour base alone: colour master has 1 "
+          + "plane(s), need 3 to separate the two lines"
+      ]),
   ]
 
   /// A scenario scanned as the import does it: a default scan, then the user's clip filters by

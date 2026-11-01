@@ -12009,18 +12009,18 @@
         }
       }
     },
-    "Its steps and their files are deleted (%@), and ⌘Z forgets the combined image's steps. This cannot be undone.": {
+    "Its steps and files are deleted (%@); ⌘Z forgets these steps. No undo.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Its steps and their files are deleted (%@), and ⌘Z forgets the combined image's steps. This cannot be undone."
+            "value": "Its steps and files are deleted (%@); ⌘Z forgets these steps. No undo."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ses étapes et leurs fichiers sont supprimés (%@), et ⌘Z oublie les étapes de l’image combinée. Impossible d’annuler."
+            "value": "Ses étapes et fichiers sont supprimés (%@) ; ⌘Z oublie ces étapes. Impossible d’annuler."
           }
         }
       }

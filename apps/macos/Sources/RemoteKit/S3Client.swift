@@ -59,9 +59,12 @@ package struct S3Client: Sendable {
 
   // MARK: - Calls
 
-  /// Every object under `prefix` (ListObjectsV2, followed page by page).
+  /// Every object under `prefix` (ListObjectsV2, followed page by page), or the first `limit`.
   @concurrent
-  package func list(bucket: String, prefix: String) async throws -> [S3Object] {
+  package func list(bucket: String, prefix: String, limit: Int? = nil) async throws
+    -> [S3Object]
+  {
+    if let limit, limit <= 0 { return [] }
     var objects: [S3Object] = []
     var token: String?
     repeat {
@@ -70,11 +73,13 @@ package struct S3Client: Sendable {
         .init("list-type", "2"), .init("prefix", prefix), .init("encoding-type", "url"),
       ]
       if let token { query.append(.init("continuation-token", token)) }
+      if let limit { query.append(.init("max-keys", String(min(limit - objects.count, 1000)))) }
       let response = try await perform(
         S3Request(method: "GET", bucket: bucket, key: "", query: query))
       let page = try S3ListPage.parse(response.body)
       objects += page.objects
       token = page.continuationToken
+      if let limit, objects.count >= limit { return Array(objects.prefix(limit)) }
       try Task.checkCancellation()
     } while token != nil
     return objects

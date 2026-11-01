@@ -78,6 +78,7 @@ let package = Package(
       name: "AstroStackApp",
       dependencies: [
         "FilterKit", "ImageKit", "RenderKit", "ProcessKit", "ProjectKit", "StackKit", "HelpKit",
+        "RemoteKit",
       ],
       exclude: ["Localizable.xcstrings"], swiftSettings: app, plugins: ["CatalogPlugin"]),
 
@@ -124,7 +125,7 @@ let package = Package(
       name: "AstroStackAppTests",
       dependencies: [
         "AstroStackApp", "FilterKit", "HelpKit", "ImageKit", "ProcessKit", "ProjectKit",
-        "RenderKit",
+        "RemoteKit", "RenderKit",
         "StackKit", "StringCatalog", "TestSupport",
       ],
       swiftSettings: common),

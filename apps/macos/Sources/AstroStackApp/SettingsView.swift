@@ -5,7 +5,8 @@ internal import RenderKit
 package import SwiftUI
 
 /// The Settings window's content: the interface language, applied on relaunch, the runs'
-/// scratch folder (card 0098), the stacks' retention (card 0114) and the host tools' status.
+/// scratch folder (card 0098), the S3 connections (card 0150), the stacks' retention (card 0114)
+/// and the host tools' status.
 package struct SettingsView: View {
   private let setting: LanguageSetting
   private let relaunch: () -> Void
@@ -15,6 +16,8 @@ package struct SettingsView: View {
   @State private var astro: AstroFolderModel
   /// Settings › Export (card 0151), owned by the view like the astro folder.
   @State private var export: ExportDestinationModel
+  /// Settings › S3 connections (card 0150), owned by the view like the export folder.
+  @State private var s3: S3ConnectionsModel
   private let retention: RetentionSetting
   /// The choice the app was launched with: Relaunch is offered once the choice differs.
   private let launched: LanguageSetting.Choice
@@ -34,6 +37,7 @@ package struct SettingsView: View {
     tools: WelcomeModel? = nil, scratch: ScratchSetting = ScratchSetting(),
     astro: AstroFolderModel = AstroFolderModel(),
     export: ExportDestinationModel = ExportDestinationModel(),
+    s3: S3ConnectionsModel = S3ConnectionsModel(),
     retention: RetentionSetting = RetentionSetting()
   ) {
     self.setting = setting
@@ -43,6 +47,7 @@ package struct SettingsView: View {
     _scratchFolder = State(initialValue: scratch.folder)
     _astro = State(initialValue: astro)
     _export = State(initialValue: export)
+    _s3 = State(initialValue: s3)
     self.retention = retention
     _policy = State(initialValue: retention.policy)
     launched = setting.choice
@@ -68,6 +73,7 @@ package struct SettingsView: View {
       scratchSection
       astroSection
       exportSection
+      S3ConnectionsSection(model: s3)
       storageSection
       if let tools {
         Section { ToolStrip(model: tools) }

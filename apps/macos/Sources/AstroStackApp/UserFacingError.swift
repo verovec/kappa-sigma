@@ -32,6 +32,8 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
   case exportFolderMissing(path: String)
   /// This folder cannot be the export base Settings remembers (card 0151).
   case exportBaseRefused(path: String, ExportDestinationSetting.Refusal)
+  /// Settings refused this S3 connection (card 0150).
+  case s3Connection(S3ConnectionStore.Refusal)
   /// A pipeline run stopped on a step (cards 0059, 0088, 0093).
   case pipeline(PipelineError)
   /// Siril found no plate solution, or could not look (card 0093).
@@ -127,6 +129,7 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
       .app("AstroStack never writes into \(path): it is a read-only source. Choose another folder.")
     case .exportBaseRefused(let path, .appOwned):
       .app("\(path) holds AstroStack's projects or work files: choose a folder outside it.")
+    case .s3Connection(let refusal): Self.message(refusal)
     case .pipeline(let error): Self.message(error)
     case .plateSolve(let error): Self.message(error)
     case .colourCalibration(let error): Self.message(error)

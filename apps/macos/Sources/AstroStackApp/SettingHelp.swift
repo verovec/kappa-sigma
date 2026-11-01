@@ -11,8 +11,10 @@ package enum SettingHelp {
   package static let astroFolder = "astro-folder"
   /// Settings › Export (card 0151).
   package static let export = "export"
+  /// Settings › S3 connections (card 0150).
+  package static let s3Connections = "s3-connections"
   /// The settings with a card, by HelpKit id.
-  package static let ids = [astroFolder, export, storage]
+  package static let ids = [astroFolder, export, s3Connections, storage]
 
   /// The card of setting `id` in the language of `locale`, or `nil` (the gate keeps it present).
   package static func card(_ id: String, locale: Locale) -> String? {

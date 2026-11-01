@@ -66,6 +66,7 @@ package final class StudioWorkspaceModel {
   /// The applied step being edited (card 0158, set by 0159): the preview draws the chain from it.
   package var editing: Int? {
     didSet {
+      guard editing != oldValue else { return }
       // The chain's cached input (a full-resolution context) is not kept past the edit.
       if editing == nil { studio.session.endChainPreview() }
       if panel != nil { schedulePreview() }
@@ -180,6 +181,8 @@ package final class StudioWorkspaceModel {
   /// Opens the panel of `processID` at `params` (its defaults when `nil`), with its suggestions.
   package func choose(_ processID: String, params: ParamSet? = nil) {
     guard let type = registry.type(id: processID) else { return }
+    // Another panel ends the edit (0159 sets `editing` after choosing the step's process).
+    editing = nil
     let panel = ProcessPanelModel(type: type, params: params ?? ParamSet(schema: type.schema))
     refresh(panel)
     panel.onChange = { [weak self] in self?.panelChanged() }
@@ -197,6 +200,7 @@ package final class StudioWorkspaceModel {
   /// Closes the panel: the viewer shows the head again.
   package func closePanel() {
     panel = nil
+    editing = nil
     appliedNothing = false
     isPreviewSuspended = false
     hideModel()

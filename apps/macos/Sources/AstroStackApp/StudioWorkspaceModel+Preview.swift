@@ -40,10 +40,7 @@ extension StudioWorkspaceModel {
   /// 0158), that step with them and the steps after it, up to the first host tool (a recipe has
   /// no mask) — and whether it is that chain.
   private func previewImage(_ panel: ProcessPanelModel) throws -> (AstroImage, isChain: Bool) {
-    // Another process's panel never reads its values onto the edited step's schema.
-    guard let editing, selection == .main, studio.steps.indices.contains(editing),
-      studio.steps[editing].processID == panel.type.id
-    else {
+    guard let editing = editedStep else {
       chainStoppedBefore = nil
       let image = try studio.preview(
         panel.type.id, params: panel.params, on: selection, mask: maskImage())
@@ -52,6 +49,18 @@ extension StudioWorkspaceModel {
     let chain = try studio.previewChain(from: editing, params: panel.params)
     chainStoppedBefore = chain.stoppedBefore
     return (chain.image, true)
+  }
+
+  /// The main step the open panel edits (card 0158): `editing` when the panel is that step's
+  /// process — another process's panel never reads its values onto the edited step's schema,
+  /// and previews and applies on the head as usual.
+  var editedStep: Int? {
+    guard let editing, let panel, selection == .main else { return nil }
+    let steps = studio.session.history.steps
+    guard steps.indices.contains(editing), steps[editing].processID == panel.type.id else {
+      return nil
+    }
+    return editing
   }
 
   /// The banner of a chain preview stopped before a host tool, in `locale`, or `nil`.

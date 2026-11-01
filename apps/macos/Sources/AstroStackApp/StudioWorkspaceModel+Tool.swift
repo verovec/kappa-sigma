@@ -11,6 +11,8 @@ extension StudioWorkspaceModel {
   /// `done` runs once it ended, with whether its step was recorded. One run at a time: while
   /// one runs, nothing starts and `done(false)` runs at once.
   package func startTool(then done: @escaping (Bool) -> Void = { _ in }) {
+    // An edited tool step runs at the revise (0159), never as a new step on the head.
+    guard editedStep == nil else { return done(false) }
     guard toolTask == nil else {
       failure = .app("A tool is already running: wait for it, or stop it.")
       return done(false)

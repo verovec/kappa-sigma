@@ -50,11 +50,11 @@ extension StudioSession {
     if let chainInput, chainInput.files == files { return chainInput.state }
     let moving = registry.movingIDs
     let image = try history.image(file: before.last?.file)
-    let (layers, layerStats) = try history.context(
+    let context = try history.contextAndMoves(
       over: bundleLayers, stats: bundle.layerStats, device: device, moving: moving, before: k)
     let state = ChainState(
-      image: image, stats: k == 0 ? bundle.stats : LayerStats.measured(image), layers: layers,
-      layerStats: layerStats, onlyMoved: History.onlyMoved(before, moving: moving),
+      image: image, stats: k == 0 ? bundle.stats : LayerStats.measured(image),
+      layers: context.layers, layerStats: context.stats, onlyMoved: context.onlyMoved,
       roles: Set(before.flatMap { $0.outputs.keys }))
     chainInput = (files, state)
     return state

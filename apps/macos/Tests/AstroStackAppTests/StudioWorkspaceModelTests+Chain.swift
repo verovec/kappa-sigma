@@ -118,5 +118,40 @@ extension StudioWorkspaceModelTests {
 
     let head = try studio.preview(StretchProcess.id, params: params)
     #expect(workspace.viewer.model.image.planes == head.planes)
+    try workspace.apply()
+    #expect(studio.steps.count == 5, "what is shown on the head is what Apply records")
+  }
+
+  @Test("closing the panel ends the edit and drops the chain's cached input", .scratchDirectory)
+  func testClosePanel_EndsEdit() async throws {
+    let opened = try StudioModelTests.project()
+    defer { try? opened.package.close() }
+    let studio = try StudioModelTests.fourApplied(opened)
+    let workspace = try Self.editingStretch(studio)
+    workspace.editing = 1
+    await workspace.settlePreview()
+    #expect(studio.session.chainInputFiles != nil)
+
+    workspace.closePanel()
+
+    #expect(workspace.editing == nil && studio.session.chainInputFiles == nil)
+  }
+
+  @Test("an edited host-tool step never runs as a new step on the head", .scratchDirectory)
+  func testEditedToolStep_StartToolRefused() async throws {
+    let opened = try StudioModelTests.project()
+    defer { try? opened.package.close() }
+    let studio = try StudioModelTests.model(opened)
+    let solve = ParamSet(schema: PlateSolveProcess.schema)
+    try studio.apply(PlateSolveProcess.id, params: solve, result: studio.head)
+    let workspace = try StudioWorkspaceModel(studio: studio, base: [.color])
+    workspace.choose(PlateSolveProcess.id, params: solve)
+    workspace.editing = 1
+
+    let recorded = await withCheckedContinuation { done in
+      workspace.startTool { done.resume(returning: $0) }
+    }
+
+    #expect(!recorded && studio.steps.count == 2)
   }
 }

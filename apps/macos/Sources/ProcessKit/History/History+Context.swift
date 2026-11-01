@@ -1,4 +1,4 @@
-package import ImageKit
+internal import ImageKit
 package import Metal
 
 extension History {
@@ -16,6 +16,17 @@ extension History {
     over layers: [String: GPUImage], stats: [String: LayerStats], device: MTLDevice,
     moving: Set<String> = [], before: Int? = nil
   ) throws -> ([String: GPUImage], [String: LayerStats]) {
+    let context = try contextAndMoves(
+      over: layers, stats: stats, device: device, moving: moving, before: before)
+    return (context.layers, context.stats)
+  }
+
+  /// `context(over:stats:device:moving:before:)` with the `onlyMoved` map it was built from
+  /// (the chain preview carries it on, card 0158).
+  func contextAndMoves(
+    over layers: [String: GPUImage], stats: [String: LayerStats], device: MTLDevice,
+    moving: Set<String>, before: Int?
+  ) throws -> (layers: [String: GPUImage], stats: [String: LayerStats], onlyMoved: [String: Bool]) {
     let applied = steps.prefix(before ?? steps.count)
     var layers = layers
     var stats = stats
@@ -25,7 +36,7 @@ extension History {
       layers[id] = try GPUImage(device: device, image: image)
       stats[id] = Self.stats(ofWritten: image, onlyMoved: onlyMoved[id] == true, stack: stats[id])
     }
-    return (layers, stats)
+    return (layers, stats, onlyMoved)
   }
 
   /// Whether every one of `steps` that wrote each id only moved it (`note`).
@@ -39,7 +50,7 @@ extension History {
 
   /// Records that the step of `processID` wrote `ids` in `onlyMoved`: whether every step that
   /// wrote each id only moved it (`moving` holds the geometric processes), since the stack.
-  package static func note(
+  static func note(
     written ids: some Sequence<String>, by processID: String, moving: Set<String>,
     in onlyMoved: inout [String: Bool]
   ) {
@@ -48,7 +59,7 @@ extension History {
 
   /// The statistics of a layer a step wrote: measured, keeping the `stack` layer's continuum fit
   /// when it was `onlyMoved` since.
-  package static func stats(ofWritten image: AstroImage, onlyMoved: Bool, stack: LayerStats?)
+  static func stats(ofWritten image: AstroImage, onlyMoved: Bool, stack: LayerStats?)
     -> LayerStats
   {
     let measured = LayerStats.measured(image)

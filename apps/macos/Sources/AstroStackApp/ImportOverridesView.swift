@@ -50,7 +50,8 @@ struct ImportOverridesView: View {
     AppGlossary.label(id, locale: locale)
   }
 
-  /// One light filter and the channel it stacks into.
+  /// One light filter and the channel it stacks into, with where its verdict came from.
+  @ViewBuilder
   private func filterMap(_ filter: String) -> some View {
     Picker(
       selection: Binding(
@@ -72,5 +73,9 @@ struct ImportOverridesView: View {
       Text(.app("Filter \(filter) →"))
     }
     .fixedSize()
+    // Where the verdict came from (card 0163): the picker above still wins.
+    ForEach(Array(model.originWords(of: filter).enumerated()), id: \.offset) { _, origin in
+      Text(origin).font(.caption).foregroundStyle(.secondary)
+    }
   }
 }

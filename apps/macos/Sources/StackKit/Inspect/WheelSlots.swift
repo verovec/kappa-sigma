@@ -93,6 +93,8 @@ package enum WheelSlots {
     guard frame.filter.isEmpty, frame.wheelSlot > 0, !frame.type.isFilterAgnostic else { return }
     frame.filter = filterOf(frame.wheelSlot)
     frame.classSource = .wheel
+    frame.filterOrigin =
+      frame.filter.isEmpty ? nil : FilterOrigin(source: .wheelSlot, raw: String(frame.wheelSlot))
     frame.filterConfidence = 1
     if frame.type == .unknown { frame.type = .light }
   }

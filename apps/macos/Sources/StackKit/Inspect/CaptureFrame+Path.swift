@@ -52,6 +52,8 @@ extension CaptureFrame {
     // per filter, and flat names rarely carry a filter token.
     if let alias = sidecar?.slotAlias, !alias.isEmpty, type == .flat, filter.isEmpty {
       filter = alias
+      filterOrigin = FilterOrigin(
+        source: .wheelSlot, raw: wheelSlot > 0 ? String(wheelSlot) : alias)
       filterConfidence = 1
     }
   }
@@ -72,7 +74,10 @@ extension CaptureFrame {
   }
 
   private mutating func apply(_ meta: PathMeta) {
-    if filter.isEmpty { filter = meta.filter }
+    if filter.isEmpty, !meta.filter.isEmpty {
+      filter = meta.filter
+      filterOrigin = PathMeta.filterNamed(in: path).origin
+    }
     if exposureMs == 0 { exposureMs = meta.exposureMs }
     if gain == 0 {
       gain = meta.gain

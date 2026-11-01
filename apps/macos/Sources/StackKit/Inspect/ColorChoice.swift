@@ -63,6 +63,7 @@ extension Inventory {
       if target.isEmpty || target == "ignore" {
         frames[index].type = .unknown
       } else {
+        frames[index].filterOrigin = FilterOrigin(source: .manual, raw: frames[index].filter)
         frames[index].filter = Filter.normalize(target)
         frames[index].classSource = .manual
       }

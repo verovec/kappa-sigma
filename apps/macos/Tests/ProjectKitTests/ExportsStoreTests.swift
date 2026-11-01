@@ -36,7 +36,8 @@ struct ExportsStoreTests {
     #expect(try store.appliedMigrations().map(\.name).contains("exports"))
     #expect(
       try store.columnNames(of: "exports") == [
-        "created_at", "files_json", "folder", "head_step_id", "id", "image_id", "settings_json",
+        "created_at", "files_json", "folder", "head_step_id", "id", "image_id",
+        "remote_connection", "remote_error", "remote_status", "remote_url", "settings_json",
         "stack_id", "updated_at",
       ])
     #expect(try store.exports(stackID: stack.id).isEmpty)

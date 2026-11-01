@@ -80,14 +80,16 @@ package struct S3ConnectionsSection: View {
 
   @ViewBuilder
   private func editor(isNew: Bool) -> some View {
-    TextField(.app("Name"), text: field(\.connection.name))
-    TextField(.app("Endpoint"), text: field(\.connection.endpoint))
-    TextField(.app("Region"), text: field(\.connection.region), prompt: Text(verbatim: "us-east-1"))
-    Toggle(isOn: pathStyle) { Text(.app("Path-style addressing")) }
+    TextField(.app("Name"), text: Self.field(model, \.connection.name))
+    TextField(.app("Endpoint"), text: Self.field(model, \.connection.endpoint))
+    TextField(
+      .app("Region"), text: Self.field(model, \.connection.region),
+      prompt: Text(verbatim: "us-east-1"))
+    Toggle(isOn: Self.pathStyle(model)) { Text(.app("Path-style addressing")) }
     Text(.app("MinIO, Garage: on; AWS: off."))
       .font(.caption).foregroundStyle(.secondary)
-    TextField(.app("Access key"), text: field(\.connection.accessKey))
-    SecureField(text: field(\.secret)) { Text(.app("Secret key")) }
+    TextField(.app("Access key"), text: Self.field(model, \.connection.accessKey))
+    SecureField(text: Self.field(model, \.secret)) { Text(.app("Secret key")) }
     if !isNew {
       Text(.app("Leave empty to keep the secret stored in the Keychain."))
         .font(.caption).foregroundStyle(.secondary)
@@ -118,13 +120,17 @@ package struct S3ConnectionsSection: View {
     }
   }
 
-  private func field(_ path: WritableKeyPath<S3ConnectionsModel.Draft, String>) -> Binding<String> {
+  /// A text field of the draft.
+  package static func field(
+    _ model: S3ConnectionsModel, _ path: WritableKeyPath<S3ConnectionsModel.Draft, String>
+  ) -> Binding<String> {
     Binding(
       get: { model.draft?[keyPath: path] ?? "" },
       set: { model.draft?[keyPath: path] = $0 })
   }
 
-  private var pathStyle: Binding<Bool> {
+  /// The draft's path-style toggle.
+  package static func pathStyle(_ model: S3ConnectionsModel) -> Binding<Bool> {
     Binding(
       get: { model.draft?.connection.pathStyle ?? false },
       set: { model.draft?.connection.pathStyle = $0 })

@@ -60,6 +60,8 @@ extension Inventory {
         let assignment = byPath[frames[index].path]
         frames[index].filter = assignment?.filter ?? ""
         frames[index].classSource = .signal
+        frames[index].filterOrigin =
+          frames[index].filter.isEmpty ? nil : FilterOrigin(source: .signal, raw: "")
         frames[index].filterConfidence = assignment?.confidence ?? 0
         frames[index].wheelTransition = assignment?.wheelTransition ?? false
       }

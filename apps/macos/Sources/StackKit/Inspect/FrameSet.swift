@@ -19,6 +19,13 @@ package struct FrameSet: Equatable, Sendable {
   }
 
   package var count: Int { frames.count }
+  /// Where the set's filter came from: its first named frame's origin (card 0163).
+  package var filterOrigin: FilterOrigin? { frames.lazy.compactMap(\.filterOrigin).first }
+  /// Every distinct origin of its frames, in frame order: a filter map can merge frames named
+  /// differently into one set.
+  package var filterOrigins: [FilterOrigin] {
+    frames.compactMap(\.filterOrigin).reduce(into: []) { if !$0.contains($1) { $0.append($1) } }
+  }
   package var totalIntegrationMs: Int { frames.reduce(0) { $0 + $1.exposureMs } }
 
   /// Groups the typed frames of a scan (`buildSets`).

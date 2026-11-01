@@ -30,7 +30,7 @@ package enum Filter: String, CaseIterable, Sendable {
   /// Every alias, lowercased, of each filter.
   ///
   /// Johnson V reads as green (old R/V/B sessions).
-  private static let aliases: [String: Self] = [
+  package static let aliases: [String: Self] = [
     "l": .luminance, "lum": .luminance, "luminance": .luminance, "clear": .luminance,
     "r": .red, "red": .red,
     "g": .green, "green": .green, "v": .green,
@@ -49,9 +49,28 @@ package enum Filter: String, CaseIterable, Sendable {
   /// Whether the filter is an emission line rather than broadband (`line` says which).
   package var isNarrowband: Bool { line != nil }
 
-  /// The filter `raw` names, if it is one (case and surrounding spaces ignored).
+  /// The same aliases under their canonical spelling (`canonical(_:)`), for the second pass.
+  private static let canonicalAliases: [String: Self] = Dictionary(
+    aliases.map { (canonical($0.key), $0.value) }, uniquingKeysWith: { first, _ in first })
+
+  /// The filter `raw` names, if it is one (card 0163).
+  ///
+  /// Case and surrounding spaces are ignored; a name with no exact alias is canonicalised
+  /// (`canonical(_:)`) and looked up again. No edit distance, no guess: no table hit = `nil`.
   package static func token(_ raw: String) -> Self? {
-    aliases[raw.trimmingCharacters(in: .whitespaces).lowercased()]
+    let exact = raw.trimmingCharacters(in: .whitespaces).lowercased()
+    return aliases[exact] ?? canonicalAliases[canonical(exact)]
+  }
+
+  /// `raw` lowercased without what capture programs add around a filter's name: a bandwidth
+  /// (`7nm`, `6.5 nm`), separators (`-_ /.`), brackets (`[OIII]`), Greek letters spelled out
+  /// (`Hα` → `halpha`).
+  static func canonical(_ raw: String) -> String {
+    var name = raw.lowercased().replacing(/\d+([.,]\d+)?\s*nm/, with: "")
+    name = name.replacingOccurrences(of: "α", with: "alpha")
+      .replacingOccurrences(of: "β", with: "beta")
+    name.removeAll { "-_/.[]".contains($0) || $0.isWhitespace }
+    return name
   }
 
   /// `raw` abbreviated to its canonical token, or trimmed and kept verbatim when unknown.

@@ -96,7 +96,7 @@ package struct ExportPathTemplate: Equatable, Sendable {
 
   /// The folder names under the base, tokens replaced; empty names (`a//b`, a trailing `/`) are
   /// skipped.
-  func components(_ values: Values) throws(Refusal) -> [String] {
+  package func components(_ values: Values) throws(Refusal) -> [String] {
     guard !text.hasPrefix("/") else { throw .leavesBase(text) }
     guard Self.balanced(text) else { throw .unbalancedBrace(text) }
     var names: [String] = []

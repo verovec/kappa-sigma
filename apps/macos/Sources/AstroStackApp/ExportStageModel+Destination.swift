@@ -58,6 +58,7 @@ extension ExportStageModel {
     let refused = destination.isDefault(base) ? destination.choose(nil) : destination.choose(base)
     if let refused { return .exportBaseRefused(path: base.path, refused) }
     destination.choose(template: template)
+    destination.choose(local: local, s3: s3)
     return nil
   }
 }

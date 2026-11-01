@@ -1,3 +1,4 @@
+package import FilterKit
 package import Foundation
 
 extension Preprocessor {
@@ -37,5 +38,31 @@ extension Preprocessor {
       }
     }
     return (split, continuum)
+  }
+
+  /// `soleClipLanes(_:clip:)` with the clip every light set of `inventory` carries.
+  ///
+  /// A clip verdict is a one-shot-colour rig's: a mono run's channels are never a clip's lane.
+  static func soleClipLanes(_ channels: [String: String], inventory: Inventory)
+    -> [String: String]
+  {
+    let clip = inventory.colorModel == .osc ? FilterSetLanes.soleVerdict(in: inventory) : nil
+    return soleClipLanes(channels, clip: clip)
+  }
+
+  /// The channel map the emission step reads for a run of one line clip alone (`clip`, the
+  /// verdict every light set carries — `FilterSetLanes.soleVerdict`): its one channel is that
+  /// clip's lane, so `DualbandSplit` keeps it as the colour base and also writes its lines
+  /// (card 0162); any other run unchanged.
+  ///
+  /// Such a run never splits its lanes (`FilterSetLanes.splits`): renamed here, after the crops,
+  /// its Siril scripts and file names stay those of a plain run.
+  package static func soleClipLanes(_ channels: [String: String], clip: FilterSet?)
+    -> [String: String]
+  {
+    guard let clip, let suffix = FilterSetLanes.suffix(of: clip), channels.count == 1,
+      let (filter, base) = channels.first, FilterSetLanes.lineSet(of: filter) == nil
+    else { return channels }
+    return [filter + suffix: base]
   }
 }

@@ -33,21 +33,30 @@ extension History {
         movesPixels: entry.movesPixels ?? movesPixels(entry.processID, params),
         branchHeads: entry.branchHeads ?? [:])
     }
-    try history.restore(
+    let versions = try (manifest.versions ?? []).map { entry in
+      guard entry.base >= 0 else { throw HistoryError.unreadable("version \(entry.id) base") }
+      return Version(
+        id: entry.id, label: entry.label, base: entry.base, parent: entry.parent,
+        steps: try entry.steps.map(step))
+    }
+    try history.load(
       steps: manifest.steps.map(step), undone: manifest.undone.map(step),
       snapshots: manifest.snapshots.map { Snapshot(name: $0.name, file: $0.file) },
-      nextNumber: manifest.nextNumber)
+      versions: versions, nextNumber: manifest.nextNumber,
+      nextVersionNumber: manifest.nextVersion ?? versions.count + 1)
     return history
   }
 
   /// The manifest of the current state.
   var manifest: HistoryManifest {
-    manifest(steps: steps, undone: undone, snapshots: snapshots)
+    manifest(steps: steps, undone: undone, snapshots: snapshots, versions: versions)
   }
 
   /// The manifest of a state about to be: written before the history moves to it, so a failed
   /// write leaves the history as it was.
-  func manifest(steps: [Step], undone: [Step], snapshots: [Snapshot]) -> HistoryManifest {
+  func manifest(
+    steps: [Step], undone: [Step], snapshots: [Snapshot], versions: [Version]
+  ) -> HistoryManifest {
     func entry(_ step: Step) -> HistoryManifest.Entry {
       HistoryManifest.Entry(
         processID: step.processID, params: step.params.entries, file: step.file,
@@ -59,15 +68,28 @@ extension History {
     return HistoryManifest(
       version: HistoryManifest.version, nextNumber: nextStepNumber, steps: steps.map(entry),
       undone: undone.map(entry),
-      snapshots: snapshots.map { HistoryManifest.Snapshot(name: $0.name, file: $0.file) })
+      snapshots: snapshots.map { HistoryManifest.Snapshot(name: $0.name, file: $0.file) },
+      versions: versions.isEmpty
+        ? nil
+        : versions.map {
+          HistoryManifest.Version(
+            id: $0.id, label: $0.label, base: $0.base, parent: $0.parent,
+            steps: $0.steps.map(entry))
+        },
+      nextVersion: nextVersionNumber > 1 ? nextVersionNumber : nil)
   }
 
   func writeManifest() throws {
     try manifest.write(in: directory)
   }
 
-  /// Writes the manifest of the state `steps`, `undone`, `snapshots`.
-  func writeManifest(steps: [Step], undone: [Step], snapshots: [Snapshot]) throws {
-    try manifest(steps: steps, undone: undone, snapshots: snapshots).write(in: directory)
+  /// Writes the manifest of the state `steps`, `undone`, `snapshots`, `versions` (the current
+  /// versions unless given).
+  func writeManifest(
+    steps: [Step], undone: [Step], snapshots: [Snapshot], versions: [Version]? = nil
+  ) throws {
+    try manifest(
+      steps: steps, undone: undone, snapshots: snapshots, versions: versions ?? self.versions
+    ).write(in: directory)
   }
 }

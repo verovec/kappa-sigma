@@ -106,6 +106,8 @@ extension UserFacingError {
     case .unreadable(let why): .app("This stack's Studio history cannot be read back: \(why).")
     case .movedDuring(let id):
       .app("The history moved while “\(id)” ran: its result was not recorded, run it again.")
+    case .unknownVersion: .app("This version is no longer kept.")
+    case .versionOutOfReach: .app("Redo the steps before this version to restore it.")
     }
   }
 }

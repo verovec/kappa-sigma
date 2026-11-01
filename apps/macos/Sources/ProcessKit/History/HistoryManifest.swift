@@ -27,6 +27,16 @@ struct HistoryManifest: Codable, Equatable {
     let file: String?
   }
 
+  /// A superseded tail (card 0156): the steps from `base` as they were before a revise.
+  struct Version: Codable, Equatable {
+    let id: String
+    let label: String
+    let base: Int
+    /// The file of step `base - 1` it was built on; `nil` on the original.
+    let parent: String?
+    let steps: [Entry]
+  }
+
   /// The format this code writes.
   static let version = 1
   /// The manifest of the history in `directory`: `<directory>.json`, beside it.
@@ -40,6 +50,10 @@ struct HistoryManifest: Codable, Equatable {
   let steps: [Entry]
   let undone: [Entry]
   let snapshots: [Snapshot]
+  /// Absent when there is none (card 0156): a manifest without versions stays byte-identical.
+  var versions: [Version]?
+  /// The next version id's number, written once a version existed (card 0156).
+  var nextVersion: Int?
 
   /// The manifest in `directory`, or nil when there is none (a fresh history).
   static func read(in directory: URL) throws -> Self? {

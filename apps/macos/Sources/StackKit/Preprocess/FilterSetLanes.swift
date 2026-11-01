@@ -23,6 +23,18 @@ package enum FilterSetLanes {
     splits(inventory, setIDs: inventory.sets.filter { $0.key.type == .light }.map(\.key.id))
   }
 
+  /// The clip every light set `setIDs` (all of them by default) was given.
+  ///
+  /// `nil` when two differ or one is unclassified: one verdict says nothing about another set.
+  /// The one answer to « is this a dual-band-only run? » (the profile proposal and the assembly,
+  /// card 0162).
+  package static func soleVerdict(in inventory: Inventory, setIDs: [String]? = nil) -> FilterSet? {
+    let ids = setIDs ?? inventory.sets.filter { $0.key.type == .light }.map(\.key.id)
+    let verdicts = Set(ids.map { inventory.filterSets[$0] ?? .unknown })
+    guard verdicts.count == 1, let verdict = verdicts.first, verdict.isKnown else { return nil }
+    return verdict
+  }
+
   /// Whether the light sets `setIDs` of `inventory` split (a run scoped to them, card 0121),
   /// without building the scoped inventory.
   package static func splits(_ inventory: Inventory, setIDs: some Sequence<String>) -> Bool {

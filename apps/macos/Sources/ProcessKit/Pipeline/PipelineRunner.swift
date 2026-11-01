@@ -60,13 +60,16 @@ package final class PipelineRunner {
   /// Applies `pipeline` to `history` from step `start` against `bundle`.
   ///
   /// The run halts before the first breakpoint; a locked step reuses the same step of
-  /// `previous` when that output was made from the same input (`PipelineReuse`).
+  /// `previous` when that output was made from the same input (`PipelineReuse`). `masks` are the
+  /// masks of the steps the Studio applied under one, by index (card 0160): a recipe has none.
   package func run(
     _ pipeline: Pipeline, on history: History, bundle: PipelineBundle, from start: Int = 0,
-    previous: PipelineRun? = nil, onEvent: @escaping EventSink = { _ in }
+    previous: PipelineRun? = nil, masks: [Int: AstroImage] = [:],
+    onEvent: @escaping EventSink = { _ in }
   ) async throws -> Outcome {
     let session = try Session(
-      history: history, bundle: bundle, device: device, previous: previous, onEvent: onEvent)
+      history: history, bundle: bundle, device: device, previous: previous, masks: masks,
+      onEvent: onEvent)
     return try await steps(of: pipeline, from: start, in: session)
   }
 
@@ -113,16 +116,18 @@ package final class PipelineRunner {
     let bundle: PipelineBundle
     let layers: [String: GPUImage]
     let previous: PipelineRun?
+    let masks: [Int: AstroImage]
     let onEvent: EventSink
 
     init(
       history: History, bundle: PipelineBundle, device: MTLDevice, previous: PipelineRun?,
-      onEvent: @escaping EventSink
+      masks: [Int: AstroImage] = [:], onEvent: @escaping EventSink
     ) throws {
       self.history = history
       self.bundle = bundle
       layers = try bundle.layers.mapValues { try GPUImage(device: device, image: $0) }
       self.previous = previous
+      self.masks = masks
       self.onEvent = onEvent
     }
 
@@ -159,7 +164,8 @@ package final class PipelineRunner {
       try history.apply(
         processID: id, params: reused.params, result: previous.history.output(ofStep: index),
         outputs: written.outputs, replacing: written.replaced,
-        movesPixels: registry.movesPixels(id, params: reused.params))
+        movesPixels: registry.movesPixels(id, params: reused.params),
+        mask: previous.history.mask(ofStep: index))
       session.onEvent(.reused(index))
       return
     }
@@ -177,13 +183,15 @@ package final class PipelineRunner {
       let params = try Self.values(of: step, schema: type.schema, at: index)
       let process = try type.init(params: params, device: device)
       let (layers, layerStats) = try context(session)
+      let mask = session.masks[index]
       // A geometry step moves the layers with its image, as in the Studio (card 0090).
       let moved = try runner.applied(
         process, input: history.current, stats: session.stats, layers: layers,
-        layerStats: layerStats, roles: history.layerRoles)
+        layerStats: layerStats, roles: history.layerRoles, mask: mask)
       try history.apply(
         processID: id, params: params, result: moved.result, outputs: moved.outputs,
-        replacing: moved.replacing, movesPixels: registry.movesPixels(id, params: params))
+        replacing: moved.replacing, movesPixels: registry.movesPixels(id, params: params),
+        mask: mask)
     } else {
       throw PipelineError.unknownProcess(id)
     }

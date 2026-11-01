@@ -81,19 +81,23 @@ a broadband and a line clip, or two line clips — card 0134) stacks one lane pe
 light, so calibration still matches on the real key. One verdict alone, or an unclassified set,
 keeps the single lane (a dual-band-only capture is not split). At the
 alignment the broadband master leads and is pinned as the reference (the first line lane, in
-`FilterSet` order, when the run has no broadband set: it is then the colour base too, its lines
-inside it, and no continuum scale is fitted)
+`FilterSet` order, when the run has no broadband set: it is then the colour base too, kept
+whole, its lines also written as layers, and no continuum scale is fitted)
 (`SirilScripts.alignMastersReference`: one pass, `-2pass` would override the pin), then, after
 the crops, the registered dual-band master is separated (`DualbandSplit`): `syn_Ha` = red,
 `syn_OIII` = max(green, blue). The lane leaves the channel map; with no broadband master left it
-is the colour channel itself, unsplit. The composite is built from the colour base alone.
+is the colour channel itself AND gives its lines (card 0162). A capture of one line clip alone
+never splits its lanes (scripts and file names of a plain run): at assembly, after the crops,
+`Preprocessor.soleClipLanes` reads its `RGB` channel as that clip's lane, so a dual-band-only
+run ends on `RGB` + `syn_Ha` + `syn_OIII` like the legacy run #79. The composite is built from
+the colour base alone.
 
 Every emission layer then gets its continuum scale `continuum_k` (`ContinuumK`: the median
 line/ref ratio over the P85–P99.9 reference pixels): Hα and [SII] against R then L, [OIII] against
 G, B then L, and past those a colour base's red (or green) plane — which the legacy list lacked.
-Each split and each scale (or why there is none) is a `PreprocessResult.notes` line. The palette-
-gated split of a dual-band-only capture (`duobandChannels`) and the excess layer itself are the
-Studio's (0051).
+Each split and each scale (or why there is none) is a `PreprocessResult.notes` line. The legacy
+palette gate on a dual-band-only capture's split (`duobandChannels`) is not ported: such a run
+always gets its lines (PO 01/11, card 0162); the excess layer itself is the Studio's (0051).
 
 ## The cross-frame trail mask (card 0081)
 

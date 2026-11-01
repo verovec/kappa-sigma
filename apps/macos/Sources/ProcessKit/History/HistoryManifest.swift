@@ -19,6 +19,8 @@ struct HistoryManifest: Codable, Equatable {
     var movesPixels: Bool?
     // Absent when the step read no branch head (card 0118): older manifests stay byte-identical.
     var branchHeads: [String: String]?
+    // Absent when the step was applied unmasked (card 0160): older manifests stay byte-identical.
+    var mask: String?
   }
 
   /// A named state.

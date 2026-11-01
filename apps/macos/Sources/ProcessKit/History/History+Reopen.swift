@@ -31,7 +31,7 @@ extension History {
         processID: entry.processID, params: params, file: entry.file, outputs: outputs,
         replaced: entry.replaced ?? [:],
         movesPixels: entry.movesPixels ?? movesPixels(entry.processID, params),
-        branchHeads: entry.branchHeads ?? [:])
+        branchHeads: entry.branchHeads ?? [:], mask: entry.mask)
     }
     let versions = try (manifest.versions ?? []).map { entry in
       guard entry.base >= 0 else { throw HistoryError.unreadable("version \(entry.id) base") }
@@ -66,7 +66,7 @@ extension History {
         outputs: Dictionary(uniqueKeysWithValues: step.outputs.map { ($0.key.rawValue, $0.value) }),
         replaced: step.replaced.isEmpty ? nil : step.replaced,
         movesPixels: step.movesPixels ? true : nil,
-        branchHeads: step.branchHeads.isEmpty ? nil : step.branchHeads)
+        branchHeads: step.branchHeads.isEmpty ? nil : step.branchHeads, mask: step.mask)
     }
     return HistoryManifest(
       version: HistoryManifest.version, nextNumber: nextStepNumber, steps: steps.map(entry),

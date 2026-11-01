@@ -43,6 +43,12 @@ struct MonoScenarioStudioTests {
       contents:
         "Holds Broadband (RGB); not yet Oxygen III or Sulphur II (to add with Line injection "
         + "or Emission screens)."),
+    .oscDualband: Expected(
+      planes: ["RGB": 3, "Ha": 1, "OIII": 1], selections: ["main", "RGB", "Ha", "OIII"],
+      sources: ["RGB.r", "RGB.g", "RGB.b", "none"],
+      contents:
+        "Holds Broadband (RGB); not yet Hydrogen-alpha or Oxygen III (to add with Line "
+        + "injection or Emission screens)."),
   ]
 
   /// A bundle of `planes`: a ramp per plane, every layer on one grid.

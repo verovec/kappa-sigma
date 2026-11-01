@@ -71,6 +71,13 @@ extension History {
     try written(ofStep: index).outputs
   }
 
+  /// The mask applied step `index` was applied under, read back from disk (card
+  /// 0160); `nil` when unmasked.
+  package func mask(ofStep index: Int) throws -> AstroImage? {
+    guard steps.indices.contains(index) else { throw HistoryError.noStep(index) }
+    return try steps[index].mask.map { try image(file: $0) }
+  }
+
   func layer(file: String) throws -> AstroImage {
     if let cached = layerCache[file] { return Self.copy(cached) }
     let image = try FITSFile.read(at: directory.appendingPathComponent(file)).image()

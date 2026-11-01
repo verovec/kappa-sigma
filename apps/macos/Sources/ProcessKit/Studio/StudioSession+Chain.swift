@@ -7,12 +7,17 @@ extension StudioSession {
   /// memory at full resolution: the pixels a revise (0157) writes, the history left untouched.
   ///
   /// Each step reads what Apply would give it: the statistics of its input, the layers the steps
-  /// before it wrote — those of the chain from its own outputs. The chain stops before the first
-  /// host-tool step (k included): that step runs at the revise. A recipe has no mask: a masked
-  /// step renders unmasked, as the revise replays it (until 0160).
+  /// before it wrote — those of the chain from its own outputs — and its recorded mask (card
+  /// 0160, k included). The chain stops before the first host-tool step (k included): that step
+  /// runs at the revise. A crop, turn or flip k with a masked step after it is refused
+  /// (`PipelineError.maskMoved`), as the revise refuses it.
   package func previewChain(from k: Int, params: ParamSet) throws -> ChainPreview {
     let steps = history.steps
     guard steps.indices.contains(k) else { throw HistoryError.noStep(k) }
+    // Its recorded mask would land on other pixels after a k that moves them.
+    let movesMasks =
+      registry.movesPixels(steps[k].processID, params: params)
+      || registry.movesPixels(steps[k].processID, params: steps[k].params)
     var state = try chainInput(k)
     for index in k..<steps.count {
       let recipe = Recipe(
@@ -24,10 +29,14 @@ extension StudioSession {
       // The recorded values as the replay reads them: a refused value stops it with its name.
       let values = try PipelineRunner.values(
         of: PipelineStep(recipe: recipe), schema: type.schema, at: index)
+      if index > k, movesMasks, steps[index].mask != nil {
+        throw PipelineError.maskMoved(step: index)
+      }
       let step = try runner.applied(
         type.init(params: values, device: device), input: state.image,
         stats: state.stats ?? LayerStats.measured(state.image), layers: state.layers,
-        layerStats: state.layerStats, roles: state.roles)
+        layerStats: state.layerStats, roles: state.roles,
+        mask: try steps[index].mask.map(history.layer(file:)))
       try state.advance(
         past: step, of: recipe.processID, moving: registry.movingIDs, stack: bundle.layerStats,
         device: device)

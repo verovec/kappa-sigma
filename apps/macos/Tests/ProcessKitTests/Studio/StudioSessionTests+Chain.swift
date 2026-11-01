@@ -79,12 +79,14 @@ struct StudioSessionChainTests {
   }
 
   /// `recipes` replayed on a new history by the pipeline runner: what a revise writes.
-  static func replayed(_ steps: [Step], _ name: String) async throws -> AstroImage {
+  static func replayed(_ steps: [Step], _ name: String, masks: [Int: AstroImage] = [:])
+    async throws -> AstroImage
+  {
     let session = try session(name)
     let runner = try PipelineRunner(registry: try registry(), device: session.device)
     _ = try await runner.run(
       Pipeline(name: "revise", steps: steps.map { PipelineStep(recipe: $0.recipe) }),
-      on: session.history, bundle: session.bundle)
+      on: session.history, bundle: session.bundle, masks: masks)
     return session.history.current
   }
 
@@ -231,5 +233,45 @@ struct StudioSessionChainTests {
     session.endChainPreview()
 
     #expect(session.chainInputFiles == nil)
+  }
+
+  /// A one-plane mask letting the left half through.
+  static var halfMask: AstroImage {
+    AstroImage(
+      width: 4, height: 2, planes: [[1, 1, 0, 0, 1, 1, 0, 0]],
+      metadata: ImageMetadata(rowOrder: .topDown))
+  }
+
+  @Test(
+    "a masked step in the chain renders under its recorded mask, as the revise replays it",
+    .scratchDirectory)
+  func testPreviewChain_AppliesRecordedMasks() async throws {
+    let session = try Self.session("applied")
+    try Self.applying([try Self.gain(1.5)], on: session)
+    let masked = try Self.gain(2)
+    try session.apply(masked.id, params: masked.params, mask: Self.halfMask)
+
+    let preview = try session.previewChain(from: 0, params: try Self.gain(0.5).params)
+
+    let expected = try await Self.replayed(
+      [try Self.gain(0.5), masked], "scratch", masks: [1: Self.halfMask])
+    #expect(Self.same(preview.image, expected))
+    let unmasked = try await Self.replayed([try Self.gain(0.5), masked], "unmasked")
+    #expect(!Self.same(preview.image, unmasked), "the mask shows")
+  }
+
+  @Test(
+    "a crop k with a masked step after it is refused, as the revise refuses it",
+    .scratchDirectory)
+  func testPreviewChain_MovedMaskRefused() throws {
+    let session = try Self.session("applied")
+    let flat = Step(id: GeometryProcess.id, params: ParamSet(schema: GeometryProcess.schema))
+    try Self.applying([flat], on: session)
+    let masked = try Self.gain(2)
+    try session.apply(masked.id, params: masked.params, mask: Self.halfMask)
+
+    #expect(throws: PipelineError.maskMoved(step: 1)) {
+      try session.previewChain(from: 0, params: try Self.crop().params)
+    }
   }
 }

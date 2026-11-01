@@ -66,6 +66,13 @@ test-live *args:
 test-heavy *args:
     cd {{pkg}} && swift test -c release {{swiftflags}} --no-parallel --filter Live {{args}}
 
+# Start the server yourself: `minio server /tmp/minio --address 127.0.0.1:9000` (minioadmin x2).
+# It writes and deletes under a random prefix of ASTROSTACK_S3_LIVE_BUCKET (astrostack-live), so
+# never point it at a capture bucket. Keys: ASTROSTACK_S3_LIVE_ACCESS_KEY / _SECRET_KEY.
+# Live S3 round trip (RemoteKit) against a local MinIO you started; this recipe starts nothing.
+s3-live endpoint="http://127.0.0.1:9000":
+    cd {{pkg}} && ASTROSTACK_S3_LIVE_ENDPOINT={{quote(endpoint)}} swift test {{swiftflags}} --no-parallel --filter LiveS3Tests
+
 # Coverage report (lcov + summary) under apps/macos/.build/coverage.
 coverage:
     ./scripts/coverage.sh {{pkg}} {{swiftflags}}

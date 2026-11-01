@@ -69,6 +69,9 @@ let package = Package(
         "Preprocess/README.md", "Import/README.md", "Legacy/README.md", "Transient/README.md",
       ], resources: [.copy("Resources/Catalogue")], swiftSettings: common),
     .target(
+      name: "RemoteKit", dependencies: [],
+      exclude: ["README.md"], swiftSettings: common),
+    .target(
       name: "HelpKit", dependencies: [],
       exclude: ["README.md"], resources: [.copy("Help")], swiftSettings: safe),
     .executableTarget(
@@ -110,6 +113,9 @@ let package = Package(
     .testTarget(
       name: "StackKitTests",
       dependencies: ["StackKit", "FilterKit", "ImageKit", "ProjectKit", "TestSupport"],
+      resources: [.copy("Fixtures")], swiftSettings: common),
+    .testTarget(
+      name: "RemoteKitTests", dependencies: ["RemoteKit", "TestSupport"],
       resources: [.copy("Fixtures")], swiftSettings: common),
     .testTarget(
       name: "HelpKitTests", dependencies: ["HelpKit", "TestSupport"],

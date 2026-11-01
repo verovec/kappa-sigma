@@ -28,8 +28,9 @@ package struct RemoteSnapshot: Sendable {
   var contents: [String: Data] = [:]
   /// The centred run read of each frame, at the largest count asked.
   var runs: [String: [Double]] = [:]
-  /// Frames whose centred run cannot be read (a layout the scan cannot locate, a short answer):
-  /// their pixel reads fail as an unreadable file does on disk, and are not asked again.
+  /// Frames no further centred run is fetched for (a layout the scan cannot locate, a short or
+  /// failed answer): a run already held still answers smaller counts; any other read fails as an
+  /// unreadable file does on disk and names the frame.
   var unreadable: Set<String> = []
   /// The side files that failed to read (path → why): absent for the scan, said as warnings.
   package internal(set) var sideFailures: [String: String] = [:]
@@ -93,7 +94,7 @@ package struct RemoteSnapshot: Sendable {
       },
       centerSample: { path, count in
         // A run held answers whatever the frame's later reads failed to fetch.
-        if let values = try snapshot.sample(path, count: count) { return values }
+        if let values = try? snapshot.sample(path, count: count) { return values }
         if snapshot.unreadable.contains(path) {
           asked.failed(path)
         } else {

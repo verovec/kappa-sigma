@@ -3,8 +3,8 @@ package import Foundation
 /// The inventory of an S3 prefix (card 0167).
 ///
 /// A `RemoteSnapshot`, then today's synchronous scan over it. A first pass learns which centred pixel runs the scan asks for; they are read by range
-/// and the scan runs again. A check that needs a frame's planes is never run: those frames are
-/// listed in `Inventory.notCheckedRemotely`.
+/// and the scan runs again. A check that needs a frame's planes is never run: the frames its
+/// verdict spans are listed in `Inventory.notCheckedRemotely` (`unchecked`).
 package struct RemoteScan: Sendable {
   /// The bucket.
   package var store: RemoteObjectStore
@@ -22,8 +22,8 @@ package struct RemoteScan: Sendable {
 
   /// The inventory of the prefix with the user's `overrides`; `progress` hears the reads.
   ///
-  /// A check that needed a frame's planes leaves its whole set unchecked (a set's verdict is read
-  /// on a sample of its frames): every frame of such a set is in `notCheckedRemotely`.
+  /// Every frame whose checks were not made is in `notCheckedRemotely` (`unchecked`); a side file
+  /// that could not be read is a warning.
   @concurrent
   package func inventory(
     overrides: InspectOverrides = InspectOverrides(),
@@ -71,10 +71,12 @@ package struct RemoteScan: Sendable {
   /// Scan passes at most: the first learns the runs, the next reads with them.
   static let passes = 3
 
-  /// The frames left unchecked: every frame a read missed and every frame of its set; when any
-  /// planes were asked (the CFA probe, the dual-band verdict — whole-inventory colour decisions),
-  /// every light and every frame of the instruments asked.
-  static func unchecked(_ missed: [String], planes: [String], in inventory: Inventory)
+  /// The frames left unchecked, as StackKit's own decisions span them: a frame a read missed and
+  /// every frame of its set (a set's verdict is read on a sample); a LIGHT whose planes were asked
+  /// (the CFA probe, decided per instrument as `clearSpuriousBayer` groups them) and every frame
+  /// of its instrument; a BIAS or DARK whose planes were asked (the pedestal every light set's
+  /// dual-band verdict reads) and every light.
+  package static func unchecked(_ missed: [String], planes: [String], in inventory: Inventory)
     -> [String]
   {
     let named = Set(missed)
@@ -82,12 +84,12 @@ package struct RemoteScan: Sendable {
     for set in inventory.sets where set.frames.contains(where: { named.contains($0.path) }) {
       frames.formUnion(set.frames.map(\.path))
     }
-    let asked = Set(planes)
-    if !asked.isEmpty {
-      let instruments = Set(inventory.frames.filter { asked.contains($0.path) }.map(\.instrument))
-      frames.formUnion(
-        inventory.frames.filter { $0.type == .light || instruments.contains($0.instrument) }
-          .map(\.path))
+    let asked = inventory.frames.filter { Set(planes).contains($0.path) }
+    let instruments = Set(asked.filter { $0.type == .light }.map(\.instrument))
+    let pedestal = asked.contains { $0.type == .bias || $0.type == .dark }
+    for frame in inventory.frames
+    where instruments.contains(frame.instrument) || (pedestal && frame.type == .light) {
+      frames.insert(frame.path)
     }
     return frames.sorted()
   }

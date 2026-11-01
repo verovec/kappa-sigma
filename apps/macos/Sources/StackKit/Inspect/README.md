@@ -73,8 +73,10 @@ offset, bin, warmer first).
   the scheme and bucket).
 - Pixels: a first pass records the centred runs the scan asks for; they are read by range
   (`FITSFile.centerRun` / `physicalValues`) and the scan runs again. Whole frames are never
-  downloaded (PO 01/11): a check that asks for planes is not run and its frame is listed in
-  `Inventory.notCheckedRemotely` — the Données line « non vérifié (distant) », never a pass.
+  downloaded (PO 01/11): a check that asks for planes is not run; the frames its verdict spans
+  (`RemoteScan.unchecked`: the set of a missed read, the instrument of a CFA probe, every light
+  when the bias/dark pedestal was asked) are listed in `Inventory.notCheckedRemotely` — the
+  Données line « non vérifié (distant) », never a pass. A side file that fails is a warning.
 - StackKit never imports RemoteKit: `RemoteObjectStore` is two closures; the app adapts its
   `S3Client` (`RemoteObjectStore.s3(_:bucket:)`). Tests use an in-memory store
   (`Tests/.../Remote/MemoryStore.swift`) and the oracle trees (`RemoteScanTests`).

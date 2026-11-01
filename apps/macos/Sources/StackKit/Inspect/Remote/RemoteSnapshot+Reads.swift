@@ -7,17 +7,14 @@ extension RemoteSnapshot {
   /// Reads every FITS header (by growing ranges) and every side file the scan reads.
   ///
   /// A side file is a frame's SharpCap sidecar or an `info.txt`; `parallelism` reads at a time,
-  /// `progress` hears the headers read. An unreadable side file is absent, as on disk; a header's
-  /// error is the frame's skip warning.
+  /// `progress` hears the headers read. A side file that fails (or is too large) is absent for the
+  /// scan and said as a warning (`sideFailures`); a header's error is the frame's skip warning.
   mutating func readHeadersAndSideFiles(
     store: RemoteObjectStore, progress: @escaping @Sendable (ScanProgress) -> Void
   ) async throws {
     let frames = listing.files.filter(InventoryBuilder.isFITS)
     let sidecars = Set(frames.map { $0 + ".txt" })
-    let sides = listing.files.filter {
-      (sidecars.contains($0) || CaptureManifest.isManifest($0))
-        && (objects[$0]?.size ?? .max) <= Self.sideFileLimit
-    }
+    let sides = listing.files.filter { sidecars.contains($0) || CaptureManifest.isManifest($0) }
     progress(.reading(done: 0, total: frames.count))
     let objects = self.objects
     var done = 0
@@ -26,11 +23,14 @@ extension RemoteSnapshot {
       if InventoryBuilder.isFITS(path) {
         return (path, .header(await Self.header(of: object, store: store)))
       }
+      guard object.size <= Self.sideFileLimit else {
+        return (path, .side(.failure(TooLarge(bytes: object.size))))
+      }
       do {
         return (path, .side(.success(try await store.get(object.key, nil))))
-      } catch is CancellationError {
-        throw CancellationError()
       } catch {
+        // A cancelled scan stops (URLSession says so with its own error): never a failed read.
+        if Task.isCancelled { throw CancellationError() }
         return (path, .side(.failure(error)))
       }
     } collect: { path, read in
@@ -73,16 +73,15 @@ extension RemoteSnapshot {
       let bytes: Data
       do {
         bytes = try await store.get(plan.key, plan.range)
-      } catch is CancellationError {
-        throw CancellationError()
       } catch {
+        if Task.isCancelled { throw CancellationError() }
         return (plan.path, nil)
       }
       guard bytes.count == plan.bytes else { return (plan.path, nil) }
       return (plan.path, try? FITSFile.physicalValues(bytes, header: header))
     } collect: { path, values in
-      // A smaller run already held keeps answering; only a frame with none is unreadable.
-      if let values { runs[path] = values } else if runs[path] == nil { unreadable.insert(path) }
+      // No further fetch for a frame that failed: a smaller run already held keeps answering.
+      if let values { runs[path] = values } else { unreadable.insert(path) }
     }
   }
 
@@ -104,9 +103,16 @@ extension RemoteSnapshot {
       } catch FITSError.noHeaderEnd where Int64(data.count) < object.size {
         continue
       } catch {
-        return .failure(error)
+        // Cancelled: the caller's group stops on its own check; the error is not the frame's.
+        return .failure(Task.isCancelled ? CancellationError() : error)
       }
     }
+  }
+
+  /// A side file larger than `sideFileLimit`: not read, said as a warning.
+  struct TooLarge: Error, CustomStringConvertible {
+    let bytes: Int64
+    var description: String { "\(bytes) bytes, larger than a sidecar or info.txt can be" }
   }
 
   /// One centred run to read: the frame, its key, the byte range, the bytes expected.

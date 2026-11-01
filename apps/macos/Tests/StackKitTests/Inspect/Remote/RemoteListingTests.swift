@@ -1,5 +1,6 @@
 import Foundation
 import StackKit
+import Synchronization
 import TestSupport
 import Testing
 
@@ -45,5 +46,78 @@ struct RemoteListingTests {
     ])
   func testS3SchemeAndBucketNotTokens(path: String, expected: FrameType) {
     #expect(PathMeta.typeFromFolders(path) == expected)
+  }
+}
+
+/// Card 0167: which frames a remote scan names « non vérifié (distant) » — the span of the
+/// decision each missed read belonged to — and a cancelled scan stops, never degrades.
+@Suite("RemoteScan.unchecked and cancellation")
+struct RemoteUncheckedTests {
+  static func frame(_ name: String, _ type: FrameType, instrument: String) -> CaptureFrame {
+    var frame = CaptureFrame(path: "s3://astro/" + name)
+    frame.type = type
+    frame.instrument = instrument
+    // Camera B shoots another exposure: its sets are its own.
+    frame.exposureMs = type == .bias ? 0 : instrument == "B" ? 120_000 : 60_000
+    return frame
+  }
+
+  static var inventory: Inventory {
+    var inventory = Inventory(
+      root: "s3://astro",
+      frames: [
+        frame("a/l1.fits", .light, instrument: "A"), frame("a/l2.fits", .light, instrument: "A"),
+        frame("a/b1.fits", .bias, instrument: "A"), frame("a/f1.fits", .flat, instrument: "A"),
+        frame("b/l1.fits", .light, instrument: "B"), frame("b/d1.fits", .dark, instrument: "B"),
+      ])
+    inventory.regroup()
+    return inventory
+  }
+
+  @Test("a pedestal read names every light, not the flats and darks")
+  func testPedestalNamesLights() {
+    let named = RemoteScan.unchecked(
+      ["s3://astro/a/b1.fits"], planes: ["s3://astro/a/b1.fits"], in: Self.inventory)
+    #expect(named.contains("s3://astro/a/l1.fits") && named.contains("s3://astro/b/l1.fits"))
+    #expect(!named.contains("s3://astro/a/f1.fits") && !named.contains("s3://astro/b/d1.fits"))
+  }
+
+  @Test("a light's CFA probe names its instrument's frames, not another camera's")
+  func testCFAProbeNamesInstrument() {
+    let named = RemoteScan.unchecked(
+      ["s3://astro/a/l1.fits"], planes: ["s3://astro/a/l1.fits"], in: Self.inventory)
+    #expect(
+      Set(["a/l1.fits", "a/l2.fits", "a/b1.fits", "a/f1.fits"].map { "s3://astro/" + $0 })
+        .isSubset(of: Set(named)))
+    #expect(!named.contains("s3://astro/b/l1.fits") && !named.contains("s3://astro/b/d1.fits"))
+  }
+
+  @Test("a missed centred run names its frame's set only")
+  func testMissedRunNamesItsSet() {
+    let named = RemoteScan.unchecked(["s3://astro/b/d1.fits"], planes: [], in: Self.inventory)
+    #expect(named == ["s3://astro/b/d1.fits"])
+  }
+
+  @Test("a scan cancelled while reading throws, it does not degrade")
+  func testCancelledScanThrows() async throws {
+    let started = Mutex(false)
+    // Never yields nor finishes (its continuation is kept): iterating it suspends until cancelled.
+    let (pending, keep) = AsyncStream<Void>.makeStream()
+    let store = RemoteObjectStore(
+      bucket: "astro",
+      list: { _ in [.init(key: "n/l.fits", size: 100_000, etag: "e")] },
+      get: { _, _ in
+        started.withLock { $0 = true }
+        for await _ in pending {}
+        try Task.checkCancellation()
+        return Data()
+      })
+    let task = Task { try await RemoteScan(store: store, prefix: "n").inventory() }
+    while !started.withLock({ $0 }) { await Task.yield() }
+
+    task.cancel()
+
+    await #expect(throws: CancellationError.self) { try await task.value }
+    keep.finish()
   }
 }

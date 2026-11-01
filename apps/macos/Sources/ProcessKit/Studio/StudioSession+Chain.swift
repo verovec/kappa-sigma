@@ -43,9 +43,11 @@ extension StudioSession {
     return ChainPreview(image: state.image, stoppedBefore: stop)
   }
 
-  /// The first masked step after `k` and before `end` when step `k` moves the pixels under its
-  /// recorded values or under `params`: its recorded mask would land on other pixels (card
-  /// 0160). The one rule of the revise's refusal and of the chain preview's.
+  /// The masked step after `k` and before `end` a pixel-moving step `k` would misplace.
+  ///
+  /// Step `k` moves the pixels under its recorded values or under `params`: the first masked
+  /// step's recorded mask would land on other pixels (card 0160). The one rule of the revise's
+  /// refusal and of the chain preview's.
   package func movedMaskStep(_ k: Int, params: ParamSet, until end: Int) -> Int? {
     let steps = history.steps
     guard steps.indices.contains(k) else { return nil }
@@ -68,12 +70,10 @@ extension StudioSession {
 
   /// What step `k` reads and the recorded masks of the steps from it, read from the history
   /// once per edit (the same `k` over the same step files).
-  func chainInput(_ k: Int) throws -> (state: ChainState, masks: [Int: AstroImage]) {
+  func chainInput(_ k: Int) throws -> ChainInput {
     let steps = history.steps
     let files = steps.map(\.file)
-    if let chainInput, chainInput.k == k, chainInput.files == files {
-      return (chainInput.state, chainInput.masks)
-    }
+    if let chainInput, chainInput.k == k, chainInput.files == files { return chainInput }
     let before = Array(steps.prefix(k))
     let moving = registry.movingIDs
     let image = try history.image(file: before.last?.file)
@@ -87,7 +87,8 @@ extension StudioSession {
     for index in steps.indices[k...] where steps[index].mask != nil {
       masks[index] = try history.mask(ofStep: index)
     }
-    chainInput = (k, files, state, masks)
-    return (state, masks)
+    let input = ChainInput(k: k, files: files, state: state, masks: masks)
+    chainInput = input
+    return input
   }
 }

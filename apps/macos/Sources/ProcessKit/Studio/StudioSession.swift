@@ -33,7 +33,7 @@ package final class StudioSession {
   /// The input of the step a chain preview starts from and the masks of the steps from it,
   /// keyed on that step and the history's step files (card 0158): a drag re-renders the chain,
   /// not the disk reads.
-  var chainInput: (k: Int, files: [String], state: ChainState, masks: [Int: AstroImage])?
+  var chainInput: ChainInput?
 
   /// A session over `history` and `bundle`, running the processes of `registry` on `device`;
   /// `branches` are those beside the history's folder unless given.

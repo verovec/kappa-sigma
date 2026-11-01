@@ -45,15 +45,22 @@ package final class History {
   package private(set) var undone: [Step] = []
   /// Named states, in creation order.
   package private(set) var snapshots: [Snapshot] = []
+  /// The tails superseded by a revise (card 0156), oldest first: kept with their files.
+  package private(set) var versions: [Version] = []
   /// The image after the last applied step: a copy, so editing it never changes the history.
   package var current: AstroImage { Self.copy(shown) }
 
-  private var shown: AstroImage
+  /// The image after the last applied step, as held (`current` hands out copies).
+  private(set) var shown: AstroImage
   private var original: AstroImage
   private let header: FITSHeader?
   private var nextNumber: Int
   /// The number the next step's file takes (the manifest records it).
   var nextStepNumber: Int { nextNumber }
+  /// The number the next version's id takes (card 0156), so no id is used twice.
+  ///
+  /// Only grows, but for a revise that applied nothing: its version never existed.
+  var nextVersionNumber = 1
   /// The outputs this history wrote: the only files `save` may remove.
   private var created: Set<String> = []
   /// Layer files already read, by file name (a step's files never change once written).
@@ -79,15 +86,36 @@ package final class History {
     nextNumber = (numbers.max() ?? 0) + 1
   }
 
-  /// Puts back a recorded state (`reopen`): the steps' files become this history's own.
-  func restore(steps: [Step], undone: [Step], snapshots: [Snapshot], nextNumber: Int) throws {
+  /// Loads a recorded state (`reopen`): the steps' files become this history's own.
+  func load(
+    steps: [Step], undone: [Step], snapshots: [Snapshot], versions: [Version], nextNumber: Int,
+    nextVersionNumber: Int
+  ) throws {
     let head = try image(file: steps.last?.file)
     self.steps = steps
     self.undone = undone
     self.snapshots = snapshots
+    self.versions = versions
+    self.nextVersionNumber = nextVersionNumber
     self.nextNumber = max(self.nextNumber, nextNumber)
     shown = head
     created.formUnion(referencedFiles)
+  }
+
+  /// Moves to the state `steps`, `undone`, `versions` with head `shown`: the manifest first, so
+  /// a failed write leaves the history as it was (card 0156's versions go through it).
+  func move(steps: [Step], undone: [Step], versions: [Version], shown: AstroImage) throws {
+    try writeManifest(steps: steps, undone: undone, snapshots: snapshots, versions: versions)
+    self.steps = steps
+    self.undone = undone
+    self.versions = versions
+    self.shown = shown
+  }
+
+  /// A new version id, `v<N>`: never one used before in this history.
+  func mintVersionID() -> String {
+    defer { nextVersionNumber += 1 }
+    return "v" + String(nextVersionNumber)
   }
 
   /// Whether there is a step to undo.
@@ -202,9 +230,9 @@ package final class History {
     return try image(file: snapshot.file)
   }
 
-  /// The outputs still reachable: applied, undone (redo) and snapshotted.
+  /// The outputs still reachable: applied, undone (redo), kept in a version and snapshotted.
   package var referencedFiles: Set<String> {
-    let kept = steps + undone
+    let kept = steps + undone + versions.flatMap(\.steps)
     return Set(
       kept.map(\.file) + kept.flatMap { $0.outputs.values } + kept.flatMap { $0.replaced.values }
         + snapshots.compactMap(\.file))
@@ -241,7 +269,8 @@ package final class History {
     created.insert(file)
   }
 
-  private func image(file: String?) throws -> AstroImage {
+  /// The output `file`, read back from disk; the original for `nil`.
+  func image(file: String?) throws -> AstroImage {
     guard let file else { return Self.copy(original) }
     return try FITSFile.read(at: directory.appendingPathComponent(file)).image()
   }
@@ -257,22 +286,4 @@ package final class History {
     guard file.hasPrefix("step-"), file.hasSuffix(".fits") else { return nil }
     return Int(file.dropFirst(5).dropLast(5))
   }
-}
-
-/// A history operation that cannot be done.
-package enum HistoryError: Error, Equatable, Sendable {
-  /// No applied step has this index.
-  case noStep(Int)
-  /// No applied step.
-  case nothingToUndo
-  /// No undone step.
-  case nothingToRedo
-  /// No snapshot has this name.
-  case unknownSnapshot(String)
-  /// A snapshot already has this name.
-  case duplicateSnapshot(String)
-  /// The history moved while the host tool `processID` ran: its step would overwrite the move.
-  case movedDuring(String)
-  /// The history's manifest cannot be read back: why.
-  case unreadable(String)
 }

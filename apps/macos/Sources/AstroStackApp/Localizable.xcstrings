@@ -10608,6 +10608,38 @@
           }
         }
       }
+    },
+    "This version is no longer kept.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This version is no longer kept."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette version n’est plus conservée."
+          }
+        }
+      }
+    },
+    "Redo the steps before this version to restore it.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Redo the steps before this version to restore it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rétablissez les étapes avant cette version pour la restaurer."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

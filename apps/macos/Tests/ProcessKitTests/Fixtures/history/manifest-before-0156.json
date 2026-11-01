@@ -1,0 +1,53 @@
+{
+  "nextNumber" : 4,
+  "snapshots" : [
+    {
+      "file" : "step-0002.fits",
+      "name" : "v1"
+    }
+  ],
+  "steps" : [
+    {
+      "file" : "step-0001.fits",
+      "outputs" : {
+
+      },
+      "params" : [
+        {
+          "id" : "gain",
+          "value" : 1
+        }
+      ],
+      "processID" : "a"
+    },
+    {
+      "file" : "step-0002.fits",
+      "outputs" : {
+
+      },
+      "params" : [
+        {
+          "id" : "gain",
+          "value" : 1
+        }
+      ],
+      "processID" : "b"
+    }
+  ],
+  "undone" : [
+    {
+      "file" : "step-0003.fits",
+      "outputs" : {
+
+      },
+      "params" : [
+        {
+          "id" : "gain",
+          "value" : 1
+        }
+      ],
+      "processID" : "c"
+    }
+  ],
+  "version" : 1
+}

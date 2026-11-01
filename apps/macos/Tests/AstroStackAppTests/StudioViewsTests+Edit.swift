@@ -108,12 +108,12 @@ extension StudioViewsTests {
     workspace.clickStep(1, option: false)
     #expect(workspace.editing == 1)
     workspace.cancelEdit()
-    workspace.select(.branch("Ha"))
+    let branch = StudioSelection.branch("Ha")
+    try workspace.studio.apply(
+      DenoiseProcess.id, params: ParamSet(schema: DenoiseProcess.schema), on: branch)
+    workspace.select(branch)
     workspace.clickStep(0, option: false)
-    let refusal = String(
-      localized: .app("Only the combined image's steps can be edited: show it first."))
-    #expect(workspace.editing == nil, "compared (no step there), never edited")
-    #expect(workspace.failure.map { String(localized: $0) } != refusal)
+    #expect(workspace.editing == nil && workspace.comparing == 0, "a branch's row compares")
   }
 
   @Test("the drop confirmation says what it frees, in fr and en", .scratchDirectory)

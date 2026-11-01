@@ -33,6 +33,7 @@ package struct BoundaryRules: Sendable {
       "HelpKit": [],
       "AstroStackApp": [
         "FilterKit", "ImageKit", "RenderKit", "ProcessKit", "ProjectKit", "StackKit", "HelpKit",
+        "RemoteKit",
       ],
     ],
     uiModules: ["AstroStackApp", "RenderKit"]

@@ -65,8 +65,10 @@ extension StudioWorkspaceModel {
 
   /// The banner of a chain preview stopped before a host tool, in `locale`, or `nil`.
   package func chainStopNotice(locale: Locale? = nil) -> LocalizedStringResource? {
-    guard let index = chainStoppedBefore, studio.steps.indices.contains(index) else { return nil }
-    let title = String(localized: stepTitle(of: studio.steps[index].processID, locale: locale))
+    // The steps `editedStep` and the chain read: the session's history.
+    let steps = studio.session.history.steps
+    guard let index = chainStoppedBefore, steps.indices.contains(index) else { return nil }
+    let title = String(localized: stepTitle(of: steps[index].processID, locale: locale))
     return .app(
       "Preview stopped before \(title) (step \(index + 1)) — computed when applied", locale: locale)
   }

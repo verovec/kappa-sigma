@@ -181,13 +181,13 @@ package final class StudioWorkspaceModel {
   /// Opens the panel of `processID` at `params` (its defaults when `nil`), with its suggestions.
   package func choose(_ processID: String, params: ParamSet? = nil) {
     guard let type = registry.type(id: processID) else { return }
-    // Another panel ends the edit (0159 sets `editing` after choosing the step's process).
-    editing = nil
     let panel = ProcessPanelModel(type: type, params: params ?? ParamSet(schema: type.schema))
     refresh(panel)
     panel.onChange = { [weak self] in self?.panelChanged() }
     hideModel()
     self.panel = panel
+    // Another panel ends the edit (0159 sets `editing` after choosing the step's process).
+    editing = nil
     toolReport = nil
     appliedNothing = false
     // A moved preview leaves the screen at once; another stays until the new one replaces it.

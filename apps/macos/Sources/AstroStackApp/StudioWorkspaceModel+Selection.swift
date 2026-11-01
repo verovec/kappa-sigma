@@ -27,6 +27,8 @@ extension StudioWorkspaceModel {
     stretches[self.selection] = ViewerStretch(
       stretch: viewer.model.stretch, linked: viewer.model.linked, manual: viewer.model.manualSTF)
     try? compare(toStep: nil)
+    // An edit is of a main step: another history ends it (card 0158).
+    editing = nil
     self.selection = selection
     // Its own stretch (a line layer is mono), auto on a first visit; set before the head is shown,
     // so the panel's offers read the stretch on screen.

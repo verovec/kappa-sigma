@@ -122,6 +122,23 @@ extension StudioWorkspaceModelTests {
     #expect(studio.steps.count == 5, "what is shown on the head is what Apply records")
   }
 
+  @Test("showing a layer's branch ends the edit and drops the cached input", .scratchDirectory)
+  func testSelectBranch_EndsEdit() async throws {
+    let opened = try StudioModelTests.project()
+    defer { try? opened.package.close() }
+    let workspace = try Self.workspace(opened, bundle: BranchTests.bundle())
+    try workspace.studio.apply(StretchProcess.id, params: ParamSet(schema: StretchProcess.schema))
+    workspace.choose(StretchProcess.id)
+    workspace.editing = 1
+    await workspace.settlePreview()
+    #expect(workspace.studio.session.chainInputFiles != nil)
+    let branch = try #require(workspace.selections.first { $0 != .main })
+
+    workspace.select(branch)
+
+    #expect(workspace.editing == nil && workspace.studio.session.chainInputFiles == nil)
+  }
+
   @Test("closing the panel ends the edit and drops the chain's cached input", .scratchDirectory)
   func testClosePanel_EndsEdit() async throws {
     let opened = try StudioModelTests.project()
@@ -144,7 +161,10 @@ extension StudioWorkspaceModelTests {
     let studio = try StudioModelTests.model(opened)
     let solve = ParamSet(schema: PlateSolveProcess.schema)
     try studio.apply(PlateSolveProcess.id, params: solve, result: studio.head)
-    let workspace = try StudioWorkspaceModel(studio: studio, base: [.color])
+    // A tool that would record a step: only the edited-step rule keeps it from running.
+    let tool = StudioTool { image, _, _ in StudioToolResult(image: image, report: nil) }
+    let workspace = try StudioWorkspaceModel(
+      studio: studio, base: [.color], tools: [PlateSolveProcess.id: tool])
     workspace.choose(PlateSolveProcess.id, params: solve)
     workspace.editing = 1
 

@@ -100,6 +100,8 @@ struct RemoteScanTests {
     #expect(result.local.notCheckedRemotely.isEmpty)
     let named = result.remote.notCheckedRemotely
     #expect(!named.isEmpty, "the OSC checks asked for planes")
+    let lights = result.remote.frames.filter { $0.type == .light }.map(\.path)
+    #expect(Set(lights).isSubset(of: Set(named)), "a set read on a sample: all its frames named")
     #expect(Set(named).isSubset(of: Set(result.remote.frames.map(\.path))))
     let byKey = Dictionary(grouping: result.store.gets, by: \.key)
     #expect(byKey.values.allSatisfy { $0.count <= 2 }, "header + at most one centred run per frame")
@@ -120,5 +122,37 @@ struct RemoteScanTests {
     #expect(try snapshot.source.header("s3://astro/l.fits") == local)
     let reads = memory.gets.filter { $0.key == "l.fits" }.compactMap(\.range)
     #expect(reads.count == 2 && reads[0].lowerBound == 0 && reads[1].lowerBound == 64 << 10)
+  }
+
+  @Test(
+    "a whole bucket (empty prefix) scans; a broken side file or short run never fails it",
+    .scratchDirectory)
+  func testEmptyPrefixAndFailuresDegrade() async throws {
+    let base = try InventoryBuilderFallbackTests.folder("bucket")
+    try TestFITS.write("session/a_flat.fits", in: base, pixel: 30000, cards: ["EXPTIME": "2.0"])
+    try TestFITS.write(
+      "lights/l_1.fits", in: base, pixel: 900,
+      cards: InventoryBuilderTests.asi("'Light Frame'", filter: "'L'", exptime: "120.0"))
+    try Data("Gain = 250\n".utf8).write(to: base.appendingPathComponent("lights/l_1.fits.txt"))
+    try Data(repeating: 1, count: 100).write(to: base.appendingPathComponent("lights/preview.jpg"))
+    let memory = try MemoryStore(tree: base, prefix: "")
+
+    let whole = try await RemoteScan(store: memory.store, prefix: "", timeZone: Self.zone)
+      .inventory()
+
+    #expect(whole.root == "s3://astro" && whole.frames.count == 2)
+    #expect(!memory.gets.contains { $0.key == "lights/preview.jpg" }, "only sidecars and info.txt")
+
+    // The sidecar cannot be read and every centred run comes back short: still an inventory.
+    let broken = RemoteObjectStore(
+      bucket: "astro", list: memory.store.list,
+      get: { key, range in
+        if key.hasSuffix(".txt") { throw CocoaError(.fileReadNoPermission) }
+        let data = try await memory.store.get(key, range)
+        let isRun = (range?.lowerBound ?? 0) > 0
+        return isRun ? data.prefix(data.count / 2) : data
+      })
+    let degraded = try await RemoteScan(store: broken, prefix: "", timeZone: Self.zone).inventory()
+    #expect(degraded.frames.count == 2)
   }
 }

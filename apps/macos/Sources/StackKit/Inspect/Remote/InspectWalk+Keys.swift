@@ -1,3 +1,4 @@
+internal import Foundation
 internal import ProjectKit
 
 // MARK: - The walk of a key space (card 0167: an S3 prefix)
@@ -58,8 +59,7 @@ extension InspectWalk {
 
   /// A package by its name alone (no Finder on a bucket): a project, an app bundle.
   private static func isPackageName(_ name: String) -> Bool {
-    let ext = (name.split(separator: ".").count > 1 ? name.split(separator: ".").last : nil)?
-      .lowercased()
+    let ext = (name as NSString).pathExtension.lowercased()
     return ext == ProjectPackage.fileExtension || ext == "app"
   }
 }

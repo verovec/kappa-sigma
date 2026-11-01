@@ -4,14 +4,19 @@ internal import ImageKit
 // MARK: - The reads of a snapshot (card 0167)
 
 extension RemoteSnapshot {
-  /// Reads every FITS header (by growing ranges) and every small side file, `parallelism` at a
-  /// time; `progress` hears the headers read.
+  /// Reads every FITS header (by growing ranges) and every side file the scan reads.
+  ///
+  /// A side file is a frame's SharpCap sidecar or an `info.txt`; `parallelism` reads at a time,
+  /// `progress` hears the headers read. An unreadable side file is absent, as on disk; a header's
+  /// error is the frame's skip warning.
   mutating func readHeadersAndSideFiles(
     store: RemoteObjectStore, progress: @escaping @Sendable (ScanProgress) -> Void
   ) async throws {
     let frames = listing.files.filter(InventoryBuilder.isFITS)
+    let sidecars = Set(frames.map { $0 + ".txt" })
     let sides = listing.files.filter {
-      !InventoryBuilder.isFITS($0) && (objects[$0]?.size ?? .max) <= Self.sideFileLimit
+      (sidecars.contains($0) || CaptureManifest.isManifest($0))
+        && (objects[$0]?.size ?? .max) <= Self.sideFileLimit
     }
     progress(.reading(done: 0, total: frames.count))
     let objects = self.objects
@@ -21,7 +26,7 @@ extension RemoteSnapshot {
       if InventoryBuilder.isFITS(path) {
         return (path, .header(await Self.header(of: object, store: store)))
       }
-      return (path, .side(try await store.get(object.key, nil)))
+      return (path, .side(try? await store.get(object.key, nil)))
     } collect: { path, read in
       switch read {
       case .header(let header):
@@ -35,25 +40,34 @@ extension RemoteSnapshot {
     }
   }
 
-  /// Fetches the centred runs `asked` lists (path → largest count), one ranged read each.
+  /// Fetches the centred runs `asked` lists (path → largest count), one ranged read each; a frame
+  /// whose run cannot be located or comes back short becomes `unreadable`, never a scan failure.
   @concurrent
   package mutating func fetchSamples(_ asked: [String: Int], store: RemoteObjectStore) async throws
   {
-    let plans = try asked.compactMap { path, count -> (String, String, ClosedRange<Int64>)? in
-      guard let object = objects[path], case .success(let header)? = headers[path] else {
-        return nil
+    var plans: [RunRead] = []
+    for (path, count) in asked {
+      guard let object = objects[path], case .success(let header)? = headers[path],
+        let run = try? FITSFile.centerRun(of: header, maxCount: count)
+      else {
+        unreadable.insert(path)
+        continue
       }
-      let run = try FITSFile.centerRun(of: header, maxCount: count)
+      let bytes = run.count * run.bytesPerValue
       let start = Int64(FITSFile.headerBytes(of: header) + run.first * run.bytesPerValue)
-      return (path, object.key, start...(start + Int64(run.count * run.bytesPerValue) - 1))
+      plans.append(
+        RunRead(
+          path: path, key: object.key, range: start...(start + Int64(bytes) - 1), bytes: bytes))
     }
     let headers = self.headers
-    try await Self.inParallel(plans) { plan -> (String, [Double])? in
-      guard case .success(let header)? = headers[plan.0] else { return nil }
-      let bytes = try await store.get(plan.1, plan.2)
-      return (plan.0, try FITSFile.physicalValues(bytes, header: header))
+    try await Self.inParallel(plans) { plan -> (String, [Double]?)? in
+      guard case .success(let header)? = headers[plan.path] else { return (plan.path, nil) }
+      // A short answer (a truncated object) reads as `centerSample`'s truncated data: unreadable.
+      guard let bytes = try? await store.get(plan.key, plan.range), bytes.count == plan.bytes
+      else { return (plan.path, nil) }
+      return (plan.path, try? FITSFile.physicalValues(bytes, header: header))
     } collect: { path, values in
-      runs[path] = values
+      if let values { runs[path] = values } else { unreadable.insert(path) }
     }
   }
 
@@ -67,7 +81,10 @@ extension RemoteSnapshot {
       let end = min(start + headerChunk, object.size) - 1
       do {
         guard end >= start else { throw FITSError.noHeaderEnd }
-        data.append(try await store.get(object.key, start...end))
+        let chunk = try await store.get(object.key, start...end)
+        // An empty answer to a range that is not (an object shrunk since the listing): no loop.
+        guard !chunk.isEmpty else { throw FITSError.truncatedData }
+        data.append(chunk)
         return .success(try FITSFile.parse(data).header)
       } catch FITSError.noHeaderEnd where Int64(data.count) < object.size {
         continue
@@ -77,10 +94,18 @@ extension RemoteSnapshot {
     }
   }
 
+  /// One centred run to read: the frame, its key, the byte range, the bytes expected.
+  struct RunRead: Sendable {
+    let path: String
+    let key: String
+    let range: ClosedRange<Int64>
+    let bytes: Int
+  }
+
   /// One read's answer.
   enum Read: Sendable {
     case header(Result<FITSHeader, any Error>)
-    case side(Data)
+    case side(Data?)
   }
 
   /// Runs `work` over `items` with at most `parallelism` in flight, handing each answer to

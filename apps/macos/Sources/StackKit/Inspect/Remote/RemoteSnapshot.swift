@@ -28,6 +28,9 @@ package struct RemoteSnapshot: Sendable {
   var contents: [String: Data] = [:]
   /// The centred run read of each frame, at the largest count asked.
   var runs: [String: [Double]] = [:]
+  /// Frames whose centred run cannot be read (a layout the scan cannot locate, a short answer):
+  /// their pixel reads fail as an unreadable file does on disk, and are not asked again.
+  var unreadable: Set<String> = []
 
   /// The virtual path of `key` in `bucket`.
   package static func path(bucket: String, key: String) -> String {
@@ -44,7 +47,10 @@ package struct RemoteSnapshot: Sendable {
     progress(.listing)
     let folder = prefix.isEmpty || prefix.hasSuffix("/") ? prefix : prefix + "/"
     let found = try await store.list(folder)
-    let root = path(bucket: store.bucket, key: String(folder.dropLast(folder.isEmpty ? 0 : 1)))
+    // Never a trailing `/` (the scan cleans its roots that way): `s3://bucket` for a whole bucket.
+    let root =
+      folder.isEmpty
+      ? "s3://" + store.bucket : path(bucket: store.bucket, key: String(folder.dropLast()))
     var objects: [String: RemoteObjectStore.Object] = [:]
     for object in found where object.key.hasPrefix(folder) {
       objects[path(bucket: store.bucket, key: object.key)] = object
@@ -64,9 +70,7 @@ package struct RemoteSnapshot: Sendable {
     let snapshot = self
     return FrameSource(
       walk: { root, _ in
-        guard root == snapshot.root || root == snapshot.root + "/" else {
-          return InspectWalk.Listing()
-        }
+        guard InventoryBuilder.clean(root) == snapshot.root else { return InspectWalk.Listing() }
         return snapshot.listing
       },
       header: { path in
@@ -86,6 +90,7 @@ package struct RemoteSnapshot: Sendable {
         throw NotRead(path: path)
       },
       centerSample: { path, count in
+        if snapshot.unreadable.contains(path) { throw NotRead(path: path) }
         guard let values = try snapshot.sample(path, count: count) else {
           asked.sample(path, count: count)
           throw NotRead(path: path)

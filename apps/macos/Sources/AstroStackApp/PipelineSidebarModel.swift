@@ -1,5 +1,6 @@
 internal import AppKit
 package import Foundation
+internal import ImageKit
 internal import Observation
 package import ProcessKit
 package import ProjectKit
@@ -74,6 +75,18 @@ package final class PipelineSidebarModel {
     return workspace.panel?.type.id == pipeline.steps[index].recipe.processID
   }
 
+  /// Edits applied step `index` from its row (card 0159): only where the column's step is that
+  /// history step (the same process at the same place); `false` otherwise, nothing opened.
+  @discardableResult
+  package func editStep(_ index: Int) -> Bool {
+    let applied = workspace.studio.steps
+    guard applied.indices.contains(index), pipeline.steps.indices.contains(index),
+      pipeline.steps[index].recipe.processID == applied[index].processID
+    else { return false }
+    workspace.editStep(index)
+    return true
+  }
+
   /// Where step `index` stands.
   package func status(of index: Int) -> Status {
     if index < workspace.studio.steps.count {
@@ -129,9 +142,19 @@ package final class PipelineSidebarModel {
       failure = .app("The history does not follow the pipeline: undo to a step it shares")
       return
     }
+    // The steps a revise left pending keep the masks they were applied under (card 0159).
+    let masks: [Int: AstroImage]
+    do {
+      masks = try workspace.studio.pendingMasks(
+        from: start, planned: pipeline.steps.map(\.recipe.processID))
+    } catch {
+      failure = UserFacingError(error).message
+      return
+    }
     await moving(on: undoManager, mark: before ?? mark()) { [runner, pipeline] in
       try await runner.run(
-        pipeline, on: $0, bundle: $1, from: start, previous: previous, onEvent: $2)
+        pipeline, on: $0, bundle: $1, from: start, previous: previous, masks: masks,
+        onEvent: $2)
     }
   }
 

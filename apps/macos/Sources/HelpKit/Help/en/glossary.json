@@ -138,5 +138,9 @@
   "studio.combined": {
     "definition": "The image after the channel combination: the main history, where the finishing steps run.",
     "label": "Combined"
+  },
+  "studio.version": {
+    "definition": "A chain of steps a change or a restore put aside, kept with its files: compare it, restore it or drop it.",
+    "label": "Version"
   }
 }

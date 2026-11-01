@@ -1,4 +1,5 @@
 internal import Foundation
+package import ImageKit
 package import ProcessKit
 
 // MARK: - Revising an applied step (card 0157)
@@ -63,6 +64,39 @@ extension StudioModel {
     if let masked = session.movedMaskStep(index, params: params, until: end) {
       throw PipelineError.maskMoved(step: masked)
     }
+  }
+
+  /// The recorded masks of the steps a revise left pending from `start` (card 0159).
+  ///
+  /// ▶ Run applies them under the masks of the chain the revise replaced (its last version), as
+  /// long as the head is that revise's — the same steps, on the same parent, up to `start` —
+  /// and only where the column plans the same process (`planned`, by index) at the same place;
+  /// the version's undone steps carry none.
+  package func pendingMasks(from start: Int, planned: [String]) throws -> [Int: AstroImage] {
+    let history = session.history
+    guard let version = history.versions.last, version.base < start,
+      history.steps.count == start, start - version.base <= version.steps.count,
+      version.parent == (version.base == 0 ? nil : history.steps[version.base - 1].file),
+      zip(history.steps[version.base..<start], version.steps)
+        .allSatisfy({ $0.processID == $1.processID })
+    else { return [:] }
+    var masks: [Int: AstroImage] = [:]
+    let applied = version.steps.count - version.redo
+    for offset in (start - version.base)..<max(start - version.base, applied)
+    where version.steps[offset].mask != nil
+      && planned.indices.contains(version.base + offset)
+      && planned[version.base + offset] == version.steps[offset].processID
+    {
+      masks[version.base + offset] = try history.mask(ofVersion: version.id, step: offset)
+    }
+    return masks
+  }
+
+  /// Forgets history version `id` and removes the files only it kept (card 0159): no undo.
+  package func dropVersion(_ id: String) throws {
+    defer { mirror() }
+    try session.history.dropVersion(id)
+    cleanUp()
   }
 
   /// Puts history version `id` back in place of the steps from its base: nothing is recomputed.

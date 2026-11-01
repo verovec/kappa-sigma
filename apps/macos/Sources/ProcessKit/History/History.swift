@@ -241,15 +241,23 @@ package final class History {
 
   /// The outputs still reachable: applied, undone (redo), kept in a version and snapshotted.
   package var referencedFiles: Set<String> {
-    let kept = steps + undone + versions.flatMap(\.steps)
-    return Set(
-      kept.map(\.file) + kept.flatMap { $0.outputs.values } + kept.flatMap { $0.replaced.values }
-        + kept.compactMap(\.mask) + snapshots.compactMap(\.file))
+    Set(Self.files(of: steps + undone + versions.flatMap(\.steps)) + snapshots.compactMap(\.file))
+  }
+
+  /// Every file `steps` refer to: their images, the layers they wrote, their masks.
+  static func files(of steps: [Step]) -> [String] {
+    steps.map(\.file) + steps.flatMap { $0.outputs.values } + steps.flatMap { $0.replaced.values }
+      + steps.compactMap(\.mask)
   }
 
   /// Bytes of the reachable outputs, counted against the project's disk budget (0068).
   package var diskBytes: Int {
-    referencedFiles.reduce(0) { total, file in
+    bytes(of: referencedFiles)
+  }
+
+  /// The bytes on disk of `files` in this history's folder.
+  func bytes(of files: some Sequence<String>) -> Int {
+    files.reduce(0) { total, file in
       let path = directory.appendingPathComponent(file).path
       return total + ((try? FileManager.default.attributesOfItem(atPath: path)[.size] as? Int) ?? 0)
     }

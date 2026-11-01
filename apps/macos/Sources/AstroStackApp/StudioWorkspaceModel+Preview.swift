@@ -54,7 +54,7 @@ extension StudioWorkspaceModel {
   /// The main step the open panel edits (card 0158): `editing` when the panel is that step's
   /// process — another process's panel never reads its values onto the edited step's schema,
   /// and previews and applies on the head as usual.
-  var editedStep: Int? {
+  package var editedStep: Int? {
     guard let editing, let panel, selection == .main else { return nil }
     let steps = studio.session.history.steps
     guard steps.indices.contains(editing), steps[editing].processID == panel.type.id else {

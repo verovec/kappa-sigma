@@ -17,29 +17,7 @@ package struct StudioSideView: View {
   package var body: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: DesignMetrics.spacingL) {
-        if let panel = model.panel {
-          ProcessPanel(model: panel)
-          rows(under: panel)
-          HStack {
-            Button(.app("Close")) { model.closePanel() }
-              .accessible(.studioClosePanel, label: .app("Close"))
-            Spacer()
-            // No default-button Return: Return confirms a typed value (Edit › Apply Process ⌘E).
-            // On a new head Apply previews first, and says so.
-            let title: LocalizedStringResource =
-              model.isPreviewSuspended ? .app("Preview") : .app("Apply")
-            let blocked = blocked(panel)
-            Button(title) { applyRecorded() }
-              .disabled(model.toolRun != nil || blocked != nil)
-              .help(blocked.map { Text($0) } ?? Text(verbatim: ""))
-              .accessible(.studioApply, label: title)
-          }
-          StudioToolRow(model: model)
-          if model.isPreviewSuspended { suspended }
-        } else {
-          Text(.app("Choose a process in the catalogue."))
-            .foregroundStyle(DesignColor.textSecondary.color)
-        }
+        panelSection
         if let notice = model.staleNotice { stale(notice) }
         if let failure = model.failure { StatusBadge(.error, failure) }
         if model.appliedNothing {
@@ -48,6 +26,40 @@ package struct StudioSideView: View {
         history
       }
       .padding(DesignMetrics.spacingM)
+    }
+  }
+
+  /// The chosen process's panel with Close / Apply, or an applied step re-edited (card 0159)
+  /// with its header and Cancel / Apply change; a hint without a panel.
+  @ViewBuilder private var panelSection: some View {
+    if let panel = model.panel, model.editedStep != nil {
+      StudioEditHeader(model: model)
+      ProcessPanel(model: panel)
+      rows(under: panel)
+      StudioEditButtons(model: model)
+      if model.isPreviewSuspended { suspended }
+    } else if let panel = model.panel {
+      ProcessPanel(model: panel)
+      rows(under: panel)
+      HStack {
+        Button(.app("Close")) { model.closePanel() }
+          .accessible(.studioClosePanel, label: .app("Close"))
+        Spacer()
+        // No default-button Return: Return confirms a typed value (Edit › Apply Process ⌘E).
+        // On a new head Apply previews first, and says so.
+        let title: LocalizedStringResource =
+          model.isPreviewSuspended ? .app("Preview") : .app("Apply")
+        let blocked = blocked(panel)
+        Button(title) { applyRecorded() }
+          .disabled(model.toolRun != nil || blocked != nil)
+          .help(blocked.map { Text($0) } ?? Text(verbatim: ""))
+          .accessible(.studioApply, label: title)
+      }
+      StudioToolRow(model: model)
+      if model.isPreviewSuspended { suspended }
+    } else {
+      Text(.app("Choose a process in the catalogue."))
+        .foregroundStyle(DesignColor.textSecondary.color)
     }
   }
 
@@ -64,6 +76,10 @@ package struct StudioSideView: View {
   private func rows(under panel: ProcessPanelModel) -> some View {
     if model.selection != .main {
       StudioInactiveMaskRow(model: model, kind: .branch)
+    } else if model.editedStep != nil {
+      // The edit replays the step under the mask it recorded, if any (the header says so):
+      // the mask row would draw another one, never applied.
+      EmptyView()
     } else if panel.type is any GeometricProcess.Type {
       // Geometry moves the whole grid: no mask, the output's size and solution instead
       // (none while the values leave no pixel: the panel shows that failure).
@@ -109,8 +125,10 @@ package struct StudioSideView: View {
   private var history: some View {
     VStack(alignment: .leading, spacing: DesignMetrics.spacingXS) {
       HStack {
-        SectionHeader(.app("History"))
+        SectionHeader(
+          .app("History"), help: StageHelp.help(card: StudioEditHeader.helpCard, locale: locale))
         Spacer()
+        if !model.versions.isEmpty { StudioVersionsMenu(model: model) }
         // A run or a host tool moving the history: the move waits, as Edit › Undo does.
         Button(.app("Undo")) { undo() }
           .disabled(!model.studio.canUndo(on: model.selection) || model.isMovingHistory)
@@ -125,24 +143,56 @@ package struct StudioSideView: View {
     }
   }
 
-  /// One applied step: its number and title, a click compares the viewer with its output.
+  /// One applied step: its number and title; a click edits it (card 0159), its eye button (or
+  /// ⌥-click) compares the viewer with its output.
   private func stepRow(_ index: Int, _ step: History.Step) -> some View {
     let title = model.stepTitle(of: step.processID, locale: locale)
-    return Button {
+    return HStack {
+      Button {
+        if NSEvent.modifierFlags.contains(.option) {
+          model.toggleCompare(index)
+        } else {
+          model.editStep(index)
+        }
+      } label: {
+        HStack {
+          Text(verbatim: "\(index + 1).")
+          Text(title).fontWeight(model.editedStep == index ? .bold : .regular)
+          if model.isRecomputed(index) {
+            Text(.app("To recompute")).font(.caption)
+              .foregroundStyle(DesignColor.textSecondary.color)
+          }
+          Spacer()
+        }
+        .contentShape(Rectangle())
+      }
+      .buttonStyle(.plain)
+      .disabled(model.isMovingHistory)
+      .help(Text(.app("Edit this step; ⌥-click compares")))
+      .accessible(.studioStep(index), label: title)
+      compareButton(index, title: title)
+    }
+  }
+
+  /// The eye of a history row: compares the viewer with the step's output, or stops.
+  private func compareButton(_ index: Int, title: LocalizedStringResource) -> some View {
+    Button {
       model.toggleCompare(index)
     } label: {
-      HStack {
-        Text(verbatim: "\(index + 1).")
-        Text(title)
-        Spacer()
-        if model.comparing == index { Image(systemName: "rectangle.split.2x1") }
+      if model.comparing == index {
+        Image(systemName: "eye.fill")
+      } else {
+        Image(systemName: "eye")
       }
     }
     .buttonStyle(.plain)
-    // No step lies under a moved preview's pixels: the row says why it is greyed (R2).
+    // No step lies under a moved preview's pixels: the eye says why it is greyed (R2).
     .disabled(model.showsMovedGrid)
-    .help(model.showsMovedGrid ? Text(UserFacingError.movedPreview.message) : Text(verbatim: ""))
-    .accessible(.studioStep(index), label: title)
+    .help(
+      model.showsMovedGrid
+        ? Text(UserFacingError.movedPreview.message) : Text(.app("Compare"))
+    )
+    .accessible(.studioStepCompare(index), label: .app("Compare"))
   }
 
   /// Applies the panel and records the step with the window's undo manager, so ⌘Z / ⇧⌘Z reach

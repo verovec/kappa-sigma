@@ -138,5 +138,9 @@
   "studio.combined": {
     "definition": "L’image après la combinaison des canaux : l’historique principal, où se font les étapes de finition.",
     "label": "Combiné"
+  },
+  "studio.version": {
+    "definition": "Une suite d’étapes mise de côté par une modification ou une restauration, gardée avec ses fichiers : comparez, restaurez ou supprimez-la.",
+    "label": "Version"
   }
 }

@@ -305,6 +305,20 @@ in en/fr; the English title is the key, resolved with `ProcessKitResources.title
 - App: `StudioWorkspaceModel.editing` (set by 0159) switches the debounced preview to the chain
   (main history only), `chainStoppedBefore` + `chainStopNotice(locale:)` word the banner.
 
+## Re-edit and versions (card 0159)
+
+- The app's re-edit: `StudioWorkspaceModel.editStep(k)` opens the step's recorded values and sets
+  `editing` (0158's chain preview); `cancelEdit` closes it; `StudioUndo.applyEdit` revises it
+  (`reviseStep`, one ⌘Z) and closes the panel. A history row click edits, its eye (or ⌥-click)
+  compares; a done row of the pipeline column edits when it is that history step
+  (`PipelineSidebarModel.editStep`). A host-tool step opens but its revise is still refused (0157).
+- `History.head(ofVersion:)`, `mask(ofVersion:step:)` and `bytes(ofVersion:)` (the files only
+  that version keeps) feed the Versions menu: Compare (`toggleCompare(version:)`), Restore
+  (`StudioUndo.restoreVersion`, one ⌘Z) and Drop (`StudioModel.dropVersion`, confirmed, no undo,
+  files removed at once).
+- ▶ Run after a revise that stopped before a host tool applies the pending steps under the masks
+  of the chain the revise put aside (`StudioModel.pendingMasks(from:)` → `PipelineRunner.run(masks:)`).
+
 ## Host-tool processes with layers (card 0092)
 
 - Background extraction is a host-tool process like plate solving (`hostTool = true`, card

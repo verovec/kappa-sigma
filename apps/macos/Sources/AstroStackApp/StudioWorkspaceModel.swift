@@ -76,6 +76,8 @@ package final class StudioWorkspaceModel {
   package internal(set) var chainStoppedBefore: Int?
   /// The other history whose head compare shows, if any (card 0119).
   package internal(set) var comparingWith: StudioSelection?
+  /// The history version whose head compare shows, if any (card 0159).
+  package internal(set) var comparingVersion: String?
   /// The step compare shows, if any.
   package internal(set) var comparing: Int?
   /// The viewer shows a geometric preview that moves the pixels (card 0090, `gridMoved`).

@@ -14,6 +14,7 @@ struct GlossaryTests {
       + FilterSet.allCases.map(\.termID) + ColorChoice.allCases.map(\.termID)
       + ColorModel.allCases.map(\.termID) + LinearBundle.Role.allCases.map(\.termID)
       + JourneyStage.allCases.map(\.termID) + StudioSelection.termIDs
+      + [StudioWorkspaceModel.versionTermID]
   }
 
   @Test("every frame type, filter, filter set, colour model and stage has a fr and an en term")

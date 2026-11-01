@@ -41,15 +41,12 @@ struct StudioEditButtons: View {
       Button(.app("Cancel")) { model.cancelEdit() }
         .accessible(.studioEditCancel, label: .app("Cancel"))
       Spacer()
-      // On a new head the values are shown first: this press previews, the next one revises.
-      let title: LocalizedStringResource =
-        model.isPreviewSuspended ? .app("Preview") : .app("Apply Change")
-      Button(title) {
+      Button(.app("Apply Change")) {
         Task { await StudioUndo.applyEdit(model, on: undoManager) }
       }
       .disabled(model.isMovingHistory || model.toolRun != nil || blocked != nil)
       .help(blocked.map { Text($0) } ?? Text(verbatim: ""))
-      .accessible(.studioEditApply, label: title)
+      .accessible(.studioEditApply, label: .app("Apply Change"))
     }
   }
 }

@@ -22,6 +22,16 @@ extension StudioWorkspaceModel {
     failure = nil
   }
 
+  /// A click on history row `index`: edits it, or compares with it on ⌥-click (`option`) and on
+  /// a layer's branch, whose steps are compared, never edited (E25 edits the combined image).
+  package func clickStep(_ index: Int, option: Bool) {
+    if option || selection != .main {
+      toggleCompare(index)
+    } else {
+      editStep(index)
+    }
+  }
+
   /// Leaves the edit: the viewer shows the head, nothing moved.
   package func cancelEdit() {
     closePanel()

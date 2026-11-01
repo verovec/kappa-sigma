@@ -37,7 +37,6 @@ package struct StudioSideView: View {
       ProcessPanel(model: panel)
       rows(under: panel)
       StudioEditButtons(model: model)
-      if model.isPreviewSuspended { suspended }
     } else if let panel = model.panel {
       ProcessPanel(model: panel)
       rows(under: panel)
@@ -149,12 +148,7 @@ package struct StudioSideView: View {
     let title = model.stepTitle(of: step.processID, locale: locale)
     return HStack {
       Button {
-        // A branch's steps are compared, never edited (E25 edits the combined image only).
-        if NSEvent.modifierFlags.contains(.option) || model.selection != .main {
-          model.toggleCompare(index)
-        } else {
-          model.editStep(index)
-        }
+        model.clickStep(index, option: NSEvent.modifierFlags.contains(.option))
       } label: {
         HStack {
           Text(verbatim: "\(index + 1).")

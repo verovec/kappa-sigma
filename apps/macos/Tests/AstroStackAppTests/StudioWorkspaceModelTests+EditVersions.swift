@@ -184,3 +184,55 @@ extension StudioWorkspaceModelTests {
     #expect(workspace.comparingVersion == nil && workspace.failure != nil)
   }
 }
+
+extension StudioWorkspaceModelTests {
+  @Test("the Versions model's refusals: a toggle off, a branch, an unknown id", .scratchDirectory)
+  func testVersions_RefusalsAndToggle() async throws {
+    let opened = try StudioModelTests.project()
+    defer { try? opened.package.close() }
+    let workspace = try Self.workspace(opened, bundle: BranchTests.bundle())
+    let undoManager = StudioUndoRunTests.undoManager()
+    try workspace.studio.apply(StretchProcess.id, params: try StudioModelTests.stretch(target: 0.2))
+    try await workspace.studio.reviseStep(1, params: try StudioModelTests.stretch(target: 0.4))
+    let version = try #require(workspace.versions.last)
+
+    workspace.toggleCompare(version: version.id)
+    workspace.toggleCompare(version: version.id)
+    #expect(workspace.comparingVersion == nil && workspace.viewer.reference == nil)
+    #expect(workspace.bytes(ofVersion: "nope") == 0)
+
+    StudioUndo.restoreVersion(workspace, "nope", on: undoManager)
+    #expect(workspace.failure != nil && workspace.versions.count == 1)
+
+    workspace.select(.branch("Ha"))
+    StudioUndo.restoreVersion(workspace, version.id, on: undoManager)
+    StudioUndo.dropVersion(workspace, version.id, on: undoManager)
+    #expect(workspace.versions.count == 1 && workspace.failure != nil)
+    #expect(workspace.historyMoveRefusal != nil)
+  }
+}
+
+extension StudioWorkspaceModelTests {
+  @Test("a restore out of reach, an unknown drop and a moved-mask ▶ Run say why", .scratchDirectory)
+  func testVersions_FailuresSaid() async throws {
+    let opened = try StudioModelTests.project()
+    defer { try? opened.package.close() }
+    let (workspace, sidebar) = try await Self.pending(
+      opened, first: (GeometryProcess.id, ParamSet(schema: GeometryProcess.schema)))
+    let undoManager = StudioUndoRunTests.undoManager()
+    var flip = ParamSet(schema: GeometryProcess.schema)
+    try flip.set("flipV", .flag(true))
+    try await workspace.studio.reviseStep(1, params: flip)
+
+    await sidebar.run(undoManager: undoManager)
+    #expect(sidebar.failure != nil && workspace.studio.steps.count == 2, "maskMoved, nothing run")
+
+    StudioUndo.dropVersion(workspace, "nope", on: undoManager)
+    #expect(workspace.failure != nil)
+
+    let version = try #require(workspace.versions.last)
+    try workspace.studio.undo(steps: 2)
+    StudioUndo.restoreVersion(workspace, version.id, on: undoManager)
+    #expect(workspace.failure != nil && workspace.studio.steps.isEmpty)
+  }
+}

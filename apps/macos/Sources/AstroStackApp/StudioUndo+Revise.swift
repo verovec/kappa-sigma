@@ -58,12 +58,8 @@ extension StudioUndo {
   /// The edited step is revised with the panel's values (`reviseStep`, one ⌘Z). A refused or
   /// failed revise keeps the edit open with its reason.
   package static func applyEdit(_ model: StudioWorkspaceModel, on undoManager: UndoManager?) async {
+    // An edit is never suspended: the history move that would suspend its preview ends it.
     guard let index = model.editedStep, let panel = model.panel else { return }
-    // On a new head the values are shown first, as Apply does (R2: never revised unseen).
-    if model.isPreviewSuspended {
-      model.resumePreview()
-      return
-    }
     await reviseStep(model, step: index, params: panel.params, on: undoManager)
     // Refused before anything moved: the edit stays open with its reason. Once the head moved
     // (done, or failed half-way — the failure stays shown) the edit is over: never left as a

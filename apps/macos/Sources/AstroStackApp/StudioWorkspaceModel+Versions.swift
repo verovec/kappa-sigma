@@ -18,6 +18,14 @@ extension StudioWorkspaceModel {
     (try? studio.session.history.bytes(ofVersion: id)) ?? 0
   }
 
+  /// What the Drop confirmation says of version `id` in `locale`: the disk it frees, and that
+  /// ⌘Z forgets the combined image's moves.
+  package func dropMessage(_ id: String, locale: Locale) -> LocalizedStringResource {
+    let size = AstroFormat(locale: locale).bytes(Int64(bytes(ofVersion: id)))
+    return .app(
+      "Deletes its steps and files (\(size)); ⌘Z forgets the combined image.", locale: locale)
+  }
+
   /// Compares the viewer with the image version `id` ended on, or stops when it is the one
   /// compared; a version on another grid is refused like a step (a failure is reported).
   package func toggleCompare(version id: String) {

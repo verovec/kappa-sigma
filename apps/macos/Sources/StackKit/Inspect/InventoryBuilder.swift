@@ -43,7 +43,7 @@ package struct InventoryBuilder: Sendable {
     progress(.listing)
     let walks = try roots.map { root in
       try Task.checkCancellation()
-      return (root: root, listing: try source.listing(root, true))
+      return (root: root, listing: try source.listing(under: root, skippingOutput: true))
     }
     for walk in walks {
       merged.skip(walk.listing.packages.map { InspectWalk.relative($0, to: merged.root) })
@@ -82,7 +82,7 @@ package struct InventoryBuilder: Sendable {
       do {
         inventory.frames.append(
           CaptureFrame(
-            path: path, header: try source.header(path), timeZone: timeZone,
+            path: source.framePath(path), header: try source.header(path), timeZone: timeZone,
             contents: source.contents))
       } catch {
         inventory.warnings.append("skip \(InspectWalk.relative(path, to: root)): \(error)")

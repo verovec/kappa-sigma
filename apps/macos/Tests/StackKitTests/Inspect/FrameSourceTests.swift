@@ -10,6 +10,11 @@ import Testing
 /// (the seam the remote snapshot of 0167 plugs into).
 @Suite("FrameSource — the scan's listing, headers and side files behind one seam")
 struct FrameSourceTests {
+  /// What the in-memory source was never given.
+  struct Missing: Error {
+    let path: String
+  }
+
   /// A source and a pixel reader answering from what `.files` read once: nothing touches disk.
   final class Recorded: Sendable {
     let listings: [String: InspectWalk.Listing]
@@ -25,13 +30,14 @@ struct FrameSourceTests {
       var planes: [String: PixelPlanes] = [:]
       var samples: [String: [Double]] = [:]
       for root in roots {
-        let listing = try FrameSource.files.listing(root, true)
+        let listing = try FrameSource.files.listing(under: root, skippingOutput: true)
         listings[root] = listing
         for path in listing.files {
           if InventoryBuilder.isFITS(path) {
             headers[path] = try FrameSource.files.header(path)
             planes[path] = try PixelReader.files.planes(path)
-            samples[path] = try PixelReader.files.centerSample(path, 4096)
+            // As many as the scan asks for (`InventoryBuilder.statsSample`): the whole centre run.
+            samples[path] = try PixelReader.files.centerSample(path, 1 << 20)
           } else {
             contents[path] = FrameSource.files.contents(path)
           }
@@ -43,21 +49,21 @@ struct FrameSourceTests {
 
     var source: FrameSource {
       FrameSource(
-        listing: { root, _ in
-          guard let listing = self.listings[root] else { throw InspectError.unreadableFolder(root) }
+        walk: { root, _ in
+          guard let listing = self.listings[root] else { throw Missing(path: root) }
           return listing
         },
         header: { path in
-          guard let header = self.headers[path] else { throw InspectError.unreadableFolder(path) }
+          guard let header = self.headers[path] else { throw Missing(path: path) }
           return header
         },
-        contents: { self.contents[$0] })
+        contents: { self.contents[$0] }, framePath: { URL(fileURLWithPath: $0).path })
     }
 
     var pixels: PixelReader {
       PixelReader(
         planes: { path in
-          guard let planes = self.planes[path] else { throw InspectError.unreadableFolder(path) }
+          guard let planes = self.planes[path] else { throw Missing(path: path) }
           return planes
         },
         centerSample: { path, count in Array((self.samples[path] ?? []).prefix(count)) })
@@ -73,17 +79,51 @@ struct FrameSourceTests {
     let root = try InventoryBuilderFallbackTests.folder("scan")
     let input = root.appendingPathComponent("in")
     try HeaderFixture.load(name).materialize(under: input)
-    let fromFiles = try InventoryBuilder(timeZone: zone).scan(paths: [input.path])
-    let recorded = try Recorded(roots: [input.path])
-    // Nothing left on disk: the in-memory source alone answers.
-    try FileManager.default.moveItem(at: input, to: root.appendingPathComponent("gone"))
+    // Nothing left on disk once recorded: the in-memory source alone answers.
+    let (files, memory) = try Self.bothWays([input], under: input, zone: zone)
 
+    #expect(memory == files)
+    #expect(!files.frames.isEmpty)
+  }
+
+  /// The inventory of `roots` from the files, then from memory once the files are gone.
+  static func bothWays(_ roots: [URL], under base: URL, zone: TimeZone) throws
+    -> (files: Inventory, memory: Inventory)
+  {
+    let paths = roots.map(\.path)
+    let fromFiles = try InventoryBuilder(timeZone: zone).scan(paths: paths)
+    let recorded = try Recorded(roots: paths)
+    try FileManager.default.moveItem(at: base, to: base.appendingPathExtension("gone"))
     let fromMemory = try InventoryBuilder(
       timeZone: zone, pixels: recorded.pixels, source: recorded.source
-    ).scan(paths: [input.path])
+    ).scan(paths: paths)
+    return (fromFiles, fromMemory)
+  }
 
-    #expect(fromMemory == fromFiles)
-    #expect(!fromFiles.frames.isEmpty)
+  @Test(
+    "SharpCap sidecars, info.txt and pixel-typed frames come through the source, not the disk",
+    .scratchDirectory)
+  func testScan_SideFilesAndPixelsThroughSource() throws {
+    let base = try InventoryBuilderFallbackTests.folder("captures")
+    let capObj = base.appendingPathComponent("M33/CapObj")
+    try FileManager.default.createDirectory(at: capObj, withIntermediateDirectories: true)
+    try Data("L R G B Ha\nL L\n300 gain\n-15°\n".utf8).write(
+      to: capObj.appendingPathComponent("info.txt"))
+    for (index, slot) in [1, 2, 3, 4, 5].enumerated() {
+      try InventoryBuilderWheelTests.slotFrame(
+        "2021-08-14-0\(index)00_6-\(slot)-CapObj_0000.FIT",
+        in: capObj.appendingPathComponent("2021-08-14_0\(index)_00_00Z"), slot: slot)
+    }
+    let session = base.appendingPathComponent("session")
+    try TestFITS.write("a_flat.fits", in: session, pixel: 30000, cards: ["EXPTIME": "2.0"])
+    try TestFITS.write("b_zero.fits", in: session, pixel: 300, cards: ["EXPTIME": "0.0"])
+    let zone = TimeZone(identifier: "Europe/Paris") ?? .gmt
+
+    let (files, memory) = try Self.bothWays([capObj, session], under: base, zone: zone)
+
+    #expect(memory == files)
+    #expect(files.frames.filter { $0.classSource == .wheel }.count == 5, "sidecars + info.txt read")
+    #expect(files.frames.contains { $0.classSource == .heuristic }, "pixel curves read")
   }
 
   @Test(
@@ -98,7 +138,7 @@ struct FrameSourceTests {
     try TestFITS.write("old.astrostack/stacks/1/c.fits", in: dir, pixel: 900, cards: light)
     try Data("Gain=100".utf8).write(to: dir.appendingPathComponent("lights/l_1.fits.txt"))
 
-    let listing = try FrameSource.files.listing(dir.path, true)
+    let listing = try FrameSource.files.listing(under: dir.path, skippingOutput: true)
     let names = listing.files.map { InspectWalk.relative($0, to: dir.path) }
 
     #expect(names == ["lights/l_1.fits", "lights/l_1.fits.txt", "lights/l_1.fits.txt.fits"])

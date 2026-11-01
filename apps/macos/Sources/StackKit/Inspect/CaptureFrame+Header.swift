@@ -30,7 +30,13 @@ extension CaptureFrame {
   }
 
   private mutating func readAcquisition(_ cards: LegacyCards) {
-    if let value = cards.string("FILTER") { filter = Filter.normalize(value) }
+    if let value = cards.string("FILTER") {
+      filter = Filter.normalize(value)
+      if !filter.isEmpty {
+        filterOrigin = FilterOrigin(
+          source: .header, raw: value.trimmingCharacters(in: .whitespaces))
+      }
+    }
     if let seconds = cards.exposureSeconds,
       let milliseconds = LegacyNumber.rounded(seconds, scale: 1000)
     {

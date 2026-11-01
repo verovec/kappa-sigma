@@ -11296,6 +11296,118 @@
           }
         }
       }
+    },
+    "%@ — FITS FILTER « %@ »": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ — FITS FILTER « %@ »"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ — FILTER du FITS « %@ »"
+          }
+        }
+      }
+    },
+    "%@ — file name « %@ »": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ — file name « %@ »"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ — nom de fichier « %@ »"
+          }
+        }
+      }
+    },
+    "%@ — folder « %@ »": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ — folder « %@ »"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ — dossier « %@ »"
+          }
+        }
+      }
+    },
+    "%@ — info.txt legend « %@ »": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ — info.txt legend « %@ »"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ — légende info.txt « %@ »"
+          }
+        }
+      }
+    },
+    "%@ — filter-wheel slot %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ — filter-wheel slot %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ — position %@ de la roue à filtres"
+          }
+        }
+      }
+    },
+    "%@ — detected from the signal (wheel order)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ — detected from the signal (wheel order)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ — détecté d'après le signal (ordre de la roue)"
+          }
+        }
+      }
+    },
+    "%@ — your mapping of « %@ »": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ — your mapping of « %@ »"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ — votre correspondance de « %@ »"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

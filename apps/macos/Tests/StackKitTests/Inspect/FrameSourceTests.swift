@@ -36,8 +36,8 @@ struct FrameSourceTests {
           if InventoryBuilder.isFITS(path) {
             headers[path] = try FrameSource.files.header(path)
             planes[path] = try PixelReader.files.planes(path)
-            // As many as the scan asks for (`InventoryBuilder.statsSample`): the whole centre run.
-            samples[path] = try PixelReader.files.centerSample(path, 1 << 20)
+            // The centred run the scan asks for (`InventoryBuilder.statsSample`), nothing else.
+            samples[path] = try PixelReader.files.centerSample(path, InventoryBuilder.statsSample)
           } else {
             contents[path] = FrameSource.files.contents(path)
           }
@@ -57,7 +57,7 @@ struct FrameSourceTests {
           guard let header = self.headers[path] else { throw Missing(path: path) }
           return header
         },
-        contents: { self.contents[$0] }, framePath: { URL(fileURLWithPath: $0).path })
+        contents: { self.contents[$0] })
     }
 
     var pixels: PixelReader {
@@ -66,7 +66,12 @@ struct FrameSourceTests {
           guard let planes = self.planes[path] else { throw Missing(path: path) }
           return planes
         },
-        centerSample: { path, count in Array((self.samples[path] ?? []).prefix(count)) })
+        centerSample: { path, count in
+          guard count == InventoryBuilder.statsSample, let sample = self.samples[path] else {
+            throw Missing(path: path)
+          }
+          return sample
+        })
     }
   }
 
@@ -90,6 +95,8 @@ struct FrameSourceTests {
   static func bothWays(_ roots: [URL], under base: URL, zone: TimeZone) throws
     -> (files: Inventory, memory: Inventory)
   {
+    // Every root lies under `base`: moving it leaves nothing on disk to read.
+    precondition(roots.allSatisfy { $0.path.hasPrefix(base.path) })
     let paths = roots.map(\.path)
     let fromFiles = try InventoryBuilder(timeZone: zone).scan(paths: paths)
     let recorded = try Recorded(roots: paths)

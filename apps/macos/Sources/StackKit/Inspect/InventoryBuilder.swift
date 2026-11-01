@@ -15,7 +15,7 @@ package struct InventoryBuilder: Sendable {
 
   static let fitsExtensions: Set<String> = ["fits", "fit", "fts"]
   /// Centre pixels sampled to classify a frame no header or name typed.
-  static let statsSample = 200_000
+  package static let statsSample = 200_000
 
   /// A builder reading FITS files on disk, unless given another `pixels` reader and `source`.
   package init(
@@ -82,7 +82,7 @@ package struct InventoryBuilder: Sendable {
       do {
         inventory.frames.append(
           CaptureFrame(
-            path: source.framePath(path), header: try source.header(path), timeZone: timeZone,
+            path: path, header: try source.header(path), timeZone: timeZone,
             contents: source.contents))
       } catch {
         inventory.warnings.append("skip \(InspectWalk.relative(path, to: root)): \(error)")

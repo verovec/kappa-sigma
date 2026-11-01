@@ -9,27 +9,23 @@ package import ImageKit
 /// scan itself stays synchronous and unchanged.
 package struct FrameSource: Sendable {
   /// The files and skipped packages under a root (`skippingOutput`: `output` folders skipped);
-  /// call it through `listing(under:skippingOutput:)`.
-  package var walk: @Sendable (_ root: String, _ skippingOutput: Bool) throws -> InspectWalk.Listing
+  /// called through `listing(under:skippingOutput:)`.
+  package private(set) var walk:
+    @Sendable (_ root: String, _ skippingOutput: Bool) throws -> InspectWalk.Listing
   /// The primary header of the frame at a path (no pixels decoded).
   package var header: @Sendable (_ path: String) throws -> FITSHeader
   /// The bytes of the file at a path, `nil` when there is none.
   package var contents: @Sendable (_ path: String) -> Data?
-  /// The path a frame found by the walk is recorded under (the disk's is URL-normalised, as the
-  /// scan always stored it; another source keeps its own spelling, an `s3://` key for one).
-  package var framePath: @Sendable (_ path: String) -> String
-
-  /// A source from its closures; `framePath` keeps the walk's spelling unless given.
+  /// A source from its closures. Every path the scan uses — a frame's, its sidecar's, a
+  /// manifest's — is the walk's spelling: a source spells its paths once, in `walk`.
   package init(
     walk: @escaping @Sendable (String, Bool) throws -> InspectWalk.Listing,
     header: @escaping @Sendable (String) throws -> FITSHeader,
-    contents: @escaping @Sendable (String) -> Data?,
-    framePath: @escaping @Sendable (String) -> String = { $0 }
+    contents: @escaping @Sendable (String) -> Data?
   ) {
     self.walk = walk
     self.header = header
     self.contents = contents
-    self.framePath = framePath
   }
 
   /// The files and skipped packages under `root`; `skippingOutput` skips `output` folders.
@@ -38,11 +34,20 @@ package struct FrameSource: Sendable {
   }
 
   /// The local disk: `InspectWalk`, ImageKit's FITS header reader, `FileManager`.
+  ///
+  /// The walk's paths are URL-normalised, the spelling frames were always recorded under, so
+  /// sidecars, manifests and warnings use that same spelling.
   package static let files = Self(
     walk: { root, skippingOutput in
-      try InspectWalk.listing(under: root, skippingOutput: skippingOutput)
+      let listing = try InspectWalk.listing(under: root, skippingOutput: skippingOutput)
+      return InspectWalk.Listing(
+        files: listing.files.map(normalised), packages: listing.packages.map(normalised))
     },
     header: { path in try FITSFile.read(at: URL(fileURLWithPath: path)).header },
-    contents: { path in FileManager.default.contents(atPath: path) },
-    framePath: { path in URL(fileURLWithPath: path).path })
+    contents: { path in FileManager.default.contents(atPath: path) })
+
+  /// `path` as `URL(fileURLWithPath:)` spells it.
+  private static func normalised(_ path: String) -> String {
+    URL(fileURLWithPath: path).path
+  }
 }

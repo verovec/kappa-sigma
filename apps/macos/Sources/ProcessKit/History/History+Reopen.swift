@@ -37,7 +37,7 @@ extension History {
       guard entry.base >= 0 else { throw HistoryError.unreadable("version \(entry.id) base") }
       return Version(
         id: entry.id, label: entry.label, base: entry.base, parent: entry.parent,
-        steps: try entry.steps.map(step))
+        steps: try entry.steps.map(step), redo: entry.redo ?? 0)
     }
     try history.load(
       steps: manifest.steps.map(step), undone: manifest.undone.map(step),
@@ -74,7 +74,7 @@ extension History {
         : versions.map {
           HistoryManifest.Version(
             id: $0.id, label: $0.label, base: $0.base, parent: $0.parent,
-            steps: $0.steps.map(entry))
+            steps: $0.steps.map(entry), redo: $0.redo == 0 ? nil : $0.redo)
         },
       nextVersion: nextVersionNumber > 1 ? nextVersionNumber : nil)
   }

@@ -174,9 +174,10 @@ package enum StudioUndo {
 
   /// Registers the undo of `steps` new steps on the history of `selection`: its redo is gone,
   /// and with it every move forward registered there — and every move after a button's move.
-  private static func recordNew(
+  static func recordNew(
     _ model: StudioWorkspaceModel, steps: Int, in selection: StudioSelection,
-    name: LocalizedStringResource, mark: PipelineSidebarModel.Mark?, on undoManager: UndoManager?
+    name: LocalizedStringResource, mark: PipelineSidebarModel.Mark?, version: String? = nil,
+    on undoManager: UndoManager?
   ) {
     guard let undoManager, !model.isRetired else { return }
     model.undoManager = undoManager
@@ -187,7 +188,8 @@ package enum StudioUndo {
     if drop(dropped, on: undoManager) { model.movedOutOfBand.remove(selection) }
     let move = StudioMove(
       steps: steps, backward: true, selection: selection,
-      head: model.studio.steps(of: selection).last?.file, name: name, mark: mark)
+      head: model.studio.steps(of: selection).last?.file, name: name, mark: mark,
+      version: version)
     register(move, model, on: undoManager)
   }
 
@@ -236,14 +238,22 @@ package enum StudioUndo {
     let now = move.mark.flatMap {
       model.pipeline?.mark(keeping: $0.recipes.keys, whole: $0.pipeline != nil)
     }
+    // A revise (card 0157) is undone and redone by swapping history versions, never by steps.
+    var restored: String?
     let moved = Result {
-      try move.backward ? model.undo(steps: move.steps) : model.redo(steps: move.steps)
+      if let version = move.version {
+        try model.reported { restored = try model.studio.restoreVersion(version) }
+      } else if move.backward {
+        try model.undo(steps: move.steps)
+      } else {
+        try model.redo(steps: move.steps)
+      }
     }
     guard case .success = moved else { return }
     if let mark = move.mark { model.pipeline?.restore(mark) }
     let inverse = StudioMove(
       steps: move.steps, backward: !move.backward, selection: move.selection,
-      head: model.steps.last?.file, name: move.name, mark: now)
+      head: model.steps.last?.file, name: move.name, mark: now, version: restored)
     register(inverse, model, on: undoManager)
   }
 }

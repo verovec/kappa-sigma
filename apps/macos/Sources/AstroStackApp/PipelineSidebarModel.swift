@@ -189,6 +189,21 @@ package final class PipelineSidebarModel {
     if let stop = stoppedAt, stop >= index { stoppedAt = stop + 1 }
   }
 
+  /// Applied step `index` was revised with `params` (card 0157): its recipe takes them, the steps
+  /// after it keep theirs (those not replayed stay pending for ▶ Run).
+  ///
+  /// Only a column that runs the history's processes up to that step is touched; a halt past
+  /// the head the replay stopped at is cleared (Continue would apply to another image).
+  func revised(_ index: Int, params: ParamSet) {
+    let applied = workspace.studio.steps
+    if let stop = stoppedAt, stop > applied.count { stoppedAt = nil }
+    guard pipeline.steps.indices.contains(index), applied.indices.contains(index),
+      pipeline.steps.prefix(index + 1).map(\.recipe.processID)
+        == applied.prefix(index + 1).map(\.processID)
+    else { return }
+    pipeline.steps[index].recipe = Recipe(processID: applied[index].processID, params: params)
+  }
+
   /// Whether the history's first `count` steps run the pipeline's processes in order.
   private func follows(upTo count: Int) -> Bool {
     let applied = workspace.studio.steps.map(\.processID)

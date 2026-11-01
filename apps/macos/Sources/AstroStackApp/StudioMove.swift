@@ -16,4 +16,7 @@ struct StudioMove: Sendable {
   let name: LocalizedStringResource
   /// The column's state once moved, `nil` when the move leaves the column alone.
   let mark: PipelineSidebarModel.Mark?
+  /// The history version it restores instead of moving steps (card 0157: a revise's undo and
+  /// redo), `nil` for a move of `steps`.
+  var version: String?
 }

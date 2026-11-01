@@ -9,8 +9,10 @@ package enum SettingHelp {
   package static let storage = "storage"
   /// Settings › Astro folder (card 0148).
   package static let astroFolder = "astro-folder"
+  /// Settings › Export (card 0151).
+  package static let export = "export"
   /// The settings with a card, by HelpKit id.
-  package static let ids = [astroFolder, storage]
+  package static let ids = [astroFolder, export, storage]
 
   /// The card of setting `id` in the language of `locale`, or `nil` (the gate keeps it present).
   package static func card(_ id: String, locale: Locale) -> String? {

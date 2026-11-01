@@ -24,21 +24,17 @@ package final class ExportStageModel {
   package private(set) var installReason: LocalizedStringResource?
   /// What the next export writes: the form's values.
   package var settings = ExportSettings()
-  /// Where the next export writes: the folder chosen, else `defaultFolder` (computed when read:
-  /// the package may have moved, the day changed).
-  package var folder: URL {
-    get {
-      chosenFolder
-        ?? Self.defaultFolder(
-          in: packageFolder(), stack: stack, date: defaultStamp, zone: services.timeZone)
-    }
-    set { chosenFolder = newValue }
-  }
-  /// The time the default folder is named after: the one shown is the one written to (R2), a
-  /// new one after each export.
-  private var defaultStamp: Date
-  /// The folder the user chose, `nil` for the default.
-  private var chosenFolder: URL?
+  /// The base folder of the next export: Settings' when the stage opened, « Choose… » changes it
+  /// for this export — read once, so the folder shown is the folder written (R2).
+  package var base: URL
+  /// The sub-path template of the next export, Settings' when the stage opened; edited here for
+  /// this export.
+  package var template: String
+  /// « Remember as default »: the export makes its base and template Settings' own.
+  package var remember = false
+  /// The time `{date}` and `{time}` stand for: the one shown is the one written to (R2), a new
+  /// one after each export.
+  var stamp: Date
   /// An export is being written.
   package private(set) var isExporting = false
   /// The files the last export wrote, in write order.
@@ -73,8 +69,8 @@ package final class ExportStageModel {
   /// The stack exported.
   @ObservationIgnored package let stack: ProjectStack
   @ObservationIgnored private let store: ProjectStore
-  @ObservationIgnored private let services: ExportServices
-  @ObservationIgnored private let packageFolder: () -> URL
+  @ObservationIgnored let services: ExportServices
+  @ObservationIgnored let packageFolder: () -> URL
   @ObservationIgnored private let onSeparated: () -> Void
   @ObservationIgnored private let onExported: () -> Void
   @ObservationIgnored private var separation: Task<Void, Never>?
@@ -94,27 +90,10 @@ package final class ExportStageModel {
     self.packageFolder = packageFolder
     self.onSeparated = onSeparated
     self.onExported = onExported
-    defaultStamp = services.now()
+    base = services.destination.base
+    template = services.destination.template.text
+    stamp = services.now()
     refresh()
-  }
-
-  /// `<package>/exports/<stack folder name>/<yyyy-MM-dd-HHmmss>/`: deliverables are not state,
-  /// so never inside the stack's own folder; one folder per export, so none overwrites another.
-  nonisolated static func defaultFolder(
-    in package: URL, stack: ProjectStack, date: Date, zone: TimeZone
-  ) -> URL {
-    let hour = Date.FormatStyle.Symbol.VerbatimHour.twoDigits(
-      clock: .twentyFourHour, hourCycle: .zeroBased)
-    let day: Date.FormatString = "\(year: .padded(4))-\(month: .twoDigits)-\(day: .twoDigits)"
-    let time: Date.FormatString = "\(hour: hour)\(minute: .twoDigits)\(second: .twoDigits)"
-    let calendar = Calendar(identifier: .gregorian)
-    let name = [day, time].map {
-      date.formatted(Date.VerbatimFormatStyle(format: $0, timeZone: zone, calendar: calendar))
-    }.joined(separator: "-")
-    let stackName = URL(fileURLWithPath: stack.bundlePath).lastPathComponent
-    return package.appendingPathComponent("exports", isDirectory: true)
-      .appendingPathComponent(stackName, isDirectory: true)
-      .appendingPathComponent(name, isDirectory: true)
   }
 
   /// The deliverables that need a starless while there is none: greyed, never written.
@@ -127,9 +106,11 @@ package final class ExportStageModel {
     settings.deliverables.filter { !unavailableDeliverables.contains($0) }
   }
 
-  /// Something can be written: one deliverable in one format, nothing else running.
+  /// Something can be written: one deliverable in one format into a folder the template names,
+  /// nothing else running.
   package var canExport: Bool {
     !effectiveDeliverables.isEmpty && !settings.formats.isEmpty && !isExporting && !isSeparating
+      && folder != nil
   }
 
   // MARK: - Star separation
@@ -211,16 +192,19 @@ package final class ExportStageModel {
 
   // MARK: - Export
 
-  /// Writes the deliverable set of the head into `folder` and records it; a folder under the
-  /// read-only sources is refused before anything is written.
+  /// Writes the deliverable set of the head into `folder` and records it; a template that
+  /// names no folder, a folder under the read-only sources, a missing chosen base or a base
+  /// that cannot be remembered is refused before anything is written.
   package func export() async {
     guard !isExporting else { return }
     failure = nil
     written = []
-    let folder = self.folder
     let astro = services.astro()
-    guard ExportGuard.refusal(for: folder, astro: astro) == nil else {
-      failure = .exportReadOnlyFolder(path: folder.path)
+    let folder: URL
+    switch destinationCheck(astro: astro) {
+    case .success(let checked): folder = checked
+    case .failure(let refused):
+      failure = refused
       return
     }
     var settings = self.settings
@@ -238,13 +222,11 @@ package final class ExportStageModel {
       return
     }
     isExporting = true
-    // Written or not (a failure may leave part of the set), the next default folder is a new
-    // one, a second later at least: folder names are to the second.
+    // Written or not (a failure may leave part of the set), the next export's time is a new
+    // one, a second later at least: `{time}` is to the second.
     defer {
       isExporting = false
-      if chosenFolder == nil {
-        defaultStamp = max(services.now(), defaultStamp.addingTimeInterval(1))
-      }
+      stamp = max(services.now(), stamp.addingTimeInterval(1))
     }
     do {
       // The head the files are rendered from, before the Studio can move on.
@@ -258,6 +240,7 @@ package final class ExportStageModel {
         stackID: stack.id, imageID: studio.imageID, headStepID: head, folder: folder.path,
         settingsJSON: json, files: urls.map(\.lastPathComponent))
       written = urls
+      failure = rememberDestination()
       refresh()
       onExported()
     } catch {

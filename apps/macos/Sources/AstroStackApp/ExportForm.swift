@@ -1,4 +1,4 @@
-internal import AppKit
+package import Foundation
 package import ProcessKit
 internal import RenderKit
 package import SwiftUI
@@ -68,24 +68,48 @@ package struct ExportForm: View {
       .font(.caption).foregroundStyle(.secondary)
   }
 
+  /// The base (with `~`), « Choose… » for this export, « Remember as default », the sub-path
+  /// template and the folder it resolves to: the path shown is the one written (R2).
   private var folder: some View {
     VStack(alignment: .leading, spacing: DesignMetrics.spacingXS) {
       Text(.app("Folder")).font(.headline)
-      Text(verbatim: model.folder.path).font(.caption).textSelection(.enabled)
-        .lineLimit(2).truncationMode(.middle)
-      Button(.app("Choose…")) { chooseFolder() }
-        .accessible(.stageControl("export", "folder"), label: .app("Choose…"))
+      HStack {
+        Text(verbatim: Self.shown(model.base)).font(.caption).textSelection(.enabled)
+          .lineLimit(1).truncationMode(.middle)
+        Spacer()
+        Button(.app("Choose…")) { chooseBase() }
+          .accessible(.stageControl("export", "folder"), label: .app("Choose…"))
+      }
+      Toggle(isOn: $model.remember) { Text(.app("Remember as default")) }
+        .accessible(.stageControl("export", "folder.remember"), label: .app("Remember as default"))
+      TextField(.app("Sub-folders"), text: $model.template)
+        .accessible(.stageControl("export", "folder.template"), label: .app("Sub-folders"))
+      Text(.app("Tokens: \(ExportPathTemplate.listed)"))
+        .font(.caption).foregroundStyle(.secondary)
+      if let resolved = Self.resolved(model) {
+        Text(verbatim: resolved).font(.caption).textSelection(.enabled)
+          .lineLimit(2).truncationMode(.middle)
+      } else if let refusal = model.folderRefusal {
+        Text(UserFacingError.exportTemplate(refusal).message)
+          .font(.caption).foregroundStyle(DesignColor.statusError.color)
+      }
     }
   }
 
-  private func chooseFolder() {
-    let panel = NSOpenPanel()
-    panel.canChooseDirectories = true
-    panel.canChooseFiles = false
-    panel.canCreateDirectories = true
-    panel.directoryURL = model.folder.deletingLastPathComponent()
-    guard panel.runModal() == .OK, let url = panel.url else { return }
-    model.folder = url
+  /// `url` as the form shows it: `~` for the home folder.
+  package static func shown(_ url: URL) -> String {
+    (url.path as NSString).abbreviatingWithTildeInPath
+  }
+
+  /// The folder the next export writes, as shown; `nil` when the template names none.
+  package static func resolved(_ model: ExportStageModel) -> String? {
+    model.folder.map(shown)
+  }
+
+  private func chooseBase() {
+    guard let url = FolderPanel.pick(FolderPanel.make(startingIn: model.base, canCreate: true))
+    else { return }
+    model.base = url
   }
 
   private func chosen(_ deliverable: ExportSettings.Deliverable) -> Binding<Bool> {

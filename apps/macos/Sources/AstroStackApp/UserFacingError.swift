@@ -26,6 +26,12 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
   case exportNothingChosen
   /// The export would replace this file of an earlier one.
   case exportWouldOverwrite(path: String)
+  /// The export sub-path template names no folder (card 0151).
+  case exportTemplate(ExportPathTemplate.Refusal)
+  /// The chosen export base is gone (an unplugged disk): never made again (card 0151).
+  case exportFolderMissing(path: String)
+  /// This folder cannot be the export base Settings remembers (card 0151).
+  case exportBaseRefused(path: String, ExportDestinationSetting.Refusal)
   /// A pipeline run stopped on a step (cards 0059, 0088, 0093).
   case pipeline(PipelineError)
   /// Siril found no plate solution, or could not look (card 0093).
@@ -107,6 +113,20 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
       .app("\(path) is open in another instance of AstroStack: use that window or quit it first.")
     case .exportWouldOverwrite(let path):
       .app("\(path) already exists: choose another folder or file name.")
+    case .exportTemplate(.unknownToken(let token, _)):
+      .app("{\(token)} is not a folder token: use \(ExportPathTemplate.listed).")
+    case .exportTemplate(.leavesBase(let template)):
+      .app("« \(template) » would leave the export folder: remove .., . and a leading /.")
+    case .exportTemplate(.unbalancedBrace(let template)):
+      .app("« \(template) » has a { without its } (or the reverse): close each token.")
+    case .exportFolderMissing(let path):
+      .app("\(path) is missing: connect its disk or choose another folder.")
+    case .exportBaseRefused(let path, .notAFolder):
+      .app("\(path) is not a folder: choose an existing one.")
+    case .exportBaseRefused(let path, .readOnly):
+      .app("AstroStack never writes into \(path): it is a read-only source. Choose another folder.")
+    case .exportBaseRefused(let path, .appOwned):
+      .app("\(path) holds AstroStack's projects or work files: choose a folder outside it.")
     case .pipeline(let error): Self.message(error)
     case .plateSolve(let error): Self.message(error)
     case .colourCalibration(let error): Self.message(error)

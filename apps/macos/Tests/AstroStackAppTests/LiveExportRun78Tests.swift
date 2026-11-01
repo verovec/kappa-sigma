@@ -53,11 +53,19 @@ struct LiveExportRun78Tests {
       stackFolder: package.url.appendingPathComponent("stacks/78"),
       bundle: PipelineBundle(stats: stats, layers: ["RGB": final], layerStats: ["RGB": stats]))
     let services = ExportServices(
-      tools: tools, scratch: try ScratchDirectory.url.appendingPathComponent("work"))
+      tools: tools, scratch: try ScratchDirectory.url.appendingPathComponent("work"),
+      destination: try Self.destination())
     let model = ExportStageModel(
       studio: studio, stack: stack, store: package.store, packageFolder: { package.url },
       services: services)
     return (package, model)
+  }
+
+  /// The default export base under a scratch home (card 0151): never the real Pictures folder.
+  static func destination() throws -> ExportDestinationSetting {
+    ExportDestinationSetting(
+      suite: "fr.astrostack.tests.live-export.\(UUID().uuidString)",
+      home: try ScratchDirectory.url.appendingPathComponent("home"))
   }
 
   @Test(
@@ -99,7 +107,8 @@ struct LiveExportRun78Tests {
     // The stage reads the step the Studio recorded.
     let stage = ExportStageModel(
       studio: studio, stack: model.stack, store: package.store, packageFolder: { package.url },
-      services: ExportServices(tools: HostTools { _ in .missing(path: "/none") }))
+      services: ExportServices(
+        tools: HostTools { _ in .missing(path: "/none") }, destination: try Self.destination()))
     #expect(stage.hasStarless && stage.unavailableDeliverables.isEmpty)
 
     await stage.export()

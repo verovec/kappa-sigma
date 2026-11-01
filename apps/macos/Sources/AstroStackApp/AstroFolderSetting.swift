@@ -52,6 +52,14 @@ package nonisolated struct AstroFolderSetting {
   ///
   /// Read by `choose` only: the readers of the root never touch the scratch setting.
   private var appOwned: [URL] {
+    Self.appOwned(defaults: defaults, home: home, scratch: scratch, temporary: temporary)
+  }
+
+  /// The folders the app writes under for `home`, `temporary` and the scratch folder (`scratch`,
+  /// else the one `defaults` chose): what neither the astro root nor an export base may be in.
+  package static func appOwned(
+    defaults: UserDefaults, home: URL, scratch: URL?, temporary: URL
+  ) -> [URL] {
     let work = scratch ?? ScratchSetting(defaults: defaults).folder
     return [home.appendingPathComponent("AstroStack", isDirectory: true)]
       + AppDelegate.leftoverRoots(work: work, temporary: temporary).map(\.folder)

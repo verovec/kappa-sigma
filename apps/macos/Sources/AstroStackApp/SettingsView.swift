@@ -1,4 +1,5 @@
 internal import AppKit
+internal import ProcessKit
 internal import ProjectKit
 internal import RenderKit
 package import SwiftUI
@@ -12,6 +13,8 @@ package struct SettingsView: View {
   private let scratch: ScratchSetting
   /// Settings › Astro folder (card 0148), owned by the view: a rebuild keeps its lines.
   @State private var astro: AstroFolderModel
+  /// Settings › Export (card 0151), owned by the view like the astro folder.
+  @State private var export: ExportDestinationModel
   private let retention: RetentionSetting
   /// The choice the app was launched with: Relaunch is offered once the choice differs.
   private let launched: LanguageSetting.Choice
@@ -30,6 +33,7 @@ package struct SettingsView: View {
     setting: LanguageSetting, relaunch: @escaping () -> Void,
     tools: WelcomeModel? = nil, scratch: ScratchSetting = ScratchSetting(),
     astro: AstroFolderModel = AstroFolderModel(),
+    export: ExportDestinationModel = ExportDestinationModel(),
     retention: RetentionSetting = RetentionSetting()
   ) {
     self.setting = setting
@@ -38,6 +42,7 @@ package struct SettingsView: View {
     self.scratch = scratch
     _scratchFolder = State(initialValue: scratch.folder)
     _astro = State(initialValue: astro)
+    _export = State(initialValue: export)
     self.retention = retention
     _policy = State(initialValue: retention.policy)
     launched = setting.choice
@@ -62,6 +67,7 @@ package struct SettingsView: View {
       }
       scratchSection
       astroSection
+      exportSection
       storageSection
       if let tools {
         Section { ToolStrip(model: tools) }
@@ -128,6 +134,58 @@ package struct SettingsView: View {
     }
   }
 
+  /// Where exports go (card 0151): the base, the sub-path template, an example of both.
+  private var exportSection: some View {
+    Section {
+      LabeledContent {
+        Text(verbatim: export.path)
+          .lineLimit(1).truncationMode(.middle).textSelection(.enabled)
+      } label: {
+        Text(.app("Export folder"))
+      }
+      HStack {
+        Text(.app("Final images go here, never into the project."))
+          .font(.caption).foregroundStyle(.secondary)
+        Spacer()
+        Button(.app("Choose…"), action: chooseExport)
+        Button(.app("Default")) { export.pick(nil) }.disabled(!export.chosen)
+      }
+      TextField(.app("Sub-folders"), text: $export.template)
+      HStack {
+        Text(.app("Tokens: \(ExportPathTemplate.listed)"))
+          .font(.caption).foregroundStyle(.secondary)
+        Spacer()
+        Button(.app("Default")) { export.resetTemplate() }
+          .disabled(export.template == ExportPathTemplate.standard)
+      }
+      if let example = export.example {
+        Text(.app("For example \(example)"))
+          .font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
+      }
+      exportRefusals
+    } header: {
+      SectionHeader(.app("Export"), help: SettingHelp.help(SettingHelp.export, locale: locale))
+    }
+    // The Export stage's « Remember as default » writes the same setting from another window.
+    .task {
+      for await _ in NotificationCenter.default.notifications(
+        named: UserDefaults.didChangeNotification)
+      {
+        export.reload()
+      }
+    }
+  }
+
+  /// Why the last export base or template was not kept, each on its own line.
+  @ViewBuilder private var exportRefusals: some View {
+    if let refusal = export.baseRefusal {
+      Text(refusal.message).font(.caption).foregroundStyle(DesignColor.statusError.color)
+    }
+    if let refusal = export.templateRefusal {
+      Text(refusal.message).font(.caption).foregroundStyle(DesignColor.statusError.color)
+    }
+  }
+
   /// Stacks never exported: asked about at launch (the default) or deleted automatically.
   private var storageSection: some View {
     Section {
@@ -158,6 +216,14 @@ package struct SettingsView: View {
   private func pickScratch(_ url: URL?) {
     scratchRefused = !scratch.choose(url)
     scratchFolder = scratch.folder
+  }
+
+  private func chooseExport() {
+    guard let url = FolderPanel.pick(FolderPanel.make(startingIn: export.base, canCreate: true))
+    else {
+      return
+    }
+    export.pick(url)
   }
 
   private func chooseAstro() {

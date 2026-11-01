@@ -24,6 +24,17 @@ package enum ExportGuard {
     return nil
   }
 
+  /// The capture source an S3 export `target` would land in or under, or `nil` (R7 on remote).
+  ///
+  /// `sources` are the bucket/prefix of the open projects' remote nights: the app never writes
+  /// into a capture bucket's prefix. Folder by folder: a sibling prefix (`M31-exports` beside
+  /// `M31`) is allowed, the bucket root above the captures too.
+  package static func remoteRefusal(_ target: RemoteLocation, sources: [RemoteLocation])
+    -> RemoteLocation?
+  {
+    sources.first { target.isInside($0) }
+  }
+
   /// The lowercased path components of `url` with every link resolved: Foundation resolves links
   /// only in a path that exists, so the nearest existing ancestor is resolved and the rest
   /// appended.

@@ -11312,6 +11312,278 @@
           }
         }
       }
+    },
+    "Destinations": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Destinations"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Destinations"
+          }
+        }
+      }
+    },
+    "On this Mac": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On this Mac"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur ce Mac"
+          }
+        }
+      }
+    },
+    "On S3": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On S3"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur S3"
+          }
+        }
+      }
+    },
+    "Uploading file %lld of %lld…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uploading file %lld of %lld…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Envoi du fichier %lld sur %lld…"
+          }
+        }
+      }
+    },
+    "Add an S3 connection in Settings › S3 connections first.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add an S3 connection in Settings › S3 connections first."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajoutez d’abord une connexion dans Réglages › Connexions S3."
+          }
+        }
+      }
+    },
+    "Copy S3 URL": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy S3 URL"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copier l’URL S3"
+          }
+        }
+      }
+    },
+    "Resend to S3": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resend to S3"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renvoyer sur S3"
+          }
+        }
+      }
+    },
+    "S3 upload failed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "S3 upload failed"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Envoi S3 échoué"
+          }
+        }
+      }
+    },
+    "Choose where the files go: on this Mac, on S3, or both.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose where the files go: on this Mac, on S3, or both."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez où vont les fichiers : sur ce Mac, sur S3, ou les deux."
+          }
+        }
+      }
+    },
+    "Name the S3 bucket the files go to.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name the S3 bucket the files go to."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nommez le bucket S3 où vont les fichiers."
+          }
+        }
+      }
+    },
+    "The S3 connection is gone or has no secret: check Settings › S3 connections.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The S3 connection is gone or has no secret: check Settings › S3 connections."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La connexion S3 a disparu ou n’a pas de secret : vérifiez Réglages › Connexions S3."
+          }
+        }
+      }
+    },
+    "AstroStack never writes into %@: captures are read there. Choose another prefix.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AstroStack never writes into %@: captures are read there. Choose another prefix."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AstroStack n’écrit jamais dans %@ : les captures y sont lues. Choisissez un autre préfixe."
+          }
+        }
+      }
+    },
+    "S3 refused: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "S3 refused: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "S3 a refusé : %@"
+          }
+        }
+      }
+    },
+    "Written on this Mac, but the S3 copy failed: %@. Resend it from the export's row.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Written on this Mac, but the S3 copy failed: %@. Resend it from the export's row."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Écrit sur ce Mac, mais la copie S3 a échoué : %@. Renvoyez-la depuis la ligne de l’export."
+          }
+        }
+      }
+    },
+    "This export does not say which S3 connection it used: export it again.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This export does not say which S3 connection it used: export it again."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet export ne dit pas quelle connexion S3 il a utilisée : exportez-le à nouveau."
+          }
+        }
+      }
+    },
+    "Not kept on this Mac: written to a scratch folder, uploaded, then removed.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not kept on this Mac: written to a scratch folder, uploaded, then removed."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas gardé sur ce Mac : écrit dans un dossier de travail, envoyé, puis supprimé."
+          }
+        }
+      }
+    },
+    "Upload cancelled": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Upload cancelled"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Envoi annulé"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

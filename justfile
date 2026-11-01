@@ -71,7 +71,7 @@ test-heavy *args:
 # never point it at a capture bucket. Keys: ASTROSTACK_S3_LIVE_ACCESS_KEY / _SECRET_KEY.
 # Live S3 round trip (RemoteKit) against a local MinIO you started; this recipe starts nothing.
 s3-live endpoint="http://127.0.0.1:9000":
-    cd {{pkg}} && ASTROSTACK_S3_LIVE_ENDPOINT={{quote(endpoint)}} swift test {{swiftflags}} --no-parallel --filter LiveS3Tests
+    cd {{pkg}} && ASTROSTACK_S3_LIVE_ENDPOINT={{quote(endpoint)}} swift test {{swiftflags}} --no-parallel --filter 'LiveS3Tests|LiveExportS3Tests'
 
 # Coverage report (lcov + summary) under apps/macos/.build/coverage.
 coverage:

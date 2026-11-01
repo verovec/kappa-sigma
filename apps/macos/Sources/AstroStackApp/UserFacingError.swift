@@ -32,6 +32,8 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
   case exportFolderMissing(path: String)
   /// This folder cannot be the export base Settings remembers (card 0151).
   case exportBaseRefused(path: String, ExportDestinationSetting.Refusal)
+  /// The S3 side of an export (card 0152).
+  case exportS3(ExportS3Problem)
   /// Settings refused this S3 connection (card 0150).
   case s3Connection(S3ConnectionStore.Refusal)
   /// A pipeline run stopped on a step (cards 0059, 0088, 0093).
@@ -130,6 +132,7 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     case .exportBaseRefused(let path, .appOwned):
       .app("\(path) holds AstroStack's projects or work files: choose a folder outside it.")
     case .s3Connection(let refusal): Self.message(refusal)
+    case .exportS3(let problem): Self.message(problem)
     case .pipeline(let error): Self.message(error)
     case .plateSolve(let error): Self.message(error)
     case .colourCalibration(let error): Self.message(error)

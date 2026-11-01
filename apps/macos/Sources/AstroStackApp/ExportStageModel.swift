@@ -30,19 +30,25 @@ package final class ExportStageModel {
   /// The sub-path template of the next export, Settings' when the stage opened; edited here for
   /// this export.
   package var template: String
-  /// « Remember as default »: the export makes its base and template Settings' own.
+  /// « Remember as default »: the export makes its base, template and targets Settings' own.
   package var remember = false
+  /// The next export writes its files on this Mac (card 0152).
+  package var local: Bool
+  /// The next export's S3 copy, `nil` for none (card 0152).
+  package var s3: S3Target?
+  /// The file being uploaded, n of N, while an S3 copy runs.
+  package internal(set) var uploadProgress: (file: Int, files: Int)?
   /// The time `{date}` and `{time}` stand for: the one shown is the one written to (R2), a new
   /// one after each export.
   var stamp: Date
-  /// An export is being written.
-  package private(set) var isExporting = false
-  /// The files the last export wrote, in write order.
-  package private(set) var written: [URL] = []
+  /// An export is being written (or its S3 copy uploaded).
+  package internal(set) var isExporting = false
+  /// The files the last export wrote on this Mac, in write order.
+  package internal(set) var written: [URL] = []
   /// This stack's exports, newest first.
   package private(set) var exports: [ProjectExport] = []
   /// Why the last separation or export failed.
-  package private(set) var failure: UserFacingError?
+  package internal(set) var failure: UserFacingError?
   /// The head has a starless layer (a StarNet step, or the bundle's own); follows every move of
   /// the Studio's history (its `steps` are observed).
   package var hasStarless: Bool {
@@ -68,12 +74,13 @@ package final class ExportStageModel {
   @ObservationIgnored package let studio: StudioModel
   /// The stack exported.
   @ObservationIgnored package let stack: ProjectStack
-  @ObservationIgnored private let store: ProjectStore
+  @ObservationIgnored let store: ProjectStore
   @ObservationIgnored let services: ExportServices
   @ObservationIgnored let packageFolder: () -> URL
   @ObservationIgnored private let onSeparated: () -> Void
-  @ObservationIgnored private let onExported: () -> Void
+  @ObservationIgnored let onExported: () -> Void
   @ObservationIgnored private var separation: Task<Void, Never>?
+  @ObservationIgnored var exportTask: Task<Void, Never>?
 
   /// The Export stage of `stack` over `studio`, in the project package at `packageFolder` (read
   /// at each use: a saved untitled project moves); `onSeparated` runs after a recorded StarNet
@@ -92,6 +99,8 @@ package final class ExportStageModel {
     self.onExported = onExported
     base = services.destination.base
     template = services.destination.template.text
+    local = services.destination.local
+    s3 = services.destination.s3
     stamp = services.now()
     refresh()
   }
@@ -110,7 +119,7 @@ package final class ExportStageModel {
   /// nothing else running.
   package var canExport: Bool {
     !effectiveDeliverables.isEmpty && !settings.formats.isEmpty && !isExporting && !isSeparating
-      && folder != nil
+      && folder != nil && (local || s3 != nil)
   }
 
   // MARK: - Star separation
@@ -190,112 +199,8 @@ package final class ExportStageModel {
     installCard = InstallCardModel(state: state, check: StarSeparation.check(services.tools))
   }
 
-  // MARK: - Export
-
-  /// Writes the deliverable set of the head into `folder` and records it; a template that
-  /// names no folder, a folder under the read-only sources, a missing chosen base or a base
-  /// that cannot be remembered is refused before anything is written.
-  package func export() async {
-    guard !isExporting else { return }
-    failure = nil
-    written = []
-    let astro = services.astro()
-    let folder: URL
-    switch destinationCheck(astro: astro) {
-    case .success(let checked): folder = checked
-    case .failure(let refused):
-      failure = refused
-      return
-    }
-    var settings = self.settings
-    settings.deliverables = effectiveDeliverables
-    guard !settings.deliverables.isEmpty, !settings.formats.isEmpty else {
-      failure = .exportNothingChosen
-      return
-    }
-    let taken = settings.deliverables.flatMap { deliverable in
-      settings.formats.map { folder.appendingPathComponent(settings.fileName(deliverable, $0)) }
-    }
-    .filter { FileManager.default.fileExists(atPath: $0.path) }
-    if let first = taken.first {
-      failure = .exportWouldOverwrite(path: first.path)
-      return
-    }
-    isExporting = true
-    // Written or not (a failure may leave part of the set), the next export's time is a new
-    // one, a second later at least: `{time}` is to the second.
-    defer {
-      isExporting = false
-      stamp = max(services.now(), stamp.addingTimeInterval(1))
-    }
-    do {
-      // The head the files are rendered from, before the Studio can move on.
-      let head = try store.images(stackID: stack.id).first { $0.id == studio.imageID }?.headStepID
-      let urls = try await Self.write(
-        original: Self.detached(studio.session.history.current),
-        starless: starless(),
-        settings: settings, to: folder, astro: astro, device: studio.session.device)
-      let json = String(bytes: try JSONEncoder().encode(settings), encoding: .utf8) ?? "{}"
-      try store.addExport(
-        stackID: stack.id, imageID: studio.imageID, headStepID: head, folder: folder.path,
-        settingsJSON: json, files: urls.map(\.lastPathComponent))
-      written = urls
-      failure = rememberDestination()
-      refresh()
-      onExported()
-    } catch {
-      failure = UserFacingError(error)
-    }
-  }
-
-  /// Shows the files of `export` in the Finder.
-  package func reveal(_ export: ProjectExport) {
-    let folder = URL(fileURLWithPath: export.folder, isDirectory: true)
-    services.reveal(
-      export.files.isEmpty ? [folder] : export.files.map(folder.appendingPathComponent))
-  }
-
-  /// Where the head's starless is: the latest StarNet step's file, else the bundle's own layer
-  /// (a legacy run's), a copy.
-  private enum Starless {
-    case file(URL)
-    case image(AstroImage)
-    case none
-  }
-
-  private func starless() -> sending Starless {
-    if let file = studio.session.history.layerFile(.starless) { return .file(file) }
-    guard let layer = studio.session.bundle.layers[LayerRole.starless.rawValue] else {
-      return .none
-    }
-    return .image(Self.detached(layer))
-  }
-
-  /// A copy of `image` of its own, which may cross to another task.
-  private nonisolated static func detached(_ image: AstroImage) -> sending AstroImage {
-    AstroImage(
-      width: image.width, height: image.height, planes: image.planes, metadata: image.metadata)
-  }
-
-  /// Reading the starless step's FITS, rendering the star tiers and encoding 16-bit files take
-  /// seconds at 22 Mpx: off the main actor, on images of its own.
-  @concurrent
-  private nonisolated static func write(
-    original: sending AstroImage, starless: sending Starless, settings: ExportSettings,
-    to folder: URL, astro: URL, device: any MTLDevice
-  ) async throws -> [URL] {
-    let image: AstroImage? =
-      switch starless {
-      case .file(let url): try FITSFile.read(at: url).image()
-      case .image(let image): image
-      case .none: nil
-      }
-    return try DeliverableExport(device: device).write(
-      original: original, starless: image, settings: settings, to: folder, astro: astro)
-  }
-
   /// Rereads this stack's exports.
-  private func refresh() {
+  func refresh() {
     do {
       exports = try store.exports(stackID: stack.id)
     } catch {

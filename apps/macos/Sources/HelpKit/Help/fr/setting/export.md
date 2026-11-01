@@ -1,5 +1,5 @@
-Où vont les exports : un dossier de base hors de tout projet, puis des sous-dossiers nommés d’après l’export.
-- **Dossier d’export** : ~/Pictures/AstroStack sauf choix ; jamais dans vos données astro ni dans ~/AstroStack.
-- **Sous-dossiers** : chaque / un dossier — {object} (sinon le nom du projet), {stack}, {date}, {time}, {project} ; vide = la base.
-- L’étape Export montre le dossier avant le clic ; son Choisir… sert un export, Mémoriser par défaut le garde.
-Un dossier choisi disparu est signalé, jamais recréé.
+Où vont les exports : sur ce Mac, sur S3, ou les deux, dans des sous-dossiers nommés d’après l’export.
+- **Dossier d’export** : ~/Pictures/AstroStack sauf choix ; jamais dans vos données astro ni ~/AstroStack.
+- **Sous-dossiers** : {object}, {stack}, {date}, {time}, {project} ; le même chemin sur S3, sous bucket et préfixe.
+- **S3** : les fichiers écrits, envoyés tels quels ; un envoi échoué s’affiche avec Renvoyer. Jamais dans un préfixe de captures.
+L’étape Export montre chaque destination avant le clic ; Mémoriser par défaut les garde.

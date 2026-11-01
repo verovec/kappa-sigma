@@ -48,16 +48,22 @@ extension ExportStageModel {
     return .success(folder)
   }
 
-  /// After a written export with « Remember as default »: Settings takes its base and template.
+  /// After a written export with « Remember as default »: Settings takes its base, template and
+  /// targets.
   ///
-  /// The base is there now and its place was checked by `destinationCheck`; the default base
-  /// stays the default (nothing stored). Returns why the base was not kept, or `nil`.
+  /// The base is judged only when the files were kept on this Mac (an S3-only export never used
+  /// it): it is there now and its place was checked by `destinationCheck`; the default base stays
+  /// the default (nothing stored). Returns why the base was not kept, or `nil`.
   func rememberDestination() -> UserFacingError? {
     guard remember else { return nil }
     let destination = services.destination
-    let refused = destination.isDefault(base) ? destination.choose(nil) : destination.choose(base)
-    if let refused { return .exportBaseRefused(path: base.path, refused) }
+    if local {
+      let refused =
+        destination.isDefault(base) ? destination.choose(nil) : destination.choose(base)
+      if let refused { return .exportBaseRefused(path: base.path, refused) }
+    }
     destination.choose(template: template)
+    destination.choose(local: local, s3: s3?.trimmed)
     return nil
   }
 }

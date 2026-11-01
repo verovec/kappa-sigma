@@ -20,4 +20,21 @@ extension UserFacingError {
     case .keychain(let error): .app("The Keychain refused: \(error.message)")
     }
   }
+
+  /// What went wrong with an export's S3 side (card 0152); the service's words kept as sent.
+  static func message(_ problem: ExportS3Problem) -> LocalizedStringResource {
+    switch problem {
+    case .noDestination: .app("Choose where the files go: on this Mac, on S3, or both.")
+    case .noBucket: .app("Name the S3 bucket the files go to.")
+    case .connectionMissing:
+      .app("The S3 connection is gone or has no secret: check Settings › S3 connections.")
+    case .captureBucket(let url):
+      .app("AstroStack never writes into \(url): captures are read there. Choose another prefix.")
+    case .service(let text): .app("S3 refused: \(text)")
+    case .uploadFailed(let text):
+      .app("Written on this Mac, but the S3 copy failed: \(text). Resend it from the export's row.")
+    case .resendNeedsConnection:
+      .app("This export does not say which S3 connection it used: export it again.")
+    }
+  }
 }

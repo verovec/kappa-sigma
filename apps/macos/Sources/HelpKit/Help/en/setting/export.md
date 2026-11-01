@@ -1,5 +1,5 @@
-Where exports go: a base folder outside every project, then sub-folders named from the export.
+Where exports go: on this Mac, on S3, or both, under sub-folders named from the export.
 - **Export folder**: ~/Pictures/AstroStack unless chosen; never inside your astro data or ~/AstroStack.
-- **Sub-folders**: each / a folder — {object} (else the project's name), {stack}, {date}, {time}, {project}; empty = the base.
-- The Export stage shows the folder before you click; its Choose… serves one export, Remember as default keeps it.
-A chosen folder that is gone is reported, never made again.
+- **Sub-folders**: {object}, {stack}, {date}, {time}, {project}; the same path on S3, under the bucket and prefix.
+- **S3**: the very files written, uploaded; a failed upload is shown with Resend. Never into a capture prefix.
+The Export stage shows each destination before you click; Remember as default keeps them.

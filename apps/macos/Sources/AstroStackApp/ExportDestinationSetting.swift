@@ -13,6 +13,10 @@ package nonisolated struct ExportDestinationSetting: Sendable {
   package static let baseKey = "exportBase"
   /// The defaults key of the template.
   package static let templateKey = "exportTemplate"
+  /// The defaults key of « write the files here » (card 0152; absent = on).
+  package static let localKey = "exportLocal"
+  /// The defaults key of the S3 target, JSON text (card 0152; absent = no S3 copy).
+  package static let s3Key = "exportS3"
 
   /// Why a folder cannot be the base.
   package enum Refusal: Equatable, Sendable {
@@ -122,6 +126,27 @@ package nonisolated struct ExportDestinationSetting: Sendable {
     if let refusal = ExportPathTemplate(text).refusal(.example) { return refusal }
     defaults.set(text, forKey: Self.templateKey)
     return nil
+  }
+
+  /// Whether exports write their files on this Mac (on unless turned off for S3 only).
+  package var local: Bool { defaults.object(forKey: Self.localKey) as? Bool ?? true }
+
+  /// The S3 copy's target, `nil` for none.
+  package var s3: S3Target? {
+    defaults.string(forKey: Self.s3Key)
+      .flatMap { try? JSONDecoder().decode(S3Target.self, from: Data($0.utf8)) }
+  }
+
+  /// Remembers the targets of an export: on this Mac and/or on S3 (`nil` = no S3 copy).
+  package func choose(local: Bool, s3: S3Target?) {
+    defaults.set(local, forKey: Self.localKey)
+    if let s3, let data = try? JSONEncoder().encode(s3),
+      let text = String(bytes: data, encoding: .utf8)
+    {
+      defaults.set(text, forKey: Self.s3Key)
+    } else {
+      defaults.removeObject(forKey: Self.s3Key)
+    }
   }
 
   /// Whether an export may create `base` when it is missing: only under `~/Pictures`.

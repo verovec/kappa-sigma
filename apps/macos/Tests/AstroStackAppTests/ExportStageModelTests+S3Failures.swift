@@ -1,5 +1,6 @@
 import AstroStackApp
 import Foundation
+import ProcessKit
 import ProjectKit
 import TestSupport
 import Testing
@@ -55,6 +56,7 @@ extension ExportStageModelTests {
       let row = try #require(model.exports.first)
       #expect(row.remoteStatus == .failed && row.remoteError?.isEmpty == false)
       #expect(row.remoteConnection == Self.target.connectionID.uuidString)
+      #expect(model.failure == nil, "the user's own cancel: no failure banner")
     } else {
       #expect(model.exports.isEmpty && model.failure == nil, "a cancel is not a failure")
     }
@@ -95,5 +97,66 @@ extension ExportStageModelTests {
 
     #expect(model.exports.first?.remoteStatus == .failed)
     #expect(services.destination.s3 == Self.target && services.destination.local)
+  }
+
+  @Test(
+    "a cancel during the S3 checks stops quietly: no refusal shown, nothing written",
+    .scratchDirectory)
+  func testCancelDuringChecks() async throws {
+    let opened = try StudioModelTests.project()
+    defer { try? opened.package.close() }
+    let fake = ExportS3Fake(cancelHead: true)
+    let model = try Self.s3Model(opened, fake: fake, local: true, s3: true)
+
+    await model.export()
+
+    #expect(model.failure == nil && model.exports.isEmpty && !fake.methods.contains("PUT"))
+  }
+
+  @Test(
+    "S3 only + Remember: the S3 target is kept even when the local base is unusable",
+    .scratchDirectory)
+  func testRememberS3OnlyIgnoresTheBase() async throws {
+    let opened = try StudioModelTests.project()
+    defer { try? opened.package.close() }
+    let suite = "fr.astrostack.tests.exportstage.\(UUID().uuidString)"
+    var services = try Self.services(suite: suite)
+    let client = try ExportS3Fake().client()
+    services.s3Client = { _ in client }
+    let model = try Self.model(opened, studio: try Self.separated(opened), services: services)
+    model.settings.deliverables = [.final]
+    model.base = try ScratchDirectory.url.appendingPathComponent("unplugged")
+    model.local = false
+    model.s3 = S3Target(connectionID: Self.target.connectionID, bucket: " exports ", prefix: "a")
+    model.remember = true
+
+    await model.export()
+
+    #expect(model.failure == nil)
+    #expect(!services.destination.local)
+    #expect(services.destination.s3?.bucket == "exports", "remembered trimmed")
+  }
+
+  @Test(
+    "Resend judges R7 again: a prefix that became a capture source is refused",
+    .scratchDirectory)
+  func testResendRefusesCapturePrefix() async throws {
+    let opened = try StudioModelTests.project()
+    defer { try? opened.package.close() }
+    let fake = ExportS3Fake(put: 500)
+    let model = try Self.s3Model(opened, fake: fake, local: true, s3: true)
+    await model.export()
+    let failed = try #require(model.exports.first)
+    var services = try Self.services()
+    let client = try fake.client()
+    services.s3Client = { _ in client }
+    services.remoteSources = { [RemoteLocation(bucket: "exports", prefix: "astro")] }
+    let later = try Self.model(opened, studio: model.studio, services: services)
+    fake.answer(put: 200)
+
+    await later.resend(failed)
+
+    #expect(later.failure == .exportS3(.captureBucket(try #require(failed.remoteURL))))
+    #expect(fake.bodies.isEmpty)
   }
 }

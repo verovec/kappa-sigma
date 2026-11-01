@@ -22,12 +22,18 @@ final class ExportS3Fake: Sendable {
     var puts = 0
     /// The next PUT throws a cancellation.
     var cancelPut = false
+    /// HEAD throws a cancellation.
+    var cancelHead = false
   }
 
   private let state: Mutex<State>
 
-  init(head: Int = 404, put: Int = 200, okPuts: Int? = nil, cancelPut: Bool = false) {
-    state = Mutex(State(head: head, put: put, okPuts: okPuts, cancelPut: cancelPut))
+  init(
+    head: Int = 404, put: Int = 200, okPuts: Int? = nil, cancelPut: Bool = false,
+    cancelHead: Bool = false
+  ) {
+    state = Mutex(
+      State(head: head, put: put, okPuts: okPuts, cancelPut: cancelPut, cancelHead: cancelHead))
   }
 
   var deleted: [String] { state.withLock { $0.deleted } }
@@ -52,6 +58,7 @@ final class ExportS3Fake: Sendable {
   private func answer(_ request: HTTPRequest) throws -> HTTPResponse {
     let key = String(request.url.path.dropFirst("/exports/".count))
     if request.method == "PUT", state.withLock({ $0.cancelPut }) { throw CancellationError() }
+    if request.method == "HEAD", state.withLock({ $0.cancelHead }) { throw URLError(.cancelled) }
     return state.withLock { state in
       state.methods.append(request.method)
       switch request.method {

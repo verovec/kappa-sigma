@@ -11441,22 +11441,6 @@
         }
       }
     },
-    "Upload cancelled.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Upload cancelled."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Envoi annulé."
-          }
-        }
-      }
-    },
     "Not kept on this Mac: written to a scratch folder, uploaded, then removed.": {
       "localizations": {
         "en": {
@@ -11469,6 +11453,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pas gardé sur ce Mac : écrit dans un dossier de travail, envoyé, puis supprimé."
+          }
+        }
+      }
+    },
+    "Upload cancelled": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Upload cancelled"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Envoi annulé"
           }
         }
       }

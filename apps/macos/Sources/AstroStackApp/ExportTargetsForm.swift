@@ -17,8 +17,14 @@ package struct ExportTargetsForm: View {
       Toggle(isOn: $model.local) { Text(.app("On this Mac")) }
         .accessible(.stageControl("export", "target.local"), label: .app("On this Mac"))
       Toggle(isOn: Self.s3On(model)) { Text(.app("On S3")) }
+        .disabled(model.s3 == nil && model.s3Connections.isEmpty)
         .accessible(.stageControl("export", "target.s3"), label: .app("On S3"))
-      if model.s3 != nil { s3Fields }
+      if model.s3 != nil {
+        s3Fields
+      } else if model.s3Connections.isEmpty {
+        Text(.app("Add an S3 connection in Settings › S3 connections first."))
+          .font(.caption).foregroundStyle(.secondary)
+      }
       if !model.local && model.s3 == nil {
         Text(UserFacingError.exportS3(.noDestination).message)
           .font(.caption).foregroundStyle(DesignColor.statusError.color)
@@ -58,12 +64,13 @@ package struct ExportTargetsForm: View {
     Binding(
       get: { model.s3 != nil },
       set: { on in
-        model.s3 =
-          on
-          ? model.s3
-            ?? S3Target(
-              connectionID: model.s3Connections.first?.id ?? UUID(), bucket: "", prefix: "")
-          : nil
+        guard on else {
+          model.s3 = nil
+          return
+        }
+        // Never a target over a connection that does not exist: without one it stays off.
+        guard model.s3 == nil, let first = model.s3Connections.first else { return }
+        model.s3 = S3Target(connectionID: first.id, bucket: "", prefix: "")
       })
   }
 

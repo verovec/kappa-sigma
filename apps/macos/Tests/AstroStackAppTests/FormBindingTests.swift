@@ -62,4 +62,20 @@ struct FormBindingTests {
     #expect(model.draft?.connection.name == "MinIO" && model.draft?.secret == "s")
     #expect(S3ConnectionsSection.pathStyle(model).wrappedValue)
   }
+
+  @Test(
+    "without any S3 connection, « On S3 » stays off: no target on a made-up connection",
+    .scratchDirectory)
+  func testS3OnWithoutConnections() async throws {
+    let opened = try StudioModelTests.project()
+    defer { try? opened.package.close() }
+    var services = try ExportStageModelTests.services()
+    services.s3Connections = { [] }
+    let model = try ExportStageModelTests.model(
+      opened, studio: try ExportStageModelTests.separated(opened), services: services)
+
+    ExportTargetsForm.s3On(model).wrappedValue = true
+
+    #expect(model.s3 == nil)
+  }
 }

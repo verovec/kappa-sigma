@@ -33,26 +33,27 @@ enum UploadOutcome: Equatable {
   case failed(String)
   /// The user stopped it.
   case cancelled
+
+  /// The copy failed (not stopped by the user).
+  var isFailure: Bool {
+    if case .failed = self { true } else { false }
+  }
 }
 
 extension ExportStageModel {
   /// The `s3://` folder the next export's copy goes to, as written; `nil` without an S3 target
   /// or while the template names no folder.
   package var remoteFolder: String? {
-    guard var s3, let folders = try? ExportPathTemplate(template).components(templateValues)
+    guard let s3 = s3?.trimmed,
+      let folders = try? ExportPathTemplate(template).components(templateValues)
     else { return nil }
-    s3.bucket = s3.bucket.trimmingCharacters(in: .whitespacesAndNewlines)
-    s3.prefix = s3.prefix.trimmingCharacters(in: .whitespacesAndNewlines)
     return s3.url(s3.key(folders))
   }
 
   /// The S3 side's checks: a bucket, never a capture prefix (R7), the connection and its keys,
   /// no object already at a file's key. `nil` with `failure` set when one refuses.
   func remotePlan(_ typed: S3Target, names: [String]) async -> RemotePlan? {
-    // A pasted name often carries a space: the bucket used, shown and recorded is trimmed.
-    var s3 = typed
-    s3.bucket = typed.bucket.trimmingCharacters(in: .whitespacesAndNewlines)
-    s3.prefix = typed.prefix.trimmingCharacters(in: .whitespacesAndNewlines)
+    let s3 = typed.trimmed
     guard !s3.bucket.isEmpty else {
       failure = .exportS3(.noBucket)
       return nil
@@ -80,6 +81,8 @@ extension ExportStageModel {
         // A write-only key (the export key Settings recommends) may not read: S3 answers 403
         // for a missing object then. Nothing can be told; the upload decides.
         continue
+      } catch  where Self.isCancellation(error) {
+        return nil  // the user stopped it: nothing to report
       } catch {
         failure = .exportS3(.service(Self.text(error)))
         return nil
@@ -137,7 +140,7 @@ extension ExportStageModel {
     }.value
   }
 
-  private static func isCancellation(_ error: any Error) -> Bool {
+  static func isCancellation(_ error: any Error) -> Bool {
     error is CancellationError || (error as? URLError)?.code == .cancelled
   }
 
@@ -166,6 +169,12 @@ extension ExportStageModel {
       return
     }
     failure = nil
+    // The capture sources may have changed since the export: R7 is judged again.
+    let location = RemoteLocation(bucket: bucket, prefix: key)
+    guard ExportGuard.remoteRefusal(location, sources: services.remoteSources()) == nil else {
+      failure = .exportS3(.captureBucket(url))
+      return
+    }
     guard let client = client(connection) else { return }
     isExporting = true
     defer {
@@ -183,7 +192,7 @@ extension ExportStageModel {
         try store.setRemoteStatus(exportID: record.id, .failed, error: text)
         failure = .exportS3(.uploadFailed(text))
       case .cancelled:
-        let text = String(localized: .app("Upload cancelled."))
+        let text = String(localized: .app("Upload cancelled"))
         try store.setRemoteStatus(exportID: record.id, .failed, error: text)
       case .done, .none:
         try store.setRemoteStatus(exportID: record.id, .done, error: nil)

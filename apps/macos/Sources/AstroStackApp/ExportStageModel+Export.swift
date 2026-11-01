@@ -140,7 +140,7 @@ extension ExportStageModel {
     case .none: (status, error) = (.none, nil)
     case .done: (status, error) = (.done, nil)
     case .failed(let text): (status, error) = (.failed, text)
-    case .cancelled: (status, error) = (.failed, String(localized: .app("Upload cancelled.")))
+    case .cancelled: (status, error) = (.failed, String(localized: .app("Upload cancelled")))
     }
     try store.addExport(
       stackID: stack.id, imageID: studio.imageID, headStepID: head,
@@ -150,7 +150,8 @@ extension ExportStageModel {
     written = plan.local ? urls : []
     // Remembered whatever the copy did: the export happened, with these choices.
     let remembered = rememberDestination()
-    failure = error.map { .exportS3(.uploadFailed($0)) } ?? remembered
+    // A cancel is the user's own: the row says it (resendable), no failure banner.
+    failure = outcome.isFailure ? error.map { .exportS3(.uploadFailed($0)) } : remembered
     refresh()
     onExported()
   }

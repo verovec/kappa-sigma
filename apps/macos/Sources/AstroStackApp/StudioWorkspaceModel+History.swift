@@ -4,7 +4,9 @@ internal import ProcessKit
 extension StudioWorkspaceModel {
   /// Applies the panel's values at full resolution: the head moves (a failure is shown).
   package func apply() throws {
-    guard let panel, !isMovingMain else { return }
+    // While a step is edited the viewer shows its chain: Apply is the revise's (0159), never
+    // the panel's values recorded on the head.
+    guard let panel, !isMovingMain, editing == nil else { return }
     // Apply records what the viewer shows (R2): values not drawn yet (a value just typed, a
     // drag within the frame) are drawn first, and what was drawn is what is recorded.
     previewTask?.cancel()

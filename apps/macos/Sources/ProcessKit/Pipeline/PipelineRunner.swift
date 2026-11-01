@@ -176,15 +176,13 @@ package final class PipelineRunner {
       }
       let params = try Self.values(of: step, schema: type.schema, at: index)
       let process = try type.init(params: params, device: device)
-      let input = history.current
       let (layers, layerStats) = try context(session)
-      let result = try runner.image(
-        process, input: input, stats: session.stats, layers: layers, layerStats: layerStats)
       // A geometry step moves the layers with its image, as in the Studio (card 0090).
-      let moved = try runner.movedLayers(
-        process, layers: layers, input: input, result: result, roles: history.layerRoles)
+      let moved = try runner.applied(
+        process, input: history.current, stats: session.stats, layers: layers,
+        layerStats: layerStats, roles: history.layerRoles)
       try history.apply(
-        processID: id, params: params, result: result, outputs: moved.outputs,
+        processID: id, params: params, result: moved.result, outputs: moved.outputs,
         replacing: moved.replacing, movesPixels: registry.movesPixels(id, params: params))
     } else {
       throw PipelineError.unknownProcess(id)
@@ -201,7 +199,7 @@ package final class PipelineRunner {
 
   /// The step's values on `schema`; a value the schema refuses stops the run with its name
   /// (never a default silently applied in its place, R2).
-  private static func values(of step: PipelineStep, schema: ParamSchema, at index: Int) throws
+  static func values(of step: PipelineStep, schema: ParamSchema, at index: Int) throws
     -> ParamSet
   {
     let loaded = ParamSet.loading(step.recipe.params, onto: schema)

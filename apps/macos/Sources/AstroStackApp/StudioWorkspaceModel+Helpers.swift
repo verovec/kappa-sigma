@@ -1,3 +1,4 @@
+package import Foundation
 internal import ImageKit
 internal import ProcessKit
 internal import RenderKit
@@ -6,6 +7,13 @@ extension StudioWorkspaceModel {
   /// The catalogue title of process `id` (ProcessKit's catalog key), or the id.
   package func title(of id: String) -> String {
     registry.type(id: id)?.title ?? id
+  }
+
+  /// The title of an applied step of `processID` in `locale`: a host-tool step has no
+  /// ProcessKit title, it has its own.
+  package func stepTitle(of processID: String, locale: Locale? = nil) -> LocalizedStringResource {
+    StarSeparation.title(of: processID, locale: locale)
+      ?? ProcessKitResources.title(title(of: processID), locale: locale)
   }
 
   /// Clears the mask (card 0111), and the refusal it caused: the row under a panel that does

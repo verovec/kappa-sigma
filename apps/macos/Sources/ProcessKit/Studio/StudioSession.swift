@@ -30,6 +30,9 @@ package final class StudioSession {
   /// same — the pipeline keeps its steps — but worth saying, since undoing it shows nothing.
   package internal(set) var lastApplyChangedNothing = false
   var overlay: Overlay?
+  /// The input of the last step a chain preview started from, keyed on the files of the steps
+  /// before it (card 0158): a drag re-renders the chain, not the disk read.
+  var chainInput: (files: [String], state: ChainState)?
 
   /// A session over `history` and `bundle`, running the processes of `registry` on `device`;
   /// `branches` are those beside the history's folder unless given.
@@ -124,10 +127,10 @@ package final class StudioSession {
     let process = try type.init(params: params, device: device)
     let input = history.current
     let (layers, layerStats) = try context()
-    let result = try runner.image(
-      process, input: input, stats: stepStats, layers: layers, layerStats: layerStats, mask: mask)
-    let moved = try runner.movedLayers(
-      process, layers: layers, input: input, result: result, roles: history.layerRoles)
+    let moved = try runner.applied(
+      process, input: input, stats: stepStats, layers: layers, layerStats: layerStats,
+      roles: history.layerRoles, mask: mask)
+    let result = moved.result
     lastApplyChangedNothing = false
     let unchanged =
       result.width == input.width && result.height == input.height

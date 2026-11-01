@@ -27,6 +27,11 @@ extension History {
   /// The file each written layer id last went to, without reading it: the one overlay rule,
   /// and the key of a cached overlay.
   package var writtenFiles: [String: String] {
+    Self.writtenFiles(of: steps)
+  }
+
+  /// The file each layer id written by `steps` last went to, the latest of each id winning.
+  static func writtenFiles(of steps: some Sequence<Step>) -> [String: String] {
     var latest: [String: String] = [:]
     for step in steps {
       latest.merge(step.replaced) { _, newer in newer }

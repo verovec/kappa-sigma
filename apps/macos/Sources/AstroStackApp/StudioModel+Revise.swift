@@ -47,6 +47,12 @@ extension StudioModel {
     return steps.count
   }
 
+  /// Applied step `index` with `params` and the steps after it, rendered in memory (card 0158):
+  /// what `reviseStep` would write, up to the first host tool; nothing recorded.
+  package func previewChain(from index: Int, params: ParamSet) throws -> ChainPreview {
+    try session.previewChain(from: index, params: params)
+  }
+
   /// Puts history version `id` back in place of the steps from its base: nothing is recomputed.
   ///
   /// A revise's undo or redo. Returns the id of the version the replaced steps became.

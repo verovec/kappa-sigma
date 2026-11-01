@@ -177,7 +177,7 @@ package final class StudioModel {
   ///
   /// A failed apply or a manifest that could not be written leaves nothing behind: one row per
   /// kept step, matched by its output file (never by position), the head on the last applied.
-  private func mirror() {
+  func mirror() {
     defer { refresh() }
     mirror(session.history, on: imageID)
   }

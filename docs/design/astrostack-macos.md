@@ -284,6 +284,14 @@ sur un niveau de pyramide, l'opérateur morphologique ne commute pas avec le sou
 Ces process portent le drapeau `previewExactOnlyAt1to1` et le Studio affiche « aperçu approximatif
 hors 1:1 » tant qu'on n'est pas à l'échelle native.
 
+**Historique non destructif = rien n'est perdu** (E25, PO 2026-11-01). Une étape déjà appliquée se
+modifie : ses réglages enregistrés reviennent, l'étape est réappliquée avec les nouvelles valeurs et
+la suite rejouée avec les siennes jusqu'au premier outil externe exclu (le reste attend ▶ Exécuter,
+R2 : aucun calcul caché de plusieurs minutes). L'ancienne suite n'est jamais réécrite ni effacée :
+elle est rangée en **version** de l'historique avec ses fichiers FITS (`History.Version`, 0156) ; un
+⌘Z la remet en place sans recalcul, ⇧⌘Z rend la suite modifiée. Retirer ou déplacer une étape faite
+reste refusé (0107) ; seules les valeurs changent.
+
 ---
 
 ### 4.7 Construction, signature, distribution

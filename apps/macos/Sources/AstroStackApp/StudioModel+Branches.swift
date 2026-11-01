@@ -32,24 +32,39 @@ extension StudioModel {
   @discardableResult
   package func replayMain() async throws -> Int? {
     guard let start = staleFrom else { return nil }
-    let recipes = steps.map {
-      PipelineStep(recipe: Recipe(processID: $0.processID, params: $0.params))
-    }
-    let session = session
+    let recipes = replayRecipes
     // Checked before anything is undone: a step the runner cannot run would leave the head
     // rolled back with the stale steps dropped.
-    for step in steps[start...] {
-      let type = session.registry.type(id: step.processID)
-      if type?.runsTool(step.params) ?? true { throw PipelineError.toolMissing(step.processID) }
+    for step in steps[start...] where runsTool(step.processID, step.params) {
+      throw PipelineError.toolMissing(step.processID)
     }
-    let runner = try PipelineRunner(registry: session.registry, device: session.device)
+    // Made before anything is undone, for the same reason.
+    let runner = try replayRunner()
     try await moving { history in
       while history.steps.count > start { try history.undo() }
-      _ = try await runner.run(
-        Pipeline(name: "replay", steps: recipes), on: history, bundle: session.bundle,
-        from: start)
+      try await replay(recipes, from: start, on: history, with: runner)
     }
     return start
+  }
+
+  /// Applies `recipes` from `start` to `history` through the pipeline runner, over the bundle as
+  /// it is now (its branch heads): the one replay of the Studio, for a stale tail (card 0118) or
+  /// a revised step (card 0157).
+  func replay(
+    _ recipes: [PipelineStep], from start: Int, on history: History, with runner: PipelineRunner
+  ) async throws {
+    _ = try await runner.run(
+      Pipeline(name: "replay", steps: recipes), on: history, bundle: session.bundle, from: start)
+  }
+
+  /// The applied steps as the recipes a replay applies (a recipe has no mask).
+  var replayRecipes: [PipelineStep] {
+    steps.map { PipelineStep(recipe: Recipe(processID: $0.processID, params: $0.params)) }
+  }
+
+  /// The runner of a replay, over the Studio's registry and device.
+  func replayRunner() throws -> PipelineRunner {
+    try PipelineRunner(registry: session.registry, device: session.device)
   }
 
   /// Brings the rows of the layer's own project image (`images` row of role `layerID`, added

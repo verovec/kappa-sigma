@@ -11200,6 +11200,102 @@
           }
         }
       }
+    },
+    "Before revising step %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Before revising step %lld"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avant la modification de l’étape %lld"
+          }
+        }
+      }
+    },
+    "Revise Step": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revise Step"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifier l’étape"
+          }
+        }
+      }
+    },
+    "A run, a replay or a tool is moving the image: wait for it, then revise.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A run, a replay or a tool is moving the image: wait for it, then revise."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une exécution, une reprise ou un outil modifie l’image : attendez la fin, puis modifiez."
+          }
+        }
+      }
+    },
+    "Only the combined image's steps can be revised: show it first.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only the combined image's steps can be revised: show it first."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seules les étapes de l’image combinée se modifient : affichez-la d’abord."
+          }
+        }
+      }
+    },
+    "A host-tool step cannot be revised yet: undo back to it and apply it again.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A host-tool step cannot be revised yet: undo back to it and apply it again."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une étape d’outil externe ne se modifie pas encore : annulez jusqu’à elle et appliquez-la de nouveau."
+          }
+        }
+      }
+    },
+    "Revised step %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revised step %lld"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Étape %lld modifiée"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

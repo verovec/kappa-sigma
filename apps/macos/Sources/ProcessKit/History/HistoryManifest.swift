@@ -35,6 +35,8 @@ struct HistoryManifest: Codable, Equatable {
     /// The file of step `base - 1` it was built on; `nil` on the original.
     let parent: String?
     let steps: [Entry]
+    /// How many of its last steps were undone; absent when none (card 0157).
+    var redo: Int?
   }
 
   /// The format this code writes.

@@ -90,7 +90,12 @@ extension PathMeta {
   }
 
   /// Ancestor folder names, nearest first, at most six (a far match must not beat a near one).
+  ///
+  /// A remote frame's `s3:` scheme and bucket are no folders (a bucket named `darks` must not type
+  /// its frames, card 0167).
   static func parentFolders(_ path: String) -> [String] {
-    Array(path.split(separator: "/").dropLast().reversed().prefix(6).map(String.init))
+    var parts = path.split(separator: "/").dropLast()
+    if path.hasPrefix("s3://") { parts = parts.dropFirst(2) }
+    return Array(parts.reversed().prefix(6).map(String.init))
   }
 }

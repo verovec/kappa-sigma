@@ -17,6 +17,9 @@ extension History {
     package let parent: String?
     /// The steps from `base`, oldest first.
     package let steps: [Step]
+    /// How many of its last steps were undone when it was put aside: a restore puts them back
+    /// as undone, so ⌘Z returns to exactly the state it left (card 0157).
+    package var redo = 0
   }
 
   /// Revises from step `index`: the head goes back to the output of `index - 1` (the original
@@ -52,13 +55,17 @@ extension History {
     }
   }
 
-  /// Puts version `id` back in place of the steps from its base: the replaced steps (and the
-  /// undone ones) become a version of the same label, restoring it is the way back; only the
-  /// new head is read from disk — nothing is recomputed.
+  /// Puts version `id` back in place of the steps from its base, its undone steps undone again.
+  ///
+  /// The replaced steps (and the undone ones) become a version labelled `replacedLabel` (the
+  /// restored one's label by default), restoring it is the way back; only the new head is read
+  /// from disk — nothing is recomputed. Returns that new version's id, `nil` when nothing was
+  /// replaced.
   ///
   /// The version must sit on the very step it was computed on (`parent`): after the steps
   /// before it changed, it is out of reach.
-  package func restore(version id: String) throws {
+  @discardableResult
+  package func restore(version id: String, replacedLabel: String? = nil) throws -> String? {
     guard let index = versions.firstIndex(where: { $0.id == id }) else {
       throw HistoryError.unknownVersion(id)
     }
@@ -66,13 +73,16 @@ extension History {
     guard version.base <= steps.count, parentFile(of: version.base) == version.parent else {
       throw HistoryError.versionOutOfReach(id)
     }
-    let restored = Array(steps[..<version.base]) + version.steps
+    let restored = Array(steps[..<version.base]) + version.steps.dropLast(version.redo)
     let head = try image(file: restored.last?.file)
     var kept = versions
     kept.remove(at: index)
-    let replaced = tail(from: version.base, label: version.label)
+    let replaced = tail(from: version.base, label: replacedLabel ?? version.label)
     if !replaced.steps.isEmpty { kept.append(replaced) }
-    try move(steps: restored, undone: [], versions: kept, shown: head)
+    try move(
+      steps: restored, undone: version.steps.suffix(version.redo).reversed(), versions: kept,
+      shown: head)
+    return replaced.steps.isEmpty ? nil : replaced.id
   }
 
   /// Forgets version `id`: its files are no longer referenced, `save` removes them.
@@ -86,7 +96,7 @@ extension History {
   private func tail(from base: Int, label: String) -> Version {
     Version(
       id: mintVersionID(), label: label, base: base, parent: parentFile(of: base),
-      steps: Array(steps[base...]) + undone.reversed())
+      steps: Array(steps[base...]) + undone.reversed(), redo: undone.count)
   }
 
   /// The file of step `base - 1`, `nil` for the original.

@@ -45,19 +45,22 @@ extension HistoryTests {
     try history.undo()
     try history.undo()
     try history.restore(version: first.id)
-    // x and y were both undone: the replaced version holds them, in apply order.
-    #expect(history.steps == before)
+    // c comes back undone, as it was put aside (card 0157); x and y were both undone: the
+    // replaced version holds them, in apply order.
+    #expect(history.steps == Array(before[..<2]) && history.undone == [before[2]])
     #expect(history.versions.map { $0.steps.map(\.processID) } == [["x", "y"]])
+    #expect(history.versions.first?.redo == 2)
     try history.save()
     #expect(try Self.files(in: directory) == history.referencedFiles)
 
-    // Restoring onto a head with nothing after it and nothing undone adds no empty version.
+    // Restored, x and y are undone again: two redos bring them back; no version is empty.
     let back = try #require(history.versions.first)
     try history.restore(version: back.id)
-    try history.undo()
-    try history.undo()
+    #expect(history.steps.map(\.processID) == ["a"])
+    #expect(history.undone.map(\.processID) == ["y", "x"])
     try history.redo()
     try history.redo()
+    #expect(history.steps.map(\.processID) == ["a", "x", "y"])
     #expect(history.versions.allSatisfy { !$0.steps.isEmpty })
   }
 
@@ -113,6 +116,53 @@ extension HistoryTests {
       .write(to: url)
 
     #expect(throws: HistoryError.unreadable("version v1 base")) {
+      _ = try History.reopen(directory: directory, original: try Self.image([0, 1, 2, 3])) { _ in
+        Self.gainSchema
+      }
+    }
+  }
+
+  @Test("a revise after an undo is undone back to that very state (card 0157)", .scratchDirectory)
+  func testRestore_AfterUndo_PutsUndoneBack() async throws {
+    let directory = try ScratchDirectory.url.appendingPathComponent("history")
+    let history = try Self.threeSteps(in: directory)
+    try history.undo()
+    let (steps, undone, head) = (history.steps, history.undone, history.current.planes)
+    try await history.revise(from: 1, label: "b") { revised in
+      try revised.apply(processID: "x", params: Self.params, result: try Self.image([5, 5, 5, 5]))
+    }
+    let id = try #require(history.versions.last).id
+
+    let replaced = try history.restore(version: id, replacedLabel: "revised")
+
+    #expect(history.steps == steps && history.undone == undone)
+    #expect(history.current.planes == head)
+    #expect(history.versions.last?.id == replaced && history.versions.last?.label == "revised")
+    let reopened = try History.reopen(
+      directory: directory, original: try Self.image([0, 1, 2, 3])
+    ) { _ in Self.gainSchema }
+    #expect(reopened.versions == history.versions && reopened.undone == undone)
+  }
+}
+
+extension HistoryTests {
+  @Test(
+    "a manifest whose version redo is out of range is refused on reopen", .scratchDirectory,
+    arguments: ["-1", "9"])
+  func testReopen_RefusesBadVersionRedo(redo: String) async throws {
+    let directory = try ScratchDirectory.url.appendingPathComponent("history")
+    let history = try Self.threeSteps(in: directory)
+    try history.undo()
+    try await history.revise(from: 1, label: "v") { revised in
+      try revised.apply(processID: "x", params: Self.params, result: try Self.image([5, 5, 5, 5]))
+    }
+    let url = directory.deletingLastPathComponent().appendingPathComponent("history.json")
+    let text = try #require(String(bytes: try Data(contentsOf: url), encoding: .utf8))
+    #expect(text.contains("\"redo\" : 1"))
+    try Data(text.replacingOccurrences(of: "\"redo\" : 1", with: "\"redo\" : \(redo)").utf8)
+      .write(to: url)
+
+    #expect(throws: HistoryError.unreadable("version v1 redo")) {
       _ = try History.reopen(directory: directory, original: try Self.image([0, 1, 2, 3])) { _ in
         Self.gainSchema
       }

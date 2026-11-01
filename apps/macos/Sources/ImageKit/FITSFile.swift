@@ -40,7 +40,8 @@ package struct FITSFile: Sendable {
       // `°C` or an accented name in comments, and one such byte must not lose the frame.
       let ascii = String(bytes: bytes, encoding: .ascii)
       guard offset != data.startIndex || ascii != nil else { throw FITSError.nonASCIIHeader }
-      let raw = ascii ?? String(decoding: bytes.map { $0 < 0x80 ? $0 : questionMark }, as: UTF8.self)
+      // Every mapped byte is ASCII, so the fallback decode cannot fail.
+      let raw = ascii ?? String(bytes: bytes.map(asciiOrQuestionMark), encoding: .ascii) ?? ""
       offset += cardLength
       if raw.hasPrefix("END") && raw.dropFirst(3).allSatisfy({ $0 == " " }) {
         let consumed = offset - data.startIndex
@@ -89,9 +90,11 @@ package struct FITSFile: Sendable {
     }
   }
 
-  /// What a non-ASCII header byte reads as: one column, so the card keeps 80. Rewriting such a
-  /// header keeps the `?` (captures are read-only; the app's own files are ASCII).
-  static let questionMark = UInt8(ascii: "?")
+  /// A header byte as read: ASCII as is, anything else `?`.
+  ///
+  /// One column per byte, so the card keeps 80. Rewriting such a header keeps the `?` (captures
+  /// are read-only; the app's own files are ASCII).
+  static func asciiOrQuestionMark(_ byte: UInt8) -> UInt8 { byte < 0x80 ? byte : UInt8(ascii: "?") }
 
   /// Bytes needed to reach the next block boundary.
   static func padding(_ count: Int) -> Int { (block - count % block) % block }

@@ -53,6 +53,21 @@ extension StudioUndo {
       version: version.id, on: undoManager)
   }
 
+  /// Applies the edit open in `model` (card 0159), then closes the panel on the new head.
+  ///
+  /// The edited step is revised with the panel's values (`reviseStep`, one ⌘Z). A refused or
+  /// failed revise keeps the edit open with its reason.
+  package static func applyEdit(_ model: StudioWorkspaceModel, on undoManager: UndoManager?) async {
+    // An edit is never suspended: the history move that would suspend its preview ends it.
+    guard let index = model.editedStep, let panel = model.panel else { return }
+    await reviseStep(model, step: index, params: panel.params, on: undoManager)
+    // Refused before anything moved: the edit stays open with its reason. Once the head moved
+    // (done, or failed half-way — the failure stays shown) the edit is over: never left as a
+    // plain panel whose Apply would add the step on top.
+    if model.failure != nil, model.editedStep == index { return }
+    model.closePanel()
+  }
+
   /// Why step `index` of `model` cannot be revised with `params` now, or `nil`.
   package static func reviseRefusal(
     _ model: StudioWorkspaceModel, step index: Int, params: ParamSet

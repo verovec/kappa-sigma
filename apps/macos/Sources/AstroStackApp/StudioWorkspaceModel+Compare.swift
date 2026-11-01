@@ -8,6 +8,7 @@ extension StudioWorkspaceModel {
       viewer.reference = nil
       comparing = nil
       comparingWith = nil
+      comparingVersion = nil
       return
     }
     // On a moved preview (a crop, a flip) the step's pixels are not under the ones shown.
@@ -23,6 +24,7 @@ extension StudioWorkspaceModel {
     viewer.reference = try Self.texture(image, device: studio.session.device)
     comparing = index
     comparingWith = nil
+    comparingVersion = nil
   }
 
   /// Compares with step `index`, or stops when it is the one compared; a failure is reported.

@@ -35,6 +35,8 @@ struct PipelineStepRow: View {
     }
     .opacity(problems.isEmpty ? 1 : 0.5)
     .contentShape(Rectangle())
+    // A done step opens in the Studio with its recorded values (card 0159).
+    .onTapGesture { model.editStep(index) }
     .contextMenu { editMenu }
     .focusable(model.canEdit(index))
     .onDeleteCommand { model.remove(at: index, undoManager: undoManager) }

@@ -96,6 +96,8 @@ extension StudioWorkspaceModel {
       try compare(toStep: nil)
     }
     if let other = comparingWith, !comparable.contains(other) { try compare(with: nil) }
+    // A version's head is no longer what it was beside (a ⌘Z swaps it in): its compare ends.
+    if comparingVersion != nil { try compare(toStep: nil) }
     try show(head)
     // After the viewer shows the new head: the display stretch offered is the one on screen.
     if let panel { refresh(panel) }

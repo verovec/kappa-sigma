@@ -193,6 +193,14 @@ package enum StudioUndo {
     register(move, model, on: undoManager)
   }
 
+  /// Forgets every move of `model` on the history of `selection` (a dropped version, card 0159).
+  static func forgetMoves(
+    _ model: StudioWorkspaceModel, in selection: StudioSelection, on undoManager: UndoManager?
+  ) {
+    guard let undoManager else { return }
+    drop(model.moveTargets.filter { $0.selection == selection }, on: undoManager)
+  }
+
   /// Drops the moves registered with `targets`, between undo groups only.
   ///
   /// Inside an open group AppKit keeps the groups it empties, and ⌘Z would stay stuck on them,

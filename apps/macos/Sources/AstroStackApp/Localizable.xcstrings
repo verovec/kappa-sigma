@@ -11712,6 +11712,334 @@
           }
         }
       }
+    },
+    "A run, a replay or a tool is moving the image: wait for it, then edit.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A run, a replay or a tool is moving the image: wait for it, then edit."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une exécution, une reprise ou un outil modifie l’image : attendez la fin, puis modifiez l’étape."
+          }
+        }
+      }
+    },
+    "Only the combined image's steps can be edited: show it first.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only the combined image's steps can be edited: show it first."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seules les étapes de l’image combinée se modifient : affichez-la d’abord."
+          }
+        }
+      }
+    },
+    "Step %lld · %@ — editing": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Step %lld · %@ — editing"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Étape %lld · %@ — modification"
+          }
+        }
+      }
+    },
+    "Replays %lld later steps": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Replays %lld later step"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Replays %lld later steps"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Rejoue %lld étape suivante"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Rejoue %lld étapes suivantes"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Stops before %@ (step %lld): ▶ Run applies it and the rest": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stops before %@ (step %lld): ▶ Run applies it and the rest"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "S’arrête avant %@ (étape %lld) : ▶ Lancer l’applique, puis la suite"
+          }
+        }
+      }
+    },
+    "Restore Version": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore Version"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restaurer la version"
+          }
+        }
+      }
+    },
+    "Edited under the mask it was applied with": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edited under the mask it was applied with"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifiée sous le masque avec lequel elle a été appliquée"
+          }
+        }
+      }
+    },
+    "Apply Change": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apply Change"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appliquer la modification"
+          }
+        }
+      }
+    },
+    "Compare": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compare"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comparer"
+          }
+        }
+      }
+    },
+    "Drop…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drop…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer…"
+          }
+        }
+      }
+    },
+    "Drop": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drop"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer"
+          }
+        }
+      }
+    },
+    "Versions (%lld)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versions (%lld)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versions (%lld)"
+          }
+        }
+      }
+    },
+    "Drop this version?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drop this version?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer cette version ?"
+          }
+        }
+      }
+    },
+    "To recompute": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To recompute"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À recalculer"
+          }
+        }
+      }
+    },
+    "Edit this step; ⌥-click compares": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit this step; ⌥-click compares"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifier cette étape ; ⌥-clic compare"
+          }
+        }
+      }
+    },
+    "This step has no panel to edit: undo back to it and apply it again.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This step has no panel to edit: undo back to it and apply it again."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette étape n’a pas de panneau à modifier : revenez-y et appliquez-la à nouveau."
+          }
+        }
+      }
+    },
+    "▶ Run still needs the masks this version recorded: run the pending steps first.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "▶ Run still needs the masks this version recorded: run the pending steps first."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "▶ Lancer a encore besoin des masques enregistrés par cette version : lancez d’abord les étapes en attente."
+          }
+        }
+      }
+    },
+    "A version holds the combined image's steps: show it to compare.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A version holds the combined image's steps: show it to compare."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une version contient des étapes de l’image combinée : affichez-la pour comparer."
+          }
+        }
+      }
+    },
+    "Deletes its steps and files (%@); ⌘Z forgets the combined image.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deletes its steps and files (%@); ⌘Z forgets the combined image."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprime ses étapes et fichiers (%@) ; ⌘Z oublie l’image combinée."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

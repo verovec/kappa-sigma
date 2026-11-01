@@ -251,6 +251,8 @@ package enum StudioUndo {
     }
     guard case .success = moved else { return }
     if let mark = move.mark { model.pipeline?.restore(mark) }
+    // A swap that put nothing aside has no way back to register.
+    if move.version != nil, restored == nil { return }
     let inverse = StudioMove(
       steps: move.steps, backward: !move.backward, selection: move.selection,
       head: model.steps.last?.file, name: move.name, mark: now, version: restored)

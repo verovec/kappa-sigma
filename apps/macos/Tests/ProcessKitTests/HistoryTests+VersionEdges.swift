@@ -144,3 +144,28 @@ extension HistoryTests {
     #expect(reopened.versions == history.versions && reopened.undone == undone)
   }
 }
+
+extension HistoryTests {
+  @Test(
+    "a manifest whose version redo is out of range is refused on reopen", .scratchDirectory,
+    arguments: ["-1", "9"])
+  func testReopen_RefusesBadVersionRedo(redo: String) async throws {
+    let directory = try ScratchDirectory.url.appendingPathComponent("history")
+    let history = try Self.threeSteps(in: directory)
+    try history.undo()
+    try await history.revise(from: 1, label: "v") { revised in
+      try revised.apply(processID: "x", params: Self.params, result: try Self.image([5, 5, 5, 5]))
+    }
+    let url = directory.deletingLastPathComponent().appendingPathComponent("history.json")
+    let text = try #require(String(bytes: try Data(contentsOf: url), encoding: .utf8))
+    #expect(text.contains("\"redo\" : 1"))
+    try Data(text.replacingOccurrences(of: "\"redo\" : 1", with: "\"redo\" : \(redo)").utf8)
+      .write(to: url)
+
+    #expect(throws: HistoryError.unreadable("version v1 redo")) {
+      _ = try History.reopen(directory: directory, original: try Self.image([0, 1, 2, 3])) { _ in
+        Self.gainSchema
+      }
+    }
+  }
+}

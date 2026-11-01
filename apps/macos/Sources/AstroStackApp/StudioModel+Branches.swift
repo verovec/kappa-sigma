@@ -32,9 +32,7 @@ extension StudioModel {
   @discardableResult
   package func replayMain() async throws -> Int? {
     guard let start = staleFrom else { return nil }
-    let recipes = steps.map {
-      PipelineStep(recipe: Recipe(processID: $0.processID, params: $0.params))
-    }
+    let recipes = replayRecipes
     // Checked before anything is undone: a step the runner cannot run would leave the head
     // rolled back with the stale steps dropped.
     for step in steps[start...] where runsTool(step.processID, step.params) {
@@ -57,6 +55,11 @@ extension StudioModel {
   ) async throws {
     _ = try await runner.run(
       Pipeline(name: "replay", steps: recipes), on: history, bundle: session.bundle, from: start)
+  }
+
+  /// The applied steps as the recipes a replay applies (a recipe has no mask).
+  var replayRecipes: [PipelineStep] {
+    steps.map { PipelineStep(recipe: Recipe(processID: $0.processID, params: $0.params)) }
   }
 
   /// The runner of a replay, over the Studio's registry and device.

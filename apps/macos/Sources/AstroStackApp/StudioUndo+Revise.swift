@@ -24,6 +24,7 @@ extension StudioUndo {
     model.isReplaying = true
     defer { model.isReplaying = false }
     let before = studio.session.history.versions.map(\.id)
+    let files = studio.steps.map(\.file)
     // The column as it was: ⌘Z puts step `index`'s recipe back with the chain.
     let mark = model.pipeline?.mark(keeping: [index])
     do {
@@ -32,20 +33,24 @@ extension StudioUndo {
     } catch {
       model.failure = UserFacingError(error).message
     }
-    // Never a silent stale view: a head that cannot be shown says so.
-    do {
-      try model.headChanged()
-    } catch {
-      model.failure = model.failure ?? UserFacingError(error).message
+    // Never a silent stale view: a head that cannot be shown says so; a revise refused before
+    // anything moved leaves the view as it is.
+    if studio.steps.map(\.file) != files {
+      do {
+        try model.headChanged()
+      } catch {
+        model.failure = model.failure ?? UserFacingError(error).message
+      }
     }
     // Read from the history, not returned by `reviseStep`: a revise that throws half-way keeps
     // its version and its steps, undoable too.
     guard let version = studio.session.history.versions.last, !before.contains(version.id)
     else { return }
-    model.pipeline?.revised(index, params: params)
+    // The column's recipe goes back with the chain only if the revise changed it.
+    let touched = model.pipeline?.revised(index, params: params) ?? false
     recordNew(
-      model, steps: 0, in: .main, name: .app("Revise Step"), mark: mark, version: version.id,
-      on: undoManager)
+      model, steps: 0, in: .main, name: .app("Revise Step"), mark: touched ? mark : nil,
+      version: version.id, on: undoManager)
   }
 
   /// Why step `index` of `model` cannot be revised with `params` now, or `nil`.

@@ -161,3 +161,22 @@ extension StudioUndoRunTests {
     #expect(fixture.sidebar.pipeline.steps.map(\.recipe) == other.steps.map(\.recipe))
   }
 }
+
+extension StudioUndoRunTests {
+  @Test("a label recorded in French still names its chain under English", .scratchDirectory)
+  func testRevise_LabelInAnotherLanguage() async throws {
+    let opened = try StudioModelTests.project()
+    defer { try? opened.package.close() }
+    let studio = try StudioModelTests.fourApplied(opened)
+    var french: LocalizedStringResource = .app("Before revising step 2")
+    french.locale = Locale(identifier: "fr")
+    let history = studio.session.history
+    try await history.revise(from: 1, label: String(localized: french)) { revised in
+      try revised.apply(
+        processID: StretchProcess.id, params: try StudioModelTests.stretch(target: 0.3),
+        result: revised.current)
+    }
+    _ = try studio.restoreVersion(try #require(history.versions.last).id)
+    #expect(history.versions.last?.label == String(localized: .app("Revised step 2")))
+  }
+}

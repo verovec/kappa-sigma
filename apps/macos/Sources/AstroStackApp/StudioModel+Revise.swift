@@ -21,9 +21,7 @@ extension StudioModel {
     let processID = steps[index].processID
     let isTool = runsTool(processID, params)
     if isTool, tool == nil { throw PipelineError.toolMissing(processID) }
-    var recipes = steps.map {
-      PipelineStep(recipe: Recipe(processID: $0.processID, params: $0.params))
-    }
+    var recipes = replayRecipes
     recipes[index] = PipelineStep(recipe: Recipe(processID: processID, params: params))
     // The replay stops before the first host tool after `index`.
     let end =
@@ -59,20 +57,27 @@ extension StudioModel {
       throw HistoryError.unknownVersion(id)
     }
     // The chain put aside is the other one: before the revise ↔ revised.
+    // Matched in either language: the label was recorded in the language of its day.
+    let wasBefore = ["en", "fr"].contains {
+      version.label == Self.versionLabels(base: version.base, locale: Locale(identifier: $0)).before
+    }
     let labels = Self.versionLabels(base: version.base)
     let replaced = try history.restore(
-      version: id, replacedLabel: version.label == labels.before ? labels.revised : labels.before)
+      version: id, replacedLabel: wasBefore ? labels.revised : labels.before)
     cleanUp()
     return replaced
   }
 
   /// The labels of the two chains of a revise of step `base`, as the Versions menu reads them
   /// (in the language of the day: a label is a recorded name, like a snapshot's).
-  static func versionLabels(base: Int) -> (before: String, revised: String) {
-    (
-      String(localized: .app("Before revising step \(base + 1)")),
-      String(localized: .app("Revised step \(base + 1)"))
-    )
+  static func versionLabels(base: Int, locale: Locale? = nil) -> (before: String, revised: String) {
+    var before: LocalizedStringResource = .app("Before revising step \(base + 1)")
+    var revised: LocalizedStringResource = .app("Revised step \(base + 1)")
+    if let locale {
+      before.locale = locale
+      revised.locale = locale
+    }
+    return (String(localized: before), String(localized: revised))
   }
 
   /// Whether `processID` with `params` runs a host tool (a step the registry cannot render, such

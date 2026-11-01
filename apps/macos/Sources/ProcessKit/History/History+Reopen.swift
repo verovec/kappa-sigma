@@ -35,6 +35,9 @@ extension History {
     }
     let versions = try (manifest.versions ?? []).map { entry in
       guard entry.base >= 0 else { throw HistoryError.unreadable("version \(entry.id) base") }
+      guard (0...entry.steps.count).contains(entry.redo ?? 0) else {
+        throw HistoryError.unreadable("version \(entry.id) redo")
+      }
       return Version(
         id: entry.id, label: entry.label, base: entry.base, parent: entry.parent,
         steps: try entry.steps.map(step), redo: entry.redo ?? 0)

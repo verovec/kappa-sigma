@@ -2,7 +2,7 @@
 package enum FITSError: Error, Equatable, Sendable {
   /// No `END` card before the end of the file.
   case noHeaderEnd
-  /// A header card holds non-ASCII bytes: not a FITS file.
+  /// The first header card is not ASCII: not a FITS file (later cards read such bytes as `?`).
   case nonASCIIHeader
   /// A required card is absent or not a number (`BITPIX`, `NAXIS1`, …).
   case missingCard(String)

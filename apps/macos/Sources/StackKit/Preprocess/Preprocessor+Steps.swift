@@ -92,17 +92,8 @@ extension Preprocessor {
     for note in notes { journal.line(note) }
     result.notes += notes
     try Task.checkCancellation()
-    emitter.begin("combining channels (Siril)")
-    let combiner = ChannelCombiner(runner: reporting(emitter), settings: request.settings)
-    if let inputs = ChannelCombiner.inputs(channels) {
-      let combined = try await combiner.combine(inputs, out: request.output)
-      result.combinedPath = combined.path
-      if let note = ChannelCombiner.note(inputs) {
-        journal.line(note)
-        result.notes.append(note)
-      }
-      preview(combined, emitter: emitter)
-    }
+    try await combine(
+      channels, request: request, emitter: emitter, journal: &journal, into: &result)
     try Task.checkCancellation()
     emitter.begin("writing the linear bundle")
     result.bundle = try BundleWriter().write(
@@ -115,6 +106,29 @@ extension Preprocessor {
           continuumK: continuum[filter]?.k, continuumReference: continuum[filter]?.plane)
       },
       to: request.output)
+  }
+
+  /// `combined.fits` from the assembled channels, its note, and the warning of a colour run left
+  /// with one grey master (card 0173).
+  private func combine(
+    _ channels: [String: String], request: PreprocessRequest, emitter: RunEmitter,
+    journal: inout PreprocessJournal, into result: inout PreprocessResult
+  ) async throws {
+    emitter.begin("combining channels (Siril)")
+    let combiner = ChannelCombiner(runner: reporting(emitter), settings: request.settings)
+    guard let inputs = ChannelCombiner.inputs(channels) else { return }
+    // Every planned lane has an outcome, a failed one too: what the run meant to combine. Said
+    // before Siril runs, and instead of the note: a lost composite is not mono by design.
+    let warning = ChannelCombiner.fallbackWarning(
+      planned: result.channels.map(\.filter), channels: channels)
+    if let warning { journal.warn(warning) }
+    let combined = try await combiner.combine(inputs, out: request.output)
+    result.combinedPath = combined.path
+    if warning == nil, let note = ChannelCombiner.note(inputs) {
+      journal.line(note)
+      result.notes.append(note)
+    }
+    preview(combined, emitter: emitter)
   }
 
   /// The common-coverage crop (multi-night channels carry coverage), then the edge trim.

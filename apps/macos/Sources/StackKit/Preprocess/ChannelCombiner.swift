@@ -44,6 +44,30 @@ package struct ChannelCombiner: Sendable {
     return "combined = \(filter) alone (mono: no colour composite to build)"
   }
 
+  /// The warning of a run that planned a colour composite but ends on one grey master.
+  ///
+  /// It names the colour inputs the `planned` lanes spelled and `channels` lack (card 0173). Nil
+  /// when the run still makes colour, or never had the lanes for it (R + G + Hα is mono by design).
+  ///
+  /// Never the word « failed »: each lost lane already has its own failure warning.
+  package static func fallbackWarning(planned: some Sequence<String>, channels: [String: String])
+    -> String?
+  {
+    guard case .mono(let filter, _) = inputs(channels) else { return nil }
+    let expected: [String]
+    // Each planned lane mapped to its own name: the inputs' masters are then the lanes the
+    // colour composite needed, compared against `channels` keys (no filter list re-declared).
+    switch inputs(Dictionary(planned.map { ($0, $0) }, uniquingKeysWith: { first, _ in first })) {
+    case .lrgb(_, let r, let g, let b), .rgb(let r, let g, let b): expected = [r, g, b]
+    case .colour(let base): expected = [base]
+    case .mono, nil: return nil
+    }
+    let missing = expected.filter { channels[$0] == nil }
+    guard !missing.isEmpty else { return nil }
+    return "no colour composite: \(missing.joined(separator: ", ")) missing — "
+      + "combined = \(filter) alone, in grey"
+  }
+
   /// Builds `out/combined.fits` from `inputs(channels)`; returns its path, or nil when they make
   /// nothing.
   package func combine(_ channels: [String: String], out: URL) async throws -> URL? {

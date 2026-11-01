@@ -293,8 +293,11 @@ in en/fr; the English title is the key, resolved with `ProcessKitResources.title
 - What a chain step reads is a `ChainState`: step k's input comes from
   `History.context(…, before: k)` (the overlay of the steps before k only), then each step's
   written layers overlay it by the same rule (`History.note` + `History.stats(ofWritten:…)`, the
-  continuum fit kept for a layer only moved). The input of k is cached in `chainInput`, keyed on
-  the files of the steps before k, dropped on a branch move.
+  continuum fit kept for a layer only moved). The input of k and the recorded masks of the
+  steps it renders are cached in a `ChainInput`, keyed on k, its stop and the history's step
+  files, dropped on a branch move and by `endChainPreview` when the edit ends.
+- `toolStep(from:revising:params:)` is the one stop rule (the revise's replay end, the chain's
+  `stoppedBefore`); `movedMaskStep(_:params:until:)` the one moved-mask refusal of both.
 - The chain stops before the first host-tool step (k included; a process the registry cannot
   render counts as one): `stoppedBefore` names it, the image is its input. Each step renders
   under its recorded mask (0160, k included) like the revise's replay; a crop, turn or flip k

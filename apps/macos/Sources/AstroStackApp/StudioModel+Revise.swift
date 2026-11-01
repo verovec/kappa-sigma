@@ -25,10 +25,8 @@ extension StudioModel {
     if isTool, tool == nil { throw PipelineError.toolMissing(processID) }
     var recipes = replayRecipes
     recipes[index] = PipelineStep(recipe: Recipe(processID: processID, params: params))
-    // The replay stops before the first host tool after `index`.
-    let end =
-      steps.indices.dropFirst(index + 1).first { runsTool(steps[$0].processID, steps[$0].params) }
-      ?? recipes.count
+    // The replay stops before the first host tool after `index` (the chain preview's rule).
+    let end = session.toolStep(from: index + 1, revising: index, params: params) ?? recipes.count
     try refuseMovedMask(index, params: params, until: end)
     let replayed = Array(recipes[..<end])
     let session = session

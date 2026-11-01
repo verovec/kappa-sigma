@@ -14,20 +14,16 @@ extension StudioSession {
   package func previewChain(from k: Int, params: ParamSet) throws -> ChainPreview {
     let steps = history.steps
     guard steps.indices.contains(k) else { throw HistoryError.noStep(k) }
-    // A process the registry cannot render counts as a tool, as in the revise.
-    let stop = steps.indices[k...].first { index in
-      let recipe = Recipe(
-        processID: steps[index].processID, params: index == k ? params : steps[index].params)
-      return registry.type(id: recipe.processID).map(recipe.runsTool(as:)) ?? true
-    }
-    if let masked = movedMaskStep(k, params: params, until: stop ?? steps.count) {
+    let stop = toolStep(from: k, revising: k, params: params)
+    let end = stop ?? steps.count
+    if let masked = movedMaskStep(k, params: params, until: end) {
       throw PipelineError.maskMoved(step: masked)
     }
-    let input = try chainInput(k)
+    let input = try chainInput(k, until: end)
     var state = input.state
-    for index in k..<(stop ?? steps.count) {
-      let recipe = Recipe(
-        processID: steps[index].processID, params: index == k ? params : steps[index].params)
+    for index in k..<end {
+      let recipe = Self.recipe(of: steps[index], revising: index == k ? params : nil)
+      // Rendered only before `stop`: its process is registered (an unknown one stops there).
       guard let type = registry.type(id: recipe.processID) else { break }
       // The recorded values as the replay reads them: a refused value stops it with its name.
       let values = try PipelineRunner.values(
@@ -41,6 +37,23 @@ extension StudioSession {
         device: device)
     }
     return ChainPreview(image: state.image, stoppedBefore: stop)
+  }
+
+  /// The first step from `start` that runs a host tool, step `k` read with `params`, or `nil`.
+  ///
+  /// Where a revise of `k` stops its replay and the chain preview its render (a process the
+  /// registry cannot render counts as a tool). The replay reads values the same way.
+  package func toolStep(from start: Int, revising k: Int, params: ParamSet) -> Int? {
+    let steps = history.steps
+    return steps.indices[min(max(start, 0), steps.count)...].first { index in
+      let recipe = Self.recipe(of: steps[index], revising: index == k ? params : nil)
+      return registry.type(id: recipe.processID).map(recipe.runsTool(as:)) ?? true
+    }
+  }
+
+  /// The recipe of applied `step`, with `params` in place of its recorded values when given.
+  static func recipe(of step: History.Step, revising params: ParamSet?) -> Recipe {
+    Recipe(processID: step.processID, params: params ?? step.params)
   }
 
   /// The masked step after `k` and before `end` a pixel-moving step `k` would misplace.
@@ -68,12 +81,14 @@ extension StudioSession {
     chainInput = nil
   }
 
-  /// What step `k` reads and the recorded masks of the steps from it, read from the history
-  /// once per edit (the same `k` over the same step files).
-  func chainInput(_ k: Int) throws -> ChainInput {
+  /// What step `k` reads and the recorded masks of the steps from it to `end`, read from the
+  /// history once per edit (the same `k` and `end` over the same step files).
+  func chainInput(_ k: Int, until end: Int) throws -> ChainInput {
     let steps = history.steps
     let files = steps.map(\.file)
-    if let chainInput, chainInput.k == k, chainInput.files == files { return chainInput }
+    if let chainInput, chainInput.k == k, chainInput.files == files, chainInput.end == end {
+      return chainInput
+    }
     let before = Array(steps.prefix(k))
     let moving = registry.movingIDs
     let image = try history.image(file: before.last?.file)
@@ -84,10 +99,10 @@ extension StudioSession {
       layers: context.layers, layerStats: context.stats, onlyMoved: context.onlyMoved,
       roles: Set(before.flatMap { $0.outputs.keys }))
     var masks: [Int: AstroImage] = [:]
-    for index in steps.indices[k...] where steps[index].mask != nil {
+    for index in steps.indices[k..<end] where steps[index].mask != nil {
       masks[index] = try history.mask(ofStep: index)
     }
-    let input = ChainInput(k: k, files: files, state: state, masks: masks)
+    let input = ChainInput(k: k, end: end, files: files, state: state, masks: masks)
     chainInput = input
     return input
   }

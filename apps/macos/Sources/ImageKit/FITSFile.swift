@@ -34,10 +34,15 @@ package struct FITSFile: Sendable {
     var cards: [FITSHeader.Card] = []
     var offset = data.startIndex
     while offset + cardLength <= data.endIndex {
-      // FITS headers are ASCII (FITS 4.0 §4.1.1): anything else is not a FITS file.
-      guard let raw = String(bytes: data[offset..<offset + cardLength], encoding: .ascii) else {
+      let bytes = data[offset..<offset + cardLength]
+      // FITS headers are ASCII (FITS 4.0 §4.1.1): a first card that is not is not a FITS file.
+      // Later cards are read the way cfitsio (and so Siril) reads them: capture software writes
+      // `°C` or an accented name in comments, and one such byte must not lose the frame.
+      guard offset != data.startIndex || bytes.allSatisfy(isPrintableASCII) else {
         throw FITSError.nonASCIIHeader
       }
+      let raw = String(
+        bytes.lazy.map { Character(Unicode.Scalar(isPrintableASCII($0) ? $0 : questionMark)) })
       offset += cardLength
       if raw.hasPrefix("END") && raw.dropFirst(3).allSatisfy({ $0 == " " }) {
         let consumed = offset - data.startIndex
@@ -85,6 +90,11 @@ package struct FITSFile: Sendable {
       try out.write(to: url, options: .atomic)
     }
   }
+
+  /// FITS header text: ASCII 32–126 (FITS 4.0 §4.1.2.1).
+  static func isPrintableASCII(_ byte: UInt8) -> Bool { (0x20...0x7E).contains(byte) }
+  /// What an out-of-range header byte reads as: one column, so the card keeps 80.
+  static let questionMark = UInt8(ascii: "?")
 
   /// Bytes needed to reach the next block boundary.
   static func padding(_ count: Int) -> Int { (block - count % block) % block }

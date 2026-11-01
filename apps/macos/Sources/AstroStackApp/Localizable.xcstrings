@@ -10416,6 +10416,198 @@
           }
         }
       }
+    },
+    "Remember as default": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remember as default"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mémoriser par défaut"
+          }
+        }
+      }
+    },
+    "Sub-folders": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sub-folders"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sous-dossiers"
+          }
+        }
+      }
+    },
+    "Tokens: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tokens: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jetons : %@"
+          }
+        }
+      }
+    },
+    "Export folder": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export folder"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dossier d’export"
+          }
+        }
+      }
+    },
+    "Final images go here, never into the project.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Final images go here, never into the project."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les images finales vont ici, jamais dans le projet."
+          }
+        }
+      }
+    },
+    "For example %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For example %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Par exemple %@"
+          }
+        }
+      }
+    },
+    "{%@} is not a folder token: use %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "{%@} is not a folder token: use %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "{%@} n’est pas un jeton de dossier : utilisez %@."
+          }
+        }
+      }
+    },
+    "« %@ » would leave the export folder: remove .., . and a leading /.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« %@ » would leave the export folder: remove .., . and a leading /."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« %@ » sortirait du dossier d’export : retirez .., . et un / initial."
+          }
+        }
+      }
+    },
+    "%@ is missing: connect its disk or choose another folder.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is missing: connect its disk or choose another folder."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ est introuvable : branchez son disque ou choisissez un autre dossier."
+          }
+        }
+      }
+    },
+    "%@ is not a folder: choose an existing one.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is not a folder: choose an existing one."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ n’est pas un dossier : choisissez-en un qui existe."
+          }
+        }
+      }
+    },
+    "%@ holds AstroStack's projects or work files: choose a folder outside it.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ holds AstroStack's projects or work files: choose a folder outside it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ contient les projets ou les fichiers de travail d’AstroStack : choisissez un dossier en dehors."
+          }
+        }
+      }
+    },
+    "« %@ » has a { without its } (or the reverse): close each token.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« %@ » has a { without its } (or the reverse): close each token."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« %@ » a une { sans sa } (ou l’inverse) : fermez chaque jeton."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

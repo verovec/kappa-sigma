@@ -138,6 +138,12 @@ package struct LeftoverSweep: Sendable {
     return left.starts(with: right) || right.starts(with: left)
   }
 
+  /// Whether `inner` is `outer` or under it, by the same rule as `overlaps` (links resolved,
+  /// names without case), one way only: a folder around `outer` is not inside it.
+  package static func contains(_ outer: URL, _ inner: URL) -> Bool {
+    canonical(inner).starts(with: canonical(outer))
+  }
+
   /// The lowercased path components of `url`, links resolved: Foundation resolves links only in a
   /// path that exists, so the nearest existing ancestor is resolved and the rest appended.
   private static func canonical(_ url: URL) -> [String] {

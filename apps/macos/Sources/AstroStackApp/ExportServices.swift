@@ -13,7 +13,9 @@ package struct ExportServices: Sendable {
   /// The astro folder (Settings, card 0148): its captures, runs, library and fixtures are never
   /// written.
   package var astro: @Sendable () -> URL
-  /// Today, for `exports/<stack>/<yyyy-MM-dd>/`.
+  /// Where exports go: the remembered base folder and sub-path template (card 0151).
+  package var destination: ExportDestinationSetting
+  /// Now, for the template's `{date}` and `{time}`.
   package var now: @Sendable () -> Date
   /// The zone the date is written in: the user's.
   package var timeZone: TimeZone
@@ -26,12 +28,14 @@ package struct ExportServices: Sendable {
     scratch: URL = FileManager.default.temporaryDirectory
       .appendingPathComponent("AstroStack/Work/starnet", isDirectory: true),
     astro: @escaping @Sendable () -> URL = { AstroFolderSetting().folder },
+    destination: ExportDestinationSetting = ExportDestinationSetting(),
     now: @escaping @Sendable () -> Date = { Date() }, timeZone: TimeZone = .current,
     reveal: @escaping @MainActor @Sendable ([URL]) -> Void = { _ in }
   ) {
     self.tools = tools
     self.scratch = scratch
     self.astro = astro
+    self.destination = destination
     self.now = now
     self.timeZone = timeZone
     self.reveal = reveal

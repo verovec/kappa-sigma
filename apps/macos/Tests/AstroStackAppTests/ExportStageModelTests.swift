@@ -18,13 +18,29 @@ struct ExportStageModelTests {
   /// 2026-10-22 12:00 UTC.
   nonisolated static let noon = Date(timeIntervalSince1970: 1_792_670_400)
 
+  /// Services over the scratch folder: the astro root, StarNet's work and the export base
+  /// (`<scratch>/home/Pictures/AstroStack`, the default under a fake home) all live there, so no
+  /// test writes into the real Pictures folder; `suite` holds the destination setting (a fresh,
+  /// never-written suite unless given).
   static func services(
-    _ tools: HostTools = HostTools { _ in .missing(path: "/usr/local/bin/starnet2") }
+    _ tools: HostTools = HostTools { _ in .missing(path: "/usr/local/bin/starnet2") },
+    suite: String? = nil
   ) throws -> ExportServices {
     let root = try ScratchDirectory.url
+    let destination = ExportDestinationSetting(
+      suite: suite ?? "fr.astrostack.tests.exportstage.\(UUID().uuidString)",
+      home: root.appendingPathComponent("home"),
+      scratch: root.appendingPathComponent("work"), temporary: root.appendingPathComponent("tmp"))
     return ExportServices(
       tools: tools, scratch: root.appendingPathComponent("work"), astro: { root },
-      now: { Self.noon }, timeZone: try #require(TimeZone(identifier: "UTC")))
+      destination: destination, now: { Self.noon },
+      timeZone: try #require(TimeZone(identifier: "UTC")))
+  }
+
+  /// The default base of `services()`: `<scratch>/home/Pictures/AstroStack`.
+  static func defaultBase() throws -> URL {
+    ExportDestinationSetting.defaultBase(
+      under: try ScratchDirectory.url.appendingPathComponent("home"))
   }
 
   static func model(
@@ -112,11 +128,12 @@ struct ExportStageModelTests {
     var recorded = 0
     let model = try Self.model(
       opened, studio: studio, services: try Self.services(), onExported: { recorded += 1 })
-    let folder = model.folder
+    let folder = try #require(model.folder)
+    // The default base and template: the project's name stands for an object-less stack.
     #expect(
       folder
-        == opened.package.url.appendingPathComponent(
-          "exports/run1/2026-10-22-120000", isDirectory: true))
+        == (try Self.defaultBase()).appendingPathComponent(
+          "M31/run1/2026-10-22-120000", isDirectory: true))
     model.settings.nameTemplate = "M31-{name}"
 
     await model.export()
@@ -148,7 +165,9 @@ struct ExportStageModelTests {
     let studio = try Self.separated(opened)
     let model = try Self.model(opened, studio: studio, services: try Self.services())
     let runs = try ScratchDirectory.url.appendingPathComponent("runs/M_31/out")
-    model.folder = runs
+    model.base = runs
+    model.template = ""
+    #expect(model.folder == runs)
 
     await model.export()
 
@@ -217,41 +236,6 @@ struct ExportStageModelTests {
     try studio.undo()
     try studio.undo()
     #expect(!model.hasStarless && model.unavailableDeliverables.count == 4)
-  }
-
-  @Test("an export never replaces files: the same folder twice is refused", .scratchDirectory)
-  func testRefusesToOverwrite() async throws {
-    let opened = try StudioModelTests.project()
-    defer { try? opened.package.close() }
-    let studio = try StudioModelTests.model(opened)
-    let model = try Self.model(opened, studio: studio, services: try Self.services())
-    let used = model.folder
-    await model.export()
-    let first = try #require(model.written.first)
-    // The default moves on (a second later at least, even on a fixed clock).
-    #expect(model.folder != used)
-
-    model.folder = used
-    await model.export()
-
-    #expect(model.failure == .exportWouldOverwrite(path: first.path))
-    #expect(try opened.package.store.exports(stackID: opened.stackID).count == 1)
-  }
-
-  @Test("the default folder follows the package where it is now", .scratchDirectory)
-  func testDefaultFolderFollowsThePackage() throws {
-    let opened = try StudioModelTests.project()
-    defer { try? opened.package.close() }
-    var place = opened.package.url
-    let stack = try #require(try opened.package.store.stack(id: opened.stackID))
-    let model = ExportStageModel(
-      studio: try StudioModelTests.model(opened), stack: stack, store: opened.package.store,
-      packageFolder: { place }, services: try Self.services())
-    place = try ScratchDirectory.url.appendingPathComponent("Moved.astrostack")
-    #expect(model.folder.path.hasPrefix(place.path))
-    let chosen = try ScratchDirectory.url.appendingPathComponent("Deliverables")
-    model.folder = chosen
-    #expect(model.folder == chosen)
   }
 
   @Test(

@@ -15,64 +15,109 @@ struct FrameSourceTests {
     let path: String
   }
 
-  /// A source and a pixel reader answering from what `.files` read once: nothing touches disk.
-  final class Recorded: Sendable {
-    let listings: [String: InspectWalk.Listing]
-    let headers: [String: FITSHeader]
-    let contents: [String: Data]
-    let planes: [String: PixelPlanes]
-    let samples: [String: [Double]]
-
-    init(roots: [String]) throws {
+  /// What a scan read from disk — exactly the headers, side files, planes and samples it asked
+  /// for, at the counts it asked — replayed by an in-memory source and pixel reader that answer
+  /// nothing else.
+  final class Recorder: Sendable {
+    private struct Reads {
       var listings: [String: InspectWalk.Listing] = [:]
       var headers: [String: FITSHeader] = [:]
       var contents: [String: Data] = [:]
       var planes: [String: PixelPlanes] = [:]
       var samples: [String: [Double]] = [:]
-      for root in roots {
-        let listing = try FrameSource.files.listing(under: root, skippingOutput: true)
-        listings[root] = listing
-        for path in listing.files {
-          if InventoryBuilder.isFITS(path) {
-            headers[path] = try FrameSource.files.header(path)
-            planes[path] = try PixelReader.files.planes(path)
-            // The centred run the scan asks for (`InventoryBuilder.statsSample`), nothing else.
-            samples[path] = try PixelReader.files.centerSample(path, InventoryBuilder.statsSample)
-          } else {
-            contents[path] = FrameSource.files.contents(path)
-          }
-        }
-      }
-      (self.listings, self.headers, self.contents) = (listings, headers, contents)
-      (self.planes, self.samples) = (planes, samples)
     }
+    private let reads = Mutex(Reads())
 
-    var source: FrameSource {
+    /// `.files`, every answer kept.
+    var recordingSource: FrameSource {
       FrameSource(
-        walk: { root, _ in
-          guard let listing = self.listings[root] else { throw Missing(path: root) }
+        walk: { root, skippingOutput in
+          let listing = try FrameSource.files.listing(under: root, skippingOutput: skippingOutput)
+          self.reads.withLock { $0.listings[root] = listing }
           return listing
         },
         header: { path in
-          guard let header = self.headers[path] else { throw Missing(path: path) }
+          let header = try FrameSource.files.header(path)
+          self.reads.withLock { $0.headers[path] = header }
           return header
         },
-        contents: { self.contents[$0] })
+        contents: { path in
+          let data = FrameSource.files.contents(path)
+          self.reads.withLock { $0.contents[path] = data }
+          return data
+        })
     }
 
-    var pixels: PixelReader {
+    /// `PixelReader.files`, every answer kept.
+    var recordingPixels: PixelReader {
       PixelReader(
         planes: { path in
-          guard let planes = self.planes[path] else { throw Missing(path: path) }
+          let planes = try PixelReader.files.planes(path)
+          self.reads.withLock { $0.planes[path] = planes }
           return planes
         },
         centerSample: { path, count in
-          guard count == InventoryBuilder.statsSample, let sample = self.samples[path] else {
+          let sample = try PixelReader.files.centerSample(path, count)
+          self.reads.withLock { $0.samples["\(count)|\(path)"] = sample }
+          return sample
+        })
+    }
+
+    /// The recorded answers, and `Missing` for anything the disk scan never asked.
+    var source: FrameSource {
+      FrameSource(
+        walk: { root, _ in
+          guard let listing = self.reads.withLock({ $0.listings[root] }) else {
+            throw Missing(path: root)
+          }
+          return listing
+        },
+        header: { path in
+          guard let header = self.reads.withLock({ $0.headers[path] }) else {
+            throw Missing(path: path)
+          }
+          return header
+        },
+        contents: { path in self.reads.withLock { $0.contents[path] } })
+    }
+
+    /// The recorded pixels, and `Missing` for any other path or count.
+    var pixels: PixelReader {
+      PixelReader(
+        planes: { path in
+          guard let planes = self.reads.withLock({ $0.planes[path] }) else {
+            throw Missing(path: path)
+          }
+          return planes
+        },
+        centerSample: { path, count in
+          guard let sample = self.reads.withLock({ $0.samples["\(count)|\(path)"] }) else {
             throw Missing(path: path)
           }
           return sample
         })
     }
+  }
+
+  /// The inventory of `roots` from the files (plain, and recorded), then from memory once the
+  /// files are gone.
+  static func bothWays(_ roots: [URL], under base: URL, zone: TimeZone) throws
+    -> (files: Inventory, memory: Inventory)
+  {
+    // Every root lies under `base` (by path components): moving it leaves nothing on disk.
+    precondition(roots.allSatisfy { $0.pathComponents.starts(with: base.pathComponents) })
+    let paths = roots.map(\.path)
+    let plain = try InventoryBuilder(timeZone: zone).scan(paths: paths)
+    let recorder = Recorder()
+    let recorded = try InventoryBuilder(
+      timeZone: zone, pixels: recorder.recordingPixels, source: recorder.recordingSource
+    ).scan(paths: paths)
+    precondition(recorded == plain, "recording changes nothing")
+    try FileManager.default.moveItem(at: base, to: base.appendingPathExtension("gone"))
+    let fromMemory = try InventoryBuilder(
+      timeZone: zone, pixels: recorder.pixels, source: recorder.source
+    ).scan(paths: paths)
+    return (plain, fromMemory)
   }
 
   @Test(
@@ -89,22 +134,6 @@ struct FrameSourceTests {
 
     #expect(memory == files)
     #expect(!files.frames.isEmpty)
-  }
-
-  /// The inventory of `roots` from the files, then from memory once the files are gone.
-  static func bothWays(_ roots: [URL], under base: URL, zone: TimeZone) throws
-    -> (files: Inventory, memory: Inventory)
-  {
-    // Every root lies under `base`: moving it leaves nothing on disk to read.
-    precondition(roots.allSatisfy { $0.path.hasPrefix(base.path) })
-    let paths = roots.map(\.path)
-    let fromFiles = try InventoryBuilder(timeZone: zone).scan(paths: paths)
-    let recorded = try Recorded(roots: paths)
-    try FileManager.default.moveItem(at: base, to: base.appendingPathExtension("gone"))
-    let fromMemory = try InventoryBuilder(
-      timeZone: zone, pixels: recorded.pixels, source: recorded.source
-    ).scan(paths: paths)
-    return (fromFiles, fromMemory)
   }
 
   @Test(

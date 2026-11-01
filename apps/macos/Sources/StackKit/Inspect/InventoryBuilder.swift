@@ -15,7 +15,7 @@ package struct InventoryBuilder: Sendable {
 
   static let fitsExtensions: Set<String> = ["fits", "fit", "fts"]
   /// Centre pixels sampled to classify a frame no header or name typed.
-  package static let statsSample = 200_000
+  static let statsSample = 200_000
 
   /// A builder reading FITS files on disk, unless given another `pixels` reader and `source`.
   package init(

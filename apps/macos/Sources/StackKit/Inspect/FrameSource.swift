@@ -13,11 +13,13 @@ package struct FrameSource: Sendable {
   package private(set) var walk:
     @Sendable (_ root: String, _ skippingOutput: Bool) throws -> InspectWalk.Listing
   /// The primary header of the frame at a path (no pixels decoded).
-  package var header: @Sendable (_ path: String) throws -> FITSHeader
+  package private(set) var header: @Sendable (_ path: String) throws -> FITSHeader
   /// The bytes of the file at a path, `nil` when there is none.
-  package var contents: @Sendable (_ path: String) -> Data?
-  /// A source from its closures. Every path the scan uses — a frame's, its sidecar's, a
-  /// manifest's — is the walk's spelling: a source spells its paths once, in `walk`.
+  package private(set) var contents: @Sendable (_ path: String) -> Data?
+  /// A source from its closures.
+  ///
+  /// Every path the scan uses — a frame's, its sidecar's, a manifest's — is the walk's spelling:
+  /// a source spells its paths once, in `walk`.
   package init(
     walk: @escaping @Sendable (String, Bool) throws -> InspectWalk.Listing,
     header: @escaping @Sendable (String) throws -> FITSHeader,
@@ -35,19 +37,12 @@ package struct FrameSource: Sendable {
 
   /// The local disk: `InspectWalk`, ImageKit's FITS header reader, `FileManager`.
   ///
-  /// The walk's paths are URL-normalised, the spelling frames were always recorded under, so
-  /// sidecars, manifests and warnings use that same spelling.
+  /// Its paths are the root's spelling plus the entries' names (the app passes absolute,
+  /// canonical roots).
   package static let files = Self(
     walk: { root, skippingOutput in
-      let listing = try InspectWalk.listing(under: root, skippingOutput: skippingOutput)
-      return InspectWalk.Listing(
-        files: listing.files.map(normalised), packages: listing.packages.map(normalised))
+      try InspectWalk.listing(under: root, skippingOutput: skippingOutput)
     },
     header: { path in try FITSFile.read(at: URL(fileURLWithPath: path)).header },
     contents: { path in FileManager.default.contents(atPath: path) })
-
-  /// `path` as `URL(fileURLWithPath:)` spells it.
-  private static func normalised(_ path: String) -> String {
-    URL(fileURLWithPath: path).path
-  }
 }

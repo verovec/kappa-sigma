@@ -19,6 +19,9 @@ package struct SyntheticCapture: Sendable {
     /// One-shot colour: a broadband set and a SII + OIII clip set of the same night, the clip
     /// asserted at import (it shares the night's flats).
     case oscSIIOIII = "osc-sii-oiii"
+    /// One-shot colour through an Hα + [OIII] clip alone, asserted at import: no broadband set,
+    /// the clip lane is the colour base and still gives its lines (card 0162).
+    case oscDualband = "osc-dualband"
 
     /// The light filters, in capture order (`RGB` for a one-shot-colour set).
     package var filters: [String] {
@@ -27,20 +30,33 @@ package struct SyntheticCapture: Sendable {
       case .sho: ["Ha", "OIII", "SII"]
       case .lOnly: ["L"]
       case .oscSIIOIII: [Filter.color, Filter.color]
+      case .oscDualband: [Filter.color]
       }
     }
 
     /// True for a one-shot-colour rig (a Bayer mosaic and its `BAYERPAT` card).
-    package var isColour: Bool { self == .oscSIIOIII }
+    package var isColour: Bool { self == .oscSIIOIII || self == .oscDualband }
 
     /// The `INSTRUME` card's value: a camera no sensor table knows (no SPCC suggestion).
     package var instrument: String { isColour ? "Synthetic OSC" : "Synthetic Mono" }
 
     /// The exposure of each light set, in seconds (the clip night is longer: a set of its own).
-    package var exposures: [Int] { isColour ? [120, 300] : filters.map { _ in 120 } }
+    package var exposures: [Int] {
+      switch self {
+      case .oscSIIOIII: [120, 300]
+      case .oscDualband: [300]
+      default: filters.map { _ in 120 }
+      }
+    }
 
     /// The clip filter the user asserts at import, by the exposure of its set.
-    package var clips: [Int: FilterSet] { isColour ? [300: .dualbandSII] : [:] }
+    package var clips: [Int: FilterSet] {
+      switch self {
+      case .oscSIIOIII: [300: .dualbandSII]
+      case .oscDualband: [300: .dualband]
+      default: [:]
+      }
+    }
 
     package var testDescription: String { rawValue }
   }

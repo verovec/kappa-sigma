@@ -53,7 +53,7 @@ struct EmissionLayersTests {
   }
 
   @Test(
-    "two line lanes, no broadband: the lines come over the first lane, no scale is fitted",
+    "two line lanes, no broadband: every lane gives its lines, no scale is fitted",
     .scratchDirectory)
   func testTwoLineLanesNoBroadband() throws {
     let out = try ScratchDirectory.url
@@ -63,12 +63,32 @@ struct EmissionLayersTests {
     let (channels, continuum) = Preprocessor.emission(
       ["RGB-dualband": "trim_RGB-dualband", "RGB-dualband-sii": "trim_RGB-dualband-sii"],
       out: out, notes: &notes)
-    #expect(channels == ["RGB": "trim_RGB-dualband", "SII": "syn_SII"])
+    #expect(
+      channels == [
+        "RGB": "trim_RGB-dualband", "Ha": "syn_Ha", "OIII": "syn_OIII", "SII": "syn_SII",
+      ])
     #expect(continuum.isEmpty)
     #expect(notes.count == 1)
     #expect(
       notes.first?.contains("no broadband master in this run — the RGB-dualband stack is") == true)
     #expect(notes.first?.contains("the RGB-dualband-sii lane became SII (red pixels)") == true)
+  }
+
+  @Test(
+    "dual-band only: the lane is the base and gives Hα + [OIII]; no continuum, the reason noted",
+    .scratchDirectory)
+  func testDualbandOnly() throws {
+    let out = try ScratchDirectory.url
+    _ = try Self.write("trim_RGB-dualband", [Self.ramp(0.5), Self.ramp(0.2), Self.ramp(0.1)])
+    var notes: [String] = []
+    let (channels, continuum) = Preprocessor.emission(
+      ["RGB-dualband": "trim_RGB-dualband"], out: out, notes: &notes)
+    #expect(channels == ["RGB": "trim_RGB-dualband", "Ha": "syn_Ha", "OIII": "syn_OIII"])
+    #expect(continuum.isEmpty)
+    #expect(notes.count == 1)
+    #expect(notes.first?.contains("no continuum scale can be fitted") == true)
+    // The composite still comes from the dual-band master alone, never from its layers.
+    #expect(ChannelCombiner.inputs(channels) == .colour("trim_RGB-dualband"))
   }
 
   @Test("the composite base: the one colour master, emission layers set aside")

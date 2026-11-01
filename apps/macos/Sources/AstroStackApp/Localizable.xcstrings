@@ -12009,18 +12009,34 @@
         }
       }
     },
-    "Its steps and files are deleted (%@); ⌘Z forgets these steps. No undo.": {
+    "A version holds the combined image's steps: show it to compare.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Its steps and files are deleted (%@); ⌘Z forgets these steps. No undo."
+            "value": "A version holds the combined image's steps: show it to compare."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ses étapes et fichiers sont supprimés (%@) ; ⌘Z oublie ces étapes. Impossible d’annuler."
+            "value": "Une version contient des étapes de l’image combinée : affichez-la pour comparer."
+          }
+        }
+      }
+    },
+    "Deletes its steps and files (%@); ⌘Z forgets the combined image.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deletes its steps and files (%@); ⌘Z forgets the combined image."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprime ses étapes et fichiers (%@) ; ⌘Z oublie l’image combinée."
           }
         }
       }

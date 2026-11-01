@@ -24,8 +24,8 @@ extension StudioWorkspaceModel {
     do {
       guard comparingVersion != id else { return try compare(toStep: nil) }
       // A version holds combined-image steps: beside a branch's head it means nothing.
-      if let refusal = historyMoveRefusal {
-        failure = refusal
+      guard selection == .main else {
+        failure = .app("A version holds the combined image's steps: show it to compare.")
         return
       }
       guard !showsMovedGrid else { throw UserFacingError.movedPreview }
@@ -55,9 +55,12 @@ extension StudioUndo {
       model.failure = refusal
       return
     }
-    guard let base = model.versions.first(where: { $0.id == id })?.base else { return }
-    // The column as it was: ⌘Z puts its recipe back with the chain, as for a revise.
-    let mark = model.pipeline?.mark(keeping: [base])
+    guard let base = model.versions.first(where: { $0.id == id })?.base else {
+      model.failure = UserFacingError(HistoryError.unknownVersion(id)).message
+      return
+    }
+    // The column as it was: ⌘Z puts its recipes back with the chain, as for a revise.
+    let mark = model.pipeline.map { $0.mark(keeping: base..<$0.pipeline.steps.count) }
     let replaced: String?
     do {
       replaced = try model.studio.restoreVersion(id)
@@ -69,11 +72,12 @@ extension StudioUndo {
     }
     model.closePanel()
     try? model.compare(toStep: nil)
-    // The column's step takes the restored values, like a revise's.
+    // The column's steps take the restored values, like a revise's.
     let steps = model.studio.steps
-    let touched =
-      steps.indices.contains(base)
-      && (model.pipeline?.revised(base, params: steps[base].params) ?? false)
+    var touched = false
+    for index in steps.indices where index >= base {
+      touched = (model.pipeline?.revised(index, params: steps[index].params) ?? false) || touched
+    }
     // The history moved: its undo is registered even when the new head cannot be shown.
     do {
       try model.headChanged()
@@ -120,9 +124,15 @@ extension StudioUndo {
     guard model.versions.last?.id == id, let pipeline = model.pipeline else { return nil }
     let start = model.studio.steps.count
     let planned = pipeline.pipeline.steps.map(\.recipe.processID)
-    guard (try? model.studio.pendingMasks(from: start, planned: planned))?.isEmpty == false else {
-      return nil
+    let needed: Bool
+    do {
+      needed = try !model.studio.pendingMaskSteps(from: start, planned: planned).isEmpty
+    } catch {
+      // A check that fails (a mask a moving revise would misplace) refuses too: no silent loss.
+      needed = true
     }
-    return .app("▶ Run still needs the masks this version recorded: run the pending steps first.")
+    return needed
+      ? .app("▶ Run still needs the masks this version recorded: run the pending steps first.")
+      : nil
   }
 }

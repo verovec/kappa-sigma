@@ -23,8 +23,10 @@ struct StudioVersionsMenu: View {
           }
           .disabled(model.isMovingHistory)
           .accessible(.studioVersion(index, "restore"), label: .app("Restore"))
+          let refusal = model.historyMoveRefusal ?? StudioUndo.dropRefusal(model, version.id)
           Button(.app("Drop…"), role: .destructive) { dropping = version }
-            .disabled(model.isMovingHistory)
+            .disabled(refusal != nil)
+            .help(refusal.map { Text($0) } ?? Text(verbatim: ""))
             .accessible(.studioVersion(index, "drop"), label: .app("Drop…"))
         } label: {
           Text(verbatim: version.label)
@@ -44,7 +46,7 @@ struct StudioVersionsMenu: View {
       }
     } message: { version in
       let size = AstroFormat(locale: locale).bytes(Int64(model.bytes(ofVersion: version.id)))
-      Text(.app("Its steps and files are deleted (\(size)); ⌘Z forgets these steps. No undo."))
+      Text(.app("Deletes its steps and files (\(size)); ⌘Z forgets the combined image."))
     }
   }
 

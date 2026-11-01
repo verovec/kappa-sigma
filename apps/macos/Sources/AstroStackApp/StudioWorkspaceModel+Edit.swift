@@ -66,13 +66,6 @@ extension StudioWorkspaceModel {
     return .app("Step \(index + 1) · \(title) — editing", locale: locale)
   }
 
-  /// How many steps after the edited one a revise replays: up to the first host tool
-  /// (`StudioSession.toolStep`, the revise's own rule).
-  package var editReplayed: Int? {
-    guard let index = editedStep else { return nil }
-    return (editStop ?? studio.session.history.steps.count) - index - 1
-  }
-
   /// The host-tool step after the edited one a revise stops before, or `nil`.
   package var editStop: Int? {
     guard let index = editedStep, let panel else { return nil }

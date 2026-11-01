@@ -66,37 +66,44 @@ extension StudioModel {
     }
   }
 
-  /// The recorded masks of the steps a revise left pending from `start` (card 0159).
-  ///
-  /// ▶ Run applies them under the masks of the chain the revise replaced (its last version), as
-  /// long as the head is that revise's — the same steps, on the same parent, up to `start` —
-  /// and only where the column plans the same process (`planned`, by index) at the same place;
-  /// the version's undone steps carry none.
+  /// The recorded masks of the steps a revise left pending from `start` (card 0159), read from
+  /// disk for ▶ Run (`pendingMaskSteps` says which).
   package func pendingMasks(from start: Int, planned: [String]) throws -> [Int: AstroImage] {
+    guard let version = session.history.versions.last else { return [:] }
+    var masks: [Int: AstroImage] = [:]
+    for index in try pendingMaskSteps(from: start, planned: planned) {
+      masks[index] = try session.history.mask(ofVersion: version.id, step: index - version.base)
+    }
+    return masks
+  }
+
+  /// The steps a revise left pending from `start` that ▶ Run applies under a recorded mask,
+  /// without reading one.
+  ///
+  /// Their masks are those of the chain the revise replaced (its last version), as long as the
+  /// head is that revise's — the same steps, on the same parent, up to `start` — and only where
+  /// the column plans the same process (`planned`, by index) at the same place; the version's
+  /// undone steps carry none. A revised step that moves the pixels makes them land elsewhere:
+  /// refused (`PipelineError.maskMoved`), as the revise refuses it (0160).
+  package func pendingMaskSteps(from start: Int, planned: [String]) throws -> [Int] {
     let history = session.history
     guard let version = history.versions.last, version.base < start,
       history.steps.count == start, start - version.base <= version.steps.count,
       version.parent == (version.base == 0 ? nil : history.steps[version.base - 1].file),
       zip(history.steps[version.base..<start], version.steps)
         .allSatisfy({ $0.processID == $1.processID })
-    else { return [:] }
-    // The revised step moved the pixels (under its new values or the ones it replaced): the
-    // recorded masks would land on other pixels — refused, as the revise refuses it (0160).
+    else { return [] }
     let revised = history.steps[version.base]
     let moved =
       session.registry.movesPixels(revised.processID, params: revised.params)
       || session.registry.movesPixels(version.steps[0].processID, params: version.steps[0].params)
-    var masks: [Int: AstroImage] = [:]
     let applied = version.steps.count - version.redo
-    for offset in (start - version.base)..<max(start - version.base, applied)
-    where version.steps[offset].mask != nil
-      && planned.indices.contains(version.base + offset)
-      && planned[version.base + offset] == version.steps[offset].processID
-    {
-      if moved { throw PipelineError.maskMoved(step: version.base + offset) }
-      masks[version.base + offset] = try history.mask(ofVersion: version.id, step: offset)
+    let masked = ((start - version.base)..<max(start - version.base, applied)).filter { offset in
+      version.steps[offset].mask != nil && planned.indices.contains(version.base + offset)
+        && planned[version.base + offset] == version.steps[offset].processID
     }
-    return masks
+    if moved, let first = masked.first { throw PipelineError.maskMoved(step: version.base + first) }
+    return masked.map { version.base + $0 }
   }
 
   /// Forgets history version `id` and removes the files only it kept (card 0159): no undo.

@@ -169,7 +169,10 @@ package struct StudioSideView: View {
       }
       .buttonStyle(.plain)
       .disabled(model.isMovingHistory)
-      .help(Text(.app("Edit this step; ⌥-click compares")))
+      .help(
+        model.selection == .main
+          ? Text(.app("Edit this step; ⌥-click compares")) : Text(.app("Compare"))
+      )
       .accessible(.studioStep(index), label: title)
       compareButton(index, title: title)
     }

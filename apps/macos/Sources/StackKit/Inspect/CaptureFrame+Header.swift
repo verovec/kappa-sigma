@@ -5,13 +5,18 @@ package import ImageKit
 extension CaptureFrame {
   /// Reads the primary header of the FITS file at `url` (no pixels decoded) and builds the frame.
   package init(reading url: URL, timeZone: TimeZone) throws {
-    try self.init(path: url.path, header: FITSFile.read(at: url).header, timeZone: timeZone)
+    try self.init(
+      path: url.path, header: FrameSource.files.header(url.path), timeZone: timeZone)
   }
 
   /// The frame a header and a path describe (`FrameFromHeader`): header cards first, then the
   /// SharpCap sidecar and the file/folder names fill only what the header left blank.
-  /// `timeZone` is the site's: it decides the observing night.
-  package init(path: String, header: FITSHeader, timeZone: TimeZone) {
+  /// `timeZone` is the site's: it decides the observing night; `contents` reads the sidecar
+  /// (the disk unless the scan's `FrameSource` says otherwise, card 0166).
+  package init(
+    path: String, header: FITSHeader, timeZone: TimeZone,
+    contents: (String) -> Data? = FrameSource.files.contents
+  ) {
     self.init(path: path)
     let cards = LegacyCards(header: header)
     binX = 1
@@ -26,7 +31,7 @@ extension CaptureFrame {
         classSource = .header
       }
     }
-    backfillFromPath()
+    backfillFromPath(contents: contents)
   }
 
   private mutating func readAcquisition(_ cards: LegacyCards) {

@@ -44,8 +44,8 @@ extension CaptureFrame {
   /// names (`backfillMeta`).
   ///
   /// Header values always win; no pixels are read.
-  mutating func backfillFromPath() {
-    let sidecar = SharpcapSidecar.read(beside: path)
+  mutating func backfillFromPath(contents: (String) -> Data?) {
+    let sidecar = SharpcapSidecar.read(beside: path, contents: contents)
     if let sidecar { apply(sidecar) }
     apply(PathMeta(path: path))
     // A flat's filter comes from the wheel alias once its folder settled the type: flats group

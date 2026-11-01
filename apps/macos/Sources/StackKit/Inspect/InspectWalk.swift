@@ -6,11 +6,19 @@ internal import ProjectKit
 ///
 /// A package folder (a `.astrostack` project, an app) is never walked (card 0101): a project
 /// saved among the captures holds stacks with no OBJECT, read as lights of another object.
-enum InspectWalk {
+package enum InspectWalk {
   /// What a walk found: the files, and the package folders it did not enter.
-  struct Listing {
-    var files: [String] = []
-    var packages: [String] = []
+  package struct Listing: Equatable, Sendable {
+    /// The files, in walk order.
+    package var files: [String] = []
+    /// The package folders skipped.
+    package var packages: [String] = []
+
+    /// A listing of `files` and skipped `packages`.
+    package init(files: [String] = [], packages: [String] = []) {
+      self.files = files
+      self.packages = packages
+    }
   }
 
   /// Every non-folder entry under `root`, in walk order, and the packages skipped. `skippingOutput`
@@ -69,7 +77,7 @@ enum InspectWalk {
   }
 
   /// `path` relative to `root` when it lies beneath it, else `path` unchanged.
-  static func relative(_ path: String, to root: String) -> String {
+  package static func relative(_ path: String, to root: String) -> String {
     let prefix = root.hasSuffix("/") ? root : root + "/"
     return path.hasPrefix(prefix) ? String(path.dropFirst(prefix.count)) : path
   }

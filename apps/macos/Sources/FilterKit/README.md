@@ -26,6 +26,13 @@ also a folder word (`PathMeta.filterFromFolders` reads a folder's first word): `
 night folder as [NII], so it is not an alias — pick aliases a capture tree would not use by
 accident. The glued-word splitter (`CaptureManifest.knownFilters`) lists each new short token.
 
+Card 0163 made the lookup tolerant without a second list: `Filter.token` tries the exact alias,
+then `Filter.canonical` of the name (bandwidth `7nm`/`6.5 nm`, separators `-_ /.`, brackets,
+`α`/`β` spelled out) against the same aliases canonicalised. So an alias also matches every
+spelling that canonicalises to it (`h-alpha` covers `H alpha 7nm`, `Hα`, `H.alpha`): check a new
+alias's canonical form too (`N 2` → `n2`, which is why `n2` stays out). No edit distance, ever.
+Where a light filter came from is StackKit's `FilterOrigin` (the import row shows it).
+
 One StackKit helper still spells tokens: `CaptureManifest.knownFilters`, the glued-word splitter
 (`LLLRGBHaHa`), lists the short tokens it may split on, longest first within a collision group —
 deriving it from every alias would change what a folder name parses as. Revisit it, with its own

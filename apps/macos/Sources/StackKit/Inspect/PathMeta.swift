@@ -32,17 +32,25 @@ package struct PathMeta: Equatable, Sendable {
     self.wheelSlot = wheelSlot
   }
 
+  /// The filter the file name (`filter-OIII`), else the nearest filter folder names, with its
+  /// origin (card 0163); `("", nil)` when none.
+  package static func filterNamed(in path: String) -> (filter: String, origin: FilterOrigin?) {
+    if let match = baseName(path).firstMatch(of: /(?i)filter[-_]([A-Za-z0-9]+)/) {
+      let raw = String(match.1)
+      let filter = Filter.normalize(raw)
+      return (filter, filter.isEmpty ? nil : FilterOrigin(source: .fileName, raw: raw))
+    }
+    guard let (filter, folder) = filterFolder(path) else { return ("", nil) }
+    return (filter, FilterOrigin(source: .folder, raw: folder))
+  }
+
   /// Parses the file name of `path` and its parent folder names (`parseFilenameMeta`).
   package init(path: String) {
     let name = Self.baseName(path)
     let low = name.lowercased()
     self.init(type: Self.typeFromToken(low))
     if type == .unknown { type = Self.typeFromFolders(path) }
-    if let match = name.firstMatch(of: /(?i)filter[-_]([A-Za-z0-9]+)/) {
-      filter = Filter.normalize(String(match.1))
-    } else {
-      filter = Self.filterFromFolders(path)
-    }
+    filter = Self.filterNamed(in: path).filter
     if let match = low.firstMatch(of: /(\d*\.?\d+)\s*sec/),
       let seconds = LegacyNumber.finite(match.1),
       let milliseconds = LegacyNumber.rounded(seconds, scale: 1000)

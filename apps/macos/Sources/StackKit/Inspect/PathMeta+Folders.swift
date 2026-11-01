@@ -19,20 +19,27 @@ extension PathMeta {
   ///
   /// Nearest parent wins; `""` when none.
   package static func filterFromFolders(_ path: String) -> String {
+    filterFolder(path)?.filter ?? ""
+  }
+
+  /// `filterFromFolders` with the folder that named it.
+  static func filterFolder(_ path: String) -> (filter: String, folder: String)? {
     for folder in parentFolders(path) {
       let words = folder.split(whereSeparator: isSeparator).map(String.init)
       guard let first = words.first else { continue }
       if typeFromFolderName(folder).isCalibration {
-        if let filter = words.lazy.compactMap(Filter.token).first { return filter.rawValue }
+        if let filter = words.lazy.compactMap(Filter.token).first {
+          return (filter.rawValue, folder)
+        }
         continue
       }
       guard let filter = Filter.token(first) else { continue }
       // `Hb` then a bare number is a catalogue designation (`Hb 5`, `Hb_12`: Hubble's planetary
       // nebulae, card 0141), not the Hβ folder; `Ha 1` (a session number) stays Hα.
       if filter == .hydrogenBeta, words.count > 1, words[1].allSatisfy(\.isASCIIDigit) { continue }
-      return filter.rawValue
+      return (filter.rawValue, folder)
     }
-    return ""
+    return nil
   }
 
   /// The gain a parent folder encodes (`darks_0gain_300s` → 0, `offset_-15_250gain` → 250); 0.

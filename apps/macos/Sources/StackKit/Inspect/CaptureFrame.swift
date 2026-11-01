@@ -36,6 +36,8 @@ package struct CaptureFrame: Equatable, Sendable {
   /// Observing-night key (`YYYY-MM-DD`, local noon bucket), `""` when undated.
   package var session = ""
   package var classSource: ClassSource = .none
+  /// Where `filter` came from, and the text it was read from (card 0163); `nil` when unnamed.
+  package var filterOrigin: FilterOrigin?
   /// Physical filter-wheel position, 1-based; 0 = unknown.
   package var wheelSlot = 0
   package var filterConfidence = 0.0

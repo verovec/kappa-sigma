@@ -73,6 +73,7 @@ extension CaptureManifest {
     if frame.filter.isEmpty, !slot.filter.isEmpty {
       frame.filter = slot.filter
       frame.classSource = .manifest
+      frame.filterOrigin = FilterOrigin(source: .manifest, raw: slot.filter)
       frame.filterConfidence = 1
       if frame.type == .unknown { frame.type = .light }
     }

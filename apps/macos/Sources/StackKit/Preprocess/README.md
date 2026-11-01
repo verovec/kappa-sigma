@@ -21,7 +21,10 @@ The combine inputs (`ChannelCombiner.inputs`, card 0137): L+R+G+B → `rgbcomp -
 colour layer at all → `.mono`, the one master `Filter.monoSource` names (L, else Hα, else the first
 in the canonical order — `palette.go` resolveMono, so OIII+SII is OIII and R+G+Hα is Hα), loaded
 and sky-flattened (`subsky`) like `buildCombine`'s mono branch but with no `rmgreen` (a colour
-step), and the journal says « combined = L alone (mono: no colour composite to build) ». A colour
+step), and the journal says « combined = L alone (mono: no colour composite to build) ». When the
+planned lanes spelled a colour composite that the run lost (a failed R/G/B lane, card 0173), that
+note becomes a run warning instead, said before Siril runs (`ChannelCombiner.fallbackWarning`):
+« no colour composite: R missing — combined = L alone, in grey ». A colour
 master beside a broadband layer makes none (that mix is refused before the run starts).
 
 Each step emits `.progress(step, steps, title, percent, line)` and each master and the composite

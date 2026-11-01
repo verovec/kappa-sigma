@@ -115,7 +115,8 @@ package final class StudioSession {
   }
 
   /// Applies `processID` with `params` at full resolution: the head moves to its result; a
-  /// geometry step moves every layer the next steps read with it (card 0090).
+  /// geometry step moves every layer the next steps read with it (card 0090); `mask` is recorded
+  /// on the step (card 0160).
   package func apply(_ processID: String, params: ParamSet, mask: AstroImage? = nil) throws {
     guard let type = registry.type(id: processID) else {
       throw StudioError.unknownProcess(processID)
@@ -134,7 +135,8 @@ package final class StudioSession {
       && result.metadata == input.metadata && Self.samePixels(result.planes, input.planes)
     try history.apply(
       processID: processID, params: params, result: result, outputs: moved.outputs,
-      replacing: moved.replacing, movesPixels: registry.movesPixels(processID, params: params))
+      replacing: moved.replacing, movesPixels: registry.movesPixels(processID, params: params),
+      mask: mask)
     lastApplyChangedNothing = unchanged && moved.outputs.isEmpty && moved.replacing.isEmpty
   }
 

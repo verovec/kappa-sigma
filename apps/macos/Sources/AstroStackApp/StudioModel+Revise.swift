@@ -10,7 +10,9 @@ extension StudioModel {
   /// ▶ Run. The chain it replaces is kept as a history version (0156): nothing is lost.
   ///
   /// A host-tool step `index` runs `tool` (its Apply's), refused before anything moves when the
-  /// caller has none. A recipe has no mask: a masked step replays unmasked (as `replayMain`).
+  /// caller has none. Every masked GPU step, `index` included, replays under its recorded mask
+  /// (card 0160; a host-tool step is never masked); a crop, turn or flip `index` with a masked
+  /// step after it is refused before anything moves (`PipelineError.maskMoved`).
   /// Returns the number of steps now applied.
   @discardableResult
   package func reviseStep(
@@ -27,10 +29,12 @@ extension StudioModel {
     let end =
       steps.indices.dropFirst(index + 1).first { runsTool(steps[$0].processID, steps[$0].params) }
       ?? recipes.count
+    try refuseMovedMask(index, params: params, until: end)
     let replayed = Array(recipes[..<end])
     let session = session
     // Made before anything moves: a runner that cannot start leaves the history as it was.
     let runner = try replayRunner()
+    let masks = try replayMasks(index..<end)
     let label = Self.versionLabels(base: index).before
     try await moving { history in
       try await history.revise(from: index, label: label) { history in
@@ -38,13 +42,28 @@ extension StudioModel {
           try await tool.record(
             processID, params: params, in: history, bundle: session.bundle,
             onProgress: onProgress)
-          try await replay(replayed, from: index + 1, on: history, with: runner)
+          try await replay(replayed, from: index + 1, on: history, with: runner, masks: masks)
         } else {
-          try await replay(replayed, from: index, on: history, with: runner)
+          try await replay(replayed, from: index, on: history, with: runner, masks: masks)
         }
       }
     }
     return steps.count
+  }
+
+  /// Refuses a revise of step `index` with `params` that moves the pixels (under its recorded or
+  /// its new values) while a masked step before `end` would replay on them: its recorded mask
+  /// would land on other pixels (card 0160).
+  private func refuseMovedMask(_ index: Int, params: ParamSet, until end: Int) throws {
+    let step = steps[index]
+    let registry = session.registry
+    guard
+      registry.movesPixels(step.processID, params: params)
+        || registry.movesPixels(step.processID, params: step.params)
+    else { return }
+    if let masked = steps.indices[(index + 1)..<end].first(where: { steps[$0].mask != nil }) {
+      throw PipelineError.maskMoved(step: masked)
+    }
   }
 
   /// Puts history version `id` back in place of the steps from its base: nothing is recomputed.

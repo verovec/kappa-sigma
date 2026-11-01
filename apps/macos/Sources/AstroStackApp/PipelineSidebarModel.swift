@@ -170,7 +170,8 @@ package final class PipelineSidebarModel {
   ///
   /// Where the pipeline plans the same process next, it is that step done with these values;
   /// elsewhere a new `auto` step where the history put it. A recipe has no mask: a masked step
-  /// is recorded with a warning that a replay applies it to the whole image.
+  /// is recorded with a warning that the pipeline, run on an image, applies it to the whole
+  /// image (the Studio's own replays keep the step's recorded mask, card 0160).
   func applied(_ processID: String, params: ParamSet, masked: Bool = false) {
     let index = workspace.studio.steps.count - 1
     guard index >= 0 else { return }

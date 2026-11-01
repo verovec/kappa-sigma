@@ -19,14 +19,16 @@ extension FITSFileTests {
   }
 
   @Test(
-    "non-ASCII bytes in a comment or value are read as '?', the card stays 80 columns",
+    "non-ASCII bytes in a comment or value read as '?', ASCII ones as they are; 80 columns",
     .scratchDirectory,
     arguments: [
-      ("Latin-1 degree", [UInt8(0xB0)]),
-      ("UTF-8 degree", [UInt8(0xC2), 0xB0]),
-      ("control byte", [UInt8(0x09)]),
+      ("Latin-1 degree", [UInt8(0xB0)], "?"),
+      ("UTF-8 degree", [UInt8(0xC2), 0xB0], "??"),
+      ("control byte, kept as before", [UInt8(0x09)], "\t"),
     ])
-  func testFITSFile_read_toleratesNonASCIICards(name: String, bytes: [UInt8]) throws {
+  func testFITSFile_read_toleratesNonASCIICards(name: String, bytes: [UInt8], reads: String)
+    throws
+  {
     let placeholder = String(repeating: "@", count: bytes.count)
     let url = try Self.write(
       Self.header(
@@ -42,8 +44,7 @@ extension FITSFileTests {
     #expect(file.header.string("FILTER") == "B", "\(name)")
     #expect(file.header.double("EXPTIME") == 15)
     #expect(file.header.double("CCD-TEMP") == -20)
-    #expect(
-      file.header.string("OBSERVER") == "J" + String(repeating: "?", count: bytes.count) + "r")
+    #expect(file.header.string("OBSERVER") == "J" + reads + "r")
     #expect(file.header.cards.allSatisfy { $0.raw.utf8.count == 80 })
     #expect(try file.image().planes == [[0.25, 0.5]], "the data unit starts where it did")
   }

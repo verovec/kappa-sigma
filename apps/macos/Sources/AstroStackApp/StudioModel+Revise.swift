@@ -80,6 +80,12 @@ extension StudioModel {
       zip(history.steps[version.base..<start], version.steps)
         .allSatisfy({ $0.processID == $1.processID })
     else { return [:] }
+    // The revised step moved the pixels (under its new values or the ones it replaced): the
+    // recorded masks would land on other pixels — refused, as the revise refuses it (0160).
+    let revised = history.steps[version.base]
+    let moved =
+      session.registry.movesPixels(revised.processID, params: revised.params)
+      || session.registry.movesPixels(version.steps[0].processID, params: version.steps[0].params)
     var masks: [Int: AstroImage] = [:]
     let applied = version.steps.count - version.redo
     for offset in (start - version.base)..<max(start - version.base, applied)
@@ -87,6 +93,7 @@ extension StudioModel {
       && planned.indices.contains(version.base + offset)
       && planned[version.base + offset] == version.steps[offset].processID
     {
+      if moved { throw PipelineError.maskMoved(step: version.base + offset) }
       masks[version.base + offset] = try history.mask(ofVersion: version.id, step: offset)
     }
     return masks

@@ -258,4 +258,71 @@ extension StudioWorkspaceModelTests {
     #expect(workspace.editing == nil && workspace.panel == nil)
     #expect(workspace.failure != nil)
   }
+
+  @Test("Apply change on a host-tool step is greyed with the revise's reason", .scratchDirectory)
+  func testApplyEdit_ToolStepGreyed() throws {
+    let opened = try StudioModelTests.project()
+    defer { try? opened.package.close() }
+    let workspace = try Self.edited(opened)
+
+    workspace.editStep(3)
+    #expect(workspace.applyEditRefusal() != nil)
+    workspace.editStep(1)
+    #expect(workspace.applyEditRefusal() == nil)
+  }
+
+  /// Combination, stretch, a background extraction, a masked saturation; the column plans them.
+  static func pending(_ opened: StudioModelTests.Opened, first: (String, ParamSet)) async throws
+    -> (StudioWorkspaceModel, PipelineSidebarModel)
+  {
+    let ids = [
+      ChannelCombinationProcess.id, first.0, BackgroundExtractionProcess.id, SaturationProcess.id,
+    ]
+    let pipeline = Pipeline(
+      name: "p",
+      steps: try ids.map { id in
+        let type = try #require(try ProcessRegistry.standard().type(id: id))
+        return PipelineStep(recipe: Recipe(processID: id, params: ParamSet(schema: type.schema)))
+      })
+    let (workspace, sidebar) = try PipelineSidebarModelTests.sidebar(opened, pipeline)
+    let studio = workspace.studio
+    try studio.apply(first.0, params: first.1)
+    try studio.apply(
+      BackgroundExtractionProcess.id, params: ParamSet(schema: BackgroundExtractionProcess.schema),
+      result: studio.head)
+    try studio.apply(
+      SaturationProcess.id, params: ParamSet(schema: SaturationProcess.schema),
+      mask: Self.halfMask(studio))
+    return (workspace, sidebar)
+  }
+
+  @Test("a version ▶ Run still needs the masks of is not dropped", .scratchDirectory)
+  func testDropVersion_RefusedWhileRunNeedsItsMasks() async throws {
+    let opened = try StudioModelTests.project()
+    defer { try? opened.package.close() }
+    let (workspace, _) = try await Self.pending(
+      opened, first: (StretchProcess.id, try StudioModelTests.stretch(target: 0.2)))
+    try await workspace.studio.reviseStep(1, params: try StudioModelTests.stretch(target: 0.4))
+    let version = try #require(workspace.versions.last)
+
+    #expect(StudioUndo.dropRefusal(workspace, version.id) != nil)
+    StudioUndo.dropVersion(workspace, version.id, on: StudioUndoRunTests.undoManager())
+    #expect(workspace.versions.count == 1 && workspace.failure != nil)
+  }
+
+  @Test("▶ Run refuses recorded masks a pixel-moving revise would misplace", .scratchDirectory)
+  func testPendingMasks_MovedPixelsRefused() async throws {
+    let opened = try StudioModelTests.project()
+    defer { try? opened.package.close() }
+    let (workspace, sidebar) = try await Self.pending(
+      opened, first: (GeometryProcess.id, ParamSet(schema: GeometryProcess.schema)))
+    var flip = ParamSet(schema: GeometryProcess.schema)
+    try flip.set("flipV", .flag(true))
+    try await workspace.studio.reviseStep(1, params: flip)
+    let planned = sidebar.pipeline.steps.map(\.recipe.processID)
+
+    #expect(throws: PipelineError.maskMoved(step: 3)) {
+      try workspace.studio.pendingMasks(from: 2, planned: planned)
+    }
+  }
 }

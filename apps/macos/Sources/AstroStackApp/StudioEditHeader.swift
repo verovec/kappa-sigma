@@ -36,7 +36,7 @@ struct StudioEditButtons: View {
   @Environment(\.locale) private var locale
 
   var body: some View {
-    let blocked = model.panel.flatMap { model.unchosenRefusal($0, locale: locale) }
+    let blocked = model.applyEditRefusal(locale: locale)
     HStack {
       Button(.app("Cancel")) { model.cancelEdit() }
         .accessible(.studioEditCancel, label: .app("Cancel"))

@@ -82,9 +82,11 @@ extension StudioWorkspaceModel {
   /// What Apply does after the edited step, in `locale`: the steps it replays, and the host
   /// tool it stops before (▶ Run applies it and the rest).
   package func editSummary(locale: Locale? = nil) -> [LocalizedStringResource] {
-    guard let replayed = editReplayed else { return [] }
+    guard let index = editedStep else { return [] }
+    let stop = editStop
+    let replayed = (stop ?? studio.session.history.steps.count) - index - 1
     var lines: [LocalizedStringResource] = [.app("Replays \(replayed) later steps", locale: locale)]
-    if let stop = editStop {
+    if let stop {
       let steps = studio.session.history.steps
       let title = String(localized: stepTitle(of: steps[stop].processID, locale: locale))
       lines.append(
@@ -100,6 +102,14 @@ extension StudioWorkspaceModel {
   package var editUsesRecordedMask: Bool {
     guard let index = editedStep else { return false }
     return studio.session.history.steps[index].mask != nil
+  }
+
+  /// Why Apply change is greyed, or `nil`: the revise's own refusal (a host-tool step), or a
+  /// choice still to make (greyed with the reason, never refused after the press).
+  package func applyEditRefusal(locale: Locale? = nil) -> LocalizedStringResource? {
+    guard let index = editedStep, let panel else { return nil }
+    return StudioUndo.reviseRefusal(self, step: index, params: panel.params)
+      ?? unchosenRefusal(panel, locale: locale)
   }
 
   /// Whether applied step `index` is recomputed by the edit open now (shown « to recompute »).

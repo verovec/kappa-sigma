@@ -44,7 +44,10 @@ struct StudioVersionsMenu: View {
       }
     } message: { version in
       let size = AstroFormat(locale: locale).bytes(Int64(model.bytes(ofVersion: version.id)))
-      Text(.app("Its steps and their files are deleted (\(size)). This cannot be undone."))
+      Text(
+        .app(
+          "Its steps and their files are deleted (\(size)), and ⌘Z forgets the combined image's steps. This cannot be undone."
+        ))
     }
   }
 

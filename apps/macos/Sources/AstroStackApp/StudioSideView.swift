@@ -149,7 +149,8 @@ package struct StudioSideView: View {
     let title = model.stepTitle(of: step.processID, locale: locale)
     return HStack {
       Button {
-        if NSEvent.modifierFlags.contains(.option) {
+        // A branch's steps are compared, never edited (E25 edits the combined image only).
+        if NSEvent.modifierFlags.contains(.option) || model.selection != .main {
           model.toggleCompare(index)
         } else {
           model.editStep(index)

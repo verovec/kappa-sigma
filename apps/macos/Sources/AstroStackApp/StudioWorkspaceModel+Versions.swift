@@ -23,6 +23,11 @@ extension StudioWorkspaceModel {
   package func toggleCompare(version id: String) {
     do {
       guard comparingVersion != id else { return try compare(toStep: nil) }
+      // A version holds combined-image steps: beside a branch's head it means nothing.
+      if let refusal = historyMoveRefusal {
+        failure = refusal
+        return
+      }
       guard !showsMovedGrid else { throw UserFacingError.movedPreview }
       let image = try studio.session.history.head(ofVersion: id)
       guard image.width == head.width, image.height == head.height else {
@@ -50,17 +55,25 @@ extension StudioUndo {
       model.failure = refusal
       return
     }
-    // The column's recipes stay: a version holds steps, not the pipeline's plan.
-    model.closePanel()
-    try? model.compare(toStep: nil)
+    guard let base = model.versions.first(where: { $0.id == id })?.base else { return }
+    // The column as it was: ⌘Z puts its recipe back with the chain, as for a revise.
+    let mark = model.pipeline?.mark(keeping: [base])
     let replaced: String?
     do {
       replaced = try model.studio.restoreVersion(id)
       model.failure = nil
     } catch {
+      // Refused before anything moved: the open panel and the compare stay as they were.
       model.failure = UserFacingError(error).message
       return
     }
+    model.closePanel()
+    try? model.compare(toStep: nil)
+    // The column's step takes the restored values, like a revise's.
+    let steps = model.studio.steps
+    let touched =
+      steps.indices.contains(base)
+      && (model.pipeline?.revised(base, params: steps[base].params) ?? false)
     // The history moved: its undo is registered even when the new head cannot be shown.
     do {
       try model.headChanged()
@@ -70,8 +83,8 @@ extension StudioUndo {
     // Nothing put aside (the version sat past the head): no swap to undo.
     guard let replaced else { return }
     recordNew(
-      model, steps: 0, in: .main, name: .app("Restore Version"), mark: nil, version: replaced,
-      on: undoManager)
+      model, steps: 0, in: .main, name: .app("Restore Version"), mark: touched ? mark : nil,
+      version: replaced, on: undoManager)
   }
 
   /// Forgets version `id` and its files, after the user confirmed (no undo).
@@ -85,6 +98,10 @@ extension StudioUndo {
       model.failure = refusal
       return
     }
+    if let refusal = dropRefusal(model, id) {
+      model.failure = refusal
+      return
+    }
     if model.comparingVersion == id { try? model.compare(toStep: nil) }
     do {
       try model.studio.dropVersion(id)
@@ -93,5 +110,19 @@ extension StudioUndo {
       return
     }
     forgetMoves(model, in: .main, on: undoManager)
+  }
+
+  /// Why version `id` cannot be dropped now, or `nil`: ▶ Run still needs the masks it recorded
+  /// for the steps a revise left pending (a drop would run them unmasked, R2).
+  package static func dropRefusal(_ model: StudioWorkspaceModel, _ id: String)
+    -> LocalizedStringResource?
+  {
+    guard model.versions.last?.id == id, let pipeline = model.pipeline else { return nil }
+    let start = model.studio.steps.count
+    let planned = pipeline.pipeline.steps.map(\.recipe.processID)
+    guard (try? model.studio.pendingMasks(from: start, planned: planned))?.isEmpty == false else {
+      return nil
+    }
+    return .app("▶ Run still needs the masks this version recorded: run the pending steps first.")
   }
 }

@@ -11945,22 +11945,6 @@
         }
       }
     },
-    "Its steps and their files are deleted (%@). This cannot be undone.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Its steps and their files are deleted (%@). This cannot be undone."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ses étapes et leurs fichiers sont supprimés (%@). Impossible d’annuler."
-          }
-        }
-      }
-    },
     "To recompute": {
       "localizations": {
         "en": {
@@ -12005,6 +11989,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cette étape n’a pas de panneau à modifier : revenez-y et appliquez-la à nouveau."
+          }
+        }
+      }
+    },
+    "▶ Run still needs the masks this version recorded: run the pending steps first.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "▶ Run still needs the masks this version recorded: run the pending steps first."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "▶ Lancer a encore besoin des masques enregistrés par cette version : lancez d’abord les étapes en attente."
+          }
+        }
+      }
+    },
+    "Its steps and their files are deleted (%@), and ⌘Z forgets the combined image's steps. This cannot be undone.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Its steps and their files are deleted (%@), and ⌘Z forgets the combined image's steps. This cannot be undone."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ses étapes et leurs fichiers sont supprimés (%@), et ⌘Z oublie les étapes de l’image combinée. Impossible d’annuler."
           }
         }
       }

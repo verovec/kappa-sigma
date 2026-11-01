@@ -65,7 +65,10 @@ extension StudioUndo {
       return
     }
     await reviseStep(model, step: index, params: panel.params, on: undoManager)
-    guard model.failure == nil else { return }
+    // Refused before anything moved: the edit stays open with its reason. Once the head moved
+    // (done, or failed half-way — the failure stays shown) the edit is over: never left as a
+    // plain panel whose Apply would add the step on top.
+    if model.failure != nil, model.editedStep == index { return }
     model.closePanel()
   }
 

@@ -1,5 +1,5 @@
 internal import FilterKit
-internal import Foundation
+package import Foundation
 
 /// The `<frame>.txt` capture settings SharpCap/ASICAP write beside each FITS
 /// (`internal/inspect/sidecar.go`).
@@ -36,8 +36,11 @@ package struct SharpcapSidecar: Equatable, Sendable {
 
   /// The sidecar of the frame at `path` (`x.FIT` → `x.FIT.txt`), or `nil` when there is none or
   /// it holds nothing useful.
-  package static func read(beside path: String) -> Self? {
-    guard let data = FileManager.default.contents(atPath: path + ".txt") else { return nil }
+  /// `contents` reads it (the disk by default, the scan's `FrameSource` otherwise).
+  package static func read(
+    beside path: String, contents: (String) -> Data? = FrameSource.files.contents
+  ) -> Self? {
+    guard let data = contents(path + ".txt") else { return nil }
     guard let text = String(bytes: data, encoding: .utf8) else { return nil }
     let sidecar = Self(parsing: text)
     let useful =

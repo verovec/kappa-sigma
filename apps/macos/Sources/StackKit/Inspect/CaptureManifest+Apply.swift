@@ -1,4 +1,4 @@
-internal import Foundation
+package import Foundation
 
 extension CaptureManifest {
   /// Whether a file is a manifest: `info.txt` or `info.txt.txt`, any case.
@@ -10,7 +10,11 @@ extension CaptureManifest {
   ///
   /// `files` is the scan's own walk; the manifest only fills blanks (`applyManifests`) and every
   /// problem becomes a warning.
-  package static func apply(files: [String], to inventory: inout Inventory) {
+  /// `contents` reads each manifest (the disk by default, the scan's `FrameSource` otherwise).
+  package static func apply(
+    files: [String], contents: (String) -> Data? = FrameSource.files.contents,
+    to inventory: inout Inventory
+  ) {
     let manifests = files.filter(isManifest)
     guard !manifests.isEmpty else { return }
     var byFolder: [String: [Int]] = [:]
@@ -18,17 +22,18 @@ extension CaptureManifest {
       byFolder[InspectWalk.parent(frame.path), default: []].append(index)
     }
     for path in manifests {
-      apply(manifestAt: path, byFolder: byFolder, to: &inventory)
+      apply(manifestAt: path, contents: contents, byFolder: byFolder, to: &inventory)
     }
   }
 
   /// One manifest: physical wheel slots, when the frames carry them, make it a slot→name legend;
   /// otherwise its slots map positionally onto the chronological capture sub-folders.
   private static func apply(
-    manifestAt path: String, byFolder: [String: [Int]], to inventory: inout Inventory
+    manifestAt path: String, contents: (String) -> Data?, byFolder: [String: [Int]],
+    to inventory: inout Inventory
   ) {
     let label = InspectWalk.relative(path, to: inventory.root)
-    guard let data = FileManager.default.contents(atPath: path),
+    guard let data = contents(path),
       let text = String(bytes: data, encoding: .utf8)
     else {
       inventory.warnings.append("\(label): read failed")

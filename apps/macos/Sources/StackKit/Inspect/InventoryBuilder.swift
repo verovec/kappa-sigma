@@ -10,15 +10,20 @@ package struct InventoryBuilder: Sendable {
   /// The site's zone: it decides each frame's observing night.
   package var timeZone: TimeZone
   package var pixels: PixelReader
+  /// Where the captures are listed and their headers and side files read (card 0166).
+  package var source: FrameSource
 
   static let fitsExtensions: Set<String> = ["fits", "fit", "fts"]
   /// Centre pixels sampled to classify a frame no header or name typed.
   static let statsSample = 200_000
 
-  /// A builder reading FITS files on disk.
-  package init(timeZone: TimeZone = .current, pixels: PixelReader = .files) {
+  /// A builder reading FITS files on disk, unless given another `pixels` reader and `source`.
+  package init(
+    timeZone: TimeZone = .current, pixels: PixelReader = .files, source: FrameSource = .files
+  ) {
     self.timeZone = timeZone
     self.pixels = pixels
+    self.source = source
   }
 
   /// Scans `paths` (folders) with the user's overrides.
@@ -38,7 +43,7 @@ package struct InventoryBuilder: Sendable {
     progress(.listing)
     let walks = try roots.map { root in
       try Task.checkCancellation()
-      return (root: root, listing: try InspectWalk.listing(under: root, skippingOutput: true))
+      return (root: root, listing: try source.listing(under: root, skippingOutput: true))
     }
     for walk in walks {
       merged.skip(walk.listing.packages.map { InspectWalk.relative($0, to: merged.root) })
@@ -79,7 +84,9 @@ package struct InventoryBuilder: Sendable {
       try Task.checkCancellation()
       do {
         inventory.frames.append(
-          try CaptureFrame(reading: URL(fileURLWithPath: path), timeZone: timeZone))
+          CaptureFrame(
+            path: path, header: try source.header(path), timeZone: timeZone,
+            contents: source.contents))
       } catch {
         inventory.warnings.append("skip \(InspectWalk.relative(path, to: root)): \(error)")
       }
@@ -92,7 +99,7 @@ package struct InventoryBuilder: Sendable {
     progress(.classifying)
     // info.txt first, so signal detection only runs on what the manifest could not name; physical
     // wheel slots before detection, so a known filter never goes to the guess-prone detector.
-    CaptureManifest.apply(files: files, to: &inventory)
+    CaptureManifest.apply(files: files, contents: source.contents, to: &inventory)
     WheelSlots.nameRemaining(&inventory)
     WheelSlots.warnUnnamed(&inventory)
     try classifyUnknowns(&inventory)

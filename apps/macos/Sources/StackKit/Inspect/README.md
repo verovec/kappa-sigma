@@ -68,5 +68,9 @@ offset, bin, warmer first).
 
 - A filter name: only in FilterKit's `Filter` (the one list, pinned by `FilterKitTests.FilterTests`; `FilterSet` lives there too).
 - Pixels go through `PixelReader` (`.files` uses ImageKit); tests inject planes and samples.
+- Everything else the scan reads goes through `FrameSource` (card 0166): `listing` (the walk),
+  `header` (a frame's primary header), `contents` (a sidecar, an `info.txt`). `.files` is the local
+  disk; `InventoryBuilder(timeZone:pixels:source:)` takes another (the S3 snapshot of 0167, tests'
+  in-memory trees — `FrameSourceTests`). Never read the disk directly from a scan step.
 - A new verdict that reads pixels must be overridable in `InspectOverrides` and stay `unknown`
   when it cannot decide.

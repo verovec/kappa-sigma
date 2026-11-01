@@ -154,5 +154,11 @@ struct RemoteScanTests {
       })
     let degraded = try await RemoteScan(store: broken, prefix: "", timeZone: Self.zone).inventory()
     #expect(degraded.frames.count == 2)
+    #expect(
+      degraded.warnings.contains { $0.hasPrefix("s3: could not read lights/l_1.fits.txt") },
+      "\(degraded.warnings)")
+    #expect(
+      degraded.notCheckedRemotely.contains("s3://astro/session/a_flat.fits"),
+      "its short run: its measurement was not made")
   }
 }

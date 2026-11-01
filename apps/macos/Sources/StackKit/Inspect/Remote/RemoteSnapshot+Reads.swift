@@ -26,7 +26,13 @@ extension RemoteSnapshot {
       if InventoryBuilder.isFITS(path) {
         return (path, .header(await Self.header(of: object, store: store)))
       }
-      return (path, .side(try? await store.get(object.key, nil)))
+      do {
+        return (path, .side(.success(try await store.get(object.key, nil))))
+      } catch is CancellationError {
+        throw CancellationError()
+      } catch {
+        return (path, .side(.failure(error)))
+      }
     } collect: { path, read in
       switch read {
       case .header(let header):
@@ -35,7 +41,8 @@ extension RemoteSnapshot {
         if done % ScanProgress.readingStep == 0 || done == frames.count {
           progress(.reading(done: done, total: frames.count))
         }
-      case .side(let data): contents[path] = data
+      case .side(.success(let data)): contents[path] = data
+      case .side(.failure(let error)): sideFailures[path] = String(describing: error)
       }
     }
   }
@@ -63,11 +70,19 @@ extension RemoteSnapshot {
     try await Self.inParallel(plans) { plan -> (String, [Double]?)? in
       guard case .success(let header)? = headers[plan.path] else { return (plan.path, nil) }
       // A short answer (a truncated object) reads as `centerSample`'s truncated data: unreadable.
-      guard let bytes = try? await store.get(plan.key, plan.range), bytes.count == plan.bytes
-      else { return (plan.path, nil) }
+      let bytes: Data
+      do {
+        bytes = try await store.get(plan.key, plan.range)
+      } catch is CancellationError {
+        throw CancellationError()
+      } catch {
+        return (plan.path, nil)
+      }
+      guard bytes.count == plan.bytes else { return (plan.path, nil) }
       return (plan.path, try? FITSFile.physicalValues(bytes, header: header))
     } collect: { path, values in
-      if let values { runs[path] = values } else { unreadable.insert(path) }
+      // A smaller run already held keeps answering; only a frame with none is unreadable.
+      if let values { runs[path] = values } else if runs[path] == nil { unreadable.insert(path) }
     }
   }
 
@@ -105,7 +120,7 @@ extension RemoteSnapshot {
   /// One read's answer.
   enum Read: Sendable {
     case header(Result<FITSHeader, any Error>)
-    case side(Data?)
+    case side(Result<Data, any Error>)
   }
 
   /// Runs `work` over `items` with at most `parallelism` in flight, handing each answer to

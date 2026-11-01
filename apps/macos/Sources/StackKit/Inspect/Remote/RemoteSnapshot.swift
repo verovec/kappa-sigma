@@ -31,6 +31,8 @@ package struct RemoteSnapshot: Sendable {
   /// Frames whose centred run cannot be read (a layout the scan cannot locate, a short answer):
   /// their pixel reads fail as an unreadable file does on disk, and are not asked again.
   var unreadable: Set<String> = []
+  /// The side files that failed to read (path → why): absent for the scan, said as warnings.
+  package internal(set) var sideFailures: [String: String] = [:]
 
   /// The virtual path of `key` in `bucket`.
   package static func path(bucket: String, key: String) -> String {
@@ -90,12 +92,14 @@ package struct RemoteSnapshot: Sendable {
         throw NotRead(path: path)
       },
       centerSample: { path, count in
-        if snapshot.unreadable.contains(path) { throw NotRead(path: path) }
-        guard let values = try snapshot.sample(path, count: count) else {
+        // A run held answers whatever the frame's later reads failed to fetch.
+        if let values = try snapshot.sample(path, count: count) { return values }
+        if snapshot.unreadable.contains(path) {
+          asked.failed(path)
+        } else {
           asked.sample(path, count: count)
-          throw NotRead(path: path)
         }
-        return values
+        throw NotRead(path: path)
       })
   }
 
@@ -111,7 +115,8 @@ package struct RemoteSnapshot: Sendable {
 
   /// What the scan asked of the pixel reader that the snapshot could not answer.
   package final class Asked: Sendable {
-    private let state = Mutex((planes: Set<String>(), samples: [String: Int]()))
+    private let state = Mutex(
+      (planes: Set<String>(), samples: [String: Int](), failed: Set<String>()))
 
     /// An empty record.
     package init() {}
@@ -120,6 +125,13 @@ package struct RemoteSnapshot: Sendable {
     package var framesNeedingPlanes: [String] { state.withLock { $0.planes.sorted() } }
     /// The centred runs to fetch: the largest count asked per frame.
     package var missingSamples: [String: Int] { state.withLock { $0.samples } }
+    /// Every frame a pixel read of this pass did not answer: planes asked, a run missing or
+    /// unreadable — each one's measurement was not made.
+    package var framesUnanswered: [String] {
+      state.withLock { $0.planes.union($0.failed).union($0.samples.keys).sorted() }
+    }
+
+    func failed(_ path: String) { state.withLock { _ = $0.failed.insert(path) } }
 
     func planes(_ path: String) { state.withLock { _ = $0.planes.insert(path) } }
 

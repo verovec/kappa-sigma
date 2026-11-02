@@ -66,4 +66,22 @@ extension LineInjectionProcessTests {
     #expect(["Red", "Green", "Blue"].map { params.number("hb" + $0) } == [0, 0, 1])
     #expect(["Red", "Green", "Blue"].map { params.number("nii" + $0) } == [1, 0, 0])
   }
+
+  @Test(
+    "a custom line layer or a step role is not broadband when a continuum is subtracted (0175)",
+    arguments: [
+      (["haGain": 1, "haContinuumK": 0.5], ["Ha", "RGB", "L"]),
+      (["haGain": 1], ["Ha"]),
+    ] as [([String: Double], Set<String>)])
+  func testLayersRead_CustomLayerIsNotBroadband(
+    values: [String: Double], expected: Set<String>
+  ) throws {
+    let read = LineInjectionProcess.layersRead(
+      try Self.params(values),
+      layerIDs: [
+        "RGB", "L", "Ha", "Filter5", "NII-custom", LayerRole.backgroundModel.rawValue,
+        LayerRole.mask.rawValue,
+      ])
+    #expect(read == expected)
+  }
 }

@@ -37,6 +37,12 @@ package struct EmissionLine: Hashable, Sendable, CaseIterable {
     LayerRole(rawValue: id) == nil && Filter.isLineName(id)
   }
 
+  /// The broadband layers among `layerIDs`, the planes a continuum subtraction may read: neither
+  /// a line layer, known or not, nor a step role (mask, stars, background model) — card 0175.
+  package static func broadband(in layerIDs: Set<String>) -> Set<String> {
+    layerIDs.filter { LayerRole(rawValue: $0) == nil && !isLineLayer($0) }
+  }
+
   /// The layer `id` as the panel writes it: a line's name, any other id as is (until 0139 words
   /// every layer).
   package static func name(ofLayer id: String) -> String {

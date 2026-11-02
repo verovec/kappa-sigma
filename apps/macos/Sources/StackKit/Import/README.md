@@ -18,6 +18,11 @@ app's `ImportPlanning.plan` is `@concurrent` and indexes the library first.
   (`path`, `paths`, `filter_map`, `color_model`, `exclude_sets`, `filter_set_overrides`,
   `calib_exclude`, `force_calibration_frames`) with Go's `omitempty`; unknown values throw.
   `overrides` is the `InspectOverrides` the scan honours.
+- `ImportRequest.folders(_:)` → `ImportFolders` (card 0174): one panel's folders as one import —
+  compared standardised, sorted by path, exact duplicates removed, a folder inside another chosen
+  one moved to `dropped` with its `ancestor` (the scan never de-duplicates overlapping roots, so the
+  sheet shows the drop instead of listing a night twice). Kept paths keep their chosen spelling:
+  one folder gives the single-folder request byte for byte.
 - `ImportPlan`: `inventory` (kept for the run), `nights` (lights and flats under their night, the
   shared darks/bias and undated frames under `""`, last), `calibration` (one `Channel` per light
   set, cells dark → flat → bias), `warnings`.

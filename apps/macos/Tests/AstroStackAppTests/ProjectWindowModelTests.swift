@@ -35,6 +35,22 @@ struct ProjectWindowModelTests {
     #expect(window.error == nil)
   }
 
+  @Test(
+    "nights chosen together in one panel become one source each, a nested one none",
+    .scratchDirectory)
+  func testAddRecordsEveryChosenFolder() async throws {
+    let project = try Self.package()
+    defer { try? project.close() }
+    let window = ProjectWindowModel(
+      store: { project.store }, planning: { _ in ImportPlanningStub.empty })
+    window.startImport()
+    let sheet = try #require(window.importing)
+    sheet.choose(folders: ImportViewModelTests.urls(["/c/M31-DB", "/c/M31-BB", "/c/M31-BB/flats"]))
+    await sheet.settled()
+    window.add(sheet.request)
+    #expect(window.sources.map(\.path) == ["/c/M31-BB", "/c/M31-DB"])
+  }
+
   @Test("a store that fails is reported, not swallowed", .scratchDirectory)
   func testStoreFailure() throws {
     let project = try Self.package()

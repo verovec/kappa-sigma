@@ -30,6 +30,10 @@ package final class ImportViewModel {
   package private(set) var error: UserFacingError?
   /// The sets the user excluded, as they were listed when excluded (a scan drops them).
   package private(set) var excludedRows: [ImportPlan.SetRow] = []
+  /// The chosen folders a kept one already covers (card 0174), listed by the sheet, never scanned.
+  package private(set) var droppedFolders: [ImportFolders.Nested] = []
+  /// Why the folder panel returned no selection; apart from `error`, which is the scan's.
+  package private(set) var panelError: UserFacingError?
 
   /// What a master's disclosure can do (inspect, rebuild, preview); `nil` hides it.
   package let masters: MasterServices?
@@ -42,9 +46,10 @@ package final class ImportViewModel {
 
   private let planning: ProgressPlanning
   private var scan: Task<Void, Never>?
-  /// The request the shown plan's scan was made for, and the sets excluded then.
+  /// The request the shown plan's scan was made for, and the sets excluded and folders dropped then.
   private var scanned: ImportRequest?
   private var scannedExcludedRows: [ImportPlan.SetRow] = []
+  private var scannedDroppedFolders: [ImportFolders.Nested] = []
   /// A Rescan asked for and not finished yet.
   private var rescanPending = false
 
@@ -101,10 +106,28 @@ package final class ImportViewModel {
 
   /// Starts over on `folder`: no override survives a change of capture, nor a profile choice.
   package func choose(folder: URL) {
-    request = ImportRequest(paths: [folder.path])
+    choose(folders: [folder])
+  }
+
+  /// Starts over on one panel's `folders` as one import, nested ones dropped (shown, not scanned);
+  /// an empty selection changes nothing.
+  package func choose(folders: [URL]) {
+    guard !folders.isEmpty else { return }
+    let chosen = ImportRequest.folders(folders)
+    request = ImportRequest(paths: chosen.paths)
+    droppedFolders = chosen.dropped
+    panelError = nil
     excludedRows = []
     profileChoice = .proposed
     refresh()
+  }
+
+  /// Says why the folder panel returned no selection.
+  ///
+  /// What was chosen before stays, and the scan's state with it. A dismissed panel is no failure.
+  package func panelFailed(_ failure: any Error) {
+    if let cocoa = failure as? CocoaError, cocoa.code == .userCancelled { return }
+    panelError = UserFacingError(failure)
   }
 
   /// Asserts the clip filter of a colour light set; `unknown` hands it back to the pixels.
@@ -185,6 +208,7 @@ package final class ImportViewModel {
         self.plan = plan
         scanned = request
         scannedExcludedRows = excludedRows
+        scannedDroppedFolders = droppedFolders
         rescanPending = false
         error = nil
       } catch is CancellationError {
@@ -235,9 +259,11 @@ package final class ImportViewModel {
     if let scanned {
       request = scanned
       excludedRows = scannedExcludedRows
+      droppedFolders = scannedDroppedFolders
     } else if error == nil {
       request = ImportRequest(paths: [])
       excludedRows = []
+      droppedFolders = []
       plan = nil
     }
   }

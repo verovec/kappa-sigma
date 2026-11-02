@@ -417,6 +417,118 @@
         }
       }
     },
+    "%lld folders": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld folder"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld folders"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld dossier"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld dossiers"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld folders already included in a chosen one": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld folder already included in a chosen one"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld folders already included in a chosen one"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld dossier déjà inclus dans un dossier choisi"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld dossiers déjà inclus dans un dossier choisi"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "already included in": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "already included in"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "déjà inclus dans"
+          }
+        }
+      }
+    },
+    "Show the dropped folders": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show the dropped folders"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voir les dossiers écartés"
+          }
+        }
+      }
+    },
     "%lld lights": {
       "localizations": {
         "en": {
@@ -1377,18 +1489,18 @@
         }
       }
     },
-    "Choose Folder…": {
+    "Choose Folders…": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choose Folder…"
+            "value": "Choose Folders…"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choisir un dossier…"
+            "value": "Choisir des dossiers…"
           }
         }
       }
@@ -1409,18 +1521,18 @@
         }
       }
     },
-    "Choose a capture folder; it is read, never written.": {
+    "Choose one or more capture folders; they are read, never written.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choose a capture folder; it is read, never written."
+            "value": "Choose one or more capture folders; they are read, never written."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choisissez un dossier de capture : il est lu, jamais modifié."
+            "value": "Choisissez un ou plusieurs dossiers de capture ; ils sont lus, jamais écrits."
           }
         }
       }

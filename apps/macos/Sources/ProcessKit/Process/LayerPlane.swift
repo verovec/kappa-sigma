@@ -92,6 +92,13 @@ package struct LayerPlane: Equatable, Sendable {
     return !first.isWhitespace && !last.isWhitespace && !id.contains("*")
   }
 
+  /// The tokens a bundle of `planes` offers the layer parameter `spec`, by its own grammar; none
+  /// for a parameter of another kind.
+  package static func options(for spec: ParamSpec, planes: [String: Int]) -> [String] {
+    guard case .layer(_, let allowsNone, let allowsProduct) = spec.kind else { return [] }
+    return options(planes: planes, allowsNone: allowsNone, allowsProduct: allowsProduct)
+  }
+
   /// The tokens a bundle of `planes` (planes per layer id) offers a layer parameter.
   ///
   /// `none` first when allowed; the colour layer first, then the canonical filter order; a plane

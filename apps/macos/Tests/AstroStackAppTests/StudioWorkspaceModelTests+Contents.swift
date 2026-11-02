@@ -71,6 +71,19 @@ extension StudioWorkspaceModelTests {
         "(to add with Line injection or Emission screens)."))
   }
 
+  @Test("testCombinedContentsNamesTheLineProcessesForACustomLine")
+  func testCombinedContentsNamesTheLineProcessesForACustomLine() {
+    // Card 0164: an « Other line » card lays a line kept as written in, like Hα's.
+    let en = Locale(identifier: "en")
+    let custom = CombinedContents(holds: ["RGB"], missing: ["Ha", "Filter5"])
+    #expect(
+      String(localized: custom.words(locale: en)).hasSuffix(
+        "(to add with Line injection or Emission screens)."))
+    // Over that line alone there is no colour base: a combination adds the others.
+    let alone = CombinedContents(holds: ["Filter5"], missing: ["RGB"])
+    #expect(!String(localized: alone.words(locale: en)).contains("Line injection"))
+  }
+
   @Test("testCombinedContentsNoneForASingleLayer", .scratchDirectory)
   func testCombinedContentsNoneForASingleLayer() throws {
     let opened = try BranchTests.project()

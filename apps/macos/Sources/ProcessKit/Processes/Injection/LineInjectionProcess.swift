@@ -9,7 +9,7 @@ package import Metal
 /// a default; every gain defaults to 0, which returns the head bit for bit. The formula has no
 /// legacy rule (legacy « hargb » was a screen); PixInsight's NBRGBCombination is the idea, the CPU
 /// oracle in the tests pins it.
-package struct LineInjectionProcess: ImageProcess {
+package struct LineInjectionProcess: LineSlotProcess {
   package static let id = "line-injection"
   package static let title = "Line injection"
   package static let stage = ProcessStage.linear
@@ -64,9 +64,9 @@ package struct LineInjectionProcess: ImageProcess {
   /// nothing, yet the rows stay so the gain can be reset and the shares restored.
   package static func layersAsked(_ params: ParamSet) -> Set<String> {
     Set(
-      EmissionLine.allCases.filter { Float(params.number($0.id("Gain"))) != 0 }.map(\.layerID))
+      EmissionLine.lines(params).filter { Float(params.number($0.id("Gain"))) != 0 }
+        .map(\.layerID))
   }
-
   /// Whether `line` subtracts its continuum with `params`: k as the kernel reads it (Float).
   package static func subtracts(_ line: EmissionLine, params: ParamSet) -> Bool {
     Float(params.number(line.id("ContinuumK"))) != 0
@@ -87,6 +87,7 @@ package struct LineInjectionProcess: ImageProcess {
       throw ProcessError.invalidParameter("line injection needs an RGB base")
     }
     try LineKernels.checkSlots(bound.count)
+    try EmissionLine.checkBound(bound)
     var textures: [MTLTexture] = []
     var values: [LineKernels.InjectLine] = []
     for line in bound {
@@ -102,12 +103,12 @@ package struct LineInjectionProcess: ImageProcess {
     try encode(input, into: output, lines: textures, values: values, context: context)
   }
 
-  /// The lines the kernel reads, in canonical order: those that inject.
+  /// The lines the kernel reads, in canonical order then slot order: those that inject.
   ///
   /// A line that adds nothing left the base untouched in the unrolled kernel, so leaving it
   /// out changes no bit (card 0136).
   package static func boundLines(_ params: ParamSet) -> [EmissionLine] {
-    EmissionLine.allCases.filter { injects($0, params: params) }
+    EmissionLine.lines(params).filter { injects($0, params: params) }
   }
 
   /// The plane of `line` and the plane k multiplies (the line itself when k = 0: no reference

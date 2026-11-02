@@ -26,9 +26,14 @@ struct StudioModelBranchTests {
   /// SHA-256 of `history.json` after combination + stretch + screens on `BranchTests.bundle()`,
   /// recorded with the code before card 0118 (254 lines, no `branchHeads` key), re-recorded by
   /// card 0141: the screens' Hβ and [NII] defaults added (318 lines); without those 16 entries
-  /// the file still hashes to the 0118 digest `3410e49c…534f`.
+  /// the file still hashes to the 0118 digest `3410e49c…534f`. Re-recorded by card 0164: the
+  /// screens' « Other line » slot defaults added; without the `custom` entries the file hashes to
+  /// the 0141 digest.
   static let recordedManifestSHA256 =
-    "b33d1729613299c584c467998a3847bfb3ad0741b263659b1bddd5691dd19f63"
+    "1e11986aa3f1dd733da228156bf98faec5849af4fc54b6c049b619c5cd203fcb"
+
+  /// The 0141 digest, before card 0164 added the « Other line » slot defaults.
+  static let digest0141 = "b33d1729613299c584c467998a3847bfb3ad0741b263659b1bddd5691dd19f63"
 
   /// The 0118 digest, before card 0141 added the Hβ and [NII] defaults.
   static let digest0118 = "3410e49cd61a9b40d33b861323480e6b8185705586be7f331f3042f9638e534f"
@@ -71,9 +76,10 @@ struct StudioModelBranchTests {
     let manifest = try Data(contentsOf: opened.folder.appendingPathComponent("history.json"))
     let digest = Self.sha256(manifest)
     #expect(digest == Self.recordedManifestSHA256)
-    // Card 0141 grew the screens' defaults: without its Hβ / [NII] entries the manifest is still
-    // the 0118 one, byte for byte.
-    #expect(Self.sha256(Self.withoutLines(["hb", "nii"], manifest)) == Self.digest0118)
+    // Cards 0141 and 0164 grew the screens' defaults: without their entries the manifest is still
+    // the earlier one, byte for byte.
+    #expect(Self.sha256(Self.withoutLines(["custom"], manifest)) == Self.digest0141)
+    #expect(Self.sha256(Self.withoutLines(["hb", "nii", "custom"], manifest)) == Self.digest0118)
     let branches = opened.folder.appendingPathComponent("branches")
     #expect(!FileManager.default.fileExists(atPath: branches.path), "no branch folder written")
     // The same steps through the pipeline runner on the bare bundle (no branch seam): the same

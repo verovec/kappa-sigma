@@ -154,9 +154,8 @@ package final class ProcessPanelModel {
   private func refreshLayerOptions() {
     var optionsNow: [String: [String]] = [:]
     for spec in type.schema.specs {
-      guard case .layer(_, let allowsNone, let allowsProduct) = spec.kind else { continue }
-      optionsNow[spec.id] = LayerPlane.options(
-        planes: layerPlanes, allowsNone: allowsNone, allowsProduct: allowsProduct)
+      guard case .layer = spec.kind else { continue }
+      optionsNow[spec.id] = type.layerOptions(for: spec, planes: layerPlanes)
     }
     if optionsNow != layerOptions { layerOptions = optionsNow }
     let palettesNow = type.palettes(planes: layerPlanes)

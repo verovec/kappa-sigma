@@ -2,12 +2,17 @@ package import FilterKit
 
 /// An emission line the line processes read: a projection of FilterKit's narrowband filters
 /// (card 0133) — the one list — with the parameter-id prefix, the panel name the schemas use and
-/// the line's panel defaults.
+/// the line's panel defaults; or an « Other line » slot bound to a layer kept as written (card
+/// 0164, `custom(slot:layer:)`), read by the same code.
 package struct EmissionLine: Hashable, Sendable, CaseIterable {
-  /// The filter that isolates the line.
-  package let filter: Filter
-  /// Its physics (FilterKit).
-  package let line: Filter.Line
+  /// The filter that isolates the line; `nil` for an « Other line » slot.
+  package let filter: Filter?
+  /// The bundle layer it reads.
+  package let layerID: String
+  /// The prefix of its parameter ids (`haBlack`, `oiiiOpacity`, `custom1Gain`…).
+  package let prefix: String
+  /// How panels write it.
+  package let name: String
   /// Its panel defaults (`LinePanelDefaults`): a line without an entry is not a line here, and
   /// `LinePanelDefaultsTests` says so (the table's keys are exactly `Filter.narrowband`).
   let defaults: LinePanelDefaults
@@ -15,18 +20,32 @@ package struct EmissionLine: Hashable, Sendable, CaseIterable {
   /// The line of `filter`; `nil` for a filter outside `LinePanelDefaults` (every broadband one).
   package init?(_ filter: Filter) {
     guard let defaults = LinePanelDefaults.table[filter], let line = filter.line else { return nil }
+    self.init(
+      filter: filter, layerID: filter.rawValue, prefix: filter.rawValue.lowercased(),
+      name: line.displayName, defaults: defaults)
+  }
+
+  private init(
+    filter: Filter?, layerID: String, prefix: String, name: String, defaults: LinePanelDefaults
+  ) {
     self.filter = filter
-    self.line = line
+    self.layerID = layerID
+    self.prefix = prefix
+    self.name = name
     self.defaults = defaults
   }
 
-  /// Every line, in display order.
+  /// « Other line `slot` » reading the bundle layer `layer`, with the neutral defaults.
+  package static func custom(slot: Int, layer: String) -> Self {
+    Self(
+      filter: nil, layerID: layer, prefix: slotPrefix(slot), name: slotName(slot),
+      defaults: .other)
+  }
+
+  /// Every catalogued line, in display order.
   package static let allCases = Filter.narrowband.compactMap(Self.init)
 
-  /// The bundle layer it reads.
-  package var layerID: String { filter.rawValue }
-
-  /// The bundle layers of every line.
+  /// The bundle layers of every catalogued line.
   package static let layerIDs = Set(allCases.map(\.layerID))
 
   /// Whether the bundle layer `id` is a line layer, known or not (`NII-custom`).
@@ -49,12 +68,6 @@ package struct EmissionLine: Hashable, Sendable, CaseIterable {
     Filter(rawValue: id).flatMap(Self.init)?.name ?? id
   }
 
-  /// The prefix of its parameter ids (`haBlack`, `oiiiOpacity`…).
-  package var prefix: String { filter.rawValue.lowercased() }
-
-  /// How panels write it.
-  package var name: String { line.displayName }
-
   /// The id of its parameter `name` (`Enabled`, `Black`…).
   package func id(_ name: String) -> String { prefix + name }
 
@@ -69,6 +82,11 @@ package struct EmissionLine: Hashable, Sendable, CaseIterable {
     return (k, reference)
   }
 
-  package static func == (lhs: Self, rhs: Self) -> Bool { lhs.filter == rhs.filter }
-  package func hash(into hasher: inout Hasher) { hasher.combine(filter) }
+  package static func == (lhs: Self, rhs: Self) -> Bool {
+    lhs.prefix == rhs.prefix && lhs.layerID == rhs.layerID
+  }
+  package func hash(into hasher: inout Hasher) {
+    hasher.combine(prefix)
+    hasher.combine(layerID)
+  }
 }

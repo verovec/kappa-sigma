@@ -121,6 +121,10 @@ package protocol ImageProcess {
   /// visible parameters, never a hidden setting. `nil` for a process without a palette menu
   /// (the default); empty when this bundle allows none (the menu then reads « Custom »).
   static func palettes(planes: [String: Int]) -> [Palette]?
+
+  /// The tokens the layer parameter `spec` lists for a bundle of `planes` (planes per layer id):
+  /// what the panel's picker offers.
+  static func layerOptions(for spec: ParamSpec, planes: [String: Int]) -> [String]
 }
 
 extension ImageProcess {
@@ -185,11 +189,19 @@ extension ImageProcess {
 
   /// A row about an absent layer hides, unless the values ask for that layer.
   package static func hiddenParameters(_ params: ParamSet, layerIDs: Set<String>) -> Set<String> {
-    guard schema.specs.contains(where: { $0.needsLayer != nil }) else { return [] }
+    layerRowsHidden(params, layerIDs: layerIDs)
+  }
+
+  /// The rows about a layer (`ParamSpec.layer(with:)`) that is absent and not asked — a slot
+  /// naming `none` included: the one 0135 rule, for a process that adds its own on top.
+  package static func layerRowsHidden(_ params: ParamSet, layerIDs: Set<String>) -> Set<String> {
+    guard schema.specs.contains(where: { $0.needsLayer != nil || $0.layerParam != nil }) else {
+      return []
+    }
     let asked = layersAsked(params)
     return Set(
       schema.specs.filter { spec in
-        spec.needsLayer.map { !layerIDs.contains($0) && !asked.contains($0) } ?? false
+        spec.layer(with: params).map { !layerIDs.contains($0) && !asked.contains($0) } ?? false
       }.map(\.id))
   }
 
@@ -201,7 +213,9 @@ extension ImageProcess {
     guard let reason = rowReasons.first else { return [:] }
     var notes: [String: RowNote] = [:]
     for layer in layersAsked(params).subtracting(layerIDs) {
-      guard let spec = schema.specs.first(where: { $0.needsLayer == layer }) else { continue }
+      guard let spec = schema.specs.first(where: { $0.layer(with: params) == layer }) else {
+        continue
+      }
       notes[spec.id] = RowNote(reason: reason, subject: EmissionLine.name(ofLayer: layer))
     }
     return notes
@@ -225,6 +239,11 @@ extension ImageProcess {
 
   /// No palette menu.
   package static func palettes(planes: [String: Int]) -> [Palette]? { nil }
+
+  /// Every token the parameter's grammar takes from the bundle (`LayerPlane.options`, card 0138).
+  package static func layerOptions(for spec: ParamSpec, planes: [String: Int]) -> [String] {
+    LayerPlane.options(for: spec, planes: planes)
+  }
 
   /// Whether its image is a colour image whatever it read (card 0137): it replaces its input
   /// with three planes — a mono layer combined in grey is honest input for a colour process.

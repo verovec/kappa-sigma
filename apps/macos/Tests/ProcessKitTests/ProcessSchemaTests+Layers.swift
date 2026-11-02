@@ -20,8 +20,10 @@ extension ProcessSchemaTests {
     #expect(try #require(screens.spec("haEnabled")).needsLayer == "Ha")
     #expect(try #require(screens.spec("nbBlend")).needsLayer == nil)
     var params = ParamSet(schema: screens)
-    // Hα and OIII are on by default: they still ask for their layer, SII, Hβ and NII do not.
-    let hidden = EmissionScreensProcess.hiddenParameters(params, layerIDs: ["RGB"])
+    // Hα and OIII are on by default: they still ask for their layer, SII, Hβ and NII do not. The
+    // « Other line » slots, unbound, hide too (card 0164): the catalogued rows are judged here.
+    let catalogued = { (rows: Set<String>) in rows.filter { !$0.hasPrefix("custom") } }
+    let hidden = catalogued(EmissionScreensProcess.hiddenParameters(params, layerIDs: ["RGB"]))
     #expect(
       hidden.allSatisfy { ["sii", "hb", "nii"].contains(where: $0.hasPrefix) } && !hidden.isEmpty)
     try params.set("haEnabled", .flag(false))
@@ -29,8 +31,9 @@ extension ProcessSchemaTests {
     let allHidden = EmissionScreensProcess.hiddenParameters(params, layerIDs: ["RGB"])
     #expect(allHidden.contains("haEnabled") && allHidden.contains("oiiiOpacity"))
     #expect(
-      EmissionScreensProcess.hiddenParameters(
-        params, layerIDs: ["RGB", "Ha", "OIII", "SII", "Hb", "NII"]
+      catalogued(
+        EmissionScreensProcess.hiddenParameters(
+          params, layerIDs: ["RGB", "Ha", "OIII", "SII", "Hb", "NII"])
       ).isEmpty)
   }
 

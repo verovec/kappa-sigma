@@ -1,8 +1,14 @@
 internal import FilterKit
 
 extension LineInjectionProcess {
-  /// One card per line in `EmissionLine` order: gain, continuum scale k, black point, shares.
-  package static let schema = ParamSchema(EmissionLine.allCases.flatMap(lineSpecs))
+  /// One card per line in `EmissionLine` order: gain, continuum scale k, black point, shares;
+  /// then the « Other line » slots (card 0164).
+  package static let schema = ParamSchema(
+    EmissionLine.allCases.flatMap(lineSpecs)
+      + EmissionLine.slots.flatMap {
+        // No k: the stack fits no continuum for a layer outside the catalogue (0165 adds one).
+        EmissionLine.slotSpecs($0, rows: specs(of:), without: ["ContinuumK"])
+      })
 
   /// One line's card; the gains default to 0 (the identity), the shares to the line's colour —
   /// every row about the line's layer (`needsLayer`).
@@ -68,7 +74,7 @@ extension LineInjectionProcess {
   /// continuum scale with its reference plane, inside the schema's range as the screens offer it,
   /// and a black point at the line's sky level; never applied by the process (R2).
   package func suggestions(stats: LayerStats, layers: [String: LayerStats]) -> [Suggestion] {
-    EmissionLine.allCases.filter { Self.injects($0, params: params) }.flatMap { line in
+    EmissionLine.lines(params).filter { Self.injects($0, params: params) }.flatMap { line in
       [continuumSuggestion(line, layers: layers), blackSuggestion(line, layers: layers)]
         .compactMap { $0 }
     }

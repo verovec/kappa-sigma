@@ -12,7 +12,7 @@ package import Metal
 ///
 /// R2: no wash gate, no automatic attenuation (the legacy `hagate.go` was rejected): k, the black
 /// point (shown in σ) and the opacities are values the user sees and may take as suggestions.
-package struct EmissionScreensProcess: ImageProcess {
+package struct EmissionScreensProcess: LineSlotProcess {
   package static let id = "emission-screens"
   package static let title = "Emission screens"
   package static let stage = ProcessStage.nonlinear
@@ -42,7 +42,7 @@ package struct EmissionScreensProcess: ImageProcess {
 
   /// The lines `params` enable, in screen order.
   package static func enabledLines(_ params: ParamSet) -> [EmissionLine] {
-    EmissionLine.allCases.filter { params.flag($0.id("Enabled")) }
+    EmissionLine.lines(params).filter { params.flag($0.id("Enabled")) }
   }
 
   /// The enabled lines' layers; with a continuum subtraction, the broadband layers too (the
@@ -82,10 +82,9 @@ package struct EmissionScreensProcess: ImageProcess {
   package static func layersAsked(_ params: ParamSet) -> Set<String> {
     Set(enabledLines(params).map(\.layerID))
   }
-
   /// Why `params` cannot run with only the `present` layers ("Hα screen needs the Ha layer").
   package static func unavailableReason(params: ParamSet, present: Set<String>) -> String? {
-    let missing = EmissionLine.allCases.first {
+    let missing = EmissionLine.lines(params).first {
       params.flag($0.id("Enabled")) && !present.contains($0.layerID)
     }
     return missing.map { "\($0.name) screen needs the \($0.layerID) layer" }
@@ -102,6 +101,7 @@ package struct EmissionScreensProcess: ImageProcess {
     var values: [LineKernels.ScreenLine] = []
     let bound = Self.boundLines(params)
     try LineKernels.checkSlots(bound.count)
+    try EmissionLine.checkBound(bound)
     for line in bound {
       // Unreachable: `lineStretches` refuses every enabled line without a stretch.
       guard let stretch = stretches[line] else { continue }

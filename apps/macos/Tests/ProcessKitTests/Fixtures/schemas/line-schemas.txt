@@ -9,7 +9,7 @@ emission-screens | haContinuumK | Hα continuum scale k | none | advanced | numb
 emission-screens | haBackground | Hα background | none | simple | number 0.12 in 0.01...0.6
 emission-screens | haBlack | Hα black point | none | simple | number 0.0 in 0.0...0.9
 emission-screens | haOpacity | Hα opacity | opacity | simple | number 0.85 in 0.0...1.0
-emission-screens | haTint | Hα tint | none | simple | choice red of red,teal,crimson,gold,green,blue
+emission-screens | haTint | Hα tint | none | simple | choice red of red,teal,crimson,gold,green,blue,white
 emission-screens | haBoost | Hα boost | none | advanced | number 1.0 in 1.0...3.0
 emission-screens | oiiiEnabled | [OIII] screen | none | simple | flag true
 emission-screens | oiiiContinuum | [OIII] continuum subtraction | none | simple | flag false
@@ -17,7 +17,7 @@ emission-screens | oiiiContinuumK | [OIII] continuum scale k | none | advanced |
 emission-screens | oiiiBackground | [OIII] background | none | simple | number 0.12 in 0.01...0.6
 emission-screens | oiiiBlack | [OIII] black point | none | simple | number 0.0 in 0.0...0.9
 emission-screens | oiiiOpacity | [OIII] opacity | opacity | simple | number 0.78 in 0.0...1.0
-emission-screens | oiiiTint | [OIII] tint | none | simple | choice teal of red,teal,crimson,gold,green,blue
+emission-screens | oiiiTint | [OIII] tint | none | simple | choice teal of red,teal,crimson,gold,green,blue,white
 emission-screens | oiiiBoost | [OIII] boost | none | advanced | number 1.0 in 1.0...3.0
 emission-screens | siiEnabled | [SII] screen | none | simple | flag false
 emission-screens | siiContinuum | [SII] continuum subtraction | none | simple | flag false
@@ -25,7 +25,7 @@ emission-screens | siiContinuumK | [SII] continuum scale k | none | advanced | n
 emission-screens | siiBackground | [SII] background | none | simple | number 0.12 in 0.01...0.6
 emission-screens | siiBlack | [SII] black point | none | simple | number 0.0 in 0.0...0.9
 emission-screens | siiOpacity | [SII] opacity | opacity | simple | number 0.6 in 0.0...1.0
-emission-screens | siiTint | [SII] tint | none | simple | choice gold of red,teal,crimson,gold,green,blue
+emission-screens | siiTint | [SII] tint | none | simple | choice gold of red,teal,crimson,gold,green,blue,white
 emission-screens | siiBoost | [SII] boost | none | advanced | number 1.0 in 1.0...3.0
 emission-screens | hbEnabled | Hβ screen | none | simple | flag false
 emission-screens | hbContinuum | Hβ continuum subtraction | none | simple | flag false
@@ -33,7 +33,7 @@ emission-screens | hbContinuumK | Hβ continuum scale k | none | advanced | numb
 emission-screens | hbBackground | Hβ background | none | simple | number 0.12 in 0.01...0.6
 emission-screens | hbBlack | Hβ black point | none | simple | number 0.0 in 0.0...0.9
 emission-screens | hbOpacity | Hβ opacity | opacity | simple | number 0.6 in 0.0...1.0
-emission-screens | hbTint | Hβ tint | none | simple | choice blue of red,teal,crimson,gold,green,blue
+emission-screens | hbTint | Hβ tint | none | simple | choice blue of red,teal,crimson,gold,green,blue,white
 emission-screens | hbBoost | Hβ boost | none | advanced | number 1.0 in 1.0...3.0
 emission-screens | niiEnabled | [NII] screen | none | simple | flag false
 emission-screens | niiContinuum | [NII] continuum subtraction | none | simple | flag false
@@ -41,8 +41,36 @@ emission-screens | niiContinuumK | [NII] continuum scale k | none | advanced | n
 emission-screens | niiBackground | [NII] background | none | simple | number 0.12 in 0.01...0.6
 emission-screens | niiBlack | [NII] black point | none | simple | number 0.0 in 0.0...0.9
 emission-screens | niiOpacity | [NII] opacity | opacity | simple | number 0.6 in 0.0...1.0
-emission-screens | niiTint | [NII] tint | none | simple | choice crimson of red,teal,crimson,gold,green,blue
+emission-screens | niiTint | [NII] tint | none | simple | choice crimson of red,teal,crimson,gold,green,blue,white
 emission-screens | niiBoost | [NII] boost | none | advanced | number 1.0 in 1.0...3.0
+emission-screens | custom1Layer | Other line 1 layer | none | simple | layer none none:true product:false
+emission-screens | custom1Enabled | Other line 1 screen | none | simple | flag false
+emission-screens | custom1Background | Other line 1 background | none | simple | number 0.12 in 0.01...0.6
+emission-screens | custom1Black | Other line 1 black point | none | simple | number 0.0 in 0.0...0.9
+emission-screens | custom1Opacity | Other line 1 opacity | opacity | simple | number 0.6 in 0.0...1.0
+emission-screens | custom1Tint | Other line 1 tint | none | simple | choice white of red,teal,crimson,gold,green,blue,white
+emission-screens | custom1Boost | Other line 1 boost | none | advanced | number 1.0 in 1.0...3.0
+emission-screens | custom2Layer | Other line 2 layer | none | simple | layer none none:true product:false
+emission-screens | custom2Enabled | Other line 2 screen | none | simple | flag false
+emission-screens | custom2Background | Other line 2 background | none | simple | number 0.12 in 0.01...0.6
+emission-screens | custom2Black | Other line 2 black point | none | simple | number 0.0 in 0.0...0.9
+emission-screens | custom2Opacity | Other line 2 opacity | opacity | simple | number 0.6 in 0.0...1.0
+emission-screens | custom2Tint | Other line 2 tint | none | simple | choice white of red,teal,crimson,gold,green,blue,white
+emission-screens | custom2Boost | Other line 2 boost | none | advanced | number 1.0 in 1.0...3.0
+emission-screens | custom3Layer | Other line 3 layer | none | simple | layer none none:true product:false
+emission-screens | custom3Enabled | Other line 3 screen | none | simple | flag false
+emission-screens | custom3Background | Other line 3 background | none | simple | number 0.12 in 0.01...0.6
+emission-screens | custom3Black | Other line 3 black point | none | simple | number 0.0 in 0.0...0.9
+emission-screens | custom3Opacity | Other line 3 opacity | opacity | simple | number 0.6 in 0.0...1.0
+emission-screens | custom3Tint | Other line 3 tint | none | simple | choice white of red,teal,crimson,gold,green,blue,white
+emission-screens | custom3Boost | Other line 3 boost | none | advanced | number 1.0 in 1.0...3.0
+emission-screens | custom4Layer | Other line 4 layer | none | simple | layer none none:true product:false
+emission-screens | custom4Enabled | Other line 4 screen | none | simple | flag false
+emission-screens | custom4Background | Other line 4 background | none | simple | number 0.12 in 0.01...0.6
+emission-screens | custom4Black | Other line 4 black point | none | simple | number 0.0 in 0.0...0.9
+emission-screens | custom4Opacity | Other line 4 opacity | opacity | simple | number 0.6 in 0.0...1.0
+emission-screens | custom4Tint | Other line 4 tint | none | simple | choice white of red,teal,crimson,gold,green,blue,white
+emission-screens | custom4Boost | Other line 4 boost | none | advanced | number 1.0 in 1.0...3.0
 line-injection | haGain | Hα gain | none | simple | number 0.0 in 0.0...4.0
 line-injection | haContinuumK | Hα continuum scale k | none | simple | number 0.0 in 0.0...5.0
 line-injection | haBlack | Hα black point | none | simple | number 0.0 in 0.0...1.0
@@ -73,3 +101,27 @@ line-injection | niiBlack | [NII] black point | none | simple | number 0.0 in 0.
 line-injection | niiRed | [NII] into red | opacity | advanced | number 1.0 in 0.0...1.0
 line-injection | niiGreen | [NII] into green | opacity | advanced | number 0.0 in 0.0...1.0
 line-injection | niiBlue | [NII] into blue | opacity | advanced | number 0.0 in 0.0...1.0
+line-injection | custom1Layer | Other line 1 layer | none | simple | layer none none:true product:false
+line-injection | custom1Gain | Other line 1 gain | none | simple | number 0.0 in 0.0...4.0
+line-injection | custom1Black | Other line 1 black point | none | simple | number 0.0 in 0.0...1.0
+line-injection | custom1Red | Other line 1 into red | opacity | advanced | number 1.0 in 0.0...1.0
+line-injection | custom1Green | Other line 1 into green | opacity | advanced | number 1.0 in 0.0...1.0
+line-injection | custom1Blue | Other line 1 into blue | opacity | advanced | number 1.0 in 0.0...1.0
+line-injection | custom2Layer | Other line 2 layer | none | simple | layer none none:true product:false
+line-injection | custom2Gain | Other line 2 gain | none | simple | number 0.0 in 0.0...4.0
+line-injection | custom2Black | Other line 2 black point | none | simple | number 0.0 in 0.0...1.0
+line-injection | custom2Red | Other line 2 into red | opacity | advanced | number 1.0 in 0.0...1.0
+line-injection | custom2Green | Other line 2 into green | opacity | advanced | number 1.0 in 0.0...1.0
+line-injection | custom2Blue | Other line 2 into blue | opacity | advanced | number 1.0 in 0.0...1.0
+line-injection | custom3Layer | Other line 3 layer | none | simple | layer none none:true product:false
+line-injection | custom3Gain | Other line 3 gain | none | simple | number 0.0 in 0.0...4.0
+line-injection | custom3Black | Other line 3 black point | none | simple | number 0.0 in 0.0...1.0
+line-injection | custom3Red | Other line 3 into red | opacity | advanced | number 1.0 in 0.0...1.0
+line-injection | custom3Green | Other line 3 into green | opacity | advanced | number 1.0 in 0.0...1.0
+line-injection | custom3Blue | Other line 3 into blue | opacity | advanced | number 1.0 in 0.0...1.0
+line-injection | custom4Layer | Other line 4 layer | none | simple | layer none none:true product:false
+line-injection | custom4Gain | Other line 4 gain | none | simple | number 0.0 in 0.0...4.0
+line-injection | custom4Black | Other line 4 black point | none | simple | number 0.0 in 0.0...1.0
+line-injection | custom4Red | Other line 4 into red | opacity | advanced | number 1.0 in 0.0...1.0
+line-injection | custom4Green | Other line 4 into green | opacity | advanced | number 1.0 in 0.0...1.0
+line-injection | custom4Blue | Other line 4 into blue | opacity | advanced | number 1.0 in 0.0...1.0

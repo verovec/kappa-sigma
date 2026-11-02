@@ -28,4 +28,8 @@ package struct LinePanelDefaults: Equatable, Sendable {
     .hydrogenBeta: Self(enabled: false, opacity: 0.6, tint: .blue, shares: [0, 0, 1]),
     .nitrogenII: Self(enabled: false, opacity: 0.6, tint: .crimson, shares: [1, 0, 0]),
   ]
+
+  /// An « Other line » slot's (card 0164): a line of unknown colour starts neutral — screen off,
+  /// white tint, injected into the three planes alike (at gain 0: no pixel changes).
+  static let other = Self(enabled: false, opacity: 0.6, tint: .white, shares: [1, 1, 1])
 }

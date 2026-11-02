@@ -12,6 +12,8 @@ package enum ScreenTint: String, CaseIterable, Sendable {
   case green
   /// Pure blue.
   case blue
+  /// Neutral: an « Other line » of unknown colour (card 0164).
+  case white
 
   /// The tint's red, green and blue weights.
   package var rgb: [Double] {
@@ -22,6 +24,7 @@ package enum ScreenTint: String, CaseIterable, Sendable {
     case .gold: [1, 215.0 / 255, 0]
     case .green: [0, 1, 0]
     case .blue: [0, 0, 1]
+    case .white: [1, 1, 1]
     }
   }
 }

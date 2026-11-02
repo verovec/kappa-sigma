@@ -30,9 +30,10 @@ package struct CombinedContents: Equatable, Sendable {
       names(missing).formatted(.list(type: either ? .or : .and).locale(locale))
     }
     // The two processes lay lines over a colour base (RGB, or mono R/G/B combined), not over
-    // lines alone: there, a channel combination is what adds the others.
-    guard !holds.allSatisfy(EmissionLine.layerIDs.contains),
-      missing.allSatisfy(EmissionLine.layerIDs.contains)
+    // lines alone: there, a channel combination is what adds the others. A line kept as written
+    // is one too: its « Other line » card lays it in (card 0164).
+    guard !holds.allSatisfy(EmissionLine.isLineLayer),
+      missing.allSatisfy(EmissionLine.isLineLayer)
     else {
       return .app("Holds \(holding); not \(list(false)).", locale: locale)
     }

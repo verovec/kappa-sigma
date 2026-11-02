@@ -34,6 +34,10 @@ package struct ParamSpec: Equatable, Sendable {
   /// The bundle layer this parameter is about (a line's rows, card 0135): the panel hides the
   /// row while that layer is absent and the values do not ask for it; `nil` for every other row.
   package private(set) var needsLayer: String?
+  /// The layer parameter whose value names the layer this row is about (an « Other line » slot,
+  /// card 0164): the row follows that layer as a `needsLayer` row follows its own, and hides while
+  /// the slot names `none`; `nil` for every other row.
+  package private(set) var layerParam: String?
 
   /// A number parameter.
   package init(
@@ -109,6 +113,19 @@ package struct ParamSpec: Equatable, Sendable {
     var copy = self
     copy.needsLayer = layer
     return copy
+  }
+
+  /// This spec, about the layer the parameter `id` names (a copy: every other field as it was).
+  package func about(layerIn id: String) -> Self {
+    var copy = self
+    copy.layerParam = id
+    return copy
+  }
+
+  /// The bundle layer this row is about with `params`: its own (`needsLayer`) or the one its slot
+  /// names (`layerParam`, `none` included); `nil` for a row about no layer.
+  package func layer(with params: ParamSet) -> String? {
+    needsLayer ?? layerParam.map { params.choice($0) }
   }
 
   /// The default value.

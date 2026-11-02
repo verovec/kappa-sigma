@@ -16,6 +16,11 @@ extension EmissionScreensProcess {
       ParamSpec(id: "linkLayers", title: "Link layers", level: .advanced, flag: false),
     ]
     for line in EmissionLine.allCases { specs += lineSpecs(line) }
+    // No continuum subtraction on a slot: the stack fits none outside the catalogue (0165).
+    for slot in EmissionLine.slots {
+      specs += EmissionLine.slotSpecs(
+        slot, rows: Self.specs(of:), without: ["Continuum", "ContinuumK"])
+    }
     return ParamSchema(specs)
   }()
 

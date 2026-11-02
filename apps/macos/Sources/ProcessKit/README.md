@@ -13,7 +13,8 @@ non-destructive history, recipes and the registry (design §2, §4.1).
 - `ParamSchema` / `ParamSpec` (number with bounds, flag, choice, `layer` (card 0138: a bundle
   layer's plane as a token — `none` when allowed, `<id>`, `<id>.r|g|b`, `<a>*<b>` when allowed —
   well-formed by `LayerPlane.isWellFormed`, a `.choice` on the wire, the bundle naming the options
-  through `LayerPlane.options(planes:allowsNone:allowsProduct:)`; a token naming an absent layer is accepted and
+  through `LayerPlane.options(planes:allowsNone:allowsProduct:)` — the panel asks
+  `ImageProcess.layerOptions(for:planes:)`, which a process may narrow (card 0164's slots); a token naming an absent layer is accepted and
   fails at render with `missingLayer`), curve `points` (card 0053: 2 to
   `maxCount` `CurvePoint`s, clamped into [0, 1], sorted, one per x; JSON `[[x, y], …]`); `ParamUnit` none/px/sigma/opacity;
   `ParamLevel` simple/advanced with the display rule `visible(disclosed:promoted:hidden:)`), `ParamSet`
@@ -202,6 +203,22 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   (`layersRead`, card 0118; broadband = `EmissionLine.broadband(in:)`: neither a line layer — catalogued
   or custom (`NII-custom`, `Filter5`) — nor a step role (mask, stars, background model), card 0175); usual order: after denoise, before HDR. Rejected: more combination
   slots (0054's one source per slot), more boost on the screens (non-linear).
+- **« Other line » slots** (card 0164, PO 02/11 option A): both line processes append
+  `EmissionLine.slots` (4) static cards `custom<k>…` — a `custom<k>Layer` layer parameter (`none`
+  by default, whole layers, no product) then the line's rows without the continuum ones (the stack
+  fits no k for a layer outside the catalogue; 0165 adds a chosen reference). A slot bound to a
+  layer is an `EmissionLine.custom(slot:layer:)` (`filter == nil`, neutral `LinePanelDefaults.other`:
+  screen off, white tint, shares 1/1/1) and `EmissionLine.lines(params)` = catalogue + bound slots
+  is what both processes iterate — the render, `layersRead/Merged/Asked` and the suggestions are
+  the catalogued code. Static ids keep recipes, history, pipelines and profiles loadable without the
+  bundle (no `ParamSet` change); untouched values are bit-identical. A slot lists only the bundle's
+  custom line layers (`layerOptions(for:planes:)` → `EmissionLine.slotOptions`); picker k shows
+  once the bundle has k of them or names a layer (`EmissionLine.hiddenSlotPickers`); two lines on one
+  layer, or a slot naming a layer that is no custom line (a recipe's value), are refused at render
+  (`EmissionLine.checkBound`), past 8 lines `LineKernels.checkSlots` refuses. Both processes adopt
+  `LineSlotProcess`, whose extension holds the slots' `hiddenParameters` / `layerOptions` once, and
+  build each slot with `EmissionLine.slotSpecs(_:rows:without:)`.
+  A new slot = raise `slots` (≤ 8 lines bound) + its fr/en titles and `params.json` entries.
 
 ## Denoise (card 0115)
 
@@ -386,9 +403,12 @@ that reads bundle layers declares them in `layersRead`, or its steps never go st
   “<title>” first. ». Colour calibration overrides it with its route (`camera` osc/mono) and
   overrides `hiddenParameters` too — the one override not about a layer: the other route's
   names, and every SPCC row under PCC, are hidden (shown = what Siril is told).
-- **Layer-aware rows** (card 0135): a spec may declare `needsLayer` (the line specs do); the
+- **Layer-aware rows** (card 0135): a spec may declare `needsLayer` (the line specs do), or
+  `about(layerIn:)` a layer parameter whose VALUE names its layer (`layerParam`, the « Other
+  line » slots, card 0164: `none` hides the row; `ParamSpec.layer(with:)` resolves both); the
   panel hides it while that layer is absent from the bundle AND the values do not ask for it
-  (`ImageProcess.hiddenParameters`, default rule over `layersAsked(_:)` — the layers the VALUES
+  (`ImageProcess.hiddenParameters` → `layerRowsHidden`, the default rule a process composes
+  with its own, over `layersAsked(_:)` — the layers the VALUES
   name, whatever the bundle holds; a screen on by default on a stack without its line stays, with
   its note, so it can be switched off). A line process implements `layersAsked` beside
   `layersRead` (the latter may add bundle-derived layers, a continuum reference, which must not

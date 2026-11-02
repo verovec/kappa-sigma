@@ -134,4 +134,22 @@ extension ScreensTests {
     ])
     #expect(try contracts.violations(of: EmissionScreensProcess.self, params: params).isEmpty)
   }
+
+  @Test(
+    "a custom line layer or a step role is not broadband when a continuum is subtracted (0175)",
+    arguments: [
+      (["haContinuum": .flag(true)], ["Ha", "RGB", "L"]),
+      ([:], ["Ha"]),
+    ] as [([String: ParamValue], Set<String>)])
+  func testLayersRead_CustomLayerIsNotBroadband(
+    values: [String: ParamValue], expected: Set<String>
+  ) throws {
+    let read = EmissionScreensProcess.layersRead(
+      try Self.params(values),
+      layerIDs: [
+        "RGB", "L", "Ha", "Filter5", "NII-custom", LayerRole.backgroundModel.rawValue,
+        LayerRole.mask.rawValue,
+      ])
+    #expect(read == expected)
+  }
 }

@@ -51,7 +51,7 @@ package struct EmissionScreensProcess: ImageProcess {
     let enabled = enabledLines(params)
     let continuum = enabled.contains { params.flag($0.id("Continuum")) }
     return Set(enabled.map(\.layerID))
-      .union(continuum ? layerIDs.subtracting(EmissionLine.layerIDs) : [])
+      .union(continuum ? EmissionLine.broadband(in: layerIDs) : [])
       .intersection(layerIDs)
   }
 

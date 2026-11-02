@@ -199,7 +199,8 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   screens' k), never a default (R2); so is a black point at the line's sky (its median − k × the
   reference's). Pinned against `LineInjectionOracle`
   (max |Δ| ≤ 1e-6). A main step reads the injecting line layers, and the broadband ones once k > 0
-  (`layersRead`, card 0118); usual order: after denoise, before HDR. Rejected: more combination
+  (`layersRead`, card 0118; broadband = `EmissionLine.broadband(in:)`: neither a line layer — catalogued
+  or custom (`NII-custom`, `Filter5`) — nor a step role (mask, stars, background model), card 0175); usual order: after denoise, before HDR. Rejected: more combination
   slots (0054's one source per slot), more boost on the screens (non-linear).
 
 ## Denoise (card 0115)

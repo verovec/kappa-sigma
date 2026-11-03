@@ -7,6 +7,11 @@ package struct FITSHeader: Equatable, Sendable {
     /// The original 80 characters, written back unchanged.
     package let raw: String
 
+    /// A card of those 80 characters — as read from a file, or as a cache kept them (card 0168).
+    package init(raw: String) {
+      self.raw = raw
+    }
+
     /// Columns 1–8, trimmed.
     package var keyword: String {
       String(raw.prefix(8)).trimmingCharacters(in: .whitespaces)

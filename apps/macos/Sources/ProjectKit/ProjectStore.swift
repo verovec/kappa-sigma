@@ -23,10 +23,25 @@ package struct ProjectStore: Sendable {
   // MARK: - Schema
 
   /// Migrates to `version` (`nil` = the latest, `0` = an empty schema), in one transaction.
+  ///
+  /// Foreign keys stay enforced: a migration that rebuilds a table other rows point at sets their
+  /// links aside and puts them back itself (card 0168), so the cascades the other migrations rely
+  /// on keep firing.
   package func migrate(to version: Int?) throws {
     let migrator = Migrator(migrations: migrations)
     let stamp = now()
     try pool.write { db in try migrator.migrate(db, to: version, now: stamp) }
+  }
+
+  /// The rows pointing at a parent that is gone, as `<table>.<column>` (empty when the database is
+  /// sound): what a migration rebuilding a referenced table is checked against.
+  package func foreignKeyViolations() throws -> [String] {
+    try pool.read { db in
+      try Row.fetchAll(db, sql: "PRAGMA foreign_key_check").map { row in
+        let table: String = row["table"] ?? "?"
+        return "\(table).\(row["fkid"] ?? -1)"
+      }
+    }
   }
 
   /// The migrations applied to this database, by version.

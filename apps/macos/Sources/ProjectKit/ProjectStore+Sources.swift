@@ -25,9 +25,41 @@ extension ProjectStore {
     }
   }
 
+  /// Records an S3 prefix as a remote night (card 0168) and returns it; recording the same bucket
+  /// and prefix again returns the existing row, with the connection it was first read through.
+  ///
+  /// The path is the virtual `s3://bucket/prefix` the scan walks — never canonicalised as a file
+  /// path, which would mangle the scheme.
+  @discardableResult
+  package func addSource(remote connectionID: String, bucket: String, prefix: String) throws
+    -> ProjectSource
+  {
+    let key = ProjectSource.key(prefix)
+    let path = ProjectSource.remotePath(bucket: bucket, prefix: key)
+    let kind = ProjectSource.Kind.remoteNight
+    let stamp = now()
+    return try pool.write { db in
+      try db.execute(
+        sql: """
+          INSERT INTO sources (kind, path, read_only, connection_id, bucket, prefix, created_at,
+            updated_at)
+          VALUES (?, ?, 1, ?, ?, ?, ?, ?) ON CONFLICT (kind, path) DO NOTHING
+          """,
+        arguments: [kind.rawValue, path, connectionID, bucket, key, stamp, stamp])
+      let row = try Row.fetchOne(
+        db, sql: "SELECT * FROM sources WHERE kind = ? AND path = ?",
+        arguments: [kind.rawValue, path])
+      guard let row else { throw DatabaseError(resultCode: .SQLITE_INTERNAL) }
+      return Self.source(row)
+    }
+  }
+
   /// Records `profileID` (`nil`: none) as the profile kept for the source of `kind` at `path`.
   package func setProfile(_ profileID: String?, kind: ProjectSource.Kind, path: String) throws {
-    let canonical = URL(fileURLWithPath: path).standardizedFileURL.path
+    // A remote night's path is virtual: canonicalising it would read `s3://…` as a file and the
+    // UPDATE would match nothing (card 0168).
+    let canonical =
+      kind == .remoteNight ? path : URL(fileURLWithPath: path).standardizedFileURL.path
     let stamp = now()
     try pool.write { db in
       try db.execute(
@@ -47,6 +79,7 @@ extension ProjectStore {
     ProjectSource(
       id: row["id"], kind: ProjectSource.Kind(rawValue: row["kind"]) ?? .night,
       path: row["path"], readOnly: row["read_only"], profileID: row["profile_id"],
+      connectionID: row["connection_id"], bucket: row["bucket"], prefix: row["prefix"],
       createdAt: row["created_at"], updatedAt: row["updated_at"])
   }
 

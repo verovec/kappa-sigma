@@ -1,5 +1,6 @@
 package import Foundation
 package import ImageKit
+internal import ProjectKit
 internal import Synchronization
 
 /// An S3 prefix read in advance for the synchronous scan (card 0167): the listing as virtual paths
@@ -42,18 +43,21 @@ package struct RemoteSnapshot: Sendable {
 
   /// Lists `prefix` of `store` and reads every FITS header and side file under it; `progress`
   /// hears the listing, then the headers read.
+  ///
+  /// `cache` is what a previous scan of the same prefix read (card 0168): a key the bucket answers
+  /// with the same ETag is taken from it and never read again.
   @concurrent
   package static func load(
-    store: RemoteObjectStore, prefix: String,
+    store: RemoteObjectStore, prefix: String, cache: RemoteScanCache = .empty,
     progress: @escaping @Sendable (ScanProgress) -> Void = { _ in }
   ) async throws -> Self {
     progress(.listing)
-    let folder = prefix.isEmpty || prefix.hasSuffix("/") ? prefix : prefix + "/"
+    // The root is the spelling the project stores for the source (ProjectSource.remotePath): no
+    // trailing `/`, `s3://bucket` for a whole bucket.
+    let key = ProjectSource.key(prefix)
+    let folder = key.isEmpty ? "" : key + "/"
     let found = try await store.list(folder)
-    // Never a trailing `/` (the scan cleans its roots that way): `s3://bucket` for a whole bucket.
-    let root =
-      folder.isEmpty
-      ? "s3://" + store.bucket : path(bucket: store.bucket, key: String(folder.dropLast()))
+    let root = ProjectSource.remotePath(bucket: store.bucket, prefix: key)
     var objects: [String: RemoteObjectStore.Object] = [:]
     for object in found where object.key.hasPrefix(folder) {
       objects[path(bucket: store.bucket, key: object.key)] = object
@@ -64,8 +68,42 @@ package struct RemoteSnapshot: Sendable {
       },
       under: root, skippingOutput: true)
     var snapshot = Self(root: root, listing: listing, objects: objects)
+    snapshot.seed(from: cache)
     try await snapshot.readHeadersAndSideFiles(store: store, progress: progress)
     return snapshot
+  }
+
+  /// Takes from `cache` what the bucket still answers at the same ETag and size.
+  ///
+  /// Everything else is read again; a cached entry is never a measurement, only bytes.
+  mutating func seed(from cache: RemoteScanCache) {
+    // The walk's files, not every listed key: what the scan never reads (an `output/` folder, a
+    // sidecar whose frame is gone) is not carried from one cache to the next.
+    for path in listing.files {
+      guard let object = objects[path], let entry = cache.entries[object.key],
+        entry.etag == object.etag, entry.size == object.size
+      else { continue }
+      if let cards = entry.header {
+        headers[path] = .success(FITSHeader(cards: cards.map(FITSHeader.Card.init(raw:))))
+      }
+      if let contents = entry.contents { self.contents[path] = contents }
+    }
+  }
+
+  /// What this snapshot read, to keep for the next scan of the same prefix (card 0168): the files
+  /// the walk just answered, so a key the bucket no longer holds is not carried over.
+  package var cache: RemoteScanCache {
+    var entries: [String: RemoteScanCache.Entry] = [:]
+    for path in listing.files {
+      guard let object = objects[path] else { continue }
+      var entry = RemoteScanCache.Entry(etag: object.etag, size: object.size)
+      if case .success(let header)? = headers[path] { entry.header = header.cards.map(\.raw) }
+      entry.contents = contents[path]
+      // An object nothing was read of (a preview image, a failed header) stays out of the body.
+      guard entry.header != nil || entry.contents != nil else { continue }
+      entries[object.key] = entry
+    }
+    return RemoteScanCache(entries: entries)
   }
 
   /// The source the scan reads: this snapshot's listing, headers and side files.

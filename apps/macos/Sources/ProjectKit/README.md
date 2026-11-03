@@ -67,6 +67,23 @@ GRDB 7), and later `images/`, `recipes/`, `history/` (design §4.5). No UI, no A
 - `summary(in:)` counts a table only if it exists: `readSummary(at:)` never migrates, so a package
   written before a migration reads 0 for the table it adds instead of failing.
 
+## Remote sources (card 0168)
+
+- `addSource(remote:bucket:prefix:)` records an S3 prefix as a `remote_night`: its `path` is the
+  virtual `s3://bucket/prefix` (`ProjectSource.remotePath`, the one spelling StackKit's scan walks
+  — `RemoteSnapshot.root`), kept as it is spelled; the local `addSource(kind:path:)` canonicalises
+  with `URL(fileURLWithPath:)`, which would eat the scheme. Recording the same bucket and prefix
+  again returns the existing row with the connection it was first read through.
+- `remoteScan(of:)` / `setRemoteScan(_:of:)` / `deleteRemoteScan(of:)` keep what the last scan of
+  a source read (`remote_scans`, one JSON body per virtual path, through the same named-JSON
+  mechanism as `pipelines`): hand it to `RemoteScan.scan(cache:)` and only the keys whose ETag
+  changed have their header or side file read again. It is derived data — a new cached field never costs a migration, and
+  dropping the row only costs reads.
+- 0010 rebuilds `sources` while `stack_sources` points at it `ON DELETE RESTRICT`: the migration
+  sets those links aside and puts them back itself, so `migrate(to:)` keeps foreign keys enforced
+  (turning them off for the run would stop 0007's `ON DELETE CASCADE`). `foreignKeyViolations()`
+  is how a migration test proves a rebuild orphaned nothing.
+
 ## Storage and retention (card 0114)
 
 - `deleteStack(id:packageFolder:openStackID:)` deletes a stack: snapshots of its images first

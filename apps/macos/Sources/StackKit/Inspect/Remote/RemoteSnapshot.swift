@@ -98,7 +98,10 @@ package struct RemoteSnapshot: Sendable {
       guard let object = objects[path] else { continue }
       var entry = RemoteScanCache.Entry(etag: object.etag, size: object.size)
       if case .success(let header)? = headers[path] { entry.header = header.cards.map(\.raw) }
-      entry.contents = contents[path]
+      // A side file bigger than a sidecar is read again rather than carried in the body.
+      if let bytes = contents[path], bytes.count <= RemoteScanCache.maxCachedSideFileBytes {
+        entry.contents = bytes
+      }
       // An object nothing was read of (a preview image, a failed header) stays out of the body.
       guard entry.header != nil || entry.contents != nil else { continue }
       entries[object.key] = entry

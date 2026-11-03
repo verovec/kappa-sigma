@@ -351,6 +351,29 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
   /// The Import sheet's profile picker (card 0060).
   package static let importProfile = Self("import", "profile")
 
+  /// The Import sheet's « folders of this Mac | bucket » choice (card 0169).
+  package static let importSource = Self("import", "source")
+
+  /// The Import sheet's « Browse… » of a bucket (card 0169).
+  package static let importBrowse = Self("import", "browse")
+
+  /// The bucket form's connection picker (card 0169).
+  package static let importBucketConnection = Self("import", "bucketConnection")
+
+  /// The bucket form's bucket name field (card 0169).
+  package static let importBucketName = Self("import", "bucketName")
+
+  /// The bucket form's « one level up » (card 0169).
+  package static let importBucketUp = Self("import", "bucketUp")
+
+  /// The bucket form's « Scan this prefix » (card 0169).
+  package static let importBucketScan = Self("import", "bucketScan")
+
+  /// One folder of the bucket form's level, by its prefix (card 0169).
+  package static func importBucketFolder(_ prefix: String) -> Self {
+    Self("import", "bucketFolder", prefix)
+  }
+
   /// The shortcuts sheet's search field.
   package static let shortcutsSearch = Self("shortcuts", "search")
 

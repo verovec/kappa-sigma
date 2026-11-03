@@ -46,6 +46,13 @@ package struct RemoteScanCache: Codable, Sendable, Equatable {
   /// Nothing read yet: every key is read.
   package static let empty = Self()
 
+  /// A side file's bytes are kept only while they are sidecar-sized.
+  ///
+  /// A real SharpCap sidecar is a few KB, but `RemoteSnapshot.sideFileLimit` reads up to 1 MiB,
+  /// and one per frame of a 348-pose night would put hundreds of megabytes through one
+  /// `remote_scans` row.
+  package static let maxCachedSideFileBytes = 64 << 10
+
   /// The cache a project kept, from its JSON body; a body this build cannot read throws, and the
   /// caller scans without a cache rather than refusing to scan.
   package init(json: Data) throws {

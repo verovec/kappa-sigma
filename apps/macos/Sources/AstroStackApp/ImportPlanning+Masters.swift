@@ -22,7 +22,10 @@ extension ImportPlanning {
         return result
       },
       preview: { path in ImageViewerWindow.show(URL(fileURLWithPath: path)) })
-    return ImportServices(planning: planning, masters: masters)
+    return ImportServices(
+      planning: planning, masters: masters,
+      remotePlanning: remotePlanning(store: store, index: index, timeZone: timeZone),
+      browsing: browsing())
   }
 
   /// Measures the master at `path` off the main actor.

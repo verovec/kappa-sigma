@@ -14,6 +14,7 @@ package struct ImportSheet: View {
   @State private var picking = false
   @State private var listing = false
   @State private var listingDropped = false
+  @State private var browsing = false
 
   /// A sheet over `model`; `onAdd` receives the request as the user left it.
   package init(
@@ -93,6 +94,12 @@ package struct ImportSheet: View {
       Spacer()
     case .scanning:
       ImportScanProgressView(progress: model.progress) { model.cancelScan() }
+    case .empty where model.source == .bucket:
+      EmptyState(
+        .app("No prefix chosen"),
+        message: .app(
+          "Choose a bucket and a prefix: its frames are read where they are, never downloaded."),
+        systemImage: "externaldrive.badge.icloud")
     case .empty:
       EmptyState(
         .app("No capture"),
@@ -140,7 +147,46 @@ package struct ImportSheet: View {
       if model.plan != nil, model.progress != nil {
         ImportScanProgressView(progress: model.progress, compact: true) { model.cancelScan() }
       }
-      Button(.app("Choose Folders…")) { picking = true }
+      sourceChoice
+      switch model.source {
+      case .folder:
+        Button(.app("Choose Folders…")) { picking = true }
+      case .bucket:
+        bucketButton
+      }
+    }
+  }
+
+  /// Where the capture is read from (card 0169).
+  ///
+  /// Folders of this Mac, or a bucket; shown only when the app offers the remote half.
+  @ViewBuilder private var sourceChoice: some View {
+    // Offered even with no connection yet: the bucket form is the one place that says where to
+    // add one, so hiding it until S3 is set up would hide the only instructions.
+    if model.bucket != nil {
+      Picker(selection: Binding(get: { model.source }, set: { model.setSource($0) })) {
+        Text(.app("Folders")).tag(ImportViewModel.Source.folder)
+        Text(.app("S3 Bucket")).tag(ImportViewModel.Source.bucket)
+      } label: {
+        EmptyView()
+      }
+      .pickerStyle(.segmented)
+      .fixedSize()
+      .accessible(.importSource, label: .app("Where the capture is read from"))
+    }
+  }
+
+  /// « Browse… », the bucket form in a popover: it stays reachable after a scan, so another
+  /// prefix can be chosen without losing the sheet.
+  @ViewBuilder private var bucketButton: some View {
+    if let bucket = model.bucket {
+      Button(.app("Browse…")) { browsing = true }
+        .popover(isPresented: $browsing) {
+          ImportBucketView(model: bucket) { target in
+            browsing = false
+            model.choose(bucket: target)
+          }
+        }
     }
   }
 

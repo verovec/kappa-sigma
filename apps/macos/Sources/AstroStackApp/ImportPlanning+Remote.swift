@@ -1,0 +1,71 @@
+package import Foundation
+package import ProjectKit
+package import RemoteKit
+package import StackKit
+
+// MARK: - Importing a bucket prefix (card 0169)
+
+extension ImportPlanning {
+  /// The client of a Settings connection; the app's one transport, as exports use it.
+  package typealias Client = @Sendable (UUID) throws -> S3Client?
+
+  /// Lists one level of a bucket for « Browse »: the sub-prefixes alone, never the whole bucket.
+  package nonisolated static func browsing(client: @escaping Client = ExportServices.liveClient)
+    -> ImportBucketModel.Browsing
+  {
+    { connection, bucket, prefix in
+      guard let s3 = try client(connection) else { throw RemoteImportProblem.connectionMissing }
+      return try await s3.list(bucket: bucket, prefix: prefix, delimiter: "/").prefixes
+    }
+  }
+
+  /// Scans a bucket prefix where it stands and plans it against the library `index` holds.
+  ///
+  /// The frames stay in the bucket: only headers, side files and one centred run a frame are read
+  /// (card 0167), and what was read is kept with the project so the next scan asks for less
+  /// (card 0168). A connection that is gone, or whose secret is, is said — never an empty
+  /// inventory, which would read as « this prefix holds no capture » (R2).
+  package nonisolated static func remotePlanning(
+    store: ProjectStore?, index: LibraryIndex, timeZone: TimeZone = .current,
+    client: @escaping Client = ExportServices.liveClient
+  ) -> ImportViewModel.RemotePlanning {
+    { target, request, progress in
+      guard let s3 = try client(target.connectionID) else {
+        throw RemoteImportProblem.connectionMissing
+      }
+      progress(.library)
+      let masters = try await index.masters()
+      try Task.checkCancellation()
+      let scan = RemoteScan(
+        store: .s3(s3, bucket: target.bucket), prefix: target.prefix, timeZone: timeZone)
+      let scanned = try await scan.scan(
+        cache: cachedScan(store, of: target), overrides: request.overrides, progress: progress)
+      keep(scanned.cache, store, of: target)
+      return ImportPlan(inventory: scanned.inventory, library: masters, request: request)
+    }
+  }
+
+  /// What the last scan of `target` read, `.empty` when there is none or this build cannot read
+  /// it: a cache is spared reads, never correctness.
+  package nonisolated static func cachedScan(_ store: ProjectStore?, of target: RemoteImportTarget)
+    -> RemoteScanCache
+  {
+    guard let body = try? store?.remoteScan(of: target.path) ?? nil else { return .empty }
+    return (try? RemoteScanCache(json: body)) ?? .empty
+  }
+
+  /// Keeps what this scan read for the next one; a project that refuses the write loses only the
+  /// saved reads.
+  nonisolated static func keep(
+    _ cache: RemoteScanCache, _ store: ProjectStore?, of target: RemoteImportTarget
+  ) {
+    guard let store, let body = try? cache.json() else { return }
+    try? store.setRemoteScan(body, of: target.path)
+  }
+}
+
+/// Why a bucket could not be read for an import (card 0169).
+package enum RemoteImportProblem: Error, Equatable, Sendable {
+  /// The connection is gone from Settings, or its secret is.
+  case connectionMissing
+}

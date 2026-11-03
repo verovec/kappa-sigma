@@ -16,24 +16,45 @@ package final class ImportViewModel {
   package typealias ProgressPlanning =
     @Sendable (ImportRequest, @escaping @Sendable (ScanProgress) -> Void) async throws
     -> ImportPlan
+  /// Scans a bucket prefix where it stands and plans it (card 0169): the remote half of
+  /// `ProgressPlanning`, which never reads the disk.
+  package typealias RemotePlanning =
+    @Sendable (RemoteImportTarget, ImportRequest, @escaping @Sendable (ScanProgress) -> Void)
+    async throws -> ImportPlan
+
+  /// Where the capture is read from.
+  package enum Source: String, CaseIterable, Sendable {
+    /// Folders of this Mac.
+    case folder
+    /// A prefix of an S3 bucket (card 0169).
+    case bucket
+  }
 
   /// The channels a light filter can be mapped to: the canonical filters, or dropped.
   package static let channels = Filter.allCases.map(\.rawValue) + [ignored]
   /// The channel that drops a filter from the stack.
   package static let ignored = "ignore"
 
-  package private(set) var request = ImportRequest(paths: [])
+  package internal(set) var request = ImportRequest(paths: [])
   package private(set) var plan: ImportPlan?
   package private(set) var isScanning = false
   /// Where the running scan is; `nil` when none runs (or a calibration-only replan does).
-  package private(set) var progress: ScanProgress?
+  package internal(set) var progress: ScanProgress?
   package private(set) var error: UserFacingError?
   /// The sets the user excluded, as they were listed when excluded (a scan drops them).
-  package private(set) var excludedRows: [ImportPlan.SetRow] = []
+  package internal(set) var excludedRows: [ImportPlan.SetRow] = []
   /// The chosen folders a kept one already covers (card 0174), listed by the sheet, never scanned.
-  package private(set) var droppedFolders: [ImportFolders.Nested] = []
+  package internal(set) var droppedFolders: [ImportFolders.Nested] = []
   /// Why the folder panel returned no selection; apart from `error`, which is the scan's.
-  package private(set) var panelError: UserFacingError?
+  package internal(set) var panelError: UserFacingError?
+
+  /// Which half of the sheet the user is on; a scan follows what was chosen, not this.
+  package internal(set) var source = Source.folder
+  /// The bucket half (card 0169), `nil` when the app offers no remote import.
+  package let bucket: ImportBucketModel?
+  /// The prefix being imported, `nil` for folders of this Mac: what the scan reads and what the
+  /// project records the source as.
+  package internal(set) var remoteTarget: RemoteImportTarget?
 
   /// What a master's disclosure can do (inspect, rebuild, preview); `nil` hides it.
   package let masters: MasterServices?
@@ -44,10 +65,15 @@ package final class ImportViewModel {
   /// The user's answer to the proposal.
   package internal(set) var profileChoice = ProfileChoice.proposed
 
-  private let planning: ProgressPlanning
+  let planning: ProgressPlanning
+  let remotePlanning: RemotePlanning?
   private var scan: Task<Void, Never>?
   /// The request the shown plan's scan was made for, and the sets excluded and folders dropped then.
   private var scanned: ImportRequest?
+  /// The side that request was scanned on: a cancelled scan must put back the routing of the
+  /// request it puts back, or Add would record a bucket prefix as a night of this Mac.
+  private var scannedSource = Source.folder
+  private var scannedTarget: RemoteImportTarget?
   private var scannedExcludedRows: [ImportPlan.SetRow] = []
   private var scannedDroppedFolders: [ImportFolders.Nested] = []
   /// A Rescan asked for and not finished yet.
@@ -57,17 +83,25 @@ package final class ImportViewModel {
   /// services if any.
   package init(
     planning: @escaping ProgressPlanning, masters: MasterServices? = nil,
-    profiles: [Profile]? = nil, rejectedProfiles: [String: String] = [:]
+    profiles: [Profile]? = nil, rejectedProfiles: [String: String] = [:],
+    remotePlanning: RemotePlanning? = nil, bucket: ImportBucketModel? = nil
   ) {
     self.planning = planning
     self.masters = masters
     self.profiles = profiles ?? Self.shippedProfiles
     self.rejectedProfiles = rejectedProfiles
+    self.remotePlanning = remotePlanning
+    self.bucket = bucket
   }
 
   /// A model planning through `planning`, which reports no progress.
-  package convenience init(planning: @escaping Planning, masters: MasterServices? = nil) {
-    self.init(planning: Self.reporting(planning), masters: masters)
+  package convenience init(
+    planning: @escaping Planning, masters: MasterServices? = nil,
+    remotePlanning: RemotePlanning? = nil, bucket: ImportBucketModel? = nil
+  ) {
+    self.init(
+      planning: Self.reporting(planning), masters: masters, remotePlanning: remotePlanning,
+      bucket: bucket)
   }
 
   /// `planning` as a `ProgressPlanning` that reports nothing.
@@ -115,11 +149,14 @@ package final class ImportViewModel {
     guard !folders.isEmpty else { return }
     let chosen = ImportRequest.folders(folders)
     request = ImportRequest(paths: chosen.paths)
+    // Folders of this Mac: the next scan reads the disk, whichever half was last on screen.
+    source = .folder
+    remoteTarget = nil
     droppedFolders = chosen.dropped
     panelError = nil
     excludedRows = []
     profileChoice = .proposed
-    refresh()
+    refreshScan()
   }
 
   /// Says why the folder panel returned no selection.
@@ -133,32 +170,32 @@ package final class ImportViewModel {
   /// Asserts the clip filter of a colour light set; `unknown` hands it back to the pixels.
   package func setFilterSet(_ value: FilterSet, for row: ImportPlan.SetRow) {
     request.filterSets[row.overrideID] = value.isKnown ? value : nil
-    refresh()
+    refreshScan()
   }
 
   /// Maps a light filter to a channel (`ignore` drops it); `nil` removes the mapping.
   package func mapFilter(_ filter: String, to channel: String?) {
     request.filterMap[filter] = channel
-    refresh()
+    refreshScan()
   }
 
   /// Mono, colour, or the scan's verdict.
   package func setColorModel(_ choice: ColorChoice) {
     request.colorModel = choice
-    refresh()
+    refreshScan()
   }
 
   /// Applies the masters even where they do not match.
   package func setForceCalibration(_ force: Bool) {
     request.forceCalibration = force
-    refresh()
+    refreshScan()
   }
 
   /// Checks or unchecks one proposed master.
   package func setIncluded(_ included: Bool, _ cell: ImportPlan.Cell) {
     request.calibExclude.removeAll { $0 == cell.suggestionID }
     if !included { request.calibExclude.append(cell.suggestionID) }
-    refresh()
+    refreshScan()
   }
 
   /// Drops a whole set from the scan.
@@ -166,14 +203,14 @@ package final class ImportViewModel {
     guard canExclude(row), !request.excludeSets.contains(row.id) else { return }
     request.excludeSets.append(row.id)
     excludedRows.append(row)
-    refresh()
+    refreshScan()
   }
 
   /// Puts an excluded set back.
   package func restore(_ row: ImportPlan.SetRow) {
     request.excludeSets.removeAll { $0 == row.id }
     excludedRows.removeAll { $0.id == row.id }
-    refresh()
+    refreshScan()
   }
 
   // MARK: - Scanning
@@ -182,14 +219,14 @@ package final class ImportViewModel {
   /// made before it ends rescans too, never only rematches the old scan.
   package func rescan() {
     rescanPending = true
-    refresh()
+    refreshScan()
   }
 
   /// Plans the current request, cancelling a scan still running for an older one; a change of
   /// calibration choices only rematches the last scan.
-  private func refresh() {
+  func refreshScan() {
     scan?.cancel()
-    guard !request.paths.isEmpty else { return }
+    guard !request.paths.isEmpty, remoteTarget == nil || remotePlanning != nil else { return }
     let request = request
     let rescans =
       rescanPending || (scanned.map { ImportPlanner.needsScan(from: $0, to: request) } ?? true)
@@ -207,6 +244,8 @@ package final class ImportViewModel {
         guard !Task.isCancelled else { return }
         self.plan = plan
         scanned = request
+        scannedSource = source
+        scannedTarget = remoteTarget
         scannedExcludedRows = excludedRows
         scannedDroppedFolders = droppedFolders
         rescanPending = false
@@ -224,26 +263,6 @@ package final class ImportViewModel {
     }
   }
 
-  /// `planning(request)`, called from the scan task itself (scans start in the order the controls
-  /// asked), its progress consumed by a child task into `progress` (newest value only: the sheet
-  /// shows where the scan is, not every step it took).
-  private func scanReporting(_ request: ImportRequest) async throws -> ImportPlan {
-    let (steps, continuation) = AsyncStream.makeStream(
-      of: ScanProgress.self, bufferingPolicy: .bufferingNewest(1))
-    async let watched: Void = watch(steps)
-    // Finished before the watcher is awaited; the defer covers a planning that throws.
-    defer { continuation.finish() }
-    let plan = try await planning(request) { continuation.yield($0) }
-    continuation.finish()
-    await watched
-    return plan
-  }
-
-  /// Shows each step of `steps` until the stream ends or the scan is cancelled.
-  private func watch(_ steps: AsyncStream<ScanProgress>) async {
-    for await step in steps where !Task.isCancelled { progress = step }
-  }
-
   /// Stops the scan in flight: the sheet is closing and nothing will read its plan.
   package func cancel() {
     scan?.cancel()
@@ -258,10 +277,13 @@ package final class ImportViewModel {
     rescanPending = false
     if let scanned {
       request = scanned
+      source = scannedSource
+      remoteTarget = scannedTarget
       excludedRows = scannedExcludedRows
       droppedFolders = scannedDroppedFolders
     } else if error == nil {
       request = ImportRequest(paths: [])
+      remoteTarget = nil
       excludedRows = []
       droppedFolders = []
       plan = nil

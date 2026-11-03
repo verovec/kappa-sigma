@@ -36,6 +36,8 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
   case exportS3(ExportS3Problem)
   /// Settings refused this S3 connection (card 0150).
   case s3Connection(S3ConnectionStore.Refusal)
+  /// A bucket could not be read for an import (card 0169).
+  case remoteImport(RemoteImportProblem)
   /// A pipeline run stopped on a step (cards 0059, 0088, 0093).
   case pipeline(PipelineError)
   /// Siril found no plate solution, or could not look (card 0093).
@@ -85,6 +87,7 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     case let error as PlateSolveError: self = .plateSolve(error)
     case let error as ColourCalibrationError: self = .colourCalibration(error)
     case let error as PlateSolveTool.InputError: self = .plateSolveInput(error)
+    case let error as RemoteImportProblem: self = .remoteImport(error)
     case ProjectStoreError.stackOpen(_): self = .stackOpen
     case ProjectPackageError.openElsewhere(let path, _): self = .projectOpenElsewhere(path: path)
     case let error as LocalizedError where error.errorDescription != nil:
@@ -132,6 +135,7 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     case .exportBaseRefused(let path, .appOwned):
       .app("\(path) holds AstroStack's projects or work files: choose a folder outside it.")
     case .s3Connection(let refusal): Self.message(refusal)
+    case .remoteImport(let problem): Self.message(problem)
     case .exportS3(let problem): Self.message(problem)
     case .pipeline(let error): Self.message(error)
     case .plateSolve(let error): Self.message(error)

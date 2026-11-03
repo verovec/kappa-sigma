@@ -40,10 +40,15 @@ package struct ProjectSource: Equatable, Sendable {
     return key.isEmpty ? "s3://" + bucket : "s3://" + bucket + "/" + key
   }
 
-  /// `prefix` as it is stored and as the scan lists it: the `/`-joined parts, so a leading,
-  /// doubled or trailing slash never makes a second source of one prefix (the rule the app's
-  /// `S3Target.key` already follows — an S3 key never begins with `/`).
+  /// `prefix` as it is stored and as the scan lists it: without its trailing `/`, which a
+  /// listing adds back and which therefore never makes a second source of one prefix.
+  ///
+  /// Nothing else is touched. `a//b` and `/M31` are legal S3 keys, and `Browse` hands prefixes
+  /// straight back from the bucket's own `CommonPrefixes`: collapsing them would list — and scan
+  /// — a prefix the user did not choose.
   package static func key(_ prefix: String) -> String {
-    prefix.split(separator: "/").joined(separator: "/")
+    var key = Substring(prefix)
+    while key.hasSuffix("/") { key = key.dropLast() }
+    return String(key)
   }
 }

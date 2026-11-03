@@ -58,14 +58,15 @@ struct RemoteSourcesStoreTests {
   }
 
   @Test(
-    "the virtual path is one spelling, whatever slashes the prefix is typed with",
+    "the trailing slash is not part of the spelling; anything else in the key is kept",
     arguments: [
       ("nights/M31", "s3://astro/nights/M31"), ("nights/M31/", "s3://astro/nights/M31"),
-      ("nights/M31//", "s3://astro/nights/M31"), ("/nights/M31", "s3://astro/nights/M31"),
-      ("nights//M31", "s3://astro/nights/M31"), ("", "s3://astro"), ("/", "s3://astro"),
+      ("nights/M31//", "s3://astro/nights/M31"), ("", "s3://astro"), ("/", "s3://astro"),
+      // `a//b` and `/M31` are legal S3 keys: the scan must list what the user chose, not a
+      // tidied-up guess (the 0169 review corrected 0168 here).
+      ("/nights/M31", "s3://astro//nights/M31"), ("nights//M31", "s3://astro/nights//M31"),
     ])
   func testRemotePathSpelling(prefix: String, path: String) {
-    // An S3 key never begins with `/`: a pasted prefix that does would list nothing at all.
     #expect(ProjectSource.remotePath(bucket: "astro", prefix: prefix) == path)
   }
 
@@ -76,7 +77,7 @@ struct RemoteSourcesStoreTests {
     defer { try? package.close() }
     let store = package.store
 
-    let typed = try store.addSource(remote: "conn-1", bucket: "astro", prefix: "/nights//M31/")
+    let typed = try store.addSource(remote: "conn-1", bucket: "astro", prefix: "nights/M31/")
     #expect(typed.path == "s3://astro/nights/M31" && typed.prefix == "nights/M31")
     let again = try store.addSource(remote: "conn-1", bucket: "astro", prefix: "nights/M31")
     #expect(again.id == typed.id)

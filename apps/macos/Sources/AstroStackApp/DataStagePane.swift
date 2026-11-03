@@ -1,4 +1,5 @@
 internal import RenderKit
+internal import StackKit
 internal import SwiftUI
 
 /// The Données stage: the project's capture nights, what they hold (integration per filter ×
@@ -67,6 +68,13 @@ struct DataStagePane: View {
       ForEach(Array((model.scan?.warnings ?? []).enumerated()), id: \.offset) { _, warning in
         Label(warning, systemImage: "exclamationmark.triangle")
           .foregroundStyle(DesignColor.statusAttention.color)
+      }
+      // A remote scan's frames whose pixel checks were not run (card 0167): said, never passed.
+      if let unchecked = model.scan?.inventory.notCheckedRemotely, !unchecked.isEmpty {
+        Label(
+          RemoteObjectStore.notCheckedWords(unchecked.count), systemImage: "icloud.slash"
+        )
+        .foregroundStyle(DesignColor.statusAttention.color)
       }
     } else if !model.isScanning && !model.nightPaths.isEmpty {
       EmptyState(

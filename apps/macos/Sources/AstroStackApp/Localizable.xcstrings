@@ -12152,6 +12152,46 @@
           }
         }
       }
+    },
+    "Pixel checks not run on %lld frames (remote)": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Pixel checks not run on %lld frame (remote)"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Pixel checks not run on %lld frames (remote)"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Contrôles de pixels non vérifiés sur %lld pose (distant)"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Contrôles de pixels non vérifiés sur %lld poses (distant)"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "version": "1.0"

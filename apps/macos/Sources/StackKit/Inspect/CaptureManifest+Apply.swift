@@ -2,7 +2,7 @@ package import Foundation
 
 extension CaptureManifest {
   /// Whether a file is a manifest: `info.txt` or `info.txt.txt`, any case.
-  static func isManifest(_ path: String) -> Bool {
+  package static func isManifest(_ path: String) -> Bool {
     PathMeta.baseName(path).wholeMatch(of: /(?i)info\.txt(\.txt)?/) != nil
   }
 

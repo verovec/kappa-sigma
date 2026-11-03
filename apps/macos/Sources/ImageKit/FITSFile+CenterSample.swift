@@ -7,19 +7,11 @@ extension FITSFile {
   /// image reads every value.
   package func centerSample(maxCount: Int) throws -> [Double] {
     try Self.withPath(path) {
-      let layout = try FITSLayout(header: header)
-      let total = layout.width * layout.height * layout.planes
-      let count = maxCount <= 0 || maxCount > total ? total : maxCount
-      let start = (total - count) / 2
-      let size = layout.bytesPerValue
-      guard body.count >= (start + count) * size else { throw FITSError.truncatedData }
-      return body.withUnsafeBytes { raw -> [Double] in
-        guard let base = raw.baseAddress else { return [] }
-        let first = base + start * size
-        return (0..<count).map { index in
-          layout.bzero + layout.bscale * Self.stored(first + index * size, bitpix: layout.bitpix)
-        }
-      }
+      let run = try Self.centerRun(of: header, maxCount: maxCount)
+      let start = body.startIndex + run.first * run.bytesPerValue
+      let end = start + run.count * run.bytesPerValue
+      guard body.endIndex >= end else { throw FITSError.truncatedData }
+      return try Self.physicalValues(body[start..<end], header: header)
     }
   }
 

@@ -52,7 +52,7 @@ user exclusions and filter map, dual-band/broadband verdicts per OSC light set
 
 ## Not ported
 
-Phone/DSLR raws, TIFF/JPEG stills, videos, the S3 remote scan and the scan cache: deep-sky FITS only.
+Phone/DSLR raws, TIFF/JPEG stills, videos and the scan cache: deep-sky FITS only.
 Go's unstable sorts are made deterministic (set ties: bin, colour, temperature; session configs:
 offset, bin, warmer first).
 
@@ -63,6 +63,23 @@ offset, bin, warmer first).
   `inventory.json` (`InventoryJSON` writes ours in the legacy JSON shape).
 - `LiveInventoryOracleTests`: the real `in/` frames, and the M31-DB / M31-BB+DB captures (~90 s).
   `RECORD=1` rewrites the header fixtures from `~/Documents/astro/fixtures/oracle/<case>/in`.
+
+## S3 remote scan (card 0167)
+
+- `RemoteScan(store:prefix:timeZone:).inventory()` scans an S3 prefix with today's synchronous
+  scan over a `RemoteSnapshot` (`Remote/`): the listing (`InspectWalk.listing(keys:under:)`, the
+  local walk's rules over keys), every FITS header read by ranges grown until `END`, the small
+  side files (sidecars, `info.txt`). Paths are virtual: `s3://<bucket>/<key>` (`PathMeta` skips
+  the scheme and bucket).
+- Pixels: a first pass records the centred runs the scan asks for; they are read by range
+  (`FITSFile.centerRun` / `physicalValues`) and the scan runs again. Whole frames are never
+  downloaded (PO 01/11): a check that asks for planes is not run; the frames its verdict spans
+  (`RemoteScan.unchecked`: the set of a missed read, the instrument of a CFA probe, every light
+  when the bias/dark pedestal was asked) are listed in `Inventory.notCheckedRemotely` — the
+  Données line « non vérifié (distant) », never a pass. A side file that fails is a warning.
+- StackKit never imports RemoteKit: `RemoteObjectStore` is two closures; the app adapts its
+  `S3Client` (`RemoteObjectStore.s3(_:bucket:)`). Tests use an in-memory store
+  (`Tests/.../Remote/MemoryStore.swift`) and the oracle trees (`RemoteScanTests`).
 
 ## How to extend
 

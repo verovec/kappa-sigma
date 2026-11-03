@@ -13,6 +13,11 @@ package struct Inventory: Equatable, Sendable {
   /// Light set id → clip filter, for one-shot-colour scans: the durable record `sets` project.
   package var filterSets: [String: FilterSet] = [:]
   package var sessions: [SessionInfo] = []
+  /// Frames of a remote scan whose pixel-based checks were not run (card 0167).
+  ///
+  /// The CFA probe, sky classification and channel detection need planes, never downloaded
+  /// (PO 01/11): shown as « non vérifié (distant) », never taken as passed. Empty locally.
+  package var notCheckedRemotely: [String] = []
 
   /// An inventory of `frames`, not yet grouped.
   package init(root: String, frames: [CaptureFrame]) {

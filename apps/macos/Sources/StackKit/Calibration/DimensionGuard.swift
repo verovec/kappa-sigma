@@ -10,12 +10,24 @@ internal import ImageKit
 package enum DimensionGuard {
   /// The masters whose pixel size equals the light's, and a note naming what was excluded.
   ///
-  /// A master whose size cannot be read is KEPT (a master still to be built has no file); an
-  /// unreadable light leaves the pool untouched.
+  /// A master whose size cannot be read is KEPT (a master still to be built has no file); a
+  /// light whose size is known neither from its file nor from `lightSize` leaves the pool
+  /// untouched.
+  ///
+  /// `lightSize` is what the scan read of the frame (`CaptureFrame.width/height`): a frame in a
+  /// bucket has no file to measure here (card 0154), and without it the guard would silently
+  /// stop keeping another sensor's masters away.
   package static func keepMatching(
-    _ masters: [CalibrationMaster], lightPath: String
+    _ masters: [CalibrationMaster], lightPath: String,
+    lightSize: (width: Int, height: Int)? = nil
   ) -> (masters: [CalibrationMaster], note: String?) {
-    guard let light = dimensions(lightPath) else { return (masters, nil) }
+    let measured =
+      dimensions(lightPath)
+      ?? lightSize.flatMap { size -> Size? in
+        size.width > 0 && size.height > 0
+          ? Size(width: size.width, height: size.height) : nil
+      }
+    guard let light = measured else { return (masters, nil) }
     var kept: [CalibrationMaster] = []
     var dropped: [String: Int] = [:]
     for master in masters {

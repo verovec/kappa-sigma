@@ -1,4 +1,5 @@
 package import Foundation
+package import ProjectKit
 package import StackKit
 
 /// How the Stacking stage runs a night: the StackKit run itself, the clock that names it, the
@@ -19,6 +20,9 @@ package nonisolated struct RunServices: Sendable {
   package var room: @Sendable (URL) -> Int64?
   /// The zone the run id is written in: the user's.
   package var timeZone: TimeZone
+  /// The buckets a run of these sources may read (card 0154); none by default, so a run of a
+  /// local capture is exactly what it was.
+  package var buckets: @Sendable ([ProjectSource]) -> [RemoteObjectStore] = { _ in [] }
 
   /// Services from their parts.
   package init(
@@ -26,8 +30,10 @@ package nonisolated struct RunServices: Sendable {
     scratch: URL = ScratchSetting.defaultFolder,
     timeZone: TimeZone = .current,
     room: @escaping @Sendable (URL) -> Int64? = ScratchSpace.available(at:),
-    scratchFolder: (@Sendable () -> URL)? = nil
+    scratchFolder: (@Sendable () -> URL)? = nil,
+    buckets: @escaping @Sendable ([ProjectSource]) -> [RemoteObjectStore] = { _ in [] }
   ) {
+    self.buckets = buckets
     self.run = run
     self.now = now
     // A fixed folder unless a reader is given (the live services read Settings at each run).
@@ -47,7 +53,8 @@ package nonisolated struct RunServices: Sendable {
       } catch {
         return AsyncThrowingStream { $0.finish(throwing: error) }
       }
-    }, scratchFolder: { ScratchSetting().folder })
+    }, scratchFolder: { ScratchSetting().folder },
+    buckets: { sources in ImportPlanning.runStores(sources) })
 
   /// The id of a run started at `date`: the legacy `yyyyMMdd_HHmmss`, so a stack folder reads
   /// like a legacy run's.

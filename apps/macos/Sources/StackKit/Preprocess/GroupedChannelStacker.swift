@@ -106,9 +106,13 @@ package struct GroupedChannelStacker: Sendable {
     let light = ChannelStacker.Light(
       folder: folder, masters: ChannelStacker.masters(selection, frames: group.frames),
       ingest: SirilIngest(paths: group.frames.map(\.path)))
+    try? FileManager.default.removeItem(at: folder)
+    // Outside the catch below: a night whose frames could not be read is not a night that
+    // « failed and was skipped ». Stacking the other nights would answer with an integration
+    // nobody chose (R2), so the staging failure fails the whole lane (card 0154).
+    try await stacker.stager.stage(
+      group.frames.map(\.path), into: folder, progress: stacker.stagingReport)
     do {
-      try? FileManager.default.removeItem(at: folder)
-      try MasterBuilder.link(group.frames.map(\.path), into: folder)
       let script =
         group.count == 1
         ? SirilScripts.calibrateSingle(seq: light.seq, masters: light.masters, ingest: light.ingest)

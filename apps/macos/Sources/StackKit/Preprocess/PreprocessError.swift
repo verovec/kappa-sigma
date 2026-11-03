@@ -23,6 +23,9 @@ package enum PreprocessError: Error, Equatable, Sendable {
   /// The run's scratch estimate exceeds the room left on the scratch folder's volume (card
   /// 0098): refused before Siril starts, never left to fail mid-run on a full disk.
   case scratchFull(neededBytes: Int64, availableBytes: Int64, folder: String)
+  /// A frame of a bucket could not be staged for its lane (card 0154): its connection is not in
+  /// the run, or the download failed. The lane fails with this text — never stacks what it has.
+  case remoteFrameUnavailable(path: String, reason: String)
 }
 
 extension PreprocessError: LocalizedError {
@@ -48,6 +51,8 @@ extension PreprocessError: LocalizedError {
     case .scratchFull(let needed, let available, let folder):
       "the run needs ~\(Self.gigabytes(needed)) of scratch in \(folder), "
         + "\(Self.gigabytes(available)) free — free some space or choose another scratch folder"
+    case .remoteFrameUnavailable(let path, let reason):
+      "\(path) could not be read for this run: \(reason)"
     }
   }
 

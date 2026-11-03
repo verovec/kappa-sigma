@@ -14,7 +14,14 @@ extension RemoteObjectStore {
           Object(key: $0.key, size: $0.size, etag: $0.etag)
         }
       },
-      get: { key, range in try await client.get(bucket: bucket, key: key, range: range) })
+      get: { key, range in try await client.get(bucket: bucket, key: key, range: range) },
+      // A whole frame goes through `S3Client.download` (card 0154): written to `<name>.part`,
+      // its size and checksum verified, then renamed — and nothing left behind if it fails.
+      fetch: { key, destination in
+        let object = try await client.download(
+          bucket: bucket, key: key, to: destination, expect: nil)
+        return Object(key: object.key, size: object.size, etag: object.etag)
+      })
   }
 
   /// The line the Données inventory shows under a remote scan whose pixel checks were not run on

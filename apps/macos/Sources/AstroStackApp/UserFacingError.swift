@@ -228,6 +228,8 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
       scratchFull(
         ScratchBudget.gigabytesUp(needed), room: ScratchBudget.gigabytesDown(room),
         folder: (folder as NSString).abbreviatingWithTildeInPath)
+    case .remoteFrameUnavailable(let path, let reason):
+      .app("\(path) could not be read for this run: \(reason)")
     }
   }
 

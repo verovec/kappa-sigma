@@ -13,7 +13,6 @@ package actor Preprocessor {
     package var edgeMeasure: EdgeCropper.Measure
     /// Writes a stage's quick-look PNG from its FITS.
     package var preview: @Sendable (_ fits: URL, _ png: URL) throws -> Void
-
     /// The real tools over `runner`.
     package init(
       runner: SirilRunner,
@@ -35,6 +34,32 @@ package actor Preprocessor {
   /// A preprocessor using `tools`.
   package init(tools: Tools) {
     self.tools = tools
+  }
+
+  /// `request` with what its buckets answer about its remote frames (card 0154).
+  ///
+  /// A bucket the run has no connection for is refused here, before Siril starts: the frames are
+  /// not there to be read at all, which is a reason the user can act on — not a lane failing
+  /// once the masters are built.
+  static func readingBuckets(_ request: PreprocessRequest) async throws -> PreprocessRequest {
+    var request = request
+    let paths = framePaths(request.inventory)
+    let stager = FrameStager(stores: request.remoteStores)
+    let missing = stager.missingBuckets(of: paths)
+    if let bucket = missing.first {
+      throw PreprocessError.remoteFrameUnavailable(
+        path: "s3://" + bucket,
+        reason: missing.count == 1
+          ? "no S3 connection for this bucket in this run"
+          : "no S3 connection for \(missing.count) of this run's buckets")
+    }
+    request.remoteIdentities = await stager.identities(of: paths)
+    return request
+  }
+
+  /// Every frame path of `inventory`: what a run may have to stage.
+  static func framePaths(_ inventory: Inventory) -> [String] {
+    inventory.sets.flatMap { $0.frames.map(\.path) }
   }
 
   /// How a run ended: with its result, or paused after a lane (card 0097).
@@ -89,6 +114,9 @@ package actor Preprocessor {
   ) async throws -> Ending {
     try TargetLock.acquire(request.output)
     defer { TargetLock.release(request.output) }
+    // What the buckets answer about this run's remote frames, read once: the lane digests
+    // (card 0154) compare `size|etag` where a local frame compares size and mtime.
+    let request = try await Self.readingBuckets(request)
     let plan = try Self.plan(request.inventory)
     let lanes = ChannelAligner.ordered(plan.channels.keys)
     let emitter = RunEmitter(steps: lanes.count + 4, sink: sink)

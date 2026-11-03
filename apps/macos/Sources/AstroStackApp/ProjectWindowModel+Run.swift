@@ -98,8 +98,13 @@ extension ProjectWindowModel {
     // The run re-plans the import silently: its own progress is the run's journal.
     let planning = ImportViewModel.silent(services(store).planning)
     let start = runs.run
+    // Read before the run starts: the sources as the project records them now (card 0154).
+    let stores = runs.buckets(sources)
     let model = RunViewModel(runID: runID, output: output)
     let gate = model.gate
+    let prepared = RunRequestPlan(
+      output: output, work: work, runID: runID, mode: record.mode, settings: settings,
+      gate: gate, resuming: resume != nil, stores: stores, laneKnobs: record.laneKnobs)
     run = model
     refresh()
     model.start(
@@ -113,16 +118,7 @@ extension ProjectWindowModel {
         let inventory = scope.map { plan.inventory.scoped($0) } ?? plan.inventory
         // Refused before Siril starts, never left to fail mid-run on a full disk (card 0098).
         try Self.checkScratch(inventory, settings: settings, folder: scratch, room: room)
-        var request = PreprocessRequest(
-          inventory: inventory, output: output, work: work, runID: runID, mode: record.mode,
-          settings: settings, library: plan.library)
-        request.pause = gate
-        request.resuming = resume != nil
-        // What a lane may take, as the panel showed it; a refused entry is listed there, unapplied.
-        for (lane, patch) in record.laneKnobs {
-          try request.overrideLane(lane, with: KnobSchema.laneAccepted(patch).accepted)
-        }
-        return start(request)
+        return start(try prepared.request(inventory: inventory, library: plan.library))
       },
       completion: { [weak self] outcome in
         await Self.remove(work)

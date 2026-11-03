@@ -7,7 +7,10 @@ extension CalibrationMatcher {
     _ set: FrameSet, in inventory: Inventory, masters: [CalibrationMaster], excluded: [String] = [],
     force: Bool = false
   ) -> CalibrationSelection {
-    let pool = DimensionGuard.keepMatching(masters, lightPath: set.frames.first?.path ?? "")
+    let first = set.frames.first
+    let pool = DimensionGuard.keepMatching(
+      masters, lightPath: first?.path ?? "",
+      lightSize: first.map { (width: $0.width, height: $0.height) })
     var selection = match(
       LightRef(set, in: inventory), masters: pool.masters, excluded: excluded, force: force)
     if let note = pool.note { selection.notes.append(note) }

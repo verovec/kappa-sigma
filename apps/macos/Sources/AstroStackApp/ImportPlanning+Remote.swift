@@ -64,6 +64,27 @@ extension ImportPlanning {
   }
 }
 
+extension ImportPlanning {
+  /// The buckets a run of this project may read (card 0154): one store per remote source
+  /// (card 0168), through the Settings connection its own row names.
+  ///
+  /// A source whose connection is gone contributes nothing: the run refuses with that bucket's
+  /// name rather than stacking the lanes it could read (R2).
+  package nonisolated static func runStores(
+    _ sources: [ProjectSource], client: @escaping Client = ExportServices.liveClient
+  ) -> [RemoteObjectStore] {
+    var byBucket: [String: RemoteObjectStore] = [:]
+    for source in sources where source.kind == .remoteNight {
+      guard let bucket = source.bucket, byBucket[bucket] == nil,
+        let id = source.connectionID.flatMap(UUID.init(uuidString:)),
+        let s3 = (try? client(id)) ?? nil
+      else { continue }
+      byBucket[bucket] = .s3(s3, bucket: bucket)
+    }
+    return byBucket.values.sorted { $0.bucket < $1.bucket }
+  }
+}
+
 /// Why a bucket could not be read for an import (card 0169).
 package enum RemoteImportProblem: Error, Equatable, Sendable {
   /// The connection is gone from Settings, or its secret is.

@@ -37,6 +37,14 @@ package struct MasterBuilder: Sendable {
   package var recipes: MasterRecipes
   /// Every line Siril prints while stacking (progress for the UI); dropped by default.
   package var onLine: @Sendable (SirilLine) -> Void
+  /// Puts a set's raw frames where Siril reads them (card 0154): a bucket's frames are
+  /// downloaded only when a master has to be built from them, never to reuse a library one.
+  package var stager = FrameStager()
+  /// What identifies each remote frame (`size|etag` by virtual path, card 0154): what the `.sig`
+  /// proof compares, since a virtual path has no local size or mtime of its own.
+  package var identities: [String: String] = [:]
+  /// Hears a set's downloads, so a run can journal them under the step that waits for them.
+  package var stagingReport: FrameStager.Progress = { _, _, _ in }
 
   /// A builder running scripts through `runner` with the given recipes.
   package init(
@@ -118,7 +126,9 @@ package struct MasterBuilder: Sendable {
     else { return false }
     let existing = pool[index]
     let type = existing.type.rawValue
-    if PoolSignature.proves(master: existing.path, builtFrom: set.frames.map(\.path)) {
+    if PoolSignature.proves(
+      master: existing.path, builtFrom: set.frames.map(\.path), identities: identities)
+    {
       var master = existing
       // The file lives in the library, but these are this run's own frames.
       master.fromLibrary = false

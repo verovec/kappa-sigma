@@ -33,11 +33,44 @@ package struct ProjectSource: Equatable, Sendable {
   /// Last update time, Unix milliseconds.
   package let updatedAt: Int64
 
+  /// A source as the store reads it; tests build one to stand for a row (card 0154).
+  package init(
+    id: Int64, kind: Kind, path: String, readOnly: Bool, profileID: String? = nil,
+    connectionID: String? = nil, bucket: String? = nil, prefix: String? = nil, createdAt: Int64,
+    updatedAt: Int64
+  ) {
+    self.id = id
+    self.kind = kind
+    self.path = path
+    self.readOnly = readOnly
+    self.profileID = profileID
+    self.connectionID = connectionID
+    self.bucket = bucket
+    self.prefix = prefix
+    self.createdAt = createdAt
+    self.updatedAt = updatedAt
+  }
+
   /// The one spelling of a remote night's path, shared by the database and the scan:
   /// `s3://<bucket>/<prefix>` without a trailing `/`, `s3://<bucket>` for a whole bucket.
   package static func remotePath(bucket: String, prefix: String) -> String {
     let key = Self.key(prefix)
     return key.isEmpty ? "s3://" + bucket : "s3://" + bucket + "/" + key
+  }
+
+  /// The bucket and key a virtual path names, `nil` when the path is a file of this Mac.
+  ///
+  /// The inverse of `remotePath(bucket:prefix:)`: `s3://astro/M31/l.fits` is the key `M31/l.fits`
+  /// of the bucket `astro`. A path with no key (the bucket's root) is no frame.
+  package static func remoteParts(of path: String) -> (bucket: String, key: String)? {
+    let scheme = "s3://"
+    guard path.hasPrefix(scheme) else { return nil }
+    let rest = path.dropFirst(scheme.count)
+    guard let slash = rest.firstIndex(of: "/") else { return nil }
+    let bucket = String(rest[rest.startIndex..<slash])
+    let key = String(rest[rest.index(after: slash)...])
+    guard !bucket.isEmpty, !key.isEmpty else { return nil }
+    return (bucket, key)
   }
 
   /// `prefix` as it is stored and as the scan lists it: without its trailing `/`, which a

@@ -85,7 +85,7 @@ extension PathMeta {
   }
 
   /// The last path component.
-  static func baseName(_ path: String) -> String {
+  package static func baseName(_ path: String) -> String {
     path.split(separator: "/").last.map(String.init) ?? path
   }
 

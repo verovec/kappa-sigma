@@ -1,5 +1,5 @@
 internal import CryptoKit
-internal import Foundation
+package import Foundation
 
 extension MasterBuilder {
   /// Stacks one set (`buildOne`): link its frames as sequence `cal`, run the script, publish the
@@ -22,16 +22,23 @@ extension MasterBuilder {
     let paths = set.frames.map(\.path)
     defer { try? FileManager.default.removeItem(at: sequence) }
     do {
-      try Self.link(paths, into: sequence)
+      let staged = try await stager.stage(paths, into: sequence, progress: stagingReport)
       if let note = try await stack(
-        set, type: type, name: name, built: built, sequence: sequence, target: target)
+        set, type: type, built: built,
+        staging: Staging(
+          name: name, sequence: sequence, staged: staged.files, target: target))
       {
         result.warnings.append(note)
       }
       try Self.publish(
         target: target, final: final, signature: PoolSignature.of(paths), frames: paths.count)
-      // A dark's raw pool also yields its defect map, applied per light with -cc=bpm.
-      if type == .dark, let note = DarkDefects.build(master: final + ".fits", frames: paths) {
+      // A dark's raw pool also yields its defect map, applied per light with -cc=bpm. It reads
+      // the frames themselves, so it reads the staged copies: a virtual path reads nothing, and
+      // a dark pool from a bucket would silently lose its cosmetic correction (R2, card 0154).
+      if type == .dark,
+        let note = DarkDefects.build(
+          master: final + ".fits", frames: staged.files.map(\.path))
+      {
         result.warnings.append(note)
       }
       try Task.checkCancellation()
@@ -45,11 +52,23 @@ extension MasterBuilder {
     return Self.master(set, type: type, path: final + ".fits")
   }
 
+  /// Where one master is stacked: its working sequence, the frames staged in it, and the name
+  /// and path it is published under.
+  struct Staging {
+    let name: String
+    let sequence: URL
+    let staged: [URL]
+    let target: String
+  }
+
   /// Runs the right script; returns the pool note, if any (`stackMasterSet`).
   private func stack(
-    _ set: FrameSet, type: MasterType, name: String, built: [CalibrationMaster], sequence: URL,
-    target: String
+    _ set: FrameSet, type: MasterType, built: [CalibrationMaster], staging: Staging
   ) async throws -> String? {
+    let name = staging.name
+    let sequence = staging.sequence
+    let target = staging.target
+    let staged = staging.staged
     let frames = set.count
     if frames == 1 {
       _ = try await runner.run(
@@ -78,7 +97,9 @@ extension MasterBuilder {
         sequence.lastPathComponent + "_uncal")
       defer { try? FileManager.default.removeItem(at: retry) }
       do {
-        try Self.link(set.frames.map(\.path), into: retry)
+        // The frames are already staged in `sequence`: the retry links those copies rather
+        // than downloading a bucket's flats a second time (card 0154).
+        try Self.link(staged.map(\.path), into: retry)
         _ = try await runner.run(
           SirilScripts.stackFlat(
             seq: "cal", out: target, bias: nil, frames: frames, options: options), retry, onLine
@@ -101,7 +122,10 @@ extension MasterBuilder {
   }
 
   /// `00001_<name>` symlinks to the frames: Siril's `convert` reads them in this order.
-  static func link(_ paths: [String], into folder: URL) throws {
+  ///
+  /// `FrameStager` (card 0154) stages a lane the same way and is pinned against this, which is
+  /// why it stays reachable from the tests.
+  package static func link(_ paths: [String], into folder: URL) throws {
     try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
     for (index, path) in paths.enumerated() {
       let link = folder.appendingPathComponent(

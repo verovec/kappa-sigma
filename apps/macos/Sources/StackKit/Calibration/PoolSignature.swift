@@ -8,8 +8,12 @@ package enum PoolSignature {
   ///
   /// A frame that cannot be read signs as `path|?`. The legacy engine's signatures cannot match
   /// anyway: the frames they signed moved out of the repo (R7), so each master rebuilds once.
-  package static func of(_ paths: [String]) -> String {
+  package static func of(_ paths: [String], identities: [String: String] = [:]) -> String {
     let parts = paths.map { path -> String in
+      // A frame of a bucket has no local attributes: what the run read of it (`size|etag`,
+      // card 0154) stands in, so a frame re-uploaded under the same key is not taken for the
+      // one the master was stacked from.
+      if let identity = identities[path] { return "\(path)|\(identity)" }
       guard let attributes = try? FileManager.default.attributesOfItem(atPath: path),
         let size = attributes[.size] as? Int, let modified = attributes[.modificationDate] as? Date
       else { return "\(path)|?" }
@@ -44,8 +48,10 @@ package enum PoolSignature {
 
   /// Whether the master at `master` was stacked from exactly `frames` (`builtFromSet`); a master
   /// without a sidecar proves nothing and is rebuilt once.
-  package static func proves(master: String, builtFrom frames: [String]) -> Bool {
+  package static func proves(
+    master: String, builtFrom frames: [String], identities: [String: String] = [:]
+  ) -> Bool {
     guard let recorded = read(at: sidecar(of: master)), !recorded.hash.isEmpty else { return false }
-    return recorded.hash == of(frames)
+    return recorded.hash == of(frames, identities: identities)
   }
 }

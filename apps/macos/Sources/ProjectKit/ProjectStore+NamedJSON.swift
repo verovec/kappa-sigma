@@ -7,6 +7,8 @@ enum NamedJSONTable: String {
   case pipelines
   /// The user's profile copies (card 0060).
   case userProfiles = "user_profiles"
+  /// What the last scan of a remote source already read, by its virtual path (card 0168).
+  case remoteScans = "remote_scans"
 }
 
 extension ProjectStore {

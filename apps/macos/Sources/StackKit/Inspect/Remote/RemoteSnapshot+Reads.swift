@@ -12,9 +12,12 @@ extension RemoteSnapshot {
   mutating func readHeadersAndSideFiles(
     store: RemoteObjectStore, progress: @escaping @Sendable (ScanProgress) -> Void
   ) async throws {
-    let frames = listing.files.filter(InventoryBuilder.isFITS)
-    let sidecars = Set(frames.map { $0 + ".txt" })
-    let sides = listing.files.filter { sidecars.contains($0) || CaptureManifest.isManifest($0) }
+    let sidecars = Set(listing.files.filter(InventoryBuilder.isFITS).map { $0 + ".txt" })
+    // What a cache already answered (card 0168) is neither read nor counted as reading.
+    let frames = listing.files.filter { InventoryBuilder.isFITS($0) && headers[$0] == nil }
+    let sides = listing.files.filter {
+      (sidecars.contains($0) || CaptureManifest.isManifest($0)) && contents[$0] == nil
+    }
     progress(.reading(done: 0, total: frames.count))
     let objects = self.objects
     var done = 0

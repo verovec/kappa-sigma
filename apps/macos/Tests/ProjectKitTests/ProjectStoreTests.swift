@@ -7,7 +7,7 @@ import Testing
 struct ProjectStoreTests {
   static let applicationTables = [
     "calibration_masters", "exports", "history_steps", "images", "pipelines", "project_settings",
-    "recipes", "snapshots", "sources", "stack_sources", "stacks", "user_profiles",
+    "recipes", "remote_scans", "snapshots", "sources", "stack_sources", "stacks", "user_profiles",
   ]
 
   static func newPackage(_ name: String = "M31") throws -> ProjectPackage {
@@ -26,11 +26,11 @@ struct ProjectStoreTests {
 
     #expect(try store.tableNames() == (Self.applicationTables + ["schema_migrations"]).sorted())
     let applied = try store.appliedMigrations()
-    #expect(applied.map(\.version) == [1, 2, 3, 4, 5, 6, 7, 8, 9])
+    #expect(applied.map(\.version) == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
     #expect(
       applied.map(\.name) == [
         "init", "calibration_masters", "project_settings", "source_profile", "stack_object_scope",
-        "exports", "stack_status", "stack_opened_at", "exports_remote",
+        "exports", "stack_status", "stack_opened_at", "exports_remote", "remote_sources",
       ])
 
     try store.migrate(to: 0)
@@ -257,7 +257,8 @@ struct ProjectStoreTests {
     try package.close()
 
     let reopened = try ProjectPackage.open(at: package.url)
-    #expect(try reopened.store.appliedMigrations().map(\.version) == [1, 2, 3, 4, 5, 6, 7, 8, 9])
+    #expect(
+      try reopened.store.appliedMigrations().map(\.version) == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
     #expect(try reopened.store.sources().count == 1)
     try reopened.close()
     let items = try FileManager.default.contentsOfDirectory(atPath: package.url.path)

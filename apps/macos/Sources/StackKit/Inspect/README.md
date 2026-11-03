@@ -77,6 +77,15 @@ offset, bin, warmer first).
   (`RemoteScan.unchecked`: the set of a missed read, the instrument of a CFA probe, every light
   when the bias/dark pedestal was asked) are listed in `Inventory.notCheckedRemotely` — the
   Données line « non vérifié (distant) », never a pass. A side file that fails is a warning.
+- A rescan reads only what changed (card 0168): `RemoteScan.scan(cache:)` answers `Scanned`
+  (inventory + `RemoteScanCache`), the cache being key -> (ETag, size, header cards, side-file
+  bytes) for the files the walk just answered. `RemoteSnapshot.load(store:prefix:cache:)` seeds
+  from it when the ETag and size still match and reads everything else; a key the bucket no longer
+  holds, and anything the walk skips (`output/`, an orphan sidecar), is in neither the inventory
+  nor the next cache. The centred pixel runs are **not** cached — 200 000 values a frame would put
+  hundreds of megabytes of JSON in `project.db`; they are re-read by range, one request per frame.
+  The project keeps the body (`ProjectStore.setRemoteScan`), and `inventory()` is the same scan
+  with the cache discarded.
 - StackKit never imports RemoteKit: `RemoteObjectStore` is two closures; the app adapts its
   `S3Client` (`RemoteObjectStore.s3(_:bucket:)`). Tests use an in-memory store
   (`Tests/.../Remote/MemoryStore.swift`) and the oracle trees (`RemoteScanTests`).

@@ -29,24 +29,49 @@ package struct RemoteScan: Sendable {
     overrides: InspectOverrides = InspectOverrides(),
     progress: @escaping @Sendable (ScanProgress) -> Void = { _ in }
   ) async throws -> Inventory {
-    var snapshot = try await RemoteSnapshot.load(store: store, prefix: prefix, progress: progress)
+    try await scan(overrides: overrides, progress: progress).inventory
+  }
+
+  /// The inventory of the prefix and what this scan read, to keep for the next one (card 0168).
+  ///
+  /// `cache` is the body a previous scan of the same prefix answered: a key the bucket still
+  /// holds at the same ETag is not read again. The cache returned describes the keys the listing
+  /// just answered — one the bucket no longer holds is gone from both.
+  @concurrent
+  package func scan(
+    cache: RemoteScanCache = .empty, overrides: InspectOverrides = InspectOverrides(),
+    progress: @escaping @Sendable (ScanProgress) -> Void = { _ in }
+  ) async throws -> Scanned {
+    var snapshot = try await RemoteSnapshot.load(
+      store: store, prefix: prefix, cache: cache, progress: progress)
     progress(.classifying)
     // The runs a pass asks for can change what the next one classifies: a few passes settle it;
     // the last pass answers with what it has (every read it misses names its frame).
     for _ in 1..<Self.passes {
       try Task.checkCancellation()
       let asked = RemoteSnapshot.Asked()
-      let inventory = try scan(snapshot, asked: asked, overrides: overrides)
-      guard !asked.missingSamples.isEmpty else { return finished(inventory, snapshot, asked) }
+      let inventory = try classify(snapshot, asked: asked, overrides: overrides)
+      guard !asked.missingSamples.isEmpty else {
+        return Scanned(inventory: finished(inventory, snapshot, asked), cache: snapshot.cache)
+      }
       try await snapshot.fetchSamples(asked.missingSamples, store: store)
     }
     try Task.checkCancellation()
     let asked = RemoteSnapshot.Asked()
-    return finished(try scan(snapshot, asked: asked, overrides: overrides), snapshot, asked)
+    let inventory = try classify(snapshot, asked: asked, overrides: overrides)
+    return Scanned(inventory: finished(inventory, snapshot, asked), cache: snapshot.cache)
+  }
+
+  /// An inventory and what reading it fetched, for the next scan of the same prefix.
+  package struct Scanned: Sendable {
+    /// The inventory the scan answered.
+    package let inventory: Inventory
+    /// What was read, to keep with the source (`ProjectStore.setRemoteScan`).
+    package let cache: RemoteScanCache
   }
 
   /// Today's scan over `snapshot`, its unanswered pixel reads told to `asked`.
-  private func scan(
+  private func classify(
     _ snapshot: RemoteSnapshot, asked: RemoteSnapshot.Asked, overrides: InspectOverrides
   ) throws -> Inventory {
     try InventoryBuilder(

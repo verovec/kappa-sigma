@@ -1,4 +1,5 @@
 package import Foundation
+internal import ProjectKit
 
 /// The scratch a run's Siril work folder peaks at, estimated from its plan before Siril starts
 /// (card 0098).
@@ -10,6 +11,10 @@ package import Foundation
 /// plus the converted copy of a capture that is not FITS.
 /// A colour light is debayered at calibration: three planes. Pinned against card 0058's measured
 /// peaks (M 31 80.6 GB, IC 1848 106 GB) within 10 %.
+///
+/// A lane whose frames live in a bucket (card 0154) also holds their raw bytes while it runs:
+/// they are downloaded into the lane's folder and go with it, so they are added to that lane's
+/// own peak — never to the whole run's.
 package struct ScratchEstimate: Equatable, Sendable {
   /// The peak, in bytes.
   package var bytes: Int64
@@ -25,6 +30,17 @@ package struct ScratchEstimate: Equatable, Sendable {
     }
     // Ties broken by name: the same scan always names the same lane.
     let peak = lanes.max { ($0.1, $1.0) < ($1.1, $0.0) }
+    // Step 1 downloads a bucket's raw calibration frames into `work/masters/cal_<name>`, one set
+    // at a time, each removed when its master is built (card 0154): the largest of them can
+    // exceed a lane, and card 0098's check has to see it.
+    let calibration = inventory.sets.filter { $0.key.type != .light }
+      .map { (Self.rawRemoteBytes($0), $0.key.id) }
+    let heaviestSet = calibration.max { ($0.0, $1.1) < ($1.0, $0.1) }
+    if let heaviestSet, heaviestSet.0 > (peak?.1 ?? 0) {
+      bytes = heaviestSet.0
+      lane = heaviestSet.1
+      return
+    }
     bytes = peak?.1 ?? 0
     lane = peak?.0 ?? ""
   }
@@ -38,14 +54,29 @@ package struct ScratchEstimate: Equatable, Sendable {
 
   /// One lane: its lights × the copies its steps write × one light's bytes, plus the copy
   /// `convert` writes of a night that is not FITS (a camera raw), before calibration.
-  static func laneBytes(_ groups: [FrameSet], flatten: Bool) -> Int64 {
+  package static func laneBytes(_ groups: [FrameSet], flatten: Bool) -> Int64 {
     // `GroupedChannelStacker.register` flattens only a lane of several nights.
     let copies: Int64 = flatten && groups.count > 1 ? 3 : 2
+    // The frames a lane downloads sit in its folder beside the copies Siril writes.
+    let raw = groups.reduce(Int64(0)) { total, group in
+      total + Self.rawRemoteBytes(group)
+    }
     return groups.reduce(0) { total, group in
       let converted = SirilIngest(paths: group.frames.map(\.path)) == .convert
       return group.frames.reduce(total) { sum, frame in
         sum + copies * Self.frameBytes(frame) + (converted ? Self.ingestBytes(frame) : 0)
       }
+    } + raw
+  }
+
+  /// The bytes a group's frames of a bucket are downloaded as (card 0154).
+  ///
+  /// Their stored size, which for a 16-bit capture is half a 32-bit copy; a frame of this Mac
+  /// costs nothing, being symlinked where it stands.
+  package static func rawRemoteBytes(_ group: FrameSet) -> Int64 {
+    group.frames.reduce(0) { total, frame in
+      guard ProjectSource.remoteParts(of: frame.path) != nil else { return total }
+      return total + Int64(frame.width) * Int64(frame.height) * Int64(max(frame.channels, 1)) * 2
     }
   }
 

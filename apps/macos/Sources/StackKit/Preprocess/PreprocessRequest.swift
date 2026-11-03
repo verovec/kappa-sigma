@@ -27,6 +27,14 @@ package struct PreprocessRequest: Sendable {
   /// The lane-scoped knobs a split run's lanes of one kind take over `settings` (card 0121), set
   /// through `overrideLane`; outside `settings` so an untouched run's digests stay as they were.
   package internal(set) var laneOverrides: [FilterSet: KnobPatch] = [:]
+  /// The buckets this run reads frames from (card 0154), one per remote source of the project;
+  /// empty for a capture of this Mac, and then nothing is ever downloaded.
+  package var remoteStores: [RemoteObjectStore] = []
+  /// What identifies each remote frame of this run (`size|etag` by virtual path, card 0154).
+  ///
+  /// A frame re-uploaded under the same key changes it, so its lane re-runs. Empty for a capture
+  /// of this Mac, which keeps every digest exactly as it was.
+  package var remoteIdentities: [String: String] = [:]
 
   /// A request; without `settings`, the preset of `mode`.
   package init(

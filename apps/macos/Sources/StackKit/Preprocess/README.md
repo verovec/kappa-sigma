@@ -60,12 +60,33 @@ the project's `stacks/<run_id>/`, with `work/` in a temporary `run_<id>` folder 
 when the run ends. `Progress` and `Preview` have package inits, so app tests can replay a
 recorded stream.
 
+**Staging a lane's frames (card 0154).** `FrameStager` puts a lane's frames where Siril reads
+them, under the positional names `MasterBuilder.link` has always written (`00001_<basename>`):
+a frame of this Mac is symlinked, so a local run emits byte-identical scripts and masters, and a
+frame whose path is a virtual `s3://bucket/key` (cards 0166-0169) is downloaded into the same
+name. The lane's own `defer` removes the folder, so the raw downloads go with it — on success,
+on failure and on cancel. A download that fails fails its lane with the bucket's own words
+(`PreprocessError.remoteFrameUnavailable`), and a bucket the run has no connection for is
+refused before Siril starts, by name.
+
+The buckets belong to the request (`PreprocessRequest.remoteStores`, filled by the app from the
+project's remote sources and their Settings connections — `ImportPlanning.runStores`); an empty
+list is a local run, and then nothing is ever downloaded. `RemoteObjectStore.download` is the
+store's own verified download (`.part`, size and checksum, atomic rename) when it has one.
+`FrameStager.identities(of:)` lists each bucket once, over the longest prefix its keys share, so
+`LaneRecord.framesDigest` can compare `size|etag` where a local frame compares size and mtime: a
+frame re-uploaded under the same key re-runs its lane. A calibration set's raw frames are staged
+only when a master has to be built from them — a library master proven by its `.sig` is reused
+without reading a single frame.
+
 **Scratch budget (card 0098).** `ScratchEstimate(inventory, settings:)` is the peak the work
 folder reaches: lanes run one after another and each removes its folders, so the largest lane
 sets it, at one 32-bit copy of each light per Siril step that writes one (`pp_`, `r_`, plus
 `flat_` when a multi-night lane flattens), colour lights debayered (three planes). It is pinned
 against 0058's measured peaks (M 31 80.6 GB, IC 1848 106 GB) within 10 %. A Siril step that
-writes another per-frame copy must add it here, with its test row. `ScratchSpace.available(at:)`
+writes another per-frame copy must add it here, with its test row. A lane of a bucket's frames
+also holds their raw bytes while it runs (`rawRemoteBytes`, card 0154): they are added to that
+lane's own peak, never to the whole run's, because they go with the lane. `ScratchSpace.available(at:)`
 reads the room left on the scratch volume. The app checks both before Siril starts
 (`check(room:folder:)` throws `scratchFull`) and shows them on the Stacking stage. The scratch
 folder is the Settings choice (`ScratchSetting`, always an app-owned `AstroStack/Work` subfolder),

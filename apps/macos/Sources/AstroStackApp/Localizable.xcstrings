@@ -12416,6 +12416,22 @@
           }
         }
       }
+    },
+    "%@ could not be read for this run: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ could not be read for this run: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ n’a pas pu être lu pour ce traitement : %@"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

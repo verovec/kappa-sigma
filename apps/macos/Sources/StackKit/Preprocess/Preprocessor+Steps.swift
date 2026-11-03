@@ -8,7 +8,15 @@ extension Preprocessor {
     async throws -> [CalibrationMaster]
   {
     emitter.begin("building master calibration frames")
-    let built = try await MasterBuilder(runner: reporting(emitter)).build(
+    var builder = MasterBuilder(runner: reporting(emitter))
+    builder.stager = FrameStager(stores: request.remoteStores)
+    builder.identities = request.remoteIdentities
+    // Step 1 can transfer many gigabytes from a bucket: it says so, under its own step.
+    builder.stagingReport = { done, total, bytes in
+      emitter.line(
+        "downloading \(done)/\(total) calibration frames · \(PreprocessError.gigabytes(bytes))")
+    }
+    let built = try await builder.build(
       request.inventory, into: request.work.appendingPathComponent("masters"), work: request.work,
       library: request.library)
     result.masters = built.masters
@@ -34,6 +42,11 @@ extension Preprocessor {
     var stacker = ChannelStacker(
       runner: tools.runner, settings: settings, trailProbe: tools.trailProbe
     ) { emitter.line($0) }
+    stacker.stager = FrameStager(stores: request.remoteStores)
+    // The downloads are the lane's own step: « 16/120 frames · 3,2 Go » under it.
+    stacker.stagingReport = { done, total, bytes in
+      emitter.line("downloading \(done)/\(total) frames · \(PreprocessError.gigabytes(bytes))")
+    }
     if settings.frameReview {
       stacker.frameReview = frameReviewHook(work: request.work, emitter: emitter)
     }

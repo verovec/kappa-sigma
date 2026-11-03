@@ -30,6 +30,11 @@ package struct ChannelStacker: Sendable {
   /// Asked once the frames are measured, before the registration is applied; nil never pauses
   /// (the run installs it when the `reference_breakpoint` knob is on).
   package var referencePin: ReferencePinHook?
+  /// Puts the lane's frames where Siril reads them (card 0154); the default stages this Mac's
+  /// frames exactly as `MasterBuilder.link` always has.
+  package var stager = FrameStager()
+  /// Hears a lane's downloads, so the run can journal them under the lane's own step.
+  package var stagingReport: FrameStager.Progress = { _, _, _ in }
 
   /// A stacker; trails are probed on the pixels unless a test substitutes them.
   package init(
@@ -68,7 +73,7 @@ package struct ChannelStacker: Sendable {
     try? FileManager.default.removeItem(at: folder)
     defer { try? FileManager.default.removeItem(at: folder) }
     do {
-      try MasterBuilder.link(set.frames.map(\.path), into: folder)
+      try await stager.stage(set.frames.map(\.path), into: folder, progress: stagingReport)
       let light = Light(
         folder: folder, masters: Self.masters(selection, frames: set.frames),
         ingest: SirilIngest(paths: set.frames.map(\.path)))

@@ -81,19 +81,35 @@ package struct LaneRecord: Codable, Equatable, Sendable {
   /// in place changes it.
   static func framesDigest(_ lane: String, plan: NightPlan, request: PreprocessRequest) -> String {
     var text = ""
+    // A remote frame whose identity the bucket did not answer is not proof of anything: it
+    // carries the run's own id, so a resume of THIS run still reuses its lanes while a later
+    // run reads the bucket again rather than trusting a digest nobody could check (card 0154).
+    let known = request.remoteIdentities
     for group in plan.channels[lane] ?? [] {
-      text += String(reflecting: group.key) + "\n" + files(group.frames.map(\.path))
+      text +=
+        String(reflecting: group.key) + "\n"
+        + files(group.frames.map(\.path), identities: known, unknownRemote: request.runID)
     }
     for set in request.inventory.sets where set.key.type != .light {
-      text += "\n" + String(reflecting: set.key) + "\n" + files(set.frames.map(\.path))
+      text +=
+        "\n" + String(reflecting: set.key) + "\n"
+        + files(set.frames.map(\.path), identities: known, unknownRemote: request.runID)
     }
-    text += "\n" + files(request.library.map(\.path))
+    text +=
+      "\n" + files(request.library.map(\.path), identities: known, unknownRemote: request.runID)
     return digest(text)
   }
 
   /// One line per path: the path, its size and its modification time (0 for a missing file).
-  private static func files(_ paths: [String]) -> String {
+  ///
+  /// A frame of a bucket has no local attributes, so `identities` carries what the run read of it
+  /// instead (`size|etag`, card 0154): a re-upload under the same key re-runs the lane.
+  package static func files(
+    _ paths: [String], identities: [String: String] = [:], unknownRemote: String = "?"
+  ) -> String {
     paths.map { path in
+      if let identity = identities[path] { return "\(path) \(identity)" }
+      if path.hasPrefix("s3://") { return "\(path) unread \(unknownRemote)" }
       let attributes = try? FileManager.default.attributesOfItem(atPath: path)
       let size = (attributes?[.size] as? NSNumber)?.int64Value ?? 0
       let modified = (attributes?[.modificationDate] as? Date)?.timeIntervalSince1970 ?? 0

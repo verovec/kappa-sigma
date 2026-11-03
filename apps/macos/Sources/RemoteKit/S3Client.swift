@@ -64,25 +64,44 @@ package struct S3Client: Sendable {
   package func list(bucket: String, prefix: String, limit: Int? = nil) async throws
     -> [S3Object]
   {
-    if let limit, limit <= 0 { return [] }
+    try await listing(bucket: bucket, prefix: prefix, delimiter: nil, limit: limit).objects
+  }
+
+  /// One level under `prefix` (card 0169): its own objects and the sub-prefixes `delimiter` cuts,
+  /// every page followed, so « Browse » walks a bucket without listing all of it.
+  @concurrent
+  package func list(bucket: String, prefix: String, delimiter: String) async throws -> S3Listing {
+    try await listing(bucket: bucket, prefix: prefix, delimiter: delimiter, limit: nil)
+  }
+
+  /// The pages of a ListObjectsV2 call, gathered.
+  private func listing(bucket: String, prefix: String, delimiter: String?, limit: Int?)
+    async throws -> S3Listing
+  {
+    if let limit, limit <= 0 { return S3Listing(objects: [], prefixes: []) }
     var objects: [S3Object] = []
+    var prefixes: [String] = []
     var token: String?
     repeat {
       // encoding-type=url: a key may hold characters XML 1.0 cannot carry (or normalises, \r).
       var query: [SignableRequest.QueryItem] = [
         .init("list-type", "2"), .init("prefix", prefix), .init("encoding-type", "url"),
       ]
+      if let delimiter { query.append(.init("delimiter", delimiter)) }
       if let token { query.append(.init("continuation-token", token)) }
       if let limit { query.append(.init("max-keys", String(min(limit - objects.count, 1000)))) }
       let response = try await perform(
         S3Request(method: "GET", bucket: bucket, key: "", query: query))
       let page = try S3ListPage.parse(response.body)
       objects += page.objects
+      prefixes += page.prefixes
       token = page.continuationToken
-      if let limit, objects.count >= limit { return Array(objects.prefix(limit)) }
+      if let limit, objects.count >= limit {
+        return S3Listing(objects: Array(objects.prefix(limit)), prefixes: prefixes)
+      }
       try Task.checkCancellation()
     } while token != nil
-    return objects
+    return S3Listing(objects: objects, prefixes: prefixes)
   }
 
   /// The object at `key`, or `nil` when the service answers 404.

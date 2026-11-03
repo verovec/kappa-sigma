@@ -228,4 +228,57 @@ struct S3ClientTests {
     #expect(await fake.requests.count == 3)
     #expect(await sleeps.delays == [.milliseconds(500), .milliseconds(1000)])
   }
+
+  /// A `delimiter=/` answer: the keys of this level, and the sub-prefixes below it.
+  static func level(
+    _ keys: [(String, Int64, String)], folders: [String], truncated: Bool, next: String?
+  ) -> String {
+    let common = folders.map { "<CommonPrefixes><Prefix>\($0)</Prefix></CommonPrefixes>" }.joined()
+    // A real answer to `encoding-type=url` echoes it: that is what says the names are encoded.
+    return Self.listing(keys, truncated: truncated, next: next)
+      .replacingOccurrences(
+        of: "</ListBucketResult>",
+        with: common + "<Delimiter>/</Delimiter><EncodingType>url</EncodingType>"
+          + "</ListBucketResult>")
+  }
+
+  @Test("testListWithDelimiter_CommonPrefixes: one level answers its folders and its own keys")
+  func testListWithDelimiter_CommonPrefixes() async throws {
+    let fake = Fake { _, call in
+      call == 0
+        ? .make(
+          200,
+          Self.level(
+            [("M31/info.txt", 12, "e1")], folders: ["M31/2026-10-18/", "M31/2026-10-19/"],
+            truncated: true, next: "tok"))
+        : .make(
+          200,
+          Self.level(
+            [("M31/notes.txt", 3, "e2")], folders: ["M31/flats%2Fdarks/"], truncated: false,
+            next: nil))
+    }
+
+    let level = try await fake.client().list(bucket: "astro", prefix: "M31/", delimiter: "/")
+
+    #expect(level.objects.map(\.key) == ["M31/info.txt", "M31/notes.txt"])
+    #expect(
+      level.prefixes == ["M31/2026-10-18/", "M31/2026-10-19/", "M31/flats/darks/"],
+      "every page's folders, URL-decoded like the keys")
+    let requests = await fake.requests
+    #expect(requests.map { $0.query("delimiter") } == ["/", "/"], "signed on both pages")
+    #expect(requests.map { $0.query("prefix") } == ["M31/", "M31/"])
+    #expect(requests.map { $0.query("encoding-type") } == ["url", "url"])
+  }
+
+  @Test("a listing without a delimiter asks for none and still answers every key")
+  func testListWithoutDelimiter() async throws {
+    let fake = Fake { _, _ in
+      .make(200, Self.listing([("M31/a.fits", 1, "e1")], truncated: false, next: nil))
+    }
+
+    let objects = try await fake.client().list(bucket: "astro", prefix: "M31/")
+
+    #expect(objects.map(\.key) == ["M31/a.fits"])
+    #expect(await fake.requests.map { $0.query("delimiter") } == [nil])
+  }
 }

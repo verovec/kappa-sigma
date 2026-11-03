@@ -163,6 +163,8 @@ struct AccessibilityAuditTests {
     "AstroStackApp/ProjectListSection.swift",
     "AstroStackApp/ProjectSwitcher.swift",
     "AstroStackApp/ProjectSwitcherItem.swift",
+    // Card 0169: the bucket form of the Import sheet.
+    "AstroStackApp/ImportBucketView.swift",
   ]
 
   @Test("no raw control: each audited source has as many `.accessible` as controls")

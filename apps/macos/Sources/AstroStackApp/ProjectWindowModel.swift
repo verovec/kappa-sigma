@@ -13,10 +13,10 @@ package final class ProjectWindowModel {
   package private(set) var statuses = JourneyState.derive(from: ProjectFacts())
   package private(set) var sources: [ProjectSource] = []
   /// The open Import sheet's model, `nil` when no sheet is shown.
-  package private(set) var importing: ImportViewModel?
+  package internal(set) var importing: ImportViewModel?
   package internal(set) var error: UserFacingError?
   /// The last Add's failure, shown on the Import sheet; an error of Run or the Studio is not.
-  package private(set) var importError: UserFacingError?
+  package internal(set) var importError: UserFacingError?
   /// The last scan of the sources in this window: the sheet's plan on Add, or a Rescan the user
   /// asked for; `nil` until then (an M31 scan takes ~90 s, never run on open).
   package internal(set) var scan: ImportPlan? {
@@ -40,6 +40,8 @@ package final class ProjectWindowModel {
   package private(set) var coverage: CoverageMatrix?
   /// A Rescan is running.
   package internal(set) var isScanning = false
+  /// What the Données stage knows of each remote source (card 0169), by virtual path.
+  package internal(set) var remoteStates: [String: RemoteSourceState] = [:]
   var scanTask: Task<Void, Never>?
   /// The scan going is the one Add a night started (card 0100): Run waits for its plan.
   var rescanAfterAdd = false
@@ -245,69 +247,6 @@ package final class ProjectWindowModel {
     planning: @escaping (ProjectStore?) -> ImportViewModel.Planning
   ) {
     self.init(store: store, folder: folder, services: { ImportServices(planning: planning($0)) })
-  }
-
-  /// Opens the Import sheet on a fresh request.
-  package func startImport() {
-    closeImport()
-    importError = nil
-    let services = services(store())
-    let profiles = ImportViewModel.profiles(store: store())
-    importing = ImportViewModel(
-      planning: services.planning, masters: services.masters, profiles: profiles.profiles,
-      rejectedProfiles: profiles.rejected)
-  }
-
-  /// Closes the Import sheet and stops its scan, which would otherwise run on for minutes.
-  package func closeImport() {
-    importing?.cancel()
-    importing = nil
-  }
-
-  /// Records the imported folders as read-only sources of the project and closes the sheet; the
-  /// next run applies the request's overrides.
-  ///
-  /// Recording is idempotent per folder: after a failure part-way, Add again records the rest.
-  /// A night added through the sheet to a project that has some is followed by a rescan of them
-  /// all (card 0100); any other plan the window cannot adopt waits for the user's Rescan.
-  package func add(_ request: ImportRequest) {
-    guard let store = store() else {
-      error = .projectClosed
-      importError = error
-      return
-    }
-    let isNewNight = addsANight(request)
-    var recorded = 0
-    do {
-      for path in request.paths {
-        try store.addSource(kind: .night, path: path)
-        recorded += 1
-      }
-      // The profile kept for these sources, recorded with them; applied by nothing here.
-      if let importing, let kept = importing.profileToRecord(for: request) {
-        for path in request.paths {
-          try store.setProfile(kept.id, kind: .night, path: path)
-        }
-      }
-      imports.append(request)
-      edited()
-      // The sources first: whether the sheet's plan is the project's scan depends on them.
-      refresh()
-      adoptScan(of: importing, for: request)
-      closeImport()
-      refresh()
-      if isNewNight && scan == nil {
-        rescan()
-        rescanAfterAdd = isScanning
-      }
-    } catch {
-      // Some folders may be recorded: the last scan no longer describes the project.
-      if recorded > 0 { edited() }
-      dropScan()
-      refresh()
-      self.error = UserFacingError(error)
-      importError = self.error
-    }
   }
 
   /// Rereads the sources and the stage states; never changes the selection.

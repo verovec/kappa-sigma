@@ -115,6 +115,8 @@ struct ImportSheetTests {
     "PipelineDiffSheet", "ReplayChooser",
     "CalibrationStagePane", "CoverageMatrix+Heading", "StackingStageModel", "StackingSeriesView",
     "ReviewStagePane", "FrameReviewView", "FrameTable", "FrameBlinkView", "FrameReviewViewModel",
+    // Card 0169: the bucket form of the Import sheet.
+    "ImportBucketView",
   ]
 
   @Test("the project window and import sheet carry no English literal outside the catalog")

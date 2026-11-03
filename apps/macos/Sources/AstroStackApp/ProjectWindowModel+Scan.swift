@@ -16,7 +16,7 @@ extension ProjectWindowModel {
     }
     let request: ImportRequest
     do {
-      guard let planned = try runRequest() else { return }
+      guard let planned = try runRequest() else { return scanRemoteOnly() }
       request = planned
     } catch {
       self.error = UserFacingError(error)
@@ -34,6 +34,9 @@ extension ProjectWindowModel {
         rescanAfterAdd = false
         scanTask = nil
         refresh()
+        // After the local plan, never before it: one unreachable bucket would otherwise hold
+        // back a purely local Rescan — and Run with it (card 0100's `awaitsRescan`).
+        await rescanRemoteSources()
       } catch {
         guard !Task.isCancelled else { return }
         // The folders no longer read as scanned: the last scan stops describing them. A
@@ -42,6 +45,19 @@ extension ProjectWindowModel {
         refresh()
         if !(error is CancellationError) { self.error = UserFacingError(error) }
       }
+    }
+  }
+
+  /// A project whose captures are all in buckets: nothing to read on this Mac, the remote
+  /// sources alone are scanned (card 0169).
+  func scanRemoteOnly() {
+    guard !remoteSources.isEmpty else { return }
+    isScanning = true
+    scanTask = Task {
+      await rescanRemoteSources()
+      guard !Task.isCancelled else { return }
+      isScanning = false
+      scanTask = nil
     }
   }
 

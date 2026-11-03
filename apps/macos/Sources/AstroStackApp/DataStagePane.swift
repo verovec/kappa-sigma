@@ -1,3 +1,4 @@
+internal import ProjectKit
 internal import RenderKit
 internal import StackKit
 internal import SwiftUI
@@ -25,7 +26,7 @@ struct DataStagePane: View {
         VStack(alignment: .leading, spacing: DesignMetrics.spacingL) {
           header
           ForEach(model.sources, id: \.id) { source in
-            Label(source.path, systemImage: "folder").font(.caption)
+            sourceRow(source)
           }
           scanned
           if !model.stacks.isEmpty {
@@ -36,6 +37,30 @@ struct DataStagePane: View {
         .padding(DesignMetrics.spacingM)
         .frame(maxWidth: .infinity, alignment: .leading)
       }
+    }
+  }
+
+  /// One source's row: a folder of this Mac, or a bucket prefix (card 0169).
+  ///
+  /// A remote row shows what its last scan answered and why the last one failed, if it did; a
+  /// failure never replaces the count, since an empty inventory would read as « the prefix holds
+  /// nothing » (R2).
+  @ViewBuilder private func sourceRow(_ source: ProjectSource) -> some View {
+    if source.kind == .remoteNight {
+      let state = model.remoteState(of: source.path)
+      VStack(alignment: .leading, spacing: 2) {
+        Label(source.path, systemImage: "externaldrive.badge.icloud").font(.caption)
+        if let lights = state?.lights {
+          Text(.app("\(lights) lights read in place")).font(.caption2).foregroundStyle(.secondary)
+        }
+        if let failure = state?.failure {
+          // Its own words: `S3Error` already starts with « S3 », and a missing connection names
+          // Settings — prefixing either would read « S3: S3 403 … ».
+          StatusBadge(.error, failure.message)
+        }
+      }
+    } else {
+      Label(source.path, systemImage: "folder").font(.caption)
     }
   }
 

@@ -21,6 +21,14 @@ extension UserFacingError {
     }
   }
 
+  /// Why a bucket could not be read for an import (card 0169).
+  static func message(_ problem: RemoteImportProblem) -> LocalizedStringResource {
+    switch problem {
+    case .connectionMissing:
+      .app("The S3 connection is gone or has no secret: check Settings › S3 connections.")
+    }
+  }
+
   /// What went wrong with an export's S3 side (card 0152); the service's words kept as sent.
   static func message(_ problem: ExportS3Problem) -> LocalizedStringResource {
     switch problem {

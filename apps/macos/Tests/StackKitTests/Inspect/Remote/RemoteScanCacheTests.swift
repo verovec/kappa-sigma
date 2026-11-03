@@ -217,4 +217,30 @@ struct RemoteScanCacheTests {
     let whole = try await RemoteSnapshot.load(store: bucket.store, prefix: "")
     #expect(whole.root == ProjectSource.remotePath(bucket: "astro", prefix: ""))
   }
+
+  @Test(
+    "a side file bigger than a sidecar is read again, never carried in the body",
+    .scratchDirectory)
+  func testOversizeSideFileIsNotCached() async throws {
+    let base = try Self.tree("sidecar")
+    let big = String(repeating: "Gain = 250\n", count: 20_000)
+    #expect(big.utf8.count > RemoteScanCache.maxCachedSideFileBytes)
+    try Data(big.utf8).write(to: base.appendingPathComponent("lights/l_1.fits.txt"))
+    let bucket = try ChangingStore(tree: base, prefix: "")
+    let scan = RemoteScan(store: bucket.store, prefix: "", timeZone: Self.zone)
+
+    let first = try await scan.scan()
+    #expect(first.cache.entries["lights/l_1.fits.txt"]?.contents == nil, "too big to keep")
+    #expect(first.cache.entries["lights/l_1.fits"]?.header != nil, "its frame's header is kept")
+
+    bucket.forgetReads()
+    _ = try await scan.scan(cache: first.cache)
+
+    #expect(
+      bucket.reads.contains { $0.key == "lights/l_1.fits.txt" },
+      "so it is fetched again, as the scan needs it")
+    #expect(
+      !bucket.reads.contains { $0.key == "lights/l_1.fits" && $0.isHeaderOrSideFile },
+      "while the cached header is not")
+  }
 }

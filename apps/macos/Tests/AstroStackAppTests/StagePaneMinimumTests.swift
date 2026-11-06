@@ -46,14 +46,8 @@ struct StagePaneMinimumTests {
   func testStudio_fits(_ state: StudioState) async throws {
     let fixture = try ProjectTests.fixture()
     defer { try? fixture.project.close() }
-    let output = fixture.project.url.appendingPathComponent("stacks/A")
-    try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
-    _ = try ProjectTests.writeBundle(in: output, runID: "A")
-    _ = try fixture.project.store.addStack(
-      bundlePath: "stacks/A", sourceIDs: [], paramsJSON: "{}", object: "M 31", scopeJSON: nil)
+    try ProjectTests.addStudioStack(fixture)
     let window = fixture.window
-    window.refresh()
-    window.select(.studio)
     await window.openStudio()
     await ProjectWindowWorkspaceTests.settle { window.workspace != nil || window.error != nil }
     let workspace = try #require(window.workspace)

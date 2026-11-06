@@ -350,10 +350,6 @@ package final class ProjectDocument: NSDocument {
   override package func makeWindowControllers() {
     // A Studio move is refused, not consumed, while a run moves the history (card 0117).
     if !(undoManager is ProjectUndoManager) { undoManager = ProjectUndoManager() }
-    let window = ProjectWindow(
-      contentRect: SplitWindow.contentRect(panes: SplitWindow.openingPanes),
-      styleMask: SplitWindow.styleMask,
-      backing: .buffered, defer: false)
     let model = ProjectWindowModel(
       store: { [weak self] in self?.project?.store }, folder: { [weak self] in self?.project?.url },
       isSaved: { [weak self] in self?.isTemporary == false },
@@ -361,12 +357,7 @@ package final class ProjectDocument: NSDocument {
       save: { [weak self] in self?.save(nil) })
     model.undoManager = { [weak self] in self?.undoManager }
     windowModel = model
-    let content = NSHostingView(
-      rootView: ProjectWindowView(model: model, projects: .live).interfaceLocale())
-    // The window keeps its own frame and a fixed minimum: SwiftUI sizes nothing (SplitWindow).
-    content.sizingOptions = []
-    window.contentView = content
-    window.contentMinSize = SplitWindow.contentMinSize
+    let window = ProjectWindow.make(model: model, projects: .live)
     // Projects share one window as tabs, whatever « Prefer tabs » says; nothing else joins them.
     window.tabbingMode = .preferred
     window.tabbingIdentifier = Self.tabbingIdentifier

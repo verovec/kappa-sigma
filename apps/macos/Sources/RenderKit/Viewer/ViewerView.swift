@@ -25,10 +25,13 @@ package struct ViewerView: View {
   }
 
   /// The image's column: it never collapses, the panel goes first when the room runs out.
-  package static let surfaceWidth = ColumnWidth(min: 240, ideal: 480, max: .infinity)
+  ///
+  /// Nonisolated, as the panel's: the geometry closure that reads both is not on the main actor.
+  nonisolated package static let surfaceWidth = ColumnWidth(min: 240, ideal: 480, max: .infinity)
   /// The « View » panel's column with its divider; it collapses when the image would be under
   /// its minimum (display only: `showsPanel` stays the user's choice).
-  package static let panelWidth = ColumnWidth(min: 281, ideal: 281, max: 281, collapseRank: 0)
+  nonisolated package static let panelWidth = ColumnWidth(
+    min: 281, ideal: 281, max: 281, collapseRank: 0)
 
   package var body: some View {
     // The minimum never follows the content (card 0176): a split view's column is never asked for

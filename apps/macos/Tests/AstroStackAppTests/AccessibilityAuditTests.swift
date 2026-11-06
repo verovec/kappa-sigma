@@ -19,16 +19,16 @@ struct AccessibilityAuditTests {
     var entries: [AccessibilityAudit.Entry] = []
   }
 
-  /// The entries `view` reports once laid out in `language`.
-  static func entries<Content: View>(_ view: Content, language: String = "fr")
-    -> [AccessibilityAudit.Entry]
-  {
+  /// The entries `view` reports once laid out `width` wide in `language`.
+  static func entries<Content: View>(
+    _ view: Content, language: String = "fr", width: CGFloat = 900
+  ) -> [AccessibilityAudit.Entry] {
     let reported = Reported()
     let host = NSHostingView(
       rootView: view.environment(\.locale, Locale(identifier: language))
         .onPreferenceChange(AccessibilityAudit.Key.self) { reported.entries = $0 }
-        .frame(width: 900, height: 1800))
-    host.frame = NSRect(x: 0, y: 0, width: 900, height: 1800)
+        .frame(width: width, height: 1800))
+    host.frame = NSRect(x: 0, y: 0, width: width, height: 1800)
     host.layoutSubtreeIfNeeded()
     RunLoop.main.run(until: Date().addingTimeInterval(0.05))
     return reported.entries

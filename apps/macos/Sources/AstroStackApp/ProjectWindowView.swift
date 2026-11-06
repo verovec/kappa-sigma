@@ -36,7 +36,8 @@ package struct ProjectWindowView: View {
         set: { if !focused { sidebarStored = $0 } })
     ) {
       JourneySidebar(model: model, switcher: switcher)
-        .navigationSplitViewColumnWidth(min: 180, ideal: 210, max: 280)
+        .navigationSplitViewColumnWidth(
+          min: sidebar.min, ideal: sidebar.ideal, max: sidebar.max)
     } detail: {
       VStack(spacing: 0) {
         // The card covers the stage, never replaces it: the Studio's viewer stays as it was.
@@ -65,7 +66,7 @@ package struct ProjectWindowView: View {
     ) {
       if let step = model.guideStep {
         GuidePanel(model: model, step: step)
-          .inspectorColumnWidth(min: 220, ideal: 260, max: 340)
+          .inspectorColumnWidth(min: guide.min, ideal: guide.ideal, max: guide.max)
       }
     }
     .frame(minWidth: SplitWindow.minPanes.width, minHeight: SplitWindow.minPanes.height)
@@ -85,6 +86,9 @@ package struct ProjectWindowView: View {
     }
     .environment(\.guideTarget, model.guideTarget)
   }
+
+  private var sidebar: ColumnWidth { SplitWindow.sidebarWidth }
+  private var guide: ColumnWidth { SplitWindow.guideWidth }
 
   /// The switcher at the head of the sidebar (card 0146), over the model's observable head.
   private var switcher: ProjectSwitcher {

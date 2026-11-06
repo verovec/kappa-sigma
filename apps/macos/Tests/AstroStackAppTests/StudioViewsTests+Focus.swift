@@ -27,8 +27,10 @@ extension StudioViewsTests {
     let viewPanel = AccessibilityID.viewer("histogramDomain").rawValue
     let exit = AccessibilityID.studioFocus("exit").rawValue
 
+    // Wide enough for the View panel: under its room the panel collapses (card 0176).
     let normal = Set(
-      AccessibilityAuditTests.entries(StudioWorkspaceView(model: workspace)).map(\.id))
+      AccessibilityAuditTests.entries(StudioWorkspaceView(model: workspace), width: 1400)
+        .map(\.id))
     #expect(normal.isSuperset(of: [history, viewPanel]))
     #expect(!normal.contains(exit), "no HUD outside focus")
 

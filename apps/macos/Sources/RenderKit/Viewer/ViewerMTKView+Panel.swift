@@ -28,10 +28,20 @@ extension ViewerMTKView: NSMenuItemValidation {
       : .renderKit("Show View Panel", locale: locale)
   }
 
+  /// The panel toggle's tooltip: its command, or, without room for the panel (card 0176), what
+  /// to do to see it.
+  package nonisolated static func panelToggleHelp(
+    showsPanel: Bool, hasRoom: Bool, locale: Locale? = nil
+  ) -> LocalizedStringResource {
+    hasRoom
+      ? panelCommandTitle(showsPanel: showsPanel, locale: locale)
+      : .renderKit("Widen the window to show the View panel", locale: locale)
+  }
+
   package func validateMenuItem(_ item: NSMenuItem) -> Bool {
     if item.action == #selector(toggleViewerPanel(_:)) {
       item.title = String(localized: Self.panelCommandTitle(showsPanel: model.showsPanel))
-      return !model.isFocused
+      return !model.isFocused && model.panelHasRoom
     } else if item.action == #selector(toggleFocusImage(_:)) {
       item.state = model.isFocused ? .on : .off
     }

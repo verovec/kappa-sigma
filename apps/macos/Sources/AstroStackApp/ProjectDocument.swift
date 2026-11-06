@@ -350,8 +350,8 @@ package final class ProjectDocument: NSDocument {
   override package func makeWindowControllers() {
     // A Studio move is refused, not consumed, while a run moves the history (card 0117).
     if !(undoManager is ProjectUndoManager) { undoManager = ProjectUndoManager() }
-    let window = NSWindow(
-      contentRect: SplitWindow.contentRect(panes: NSSize(width: 960, height: 640)),
+    let window = ProjectWindow(
+      contentRect: SplitWindow.contentRect(panes: SplitWindow.openingPanes),
       styleMask: SplitWindow.styleMask,
       backing: .buffered, defer: false)
     let model = ProjectWindowModel(

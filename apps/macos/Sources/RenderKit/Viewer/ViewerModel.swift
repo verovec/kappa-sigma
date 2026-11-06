@@ -74,6 +74,10 @@ package final class ViewerModel {
       panelToggled?()
     }
   }
+  /// The viewer is wide enough for the « View » panel beside the image (card 0176); display
+  /// only, set from the width the viewer is given: narrower, the panel collapses and its toggle
+  /// says to widen the window.
+  package var panelHasRoom = true
   /// Where `showsPanel` is remembered.
   @ObservationIgnored private let panelSetting: ViewerPanelSetting
   /// A change of `showsPanel` is the user's choice, stored (not focus hiding it, card 0127).

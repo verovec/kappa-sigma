@@ -24,8 +24,16 @@ package struct ViewerView: View {
     self.mask = mask
   }
 
+  /// The image's column: it never collapses, the panel goes first when the room runs out.
+  package static let surfaceWidth = ColumnWidth(min: 240, ideal: 480, max: .infinity)
+  /// The « View » panel's column with its divider; it collapses when the image would be under
+  /// its minimum (display only: `showsPanel` stays the user's choice).
+  package static let panelWidth = ColumnWidth(min: 281, ideal: 281, max: 281, collapseRank: 0)
+
   package var body: some View {
-    HStack(spacing: 0) {
+    // The minimum never follows the content (card 0176): a split view's column is never asked for
+    // more than the window gives it.
+    CollapsingColumns {
       ZStack(alignment: .topLeading) {
         MetalSurface(
           model: model, renderer: renderer, texture: texture, reference: reference, mask: mask)
@@ -33,13 +41,22 @@ package struct ViewerView: View {
       }
       .overlay(alignment: .topTrailing) { PanelToggle(model: model) }
       .clipped()
-      .frame(minWidth: 480, minHeight: 320)
+      .frame(minHeight: 320)
+      .column(Self.surfaceWidth)
       // The surface keeps its slot whether the panel is shown: SwiftUI keeps the same
       // `ViewerMTKView` (card 0109), so zoom, focus and the ⌥ compare key survive (card 0126).
       if model.showsPanel {
-        Divider()
-        ViewerPanel(model: model).frame(width: 280)
+        HStack(spacing: 0) {
+          Divider()
+          ViewerPanel(model: model).frame(width: 280)
+        }
+        .column(Self.panelWidth)
       }
+    }
+    .onGeometryChange(for: Bool.self) { geometry in
+      geometry.size.width >= Self.surfaceWidth.min + Self.panelWidth.min
+    } action: { room in
+      model.panelHasRoom = room
     }
   }
 }
@@ -51,6 +68,8 @@ private struct PanelToggle: View {
 
   var body: some View {
     let title = ViewerMTKView.panelCommandTitle(showsPanel: model.showsPanel)
+    let help = ViewerMTKView.panelToggleHelp(
+      showsPanel: model.showsPanel, hasRoom: model.panelHasRoom)
     Button {
       model.showsPanel.toggle()
     } label: {
@@ -58,7 +77,9 @@ private struct PanelToggle: View {
     }
     .buttonStyle(.borderless)
     .padding(8)
-    .help(Text(title))
+    // Without room the panel cannot show: the toggle says why instead of seeming to do nothing.
+    .disabled(!model.panelHasRoom)
+    .help(Text(help))
     .accessible(.viewer("togglePanel"), label: title)
   }
 }

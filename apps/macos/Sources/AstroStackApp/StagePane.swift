@@ -1,6 +1,6 @@
 package import Foundation
 package import RenderKit
-internal import SwiftUI
+package import SwiftUI
 
 /// The one place that maps a journey stage to its pane and its state's badge and words.
 ///
@@ -10,7 +10,7 @@ internal import SwiftUI
 package enum StagePane {
   /// The pane of `stage`.
   @ViewBuilder
-  static func pane(for stage: JourneyStage, model: ProjectWindowModel) -> some View {
+  package static func pane(for stage: JourneyStage, model: ProjectWindowModel) -> some View {
     switch stage {
     case .data:
       DataStagePane(model: model)

@@ -40,4 +40,15 @@ struct SplitWindowTests {
     defer { controller.window?.close() }
     #expect(controller.window?.styleMask == SplitWindow.styleMask)
   }
+
+  @Test("the window minimum holds every column at its minimum; the window opens over it")
+  func testMinPanes_holdsEveryColumn() {
+    let columns =
+      SplitWindow.sidebarWidth.min + SplitWindow.detailMinSize.width + SplitWindow.guideWidth.min
+      + SplitWindow.dividers
+    #expect(SplitWindow.minPanes.width == columns)
+    #expect(SplitWindow.minPanes.height == SplitWindow.detailMinSize.height)
+    #expect(SplitWindow.openingPanes.width >= SplitWindow.minPanes.width)
+    #expect(SplitWindow.openingPanes.height >= SplitWindow.minPanes.height)
+  }
 }

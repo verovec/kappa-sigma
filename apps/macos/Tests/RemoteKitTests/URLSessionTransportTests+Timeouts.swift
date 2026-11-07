@@ -79,5 +79,23 @@ extension URLSessionTransportTests {
     #expect(S3Error.transferTimedOut(seconds: 0.2).description.contains("0.2 s"))
     #expect(S3Error.transferTimedOut(seconds: 45).description.contains("45 s"))
     #expect(S3Error.transferTimedOut(seconds: 0.30000000000000004).description.contains("0.3 s"))
+    #expect(S3Error.transferTimedOut(seconds: 0.25).description.contains("0.25 s"))
+  }
+
+  @Test("a caller already cancelled sends nothing")
+  func testCancelledCallerSendsNothing() async throws {
+    let host = "cancelled.test"
+    Self.route(host, .init(status: 200, headers: [:], body: Data()))
+    let transport = Self.transport()
+    let request = HTTPRequest(
+      method: "PUT", url: try #require(URL(string: "http://\(host)/b/k")), headers: [:])
+
+    let outcome = await Task {
+      withUnsafeCurrentTask { $0?.cancel() }
+      return try await transport.send(request)
+    }.result
+
+    #expect(throws: CancellationError.self) { try outcome.get() }
+    #expect(Self.received(host) == nil)
   }
 }

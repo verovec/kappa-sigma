@@ -48,10 +48,10 @@ module (Foundation and CryptoKit only), with no AWS SDK and no helper process.
 - Redirects are refused (`RedirectRefusal`): a 3xx such as `PermanentRedirect` is an error, never a
   signed request replayed to another host. When the answer names the bucket's region
   (`x-amz-bucket-region`) and that explains it, the error is `S3Error.wrongRegion`: the service's
-  answer as sent, then the region and what to change (the region, or the endpoint when the region
-  is already the connection's). That is a 301; another 3xx naming another region; a 400 with a
-  region code (`AuthorizationHeaderMalformed`); a body-less 400 (HEAD) naming another region. A
-  403 or a 400 `RequestTimeout` keep their words (the latter stays retried).
+  answer as sent, then the region and what to change (the region, or the endpoint when a 301
+  names the connection's own region). Besides a 301, only an answer naming another region: a
+  3xx, a 400 with a region code (`AuthorizationHeaderMalformed`), a HEAD's body-less 400. A 403
+  or a 400 `RequestTimeout` keep their words (the latter stays retried).
 - Every request is bounded: 60 s without bytes (`HTTPTransport.configuration()`, `idleTimeout`,
   retried as a timeout) and 6 h in all (`urlSession(_:transfer:)`, `transferTimeout`, a 4 GB
   object at 200 kB/s), which ends in `S3Error.transferTimedOut` and is never retried: a new try

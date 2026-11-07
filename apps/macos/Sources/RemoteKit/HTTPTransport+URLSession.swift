@@ -70,6 +70,8 @@ extension HTTPTransport {
   static func bounded<T: Sendable>(
     _ transfer: TimeInterval, _ body: @escaping @Sendable () async throws -> T
   ) async throws -> T {
+    // An already-cancelled caller sends nothing: the request below is not a child task.
+    try Task.checkCancellation()
     let expiry = Expiry()
     let work = Task { try await body() }
     let timer = Task {
@@ -82,7 +84,12 @@ extension HTTPTransport {
       do {
         return try await work.value
       } catch {
-        if await expiry.expired { throw S3Error.transferTimedOut(seconds: transfer) }
+        // Only the timer's own cancel is the deadline: a stall or a caller's cancel that lands
+        // as the timer fires keeps its own error (a stall stays retried).
+        let cancelled = error is CancellationError || (error as? URLError)?.code == .cancelled
+        if cancelled, !Task.isCancelled, await expiry.expired {
+          throw S3Error.transferTimedOut(seconds: transfer)
+        }
         throw error
       }
     } onCancel: {

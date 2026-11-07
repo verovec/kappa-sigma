@@ -25,7 +25,7 @@ extension S3Client {
         let answer = try await transport.download(http, part) { bytes in
           progress?(.transferred(bytes: bytes, total: total))
         }
-        return try checked(answer, bucket: bucket)
+        return try checked(answer, bucket: bucket, method: "GET")
       }
       let object = try verify(part, key: key, response: response, expect: expect)
       if files.fileExists(atPath: destination.path) {

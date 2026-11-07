@@ -51,9 +51,9 @@ struct S3ClientRegionTests {
       response: .make(301, headers: ["x-amz-bucket-region": "us-east-1"]),
       outcome: .region("us-east-1", ending: endpoint)),
     Row(
-      label: "400 AuthorizationHeaderMalformed naming the connection's region: the endpoint",
+      label: "400 AuthorizationHeaderMalformed in the connection's region is a malformed key",
       response: error(400, "AuthorizationHeaderMalformed", region: "us-east-1"),
-      outcome: .region("us-east-1", ending: endpoint)),
+      outcome: .service(status: 400, tries: 1)),
     Row(
       label: "400 with an unreadable body naming another region keeps the service's words",
       response: HTTPResponse(
@@ -114,6 +114,15 @@ struct S3ClientRegionTests {
         #expect(got == status)
         #expect(await fake.requests.count == tries)
       }
+    }
+  }
+
+  @Test("a GET's body-less 400 naming another region keeps the service's words")
+  func testBodylessNonHeadStaysService() async throws {
+    let fake = Fake { _, _ in .make(400, headers: ["x-amz-bucket-region": "eu-west-3"]) }
+
+    await #expect(throws: S3Error.service(status: 400, code: nil, message: nil, requestID: nil)) {
+      _ = try await fake.client().get(bucket: "astro", key: "M31/a.fits", range: nil)
     }
   }
 

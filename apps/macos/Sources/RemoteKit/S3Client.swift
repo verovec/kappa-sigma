@@ -158,7 +158,8 @@ package struct S3Client: Sendable {
 
   /// One signed try of `request`; a non-2xx answer becomes `S3Error.service`.
   func send(_ request: S3Request) async throws -> HTTPResponse {
-    try checked(await transport.send(prepare(request)), bucket: request.bucket)
+    try checked(
+      await transport.send(prepare(request)), bucket: request.bucket, method: request.method)
   }
 
   /// `request` addressed and signed now (each try signs again: `x-amz-date` must be fresh).

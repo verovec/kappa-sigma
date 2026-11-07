@@ -35,7 +35,7 @@ extension ParameterRowKeyTests {
   @Test("a whole-number knob reads 4 after 3.4 typed and ↑, as the model keeps it")
   func testWholeKnobFromATypedFraction() throws {
     let row = Self.hosted(
-      ParameterValue(default: 2, range: 0...512), step: .default(for: 0...512, integer: true),
+      ParameterValue(default: 2, range: 0...512), step: .wholeNumber,
       rounds: true)
     defer { row.window.close() }
     try row.focusField()

@@ -46,6 +46,9 @@ package struct GeometryProcess: GeometricProcess {
     "cropLeft": 1, "cropTop": 1, "cropRight": 1, "cropBottom": 1, "angle": 0.1,
   ]
 
+  /// The crops are whole pixels: the plan refuses a fraction.
+  package static let wholeNumbers: Set<String> = ["cropLeft", "cropTop", "cropRight", "cropBottom"]
+
   /// Each crop slides up to one pixel short of the side it crops: a crop that leaves no pixel is
   /// refused by the plan, a larger typed value is kept as typed (R2).
   package static func displayRanges(width: Int, height: Int) -> [String: ClosedRange<Double>] {

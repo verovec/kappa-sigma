@@ -35,6 +35,13 @@ package struct HDRProcess: ImageProcess {
       in: 0...64),
   ])
 
+  /// The knee and the softness sit a hundred times below their range's travel: a step of their
+  /// own, or one press crosses the validated default (card 0179).
+  package static let steps: [String: Double] = ["kneeAboveSky": 0.000_1, "softness": 0.000_1]
+
+  /// The star removal radius is read as whole pixels.
+  package static let wholeNumbers: Set<String> = ["openRadius"]
+
   package let params: ParamSet
   private let luminance: MTLComputePipelineState
   private let compress: MTLComputePipelineState

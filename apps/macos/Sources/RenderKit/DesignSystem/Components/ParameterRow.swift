@@ -7,8 +7,8 @@ package import SwiftUI
 /// RenderKit never imports the app: the caller passes `format` and `parse` (the app's
 /// `AstroFormat.parameter` and `parameter(parsing:)`, which round-trip exactly). Every field steps
 /// (cards 0085, 0179): ↑/↓ move one step per press and speed up while held (`ArrowRepeat`), by
-/// the panel's `step`, else `ParameterStep.default(for:near:)` of the range and the default; ⇧
-/// or ⌥ a fine step. With a declared `step` the slider takes focus too: ←/→ one step per press,
+/// the panel's `step`, else `ParameterStep.default(for:)` of the range; ⇧ or ⌥ a fine step; ⌘
+/// and ⌃ stay the field's (⌘↑ to the start). With a declared `step` the slider takes focus too: ←/→ one step per press,
 /// ↑/↓ as in the field, and an ⌥-drag runs at a tenth of the pointer's travel. The field shows
 /// the value applied (R2).
 package struct ParameterRow: View {
@@ -35,8 +35,10 @@ package struct ParameterRow: View {
   @State private var dragRange: ClosedRange<Double>?
   /// The repeats of the ↑/↓ held down, for the speed-up.
   @State private var arrows = ArrowRepeat()
-  /// The value the last arrow wrote, until the binding shows it: auto-repeats arrive before the
-  /// row is drawn again, and stepping from the binding then would step from a stale value.
+  /// The value the last arrow wrote while its key is held.
+  ///
+  /// Auto-repeats arrive before the binding shows a write (whatever the binding), and stepping
+  /// from it then would step from a stale value. A new press starts from the binding again.
   @State private var pending: Double?
   /// Arrow releases: each one shows the binding's value again, once the row is drawn, so a write
   /// the model rounded or refused never stays in the field (R2).
@@ -46,7 +48,8 @@ package struct ParameterRow: View {
   /// A row editing `parameter`; `help` is its « ? » (summary on hover, content on click);
   /// `key` (the parameter's stable id) identifies its controls (`AccessibilityID.parameter`);
   /// `frozen` disables the value's controls but never the « ? »; `step` is the panel's keyboard
-  /// and fine-drag step (`nil`: a hundredth of the range, on a decade).
+  /// and fine-drag step (`nil`: the field steps by `ParameterStep.default(for:)` of the range,
+  /// and the slider stays out of the tab loop).
   package init(
     _ label: LocalizedStringResource, parameter: Binding<ParameterValue>,
     help: HelpContent? = nil, key: String, frozen: Bool = false, step: ParameterStep? = nil,
@@ -92,7 +95,10 @@ package struct ParameterRow: View {
     // A freeze (a run starting) shows the applied value, never a typed one nobody committed.
     .onChange(of: frozen) {
       // A row frozen mid-drag gets no end of the drag: the next drag starts on the live range.
+      // Nor the release of a held arrow: the next press starts afresh.
       dragRange = nil
+      pending = nil
+      arrows = ArrowRepeat()
       if frozen {
         editing = false
         text = format(parameter.value)
@@ -176,20 +182,21 @@ package struct ParameterRow: View {
     }
   }
 
-  /// The row's step: the panel's, else a decade of its range near its default.
-  private var arrowStep: ParameterStep {
-    step ?? .default(for: parameter.range, near: parameter.defaultValue)
-  }
+  /// The row's step: the panel's, else a decade of its range.
+  private var arrowStep: ParameterStep { step ?? .default(for: parameter.range) }
 
   /// One arrow event, applied to the value and shown in the field.
   ///
-  /// ↑/↓ move by `ArrowRepeat`'s tier, ←/→ one step per press or repeat. The step starts from
-  /// the value the row last wrote (`pending`), else the binding's. From the field (`typed`),
+  /// ↑/↓ move by `ArrowRepeat`'s tier, ←/→ one step per press or repeat. A repeat starts from
+  /// the value the row last wrote (`pending`), a press from the binding's. From the field (`typed`),
   /// what was typed is applied first; text that does not read as a number blocks the step and
   /// stays for the user to fix, never replaced by another value.
   private func arrow(_ press: KeyPress, typed: Bool) -> KeyPress.Result {
+    guard press.modifiers.isDisjoint(with: [.command, .control]) else { return .ignored }
     let vertical = press.key == .upArrow || press.key == .downArrow
-    guard let times = arrows.steps(ArrowRepeat.Phase(press.phase), accelerating: vertical) else {
+    let phase = ArrowRepeat.Phase(press.phase)
+    if phase == .down { pending = nil }
+    guard let times = arrows.steps(phase, accelerating: vertical) else {
       releases &+= 1
       return vertical ? .handled : .ignored
     }

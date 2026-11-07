@@ -4,7 +4,8 @@ internal import Foundation
 ///
 /// Arrows move one `coarse` step, ⇧-arrows (or ⌥-arrows) and ⌥-drag a `fine` one, a tenth of it
 /// unless the value is a whole number. A held ↑/↓ moves several steps per repeat (`ArrowRepeat`).
-/// A panel may declare its own; every other row takes `default(for:integer:)`.
+/// A panel may declare its own (`wholeNumber` for counts and whole pixels); every other row
+/// takes `default(for:)`.
 package struct ParameterStep: Equatable, Sendable {
   /// One arrow press.
   package let coarse: Double
@@ -29,23 +30,17 @@ package struct ParameterStep: Equatable, Sendable {
     whole = true
   }
 
-  /// The step of a row whose panel declares none.
+  /// One per press, ⇧ too, landing on whole numbers: a count, a degree, whole pixels.
+  package static let wholeNumber = Self(whole: 1)
+
+  /// The step of a decimal row whose panel declares none.
   ///
-  /// One per press for a whole number (⇧ too). Else about a hundredth of `range` rounded to a
-  /// decade (0…1 → 0.01, −5…5 → 0.1, 0…64 → 1), and never more than a tenth of the decade of
-  /// `value` (the default the row is tuned around), so a small validated default — a knee of
-  /// 0.00084 in 0…0.1 — is not crossed in one press. An empty range steps by one.
-  package static func `default`(
-    for range: ClosedRange<Double>, near value: Double? = nil, integer: Bool = false
-  ) -> Self {
-    if integer { return Self(whole: 1) }
+  /// About a hundredth of `range` rounded to a decade (0…1 → 0.01, −5…5 → 0.1, 0…64 → 1), so a
+  /// value keeps the decimals it is written with. An empty range steps by one.
+  package static func `default`(for range: ClosedRange<Double>) -> Self {
     let span = range.upperBound - range.lowerBound
     guard span.isFinite, span > 0 else { return Self(1) }
-    var exponent = Int((log10(span / 100)).rounded())
-    if let value, value.isFinite, value != 0 {
-      exponent = min(exponent, Int(log10(value.magnitude).rounded(.down)) - 1)
-    }
-    return Self(decade(exponent))
+    return Self(decade(Int((log10(span / 100)).rounded())))
   }
 
   /// 10ⁿ as the closest double: 1 / 10⁻ⁿ for a negative n (pow(10, −n) may miss 0.01).

@@ -62,4 +62,14 @@ extension ParameterRowKeyTests {
     try row.press(.up, repeats: 3)
     #expect(row.box.value.value == 249, "↑ never goes further past the slider")
   }
+
+  @Test("⌘↑ and ⌃↓ in the field stay the field's: the value does not move")
+  func testCommandArrowsStayTheField() throws {
+    let row = Self.hosted(ParameterValue(default: 0.5, range: 0...1))
+    defer { row.window.close() }
+    try row.focusField()
+    try row.press(.up, modifiers: .command)
+    try row.press(.down, modifiers: .control)
+    #expect(row.box.value.value == 0.5 && row.box.value.isDefault)
+  }
 }

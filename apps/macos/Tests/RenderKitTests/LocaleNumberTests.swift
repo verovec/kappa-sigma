@@ -50,24 +50,52 @@ struct LocaleNumberTests {
     #expect(LocaleNumber.decimal(-0.25, locale: locale, maxFractionDigits: 2) == "\u{2212}0.25")
   }
 
-  @Test(
-    "a typed number takes a dot or a comma as its mark, and nothing but a whole number",
-    arguments: zip(
-      [
-        "0,115", "0.115", "\u{2212}2,8", "-2.8", "1 234.5", "1\u{202f}234,5", " 3 ", "+1.5",
-        "1.234,5", "1,234.5", "0.1.2", "2,8abc", "", " ", "abc", "nan", "inf", "0x10",
-      ],
-      [
-        0.115, 0.115, -2.8, -2.8, 1234.5, 1234.5, 3, 1.5,
-        nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-      ] as [Double?]))
-  func testParseAcceptsEitherMarkAndRefusesTheRest(text: String, expected: Double?) {
-    for locale in ["fr_FR", "en_US", "de_DE"] {
-      #expect(LocaleNumber.parse(text, locale: Locale(identifier: locale)) == expected, "\(locale)")
-    }
+  struct Typed: Sendable, CustomTestStringConvertible {
+    let text: String
+    let french: Double?
+    let english: Double?
+    let german: Double?
+    var testDescription: String { "« \(text) »" }
   }
 
-  /// Ungrouped, as a field writes it (a grouped en « 1,234.5 » carries both marks: refused).
+  /// fr_FR and de_DE write a comma as their decimal mark: typed by habit, it is one. en_US groups
+  /// with a comma: there a comma is only a group mark, and a text it cannot group is refused
+  /// rather than read 1000 times too small. Spaces group in every locale, in threes only.
+  static let typed: [Typed] = [
+    Typed(text: "0.115", french: 0.115, english: 0.115, german: 0.115),
+    Typed(text: "0,115", french: 0.115, english: nil, german: 0.115),
+    Typed(text: "\u{2212}2,8", french: -2.8, english: nil, german: -2.8),
+    Typed(text: "-2.8", french: -2.8, english: -2.8, german: -2.8),
+    Typed(text: "+1.5", french: 1.5, english: 1.5, german: 1.5),
+    Typed(text: "1,000", french: 1, english: 1000, german: 1),
+    Typed(text: "1,234.5", french: nil, english: 1234.5, german: nil),
+    Typed(text: "1.234,5", french: nil, english: nil, german: nil),
+    Typed(text: "1 234.5", french: 1234.5, english: 1234.5, german: 1234.5),
+    Typed(text: "1\u{202f}234,5", french: 1234.5, english: nil, german: 1234.5),
+    Typed(text: " 3 ", french: 3, english: 3, german: 3),
+    Typed(text: "0.5\t", french: 0.5, english: 0.5, german: 0.5),
+    Typed(text: "1 5", french: nil, english: nil, german: nil),
+    Typed(text: "0.1 25", french: nil, english: nil, german: nil),
+    Typed(text: "0.1.2", french: nil, english: nil, german: nil),
+    Typed(text: "2,8abc", french: nil, english: nil, german: nil),
+    Typed(text: "", french: nil, english: nil, german: nil),
+    Typed(text: " ", french: nil, english: nil, german: nil),
+    Typed(text: "abc", french: nil, english: nil, german: nil),
+    Typed(text: "nan", french: nil, english: nil, german: nil),
+    Typed(text: "inf", french: nil, english: nil, german: nil),
+    Typed(text: "0x10", french: nil, english: nil, german: nil),
+  ]
+
+  @Test(
+    "a typed number takes the habit's comma where it is a decimal mark, and only whole numbers",
+    arguments: typed)
+  func testParseAcceptsEitherMarkAndRefusesTheRest(_ row: Typed) {
+    #expect(LocaleNumber.parse(row.text, locale: Locale(identifier: "fr_FR")) == row.french)
+    #expect(LocaleNumber.parse(row.text, locale: Locale(identifier: "en_US")) == row.english)
+    #expect(LocaleNumber.parse(row.text, locale: Locale(identifier: "de_DE")) == row.german)
+  }
+
+  /// Ungrouped, as a field writes it.
   @Test("what a field writes parses back to the identical value, in every locale")
   func testWrittenReadsBack() {
     let values = [0.115, -2.8, 0.25, 1e-7, 123_456.5, 0]

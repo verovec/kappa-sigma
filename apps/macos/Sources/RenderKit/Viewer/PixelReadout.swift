@@ -47,8 +47,8 @@ package struct PixelReadout: Equatable, Sendable {
     }
   }
 
-  /// The readout on one line in `locale`, as the View panel words it: `120, 48 · R 0,012345 G …
-  /// · AD 00h42m44,3s Déc +41°16′09″` (the focus HUD, card 0127).
+  /// The readout on one line in `locale`, as the View panel words it: `120, 48 · R 0.012345 G …
+  /// · AD 00h42m44.3s Déc +41°16′09″` (the focus HUD, card 0127).
   package func summary(locale: Locale) -> String {
     let channels = values.indices.map { channel in
       ViewerPanel.channelName(channel, of: values.count) + " "

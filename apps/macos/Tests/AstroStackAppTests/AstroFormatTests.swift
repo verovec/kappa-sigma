@@ -102,17 +102,20 @@ struct AstroFormatTests {
 
   @Test(
     "a field that is not wholly a number is refused, never read as its prefix",
-    arguments: [("fr_FR", "2,8abc"), ("fr_FR", ""), ("en_US", " "), ("fr_FR", "1.234,5")])
+    arguments: [
+      ("en_US", "1,5"), ("fr_FR", "2,8abc"), ("fr_FR", ""), ("en_US", " "), ("fr_FR", "1.234,5"),
+      ("fr_FR", "1 5"),
+    ])
   func testPartialInputIsRefused(locale: String, text: String) {
     #expect(AstroFormat(locale: Locale(identifier: locale)).parameter(parsing: text) == nil)
   }
 
   /// PO 07/11 « point partout »: the field shows a dot, and a comma typed by habit still works.
   @Test(
-    "a field takes a dot or a comma as its decimal mark, in either language",
+    "a field takes a dot, and a comma where the language writes one, as its decimal mark",
     arguments: [
       ("fr_FR", "0.115", 0.115), ("fr_FR", "0,115", 0.115), ("fr_FR", "1.5", 1.5),
-      ("en_US", "1,5", 1.5), ("en_US", "\u{2212}2.8", -2.8),
+      ("en_US", "\u{2212}2.8", -2.8), ("en_US", "1,000", 1000),
     ])
   func testEitherMarkIsAccepted(locale: String, text: String, value: Double) {
     #expect(AstroFormat(locale: Locale(identifier: locale)).parameter(parsing: text) == value)

@@ -154,27 +154,21 @@ package nonisolated struct AstroFormat: Sendable {
   /// A parameter as a field shows it: the shortest digits that read back as exactly `value`
   /// (R2: the value applied is the value shown), with a dot, never grouped.
   package func parameter(_ value: Double) -> String {
-    LocaleNumber.dotted(
-      LocaleNumber.minus(value.formatted(Self.parameterStyle(value, locale: locale))),
-      locale: locale)
+    LocaleNumber.significant(value, locale: locale, digits: Self.exactDigits(value))
   }
 
   /// The value a parameter field holds, or `nil` unless the WHOLE text is one number.
   ///
-  /// `LocaleNumber.parse`: a dot or a comma, U+2212 or `-`; never a prefix of what was typed,
-  /// which would apply a value the user never meant (R2). What `parameter(_:)` writes reads back
-  /// exactly: it writes a dot and the dot is read as the decimal mark.
+  /// `LocaleNumber.parse`: a dot, or a comma where the language writes one, U+2212 or `-`;
+  /// never a prefix of what was typed, which would apply a value the user never meant (R2).
+  /// What `parameter(_:)` writes reads back exactly: it writes a dot, read as the decimal mark.
   package func parameter(parsing text: String) -> Double? {
     LocaleNumber.parse(text, locale: locale)
   }
 
   /// Enough significant digits for the shortest form of `value` that reads back exactly.
-  private static func parameterStyle(
-    _ value: Double, locale: Locale
-  ) -> FloatingPointFormatStyle<Double> {
+  private static func exactDigits(_ value: Double) -> Int {
     let mantissa = String(value.magnitude).split(separator: "e").first.map(String.init) ?? ""
-    let digits = mantissa.filter(\.isNumber).drop { $0 == "0" }.count
-    return .number.locale(locale).grouping(.never)
-      .precision(.significantDigits(1...max(1, min(17, digits))))
+    return min(17, mantissa.filter(\.isNumber).drop { $0 == "0" }.count)
   }
 }

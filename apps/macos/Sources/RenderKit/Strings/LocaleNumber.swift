@@ -39,21 +39,39 @@ package enum LocaleNumber {
   /// A typed number, `nil` unless the WHOLE text is one finite decimal number (R2: a field never
   /// applies a prefix the user did not mean).
   ///
-  /// A dot or a comma is the decimal mark (a comma typed by habit still works); spaces and the
-  /// locale's other group marks are ignored; either minus. A text with both marks is refused:
-  /// « 1.234,5 » or « 1,234.5 » cannot be read one way only.
+  /// A dot is the decimal mark, and so is a comma typed by habit in a locale that writes one
+  /// (fr, de…). Where the locale groups with a comma (en), a comma is only a group mark: « 1,000 »
+  /// is 1000, and « 1,5 » is refused rather than read as 15. Group marks (spaces, the locale's)
+  /// count only in the integer part and in threes; surrounding whitespace is ignored; either minus.
   package static func parse(_ text: String, locale: Locale) -> Double? {
-    var plain = text.replacing("\u{2212}", with: "-")
-    for space in [" ", "\u{a0}", "\u{202f}"] { plain = plain.replacing(space, with: "") }
-    if let group = locale.groupingSeparator, ![".", ","].contains(group) {
-      plain = plain.replacing(group, with: "")
-    }
-    guard !(plain.contains(".") && plain.contains(",")) else { return nil }
-    plain = plain.replacing(",", with: ".")
+    let typed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+      .replacing("\u{2212}", with: "-")
+    let commaGroups = locale.groupingSeparator == ","
+    let marks = Set(typed.filter { $0 == "." || (!commaGroups && $0 == ",") })
+    guard marks.count <= 1 else { return nil }
+    let parts = typed.split(
+      separator: marks.first ?? ".", maxSplits: 1, omittingEmptySubsequences: false)
+    guard let integer = parts.first.map(String.init),
+      let whole = ungrouped(integer, locale: locale)
+    else { return nil }
+    let plain = parts.count > 1 ? whole + "." + parts[1] : whole
     guard plain.wholeMatch(of: /[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?/) != nil,
       let value = Double(plain), value.isFinite
     else { return nil }
     return value
+  }
+
+  /// The integer part of a typed number without its group marks, or `nil` when they do not
+  /// group it in threes after a non-zero lead (« 1 5 » is not 15, en « 0,115 » not 115).
+  private static func ungrouped(_ integer: String, locale: Locale) -> String? {
+    var groups: Set<Character> = [" ", "\u{a0}", "\u{202f}", "\u{2009}"]
+    if let mark = locale.groupingSeparator, mark.count == 1, let group = mark.first, group != "." {
+      groups.insert(group)
+    }
+    guard integer.contains(where: groups.contains) else { return integer }
+    let spaced = String(integer.map { groups.contains($0) ? " " : $0 })
+    guard spaced.wholeMatch(of: /[+-]?[1-9]\d{0,2}( \d{3})+/) != nil else { return nil }
+    return spaced.replacing(" ", with: "")
   }
 
   /// `text` with a leading `-` written as U+2212, the typographic minus.

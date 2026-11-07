@@ -197,7 +197,7 @@ struct STFControlsTests {
   }
 
   @Test(
-    "typed numbers in the locale's notation: decimal mark, either minus, spaces, grouping",
+    "typed numbers in French: a dot or the habit's comma, either minus, spaces, grouping",
     arguments: zip(
       ["−2,50", "0,229", "1 234,5", "-0.5", "abc", "1.234,5"],
       [-2.5, 0.229, 1234.5, -0.5, nil, nil]))

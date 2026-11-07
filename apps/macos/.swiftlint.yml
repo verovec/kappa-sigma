@@ -141,7 +141,7 @@ custom_rules:
     included: "Sources/.*\\.swift"
   numbers_through_locale_number:
     name: "Numbers through LocaleNumber"
-    regex: 'FloatingPointFormatStyle|IntegerFormatStyle|NumberFormatter|formatted\(\s*\.number|\.number\.locale\(|format:\s*\.number|\.byteCount\('
+    regex: 'FloatingPointFormatStyle|IntegerFormatStyle|Decimal\.FormatStyle|NumberFormatter|ByteCountFormatter|MeasurementFormatter|formatted\(\s*\.(number|percent|measurement)|\.number\.locale\(|format:\s*\.(number|percent|measurement)|\.byteCount\('
     message: "Write numbers through LocaleNumber / AstroFormat: a dot in every language (card 0178)."
     severity: error
     included: "Sources/.*\\.swift"

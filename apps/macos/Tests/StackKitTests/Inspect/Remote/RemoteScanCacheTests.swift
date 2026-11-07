@@ -243,4 +243,18 @@ struct RemoteScanCacheTests {
       !bucket.reads.contains { $0.key == "lights/l_1.fits" && $0.isHeaderOrSideFile },
       "while the cached header is not")
   }
+
+  @Test("testIdentitiesNameEachKeyAsTheStagerDoes: the scan's listing, by virtual path")
+  func testIdentitiesNameEachKeyAsTheStagerDoes() {
+    let cache = RemoteScanCache(entries: [
+      "M31/l_1.fits": .init(etag: "abc", size: 2880), "M31/info.txt": .init(etag: "d", size: 12),
+    ])
+
+    #expect(
+      cache.identities(bucket: "astro") == [
+        "s3://astro/M31/l_1.fits": FrameStager.identity(size: 2880, etag: "abc"),
+        "s3://astro/M31/info.txt": FrameStager.identity(size: 12, etag: "d"),
+      ])
+    #expect(FrameStager.identity(size: 2880, etag: "abc") == "2880|abc")
+  }
 }

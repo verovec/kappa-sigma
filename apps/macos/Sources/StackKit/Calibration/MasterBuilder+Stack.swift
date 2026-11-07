@@ -30,8 +30,12 @@ extension MasterBuilder {
       {
         result.warnings.append(note)
       }
+      // A bucket's frame signs as what was downloaded (`size|etag`, card 0181), the same
+      // identity the next run lists: signed by its key alone it could never prove a reuse.
+      // Frames of this Mac have no identity here, so their `.sig` is unchanged.
       try Self.publish(
-        target: target, final: final, signature: PoolSignature.of(paths), frames: paths.count)
+        target: target, final: final,
+        signature: PoolSignature.of(paths, identities: staged.identities), frames: paths.count)
       // A dark's raw pool also yields its defect map, applied per light with -cc=bpm. It reads
       // the frames themselves, so it reads the staged copies: a virtual path reads nothing, and
       // a dark pool from a bucket would silently lose its cosmetic correction (R2, card 0154).

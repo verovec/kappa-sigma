@@ -65,8 +65,8 @@ struct RemoteCalibrationTests {
 
   /// The first run's masters as the library, as `CalibrationLibrary.reindex` marks them: `reuse`
   /// only considers library masters.
-  static func library(_ built: MasterBuilder.Result) -> [CalibrationMaster] {
-    built.masters.map { master in
+  static func library(_ masters: [CalibrationMaster]) -> [CalibrationMaster] {
+    masters.map { master in
       var fromLibrary = master
       fromLibrary.fromLibrary = true
       return fromLibrary
@@ -88,7 +88,7 @@ struct RemoteCalibrationTests {
     // Second run, the bucket listed again as every run does before step 1.
     let reused = try await night.builder().build(
       night.inventory, into: night.work.appendingPathComponent("masters2"), work: night.work,
-      library: Self.library(built))
+      library: Self.library(built.masters))
 
     #expect(
       reused.warnings.filter { $0.contains("reused library master") }.count
@@ -106,14 +106,15 @@ struct RemoteCalibrationTests {
     let built = try await night.builder().build(
       night.inventory, into: night.work.appendingPathComponent("masters"), work: night.work)
     let downloaded = night.bucket.downloaded.count
+    // A flat: no other master is stacked with it, so only its own proof is at stake here.
     let changed = try #require(
-      night.inventory.sets.first { $0.key.type != .light && !$0.frames.isEmpty })
+      night.inventory.sets.first { $0.key.type == .flat && !$0.frames.isEmpty })
     let key = try #require(ProjectSource.remoteParts(of: changed.frames[0].path)?.key)
     night.bucket.replace(key, with: Data("another exposure".utf8))
 
     let second = try await night.builder().build(
       night.inventory, into: night.work.appendingPathComponent("masters2"), work: night.work,
-      library: Self.library(built))
+      library: Self.library(built.masters))
 
     #expect(
       second.warnings.filter { $0.contains("rebuilding the") }.count == 1,

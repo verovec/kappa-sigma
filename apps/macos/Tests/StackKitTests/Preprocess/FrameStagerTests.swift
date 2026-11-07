@@ -59,8 +59,7 @@ struct FrameStagerTests {
     var store: RemoteObjectStore {
       // A whole object answers with the ETag the listing gives, as `S3Client.download` does:
       // what a build read can be compared with what a run listed.
-      let fetch: @Sendable (String, URL) async throws -> RemoteObjectStore.Object = {
-        key, destination in
+      let fetch: Fetch = { key, destination in
         let (data, etag) = try self.read(key)
         try data.write(to: destination, options: .atomic)
         return RemoteObjectStore.Object(key: key, size: Int64(data.count), etag: etag)
@@ -79,6 +78,9 @@ struct FrameStagerTests {
         },
         get: { key, _ in try self.read(key).data }, fetch: fetching ? fetch : nil)
     }
+
+    /// A whole-object download, as `RemoteObjectStore` takes it.
+    typealias Fetch = @Sendable (String, URL) async throws -> RemoteObjectStore.Object
 
     /// One read of `key`, recorded: its bytes and ETag, or the failure the test scripted.
     private func read(_ key: String) throws -> (data: Data, etag: String) {

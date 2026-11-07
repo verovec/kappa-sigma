@@ -46,14 +46,15 @@ package struct RemoteScanCache: Codable, Sendable, Equatable {
   /// Nothing read yet: every key is read.
   package static let empty = Self()
 
-  /// What the scan listed of each object of `bucket`, by virtual path, in the stager's form
-  /// (card 0181): the import sheet proves a bucket master with it, as the run will.
+  /// What the scan listed of each object of `bucket`, by virtual path, as a run names it
+  /// (`RemoteObjectStore.Object.identity`, card 0181): the import sheet proves a bucket master
+  /// with it, as the run will.
   package func identities(bucket: String) -> [String: String] {
     Dictionary(
       uniqueKeysWithValues: entries.map { key, entry in
         (
           RemoteSnapshot.path(bucket: bucket, key: key),
-          FrameStager.identity(size: entry.size, etag: entry.etag)
+          RemoteObjectStore.Object.identity(size: entry.size, etag: entry.etag)
         )
       })
   }

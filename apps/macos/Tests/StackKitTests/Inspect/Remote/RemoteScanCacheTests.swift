@@ -244,17 +244,35 @@ struct RemoteScanCacheTests {
       "while the cached header is not")
   }
 
-  @Test("testIdentitiesNameEachKeyAsTheStagerDoes: the scan's listing, by virtual path")
-  func testIdentitiesNameEachKeyAsTheStagerDoes() {
+  @Test("testIdentitiesNameEachKeyAsARunDoes: the scan's listing, by virtual path")
+  func testIdentitiesNameEachKeyAsARunDoes() {
     let cache = RemoteScanCache(entries: [
       "M31/l_1.fits": .init(etag: "abc", size: 2880), "M31/info.txt": .init(etag: "d", size: 12),
     ])
 
     #expect(
       cache.identities(bucket: "astro") == [
-        "s3://astro/M31/l_1.fits": FrameStager.identity(size: 2880, etag: "abc"),
-        "s3://astro/M31/info.txt": FrameStager.identity(size: 12, etag: "d"),
+        "s3://astro/M31/l_1.fits": RemoteObjectStore.Object.identity(size: 2880, etag: "abc"),
+        "s3://astro/M31/info.txt": RemoteObjectStore.Object.identity(size: 12, etag: "d"),
       ])
-    #expect(FrameStager.identity(size: 2880, etag: "abc") == "2880|abc")
+    #expect(RemoteObjectStore.Object.identity(size: 2880, etag: "abc") == "2880|abc")
+  }
+
+  @Test(
+    "testScanIdentitiesNameEveryFrameOfItsInventory: the sheet can prove every set it scanned",
+    .scratchDirectory)
+  func testScanIdentitiesNameEveryFrameOfItsInventory() async throws {
+    let bucket = try ChangingStore(tree: Self.tree("identities"), prefix: "nights/M31/")
+
+    let scanned = try await RemoteScan(
+      store: bucket.store, prefix: "nights/M31/", timeZone: Self.zone
+    ).scan()
+
+    let identities = scanned.cache.identities(bucket: bucket.bucket)
+    let paths = scanned.inventory.sets.flatMap { $0.frames.map(\.path) }
+    #expect(!paths.isEmpty)
+    #expect(
+      paths.allSatisfy { identities[$0] != nil },
+      "every frame a set holds is named as the run lists it: \(paths) vs \(identities.keys)")
   }
 }

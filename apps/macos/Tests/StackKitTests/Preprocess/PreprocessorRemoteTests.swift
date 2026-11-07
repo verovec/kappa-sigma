@@ -26,13 +26,8 @@ struct PreprocessorRemoteTests {
     let downloaded = night.bucket.downloaded.count
     #expect(downloaded > 0, "the first run reads the bucket's calibration frames to build")
 
-    // The first run's masters as the library, as `CalibrationLibrary.reindex` marks them.
-    let library = first.masters.map { master -> CalibrationMaster in
-      var fromLibrary = master
-      fromLibrary.fromLibrary = true
-      return fromLibrary
-    }
-    let second = try await preprocessor.perform(request("R2", library: library), sink: { _ in })
+    let second = try await preprocessor.perform(
+      request("R2", library: RemoteCalibrationTests.library(first.masters)), sink: { _ in })
 
     #expect(
       second.warnings.contains { $0.contains("reused library master") },

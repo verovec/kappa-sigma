@@ -11,7 +11,7 @@ extension RemoteCalibrationTests {
     let builder = await night.builder()
     let built = try await builder.build(
       night.inventory, into: night.work.appendingPathComponent("masters"), work: night.work)
-    return (night, builder, Self.library(built))
+    return (night, builder, Self.library(built.masters))
   }
 
   @Test(
@@ -49,5 +49,33 @@ extension RemoteCalibrationTests {
     #expect(
       !statuses.contains { if case .build = $0 { true } else { false } },
       "still reused after a replan: \(statuses)")
+  }
+}
+
+// MARK: - A proof needs what the bucket answers now
+
+extension RemoteCalibrationTests {
+  @Test(
+    "testRemoteFrameWithoutIdentityProvesNothing: a failed listing never proves a bucket master",
+    .scratchDirectory)
+  func testRemoteFrameWithoutIdentityProvesNothing() throws {
+    let master = try ScratchDirectory.url.appendingPathComponent("master_BIAS.fits").path
+    let paths = ["s3://astro/cal/b_1.fits", "s3://astro/cal/b_2.fits"]
+    let listed = [paths[0]: "100|e1", paths[1]: "100|e2"]
+    // A .sig signed by the keys alone — what a bucket master built before card 0181 holds.
+    try PoolSignature.format(hash: PoolSignature.of(paths), frameCount: 2)
+      .write(toFile: PoolSignature.sidecar(of: master), atomically: true, encoding: .utf8)
+
+    #expect(
+      !PoolSignature.proves(master: master, builtFrom: paths),
+      "no identity: nothing says these are the bytes stacked")
+    #expect(
+      !PoolSignature.proves(master: master, builtFrom: paths, identities: [paths[0]: "100|e1"]),
+      "one frame unanswered is enough to rebuild")
+    #expect(!PoolSignature.proves(master: master, builtFrom: paths, identities: listed))
+
+    try PoolSignature.format(hash: PoolSignature.of(paths, identities: listed), frameCount: 2)
+      .write(toFile: PoolSignature.sidecar(of: master), atomically: true, encoding: .utf8)
+    #expect(PoolSignature.proves(master: master, builtFrom: paths, identities: listed))
   }
 }

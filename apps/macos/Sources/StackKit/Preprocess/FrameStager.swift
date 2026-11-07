@@ -67,18 +67,12 @@ package struct FrameStager: Sendable {
       let object = try await store.download(parts.key, to: destination)
       staged.remote += 1
       staged.bytes += object.size
-      staged.identities[path] = Self.identity(size: object.size, etag: object.etag)
+      staged.identities[path] = object.identity
       if staged.remote % Self.progressStep == 0 || staged.remote == remote {
         progress(staged.remote, remote, staged.bytes)
       }
     }
     return staged
-  }
-
-  /// What identifies an object of a bucket (`size|etag`): what a master's `.sig` and a lane's
-  /// digest sign for a remote frame, and what the next run, or the import sheet, lists to compare.
-  package static func identity(size: Int64, etag: String) -> String {
-    "\(size)|\(etag)"
   }
 
   /// The buckets `paths` name that this run has no connection for, sorted.
@@ -117,7 +111,7 @@ package struct FrameStager: Sendable {
         guard let objects = try? await store.list(prefix) else { continue }
         for object in objects {
           guard let path = keys[object.key] else { continue }
-          identities[path] = Self.identity(size: object.size, etag: object.etag)
+          identities[path] = object.identity
         }
       }
     }

@@ -67,7 +67,7 @@ package struct CalibrationPreview: Equatable, Sendable {
   /// Whether the run would reuse `master` for `set` (`MasterBuilder.reuse`): it stands for the
   /// set, was stacked with the default recipe, and its `.sig` proves the same frames.
   static func reused(
-    _ master: CalibrationMaster, for set: FrameSet, identities: [String: String] = [:]
+    _ master: CalibrationMaster, for set: FrameSet, identities: [String: String]
   ) -> Bool {
     master.recipe.isEmpty && master.satisfies(set.key)
       && PoolSignature.proves(

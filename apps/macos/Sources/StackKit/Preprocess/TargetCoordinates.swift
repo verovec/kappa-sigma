@@ -32,10 +32,13 @@ package enum TargetCoordinates {
     return text.trimmingCharacters(in: .whitespaces).hasPrefix("-") ? -magnitude : magnitude
   }
 
-  /// One number (decimal) or two to three (sexagesimal), space or colon separated.
+  /// One number (decimal) or two to three (sexagesimal), space or colon separated; a comma typed
+  /// by habit between two digits is the decimal mark (card 0178), any other comma is refused.
   static func fields(_ text: String) -> ([Double], Bool)? {
     let tokens = text.split { $0 == " " || $0 == ":" }.map(String.init)
-    let numbers = tokens.compactMap(Double.init)
+    let numbers = tokens.compactMap { token in
+      Double(token.wholeMatch(of: /[+-]?\d+,\d+/) == nil ? token : token.replacing(",", with: "."))
+    }
     guard (1...3).contains(tokens.count), numbers.count == tokens.count else { return nil }
     return (numbers + Array(repeating: 0, count: 3 - numbers.count), tokens.count > 1)
   }

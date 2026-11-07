@@ -374,6 +374,12 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
     Self("import", "bucketFolder", prefix)
   }
 
+  /// A button opening the Settings window, on the tab it names (`last`: the tab last shown) —
+  /// card 0177.
+  package static func openSettings(_ tab: String) -> Self {
+    Self("settings", "open", tab)
+  }
+
   /// The shortcuts sheet's search field.
   package static let shortcutsSearch = Self("shortcuts", "search")
 

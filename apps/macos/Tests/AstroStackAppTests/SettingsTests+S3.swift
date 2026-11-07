@@ -23,7 +23,8 @@ extension SettingsTests {
 
     func host() -> NSSize {
       let view = SettingsView(
-        setting: LanguageSetting(defaults: defaults, domain: name), relaunch: {}, s3: model)
+        setting: LanguageSetting(defaults: defaults, domain: name), relaunch: {}, s3: model,
+        selection: SettingsSelection(.s3))
       let host = NSHostingView(rootView: view.environment(\.locale, locale))
       host.layoutSubtreeIfNeeded()
       return host.fittingSize

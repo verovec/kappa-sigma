@@ -203,8 +203,18 @@ extension ExportStageModel {
     refresh()
   }
 
-  /// The S3 connections the form offers (Settings').
-  package var s3Connections: [S3Connection] { services.s3Connections() }
+  /// Reads Settings' S3 connections again (card 0177): « S3 connections… » beside the S3 target
+  /// opens Settings, and the one added there must be offered when the user comes back.
+  package func reloadConnections() {
+    let read = services.s3Connections()
+    if read != s3Connections { s3Connections = read }
+  }
+
+  /// Reads the connections now, then on every element of `changes` (each defaults write in the
+  /// app), until cancelled — the form's lifetime.
+  package func followSettings<Changes: AsyncSequence>(_ changes: Changes) async {
+    await DefaultsChanges.follow(changes) { reloadConnections() }
+  }
 
   /// « Copy S3 URL » of `record`.
   package func copyRemoteURL(_ record: ProjectExport) {

@@ -19,6 +19,9 @@ struct S3CredentialsTests {
       label: "long-term keys",
       credentials: S3Credentials(accessKey: "AKIAIOSFODNN7EXAMPLE", secretKey: secret)),
     Row(
+      label: "a short key shows nothing of itself",
+      credentials: S3Credentials(accessKey: "minio", secretKey: secret)),
+    Row(
       label: "temporary keys with a session token",
       credentials: S3Credentials(
         accessKey: "ASIAIOSFODNN7EXAMPLE", secretKey: secret, sessionToken: token)),
@@ -46,7 +49,7 @@ struct S3CredentialsTests {
   }
 
   @Test(
-    "the secret and the session token never print; the access key shows its first 4 characters",
+    "the secret and the session token never print; the access key shows its last 4 characters",
     arguments: rows)
   func testDescriptionRedactsSecrets(row: Row) throws {
     for text in try Self.printed(row.credentials) {
@@ -55,7 +58,11 @@ struct S3CredentialsTests {
       #expect(!text.contains(row.credentials.accessKey), "whole access key in: \(text)")
     }
     let shown = "\(row.credentials)"
-    #expect(shown.contains(String(row.credentials.accessKey.prefix(4))))
+    // The last 4, as the AWS CLI shows them: every AWS key starts AKIA or ASIA.
+    if row.credentials.accessKey.count >= 12 {
+      #expect(shown.contains("…\(row.credentials.accessKey.suffix(4))"))
+    }
+    #expect(!shown.contains(String(row.credentials.accessKey.prefix(4))))
     #expect(shown.contains("redacted"))
   }
 

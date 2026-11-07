@@ -45,7 +45,8 @@ extension S3ConnectionTestTests {
 
     #expect(
       model.testResult
-        == .failed("S3 301: bucket captures is in region eu-west-3, the connection says us-east-1"))
+        == .failed("S3 301 — bucket captures is in region eu-west-3, the connection says us-east-1")
+    )
   }
 
   @Test("a dotted bucket over https with virtual-host addressing: refused, nothing sent")

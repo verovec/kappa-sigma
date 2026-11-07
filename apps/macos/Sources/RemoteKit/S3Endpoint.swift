@@ -47,15 +47,16 @@ package struct S3Endpoint: Sendable, Equatable {
   /// Throws `S3Error.invalidBucket` when `bucket` cannot be addressed here, before any request.
   ///
   /// Path-style is left as permissive as the server (MinIO and Garage accept names AWS refuses):
-  /// only an empty name or a `/`, which would address another path, is refused. Virtual-host puts
+  /// only an empty name, a `/`, `.` or `..`, which would address another path, are refused. Virtual-host puts
   /// the name in the host, so it must be a host name (3–63 of `a-z 0-9 . -`, no edge hyphen or
   /// dot, no `..`), and a dotted name over https fails TLS: `*.host` covers one label only.
   package func validate(bucket: String) throws {
     if bucket.isEmpty {
       throw S3Error.invalidBucket(name: bucket, reason: "a bucket name is required")
     }
-    if bucket.contains("/") {
-      throw S3Error.invalidBucket(name: bucket, reason: "a bucket name has no /")
+    if bucket.contains("/") || bucket == "." || bucket == ".." {
+      throw S3Error.invalidBucket(
+        name: bucket, reason: "a bucket name has no /, and is not . or ..")
     }
     guard addressing == .virtualHost else { return }
     let pathStyle = "turn path-style addressing on for this connection"
@@ -70,10 +71,13 @@ package struct S3Endpoint: Sendable, Equatable {
     }
   }
 
+  private static let hostCharacters = Set("abcdefghijklmnopqrstuvwxyz0123456789.-")
+
   /// A bucket name usable as the first labels of a host name.
   private static func isHostLabel(_ name: String) -> Bool {
-    let allowed = Set("abcdefghijklmnopqrstuvwxyz0123456789.-")
-    guard (3...63).contains(name.count), name.allSatisfy(allowed.contains) else { return false }
+    guard (3...63).contains(name.count), name.allSatisfy(hostCharacters.contains) else {
+      return false
+    }
     return name.split(separator: ".", omittingEmptySubsequences: false).allSatisfy { label in
       !label.isEmpty && label.first != "-" && label.last != "-"
     }

@@ -34,13 +34,18 @@ extension HTTPTransport {
   {
     let session = URLSession(
       configuration: configuration, delegate: RedirectRefusal(), delegateQueue: nil)
+    let transfer = configuration.timeoutIntervalForResource
     return Self(
       send: { request in
-        let (data, response) = try await session.data(for: urlRequest(request))
+        let (data, response) = try await bounded(transfer) {
+          try await session.data(for: urlRequest(request))
+        }
         return try httpResponse(response, body: data)
       },
       download: { request, destination, progress in
-        let (temporary, response) = try await session.download(for: urlRequest(request))
+        let (temporary, response) = try await bounded(transfer) {
+          try await session.download(for: urlRequest(request))
+        }
         let files = FileManager.default
         defer { try? files.removeItem(at: temporary) }
         var http = try httpResponse(response, body: Data())
@@ -53,6 +58,21 @@ extension HTTPTransport {
         progress(try FileDigest.size(destination))
         return http
       })
+  }
+
+  /// `body`, whose `URLError.timedOut` after `transfer` seconds becomes `transferTimedOut`.
+  ///
+  /// URLSession reports both of its timeouts as `.timedOut`: a stall is worth retrying, but a
+  /// transfer that used its whole time would only start again from byte 0 under the same limit.
+  static func bounded<T>(_ transfer: TimeInterval, _ body: () async throws -> T) async throws -> T {
+    let start = ContinuousClock.now
+    do {
+      return try await body()
+    } catch let error as URLError
+      where error.code == .timedOut && ContinuousClock.now - start >= .seconds(transfer * 0.95)
+    {
+      throw S3Error.transferTimedOut(seconds: transfer)
+    }
   }
 
   /// `request` for URLSession; `host` is left to URLSession, which derives it from the URL.

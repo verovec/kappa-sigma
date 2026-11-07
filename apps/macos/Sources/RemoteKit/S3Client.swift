@@ -183,31 +183,6 @@ package struct S3Client: Sendable {
     }
   }
 
-  /// `response` when 2xx, otherwise the S3 error it carries: `wrongRegion` when the answer
-  /// names another region for `bucket` than the connection's (card 0184).
-  func checked(_ response: HTTPResponse, bucket: String) throws -> HTTPResponse {
-    guard response.isSuccess else {
-      if let actual = Self.otherRegion(response, than: endpoint.region) {
-        throw S3Error.wrongRegion(
-          status: response.status, bucket: bucket, expected: endpoint.region, actual: actual)
-      }
-      throw Self.serviceError(response)
-    }
-    return response
-  }
-
-  /// The bucket's region named by a refused redirect or a wrongly signed request, if not `region`.
-  ///
-  /// Read from `x-amz-bucket-region` on a 3xx or a 400 only. Other statuses keep the service's
-  /// words: S3 also sends the header with a 403 that has nothing to do with regions.
-  static func otherRegion(_ response: HTTPResponse, than region: String) -> String? {
-    guard response.status == 400 || (300..<400).contains(response.status),
-      let actual = response.headers["x-amz-bucket-region"], !actual.isEmpty,
-      actual.caseInsensitiveCompare(region) != .orderedSame
-    else { return nil }
-    return actual
-  }
-
   /// The `<Error>` document of a failed answer, status kept when the body is empty (HEAD).
   static func serviceError(_ response: HTTPResponse) -> S3Error {
     let root = response.body.isEmpty ? nil : try? XMLNode.parse(response.body)

@@ -47,14 +47,18 @@ module (Foundation and CryptoKit only), with no AWS SDK and no helper process.
   survives. Leading whitespace before `<?xml` (S3's keep-alive) is skipped.
 - Redirects are refused (`RedirectRefusal`): a 3xx such as `PermanentRedirect` is an error, never a
   signed request replayed to another host. A 3xx or 400 naming another `x-amz-bucket-region` than
-  the connection's is `S3Error.wrongRegion` (« bucket … is in region …, the connection says … »).
+  the connection's, or one its host does not serve, is `S3Error.wrongRegion`: the service's answer
+  as sent, then the region and what to change (a 400 only with a region code, so a 400
+  `RequestTimeout` stays retried).
 - Every request is bounded (`HTTPTransport.configuration()`): 60 s without bytes (`idleTimeout`,
-  retried as a timeout) and 6 h in all (`transferTimeout`, a 4 GB object at 200 kB/s).
+  retried as a timeout) and 6 h in all (`transferTimeout`, a 4 GB object at 200 kB/s), which ends
+  in `S3Error.transferTimedOut` and is never retried: a new try would start from byte 0.
 - A bucket name the endpoint cannot address is refused before anything is sent
   (`S3Endpoint.validate(bucket:)`, `S3Error.invalidBucket`): virtual-host needs a host name, with
   no dot over https; path-style only refuses an empty name or a `/`.
-- `S3Credentials` print redacted (first 4 characters of the access key, never the secret or the
-  token), so a client, a signer or an error log can be printed whole.
+- `S3Credentials` print redacted (last 4 characters of the access key, never the secret or the
+  token), so credentials, a signer or a client can be printed whole. The signed wire request
+  (`HTTPRequest`) carries `Authorization` and `x-amz-security-token` as sent: never log it.
 - Uploads send `x-amz-checksum-sha256` on every body, so the service refuses a corrupted part.
   A failed or cancelled multipart upload is aborted from a fresh task, because a cancelled task's
   requests fail at once.

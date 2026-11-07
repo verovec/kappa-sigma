@@ -16,9 +16,12 @@ package enum S3Error: Error, Sendable, Equatable, CustomStringConvertible {
   case checksumMismatch(key: String, expected: String, actual: String)
   /// The object's ETag changed since it was listed.
   case objectChanged(key: String, expectedETag: String, actualETag: String)
-  /// The service answered `status` (a redirect, or a request signed for the wrong region) and
-  /// named the bucket's `actual` region, which is not the connection's `expected` one.
-  case wrongRegion(status: Int, bucket: String, expected: String, actual: String)
+  /// The service's `answer` (a refused redirect, or a request signed for the wrong region) named
+  /// `region` as the bucket's: either not the `connection`'s region, or one `host` does not serve.
+  indirect case wrongRegion(
+    bucket: String, region: String, connection: String, host: String, answer: Self)
+  /// One request ran for `seconds`, the limit for a whole transfer; retrying would start over.
+  case transferTimedOut(seconds: Double)
   /// `name` cannot be addressed on this endpoint, for `reason`; nothing was sent.
   case invalidBucket(name: String, reason: String)
 
@@ -36,8 +39,13 @@ package enum S3Error: Error, Sendable, Equatable, CustomStringConvertible {
       "\(key): checksum \(actual), \(expected) expected"
     case .objectChanged(let key, let expected, let actual):
       "\(key) changed on the server (ETag \(actual), \(expected) listed)"
-    case .wrongRegion(let status, let bucket, let expected, let actual):
-      "S3 \(status): bucket \(bucket) is in region \(actual), the connection says \(expected)"
+    case .wrongRegion(let bucket, let region, let connection, let host, let answer):
+      "\(answer.description) — bucket \(bucket) is in region \(region), "
+        + (region.caseInsensitiveCompare(connection) == .orderedSame
+          ? "which \(host) does not serve: use that region's endpoint"
+          : "the connection says \(connection)")
+    case .transferTimedOut(let seconds):
+      "Transfer stopped after \(Int(seconds)) s, the limit for one request"
     case .invalidBucket(let name, let reason): "Bucket name \"\(name)\": \(reason)"
     }
   }

@@ -50,6 +50,8 @@ struct S3EndpointTests {
     Row(bucket: "", url: "http://127.0.0.1:9000", addressing: .pathStyle, refusal: "required"),
     Row(bucket: "", url: "https://s3.amazonaws.com", addressing: .virtualHost, refusal: "required"),
     Row(bucket: "astro/M31", url: "http://127.0.0.1:9000", addressing: .pathStyle, refusal: "/"),
+    Row(bucket: ".", url: "http://127.0.0.1:9000", addressing: .pathStyle, refusal: ".."),
+    Row(bucket: "..", url: "http://127.0.0.1:9000", addressing: .pathStyle, refusal: ".."),
   ]
 
   @Test("bucket names: valid, refused with the reason, or left to the server", arguments: rows)

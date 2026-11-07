@@ -12,7 +12,8 @@ extension URLSessionTransportTests {
   func testTimesOut(call: Call) async throws {
     let host = "stall-\(call.rawValue).test"
     Self.route(host, .init(status: 200, headers: [:], body: Data(), stalls: true))
-    let configuration = HTTPTransport.configuration(idle: 0.2, transfer: 5)
+    // The whole-transfer limit far away: only the stall can end this request.
+    let configuration = HTTPTransport.configuration(idle: 0.2, transfer: 600)
     configuration.protocolClasses = [Stub.self]
     let transport = HTTPTransport.urlSession(configuration)
     let request = HTTPRequest(
@@ -28,6 +29,31 @@ extension URLSessionTransportTests {
 
     #expect(error?.code == .timedOut)
     #expect(S3Error.isRetryable(try #require(error)))
+  }
+
+  @Test(
+    "a transfer that used its whole time is not retried: a new try would start over",
+    .scratchDirectory, arguments: Call.allCases)
+  func testTransferLimitIsNotRetried(call: Call) async throws {
+    let host = "long-\(call.rawValue).test"
+    Self.route(host, .init(status: 200, headers: [:], body: Data(), stalls: true))
+    // The stall limit far away: only the whole-transfer limit can end this request.
+    let configuration = HTTPTransport.configuration(idle: 600, transfer: 0.2)
+    configuration.protocolClasses = [Stub.self]
+    let transport = HTTPTransport.urlSession(configuration)
+    let request = HTTPRequest(
+      method: "GET", url: try #require(URL(string: "http://\(host)/b/k")), headers: [:])
+    let destination = try ScratchDirectory.url.appendingPathComponent("k.part")
+
+    let error = await #expect(throws: S3Error.self) {
+      switch call {
+      case .send: _ = try await transport.send(request)
+      case .download: _ = try await transport.download(request, destination, { _ in })
+      }
+    }
+
+    #expect(error == .transferTimedOut(seconds: 0.2))
+    #expect(!S3Error.isRetryable(try #require(error)))
   }
 
   @Test("the live configuration bounds a stall and a whole transfer")

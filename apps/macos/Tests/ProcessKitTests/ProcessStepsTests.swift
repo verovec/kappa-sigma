@@ -17,6 +17,8 @@ struct ProcessStepsTests {
       for id in Set(type.steps.keys).union(type.wholeNumbers) {
         #expect(numbers.contains(id), "\(type.id).\(id)")
       }
+      let both = Set(type.steps.keys).intersection(type.wholeNumbers)
+      #expect(both.isEmpty, "\(type.id) declares \(both) twice: the whole number wins")
     }
   }
 
@@ -25,6 +27,7 @@ struct ProcessStepsTests {
     arguments: [
       ("geometry", "cropLeft"), ("background-extraction", "samples"),
       ("background-extraction", "degree"), ("sky-desat", "coreGuardPx"), ("hdr", "openRadius"),
+      ("emission-screens", "starRadius"), ("emission-screens", "smooth"),
     ])
   func testWholeNumbersDeclared(process: String, id: String) throws {
     let type = try #require(try ProcessRegistry.standard().type(id: process))

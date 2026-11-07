@@ -24,6 +24,9 @@ extension EmissionScreensProcess {
     return ParamSchema(specs)
   }()
 
+  /// The star radius and the layer smoothing are read as whole pixels (`MaskBuilder`).
+  package static let wholeNumbers: Set<String> = ["starRadius", "smooth"]
+
   /// One line's card: on/off, continuum subtraction, stretch, black point, screen — every row
   /// about the line's layer (`needsLayer`).
   private static func lineSpecs(_ line: EmissionLine) -> [ParamSpec] {

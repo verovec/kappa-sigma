@@ -1,5 +1,5 @@
 package import ProcessKit
-internal import RenderKit
+package import RenderKit
 package import SwiftUI
 
 /// Where the chosen process acts (card 0087): everywhere, a luminosity range or the stars,
@@ -77,7 +77,8 @@ package struct StudioMaskRow: View {
       parameter: Binding(
         get: { ParameterValue(default: 0, range: 0...64, value: mask.featherPx) },
         set: { model.mask?.featherPx = $0.value }),
-      key: AccessibilityID.studioMaskKey(Field.feather.rawValue), format: format, parse: parse)
+      key: AccessibilityID.studioMaskKey(Field.feather.rawValue), step: .wholeNumber,
+      format: format, parse: parse)
   }
 
   private func row(
@@ -94,7 +95,8 @@ package struct StudioMaskRow: View {
             model.mask?.source = Self.moved(source, key, to: moved.value)
           }
         }),
-      key: AccessibilityID.studioMaskKey(key.rawValue), format: format, parse: parse)
+      key: AccessibilityID.studioMaskKey(key.rawValue), step: Self.step(key),
+      format: format, parse: parse)
   }
 
   /// `source` with its `key` value set to `value`: a range end never crosses its start; a key
@@ -113,6 +115,12 @@ package struct StudioMaskRow: View {
     case (.stars(let threshold, _), .radius): .stars(threshold: threshold, radiusPx: value)
     default: source
     }
+  }
+
+  /// The arrow step of `key`: the pixel radii are whole pixels (`MaskBuilder` rounds them),
+  /// the others take their range's decade (card 0179).
+  nonisolated package static func step(_ key: Field) -> ParameterStep? {
+    key == .radius || key == .feather ? .wholeNumber : nil
   }
 
   /// The starting value of `key` in `source` (the row's default badge and reset).

@@ -62,6 +62,7 @@ extension ParameterStepTests {
   func testFineDragFollowsTheStep() {
     let whole = ParameterStep.wholeNumber
     #expect(whole.fineDragValue(anchor: 10, start: 10, pointer: 20) == 20)
+    #expect(whole.fineDragValue(anchor: 10, start: 10, pointer: 12.37) == 12)
     #expect(ParameterStep(0.01).fineDragValue(anchor: 0.5, start: 0.5, pointer: 0.6) == 0.51)
   }
 }

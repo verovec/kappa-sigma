@@ -58,9 +58,9 @@ extension ParameterRowKeyTests {
     defer { row.window.close() }
     try row.focusField()
     try row.press(.down)
-    #expect(row.box.value.value == 249, "the default step of 0…100 is 1")
+    #expect(row.box.value.value == 240, "the default step follows the bounds 0…400: 10")
     try row.press(.up, repeats: 3)
-    #expect(row.box.value.value == 249, "↑ never goes further past the slider")
+    #expect(row.box.value.value == 240, "↑ never goes further past the slider")
   }
 
   @Test("⌘↑ and ⌃↓ in the field stay the field's: the value does not move")

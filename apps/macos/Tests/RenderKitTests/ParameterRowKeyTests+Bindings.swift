@@ -61,4 +61,34 @@ extension ParameterRowKeyTests {
     #expect(row.box.value.value == 0.5 && row.box.value.isDefault)
     #expect(try row.text() == "0.3x")
   }
+
+  @Test("a release with ⌘ still shows what the model kept")
+  func testReleaseWithCommandStillResyncs() throws {
+    let box = Box(ParameterValue(default: 0.5, range: 0...1))
+    let row = Self.hosted(box, BindingHost(binding: Binding(get: { box.value }, set: { _ in })))
+    defer { row.window.close() }
+    try row.focusField()
+    try row.press(.up, release: false)
+    let up = try Arrow.up.event(.keyUp, repeat: false, .command, in: row.window)
+    row.window.sendEvent(up)
+    row.settle()
+    #expect(try row.text() == "0.5")
+  }
+
+  @Test("a field left while an arrow is held shows the model's value, never commits the arrow's")
+  func testFocusLossMidHoldResyncs() throws {
+    final class Writes { var count = 0 }
+    let writes = Writes()
+    let box = Box(ParameterValue(default: 0.5, range: 0...1))
+    let row = Self.hosted(
+      box, BindingHost(binding: Binding(get: { box.value }, set: { _ in writes.count += 1 })))
+    defer { row.window.close() }
+    try row.focusField()
+    try row.press(.up, release: false)
+    #expect(writes.count == 1)
+    row.window.makeFirstResponder(nil)
+    row.settle()
+    #expect(writes.count == 1, "the arrow's text was not committed as typed")
+    #expect(try row.text() == "0.5")
+  }
 }

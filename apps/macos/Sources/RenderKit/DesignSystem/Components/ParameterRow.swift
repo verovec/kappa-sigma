@@ -91,7 +91,17 @@ package struct ParameterRow: View {
       text = format(parameter.value)
     }
     // A freeze takes the focus too: that loss of focus commits nothing (R2).
-    .onChange(of: editing) { if !editing && !frozen { commit() } }
+    // A field left while an arrow is held shows the binding: its text is the arrow's, not typed.
+    .onChange(of: editing) {
+      if editing || frozen {
+        return
+      } else if pending != nil {
+        pending = nil
+        text = format(parameter.value)
+      } else {
+        commit()
+      }
+    }
     // A freeze (a run starting) shows the applied value, never a typed one nobody committed.
     .onChange(of: frozen) {
       // A row frozen mid-drag gets no end of the drag: the next drag starts on the live range.
@@ -183,7 +193,7 @@ package struct ParameterRow: View {
   }
 
   /// The row's step: the panel's, else a decade of its range.
-  private var arrowStep: ParameterStep { step ?? .default(for: parameter.range) }
+  private var arrowStep: ParameterStep { step ?? .default(for: parameter.limits) }
 
   /// One arrow event, applied to the value and shown in the field.
   ///
@@ -192,14 +202,15 @@ package struct ParameterRow: View {
   /// what was typed is applied first; text that does not read as a number blocks the step and
   /// stays for the user to fix, never replaced by another value.
   private func arrow(_ press: KeyPress, typed: Bool) -> KeyPress.Result {
-    guard press.modifiers.isDisjoint(with: [.command, .control]) else { return .ignored }
     let vertical = press.key == .upArrow || press.key == .downArrow
     let phase = ArrowRepeat.Phase(press.phase)
-    if phase == .down { pending = nil }
+    // A release counts whatever the modifiers: it shows the binding again (R2).
     guard let times = arrows.steps(phase, accelerating: vertical) else {
       releases &+= 1
       return vertical ? .handled : .ignored
     }
+    guard press.modifiers.isDisjoint(with: [.command, .control]) else { return .ignored }
+    if phase == .down { pending = nil }
     var edited = parameter
     if let pending { edited.set(pending) }
     if typed && text != format(edited.value) {
@@ -220,7 +231,8 @@ package struct ParameterRow: View {
   private func slide(to pointer: Double) {
     guard let step, dragging, fineHeld else {
       gearing = nil
-      parameter.slide(pointer, on: dragRange)
+      // A whole-number row never gets a fraction from its slider either.
+      parameter.slide(step?.whole == true ? pointer.rounded() : pointer, on: dragRange)
       return
     }
     let gearing = self.gearing ?? Gearing(anchor: parameter.value, start: pointer)

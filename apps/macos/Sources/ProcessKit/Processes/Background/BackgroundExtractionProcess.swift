@@ -46,7 +46,7 @@ package struct BackgroundExtractionProcess: ImageProcess {
   ])
 
   package static let steps: [String: Double] = [
-    "smoothing": 0.05, "rbfSmooth": 0.05, "samples": 1, "tolerance": 0.1, "degree": 1,
+    "smoothing": 0.05, "rbfSmooth": 0.05, "tolerance": 0.1,
   ]
 
   /// The sample count and the polynomial degree are whole numbers.

@@ -81,11 +81,11 @@ package struct ParameterStep: Equatable, Sendable {
   }
 
   /// ⌥-drag: the value moves a tenth of the pointer's travel since the gearing began (all of it
-  /// for a whole step, which has no tenth to give).
+  /// for a whole step, which has no tenth to give, rounded to a whole number).
   ///
   /// `anchor` is the value then, `start` the pointer then: the thumb stays on the value and the
   /// pointer runs ahead of it. Re-anchoring when ⌥ changes mid-drag keeps the value continuous.
   package func fineDragValue(anchor: Double, start: Double, pointer: Double) -> Double {
-    whole ? pointer : anchor + (pointer - start) / 10
+    whole ? pointer.rounded() : anchor + (pointer - start) / 10
   }
 }

@@ -35,8 +35,9 @@ extension ProjectWindowModel {
         scanTask = nil
         refresh()
         // After the local plan, never before it: one unreachable bucket would otherwise hold
-        // back a purely local Rescan — and Run with it (card 0100's `awaitsRescan`).
-        await rescanRemoteSources()
+        // back a purely local Rescan — and Run with it (card 0100's `awaitsRescan`). Its own
+        // task, so Cancel and the next Rescan still reach it (card 0182).
+        startRemoteScan()
       } catch {
         guard !Task.isCancelled else { return }
         // The folders no longer read as scanned: the last scan stops describing them. A
@@ -51,27 +52,25 @@ extension ProjectWindowModel {
   /// A project whose captures are all in buckets: nothing to read on this Mac, the remote
   /// sources alone are scanned (card 0169).
   func scanRemoteOnly() {
-    guard !remoteSources.isEmpty else { return }
-    isScanning = true
-    scanTask = Task {
-      await rescanRemoteSources()
-      guard !Task.isCancelled else { return }
-      isScanning = false
-      scanTask = nil
-    }
+    startRemoteScan()
   }
 
-  /// Stops the scan in flight; the previous scan, if any, stays shown.
+  /// Stops the scan in flight, the buckets' too (card 0182).
+  ///
+  /// The previous scan, if any, and each bucket's last count stay shown. A closing window comes
+  /// through here.
   package func cancelScan() {
     scanTask?.cancel()
     scanTask = nil
     isScanning = false
     rescanAfterAdd = false
+    cancelRemoteScan()
   }
 
-  /// Waits for the scan in flight, if any.
+  /// Waits for the scan in flight, if any: the local plan, then the buckets it started.
   package func scanSettled() async {
     await scanTask?.value
+    await remoteScanTask?.value
   }
 
   /// After Add: the sheet's plan becomes the window's scan only when it is settled (planned for

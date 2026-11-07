@@ -13,12 +13,17 @@ package struct RemoteSourceState: Equatable, Sendable {
   package var lights: Int?
   /// Why the last scan failed, `nil` when the last one answered.
   package var failure: UserFacingError?
+  /// This prefix is being read now (card 0182): the row says so beside its last count.
+  package var isScanning: Bool
 
   /// A state for `path`.
-  package init(path: String, lights: Int? = nil, failure: UserFacingError? = nil) {
+  package init(
+    path: String, lights: Int? = nil, failure: UserFacingError? = nil, isScanning: Bool = false
+  ) {
     self.path = path
     self.lights = lights
     self.failure = failure
+    self.isScanning = isScanning
   }
 }
 
@@ -36,6 +41,33 @@ extension ProjectWindowModel {
       path: target.path, lights: plan.inventory.frames.count { $0.type == .light })
   }
 
+  /// Scans the remote sources in a task of their own (card 0182).
+  ///
+  /// It replaces a scan of them in flight, so one writer of `remoteStates` at a time; nothing
+  /// without a remote source.
+  func startRemoteScan() {
+    cancelRemoteScan()
+    guard !remoteSources.isEmpty else { return }
+    isScanningRemote = true
+    remoteScanTask = Task {
+      await rescanRemoteSources()
+      // A stopped scan leaves the flags to whoever stopped it (`cancelRemoteScan`).
+      guard !Task.isCancelled else { return }
+      isScanningRemote = false
+      remoteScanTask = nil
+    }
+  }
+
+  /// Stops the scan of the buckets in flight; each row keeps its last count and failure.
+  func cancelRemoteScan() {
+    remoteScanTask?.cancel()
+    remoteScanTask = nil
+    isScanningRemote = false
+    for (path, state) in remoteStates where state.isScanning {
+      remoteStates[path]?.isScanning = false
+    }
+  }
+
   /// Scans every remote source through the connection it was imported with, one after another.
   ///
   /// A failure stays on its own row: the counts the last scan answered are kept, because an
@@ -47,18 +79,23 @@ extension ProjectWindowModel {
         update(source.path) { $0.failure = .remoteImport(.connectionMissing) }
         continue
       }
+      update(source.path) { $0.isScanning = true }
       do {
         let plan = try await planning(target, ImportRequest(paths: [target.path])) { _ in }
         guard !Task.isCancelled else { return }
         update(source.path) {
           $0.lights = plan.inventory.frames.count { $0.type == .light }
           $0.failure = nil
+          $0.isScanning = false
         }
       } catch is CancellationError {
         return
       } catch {
         guard !Task.isCancelled else { return }
-        update(source.path) { $0.failure = UserFacingError(error) }
+        update(source.path) {
+          $0.failure = UserFacingError(error)
+          $0.isScanning = false
+        }
       }
     }
   }

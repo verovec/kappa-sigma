@@ -38,11 +38,15 @@ package final class ProjectWindowModel {
   package private(set) var integration: IntegrationSummary?
   /// The calibration coverage of `scan`, the matcher's verdict as is.
   package private(set) var coverage: CoverageMatrix?
-  /// A Rescan is running.
+  /// A Rescan is reading this Mac's folders (what Run waits for after Add, card 0100).
   package internal(set) var isScanning = false
   /// What the Données stage knows of each remote source (card 0169), by virtual path.
   package internal(set) var remoteStates: [String: RemoteSourceState] = [:]
+  /// The buckets are being read (card 0182): after the local plan, never holding Run back.
+  package internal(set) var isScanningRemote = false
   var scanTask: Task<Void, Never>?
+  /// The one scan of the buckets that may write `remoteStates` (card 0182).
+  var remoteScanTask: Task<Void, Never>?
   /// The scan going is the one Add a night started (card 0100): Run waits for its plan.
   var rescanAfterAdd = false
   /// The preprocessing run the Stacking stage shows: the one running, or the last one.

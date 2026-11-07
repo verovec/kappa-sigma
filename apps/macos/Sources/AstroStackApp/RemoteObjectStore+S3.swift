@@ -24,6 +24,14 @@ extension RemoteObjectStore {
       })
   }
 
+  /// `bucket` when its connection cannot be used: every read answers `error` as it is, so the
+  /// run that needs the bucket says why (card 0185), never « no bucket ».
+  nonisolated package static func refusing(bucket: String, _ error: any Error) -> Self {
+    Self(
+      bucket: bucket, list: { _ in throw error }, get: { _, _ in throw error },
+      fetch: { _, _ in throw error })
+  }
+
   /// The line the Données inventory shows under a remote scan whose pixel checks were not run on
   /// `count` frames, in `locale` (PO 01/11: « non vérifié (distant) », never taken as passed).
   nonisolated package static func notCheckedWords(_ count: Int, locale: Locale? = nil)

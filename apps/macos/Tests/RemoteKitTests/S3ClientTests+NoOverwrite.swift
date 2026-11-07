@@ -106,26 +106,83 @@ extension S3ClientTests {
     }
   }
 
-  @Test(
-    "a 412 on the object this upload itself wrote (its answer lost) is that object",
-    .scratchDirectory, arguments: noOverwriteRows)
-  func testUploadOwnObjectAfterLostAnswer(row: NoOverwriteRow) async throws {
-    let file = try ScratchDirectory.url.appendingPathComponent("final.tif")
-    try Self.tenBytes.write(to: file)
-    let etag = row.multipart ? "whole-3" : try FileDigest.md5Hex(file)
-    let fake = Self.multipartServer { request in
-      if Self.creates(request) {
+  /// The parts of `tenBytes` in 4-byte parts, each tagged with its own MD5 as S3 does.
+  static let partTags = ["0123", "4567", "89"].map { FileDigest.md5Hex(Data($0.utf8)) }
+
+  /// A server whose parts answer their MD5, whose creating request answers 412, and whose HEAD
+  /// shows ten bytes tagged `etag`.
+  static func refusingServer(headETag etag: String) -> Fake {
+    multipartServer { request in
+      if creates(request) {
         return .error(412, code: "PreconditionFailed", message: "precondition")
+      }
+      if let part = request.query("partNumber").flatMap(Int.init) {
+        return .make(200, headers: ["etag": "\"\(partTags[part - 1])\""])
       }
       if request.method == "HEAD" {
         return .make(200, headers: ["content-length": "10", "etag": "\"\(etag)\""])
       }
       return nil
     }
+  }
 
-    let object = try await fake.client(policy: row.policy)
+  @Test(
+    "a 412 on the object this upload itself wrote (its answer lost) is that object",
+    .scratchDirectory, arguments: noOverwriteRows)
+  func testUploadOwnObjectAfterLostAnswer(row: NoOverwriteRow) async throws {
+    let file = try ScratchDirectory.url.appendingPathComponent("final.tif")
+    try Self.tenBytes.write(to: file)
+    let etag =
+      row.multipart
+      ? try #require(FileDigest.multipartETag(Self.partTags)) : FileDigest.md5Hex(Self.tenBytes)
+
+    let object = try await Self.refusingServer(headETag: etag).client(policy: row.policy)
       .upload(file: file, bucket: "exports", key: "M31/final.tif", ifNoneMatch: true)
 
     #expect(object.size == 10 && object.etag == etag)
+  }
+
+  @Test(
+    "a 412 on another object of the same size (and part count) is never taken for ours",
+    .scratchDirectory, arguments: noOverwriteRows)
+  func testForeignObjectOfTheSameSizeStaysRefused(row: NoOverwriteRow) async throws {
+    let file = try ScratchDirectory.url.appendingPathComponent("final.tif")
+    try Self.tenBytes.write(to: file)
+    let foreign =
+      row.multipart ? "0f343b0931126a20f133d67c2b018a3b-3" : String(repeating: "a", count: 32)
+
+    await #expect {
+      _ = try await Self.refusingServer(headETag: foreign).client(policy: row.policy)
+        .upload(file: file, bucket: "exports", key: "M31/final.tif", ifNoneMatch: true)
+    } throws: { error in
+      guard case S3Error.service(412, _, _, _) = error else { return false }
+      return true
+    }
+  }
+
+  struct ETagRow: Sendable, CustomTestStringConvertible {
+    let parts: [String]
+    let expected: String?
+    var testDescription: String { "\(parts.count) parts → \(expected ?? "nil")" }
+  }
+
+  @Test(
+    "a multipart ETag is the MD5 of the parts' binary MD5s and their count; else nothing",
+    arguments: [
+      // md5(md5("a")) — the one-part case of the AWS rule, checked by hand.
+      ETagRow(
+        parts: ["0cc175b9c0f1b6a831c399e269772661"],
+        expected: FileDigest.md5Hex(
+          Data([
+            0x0c, 0xc1, 0x75, 0xb9, 0xc0, 0xf1, 0xb6, 0xa8, 0x31, 0xc3, 0x99, 0xe2, 0x69, 0x77,
+            0x26,
+            0x61,
+          ])) + "-1"),
+      ETagRow(parts: [], expected: nil),
+      ETagRow(parts: ["p1"], expected: nil),
+      ETagRow(parts: [String(repeating: "z", count: 32)], expected: nil),
+    ])
+  func testMultipartETag(row: ETagRow) {
+    #expect(FileDigest.multipartETag(row.parts) == row.expected)
   }
 }

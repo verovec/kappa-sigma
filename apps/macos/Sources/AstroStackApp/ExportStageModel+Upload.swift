@@ -101,8 +101,6 @@ extension ExportStageModel {
         return nil
       }
       return client
-    } catch let refusal as S3ConnectionStore.Refusal {
-      failure = .s3Connection(refusal)
     } catch {
       failure = UserFacingError(error)
     }
@@ -112,11 +110,10 @@ extension ExportStageModel {
   /// Uploads `urls` (the very files written) one after another.
   ///
   /// The first failure or a cancel stops it; with `discardPartial`, the objects already sent are
-  /// deleted then. `replacing` false (an export): the service refuses to replace an object
-  /// (`If-None-Match: *`), said as the overwrite it would have been; Resend replaces its own.
-  func upload(
-    _ urls: [URL], to remote: RemotePlan?, discardPartial: Bool, replacing: Bool = false
-  ) async -> UploadOutcome {
+  /// deleted then. The service is asked never to replace an object (`If-None-Match: *`), Resend
+  /// included: its refusal is said as the object already there (card 0185). An object this very
+  /// copy wrote is recognised by its size and ETag where the key can read it.
+  func upload(_ urls: [URL], to remote: RemotePlan?, discardPartial: Bool) async -> UploadOutcome {
     guard let remote else { return .none }
     // A window may have imported this prefix while the files were written: R7 is judged again
     // before the first object is sent (card 0180).
@@ -133,9 +130,9 @@ extension ExportStageModel {
         try Task.checkCancellation()
         _ = try await remote.client.upload(
           file: url, bucket: remote.target.bucket, key: key, contentType: Self.contentType(url),
-          ifNoneMatch: !replacing)
+          ifNoneMatch: true)
         sent.append(key)
-      } catch S3Error.service(412, _, _, _) where !replacing {
+      } catch S3Error.service(412, _, _, _) {
         if discardPartial { await Self.discard(sent, from: remote) }
         let refusal = UserFacingError.exportWouldOverwrite(path: remote.target.url(key))
         return .failed(String(localized: refusal.message))
@@ -186,6 +183,7 @@ extension ExportStageModel {
       return
     }
     failure = nil
+    remoteUnchecked = false
     // The capture sources may have changed since the export: R7 is judged again.
     let location = RemoteLocation(bucket: bucket, prefix: key)
     guard ExportGuard.remoteRefusal(location, sources: services.remoteSources()) == nil else {
@@ -202,8 +200,7 @@ extension ExportStageModel {
     let folder = URL(fileURLWithPath: path, isDirectory: true)
     let outcome = await upload(
       record.files.map(folder.appendingPathComponent),
-      to: RemotePlan(client: client, target: target, key: key), discardPartial: false,
-      replacing: true)
+      to: RemotePlan(client: client, target: target, key: key), discardPartial: false)
     do {
       switch outcome {
       case .failed(let text):

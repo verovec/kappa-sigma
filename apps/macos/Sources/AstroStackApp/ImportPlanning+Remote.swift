@@ -68,21 +68,29 @@ extension ImportPlanning {
 
 extension ImportPlanning {
   /// The buckets a run of this project may read (card 0154): one store per remote source
-  /// (card 0168), through the Settings connection its own row names.
+  /// (card 0168), through the Settings connection its own row names, each looked up once.
   ///
   /// A source whose connection is gone contributes nothing: the run refuses with that bucket's
-  /// name rather than stacking the lanes it could read (R2). A Keychain that refuses the secret
-  /// is thrown with its own words (card 0185): « no bucket » would hide why.
+  /// name rather than stacking the lanes it could read (R2). A connection whose secret the
+  /// Keychain refuses gives a store that answers that refusal (card 0185): a run that reads the
+  /// bucket says why, one that never does runs as before.
   package nonisolated static func runStores(
     _ sources: [ProjectSource], client: Client = ExportServices.liveClient
-  ) async throws -> [RemoteObjectStore] {
+  ) async -> [RemoteObjectStore] {
     var byBucket: [String: RemoteObjectStore] = [:]
+    var looked: [UUID: Result<S3Client?, any Error>] = [:]
     for source in sources where source.kind == .remoteNight {
       guard let bucket = source.bucket, byBucket[bucket] == nil,
-        let id = source.connectionID.flatMap(UUID.init(uuidString:)),
-        let s3 = try await client(id)
+        let id = source.connectionID.flatMap(UUID.init(uuidString:))
       else { continue }
-      byBucket[bucket] = .s3(s3, bucket: bucket)
+      if looked[id] == nil {
+        do { looked[id] = .success(try await client(id)) } catch { looked[id] = .failure(error) }
+      }
+      switch looked[id] {
+      case .success(let s3?): byBucket[bucket] = .s3(s3, bucket: bucket)
+      case .failure(let error): byBucket[bucket] = .refusing(bucket: bucket, error)
+      case .success(nil), nil: continue
+      }
     }
     return byBucket.values.sorted { $0.bucket < $1.bucket }
   }

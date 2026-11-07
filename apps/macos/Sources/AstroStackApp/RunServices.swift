@@ -22,11 +22,11 @@ package nonisolated struct RunServices: Sendable {
   package var timeZone: TimeZone
   /// The buckets a run of these sources may read (card 0154); none by default.
   ///
-  /// A run of a local capture is exactly what it was; a Keychain refusal is thrown (card 0185).
+  /// A run of a local capture is exactly what it was; looked up off the main actor (card 0185).
   package var buckets: Buckets = { _ in [] }
 
   /// The buckets of a run's sources, looked up when the run starts.
-  package typealias Buckets = @Sendable ([ProjectSource]) async throws -> [RemoteObjectStore]
+  package typealias Buckets = @Sendable ([ProjectSource]) async -> [RemoteObjectStore]
 
   /// Services from their parts.
   package init(
@@ -58,7 +58,7 @@ package nonisolated struct RunServices: Sendable {
         return AsyncThrowingStream { $0.finish(throwing: error) }
       }
     }, scratchFolder: { ScratchSetting().folder },
-    buckets: { sources in try await ImportPlanning.runStores(sources) })
+    buckets: { sources in await ImportPlanning.runStores(sources) })
 
   /// The id of a run started at `date`: the legacy `yyyyMMdd_HHmmss`, so a stack folder reads
   /// like a legacy run's.

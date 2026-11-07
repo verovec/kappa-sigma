@@ -42,7 +42,7 @@ struct RunStoresTests {
       Self.source(4, bucket: nil, kind: .night),
     ]
 
-    let stores = try await ImportPlanning.runStores(sources, client: { _ in client })
+    let stores = await ImportPlanning.runStores(sources, client: { _ in client })
 
     #expect(stores.map(\.bucket) == ["astro", "other"], "one per bucket, in name order")
   }
@@ -51,9 +51,9 @@ struct RunStoresTests {
   func testMissingConnectionGivesNoBucket() async throws {
     let sources = [Self.source(1, bucket: "astro")]
 
-    #expect(try await ImportPlanning.runStores(sources, client: { _ in nil }).isEmpty)
+    #expect(await ImportPlanning.runStores(sources, client: { _ in nil }).isEmpty)
     #expect(
-      try await ImportPlanning.runStores(
+      await ImportPlanning.runStores(
         [Self.source(2, bucket: "astro", connection: "not-a-uuid")], client: { _ in nil }
       ).isEmpty, "a row written without a usable connection id is no bucket either")
   }
@@ -63,9 +63,9 @@ struct RunStoresTests {
     let client = try Self.client()
 
     #expect(
-      try await ImportPlanning.runStores(
+      await ImportPlanning.runStores(
         [Self.source(1, bucket: nil, kind: .night)], client: { _ in client }
       ).isEmpty)
-    #expect(try await ImportPlanning.runStores([], client: { _ in client }).isEmpty)
+    #expect(await ImportPlanning.runStores([], client: { _ in client }).isEmpty)
   }
 }

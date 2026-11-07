@@ -111,9 +111,9 @@ extension ProjectWindowModel {
     refresh()
     model.start(
       {
-        // A Keychain refusal stops the run here with its own words, before any scan (R2).
+        // Looked up here, off the main actor: a Keychain prompt never freezes the window.
         var prepared = prepared
-        prepared.stores = try await buckets(remote)
+        prepared.stores = await buckets(remote)
         let plan = try await planning(record.request)
         // A scan that moved since the series were chosen is refused, never stacked in part.
         if let scope {

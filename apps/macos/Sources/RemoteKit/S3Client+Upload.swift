@@ -36,9 +36,8 @@ extension S3Client {
       } catch S3Error.service(412, let code, let message, let requestID) where ifNoneMatch {
         // Ours if a lost answer was retried: same size, the ETag of a single PUT = its MD5. A
         // key that may not read (HEAD 403) cannot tell: the refusal stands.
-        let md5 = try FileDigest.md5Hex(file)
         if let object = (try? await head(bucket: bucket, key: key)) ?? nil,
-          object.size == Int64(body.count), object.etag == md5
+          object.size == Int64(body.count), object.etag == FileDigest.md5Hex(body)
         {
           return object
         }
@@ -118,14 +117,17 @@ extension S3Client {
       // A try whose answer was lost may have completed the upload: the retry then finds no
       // upload, or (asked never to replace) the object it wrote. The object, if whole (same
       // size, as many parts), is the result; anything else is the service's refusal as sent.
-      // A key that may not read (HEAD 403) cannot tell for a 412: the refusal stands.
+      // A 412 says an object is there for sure: only its exact ETag (computed from the parts')
+      // makes it ours; a key that may not read (HEAD 403) cannot tell, the refusal stands.
       let object =
         status == 412
         ? (try? await head(bucket: bucket, key: key)) ?? nil
         : try await head(bucket: bucket, key: key)
-      if let object, object.size == size, object.etag.hasSuffix("-\(parts.count)") {
-        return object
-      }
+      let ours =
+        status == 412
+        ? object?.etag == FileDigest.multipartETag(parts.map(\.etag))
+        : object?.etag.hasSuffix("-\(parts.count)") == true
+      if let object, object.size == size, ours { return object }
       throw S3Error.service(status: status, code: code, message: message, requestID: requestID)
     }
   }

@@ -19,7 +19,7 @@ extension ImportPlanning {
         // A set scanned out of a bucket is rebuilt from that bucket (card 0154), through the
         // connection its source row names — not refused for want of a store.
         builder.stager = FrameStager(
-          stores: try await runStores((try? store?.sources() ?? []) ?? []))
+          stores: await runStores((try? store?.sources() ?? []) ?? []))
         let result = try await rebuild(
           set, of: inventory, pool: pool, library: library, replace: replace, builder: builder)
         await index.invalidate()

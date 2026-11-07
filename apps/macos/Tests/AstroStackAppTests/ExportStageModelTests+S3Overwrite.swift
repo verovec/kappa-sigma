@@ -52,21 +52,37 @@ extension ExportStageModelTests {
     }
   }
 
-  @Test("Resend replaces what the failed copy left: no condition on its PUTs", .scratchDirectory)
-  func testResendReplaces() async throws {
+  @Test(
+    "Resend never replaces either: its PUTs ask the service the same, the notice reset",
+    .scratchDirectory)
+  func testResendNeverReplaces() async throws {
     let opened = try StudioModelTests.project()
     defer { try? opened.package.close() }
-    let fake = ExportS3Fake(put: 500)
+    let fake = ExportS3Fake(head: 403, put: 500)
     let model = try Self.s3Model(opened, fake: fake, local: true, s3: true)
     await model.export()
     let failed = try #require(model.exports.first)
+    #expect(model.remoteUnchecked)
     let sentByExport = fake.conditions.count
     fake.answer(put: 200)
 
     await model.resend(failed)
 
     let resent = fake.conditions.dropFirst(sentByExport)
-    #expect(!resent.isEmpty && resent.allSatisfy { $0 == nil })
-    #expect(model.exports.first?.remoteStatus == .done)
+    #expect(!resent.isEmpty && resent.allSatisfy { $0 == "*" })
+    #expect(model.exports.first?.remoteStatus == .done && !model.remoteUnchecked)
+  }
+
+  @Test("another S3 target clears what the last key could not check", .scratchDirectory)
+  func testNoticeFollowsTheTarget() async throws {
+    let opened = try StudioModelTests.project()
+    defer { try? opened.package.close() }
+    let model = try Self.s3Model(opened, fake: ExportS3Fake(head: 403), local: false, s3: true)
+    await model.export()
+    #expect(model.remoteUnchecked)
+
+    model.s3?.prefix = "elsewhere"
+
+    #expect(!model.remoteUnchecked)
   }
 }

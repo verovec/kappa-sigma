@@ -159,7 +159,7 @@ package nonisolated struct AstroFormat: Sendable {
 
   /// The value a parameter field holds, or `nil` unless the WHOLE text is one number.
   ///
-  /// `LocaleNumber.parse`: a dot, or a comma where the language writes one, U+2212 or `-`;
+  /// `LocaleNumber.parse`: a dot, or a comma unless the region groups with one, U+2212 or `-`;
   /// never a prefix of what was typed, which would apply a value the user never meant (R2).
   /// What `parameter(_:)` writes reads back exactly: it writes a dot, read as the decimal mark.
   package func parameter(parsing text: String) -> Double? {

@@ -95,6 +95,14 @@ struct LocaleNumberTests {
     #expect(LocaleNumber.parse(row.text, locale: Locale(identifier: "de_DE")) == row.german)
   }
 
+  @Test("Swiss grouping takes the typed apostrophe and the typographic one")
+  func testSwissApostrophes() {
+    let swiss = Locale(identifier: "fr_CH")
+    #expect(LocaleNumber.parse("1'234.5", locale: swiss) == 1234.5)
+    #expect(LocaleNumber.parse("1\u{2019}234.5", locale: swiss) == 1234.5)
+    #expect(LocaleNumber.parse("1\u{2019}23", locale: swiss) == nil)
+  }
+
   /// Ungrouped, as a field writes it.
   @Test("what a field writes parses back to the identical value, in every locale")
   func testWrittenReadsBack() {

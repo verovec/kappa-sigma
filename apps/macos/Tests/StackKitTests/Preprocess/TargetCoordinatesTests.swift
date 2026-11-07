@@ -29,6 +29,12 @@ struct TargetCoordinatesTests {
     #expect(abs(try #require(TargetCoordinates.declination(dec)) - wantDec) <= 1e-6)
   }
 
+  @Test("a comma that is not between two digits is refused, never read as a separator")
+  func testStrayCommaRefused() {
+    #expect(TargetCoordinates.rightAscension("10, 41") == nil)
+    #expect(TargetCoordinates.declination("41,") == nil)
+  }
+
   @Test("empty or unparseable is no hint")
   func testInvalid() {
     #expect(

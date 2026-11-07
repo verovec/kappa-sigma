@@ -39,9 +39,9 @@ package enum LocaleNumber {
   /// A typed number, `nil` unless the WHOLE text is one finite decimal number (R2: a field never
   /// applies a prefix the user did not mean).
   ///
-  /// A dot is the decimal mark, and so is a comma typed by habit in a locale that writes one
-  /// (fr, de…). Where the locale groups with a comma (en), a comma is only a group mark: « 1,000 »
-  /// is 1000, and « 1,5 » is refused rather than read as 15. Group marks (spaces, the locale's)
+  /// A dot is the decimal mark everywhere (the app never writes a dot between groups), and so is a
+  /// comma typed by habit, unless the locale's region groups with a comma (en_US): there a comma is
+  /// only a group mark, « 1,000 » is 1000 and « 1,5 » is refused rather than read as 15. Group marks (spaces, the locale's)
   /// count only in the integer part and in threes; surrounding whitespace is ignored; either minus.
   package static func parse(_ text: String, locale: Locale) -> Double? {
     let typed = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -67,6 +67,7 @@ package enum LocaleNumber {
     var groups: Set<Character> = [" ", "\u{a0}", "\u{202f}", "\u{2009}"]
     if let mark = locale.groupingSeparator, mark.count == 1, let group = mark.first, group != "." {
       groups.insert(group)
+      if group == "'" { groups.insert("\u{2019}") }
     }
     guard integer.contains(where: groups.contains) else { return integer }
     let spaced = String(integer.map { groups.contains($0) ? " " : $0 })

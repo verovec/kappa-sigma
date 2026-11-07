@@ -4,48 +4,28 @@ import RemoteKit
 import TestSupport
 import Testing
 
-/// Where the live round trip runs: a local `minio server` named by `ASTROSTACK_S3_LIVE_ENDPOINT`
-/// (`just s3-live`), never a real bucket by default.
-enum LiveS3 {
-  struct Configuration {
-    let endpoint: S3Endpoint
-    let credentials: S3Credentials
-    let bucket: String
-  }
-
-  /// `nil` (the suite skips) without the endpoint variable, or under `ASTROSTACK_SKIP_LIVE=1`.
-  static var configuration: Configuration? {
-    let env = ProcessInfo.processInfo.environment
-    guard env["ASTROSTACK_SKIP_LIVE"] != "1",
-      let text = env["ASTROSTACK_S3_LIVE_ENDPOINT"], let url = URL(string: text),
-      let endpoint = try? S3Endpoint(
-        url: url, region: env["ASTROSTACK_S3_LIVE_REGION"] ?? "us-east-1", addressing: .pathStyle)
-    else { return nil }
-    return Configuration(
-      endpoint: endpoint,
-      credentials: S3Credentials(
-        accessKey: env["ASTROSTACK_S3_LIVE_ACCESS_KEY"] ?? "minioadmin",
-        secretKey: env["ASTROSTACK_S3_LIVE_SECRET_KEY"] ?? "minioadmin"),
-      bucket: env["ASTROSTACK_S3_LIVE_BUCKET"] ?? "astrostack-live")
-  }
-}
-
+/// RemoteKit against a real S3 service: the local MinIO `just s3-live` starts, or the bucket `.env`
+/// names (`LiveS3Environment`). Each test writes under a prefix of its own and removes it.
 @Suite(
-  "Live S3: a real round trip against a local MinIO",
-  .enabled(if: LiveS3.configuration != nil, "ASTROSTACK_S3_LIVE_ENDPOINT unset (just s3-live)"),
+  "Live S3: a real round trip against an S3 service",
+  .liveS3,
   .tags(.live), .serialized, .timeLimit(.minutes(5)))
 struct LiveS3Tests {
+  /// The configuration, its client, the bucket made sure of, and a prefix of this test alone.
+  static func session() async throws -> (LiveS3Environment, S3Client, String) {
+    let live = try #require(LiveS3Environment.current)
+    let client = live.client()
+    try await live.ensureBucket(client)
+    try await live.sweep(client: client)
+    return (live, client, LiveS3Environment.runPrefix())
+  }
+
   @Test(
     "Upload 70 MiB (multipart) and 1 KiB, list, head, ranged get, download, delete",
     .scratchDirectory)
   func testRoundTrip() async throws {
-    let live = try #require(LiveS3.configuration)
-    let transport = HTTPTransport.urlSession()
-    let client = S3Client(
-      endpoint: live.endpoint, credentials: live.credentials, transport: transport)
-    try await Self.ensureBucket(live, transport: transport)
+    let (live, client, prefix) = try await Self.session()
     let scratch = try ScratchDirectory.url
-    let prefix = "astrostack-live/\(UUID().uuidString)/"
     let big = try Self.file(scratch.appendingPathComponent("big.fit"), bytes: 70 << 20)
     let small = try Self.file(scratch.appendingPathComponent("small.fit"), bytes: 1024)
 
@@ -61,6 +41,7 @@ struct LiveS3Tests {
 
       let head = try await client.head(bucket: live.bucket, key: prefix + "big.fit")
       #expect(head?.size == 70 << 20)
+      #expect(head?.etag == uploaded.etag, "an unchanged object keeps its ETag")
       let slice = try await client.get(
         bucket: live.bucket, key: prefix + "big.fit", range: 1_000_000...1_000_999)
       #expect(slice == (try Data(contentsOf: big))[1_000_000...1_000_999])
@@ -77,11 +58,68 @@ struct LiveS3Tests {
       Issue.record(error)
     }
 
-    for key in [prefix + "big.fit", prefix + "small.fit"] {
-      try await client.delete(bucket: live.bucket, key: key)
-    }
+    try await live.removePrefix(prefix, client: client)
     #expect(try await client.list(bucket: live.bucket, prefix: prefix).isEmpty)
     #expect(try await client.head(bucket: live.bucket, key: prefix + "big.fit") == nil)
+  }
+
+  @Test("A listing past one page (1 001 keys) is whole, and one level of it too", .scratchDirectory)
+  func testListingPagesPast1000Keys() async throws {
+    let (live, client, prefix) = try await Self.session()
+    let empty = try Self.file(try ScratchDirectory.url.appendingPathComponent("e"), bytes: 1)
+    let keys = (0..<1001).map { String(format: "%@a/%04d.fit", prefix, $0) }
+    do {
+      try await Self.forEach(keys) { key in
+        _ = try await client.upload(file: empty, bucket: live.bucket, key: key)
+      }
+      let listed = try await client.list(bucket: live.bucket, prefix: prefix)
+      #expect(listed.map(\.key) == keys, "every page, in key order")
+      let level = try await client.list(bucket: live.bucket, prefix: prefix, delimiter: "/")
+      #expect(level.prefixes == [prefix + "a/"])
+      #expect(level.objects.isEmpty)
+    } catch {
+      Issue.record(error)
+    }
+    try await live.removePrefix(prefix, client: client)
+  }
+
+  @Test(
+    "A key with a space, a plus, an accent or nested folders round-trips as written",
+    .scratchDirectory,
+    // Not `a//b`: MinIO refuses an empty path segment (400 XMinioInvalidObjectName), AWS does not.
+    arguments: ["with space.fit", "plus+sign.fit", "été/Hα.fit", "Nuit 2/Lights L/L_001.fit"])
+  func testAwkwardKeysRoundTrip(_ name: String) async throws {
+    let (live, client, prefix) = try await Self.session()
+    let scratch = try ScratchDirectory.url
+    let file = try Self.file(scratch.appendingPathComponent("f"), bytes: 4096)
+    let key = prefix + name
+    do {
+      _ = try await client.upload(file: file, bucket: live.bucket, key: key)
+      let listed = try await client.list(bucket: live.bucket, prefix: prefix)
+      #expect(listed.map(\.key) == [key], "the listing names the key as written")
+      let head = try await client.head(bucket: live.bucket, key: key)
+      #expect(head?.size == 4096)
+      let target = scratch.appendingPathComponent("down")
+      _ = try await client.download(
+        bucket: live.bucket, key: key, to: target, expect: head)
+      #expect(try FileDigest.sha256Base64(target) == FileDigest.sha256Base64(file))
+    } catch {
+      Issue.record(error)
+    }
+    try await live.removePrefix(prefix, client: client)
+  }
+
+  /// Runs `body` over `items`, eight at a time.
+  static func forEach(
+    _ items: [String], _ body: @escaping @Sendable (String) async throws -> Void
+  ) async throws {
+    try await withThrowingTaskGroup(of: Void.self) { group in
+      for (index, item) in items.enumerated() {
+        if index >= 8 { try await group.next() }
+        group.addTask { try await body(item) }
+      }
+      try await group.waitForAll()
+    }
   }
 
   /// A file of `bytes` pseudo-random bytes (seeded, so a failure reproduces).
@@ -93,16 +131,6 @@ struct LiveS3Tests {
     }
     try data.prefix(bytes).write(to: url)
     return url
-  }
-
-  /// Creates the bucket; « already owned » is fine.
-  static func ensureBucket(_ live: LiveS3.Configuration, transport: HTTPTransport) async throws {
-    let request = try S3Request(method: "PUT", bucket: live.bucket, key: "")
-      .prepared(
-        endpoint: live.endpoint,
-        signer: SigV4(credentials: live.credentials, region: live.endpoint.region), date: Date())
-    let response = try await transport.send(request)
-    #expect(response.isSuccess || response.status == 409, "create bucket: \(response.status)")
   }
 
   struct SplitMix {

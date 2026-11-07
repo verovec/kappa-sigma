@@ -42,7 +42,7 @@ struct KnobRow: View {
       ParameterRow(
         .app("\(term.label)"), parameter: number(bounds, integer: integer),
         help: KnobHelpButton.content(row.id, model: model, locale: locale), key: row.id,
-        frozen: locked,
+        frozen: locked, step: row.step,
         format: { AstroFormat(locale: locale).parameter($0) },
         parse: { AstroFormat(locale: locale).parameter(parsing: $0) })
     case .flag:

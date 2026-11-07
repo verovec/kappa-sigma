@@ -55,10 +55,16 @@ The viewer's stretch stays display-only (R2) but reads and edits precisely:
   (−5…5), target background (0.01…0.6), highlights (0.5…1), raw c0 / m / c1 — each editing one
   parameter only, defaulting to the autostretch (reset lands on it exactly). `STFControls` draws
   them with `ParameterRow`s; ids `fr.astrostack.parameter.stf.<k|r|g|b>.<row>.<part>`.
-- **Steps** (`ParameterStep`, `ParameterRow(…, step:)`): with a step the slider takes focus and
-  moves one step per arrow, a tenth with ⇧ or ⌥; an ⌥-drag runs at a tenth of the pointer's travel
-  (re-anchored where ⌥ toggles, so the value never jumps). Without a step the row is the plain
-  slider it was. Each row's « why » states its steps.
+- **Steps** (`ParameterStep`, `ParameterRow(…, step:)`, cards 0085, 0179): every row steps, by
+  the panel's `step` or else `ParameterStep.default(for:integer:)` (a hundredth of the range on a
+  decade; 1 for a whole number, ⇧ too). ↑/↓ in the field or on the focused slider move one step
+  per press and speed up while held — 1, 2, 5 then 10 steps per auto-repeat, by eights of
+  repeats (`ArrowRepeat`, counted in repeats, never in time); ←/→ on the slider move one step per
+  press or repeat, never faster, and in the field still move the caret; ⇧ or ⌥ a fine step. From
+  the field, typed text is applied before the step. The row steps from the value it last wrote
+  until the binding shows it (auto-repeats arrive before the row is drawn again), and the field
+  shows the value applied at once (R2). An ⌥-drag runs at a tenth of the pointer's travel
+  (re-anchored where ⌥ toggles, so the value never jumps). Each STF row's « why » states its steps.
 - **Display-domain histogram**: `ViewerFrame.histogramDomain` (`linear` | `display`); in the
   display domain the `histogram` kernel bins `stf(x)` through `STF.h` (the functions
   `Display.metal` uses too) with the frame's stretch in `HistogramUniforms`, and the viewer counts

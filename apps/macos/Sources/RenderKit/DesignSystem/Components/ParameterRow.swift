@@ -5,9 +5,11 @@ package import SwiftUI
 /// the default badge, and its help: the one-line « why » on hover, the card on click (0086).
 ///
 /// RenderKit never imports the app: the caller passes `format` and `parse` (the app's
-/// `AstroFormat.parameter` and `parameter(parsing:)`, which round-trip exactly). With a `step`,
-/// the focused slider moves one step per arrow, a tenth with ⇧ or ⌥, and an ⌥-drag runs at a
-/// tenth of the pointer's travel (card 0085); without one the row is the plain slider it was.
+/// `AstroFormat.parameter` and `parameter(parsing:)`, which round-trip exactly). Every row steps
+/// (cards 0085, 0179): by the panel's `step`, else `ParameterStep.default(for:)` of its range.
+/// ↑/↓ in the field or on the focused slider move one step per press and speed up while held
+/// (`ArrowRepeat`); ←/→ on the slider move one step per press; ⇧ or ⌥ a fine step; an ⌥-drag
+/// runs at a tenth of the pointer's travel. The field shows the value applied at once (R2).
 package struct ParameterRow: View {
   /// Where an ⌥-drag's gearing began: the value and the pointer then.
   private struct Gearing: Equatable {
@@ -30,12 +32,17 @@ package struct ParameterRow: View {
   /// The slider's range while a drag runs: a range that widens to hold the value would otherwise
   /// move under the pointer.
   @State private var dragRange: ClosedRange<Double>?
+  /// The repeats of the ↑/↓ held down, for the speed-up.
+  @State private var arrows = ArrowRepeat()
+  /// The value the last arrow wrote, until the binding shows it: auto-repeats arrive before the
+  /// row is drawn again, and stepping from the binding then would step from a stale value.
+  @State private var pending: Double?
   @FocusState private var editing: Bool
 
   /// A row editing `parameter`; `help` is its « ? » (summary on hover, content on click);
   /// `key` (the parameter's stable id) identifies its controls (`AccessibilityID.parameter`);
-  /// `frozen` disables the value's controls but never the « ? »; `step` enables the keyboard
-  /// and fine-drag steps.
+  /// `frozen` disables the value's controls but never the « ? »; `step` is the panel's keyboard
+  /// and fine-drag step (`nil`: a hundredth of the range, on a decade).
   package init(
     _ label: LocalizedStringResource, parameter: Binding<ParameterValue>,
     help: HelpContent? = nil, key: String, frozen: Bool = false, step: ParameterStep? = nil,
@@ -65,7 +72,10 @@ package struct ParameterRow: View {
     }
     .onAppear { text = format(parameter.value) }
     // The slider and reset move the value while the field may have focus: always show it.
-    .onChange(of: parameter.value) { text = format(parameter.value) }
+    .onChange(of: parameter.value) {
+      pending = nil
+      text = format(parameter.value)
+    }
     // A freeze takes the focus too: that loss of focus commits nothing (R2).
     .onChange(of: editing) { if !editing && !frozen { commit() } }
     // A freeze (a run starting) shows the applied value, never a typed one nobody committed.
@@ -131,31 +141,57 @@ package struct ParameterRow: View {
         .frame(width: 84)
         .focused($editing)
         .onSubmit(commit)
+        // ↑/↓ only: ←/→ still move the caret through what is typed.
+        .onKeyPress(keys: [.upArrow, .downArrow], phases: [.down, .repeat, .up]) { press in
+          arrow(press, typed: true)
+        }
     }
   }
 
-  /// With a step: the slider takes focus, arrows move it, ⌥ is tracked for the drag gearing.
-  @ViewBuilder private func stepped<Content: View>(_ slider: Content) -> some View {
-    if let step {
-      slider
-        .focusable()
-        .onKeyPress(keys: [.leftArrow, .rightArrow]) { press in
-          let fine = !press.modifiers.isDisjoint(with: [.shift, .option])
-          parameter.slide(
-            step.moved(parameter.value, forward: press.key == .rightArrow, fine: fine))
-          return .handled
-        }
-        .onModifierKeysChanged(mask: .option) { _, held in fineHeld = !held.isEmpty }
-    } else {
-      slider
+  /// The slider takes focus, arrows move it, ⌥ is tracked for the drag gearing.
+  private func stepped<Content: View>(_ slider: Content) -> some View {
+    slider
+      .focusable()
+      .onKeyPress(
+        keys: [.leftArrow, .rightArrow, .upArrow, .downArrow], phases: [.down, .repeat, .up]
+      ) { press in
+        arrow(press, typed: false)
+      }
+      .onModifierKeysChanged(mask: .option) { _, held in fineHeld = !held.isEmpty }
+  }
+
+  /// The row's step: the panel's, else a decade of its range.
+  private var arrowStep: ParameterStep { step ?? .default(for: parameter.range) }
+
+  /// One arrow event, applied to the value and shown in the field.
+  ///
+  /// ↑/↓ move by `ArrowRepeat`'s tier, ←/→ one step per press or repeat.
+  /// The step starts from the value the row last wrote (`pending`), else the binding's. From the
+  /// field (`typed`), what was typed is applied first. The field then shows the new value (R2).
+  private func arrow(_ press: KeyPress, typed: Bool) -> KeyPress.Result {
+    let vertical = press.key == .upArrow || press.key == .downArrow
+    let phase: ArrowRepeat.Phase =
+      press.phase == .up ? .up : press.phase == .repeat ? .repeat : .down
+    guard let times = arrows.steps(phase, accelerating: vertical) else {
+      return vertical ? .handled : .ignored
     }
+    var edited = parameter
+    if let pending { edited.set(pending) }
+    if typed && text != format(edited.value) { _ = edited.commit(text, parse: parse) }
+    let fine = !press.modifiers.isDisjoint(with: [.shift, .option])
+    let forward = press.key == .upArrow || press.key == .rightArrow
+    edited.nudge(arrowStep.moved(edited.value, forward: forward, fine: fine, times: times))
+    parameter = edited
+    pending = edited.value
+    text = format(edited.value)
+    return .handled
   }
 
   /// The slider's value: as dragged, or geared down to a tenth of the travel while ⌥ is held.
   ///
   /// The gearing re-anchors where ⌥ was pressed or released, so the value never jumps.
   private func slide(to pointer: Double) {
-    guard let step, dragging, fineHeld else {
+    guard dragging, fineHeld else {
       gearing = nil
       parameter.slide(pointer, on: dragRange)
       return
@@ -163,12 +199,13 @@ package struct ParameterRow: View {
     let gearing = self.gearing ?? Gearing(anchor: parameter.value, start: pointer)
     self.gearing = gearing
     parameter.slide(
-      step.fineDragValue(anchor: gearing.anchor, start: gearing.start, pointer: pointer),
+      arrowStep.fineDragValue(anchor: gearing.anchor, start: gearing.start, pointer: pointer),
       on: dragRange)
   }
 
   /// The field's text applied, then shown as the value it became (clamped, or unchanged).
   private func commit() {
+    pending = nil
     _ = parameter.commitEdit(text, format: format, parse: parse)
     text = format(parameter.value)
   }

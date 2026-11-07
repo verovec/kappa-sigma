@@ -137,3 +137,19 @@ struct ParameterRowTests {
     #expect(parameter.range == 0...100)
   }
 }
+
+extension ParameterRowTests {
+  @Test(
+    "an arrow keeps to the slider, widened to hold a value typed past it (card 0179)",
+    arguments: [
+      (50.0, 120.0, 100.0),
+      (250.0, 260.0, 250.0),
+      (250.0, 240.0, 240.0),
+      (5.0, -3.0, 0.0),
+    ])
+  func testNudgeKeepsToTheSliderOrTheTypedValue(from: Double, to: Double, expected: Double) {
+    var parameter = ParameterValue(default: 10, range: 0...100, limits: 0...400, value: from)
+    parameter.nudge(to)
+    #expect(parameter.value == expected)
+  }
+}

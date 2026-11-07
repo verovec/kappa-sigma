@@ -56,7 +56,7 @@ extension URLSessionTransportTests {
     #expect(!S3Error.isRetryable(try #require(error)))
   }
 
-  @Test("the live configuration bounds a stall and a whole transfer")
+  @Test("the live limits: a stall within a minute, a whole transfer within 6 h")
   func testDefaultConfigurationBoundsEveryTransfer() {
     let configuration = HTTPTransport.configuration()
 
@@ -78,5 +78,6 @@ extension URLSessionTransportTests {
     #expect(S3Error.transferTimedOut(seconds: 5400).description.contains("90 min"))
     #expect(S3Error.transferTimedOut(seconds: 0.2).description.contains("0.2 s"))
     #expect(S3Error.transferTimedOut(seconds: 45).description.contains("45 s"))
+    #expect(S3Error.transferTimedOut(seconds: 0.30000000000000004).description.contains("0.3 s"))
   }
 }

@@ -58,7 +58,8 @@ package enum S3Error: Error, Sendable, Equatable, CustomStringConvertible {
     if seconds >= 60, seconds.truncatingRemainder(dividingBy: 60) == 0 {
       return "\(Int(seconds / 60)) min"
     }
-    return seconds == seconds.rounded() ? "\(Int(seconds)) s" : "\(seconds) s"
+    let tenths = (seconds * 10).rounded() / 10
+    return tenths == tenths.rounded() ? "\(Int(tenths)) s" : "\(tenths) s"
   }
 
   /// The codes S3 documents as « try again », also sent inside a 200 (CompleteMultipartUpload).

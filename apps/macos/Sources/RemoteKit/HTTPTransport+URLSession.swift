@@ -63,23 +63,37 @@ extension HTTPTransport {
 
   /// `body`, or `S3Error.transferTimedOut` once it has run for `transfer` seconds.
   ///
-  /// The deadline is a sibling task, so every `URLError.timedOut` left is a stall (retried); a
-  /// transfer that used its whole time is not, since a new try would start again from byte 0.
+  /// The deadline is a timer that cancels the request, so every `URLError.timedOut` left is a
+  /// stall (retried) and a transfer that used its whole time is not: a new try would start again
+  /// from byte 0. A caller's cancel reaches the request as before (`URLError.cancelled`), and an
+  /// answer that lands as the timer fires is returned, never dropped (a download's file with it).
   static func bounded<T: Sendable>(
     _ transfer: TimeInterval, _ body: @escaping @Sendable () async throws -> T
   ) async throws -> T {
-    try await withThrowingTaskGroup(of: T?.self) { group in
-      group.addTask { try await body() }
-      group.addTask {
-        try await Task.sleep(for: .seconds(transfer))
-        return nil
-      }
-      defer { group.cancelAll() }
-      guard let first = try await group.next(), let value = first else {
-        throw S3Error.transferTimedOut(seconds: transfer)
-      }
-      return value
+    let expiry = Expiry()
+    let work = Task { try await body() }
+    let timer = Task {
+      try await Task.sleep(for: .seconds(transfer))
+      await expiry.expire()
+      work.cancel()
     }
+    defer { timer.cancel() }
+    return try await withTaskCancellationHandler {
+      do {
+        return try await work.value
+      } catch {
+        if await expiry.expired { throw S3Error.transferTimedOut(seconds: transfer) }
+        throw error
+      }
+    } onCancel: {
+      work.cancel()
+    }
+  }
+
+  /// Whether a request's deadline has passed.
+  private actor Expiry {
+    private(set) var expired = false
+    func expire() { expired = true }
   }
 
   /// `request` for URLSession; `host` is left to URLSession, which derives it from the URL.

@@ -51,6 +51,16 @@ struct S3ClientRegionTests {
       response: .make(301, headers: ["x-amz-bucket-region": "us-east-1"]),
       outcome: .region("us-east-1", ending: endpoint)),
     Row(
+      label: "400 AuthorizationHeaderMalformed naming the connection's region: the endpoint",
+      response: error(400, "AuthorizationHeaderMalformed", region: "us-east-1"),
+      outcome: .region("us-east-1", ending: endpoint)),
+    Row(
+      label: "400 with an unreadable body naming another region keeps the service's words",
+      response: HTTPResponse(
+        status: 400, headers: ["x-amz-bucket-region": "eu-west-3"],
+        body: Data("<html>Bad Request</html>".utf8)),
+      outcome: .service(status: 400, tries: 1)),
+    Row(
       label: "HEAD 400 without a body, another region named",
       response: .make(400, headers: ["x-amz-bucket-region": "eu-west-3"]),
       outcome: .region("eu-west-3", ending: other)),

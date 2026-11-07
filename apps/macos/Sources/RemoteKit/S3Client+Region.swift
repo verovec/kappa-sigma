@@ -27,9 +27,9 @@ extension S3Client {
   ///
   /// A 301 always does (another region, or this one on an endpoint that does not serve it); any
   /// other 3xx only for another region (a 307 in the same one is S3's transient redirect while a
-  /// new bucket's DNS spreads). A 400 does with a region code, or with no code at all: a HEAD has
-  /// no body. A 403 or a 400 `RequestTimeout` carrying the header keep the service's words (the
-  /// latter stays retried).
+  /// new bucket's DNS spreads). A 400 does with a region code (this region too: then the endpoint
+  /// is wrong), or with an empty body naming another region (a HEAD carries no code). A 403, or a
+  /// 400 such as `RequestTimeout`, carrying the header keep the service's words.
   static func bucketRegion(_ response: HTTPResponse, answer: S3Error, connection: String)
     -> String?
   {
@@ -42,7 +42,8 @@ extension S3Client {
     case 300..<400: return elsewhere ? region : nil
     case 400:
       guard case .service(_, let code, _, _) = answer else { return nil }
-      return elsewhere && (code.map(regionCodes.contains) ?? true) ? region : nil
+      if let code { return regionCodes.contains(code) ? region : nil }
+      return elsewhere && response.body.isEmpty ? region : nil
     default: return nil
     }
   }

@@ -62,7 +62,11 @@ struct S3CredentialsTests {
     if row.credentials.accessKey.count >= 12 {
       #expect(shown.contains("…\(row.credentials.accessKey.suffix(4))"))
     }
-    #expect(!shown.contains("accessKey: \(row.credentials.accessKey.prefix(4))"))
+    // The access key's field shows at most its last 4, never its first (AKIA/ASIA tell none apart).
+    let field = try #require(
+      shown.split(separator: "accessKey: ").last?.split(separator: ",").first)
+    #expect(!field.contains(row.credentials.accessKey.prefix(4)))
+    #expect(field.count <= "…".count + 4 || field == "<redacted>")
     #expect(shown.contains("redacted"))
   }
 

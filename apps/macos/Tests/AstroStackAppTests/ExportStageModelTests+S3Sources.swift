@@ -43,7 +43,7 @@ extension ExportStageModelTests {
     let opened = try StudioModelTests.project()
     defer { try? opened.package.close() }
     let other = try ExportServicesTests.project(
-      "Other", remote: [RemoteLocation(bucket: Self.target.bucket, prefix: "a/b")])
+      "Other", remote: [RemoteLocation(bucket: Self.target.bucket, prefix: "a/b")], window: false)
     defer { other.close() }
     let fake = ExportS3Fake()
     // What `live` reads, over the other project only: nothing global is stubbed across `await`.

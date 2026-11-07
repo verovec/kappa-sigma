@@ -34,7 +34,7 @@
       "why": {
         "strength": {
           "en": "M 45 bathes in the Taurus dust: 0.85 removes the brown sky mottle (−80 % chroma measured) and keeps the luminance.",
-          "fr": "M 45 baigne dans les poussières du Taureau : 0,85 retire la marbrure brune du ciel (−80 % de chroma mesuré) et garde la luminance."
+          "fr": "M 45 baigne dans les poussières du Taureau : 0.85 retire la marbrure brune du ciel (−80 % de chroma mesuré) et garde la luminance."
         }
       }
     },
@@ -55,7 +55,7 @@
       "why": {
         "starDesat": {
           "en": "The stars are the subject: a light star-core desaturation (0.2), no saturation boost, no screen.",
-          "fr": "Les étoiles sont le sujet : une légère désaturation des cœurs (0,2), pas de renfort de saturation, pas d'écran."
+          "fr": "Les étoiles sont le sujet : une légère désaturation des cœurs (0.2), pas de renfort de saturation, pas d'écran."
         }
       }
     }

@@ -63,6 +63,6 @@ struct PlateSolveToolTests {
     let french = String(
       localized: PlateSolveTool.report(solution, locale: Locale(identifier: "fr")))
     #expect(english.hasPrefix("Solved: centre") && english.contains("3.117″/px"))
-    #expect(french.contains("3,117″/px") && !french.hasPrefix("Solved"))
+    #expect(french.contains("3.117″/px") && !french.hasPrefix("Solved"))
   }
 }

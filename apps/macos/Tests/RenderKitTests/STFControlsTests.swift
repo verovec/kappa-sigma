@@ -138,7 +138,7 @@ struct STFControlsTests {
       #expect(Double(sign: .plus, exponent: 0, significand: 1) / pow(10, Double(digits)) <= fine)
       let text = STFControls.format(
         0.123_456_789, control: control, locale: Locale(identifier: "fr"))
-      #expect(text.contains(","))
+      #expect(text.contains(".") && !text.contains(","), "a dot in every language (0178): \(text)")
       #expect(STFControls.parse(text, locale: Locale(identifier: "fr")) != nil)
     }
   }

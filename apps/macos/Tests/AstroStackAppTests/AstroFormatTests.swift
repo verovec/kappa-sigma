@@ -20,9 +20,9 @@ struct AstroFormatTests {
 
   nonisolated static let rows: [Row] = [
     Row(name: "300 s", text: { $0.exposure(ms: 300_000) }, french: "300 s", english: "300 s"),
-    Row(name: "0.5 s", text: { $0.exposure(ms: 500) }, french: "0,5 s", english: "0.5 s"),
+    Row(name: "0.5 s", text: { $0.exposure(ms: 500) }, french: "0.5 s", english: "0.5 s"),
     Row(name: "5 ms", text: { $0.exposure(ms: 5) }, french: "5 ms", english: "5 ms"),
-    Row(name: "2.5 s", text: { $0.exposure(ms: 2500) }, french: "2,5 s", english: "2.5 s"),
+    Row(name: "2.5 s", text: { $0.exposure(ms: 2500) }, french: "2.5 s", english: "2.5 s"),
     Row(name: "no exposure", text: { $0.exposure(ms: 0) }, french: "—", english: "—"),
     Row(
       name: "20 880 s integration", text: { $0.integration(seconds: 20_880) },
@@ -41,15 +41,15 @@ struct AstroFormatTests {
       english: "1 s"),
     Row(
       name: "−20 °C", text: { $0.temperature(celsius: -20) }, french: "−20 °C", english: "−20 °C"),
-    Row(name: "0.115", text: { $0.parameter(0.115) }, french: "0,115", english: "0.115"),
+    Row(name: "0.115", text: { $0.parameter(0.115) }, french: "0.115", english: "0.115"),
     Row(name: "1 400 ADU", text: { $0.adu(1400) }, french: "1 400 ADU", english: "1,400 ADU"),
     Row(
       name: "FWHM with scale", text: { $0.fwhm(px: 2.34, arcsecPerPx: 1.8) },
-      french: "2,3 px (4,2″)", english: "2.3 px (4.2″)"),
-    Row(name: "3 σ", text: { $0.sigma(3) }, french: "3,0 σ", english: "3.0 σ"),
+      french: "2.3 px (4.2″)", english: "2.3 px (4.2″)"),
+    Row(name: "3 σ", text: { $0.sigma(3) }, french: "3.0 σ", english: "3.0 σ"),
     Row(
       name: "RA 00h42m44s", text: { $0.rightAscension(degrees: 10.684_708) },
-      french: "00h42m44,3s", english: "00h42m44.3s"),
+      french: "00h42m44.3s", english: "00h42m44.3s"),
     Row(
       name: "Dec +41°16′", text: { $0.declination(degrees: 41.268_75) },
       french: "+41°16′08″", english: "+41°16′08″"),
@@ -101,12 +101,20 @@ struct AstroFormatTests {
   }
 
   @Test(
-    "a field that is not wholly a number in the locale is refused, never read as its prefix",
-    arguments: [
-      ("fr_FR", "0.115"), ("fr_FR", "1.5"), ("en_US", "1,5"), ("fr_FR", "2,8abc"), ("fr_FR", ""),
-      ("en_US", " "),
-    ])
+    "a field that is not wholly a number is refused, never read as its prefix",
+    arguments: [("fr_FR", "2,8abc"), ("fr_FR", ""), ("en_US", " "), ("fr_FR", "1.234,5")])
   func testPartialInputIsRefused(locale: String, text: String) {
     #expect(AstroFormat(locale: Locale(identifier: locale)).parameter(parsing: text) == nil)
+  }
+
+  /// PO 07/11 « point partout »: the field shows a dot, and a comma typed by habit still works.
+  @Test(
+    "a field takes a dot or a comma as its decimal mark, in either language",
+    arguments: [
+      ("fr_FR", "0.115", 0.115), ("fr_FR", "0,115", 0.115), ("fr_FR", "1.5", 1.5),
+      ("en_US", "1,5", 1.5), ("en_US", "\u{2212}2.8", -2.8),
+    ])
+  func testEitherMarkIsAccepted(locale: String, text: String, value: Double) {
+    #expect(AstroFormat(locale: Locale(identifier: locale)).parameter(parsing: text) == value)
   }
 }

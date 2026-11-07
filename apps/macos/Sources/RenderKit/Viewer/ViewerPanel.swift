@@ -147,7 +147,7 @@ struct ViewerPanel: View {
       }
       if let sky = readout.sky {
         LabeledContent {
-          Text(verbatim: LocaleNumber.decimalMark(sky.raText, locale: locale))
+          Text(verbatim: sky.raText)
         } label: {
           Text(.renderKit("RA"))
         }

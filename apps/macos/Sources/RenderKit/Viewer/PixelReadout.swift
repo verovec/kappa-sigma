@@ -60,9 +60,7 @@ package struct PixelReadout: Equatable, Sendable {
         String(localized: .renderKit("RA", locale: locale)),
         String(localized: .renderKit("Dec", locale: locale))
       )
-      parts.append(
-        ra + " " + LocaleNumber.decimalMark(sky.raText, locale: locale) + " " + dec + " "
-          + sky.decText)
+      parts.append(ra + " " + sky.raText + " " + dec + " " + sky.decText)
     }
     return parts.joined(separator: " · ")
   }

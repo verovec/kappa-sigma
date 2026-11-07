@@ -1,11 +1,12 @@
 package import Foundation
 internal import RenderKit
 
-/// How the app writes astronomy values in a locale (card 0074): « 0,115 », « 5 h 48 min »,
+/// How the app writes astronomy values in a locale (card 0074): « 0.115 », « 5 h 48 min »,
 /// « −20 °C », « 36 brutes ».
 ///
-/// Values only: what to show is decided elsewhere. Numbers go through Foundation `FormatStyle`
-/// in `locale` (decimal comma, grouping), words through the app's catalog in the same locale.
+/// Values only: what to show is decided elsewhere. Numbers go through `LocaleNumber` (a dot as the
+/// decimal mark in every language, card 0178; the locale's grouping), words through the app's
+/// catalog in `locale`.
 /// A unit is separated by a no-break space; negatives use U+2212.
 package nonisolated struct AstroFormat: Sendable {
   /// The view's locale (`\.locale`, set to `AppLocale.interface` at the window roots).
@@ -20,7 +21,7 @@ package nonisolated struct AstroFormat: Sendable {
 
   // MARK: - Times
 
-  /// An exposure: `300 s`, `0,5 s` (short flats), `5 ms` below a tenth of a second; `—` when
+  /// An exposure: `300 s`, `0.5 s` (short flats), `5 ms` below a tenth of a second; `—` when
   /// the type has none.
   package func exposure(ms: Int) -> String {
     guard ms > 0 else { return "—" }
@@ -46,9 +47,9 @@ package nonisolated struct AstroFormat: Sendable {
 
   // MARK: - Disk
 
-  /// A size on disk, in decimal units as the Finder writes it: `74 Go`, `1,25 GB`.
+  /// A size on disk, in decimal units as the Finder writes it: `74 Go`, `1.25 GB`.
   package func bytes(_ count: Int64) -> String {
-    count.formatted(.byteCount(style: .file).locale(locale))
+    LocaleNumber.dotted(count.formatted(.byteCount(style: .file).locale(locale)), locale: locale)
   }
 
   // MARK: - Sensor
@@ -63,23 +64,23 @@ package nonisolated struct AstroFormat: Sendable {
     decimal(value, maxFractionDigits: 0, grouping: true) + Self.space + "ADU"
   }
 
-  /// A star size: `2,3 px`, with arcseconds when the image scale is known (`2,3 px (4,1″)`).
+  /// A star size: `2.3 px`, with arcseconds when the image scale is known (`2.3 px (4.1″)`).
   package func fwhm(px: Double, arcsecPerPx scale: Double? = nil) -> String {
     let pixels = decimal(px, maxFractionDigits: 1, minFractionDigits: 1) + Self.space + "px"
     guard let scale else { return pixels }
     return pixels + " (" + decimal(px * scale, maxFractionDigits: 1, minFractionDigits: 1) + "″)"
   }
 
-  /// A rejection threshold: `3,0 σ`.
+  /// A rejection threshold: `3.0 σ`.
   package func sigma(_ value: Double) -> String {
     decimal(value, maxFractionDigits: 1, minFractionDigits: 1) + Self.space + "σ"
   }
 
   // MARK: - Sky
 
-  /// Right ascension, `00h42m44,3s` (the viewer's sexagesimal, in the locale's decimal mark).
+  /// Right ascension, `00h42m44.3s` (the viewer's sexagesimal).
   package func rightAscension(degrees: Double) -> String {
-    LocaleNumber.decimalMark(PixelReadout.Sky(ra: degrees, dec: 0).raText, locale: locale)
+    PixelReadout.Sky(ra: degrees, dec: 0).raText
   }
 
   /// Declination, `+41°16′09″`.
@@ -134,40 +135,37 @@ package nonisolated struct AstroFormat: Sendable {
       minFractionDigits: minFractionDigits, grouping: grouping)
   }
 
-  /// A measured value with at most `digits` significant digits (`0,0076334`).
+  /// A measured value with at most `digits` significant digits (`0.0076334`).
   package func significant(_ value: Double, digits: Int) -> String {
     LocaleNumber.significant(value, locale: locale, digits: digits)
   }
 
-  /// A percentage with two decimals, signed when positive: `+59,19 %`, `−3,33 %`.
+  /// A percentage with two decimals, signed when positive: `+59.19 %`, `−3.33 %`.
   package func percent(_ value: Double) -> String {
     (value > 0 ? "+" : "") + decimal(value, maxFractionDigits: 2, minFractionDigits: 2)
       + Self.space + "%"
   }
 
-  /// A share of 0…1 as a percentage with two decimals, never signed: `12,50 %`.
+  /// A share of 0…1 as a percentage with two decimals, never signed: `12.50 %`.
   package func share(_ fraction: Double) -> String {
     decimal(fraction * 100, maxFractionDigits: 2, minFractionDigits: 2) + Self.space + "%"
   }
 
   /// A parameter as a field shows it: the shortest digits that read back as exactly `value`
-  /// (R2: the value applied is the value shown), in the locale's decimal mark, never grouped.
+  /// (R2: the value applied is the value shown), with a dot, never grouped.
   package func parameter(_ value: Double) -> String {
-    LocaleNumber.minus(value.formatted(Self.parameterStyle(value, locale: locale)))
+    LocaleNumber.dotted(
+      LocaleNumber.minus(value.formatted(Self.parameterStyle(value, locale: locale))),
+      locale: locale)
   }
 
-  /// The value a parameter field holds, or `nil` unless the WHOLE text is a number in `locale`
-  /// (U+2212 or `-` for the sign): Foundation would read « 0.115 » in French as 0 and stop at
-  /// the dot, which would apply a value the user never typed (R2).
+  /// The value a parameter field holds, or `nil` unless the WHOLE text is one number.
+  ///
+  /// `LocaleNumber.parse`: a dot or a comma, U+2212 or `-`; never a prefix of what was typed,
+  /// which would apply a value the user never meant (R2). What `parameter(_:)` writes reads back
+  /// exactly: it writes a dot and the dot is read as the decimal mark.
   package func parameter(parsing text: String) -> Double? {
-    let ascii = text.trimmingCharacters(in: .whitespaces).replacing("\u{2212}", with: "-")
-    let style = FloatingPointFormatStyle<Double>.number.locale(locale).grouping(.never)
-    guard !ascii.isEmpty,
-      let (end, value) = try? style.consuming(
-        ascii, startingAt: ascii.startIndex, in: ascii.startIndex..<ascii.endIndex),
-      end == ascii.endIndex
-    else { return nil }
-    return value
+    LocaleNumber.parse(text, locale: locale)
   }
 
   /// Enough significant digits for the shortest form of `value` that reads back exactly.

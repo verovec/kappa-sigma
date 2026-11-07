@@ -28,7 +28,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Point noir en σ du bruit (MADN ; auto −2,8 σ). Flèches ±0,1 σ, ⇧ ou ⌥ ±0,01 σ."
+            "value": "Point noir en σ du bruit (MADN ; auto −2.8 σ). Flèches ±0.1 σ, ⇧ ou ⌥ ±0.01 σ."
           }
         }
       }
@@ -1213,7 +1213,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Niveau où la médiane s’affiche, au sens de Siril (auto 0,25). Flèches ±0,01, ⇧ ou ⌥ ±0,001."
+            "value": "Niveau où la médiane s’affiche, au sens de Siril (auto 0.25). Flèches ±0.01, ⇧ ou ⌥ ±0.001."
           }
         }
       }
@@ -1229,7 +1229,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Point blanc c1 : au-dessus, tout s’affiche blanc. Flèches ±0,01, ⇧ ou ⌥ ±0,001."
+            "value": "Point blanc c1 : au-dessus, tout s’affiche blanc. Flèches ±0.01, ⇧ ou ⌥ ±0.001."
           }
         }
       }
@@ -1310,7 +1310,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "c0, le point noir appliqué. Flèches ±0,0001, ⇧ ou ⌥ ±0,00001."
+            "value": "c0, le point noir appliqué. Flèches ±0.0001, ⇧ ou ⌥ ±0.00001."
           }
         }
       }
@@ -1326,7 +1326,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "c1, le point blanc appliqué. Flèches ±0,01, ⇧ ou ⌥ ±0,001."
+            "value": "c1, le point blanc appliqué. Flèches ±0.01, ⇧ ou ⌥ ±0.001."
           }
         }
       }
@@ -1359,7 +1359,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "m, l’équilibre des tons moyens appliqué. Flèches ±0,001, ⇧ ou ⌥ ±0,0001."
+            "value": "m, l’équilibre des tons moyens appliqué. Flèches ±0.001, ⇧ ou ⌥ ±0.0001."
           }
         }
       }

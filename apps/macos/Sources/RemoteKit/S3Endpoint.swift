@@ -47,9 +47,10 @@ package struct S3Endpoint: Sendable, Equatable {
   /// Throws `S3Error.invalidBucket` when `bucket` cannot be addressed here, before any request.
   ///
   /// Path-style is left as permissive as the server (MinIO and Garage accept names AWS refuses):
-  /// only an empty name, a `/`, `.` or `..`, which would address another path, are refused. Virtual-host puts
-  /// the name in the host, so it must be a host name (3–63 of `a-z 0-9 . -`, no edge hyphen or
-  /// dot, no `..`), and a dotted name over https fails TLS: `*.host` covers one label only.
+  /// only an empty name, a `/`, `.` or `..`, which would address another path, are refused.
+  /// Virtual-host puts the name in the host, so it must be a host name (3–63 of `a-z 0-9 . -`, no
+  /// edge hyphen or dot, no `..`), and a dotted name over https fails TLS: `*.host` covers one
+  /// label only.
   package func validate(bucket: String) throws {
     if bucket.isEmpty {
       throw S3Error.invalidBucket(name: bucket, reason: "a bucket name is required")

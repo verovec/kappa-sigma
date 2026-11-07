@@ -13,9 +13,9 @@ extension URLSessionTransportTests {
     let host = "stall-\(call.rawValue).test"
     Self.route(host, .init(status: 200, headers: [:], body: Data(), stalls: true))
     // The whole-transfer limit far away: only the stall can end this request.
-    let configuration = HTTPTransport.configuration(idle: 0.2, transfer: 600)
+    let configuration = HTTPTransport.configuration(idle: 0.2)
     configuration.protocolClasses = [Stub.self]
-    let transport = HTTPTransport.urlSession(configuration)
+    let transport = HTTPTransport.urlSession(configuration, transfer: 600)
     let request = HTTPRequest(
       method: "GET", url: try #require(URL(string: "http://\(host)/b/k")), headers: [:])
     let destination = try ScratchDirectory.url.appendingPathComponent("k.part")
@@ -38,9 +38,9 @@ extension URLSessionTransportTests {
     let host = "long-\(call.rawValue).test"
     Self.route(host, .init(status: 200, headers: [:], body: Data(), stalls: true))
     // The stall limit far away: only the whole-transfer limit can end this request.
-    let configuration = HTTPTransport.configuration(idle: 600, transfer: 0.2)
+    let configuration = HTTPTransport.configuration(idle: 600)
     configuration.protocolClasses = [Stub.self]
-    let transport = HTTPTransport.urlSession(configuration)
+    let transport = HTTPTransport.urlSession(configuration, transfer: 0.2)
     let request = HTTPRequest(
       method: "GET", url: try #require(URL(string: "http://\(host)/b/k")), headers: [:])
     let destination = try ScratchDirectory.url.appendingPathComponent("k.part")
@@ -61,7 +61,6 @@ extension URLSessionTransportTests {
     let configuration = HTTPTransport.configuration()
 
     #expect(configuration.timeoutIntervalForRequest == HTTPTransport.idleTimeout)
-    #expect(configuration.timeoutIntervalForResource == HTTPTransport.transferTimeout)
     // A stall is seen within a minute; a transfer is bounded far below URLSession's 7 days,
     // yet a 4 GB object at 200 kB/s still fits.
     #expect(HTTPTransport.idleTimeout <= 60)
@@ -69,5 +68,15 @@ extension URLSessionTransportTests {
     #expect(HTTPTransport.transferTimeout >= 4e9 / 200e3)
     // Still ephemeral: no cache on disk between launches.
     #expect((configuration.urlCache?.diskCapacity ?? 0) == 0)
+  }
+
+  @Test("the limit reads in its largest whole unit")
+  func testTransferLimitWords() {
+    #expect(
+      S3Error.transferTimedOut(seconds: HTTPTransport.transferTimeout).description
+        == "Transfer stopped after 6 h, the limit for one request")
+    #expect(S3Error.transferTimedOut(seconds: 5400).description.contains("90 min"))
+    #expect(S3Error.transferTimedOut(seconds: 0.2).description.contains("0.2 s"))
+    #expect(S3Error.transferTimedOut(seconds: 45).description.contains("45 s"))
   }
 }

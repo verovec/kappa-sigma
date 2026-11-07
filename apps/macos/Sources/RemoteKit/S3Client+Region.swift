@@ -13,7 +13,7 @@ extension S3Client {
   func checked(_ response: HTTPResponse, bucket: String) throws -> HTTPResponse {
     guard response.isSuccess else {
       let answer = Self.serviceError(response)
-      if let region = Self.bucketRegion(response, answer: answer) {
+      if let region = Self.bucketRegion(response, answer: answer, connection: endpoint.region) {
         throw S3Error.wrongRegion(
           bucket: bucket, region: region, connection: endpoint.region, host: endpoint.host,
           answer: answer)
@@ -23,19 +23,27 @@ extension S3Client {
     return response
   }
 
-  /// The bucket's region named in `x-amz-bucket-region` by a refused redirect (3xx), or by a 400
-  /// whose code says the signing region is wrong.
+  /// The bucket's region named in `x-amz-bucket-region`, when it explains the failure.
   ///
-  /// Other answers keep the service's words: S3 also sends the header with a 403 or a 400
-  /// `RequestTimeout` that have nothing to do with regions (the latter stays retried).
-  static func bucketRegion(_ response: HTTPResponse, answer: S3Error) -> String? {
+  /// A 301 always does (another region, or this one on an endpoint that does not serve it); any
+  /// other 3xx only for another region (a 307 in the same one is S3's transient redirect while a
+  /// new bucket's DNS spreads). A 400 does with a region code, or with no code at all: a HEAD has
+  /// no body. A 403 or a 400 `RequestTimeout` carrying the header keep the service's words (the
+  /// latter stays retried).
+  static func bucketRegion(_ response: HTTPResponse, answer: S3Error, connection: String)
+    -> String?
+  {
     guard let region = response.headers["x-amz-bucket-region"], !region.isEmpty else {
       return nil
     }
-    if (300..<400).contains(response.status) { return region }
-    guard response.status == 400, case .service(_, let code?, _, _) = answer,
-      regionCodes.contains(code)
-    else { return nil }
-    return region
+    let elsewhere = region.caseInsensitiveCompare(connection) != .orderedSame
+    switch response.status {
+    case 301: return region
+    case 300..<400: return elsewhere ? region : nil
+    case 400:
+      guard case .service(_, let code, _, _) = answer else { return nil }
+      return elsewhere && (code.map(regionCodes.contains) ?? true) ? region : nil
+    default: return nil
+    }
   }
 }

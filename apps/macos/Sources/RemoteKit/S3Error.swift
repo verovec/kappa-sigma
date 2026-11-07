@@ -45,9 +45,20 @@ package enum S3Error: Error, Sendable, Equatable, CustomStringConvertible {
           ? "which \(host) does not serve: use that region's endpoint"
           : "the connection says \(connection)")
     case .transferTimedOut(let seconds):
-      "Transfer stopped after \(Int(seconds)) s, the limit for one request"
+      "Transfer stopped after \(Self.duration(seconds)), the limit for one request"
     case .invalidBucket(let name, let reason): "Bucket name \"\(name)\": \(reason)"
     }
+  }
+
+  /// `seconds` in the largest whole unit: « 6 h », « 90 min », « 0.2 s ».
+  static func duration(_ seconds: Double) -> String {
+    if seconds >= 3600, seconds.truncatingRemainder(dividingBy: 3600) == 0 {
+      return "\(Int(seconds / 3600)) h"
+    }
+    if seconds >= 60, seconds.truncatingRemainder(dividingBy: 60) == 0 {
+      return "\(Int(seconds / 60)) min"
+    }
+    return seconds == seconds.rounded() ? "\(Int(seconds)) s" : "\(seconds) s"
   }
 
   /// The codes S3 documents as « try again », also sent inside a 200 (CompleteMultipartUpload).

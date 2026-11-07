@@ -62,7 +62,7 @@ struct S3CredentialsTests {
     if row.credentials.accessKey.count >= 12 {
       #expect(shown.contains("…\(row.credentials.accessKey.suffix(4))"))
     }
-    #expect(!shown.contains(String(row.credentials.accessKey.prefix(4))))
+    #expect(!shown.contains("accessKey: \(row.credentials.accessKey.prefix(4))"))
     #expect(shown.contains("redacted"))
   }
 

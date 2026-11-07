@@ -51,6 +51,14 @@ struct S3ClientRegionTests {
       response: .make(301, headers: ["x-amz-bucket-region": "us-east-1"]),
       outcome: .region("us-east-1", ending: endpoint)),
     Row(
+      label: "HEAD 400 without a body, another region named",
+      response: .make(400, headers: ["x-amz-bucket-region": "eu-west-3"]),
+      outcome: .region("eu-west-3", ending: other)),
+    Row(
+      label: "307 in the connection's own region is S3's transient redirect",
+      response: .make(307, headers: ["x-amz-bucket-region": "us-east-1"]),
+      outcome: .service(status: 307, tries: 1)),
+    Row(
       label: "301 without the header stays a 301", response: .make(301),
       outcome: .service(status: 301, tries: 1)),
     Row(

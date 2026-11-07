@@ -12,29 +12,30 @@ extension HTTPTransport {
   /// instead of running for URLSession's 7 days.
   package static let transferTimeout: TimeInterval = 6 * 3600
 
-  /// The live configuration: ephemeral (no cookies, cache or credentials kept) with `idle` and
-  /// `transfer` timeouts.
-  package static func configuration(
-    idle: TimeInterval = idleTimeout, transfer: TimeInterval = transferTimeout
-  ) -> URLSessionConfiguration {
+  /// The live configuration: ephemeral (no cookies, cache or credentials kept), a stall ending
+  /// after `idle` seconds (`URLError.timedOut`, retried).
+  ///
+  /// The whole-transfer limit is not URLSession's: it reports it with the same `.timedOut` as a
+  /// stall, so `urlSession(_:transfer:)` owns it and ends it as `S3Error.transferTimedOut`.
+  package static func configuration(idle: TimeInterval = idleTimeout) -> URLSessionConfiguration {
     let configuration = URLSessionConfiguration.ephemeral
     configuration.timeoutIntervalForRequest = idle
-    configuration.timeoutIntervalForResource = transfer
     return configuration
   }
 
-  /// The live transport over a `URLSession` with `configuration`.
+  /// The live transport over a `URLSession` with `configuration`, each request ended after
+  /// `transfer` seconds.
   ///
-  /// Bounded by `configuration()` by default (see `idleTimeout`, `transferTimeout`). Downloads land in
-  /// URLSession's temporary file, then move to the destination; progress is reported once, when
+  /// A stall ends after `idleTimeout` (`configuration()`). Downloads land in URLSession's
+  /// temporary file, then move to the destination; progress is reported once, when
   /// the body is complete. Redirects are refused: the 3xx (S3's `PermanentRedirect` to another
   /// region) comes back as an error, never as a signed request replayed to another host.
-  package static func urlSession(_ configuration: URLSessionConfiguration = configuration())
-    -> Self
-  {
+  package static func urlSession(
+    _ configuration: URLSessionConfiguration = configuration(),
+    transfer: TimeInterval = transferTimeout
+  ) -> Self {
     let session = URLSession(
       configuration: configuration, delegate: RedirectRefusal(), delegateQueue: nil)
-    let transfer = configuration.timeoutIntervalForResource
     return Self(
       send: { request in
         let (data, response) = try await bounded(transfer) {
@@ -60,18 +61,24 @@ extension HTTPTransport {
       })
   }
 
-  /// `body`, whose `URLError.timedOut` after `transfer` seconds becomes `transferTimedOut`.
+  /// `body`, or `S3Error.transferTimedOut` once it has run for `transfer` seconds.
   ///
-  /// URLSession reports both of its timeouts as `.timedOut`: a stall is worth retrying, but a
-  /// transfer that used its whole time would only start again from byte 0 under the same limit.
-  static func bounded<T>(_ transfer: TimeInterval, _ body: () async throws -> T) async throws -> T {
-    let start = ContinuousClock.now
-    do {
-      return try await body()
-    } catch let error as URLError
-      where error.code == .timedOut && ContinuousClock.now - start >= .seconds(transfer * 0.95)
-    {
-      throw S3Error.transferTimedOut(seconds: transfer)
+  /// The deadline is a sibling task, so every `URLError.timedOut` left is a stall (retried); a
+  /// transfer that used its whole time is not, since a new try would start again from byte 0.
+  static func bounded<T: Sendable>(
+    _ transfer: TimeInterval, _ body: @escaping @Sendable () async throws -> T
+  ) async throws -> T {
+    try await withThrowingTaskGroup(of: T?.self) { group in
+      group.addTask { try await body() }
+      group.addTask {
+        try await Task.sleep(for: .seconds(transfer))
+        return nil
+      }
+      defer { group.cancelAll() }
+      guard let first = try await group.next(), let value = first else {
+        throw S3Error.transferTimedOut(seconds: transfer)
+      }
+      return value
     }
   }
 

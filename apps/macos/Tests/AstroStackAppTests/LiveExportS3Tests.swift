@@ -21,7 +21,7 @@ struct LiveExportS3Tests {
     let live = try #require(LiveS3Environment.current)
     let client = live.client()
     try await live.ensureBucket(client)
-    try await live.sweep(client: client)
+    try await live.sweepOnce(client: client)
     let prefix = LiveS3Environment.runPrefix()
     let opened = try StudioModelTests.project()
     defer { try? opened.package.close() }

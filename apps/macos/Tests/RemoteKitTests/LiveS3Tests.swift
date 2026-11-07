@@ -16,7 +16,7 @@ struct LiveS3Tests {
     let live = try #require(LiveS3Environment.current)
     let client = live.client()
     try await live.ensureBucket(client)
-    try await live.sweep(client: client)
+    try await live.sweepOnce(client: client)
     return (live, client, LiveS3Environment.runPrefix())
   }
 
@@ -69,7 +69,7 @@ struct LiveS3Tests {
     let empty = try Self.file(try ScratchDirectory.url.appendingPathComponent("e"), bytes: 1)
     let keys = (0..<1001).map { String(format: "%@a/%04d.fit", prefix, $0) }
     do {
-      try await Self.forEach(keys) { key in
+      try await LiveS3Environment.forEach(keys) { key in
         _ = try await client.upload(file: empty, bucket: live.bucket, key: key)
       }
       let listed = try await client.list(bucket: live.bucket, prefix: prefix)
@@ -107,19 +107,6 @@ struct LiveS3Tests {
       Issue.record(error)
     }
     try await live.removePrefix(prefix, client: client)
-  }
-
-  /// Runs `body` over `items`, eight at a time.
-  static func forEach(
-    _ items: [String], _ body: @escaping @Sendable (String) async throws -> Void
-  ) async throws {
-    try await withThrowingTaskGroup(of: Void.self) { group in
-      for (index, item) in items.enumerated() {
-        if index >= 8 { try await group.next() }
-        group.addTask { try await body(item) }
-      }
-      try await group.waitForAll()
-    }
   }
 
   /// A file of `bytes` pseudo-random bytes (seeded, so a failure reproduces).

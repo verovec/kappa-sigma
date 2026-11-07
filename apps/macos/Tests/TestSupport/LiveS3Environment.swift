@@ -1,13 +1,16 @@
 package import Foundation
 package import RemoteKit
+internal import Synchronization
 package import Testing
 
 /// The live S3 suites' one configuration (card 0183): `LiveS3Tests`, `LiveExportS3Tests` and
 /// `RemotePipelineLiveTests` read it from the environment `just s3-live` sets.
 ///
-/// A local MinIO by default (minioadmin keys, path-style, bucket `astrostack-live`); a real bucket
-/// when `.env` names one. Every run writes under its own `runPrefix()` and removes it; a run killed
-/// before its cleanup is reaped by the next one (`sweep`), a day later.
+/// They run only under `just s3-live` (`ASTROSTACK_S3_LIVE=1`, `isRequested`): an endpoint left in
+/// `.env` never turns them on inside `just check`. A local MinIO by default (minioadmin keys,
+/// path-style, bucket `astrostack-live`); a real bucket when `.env` names one. Every test writes
+/// under its own `runPrefix()` and removes it; what a killed run left is reaped a day later by the
+/// next process (`sweepOnce`).
 package struct LiveS3Environment: Sendable {
   /// Where the service answers.
   package let endpoint: S3Endpoint
@@ -21,7 +24,13 @@ package struct LiveS3Environment: Sendable {
   /// A prefix older than this belongs to no running suite.
   package static let staleAge: TimeInterval = 24 * 3600
 
-  /// The configuration `environment` names; `nil` (the suites skip) without
+  /// True when `environment` asks for the live S3 suites: `just s3-live` sets
+  /// `ASTROSTACK_S3_LIVE=1`; `ASTROSTACK_SKIP_LIVE=1` still wins.
+  package static func isRequested(_ environment: [String: String]) -> Bool {
+    environment["ASTROSTACK_S3_LIVE"] == "1" && environment["ASTROSTACK_SKIP_LIVE"] != "1"
+  }
+
+  /// The configuration `environment` names; `nil` (a requested suite then fails) without
   /// `ASTROSTACK_S3_LIVE_ENDPOINT`, with a non-http(s) one, or under `ASTROSTACK_SKIP_LIVE=1`.
   package init?(environment: [String: String]) {
     guard environment["ASTROSTACK_SKIP_LIVE"] != "1",
@@ -68,7 +77,8 @@ package struct LiveS3Environment: Sendable {
   }
 
   /// The bucket, created when the service says it does not exist; an existing one (listable with
-  /// these keys) is used as is, so a real bucket needs no CreateBucket permission.
+  /// these keys) is used as is, so a real bucket needs no CreateBucket permission. Outside
+  /// `us-east-1` the creation names its region, as S3 requires.
   package func ensureBucket(_ client: S3Client, transport: HTTPTransport = .urlSession())
     async throws
   {
@@ -76,7 +86,14 @@ package struct LiveS3Environment: Sendable {
       _ = try await client.list(bucket: bucket, prefix: Self.root, limit: 1)
       return
     } catch S3Error.service(404, _, _, _) {}
-    let request = try S3Request(method: "PUT", bucket: bucket, key: "")
+    let body =
+      endpoint.region == "us-east-1"
+      ? nil
+      : Data(
+        ("<CreateBucketConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+          + "<LocationConstraint>\(endpoint.region)</LocationConstraint>"
+          + "</CreateBucketConfiguration>").utf8)
+    let request = try S3Request(method: "PUT", bucket: bucket, key: "", body: body)
       .prepared(
         endpoint: endpoint, signer: SigV4(credentials: credentials, region: endpoint.region),
         date: Date())
@@ -99,12 +116,32 @@ package struct LiveS3Environment: Sendable {
     try await delete(Self.staleKeys(keys, now: now), client)
   }
 
-  /// Deletes `keys`, eight requests in flight.
+  /// `sweep`, the first time a test of this process asks; later calls do nothing.
+  package func sweepOnce(client: S3Client) async throws {
+    let first = Self.swept.withLock { swept in
+      defer { swept = true }
+      return !swept
+    }
+    if first { try await sweep(client: client) }
+  }
+
+  private static let swept = Mutex(false)
+
+  /// Deletes `keys`, `limit` requests in flight.
   private func delete(_ keys: [String], _ client: S3Client) async throws {
+    try await Self.forEach(keys) { [bucket] key in
+      try await client.delete(bucket: bucket, key: key)
+    }
+  }
+
+  /// Runs `body` over `items`, `limit` at a time.
+  package static func forEach(
+    _ items: [String], limit: Int = 8, _ body: @escaping @Sendable (String) async throws -> Void
+  ) async throws {
     try await withThrowingTaskGroup(of: Void.self) { group in
-      for (index, key) in keys.enumerated() {
-        if index >= 8 { try await group.next() }
-        group.addTask { [bucket] in try await client.delete(bucket: bucket, key: key) }
+      for (index, item) in items.enumerated() {
+        if index >= limit { try await group.next() }
+        group.addTask { try await body(item) }
       }
       try await group.waitForAll()
     }
@@ -117,9 +154,10 @@ package struct LiveS3Environment: Sendable {
 }
 
 extension Trait where Self == ConditionTrait {
-  /// Skips a live S3 suite, saying why, when no endpoint is configured (`just s3-live` sets it).
+  /// Runs a live S3 suite under `just s3-live` alone; skips it, saying so, everywhere else.
   package static var liveS3: Self {
     .enabled(
-      if: LiveS3Environment.current != nil, "ASTROSTACK_S3_LIVE_ENDPOINT unset (just s3-live)")
+      if: LiveS3Environment.isRequested(ProcessInfo.processInfo.environment),
+      "run by `just s3-live` only (ASTROSTACK_S3_LIVE unset)")
   }
 }

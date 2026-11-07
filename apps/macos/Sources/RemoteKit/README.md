@@ -75,19 +75,24 @@ module (Foundation and CryptoKit only), with no AWS SDK and no helper process.
 - `just s3-live` (card 0183): the three live suites, serially, against one endpoint.
   - `LiveS3Tests`: a 70 MiB multipart and a 1 KiB upload, list, head, a range, downloads and
     deletes; a listing past one page (1 001 keys) and one level of it; keys with a space, a `+`,
-    accents and `//` round-tripped as written.
+    accents and nested folders round-tripped as written. Not `a//b`: MinIO refuses an empty path
+    segment (`400 XMinioInvalidObjectName`), so a `//` key is pinned against the scripted
+    transport only.
   - `LiveExportS3Tests` (app): the Export stage writes here and to S3, same SHA-256.
   - `RemotePipelineLiveTests` (app): a synthetic night uploaded, recorded as a project source,
     scanned and run from the bucket; masters and `bundle.json` equal the same night run from
     disk, and a rerun downloads no calibration frame (card 0181).
   - Endpoint: the argument, else `ASTROSTACK_S3_LIVE_ENDPOINT` (`.env`), else
     `http://127.0.0.1:9000`. A loopback endpoint starts a local MinIO in Docker first
-    (`just s3-minio`, stopped by `just s3-minio-stop`); any other is a real bucket, read with
-    `ASTROSTACK_S3_LIVE_REGION/_ACCESS_KEY/_SECRET_KEY/_BUCKET` and `_ADDRESSING=virtual`.
+    (`just s3-minio`, stopped by `just s3-minio-stop`) and uses MinIO's keys whatever `.env` says;
+    any other is a real bucket, read with `ASTROSTACK_S3_LIVE_REGION/_ACCESS_KEY/_SECRET_KEY/_BUCKET`
+    and `_ADDRESSING=virtual`.
+  - Only `just s3-live` runs them (it sets `ASTROSTACK_S3_LIVE=1`, the `.liveS3` trait): an
+    endpoint in `.env` never turns them on inside `just check`.
   - One configuration for all three: `LiveS3Environment` (TestSupport). Every test writes under
-    `astrostack-live/<yyyyMMdd>-<uuid>/` of the bucket and removes it; a killed run's prefix is
-    swept by the next run a day later. Never point it at a capture bucket. The suites skip
-    without an endpoint, and under `ASTROSTACK_SKIP_LIVE=1`.
+    `astrostack-live/<yyyyMMdd>-<uuid>/` of the bucket and removes it, even when a step throws; a
+    killed run's prefix is swept once per process, a day later. Never point it at a capture
+    bucket. `ASTROSTACK_SKIP_LIVE=1` still skips them.
 
 ## Extending
 

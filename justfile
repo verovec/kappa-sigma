@@ -79,9 +79,10 @@ s3-live endpoint="":
 s3-minio port="9000":
     @./scripts/s3-minio.sh {{quote(port)}}
 
-# Stop the local MinIO container; its test data goes with it.
-s3-minio-stop:
-    @docker rm -f astrostack-minio >/dev/null 2>&1 && echo "s3-minio: stopped" || echo "s3-minio: not running"
+# Stop the local MinIO container of `port`; its test data goes with it.
+[confirm("Stop the local MinIO and drop its test data?")]
+s3-minio-stop port="9000":
+    @docker rm -f "astrostack-minio-{{port}}" >/dev/null 2>&1 && echo "s3-minio: stopped" || echo "s3-minio: not running"
 
 # Coverage report (lcov + summary) under apps/macos/.build/coverage.
 coverage:

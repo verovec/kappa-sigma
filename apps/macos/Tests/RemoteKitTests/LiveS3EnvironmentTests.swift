@@ -66,6 +66,18 @@ struct LiveS3EnvironmentTests {
     #expect((found.endpoint.addressing == .pathStyle) == expected.path)
   }
 
+  @Test(
+    "testOnlyJustS3LiveRunsTheSuites",
+    arguments: [
+      ([:], false),
+      (["ASTROSTACK_S3_LIVE_ENDPOINT": "https://s3.example.net"], false),  // .env alone: no
+      (["ASTROSTACK_S3_LIVE": "1"], true),
+      (["ASTROSTACK_S3_LIVE": "1", "ASTROSTACK_SKIP_LIVE": "1"], false),
+    ] as [([String: String], Bool)])
+  func testOnlyJustS3LiveRunsTheSuites(_ env: [String: String], _ requested: Bool) {
+    #expect(LiveS3Environment.isRequested(env) == requested)
+  }
+
   @Test("testRunPrefixIsDatedAndUnique")
   func testRunPrefixIsDatedAndUnique() {
     let now = Date(timeIntervalSince1970: 1_794_052_800)  // 2026-11-07 12:00 UTC

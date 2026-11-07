@@ -31,23 +31,34 @@ struct RemotePipelineLiveTests {
     let prefix: String
     let binary: String
 
-    /// Writes the night (card 0142's L-only rig: flats, darks, bias, lights) and uploads every
-    /// file of it under `prefix`, keeping its folders.
-    static func make() async throws -> Self {
+    /// The night (card 0142's L-only rig: flats, darks, bias, lights) written on disk and
+    /// uploaded under a prefix of its own, keeping its folders; `body` runs over it, and the
+    /// prefix is removed afterwards whether a step threw or not.
+    static func with(_ body: (Self) async throws -> Void) async throws {
       let live = try #require(LiveS3Environment.current)
       let client = live.client()
       try await live.ensureBucket(client)
-      try await live.sweep(client: client)
+      try await live.sweepOnce(client: client)
       let root = try ScratchDirectory.url.appendingPathComponent("n1/n2/n3/remote-live")
-      let input = root.appendingPathComponent("in")
       let night = Self(
-        live: live, client: client, root: root, input: input,
+        live: live, client: client, root: root, input: root.appendingPathComponent("in"),
         prefix: LiveS3Environment.runPrefix(), binary: try SirilTool.locate())
+      do {
+        try await night.upload()
+        try await body(night)
+      } catch {
+        await night.clean()
+        throw error
+      }
+      await night.clean()
+    }
+
+    /// Writes the night under `input` and uploads every file of it under `prefix`.
+    func upload() async throws {
       for file in try SyntheticCapture(.lOnly).write(under: input) {
         let relative = String(file.path.dropFirst(input.path.count + 1))
-        _ = try await client.upload(file: file, bucket: live.bucket, key: night.prefix + relative)
+        _ = try await client.upload(file: file, bucket: live.bucket, key: prefix + relative)
       }
-      return night
     }
 
     /// The run of `inventory` into `out-<run>` / `work-<run>` over `stores`.
@@ -78,8 +89,10 @@ struct RemotePipelineLiveTests {
         connectionID: connection, bucket: live.bucket, prefix: String(prefix.dropLast()))
       _ = try project.store.addSource(
         remote: connection.uuidString, bucket: target.bucket, prefix: target.prefix)
+      // An empty library: the bucket's frames build the masters, nothing of this tree is reused.
+      let library = root.appendingPathComponent("library-\(UUID().uuidString)")
       let planning = ImportPlanning.remotePlanning(
-        store: project.store, index: LibraryIndex(store: project.store, folder: root),
+        store: project.store, index: LibraryIndex(store: project.store, folder: library),
         client: { [client] _ in client })
       let plan = try await planning(target, ImportRequest(paths: [target.path])) { _ in }
       let downloads = Downloads()
@@ -146,7 +159,11 @@ struct RemotePipelineLiveTests {
     "testRemoteNightEqualsLocal: same masters and bundle, from the bucket or from the disk",
     .scratchDirectory)
   func testRemoteNightEqualsLocal() async throws {
-    let night = try await Night.make()
+    try await Night.with { night in try await Self.remoteEqualsLocal(night) }
+  }
+
+  /// The local run, the import and the bucket run of `night`, compared.
+  static func remoteEqualsLocal(_ night: Night) async throws {
     let local = try InventoryBuilder().scan(paths: [night.input.path])
     let reference = try await night.run(local, "R_local")
 
@@ -155,7 +172,6 @@ struct RemotePipelineLiveTests {
       Self.counts(remote.inventory) == Self.counts(local),
       "the bucket scan finds the frames the disk scan finds")
     let result = try await night.run(remote.inventory, "R_remote", stores: remote.stores)
-    await night.clean()
 
     let localDigests = try Self.masterDigests(in: night.root.appendingPathComponent("out-R_local"))
     #expect(!localDigests.isEmpty, "the local run wrote masters")
@@ -179,7 +195,11 @@ struct RemotePipelineLiveTests {
     "testRemoteRerunReusesItsMasters: the second run downloads no calibration frame",
     .scratchDirectory)
   func testRemoteRerunReusesItsMasters() async throws {
-    let night = try await Night.make()
+    try await Night.with { night in try await Self.rerunReuses(night) }
+  }
+
+  /// Two runs of `night` from the bucket, the second over the first one's masters.
+  static func rerunReuses(_ night: Night) async throws {
     let first = try await night.imported()
     let built = try await night.run(first.inventory, "R1", stores: first.stores)
     #expect(!first.downloads.calibration.isEmpty, "the first run reads the calibration frames")
@@ -193,7 +213,6 @@ struct RemotePipelineLiveTests {
     }
     let rerun = try await night.run(
       second.inventory, "R2", stores: second.stores, library: library)
-    await night.clean()
 
     #expect(
       rerun.warnings.contains { $0.contains("reused library master") },

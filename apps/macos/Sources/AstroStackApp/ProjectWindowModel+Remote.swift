@@ -14,6 +14,8 @@ package struct RemoteSourceState: Equatable, Sendable {
   /// Why the last scan failed, `nil` when the last one answered.
   package var failure: UserFacingError?
   /// This prefix is being read now (card 0182): the row says so beside its last count.
+  ///
+  /// Derived by `remoteState(of:)` from the scan in flight, never stored.
   package var isScanning: Bool
 
   /// A state for `path`.
@@ -31,8 +33,14 @@ extension ProjectWindowModel {
   /// The project's remote sources (card 0168), in the order they were imported.
   package var remoteSources: [ProjectSource] { sources.filter { $0.kind == .remoteNight } }
 
-  /// What the Données stage knows of the remote source at `path`.
-  package func remoteState(of path: String) -> RemoteSourceState? { remoteStates[path] }
+  /// What the Données stage knows of the remote source at `path`, and whether it is being read.
+  package func remoteState(of path: String) -> RemoteSourceState? {
+    let reading = isScanningRemote && scanningRemotePath == path
+    guard var state = remoteStates[path] ?? (reading ? RemoteSourceState(path: path) : nil)
+    else { return nil }
+    state.isScanning = reading
+    return state
+  }
 
   /// Keeps what the Import sheet's own scan of `target` counted, so the stage shows the lights
   /// it measured rather than a bare row (card 0169).
@@ -57,6 +65,7 @@ extension ProjectWindowModel {
       // already have started the next one.
       guard !Task.isCancelled else { return }
       remoteScanTask = nil
+      scanningRemotePath = nil
     }
   }
 
@@ -64,9 +73,7 @@ extension ProjectWindowModel {
   func cancelRemoteScan() {
     remoteScanTask?.cancel()
     remoteScanTask = nil
-    for (path, state) in remoteStates where state.isScanning {
-      remoteStates[path]?.isScanning = false
-    }
+    scanningRemotePath = nil
   }
 
   /// Scans every remote source through the connection it was imported with, one after another.
@@ -76,30 +83,26 @@ extension ProjectWindowModel {
   func rescanRemoteSources() async {
     guard let planning = services(store()).remotePlanning else { return }
     for source in remoteSources {
+      // Stopped before or between reads: nothing more is written, not even « Scanning… ».
+      guard !Task.isCancelled else { return }
       guard let target = Self.target(of: source) else {
         update(source.path) { $0.failure = .remoteImport(.connectionMissing) }
         continue
       }
-      update(source.path) { $0.isScanning = true }
+      scanningRemotePath = source.path
       do {
         let plan = try await planning(target, ImportRequest(paths: [target.path])) { _ in }
         guard !Task.isCancelled else { return }
         update(source.path) {
           $0.lights = plan.inventory.frames.count { $0.type == .light }
           $0.failure = nil
-          $0.isScanning = false
         }
       } catch is CancellationError {
-        // The planner's own cancellation, not ours: the row stops saying it reads, and the
-        // prefixes after it wait for the next Rescan as before.
-        if !Task.isCancelled { update(source.path) { $0.isScanning = false } }
+        // Ours, or the planner's own: the prefixes after it wait for the next Rescan.
         return
       } catch {
         guard !Task.isCancelled else { return }
-        update(source.path) {
-          $0.failure = UserFacingError(error)
-          $0.isScanning = false
-        }
+        update(source.path) { $0.failure = UserFacingError(error) }
       }
     }
   }

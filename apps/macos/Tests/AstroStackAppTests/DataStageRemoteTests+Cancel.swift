@@ -241,7 +241,47 @@ struct DataStageRemoteCancelTests {
     window.rescan()
     await window.scanSettled()
 
-    #expect(window.remoteState(of: Self.path)?.isScanning == false)
+    #expect(window.remoteState(of: Self.path)?.isScanning != true, "nothing says it reads")
     #expect(!window.isScanningRemote)
+  }
+
+  @Test("a Cancel before the bucket read starts leaves no row saying it reads", .scratchDirectory)
+  func testCancelBeforeTheReadStarts() async throws {
+    let project = try ProjectWindowModelTests.package()
+    defer { try? project.close() }
+    try project.store.addSource(
+      remote: DataStageRemoteTests.connection.uuidString, bucket: "astro",
+      prefix: "M31/2026-10-18")
+    let remote = DataStageRemoteTests.FakeRemote()
+    let window = DataStageRemoteTests.window(project, remote)
+    window.refresh()
+
+    // Same turn: the task is queued, not started, when Cancel lands.
+    window.rescan()
+    window.cancelScan()
+    await window.scanSettled()
+    await Self.drain()
+
+    #expect(remote.targets.isEmpty, "a stopped scan reads nothing")
+    #expect(window.remoteState(of: Self.path) == nil && !window.isScanningRemote)
+  }
+
+  @Test("scanSettled follows a Rescan that replaced the one it waited for", .scratchDirectory)
+  func testScanSettledFollowsAReplacement() async throws {
+    let project = try ProjectWindowModelTests.package()
+    defer { try? project.close() }
+    let gate = Gate()
+    let window = try Self.window(project, gate: gate, lights: [2, 7])
+
+    window.rescan()
+    await gate.arrived(1)
+    let settled = Task { await window.scanSettled() }
+    window.rescan()
+    await gate.arrived(2)
+    gate.open()
+    await settled.value
+
+    #expect(!window.isScanningRemote, "settled means the replacement too")
+    #expect(window.remoteState(of: Self.path)?.lights == 7)
   }
 }

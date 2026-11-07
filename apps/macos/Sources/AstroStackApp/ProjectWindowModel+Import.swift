@@ -15,8 +15,9 @@ extension ProjectWindowModel {
       planning: services.planning, masters: services.masters, profiles: profiles.profiles,
       rejectedProfiles: profiles.rejected, remotePlanning: services.remotePlanning,
       bucket: services.browsing.map {
-        // The connections as Settings holds them now: a sheet opened later sees a new one.
-        ImportBucketModel(connections: S3ConnectionStore().connections, browsing: $0)
+        // The connections as Settings holds them, read again while the sheet is up (card 0177).
+        let connections = S3ConnectionStore()
+        return ImportBucketModel(connectionsFrom: { connections.connections }, browsing: $0)
       })
   }
 

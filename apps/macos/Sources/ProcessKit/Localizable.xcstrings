@@ -1292,7 +1292,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "une finition douce : couleur conservée à 0,62"
+            "value": "une finition douce : couleur conservée à 0.62"
           }
         }
       }
@@ -3004,7 +3004,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "autostretch comme Siril : fond à 0,25"
+            "value": "autostretch comme Siril : fond à 0.25"
           }
         }
       }
@@ -3036,7 +3036,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "autostretch comme Siril : ombres 2,8σ sous le fond"
+            "value": "autostretch comme Siril : ombres 2.8σ sous le fond"
           }
         }
       }
@@ -3052,7 +3052,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "autostretch comme Siril : ombres 2,8σ sous le fond, fond à 0,25"
+            "value": "autostretch comme Siril : ombres 2.8σ sous le fond, fond à 0.25"
           }
         }
       }
@@ -3100,7 +3100,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "couleur des étoiles 0,25 : sinon les géantes rouges deviennent des taches orange"
+            "value": "couleur des étoiles 0.25 : sinon les géantes rouges deviennent des taches orange"
           }
         }
       }
@@ -3116,7 +3116,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "un renfort modéré de 0,32"
+            "value": "un renfort modéré de 0.32"
           }
         }
       }
@@ -3324,7 +3324,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "le préréglage ciel profond plafonne les cœurs linéaires à 0,90 pour que les étoiles gardent leur couleur"
+            "value": "le préréglage ciel profond plafonne les cœurs linéaires à 0.90 pour que les étoiles gardent leur couleur"
           }
         }
       }

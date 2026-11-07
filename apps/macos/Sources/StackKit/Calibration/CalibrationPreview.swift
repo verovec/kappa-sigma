@@ -44,14 +44,18 @@ package struct CalibrationPreview: Equatable, Sendable {
 
   /// The masters a run would match against (`PreviewCandidates`): the library plus a path-less
   /// master for every calibration set no library master already satisfies.
-  package static func candidates(inventory: Inventory?, library: [CalibrationMaster])
-    -> [CalibrationMaster]
-  {
+  ///
+  /// `identities` is what a bucket answered of its frames (`size|etag` by virtual path, card
+  /// 0181): the run proves a bucket master with what it lists, so the preview does too.
+  package static func candidates(
+    inventory: Inventory?, library: [CalibrationMaster], identities: [String: String] = [:]
+  ) -> [CalibrationMaster] {
     guard let inventory else { return library }
     var out = library
     for type in MasterType.buildOrder {
       for set in inventory.sets where set.key.type == type.frameType {
-        guard !library.contains(where: { Self.reused($0, for: set) }) else { continue }
+        guard !library.contains(where: { Self.reused($0, for: set, identities: identities) })
+        else { continue }
         var master = synthetic(set)
         master.stampFilterSet(of: set.key, in: inventory)
         out.append(master)
@@ -62,9 +66,12 @@ package struct CalibrationPreview: Equatable, Sendable {
 
   /// Whether the run would reuse `master` for `set` (`MasterBuilder.reuse`): it stands for the
   /// set, was stacked with the default recipe, and its `.sig` proves the same frames.
-  static func reused(_ master: CalibrationMaster, for set: FrameSet) -> Bool {
+  static func reused(
+    _ master: CalibrationMaster, for set: FrameSet, identities: [String: String]
+  ) -> Bool {
     master.recipe.isEmpty && master.satisfies(set.key)
-      && PoolSignature.proves(master: master.path, builtFrom: set.frames.map(\.path))
+      && PoolSignature.proves(
+        master: master.path, builtFrom: set.frames.map(\.path), identities: identities)
   }
 
   /// The master a run would build from a calibration set, described before it exists.

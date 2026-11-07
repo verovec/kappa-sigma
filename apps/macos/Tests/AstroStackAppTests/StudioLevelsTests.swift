@@ -123,7 +123,7 @@ extension StudioLevelsTests {
       #expect(ids.contains("fr.astrostack.parameter.levels.rgbShadows.slider"))
       #expect(AccessibilityAudit.problems(entries) == [])
     }
-    #expect(AstroFormat(locale: Locale(identifier: "fr")).share(0.125) == "12,50\u{a0}%")
+    #expect(AstroFormat(locale: Locale(identifier: "fr")).share(0.125) == "12.50\u{a0}%")
   }
 }
 

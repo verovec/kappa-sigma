@@ -70,11 +70,11 @@
       "why": {
         "haBlack": {
           "en": "A soft emission finish: Hα black point 0.126 keeps the faint shell without lifting the sky.",
-          "fr": "Une finition d'émission douce : point noir Hα 0,126 garde la coquille faible sans relever le ciel."
+          "fr": "Une finition d'émission douce : point noir Hα 0.126 garde la coquille faible sans relever le ciel."
         },
         "oiiiBoost": {
           "en": "A marked teal for the OIII shell: boost 1.35.",
-          "fr": "Un sarcelle marqué pour la coquille OIII : renfort 1,35."
+          "fr": "Un sarcelle marqué pour la coquille OIII : renfort 1.35."
         }
       }
     },

@@ -251,7 +251,7 @@ package final class ProcessPanelModel {
   }
 
   /// The solution the head carries, as the plate-solve panel words it: « Already solved: centre
-  /// 22h18m51,8s +56°08′05″, 1,52″/px ».
+  /// 22h18m51.8s +56°08′05″, 1.52″/px ».
   package nonisolated static func solvedWords(_ status: PlateSolveStatus, locale: Locale) -> String
   {
     let format = AstroFormat(locale: locale)

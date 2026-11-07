@@ -40,7 +40,7 @@ extension KnobPanelViewModelTests {
   @Test(
     "a profile's value is worded as the panel shows it",
     arguments: [
-      (ParamValue.number(3.5), "3,5"), (.flag(true), "Activé"), (.flag(false), "Désactivé"),
+      (ParamValue.number(3.5), "3.5"), (.flag(true), "Activé"), (.flag(false), "Désactivé"),
       (.choice("sigma"), "Écrêtage sigma"),
     ])
   func testProfileValueWords(value: ParamValue, expected: String) {

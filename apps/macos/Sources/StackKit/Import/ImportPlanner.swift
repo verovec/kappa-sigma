@@ -27,6 +27,8 @@ package struct ImportPlanner: Sendable {
   /// Off the caller's actor: the matcher reads a header and the `.sig` files.
   @concurrent
   package static func replanned(_ plan: ImportPlan, request: ImportRequest) async -> ImportPlan {
-    ImportPlan(inventory: plan.inventory, library: plan.library, request: request)
+    ImportPlan(
+      inventory: plan.inventory, library: plan.library, request: request,
+      identities: plan.identities)
   }
 }

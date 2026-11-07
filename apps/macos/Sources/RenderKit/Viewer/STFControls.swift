@@ -78,7 +78,7 @@ package struct STFControls: View {
       value, locale: locale, maxFractionDigits: digits, minFractionDigits: digits)
   }
 
-  /// A typed number in the notation of `locale` (`LocaleNumber.parse`).
+  /// A typed number: a dot, or the habit's comma, read by `LocaleNumber.parse` (card 0178).
   nonisolated package static func parse(_ text: String, locale: Locale) -> Double? {
     LocaleNumber.parse(text, locale: locale)
   }

@@ -42,8 +42,10 @@ resources, identically under CLT and Xcode. A catalog that fails the gate **fail
   resolve in the outer one's language).
 - A literal `%` only in a key that has an argument (`%%` there); Foundation keeps a bare `%` in a key
   without arguments, which the gate cannot tell from a specifier.
-- Numbers and units go through `AstroFormat` (app) in the view's `\.locale` — « 0,115 »,
-  « 5 h 48 min », « −20 °C », a parameter field that parses back to the exact value — and terms
+- Numbers and units go through `AstroFormat` (app) / `LocaleNumber` (RenderKit) in the view's
+  `\.locale` — « 0.115 » (a dot in every language, card 0178; a field also takes a comma typed by
+  habit), « 5 h 48 min », « −20 °C », a parameter field that parses back to the exact value; the
+  swiftlint rule `numbers_through_locale_number` refuses a number style anywhere else — and terms
   (frame types, filters, stages) through `AppGlossary`, never an enum's `rawValue`
   (`scripts/hygiene.sh` rule 6). Window roots apply `.interfaceLocale()`.
 - Tests resolve with an explicit locale (`resource.locale = Locale(identifier: "fr")`), never the

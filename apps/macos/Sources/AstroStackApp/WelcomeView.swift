@@ -21,15 +21,19 @@ package struct WelcomeView: View {
     package var choose: () -> Void
     /// Creates a project named after the target and returns it.
     package var create: (String) throws -> URL
+    /// Opens the Settings window (card 0177).
+    package var settings: OpenSettingsButton.Open
 
     /// Actions with these closures.
     package init(
       open: @escaping (URL) -> Void, choose: @escaping () -> Void,
-      create: @escaping (String) throws -> URL
+      create: @escaping (String) throws -> URL,
+      settings: @escaping OpenSettingsButton.Open = OpenSettingsButton.window
     ) {
       self.open = open
       self.choose = choose
       self.create = create
+      self.settings = settings
     }
   }
 
@@ -48,6 +52,7 @@ package struct WelcomeView: View {
         // ⌘N and ⌘O stay the menu's: File › New Project raises this same sheet.
         Button(.app("New Project…")) { model.isNaming = true }
         Button(.app("Open…"), action: actions.choose)
+        settingsButton
       }
       if let retention { RetentionNotice(review: retention) }
       ProjectListSection(
@@ -63,6 +68,11 @@ package struct WelcomeView: View {
     .sheet(isPresented: asking) {
       if let retention { RetentionSheet(review: retention) }
     }
+  }
+
+  /// « Settings… », on the tab shown last: the menu bar was the only way there (card 0177).
+  package var settingsButton: OpenSettingsButton {
+    OpenSettingsButton(tab: nil, open: actions.settings)
   }
 
   /// The retention sheet is up while it has stacks to ask about; closing it decides nothing.

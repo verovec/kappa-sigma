@@ -88,6 +88,7 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     case let error as ColourCalibrationError: self = .colourCalibration(error)
     case let error as PlateSolveTool.InputError: self = .plateSolveInput(error)
     case let error as RemoteImportProblem: self = .remoteImport(error)
+    case let error as S3ConnectionStore.Refusal: self = .s3Connection(error)
     case ProjectStoreError.stackOpen(_): self = .stackOpen
     case ProjectPackageError.openElsewhere(let path, _): self = .projectOpenElsewhere(path: path)
     case let error as LocalizedError where error.errorDescription != nil:

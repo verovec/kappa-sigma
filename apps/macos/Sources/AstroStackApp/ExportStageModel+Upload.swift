@@ -69,7 +69,7 @@ extension ExportStageModel {
       failure = .exportS3(.captureBucket(s3.url(key)))
       return nil
     }
-    guard let client = client(s3.connectionID) else { return nil }
+    guard let client = await client(s3.connectionID) else { return nil }
     let plan = RemotePlan(client: client, target: s3, key: key)
     for name in names {
       do {
@@ -79,7 +79,9 @@ extension ExportStageModel {
         }
       } catch S3Error.service(403, _, _, _) {
         // A write-only key (the export key Settings recommends) may not read: S3 answers 403
-        // for a missing object then. Nothing can be told; the upload decides.
+        // for a missing object then. Nothing can be told here — said on the stage; the upload
+        // asks the service never to replace an object (`If-None-Match`, card 0185).
+        remoteUnchecked = true
         continue
       } catch  where Self.isCancellation(error) {
         return nil  // the user stopped it: nothing to report
@@ -92,9 +94,9 @@ extension ExportStageModel {
   }
 
   /// The client of connection `id`, or `nil` with `failure` set.
-  private func client(_ id: UUID) -> S3Client? {
+  private func client(_ id: UUID) async -> S3Client? {
     do {
-      guard let client = try services.s3Client(id) else {
+      guard let client = try await services.s3Client(id) else {
         failure = .exportS3(.connectionMissing)
         return nil
       }
@@ -110,8 +112,11 @@ extension ExportStageModel {
   /// Uploads `urls` (the very files written) one after another.
   ///
   /// The first failure or a cancel stops it; with `discardPartial`, the objects already sent are
-  /// deleted then.
-  func upload(_ urls: [URL], to remote: RemotePlan?, discardPartial: Bool) async -> UploadOutcome {
+  /// deleted then. `replacing` false (an export): the service refuses to replace an object
+  /// (`If-None-Match: *`), said as the overwrite it would have been; Resend replaces its own.
+  func upload(
+    _ urls: [URL], to remote: RemotePlan?, discardPartial: Bool, replacing: Bool = false
+  ) async -> UploadOutcome {
     guard let remote else { return .none }
     // A window may have imported this prefix while the files were written: R7 is judged again
     // before the first object is sent (card 0180).
@@ -127,8 +132,13 @@ extension ExportStageModel {
       do {
         try Task.checkCancellation()
         _ = try await remote.client.upload(
-          file: url, bucket: remote.target.bucket, key: key, contentType: Self.contentType(url))
+          file: url, bucket: remote.target.bucket, key: key, contentType: Self.contentType(url),
+          ifNoneMatch: !replacing)
         sent.append(key)
+      } catch S3Error.service(412, _, _, _) where !replacing {
+        if discardPartial { await Self.discard(sent, from: remote) }
+        let refusal = UserFacingError.exportWouldOverwrite(path: remote.target.url(key))
+        return .failed(String(localized: refusal.message))
       } catch {
         if discardPartial { await Self.discard(sent, from: remote) }
         return Self.isCancellation(error) ? .cancelled : .failed(Self.text(error))
@@ -182,7 +192,7 @@ extension ExportStageModel {
       failure = .exportS3(.captureBucket(url))
       return
     }
-    guard let client = client(connection) else { return }
+    guard let client = await client(connection) else { return }
     isExporting = true
     defer {
       isExporting = false
@@ -192,7 +202,8 @@ extension ExportStageModel {
     let folder = URL(fileURLWithPath: path, isDirectory: true)
     let outcome = await upload(
       record.files.map(folder.appendingPathComponent),
-      to: RemotePlan(client: client, target: target, key: key), discardPartial: false)
+      to: RemotePlan(client: client, target: target, key: key), discardPartial: false,
+      replacing: true)
     do {
       switch outcome {
       case .failed(let text):

@@ -1,20 +1,22 @@
 package import Foundation
 package import ProjectKit
-package import RemoteKit
+internal import RemoteKit
 package import StackKit
 
 // MARK: - Importing a bucket prefix (card 0169)
 
 extension ImportPlanning {
   /// The client of a Settings connection; the app's one transport, as exports use it.
-  package typealias Client = @Sendable (UUID) throws -> S3Client?
+  package typealias Client = S3ClientLookup
 
   /// Lists one level of a bucket for « Browse »: the sub-prefixes alone, never the whole bucket.
   package nonisolated static func browsing(client: @escaping Client = ExportServices.liveClient)
     -> ImportBucketModel.Browsing
   {
     { connection, bucket, prefix in
-      guard let s3 = try client(connection) else { throw RemoteImportProblem.connectionMissing }
+      guard let s3 = try await client(connection) else {
+        throw RemoteImportProblem.connectionMissing
+      }
       return try await s3.list(bucket: bucket, prefix: prefix, delimiter: "/").prefixes
     }
   }
@@ -30,7 +32,7 @@ extension ImportPlanning {
     client: @escaping Client = ExportServices.liveClient
   ) -> ImportViewModel.RemotePlanning {
     { target, request, progress in
-      guard let s3 = try client(target.connectionID) else {
+      guard let s3 = try await client(target.connectionID) else {
         throw RemoteImportProblem.connectionMissing
       }
       progress(.library)
@@ -69,15 +71,16 @@ extension ImportPlanning {
   /// (card 0168), through the Settings connection its own row names.
   ///
   /// A source whose connection is gone contributes nothing: the run refuses with that bucket's
-  /// name rather than stacking the lanes it could read (R2).
+  /// name rather than stacking the lanes it could read (R2). A Keychain that refuses the secret
+  /// is thrown with its own words (card 0185): « no bucket » would hide why.
   package nonisolated static func runStores(
-    _ sources: [ProjectSource], client: @escaping Client = ExportServices.liveClient
-  ) -> [RemoteObjectStore] {
+    _ sources: [ProjectSource], client: Client = ExportServices.liveClient
+  ) async throws -> [RemoteObjectStore] {
     var byBucket: [String: RemoteObjectStore] = [:]
     for source in sources where source.kind == .remoteNight {
       guard let bucket = source.bucket, byBucket[bucket] == nil,
         let id = source.connectionID.flatMap(UUID.init(uuidString:)),
-        let s3 = (try? client(id)) ?? nil
+        let s3 = try await client(id)
       else { continue }
       byBucket[bucket] = .s3(s3, bucket: bucket)
     }

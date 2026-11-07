@@ -163,7 +163,7 @@ extension ExportStageModelTests {
   }
 
   @Test("the live client of a connection Settings does not hold is nil")
-  func testLiveClientUnknownConnection() throws {
-    #expect(try ExportServices.liveClient(UUID()) == nil)
+  func testLiveClientUnknownConnection() async throws {
+    #expect(try await ExportServices.liveClient(UUID()) == nil)
   }
 }

@@ -7,7 +7,7 @@ import Testing
 
 extension ExportStageModelTests {
   @Test(
-    "a write-only key (HEAD 403) still exports: nothing can be told, the upload decides",
+    "a write-only key (HEAD 403) still exports: said on the stage, the service never replaces",
     .scratchDirectory)
   func testWriteOnlyKeyProceeds() async throws {
     let opened = try StudioModelTests.project()
@@ -19,6 +19,8 @@ extension ExportStageModelTests {
 
     #expect(model.failure == nil && model.exports.first?.remoteStatus == .done)
     #expect(!fake.bodies.isEmpty)
+    #expect(model.remoteUnchecked, "what the key could not check is said (card 0185)")
+    #expect(!fake.conditions.isEmpty && fake.conditions.allSatisfy { $0 == "*" })
   }
 
   @Test(

@@ -38,6 +38,9 @@ package final class ExportStageModel {
   package var s3: S3Target?
   /// The file being uploaded, n of N, while an S3 copy runs.
   package internal(set) var uploadProgress: (file: Int, files: Int)?
+  /// The last export's S3 key could not look for objects already there (a write-only key: HEAD
+  /// answers 403): the service alone refused an overwrite then, where it can (card 0185).
+  package internal(set) var remoteUnchecked = false
   /// The time `{date}` and `{time}` stand for: the one shown is the one written to (R2), a new
   /// one after each export.
   var stamp: Date

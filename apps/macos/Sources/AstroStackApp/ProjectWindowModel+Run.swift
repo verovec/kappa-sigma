@@ -98,17 +98,22 @@ extension ProjectWindowModel {
     // The run re-plans the import silently: its own progress is the run's journal.
     let planning = ImportViewModel.silent(services(store).planning)
     let start = runs.run
-    // Read before the run starts: the sources as the project records them now (card 0154).
-    let stores = runs.buckets(sources)
+    // Read before the run starts: the sources as the project records them now (card 0154);
+    // their clients are looked up in the run's task, off the main actor (card 0185).
+    let remote = sources
+    let buckets = runs.buckets
     let model = RunViewModel(runID: runID, output: output)
     let gate = model.gate
     let prepared = RunRequestPlan(
       output: output, work: work, runID: runID, mode: record.mode, settings: settings,
-      gate: gate, resuming: resume != nil, stores: stores, laneKnobs: record.laneKnobs)
+      gate: gate, resuming: resume != nil, laneKnobs: record.laneKnobs)
     run = model
     refresh()
     model.start(
       {
+        // A Keychain refusal stops the run here with its own words, before any scan (R2).
+        var prepared = prepared
+        prepared.stores = try await buckets(remote)
         let plan = try await planning(record.request)
         // A scan that moved since the series were chosen is refused, never stacked in part.
         if let scope {

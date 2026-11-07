@@ -138,7 +138,7 @@ struct STFControlsTests {
       #expect(Double(sign: .plus, exponent: 0, significand: 1) / pow(10, Double(digits)) <= fine)
       let text = STFControls.format(
         0.123_456_789, control: control, locale: Locale(identifier: "fr"))
-      #expect(text.contains(","))
+      #expect(text.contains(".") && !text.contains(","), "a dot in every language (0178): \(text)")
       #expect(STFControls.parse(text, locale: Locale(identifier: "fr")) != nil)
     }
   }
@@ -197,7 +197,7 @@ struct STFControlsTests {
   }
 
   @Test(
-    "typed numbers in the locale's notation: decimal mark, either minus, spaces, grouping",
+    "typed numbers in French: a dot or the habit's comma, either minus, spaces, grouping",
     arguments: zip(
       ["−2,50", "0,229", "1 234,5", "-0.5", "abc", "1.234,5"],
       [-2.5, 0.229, 1234.5, -0.5, nil, nil]))

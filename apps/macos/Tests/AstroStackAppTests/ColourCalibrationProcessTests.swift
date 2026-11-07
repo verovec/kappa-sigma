@@ -218,7 +218,7 @@ struct ColourCalibrationProcessTests {
     #expect(
       english.hasPrefix("PCC: R × 1, G × 0.9, B × 0.8, from 12 stars;")
         && english.contains("imprecise"))
-    #expect(french.contains("G × 0,9") && french.contains("imprécis"))
+    #expect(french.contains("G × 0.9") && french.contains("imprécis"))
   }
 }
 

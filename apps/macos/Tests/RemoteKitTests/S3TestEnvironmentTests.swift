@@ -5,8 +5,8 @@ import Testing
 
 /// The live S3 suites' one configuration (card 0183): read from the environment `just s3-live`
 /// sets, so these run on every host — the live suites themselves skip on CI.
-@Suite("Live S3 environment: one configuration for the three live suites")
-struct LiveS3EnvironmentTests {
+@Suite("S3 test environment: one configuration for the three live S3 suites")
+struct S3TestEnvironmentTests {
   /// What a configuration reads.
   struct Expected: Sendable {
     let url: String
@@ -76,6 +76,18 @@ struct LiveS3EnvironmentTests {
     ] as [([String: String], Bool)])
   func testOnlyJustS3LiveRunsTheSuites(_ env: [String: String], _ requested: Bool) {
     #expect(LiveS3Environment.isRequested(env) == requested)
+  }
+
+  @Test(
+    "testRemovePrefixRefusesWhatIsNotARun",
+    arguments: ["", "captures/M31/", "astrostack-live/", "Astrostack-live/x/"])
+  func testRemovePrefixRefusesWhatIsNotARun(_ prefix: String) async throws {
+    // Refused before any request: the endpoint is never contacted.
+    let live = try #require(
+      LiveS3Environment(environment: ["ASTROSTACK_S3_LIVE_ENDPOINT": "http://127.0.0.1:1"]))
+    await #expect(throws: LiveS3Environment.Refusal.notARunPrefix(prefix)) {
+      try await live.removePrefix(prefix, client: live.client())
+    }
   }
 
   @Test("testRunPrefixIsDatedAndUnique")

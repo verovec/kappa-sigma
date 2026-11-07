@@ -36,21 +36,15 @@ struct RemotePipelineLiveTests {
     /// prefix is removed afterwards whether a step threw or not.
     static func with(_ body: (Self) async throws -> Void) async throws {
       let live = try #require(LiveS3Environment.current)
-      let client = live.client()
-      try await live.ensureBucket(client)
-      try await live.sweepOnce(client: client)
       let root = try ScratchDirectory.url.appendingPathComponent("n1/n2/n3/remote-live")
-      let night = Self(
-        live: live, client: client, root: root, input: root.appendingPathComponent("in"),
-        prefix: LiveS3Environment.runPrefix(), binary: try SirilTool.locate())
-      do {
+      let binary = try SirilTool.locate()
+      try await live.withRun { client, prefix in
+        let night = Self(
+          live: live, client: client, root: root, input: root.appendingPathComponent("in"),
+          prefix: prefix, binary: binary)
         try await night.upload()
         try await body(night)
-      } catch {
-        await night.clean()
-        throw error
       }
-      await night.clean()
     }
 
     /// Writes the night under `input` and uploads every file of it under `prefix`.
@@ -100,12 +94,6 @@ struct RemotePipelineLiveTests {
       return (plan.inventory, stores.map(downloads.counting), downloads)
     }
 
-    /// Removes this run's prefix.
-    func clean() async {
-      do { try await live.removePrefix(prefix, client: client) } catch {
-        Issue.record("could not remove \(prefix): \(error)")
-      }
-    }
   }
 
   /// The keys a run downloaded, in order.
@@ -130,17 +118,37 @@ struct RemotePipelineLiveTests {
     }
   }
 
-  /// The sha256 of the data unit of every `master_*.fits` of a run, by file name: Siril stamps
-  /// `DATE` (the second it wrote the file) in every header, so two runs of the same frames differ
-  /// there and nowhere else (the oracles of 0044 hash the same way, `PreprocessLiveTests`).
+  /// The sha256 of every `master_*.fits` of a run, by file name, over its header cards and its
+  /// data unit — all but the `DATE` card: Siril stamps there the second it wrote the file, so two
+  /// runs of the same frames differ in it and nowhere else (0044's oracles skip it too).
   static func masterDigests(in folder: URL) throws -> [String: String] {
     let names = try FileManager.default.contentsOfDirectory(atPath: folder.path)
     var digests: [String: String] = [:]
     for name in names.sorted() where name.hasPrefix("master_") && name.hasSuffix(".fits") {
-      let body = try FITSFile.read(at: folder.appendingPathComponent(name)).dataUnit
-      digests[name] = SHA256.hash(data: body).map { String(format: "%02x", $0) }.joined()
+      let url = folder.appendingPathComponent(name)
+      let file = try FITSFile.read(at: url)
+      let cards = try Self.headerCards(of: Data(contentsOf: url)).filter { !$0.hasPrefix("DATE ") }
+      var hasher = SHA256()
+      hasher.update(data: Data(cards.joined().utf8))
+      hasher.update(data: file.dataUnit)
+      digests[name] = hasher.finalize().map { String(format: "%02x", $0) }.joined()
     }
     return digests
+  }
+
+  /// The 80-column cards of the primary header, through `END`.
+  static func headerCards(of bytes: Data) throws -> [String] {
+    var cards: [String] = []
+    var offset = bytes.startIndex
+    while offset + 80 <= bytes.endIndex {
+      guard let card = String(bytes: bytes[offset..<offset + 80], encoding: .ascii) else {
+        throw CocoaError(.fileReadCorruptFile)
+      }
+      cards.append(card)
+      if card.hasPrefix("END ") { return cards }
+      offset += 80
+    }
+    throw CocoaError(.fileReadCorruptFile)
   }
 
   /// Each set's frame count, by set.

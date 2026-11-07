@@ -12,6 +12,12 @@ package import Testing
 /// under its own `runPrefix()` and removes it; what a killed run left is reaped a day later by the
 /// next process (`sweepOnce`).
 package struct LiveS3Environment: Sendable {
+  /// What the helpers refuse.
+  package enum Refusal: Error, Equatable {
+    /// Only a run's own prefix is ever deleted.
+    case notARunPrefix(String)
+  }
+
   /// Where the service answers.
   package let endpoint: S3Endpoint
   /// The keys (minioadmin unless given).
@@ -50,9 +56,37 @@ package struct LiveS3Environment: Sendable {
   /// This process's configuration.
   package static var current: Self? { Self(environment: ProcessInfo.processInfo.environment) }
 
-  /// A client of the endpoint over `transport`.
-  package func client(transport: HTTPTransport = .urlSession()) -> S3Client {
-    S3Client(endpoint: endpoint, credentials: credentials, transport: transport)
+  /// A client of the endpoint, over the one transport of this process (a URLSession is never
+  /// invalidated: one per process, not one per test).
+  package func client() -> S3Client {
+    S3Client(endpoint: endpoint, credentials: credentials, transport: Self.transport)
+  }
+
+  private static let transport = HTTPTransport.urlSession()
+
+  /// One test's run: the bucket made sure of, what killed runs left swept (once per process, best
+  /// effort), and a prefix of its own handed to `body` with the client; the prefix is removed
+  /// afterwards whether `body` returned, threw or was cancelled.
+  package func withRun(_ body: (S3Client, String) async throws -> Void) async throws {
+    let client = client()
+    try await ensureBucket(client)
+    await sweepOnce(client: client)
+    let prefix = Self.runPrefix()
+    do {
+      try await body(client, prefix)
+    } catch {
+      await removeUncancelled(prefix, client)
+      throw error
+    }
+    await removeUncancelled(prefix, client)
+  }
+
+  /// `removePrefix` in a task of its own: a test cancelled by its time limit still cleans up.
+  private func removeUncancelled(_ prefix: String, _ client: S3Client) async {
+    let removal = await Task { try await removePrefix(prefix, client: client) }.result
+    if case .failure(let error) = removal {
+      Issue.record("could not remove \(prefix) from \(bucket): \(error)")
+    }
   }
 
   /// A prefix of one run alone: `astrostack-live/<yyyyMMdd>-<uuid>/`, its day first so `sweep`
@@ -79,9 +113,7 @@ package struct LiveS3Environment: Sendable {
   /// The bucket, created when the service says it does not exist; an existing one (listable with
   /// these keys) is used as is, so a real bucket needs no CreateBucket permission. Outside
   /// `us-east-1` the creation names its region, as S3 requires.
-  package func ensureBucket(_ client: S3Client, transport: HTTPTransport = .urlSession())
-    async throws
-  {
+  package func ensureBucket(_ client: S3Client) async throws {
     do {
       _ = try await client.list(bucket: bucket, prefix: Self.root, limit: 1)
       return
@@ -97,16 +129,21 @@ package struct LiveS3Environment: Sendable {
       .prepared(
         endpoint: endpoint, signer: SigV4(credentials: credentials, region: endpoint.region),
         date: Date())
-    let response = try await transport.send(request)
+    let response = try await Self.transport.send(request)
     guard response.isSuccess || response.status == 409 else {
+      // The service's own answer, as sent: its <Code> and <Message> say why.
       throw S3Error.service(
-        status: response.status, code: "CreateBucket", message: bucket, requestID: nil)
+        status: response.status, code: "CreateBucket \(bucket)",
+        message: String(bytes: response.body.prefix(600), encoding: .utf8), requestID: nil)
     }
   }
 
-  /// Deletes every object under `prefix` (a run's own cleanup).
+  /// Deletes every object under `prefix` (a run's own cleanup); a prefix that is not a run's
+  /// (outside `root`, or `root` itself) is refused, never listed.
   package func removePrefix(_ prefix: String, client: S3Client) async throws {
-    precondition(prefix.hasPrefix(Self.root) && prefix.count > Self.root.count)
+    guard prefix.hasPrefix(Self.root), prefix.count > Self.root.count else {
+      throw Refusal.notARunPrefix(prefix)
+    }
     try await delete(try await client.list(bucket: bucket, prefix: prefix).map(\.key), client)
   }
 
@@ -116,13 +153,14 @@ package struct LiveS3Environment: Sendable {
     try await delete(Self.staleKeys(keys, now: now), client)
   }
 
-  /// `sweep`, the first time a test of this process asks; later calls do nothing.
-  package func sweepOnce(client: S3Client) async throws {
+  /// `sweep`, the first time a test of this process asks; later calls do nothing. Housekeeping:
+  /// a sweep that fails fails no test (the next process tries again).
+  package func sweepOnce(client: S3Client) async {
     let first = Self.swept.withLock { swept in
       defer { swept = true }
       return !swept
     }
-    if first { try await sweep(client: client) }
+    if first { try? await sweep(client: client) }
   }
 
   private static let swept = Mutex(false)

@@ -19,25 +19,21 @@ struct LiveExportS3Tests {
     "export on this Mac and to MinIO: each object's SHA-256 = the local file's", .scratchDirectory)
   func testExportBothToMinIO() async throws {
     let live = try #require(LiveS3Environment.current)
-    let client = live.client()
-    try await live.ensureBucket(client)
-    try await live.sweepOnce(client: client)
-    let prefix = LiveS3Environment.runPrefix()
     let opened = try StudioModelTests.project()
     defer { try? opened.package.close() }
-    let target = S3Target(
-      connectionID: UUID(), bucket: live.bucket, prefix: String(prefix.dropLast()))
-    var services = try ExportStageModelTests.services()
-    services.s3Client = { _ in client }
-    let model = try ExportStageModelTests.model(
-      opened, studio: try ExportStageModelTests.separated(opened), services: services)
-    model.settings.deliverables = [.final]
-    model.settings.formats = [.png16, .tiff16]
-    model.s3 = target
+    try await live.withRun { client, prefix in
+      let target = S3Target(
+        connectionID: UUID(), bucket: live.bucket, prefix: String(prefix.dropLast()))
+      var services = try ExportStageModelTests.services()
+      services.s3Client = { _ in client }
+      let model = try ExportStageModelTests.model(
+        opened, studio: try ExportStageModelTests.separated(opened), services: services)
+      model.settings.deliverables = [.final]
+      model.settings.formats = [.png16, .tiff16]
+      model.s3 = target
 
-    await model.export()
+      await model.export()
 
-    do {
       #expect(model.failure == nil)
       let record = try #require(model.exports.first)
       let folder = URL(fileURLWithPath: try #require(record.folder))
@@ -47,9 +43,6 @@ struct LiveExportS3Tests {
         let remote = try await client.get(bucket: target.bucket, key: "\(key)/\(name)", range: nil)
         #expect(SHA256.hash(data: remote) == SHA256.hash(data: local), "\(name)")
       }
-    } catch {
-      Issue.record(error)
     }
-    try await live.removePrefix(prefix, client: client)
   }
 }

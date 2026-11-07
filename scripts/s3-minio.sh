@@ -29,9 +29,14 @@ if ! docker info >/dev/null 2>&1; then
   echo "s3-minio: the Docker daemon is not running: start Docker Desktop (open -a Docker), then retry" >&2
   exit 1
 fi
+# A container of that name that is not running (exited, or created but never started) is
+# nobody's: remove it. A running one is left alone and waited for. Two sessions starting at the
+# same time: the second `docker run` loses the name and waits for the first's server.
 if [ -z "$(docker ps -q --filter "name=^${name}\$")" ]; then
+  docker rm "$name" >/dev/null 2>&1 || true
   docker run -d --rm --name "$name" -p "127.0.0.1:${port}:9000" \
-    -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin "$image" >/dev/null
+    -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin "$image" >/dev/null ||
+    echo "s3-minio: $name is being started elsewhere; waiting for it" >&2
 fi
 if answers 60; then
   echo "s3-minio: $image up on 127.0.0.1:${port} (minioadmin / minioadmin)"

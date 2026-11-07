@@ -16,11 +16,16 @@ endpoint="${2:-${ASTROSTACK_S3_LIVE_ENDPOINT:-http://127.0.0.1:9000}}"
 shift 2
 
 case "$endpoint" in
-  http://127.0.0.1:* | http://localhost:*)
+  http://127.0.0.1:[0-9]* | http://localhost:[0-9]*)
     port="${endpoint##*:}"
     "$(dirname "$0")/s3-minio.sh" "${port%%/*}"
     unset ASTROSTACK_S3_LIVE_ACCESS_KEY ASTROSTACK_S3_LIVE_SECRET_KEY ASTROSTACK_S3_LIVE_BUCKET \
       ASTROSTACK_S3_LIVE_REGION ASTROSTACK_S3_LIVE_ADDRESSING
+    ;;
+  http://127.* | http://localhost* | http://\[::1\]* | https://127.* | https://localhost*)
+    # The local MinIO listens on 127.0.0.1 with an explicit port, over http.
+    echo "s3-live: a local endpoint is http://127.0.0.1:<port> (e.g. http://127.0.0.1:9000), not '$endpoint'" >&2
+    exit 2
     ;;
   http://* | https://*) ;;
   *)

@@ -88,7 +88,8 @@ struct ParameterRowKeyTests {
         case .left: NSLeftArrowFunctionKey
         case .right: NSRightArrowFunctionKey
         }
-      return String(Character(Unicode.Scalar(UInt32(scalar))!))
+      // The arrows' function-key scalars (U+F700…U+F703) are valid: the fallback never shows.
+      return Unicode.Scalar(UInt32(scalar)).map { String(Character($0)) } ?? ""
     }
 
     func event(

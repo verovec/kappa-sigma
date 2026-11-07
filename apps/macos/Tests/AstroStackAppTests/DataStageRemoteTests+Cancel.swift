@@ -58,7 +58,8 @@ struct DataStageRemoteCancelTests {
   /// A project with one local night and one bucket prefix; its remote reads pass `gate` and the
   /// n-th read answers `lights[n]` lights (the last one past the end).
   static func window(
-    _ project: ProjectPackage, gate: Gate, lights: [Int] = [2]
+    _ project: ProjectPackage, gate: Gate, lights: [Int] = [2],
+    localFailure: (any Error)? = nil
   ) throws -> ProjectWindowModel {
     try project.store.addSource(kind: .night, path: "/c/M31-DB")
     try project.store.addSource(
@@ -79,7 +80,8 @@ struct DataStageRemoteCancelTests {
       services: { _ in
         ImportServices(
           planning: { request, _ in
-            ImportPlan(
+            if let localFailure { throw localFailure }
+            return ImportPlan(
               inventory: Inventory(root: request.paths.first ?? "", frames: []), library: [],
               request: request)
           },
@@ -187,5 +189,59 @@ struct DataStageRemoteCancelTests {
     let ids = AccessibilityAuditTests.entries(ProjectWindowView(model: window, projects: .empty))
       .map(\.id)
     #expect(ids.contains(AccessibilityID.dataRescan.rawValue), "\(ids)")
+  }
+
+  @Test("Add while a bucket reads lets the read go on: it plans no folder", .scratchDirectory)
+  func testAddLetsTheBucketReadGoOn() async throws {
+    let project = try ProjectWindowModelTests.package()
+    defer { try? project.close() }
+    let gate = Gate()
+    let window = try Self.window(project, gate: gate)
+
+    window.rescan()
+    await gate.arrived(1)
+    // The same night again: recorded, no new night, so no Rescan follows — the scan is dropped.
+    window.add(ImportRequest(paths: ["/c/M31-DB"]))
+    #expect(window.isScanningRemote, "the bucket read is not Add's to stop")
+    gate.open()
+    await window.scanSettled()
+
+    #expect(window.remoteState(of: Self.path)?.lights == 2)
+  }
+
+  @Test("a folder that does not read still lets the buckets be read", .scratchDirectory)
+  func testLocalFailureStillReadsTheBuckets() async throws {
+    let project = try ProjectWindowModelTests.package()
+    defer { try? project.close() }
+    let gate = Gate()
+    let window = try Self.window(
+      project, gate: gate, localFailure: CocoaError(.fileReadNoSuchFile))
+
+    window.rescan()
+    await gate.arrived(1)
+    gate.open()
+    await window.scanSettled()
+
+    #expect(window.scan == nil && window.error != nil, "the folder's failure is said")
+    #expect(window.remoteState(of: Self.path)?.lights == 2, "and the bucket was read anyway")
+  }
+
+  @Test("a planner that cancels its own read leaves no row saying it reads", .scratchDirectory)
+  func testPlannersOwnCancellationEndsTheRow() async throws {
+    let project = try ProjectWindowModelTests.package()
+    defer { try? project.close() }
+    try project.store.addSource(
+      remote: DataStageRemoteTests.connection.uuidString, bucket: "astro",
+      prefix: "M31/2026-10-18")
+    let remote = DataStageRemoteTests.FakeRemote()
+    remote.failure = CancellationError()
+    let window = DataStageRemoteTests.window(project, remote)
+    window.refresh()
+
+    window.rescan()
+    await window.scanSettled()
+
+    #expect(window.remoteState(of: Self.path)?.isScanning == false)
+    #expect(!window.isScanningRemote)
   }
 }

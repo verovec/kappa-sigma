@@ -16,7 +16,8 @@ extension ProjectWindowModel {
     }
     let request: ImportRequest
     do {
-      guard let planned = try runRequest() else { return scanRemoteOnly() }
+      // A project whose captures are all in buckets: the remote sources alone (card 0169).
+      guard let planned = try runRequest() else { return startRemoteScan() }
       request = planned
     } catch {
       self.error = UserFacingError(error)
@@ -45,26 +46,28 @@ extension ProjectWindowModel {
         dropScan()
         refresh()
         if !(error is CancellationError) { self.error = UserFacingError(error) }
+        // A folder that does not read never keeps the buckets from being read (card 0182).
+        startRemoteScan()
       }
     }
   }
 
-  /// A project whose captures are all in buckets: nothing to read on this Mac, the remote
-  /// sources alone are scanned (card 0169).
-  func scanRemoteOnly() {
-    startRemoteScan()
+  /// Stops the scan in flight, the buckets' too (card 0182): the user's Cancel, a new Rescan, a
+  /// closing window.
+  ///
+  /// The previous scan, if any, and each bucket's last count stay shown.
+  package func cancelScan() {
+    cancelLocalScan()
+    cancelRemoteScan()
   }
 
-  /// Stops the scan in flight, the buckets' too (card 0182).
-  ///
-  /// The previous scan, if any, and each bucket's last count stay shown. A closing window comes
-  /// through here.
-  package func cancelScan() {
+  /// Stops the plan of this Mac's folders only: what Add and Run replace (card 0182), while a
+  /// bucket read in flight goes on — it reads no folder Add or Run plans.
+  func cancelLocalScan() {
     scanTask?.cancel()
     scanTask = nil
     isScanning = false
     rescanAfterAdd = false
-    cancelRemoteScan()
   }
 
   /// Waits for the scan in flight, if any: the local plan, then the buckets it started.
@@ -81,13 +84,13 @@ extension ProjectWindowModel {
     guard let sheet, let plan = sheet.plan, !sheet.isScanning, sheet.request == request,
       let run = try? runRequest(), Self.sameRequest(request, run)
     else { return dropScan() }
-    cancelScan()
+    cancelLocalScan()
     scan = plan
   }
 
-  /// The project changed in a way the last scan does not describe.
+  /// The project changed in a way the last scan of its folders does not describe.
   func dropScan() {
-    cancelScan()
+    cancelLocalScan()
     scan = nil
   }
 

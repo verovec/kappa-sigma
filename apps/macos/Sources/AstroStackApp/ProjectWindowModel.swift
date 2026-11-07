@@ -42,8 +42,6 @@ package final class ProjectWindowModel {
   package internal(set) var isScanning = false
   /// What the Données stage knows of each remote source (card 0169), by virtual path.
   package internal(set) var remoteStates: [String: RemoteSourceState] = [:]
-  /// The buckets are being read (card 0182): after the local plan, never holding Run back.
-  package internal(set) var isScanningRemote = false
   var scanTask: Task<Void, Never>?
   /// The one scan of the buckets that may write `remoteStates` (card 0182).
   var remoteScanTask: Task<Void, Never>?

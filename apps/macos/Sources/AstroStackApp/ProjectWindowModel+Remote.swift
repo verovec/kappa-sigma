@@ -41,6 +41,9 @@ extension ProjectWindowModel {
       path: target.path, lights: plan.inventory.frames.count { $0.type == .light })
   }
 
+  /// The buckets are being read (card 0182): after the local plan, never holding Run back.
+  package var isScanningRemote: Bool { remoteScanTask != nil }
+
   /// Scans the remote sources in a task of their own (card 0182).
   ///
   /// It replaces a scan of them in flight, so one writer of `remoteStates` at a time; nothing
@@ -48,12 +51,11 @@ extension ProjectWindowModel {
   func startRemoteScan() {
     cancelRemoteScan()
     guard !remoteSources.isEmpty else { return }
-    isScanningRemote = true
     remoteScanTask = Task {
       await rescanRemoteSources()
-      // A stopped scan leaves the flags to whoever stopped it (`cancelRemoteScan`).
+      // A stopped scan leaves the task to whoever stopped it (`cancelRemoteScan`), who may
+      // already have started the next one.
       guard !Task.isCancelled else { return }
-      isScanningRemote = false
       remoteScanTask = nil
     }
   }
@@ -62,7 +64,6 @@ extension ProjectWindowModel {
   func cancelRemoteScan() {
     remoteScanTask?.cancel()
     remoteScanTask = nil
-    isScanningRemote = false
     for (path, state) in remoteStates where state.isScanning {
       remoteStates[path]?.isScanning = false
     }
@@ -89,6 +90,9 @@ extension ProjectWindowModel {
           $0.isScanning = false
         }
       } catch is CancellationError {
+        // The planner's own cancellation, not ours: the row stops saying it reads, and the
+        // prefixes after it wait for the next Rescan as before.
+        if !Task.isCancelled { update(source.path) { $0.isScanning = false } }
         return
       } catch {
         guard !Task.isCancelled else { return }

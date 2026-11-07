@@ -13,8 +13,8 @@ package final class ImportBucketModel {
   package typealias Browsing =
     @Sendable (_ connection: UUID, _ bucket: String, _ prefix: String) async throws -> [String]
 
-  /// The connections of Settings › S3 connections, in their stored order.
-  package let connections: [S3Connection]
+  /// The connections of Settings › S3 connections, in their stored order, as last read.
+  package private(set) var connections: [S3Connection]
   /// The connection chosen, `nil` until the user picks one; changing it starts over, since the
   /// level browsed belongs to the bucket it was listed in.
   package var connectionID: UUID? {
@@ -36,12 +36,50 @@ package final class ImportBucketModel {
   package private(set) var error: UserFacingError?
 
   private let browsing: Browsing
+  private let provider: () -> [S3Connection]
   private var listing: Task<Void, Never>?
 
-  /// A model over `connections`, listing through `browsing`.
-  package init(connections: [S3Connection], browsing: @escaping Browsing) {
-    self.connections = connections
+  /// A model over a fixed list of `connections`, listing through `browsing`.
+  package convenience init(connections: [S3Connection], browsing: @escaping Browsing) {
+    self.init(connectionsFrom: { connections }, browsing: browsing)
+  }
+
+  /// A model over the connections `provider` reads (Settings' store in the app), listing
+  /// through `browsing`.
+  package init(
+    connectionsFrom provider: @escaping () -> [S3Connection], browsing: @escaping Browsing
+  ) {
+    self.provider = provider
+    connections = provider()
     self.browsing = browsing
+  }
+
+  /// Reads the connections again (card 0177): one added in Settings while the sheet is up shows;
+  /// the chosen one removed is no longer chosen, and edited (another endpoint, key or style) its
+  /// level is read again — the folders shown were listed through what it was.
+  package func reloadConnections() {
+    let read = provider()
+    guard read != connections else { return }
+    let chosen = connections.first { $0.id == connectionID }
+    connections = read
+    guard let chosen else { return }
+    if let now = read.first(where: { $0.id == chosen.id }) {
+      if !Self.listsAlike(now, chosen) { startOver() }
+    } else {
+      connectionID = nil
+    }
+  }
+
+  /// Reads the connections now, then again on every element of `changes` (each defaults write
+  /// by default: the store keeps them there), until cancelled — the sheet's lifetime.
+  package func followSettings<Changes: AsyncSequence>(_ changes: Changes) async {
+    await DefaultsChanges.follow(changes) { reloadConnections() }
+  }
+
+  /// Whether `one` and `other` list a bucket the same way: a new name changes nothing read.
+  private static func listsAlike(_ one: S3Connection, _ other: S3Connection) -> Bool {
+    one.endpoint == other.endpoint && one.region == other.region
+      && one.pathStyle == other.pathStyle && one.accessKey == other.accessKey
   }
 
   /// What the Import sheet would scan: `nil` until a connection and a bucket are both chosen.

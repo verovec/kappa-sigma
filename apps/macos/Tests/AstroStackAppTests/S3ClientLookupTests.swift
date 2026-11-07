@@ -89,6 +89,28 @@ struct S3ClientLookupTests {
     #expect(UserFacingError(refusal) == .s3Connection(refusal), "in the refusal's own words")
   }
 
+  @Test("an inventory is refused when one of its frames lives in a refused bucket, else not")
+  func testRefusalInInventory() {
+    let refusal = S3ConnectionStore.Refusal.keychain(KeychainError(status: -25293))
+    var buckets = RunBuckets()
+    buckets.refusals["astro"] = refusal
+    func light(_ path: String) -> CaptureFrame {
+      var frame = CaptureFrame(path: path)
+      frame.type = .light
+      return frame
+    }
+    var remote = Inventory(
+      root: "s3://astro/M31", frames: [light("/c/l_1.fits"), light("s3://astro/M31/l_2.fits")])
+    remote.regroup()
+    var local = Inventory(root: "/c", frames: [light("/c/l_1.fits")])
+    local.regroup()
+
+    #expect(buckets.refusal(in: remote) as? S3ConnectionStore.Refusal == refusal)
+    #expect(buckets.refusal(in: local) == nil)
+    #expect(RunBuckets().refusal(in: remote) == nil, "nothing refused, nothing said")
+    #expect(buckets.names("astro") && !buckets.names("other"))
+  }
+
   @Test("buckets sharing one connection: the Keychain is read once")
   func testOneLookupPerConnection() async throws {
     let client = try RunStoresTests.client()

@@ -17,9 +17,8 @@ package enum FileDigest {
 
   /// The ETag S3 gives an object completed from parts whose MD5s are `parts` (computed from the
   /// bytes sent, never read back from the service): the MD5 of those MD5s, then `-<count>`.
-  package static func multipartETag(_ parts: [Data]) -> String? {
-    guard !parts.isEmpty else { return nil }
-    return "\(Insecure.MD5.hash(data: Data(parts.joined())).hexString)-\(parts.count)"
+  package static func multipartETag(_ parts: [Data]) -> String {
+    "\(Insecure.MD5.hash(data: Data(parts.joined())).hexString)-\(parts.count)"
   }
 
   /// The binary MD5 of `data` (a part's, for `multipartETag`).

@@ -164,7 +164,6 @@ extension S3ClientTests {
     #expect(
       FileDigest.multipartETag([FileDigest.md5(Data("a".utf8))])
         == "b6ff9a06b7e20bcb2858c5b8ff744aea-1")
-    #expect(FileDigest.multipartETag([]) == nil)
     #expect(FileDigest.md5Hex(Self.tenBytes) == Self.singleETag)
   }
 }

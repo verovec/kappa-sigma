@@ -18,9 +18,13 @@ extension ImportPlanning {
         var builder = MasterBuilder(runner: .live(binary: try SirilTool.locate()), onLine: onLine)
         // A set scanned out of a bucket is rebuilt from that bucket (card 0154), through the
         // connection its source row names — not refused for want of a store.
-        let buckets = await runStores((try? store?.sources() ?? []) ?? [])
-        if let refusal = buckets.refusal(reading: set.frames.map(\.path)) { throw refusal }
-        builder.stager = FrameStager(stores: buckets.stores)
+        // A set of this Mac's frames never asks the Keychain (no prompt for a local rebuild).
+        let paths = set.frames.map(\.path)
+        if paths.contains(where: { ProjectSource.remoteParts(of: $0) != nil }) {
+          let buckets = await runStores((try? store?.sources() ?? []) ?? [])
+          if let refusal = buckets.refusal(reading: paths) { throw refusal }
+          builder.stager = FrameStager(stores: buckets.stores)
+        }
         let result = try await rebuild(
           set, of: inventory, pool: pool, library: library, replace: replace, builder: builder)
         await index.invalidate()

@@ -65,7 +65,8 @@ extension S3Client {
     let number: Int
     let etag: String
     let checksum: String
-    let md5: Data
+    /// The MD5 of the bytes sent, kept only when the completion is conditioned (for a 412).
+    let md5: Data?
   }
 
   private func multipart(
@@ -83,7 +84,7 @@ extension S3Client {
     do {
       // The size is what was read, not the earlier stat: a file still being written changes.
       let (parts, sent) = try await uploadParts(
-        file: file, size: size, bucket: bucket, key: key, uploadID: uploadID, progress: progress)
+        file: file, size: size, to: destination, uploadID: uploadID, progress: progress)
       return try await complete(
         destination, uploadID: uploadID, parts: parts, size: sent, progress: progress)
     } catch {
@@ -126,7 +127,7 @@ extension S3Client {
         : try await head(bucket: bucket, key: key)
       let ours =
         status == 412
-        ? object?.etag.lowercased() == FileDigest.multipartETag(parts.map(\.md5))
+        ? object?.etag.lowercased() == FileDigest.multipartETag(parts.compactMap(\.md5))
         : object?.etag.hasSuffix("-\(parts.count)") == true
       if let object, object.size == size, ours { return object }
       throw S3Error.service(status: status, code: code, message: message, requestID: requestID)
@@ -135,9 +136,11 @@ extension S3Client {
 
   /// Every part until the end of the file, with the bytes sent; `size` is the progress total.
   private func uploadParts(
-    file: URL, size: Int64, bucket: String, key: String, uploadID: String,
+    file: URL, size: Int64, to destination: Destination, uploadID: String,
     progress: S3ProgressHandler?
   ) async throws -> (parts: [Part], sent: Int64) {
+    let (bucket, key) = (destination.bucket, destination.key)
+    let conditioned = !destination.condition.isEmpty
     let handle = try FileHandle(forReadingFrom: file)
     defer { try? handle.close() }
     var parts: [Part] = []
@@ -159,7 +162,9 @@ extension S3Client {
         throw S3Error.invalidResponse("UploadPart \(number) of \(key) without ETag")
       }
       parts.append(
-        Part(number: number, etag: etag, checksum: digest.base64, md5: FileDigest.md5(body)))
+        Part(
+          number: number, etag: etag, checksum: digest.base64,
+          md5: conditioned ? FileDigest.md5(body) : nil))
       sent += Int64(body.count)
       progress?(.transferred(bytes: sent, total: max(size, sent)))
     }

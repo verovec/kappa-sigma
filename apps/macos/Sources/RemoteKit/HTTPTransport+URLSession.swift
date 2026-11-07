@@ -1,13 +1,37 @@
 package import Foundation
 
 extension HTTPTransport {
+  /// How long a request may wait for its next bytes before it times out (retried by `S3Client`).
+  ///
+  /// URLSession's own default, made explicit: a CompleteMultipartUpload that takes minutes stays
+  /// alive on the whitespace S3 and MinIO send while they work.
+  package static let idleTimeout: TimeInterval = 60
+  /// The longest one request may take as a whole.
+  ///
+  /// 6 h: a 4 GB object still downloads at 200 kB/s, while a connection that only trickles ends
+  /// instead of running for URLSession's 7 days.
+  package static let transferTimeout: TimeInterval = 6 * 3600
+
+  /// The live configuration: ephemeral (no cookies, cache or credentials kept) with `idle` and
+  /// `transfer` timeouts.
+  package static func configuration(
+    idle: TimeInterval = idleTimeout, transfer: TimeInterval = transferTimeout
+  ) -> URLSessionConfiguration {
+    let configuration = URLSessionConfiguration.ephemeral
+    configuration.timeoutIntervalForRequest = idle
+    configuration.timeoutIntervalForResource = transfer
+    return configuration
+  }
+
   /// The live transport over a `URLSession` with `configuration`.
   ///
-  /// Ephemeral by default: no cookies, no cache, no credentials kept. Downloads land in
+  /// Bounded by `configuration()` by default (see `idleTimeout`, `transferTimeout`). Downloads land in
   /// URLSession's temporary file, then move to the destination; progress is reported once, when
   /// the body is complete. Redirects are refused: the 3xx (S3's `PermanentRedirect` to another
   /// region) comes back as an error, never as a signed request replayed to another host.
-  package static func urlSession(_ configuration: URLSessionConfiguration = .ephemeral) -> Self {
+  package static func urlSession(_ configuration: URLSessionConfiguration = configuration())
+    -> Self
+  {
     let session = URLSession(
       configuration: configuration, delegate: RedirectRefusal(), delegateQueue: nil)
     return Self(

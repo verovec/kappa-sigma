@@ -14,6 +14,8 @@ struct URLSessionTransportTests {
       var headers: [String: String]
       var body: Data
       var received: HTTPRequest?
+      /// Never answers: the request can only end by timing out (card 0184).
+      var stalls = false
     }
 
     static let routes = Mutex<[String: Route]>([:])
@@ -29,6 +31,7 @@ struct URLSessionTransportTests {
           headers: Self.headers(of: request), body: Self.body(of: request))
         return routes[host]
       }
+      if route?.stalls == true { return }
       guard let route, let url = request.url,
         let response = HTTPURLResponse(
           url: url, statusCode: route.status, httpVersion: "HTTP/1.1", headerFields: route.headers)

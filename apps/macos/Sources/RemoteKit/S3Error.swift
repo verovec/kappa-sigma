@@ -16,6 +16,11 @@ package enum S3Error: Error, Sendable, Equatable, CustomStringConvertible {
   case checksumMismatch(key: String, expected: String, actual: String)
   /// The object's ETag changed since it was listed.
   case objectChanged(key: String, expectedETag: String, actualETag: String)
+  /// The service answered `status` (a redirect, or a request signed for the wrong region) and
+  /// named the bucket's `actual` region, which is not the connection's `expected` one.
+  case wrongRegion(status: Int, bucket: String, expected: String, actual: String)
+  /// `name` cannot be addressed on this endpoint, for `reason`; nothing was sent.
+  case invalidBucket(name: String, reason: String)
 
   /// One line for the user, the S3 code and message verbatim.
   package var description: String {
@@ -31,6 +36,9 @@ package enum S3Error: Error, Sendable, Equatable, CustomStringConvertible {
       "\(key): checksum \(actual), \(expected) expected"
     case .objectChanged(let key, let expected, let actual):
       "\(key) changed on the server (ETag \(actual), \(expected) listed)"
+    case .wrongRegion(let status, let bucket, let expected, let actual):
+      "S3 \(status): bucket \(bucket) is in region \(actual), the connection says \(expected)"
+    case .invalidBucket(let name, let reason): "Bucket name \"\(name)\": \(reason)"
     }
   }
 

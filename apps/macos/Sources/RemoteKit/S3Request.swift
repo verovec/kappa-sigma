@@ -34,8 +34,10 @@ package struct S3Request: Sendable, Equatable {
 
   /// The wire request, addressed on `endpoint` and signed by `signer` at `date`.
   ///
-  /// The URL carries the path and query in the exact encoding that was signed.
+  /// The URL carries the path and query in the exact encoding that was signed. A bucket the
+  /// endpoint cannot address throws `S3Error.invalidBucket` here, before anything is sent.
   package func prepared(endpoint: S3Endpoint, signer: SigV4, date: Date) throws -> HTTPRequest {
+    try endpoint.validate(bucket: bucket)
     let (host, path) = endpoint.location(bucket: bucket, key: key)
     let hash = payloadHash ?? (body ?? Data()).sha256Hex
     var headerLines = [

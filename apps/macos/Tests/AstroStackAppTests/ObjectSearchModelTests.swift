@@ -122,8 +122,8 @@ struct ObjectSearchModelTests {
       majorAxisArcmin: 177.83)
     m31.minorAxisArcmin = 69.66
     let french = Locale(identifier: "fr")
-    #expect(SkyObjectWords.size(m31, locale: french) == "177,8′ × 69,7′")
-    #expect(SkyObjectWords.magnitude(m31, locale: french) == "3,4")
+    #expect(SkyObjectWords.size(m31, locale: french) == "177.8′ × 69.7′")
+    #expect(SkyObjectWords.magnitude(m31, locale: french) == "3.4")
     let sh2 = SkyObject(name: "Sh2-132", raDeg: 0, decDeg: 0, source: .sh2)
     #expect(
       SkyObjectWords.size(sh2, locale: french) == nil

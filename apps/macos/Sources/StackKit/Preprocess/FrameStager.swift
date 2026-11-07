@@ -67,7 +67,7 @@ package struct FrameStager: Sendable {
       let object = try await store.download(parts.key, to: destination)
       staged.remote += 1
       staged.bytes += object.size
-      staged.identities[path] = "\(object.size)|\(object.etag)"
+      staged.identities[path] = object.identity
       if staged.remote % Self.progressStep == 0 || staged.remote == remote {
         progress(staged.remote, remote, staged.bytes)
       }
@@ -111,7 +111,7 @@ package struct FrameStager: Sendable {
         guard let objects = try? await store.list(prefix) else { continue }
         for object in objects {
           guard let path = keys[object.key] else { continue }
-          identities[path] = "\(object.size)|\(object.etag)"
+          identities[path] = object.identity
         }
       }
     }

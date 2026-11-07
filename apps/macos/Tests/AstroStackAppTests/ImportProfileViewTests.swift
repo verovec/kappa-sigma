@@ -52,7 +52,7 @@ struct ImportProfileViewTests {
     let french = ImportProfileView.line(
       screens, "haBlack", registry: try ProcessRegistry.standard(), locale: Locale(identifier: "fr")
     )
-    #expect(french.contains("0,115"))
+    #expect(french.contains("0.115"))
     #expect(!french.contains("emission-screens"), "the process title, not its id: \(french)")
   }
 

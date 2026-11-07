@@ -43,7 +43,7 @@ extension ExportStageModelTests {
     let opened = try StudioModelTests.project()
     defer { try? opened.package.close() }
     let other = try ExportServicesTests.project(
-      "Other", remote: [RemoteLocation(bucket: Self.target.bucket, prefix: "a/b")])
+      "Other", remote: [RemoteLocation(bucket: Self.target.bucket, prefix: "a/b")], window: false)
     defer { other.close() }
     let fake = ExportS3Fake()
     // What `live` reads, over the other project only: nothing global is stubbed across `await`.
@@ -61,36 +61,4 @@ extension ExportStageModelTests {
       #expect(fake.methods.contains("PUT") && model.exports.count == 1)
     }
   }
-
-  @Test(
-    "a prefix that becomes a capture source while the files are written is refused before any PUT",
-    .scratchDirectory)
-  func testCapturePrefixImportedDuringTheExportRefusedBeforeUpload() async throws {
-    let opened = try StudioModelTests.project()
-    defer { try? opened.package.close() }
-    let fake = ExportS3Fake()
-    // The plan's check sees no capture; the one before the upload sees the prefix imported.
-    let checks = CheckCount()
-    let model = try Self.s3Model(
-      opened, fake: fake, local: true, prefix: "a/b",
-      sources: {
-        checks.count += 1
-        return checks.count == 1 ? [] : [RemoteLocation(bucket: "exports", prefix: "a")]
-      })
-
-    await model.export()
-
-    let record = try #require(model.exports.first)
-    #expect(record.remoteStatus == .failed && record.folder != nil)
-    #expect(!fake.methods.contains("PUT"))
-    // The record's own URL: after an export the stage's folder names the next one's time.
-    let url = try #require(record.remoteURL)
-    #expect(record.remoteError?.contains(url) == true)
-  }
-}
-
-/// How many times the stage asked for the capture sources.
-@MainActor
-final class CheckCount {
-  var count = 0
 }

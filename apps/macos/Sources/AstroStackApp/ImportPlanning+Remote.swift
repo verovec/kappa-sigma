@@ -43,7 +43,10 @@ extension ImportPlanning {
       let scanned = try await scan.scan(
         cache: cachedScan(store, of: target), overrides: request.overrides, progress: progress)
       keep(scanned.cache, store, of: target)
-      return ImportPlan(inventory: scanned.inventory, library: masters, request: request)
+      // What the scan listed proves a bucket master as the run will (card 0181).
+      return ImportPlan(
+        inventory: scanned.inventory, library: masters, request: request,
+        identities: scanned.cache.identities(bucket: target.bucket))
     }
   }
 

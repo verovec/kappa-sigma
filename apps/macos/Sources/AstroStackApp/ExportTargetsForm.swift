@@ -7,18 +7,35 @@ package import SwiftUI
 /// progress with « Cancel » while it runs.
 package struct ExportTargetsForm: View {
   @Bindable var model: ExportStageModel
+  /// Opens Settings on its S3 tab (card 0177).
+  var openSettings: OpenSettingsButton.Open
 
-  /// The targets of the next export of `model`.
-  package init(model: ExportStageModel) { self.model = model }
+  /// The targets of the next export of `model`; `openSettings` opens the connections' editor.
+  package init(
+    model: ExportStageModel,
+    openSettings: @escaping OpenSettingsButton.Open = OpenSettingsButton.window
+  ) {
+    self.model = model
+    self.openSettings = openSettings
+  }
+
+  /// « S3 connections… »: the one place the connections are edited, a click away.
+  package var settingsButton: OpenSettingsButton {
+    OpenSettingsButton(tab: .s3, open: openSettings)
+  }
 
   package var body: some View {
     VStack(alignment: .leading, spacing: DesignMetrics.spacingXS) {
       Text(.app("Destinations")).font(.headline)
       Toggle(isOn: $model.local) { Text(.app("On this Mac")) }
         .accessible(.stageControl("export", "target.local"), label: .app("On this Mac"))
-      Toggle(isOn: Self.s3On(model)) { Text(.app("On S3")) }
-        .disabled(model.s3 == nil && model.s3Connections.isEmpty)
-        .accessible(.stageControl("export", "target.s3"), label: .app("On S3"))
+      HStack {
+        Toggle(isOn: Self.s3On(model)) { Text(.app("On S3")) }
+          .disabled(model.s3 == nil && model.s3Connections.isEmpty)
+          .accessible(.stageControl("export", "target.s3"), label: .app("On S3"))
+        Spacer()
+        settingsButton
+      }
       if model.s3 != nil {
         s3Fields
       } else if model.s3Connections.isEmpty {
@@ -31,6 +48,8 @@ package struct ExportTargetsForm: View {
       }
       uploadLines
     }
+    // A connection added through « S3 connections… » shows when the user comes back (card 0177).
+    .task { await model.followSettings(DefaultsChanges.live) }
   }
 
   /// What the S3 copy says while and after it runs: what the key could not check (card 0185),

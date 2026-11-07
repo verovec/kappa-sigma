@@ -39,6 +39,8 @@ package final class ExportStageModel {
     // What the last export's key could not check says nothing of another target (card 0185).
     didSet { if s3 != oldValue { remoteUnchecked = false } }
   }
+  /// The S3 connections the form offers, as Settings held them when last read (card 0177).
+  package internal(set) var s3Connections: [S3Connection]
   /// The file being uploaded, n of N, while an S3 copy runs.
   package internal(set) var uploadProgress: (file: Int, files: Int)?
   /// The last export's S3 key could not look for objects already there (a write-only key: HEAD
@@ -107,6 +109,7 @@ package final class ExportStageModel {
     template = services.destination.template.text
     local = services.destination.local
     s3 = services.destination.s3
+    s3Connections = services.s3Connections()
     stamp = services.now()
     refresh()
   }

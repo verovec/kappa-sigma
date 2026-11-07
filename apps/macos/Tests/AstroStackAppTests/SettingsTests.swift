@@ -56,7 +56,8 @@ struct SettingsTests {
     await astro.refresh()
     #expect(astro.lines.map(\.found) == [true, false, false, false, false])
     let view = SettingsView(
-      setting: LanguageSetting(defaults: defaults, domain: name), relaunch: {}, astro: astro)
+      setting: LanguageSetting(defaults: defaults, domain: name), relaunch: {}, astro: astro,
+      selection: SettingsSelection(.folders))
     let host = NSHostingView(rootView: view.environment(\.locale, Locale(identifier: language)))
     host.layoutSubtreeIfNeeded()
     #expect(host.fittingSize.width >= 460)

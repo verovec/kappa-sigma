@@ -57,7 +57,8 @@ extension SettingsTests {
     #expect(defaults.string(forKey: ExportDestinationSetting.templateKey) == nil, "key cleared")
 
     let view = SettingsView(
-      setting: LanguageSetting(defaults: defaults, domain: name), relaunch: {}, export: export)
+      setting: LanguageSetting(defaults: defaults, domain: name), relaunch: {}, export: export,
+      selection: SettingsSelection(.folders))
     let host = NSHostingView(rootView: view.environment(\.locale, Locale(identifier: language)))
     host.layoutSubtreeIfNeeded()
     #expect(host.fittingSize.width >= 460 && host.fittingSize.height > 0)

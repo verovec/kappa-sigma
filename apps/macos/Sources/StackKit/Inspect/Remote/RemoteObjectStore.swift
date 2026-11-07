@@ -12,6 +12,13 @@ package struct RemoteObjectStore: Sendable {
     /// Its ETag (the scan cache keys on it, 0168).
     package let etag: String
 
+    /// What identifies it (`size|etag`): what a master's `.sig` and a lane's digest sign for a
+    /// frame of a bucket, and what a later listing is compared with (card 0181).
+    package var identity: String { Self.identity(size: size, etag: etag) }
+
+    /// The identity of an object of `size` bytes tagged `etag`.
+    package static func identity(size: Int64, etag: String) -> String { "\(size)|\(etag)" }
+
     /// An object of `key`, `size` bytes, tagged `etag`.
     package init(key: String, size: Int64, etag: String) {
       self.key = key

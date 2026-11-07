@@ -187,6 +187,9 @@ package struct ImportSheet: View {
             model.choose(bucket: target)
           }
         }
+        // On the button, not in the popover: Settings coming forward closes the popover, and a
+        // connection added there must be in the picker when it reopens (card 0177).
+        .task { await bucket.followSettings(DefaultsChanges.live) }
     }
   }
 

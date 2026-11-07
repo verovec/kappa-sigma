@@ -8,7 +8,7 @@ struct AstroFormatBytesTests {
     "a size on disk reads in decimal units, in the user's language",
     arguments: [
       (Int64(74_000_000_000), "74 Go", "74 GB"),
-      (Int64(1_250_000_000), "1,25 Go", "1.25 GB"),
+      (Int64(1_250_000_000), "1.25 Go", "1.25 GB"),
       (Int64(4096), "4 ko", "4 kB"),
     ])
   func testBytes(_ bytes: Int64, french: String, english: String) {

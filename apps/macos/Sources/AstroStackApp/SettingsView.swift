@@ -4,9 +4,9 @@ internal import ProjectKit
 internal import RenderKit
 package import SwiftUI
 
-/// The Settings window's content: the interface language, applied on relaunch, the runs'
-/// scratch folder (card 0098), the S3 connections (card 0150), the stacks' retention (card 0114)
-/// and the host tools' status.
+/// The Settings window's content, one tab each (card 0177): the interface language, applied on
+/// relaunch; the scratch (card 0098), astro (0148) and export (0151) folders; the S3 connections
+/// (card 0150); the stacks' retention (card 0114); the host tools' status.
 package struct SettingsView: View {
   private let setting: LanguageSetting
   private let relaunch: () -> Void
@@ -18,6 +18,8 @@ package struct SettingsView: View {
   @State private var export: ExportDestinationModel
   /// Settings › S3 connections (card 0150), owned by the view like the export folder.
   @State private var s3: S3ConnectionsModel
+  /// The tab shown (card 0177), kept by the window across openings.
+  private let selection: SettingsSelection
   private let retention: RetentionSetting
   /// The choice the app was launched with: Relaunch is offered once the choice differs.
   private let launched: LanguageSetting.Choice
@@ -31,14 +33,16 @@ package struct SettingsView: View {
   @State private var policy: RetentionPolicy
 
   /// Settings over `setting`; `relaunch` restarts the app; `tools` fills the Tools section;
-  /// `scratch` is the runs' scratch folder; `retention` the policy for stacks never exported.
+  /// `scratch` is the runs' scratch folder; `retention` the policy for stacks never exported;
+  /// `selection` the tab shown.
   package init(
     setting: LanguageSetting, relaunch: @escaping () -> Void,
     tools: WelcomeModel? = nil, scratch: ScratchSetting = ScratchSetting(),
     astro: AstroFolderModel = AstroFolderModel(),
     export: ExportDestinationModel = ExportDestinationModel(),
     s3: S3ConnectionsModel = S3ConnectionsModel(),
-    retention: RetentionSetting = RetentionSetting()
+    retention: RetentionSetting = RetentionSetting(),
+    selection: SettingsSelection = SettingsSelection()
   ) {
     self.setting = setting
     self.relaunch = relaunch
@@ -49,13 +53,69 @@ package struct SettingsView: View {
     _export = State(initialValue: export)
     _s3 = State(initialValue: s3)
     self.retention = retention
+    self.selection = selection
     _policy = State(initialValue: retention.policy)
     launched = setting.choice
     _choice = State(initialValue: setting.choice)
   }
 
   package var body: some View {
-    Form {
+    TabView(selection: shown) {
+      ForEach(tabs) { tab in
+        Form { content(of: tab) }
+          .formStyle(.grouped)
+          .frame(width: SettingsTab.formWidth)
+          .frame(minHeight: SettingsTab.formMinHeight)
+          .tabItem {
+            Label {
+              Text(tab.title)
+            } icon: {
+              Image(systemName: tab.symbol)
+            }
+          }
+          .tag(tab)
+      }
+    }
+    .task(id: astro.folder) { await astro.refresh() }
+    // The Export stage's « Remember as default » writes the same setting from another window;
+    // here, not on the Folders tab, whose task stops while another tab is shown.
+    .task { await DefaultsChanges.follow(DefaultsChanges.live) { export.reload() } }
+  }
+
+  /// The selection as shown: a selection the view has no tab for would leave the tab view blank.
+  private var shown: Binding<SettingsTab> {
+    Binding(
+      get: { Self.shown(selection.tab, in: tabs) }, set: { selection.tab = $0 })
+  }
+
+  /// The tabs shown: Tools only when there is a tool model to show.
+  private var tabs: [SettingsTab] {
+    SettingsTab.allCases.filter { $0 != .tools || tools != nil }
+  }
+
+  /// `tab` when it is one of `tabs`, General otherwise.
+  package static func shown(_ tab: SettingsTab, in tabs: [SettingsTab]) -> SettingsTab {
+    tabs.contains(tab) ? tab : .general
+  }
+
+  /// The sections of `tab`, each unchanged from the single form they came from.
+  @ViewBuilder private func content(of tab: SettingsTab) -> some View {
+    switch tab {
+    case .general: languageSection
+    case .folders:
+      scratchSection
+      astroSection
+      exportSection
+    case .s3: S3ConnectionsSection(model: s3)
+    case .storage: storageSection
+    case .tools:
+      if let tools { Section { ToolStrip(model: tools) } }
+    }
+  }
+
+  /// The interface language, applied when the app relaunches.
+  private var languageSection: some View {
+    Section {
       Picker(selection: $choice) {
         Text(.app("System")).tag(LanguageSetting.Choice.system)
         Text(verbatim: "Français").tag(LanguageSetting.Choice.french)
@@ -70,18 +130,7 @@ package struct SettingsView: View {
         Spacer()
         Button(.app("Relaunch"), action: relaunch).disabled(choice == launched)
       }
-      scratchSection
-      astroSection
-      exportSection
-      S3ConnectionsSection(model: s3)
-      storageSection
-      if let tools {
-        Section { ToolStrip(model: tools) }
-      }
     }
-    .formStyle(.grouped)
-    .frame(width: 460)
-    .task(id: astro.folder) { await astro.refresh() }
   }
 
   /// Where Siril's work files go during a run; the next run reads it.
@@ -171,14 +220,6 @@ package struct SettingsView: View {
       exportRefusals
     } header: {
       SectionHeader(.app("Export"), help: SettingHelp.help(SettingHelp.export, locale: locale))
-    }
-    // The Export stage's « Remember as default » writes the same setting from another window.
-    .task {
-      for await _ in NotificationCenter.default.notifications(
-        named: UserDefaults.didChangeNotification)
-      {
-        export.reload()
-      }
     }
   }
 

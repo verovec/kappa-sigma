@@ -163,7 +163,7 @@ package final class AppDelegate: NSObject, NSApplicationDelegate {
     WelcomeWindow.show()
   }
 
-  /// AstroStack › Settings…: the interface language and the host tools.
+  /// AstroStack › Settings… (⌘,): the Settings window on the last tab shown (card 0177).
   @objc package func showSettings(_ sender: Any?) {
     SettingsWindow.show()
   }

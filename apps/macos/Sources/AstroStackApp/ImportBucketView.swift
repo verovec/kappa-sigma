@@ -7,11 +7,23 @@ package struct ImportBucketView: View {
   var model: ImportBucketModel
   /// Called with the prefix to scan when the user asks for it.
   var onScan: (RemoteImportTarget) -> Void
+  /// Opens Settings on its S3 tab (card 0177).
+  var openSettings: OpenSettingsButton.Open
 
-  /// A form over `model`; `onScan` receives the prefix chosen.
-  package init(model: ImportBucketModel, onScan: @escaping (RemoteImportTarget) -> Void) {
+  /// A form over `model`; `onScan` receives the prefix chosen; `openSettings` opens the
+  /// connections' editor.
+  package init(
+    model: ImportBucketModel, onScan: @escaping (RemoteImportTarget) -> Void,
+    openSettings: @escaping OpenSettingsButton.Open = OpenSettingsButton.window
+  ) {
     self.model = model
     self.onScan = onScan
+    self.openSettings = openSettings
+  }
+
+  /// « S3 connections… »: the one place the connections are edited, a click away.
+  package var settingsButton: OpenSettingsButton {
+    OpenSettingsButton(tab: .s3, open: openSettings)
   }
 
   package var body: some View {
@@ -38,15 +50,18 @@ package struct ImportBucketView: View {
 
   private var connectionRow: some View {
     VStack(alignment: .leading, spacing: DesignMetrics.spacingS) {
-      Picker(selection: Binding(get: { model.connectionID }, set: { model.connectionID = $0 })) {
-        Text(.app("Choose a connection")).tag(nil as UUID?)
-        ForEach(model.connections) { connection in
-          Text(verbatim: connection.name).tag(connection.id as UUID?)
+      HStack {
+        Picker(selection: Binding(get: { model.connectionID }, set: { model.connectionID = $0 })) {
+          Text(.app("Choose a connection")).tag(nil as UUID?)
+          ForEach(model.connections) { connection in
+            Text(verbatim: connection.name).tag(connection.id as UUID?)
+          }
+        } label: {
+          Text(.app("Connection"))
         }
-      } label: {
-        Text(.app("Connection"))
+        .accessible(.importBucketConnection, label: .app("Connection"))
+        settingsButton
       }
-      .accessible(.importBucketConnection, label: .app("Connection"))
       TextField(
         text: Binding(get: { model.bucket }, set: { model.bucket = $0 }),
         prompt: Text(.app("bucket name"))

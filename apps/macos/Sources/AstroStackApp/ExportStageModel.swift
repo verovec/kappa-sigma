@@ -36,6 +36,8 @@ package final class ExportStageModel {
   package var local: Bool
   /// The next export's S3 copy, `nil` for none (card 0152).
   package var s3: S3Target?
+  /// The S3 connections the form offers, as Settings held them when last read (card 0177).
+  package internal(set) var s3Connections: [S3Connection]
   /// The file being uploaded, n of N, while an S3 copy runs.
   package internal(set) var uploadProgress: (file: Int, files: Int)?
   /// The time `{date}` and `{time}` stand for: the one shown is the one written to (R2), a new
@@ -101,6 +103,7 @@ package final class ExportStageModel {
     template = services.destination.template.text
     local = services.destination.local
     s3 = services.destination.s3
+    s3Connections = services.s3Connections()
     stamp = services.now()
     refresh()
   }

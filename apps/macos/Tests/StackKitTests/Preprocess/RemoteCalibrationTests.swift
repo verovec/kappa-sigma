@@ -1,4 +1,5 @@
 import Foundation
+import ProjectKit
 import StackKit
 import Synchronization
 import TestSupport
@@ -10,60 +11,143 @@ import Testing
 struct RemoteCalibrationTests {
   typealias RemoteNight = RemoteLaneTests.RemoteNight
 
-  @Test(
-    "testRemoteCalibrationDownloadedOnlyWhenBuilding: a library master is reused, not refetched",
-    .scratchDirectory)
-  func testRemoteCalibrationDownloadedOnlyWhenBuilding() async throws {
-    let root = try InventoryBuilderFallbackTests.folder("cal")
-    let inventory = try MasterBuilderTests.scan("golden-single-night", under: root)
-    let work = root.appendingPathComponent("work/run_C")
-    // Every calibration frame moved into the bucket; the lights stay where they are.
-    var objects: [String: Data] = [:]
-    var sets: [FrameSet] = []
-    for set in inventory.sets {
-      guard set.key.type != .light else {
-        sets.append(set)
-        continue
+  /// The golden night with every calibration frame moved into a bucket, the lights left where
+  /// they are, and the bucket holding them.
+  struct RemoteCalibration {
+    let inventory: Inventory
+    let bucket: FrameStagerTests.FakeBucket
+    let work: URL
+
+    static func make() throws -> Self {
+      let root = try InventoryBuilderFallbackTests.folder("cal")
+      let inventory = try MasterBuilderTests.scan("golden-single-night", under: root)
+      var objects: [String: Data] = [:]
+      var sets: [FrameSet] = []
+      for set in inventory.sets {
+        guard set.key.type != .light else {
+          sets.append(set)
+          continue
+        }
+        var frames: [CaptureFrame] = []
+        for frame in set.frames {
+          let key = "cal/" + PathMeta.baseName(frame.path)
+          objects[key] = try Data(contentsOf: URL(fileURLWithPath: frame.path))
+          var moved = frame
+          moved.path = "s3://astro/" + key
+          frames.append(moved)
+        }
+        sets.append(FrameSet(key: set.key, frames: frames, indices: set.indices))
       }
-      var frames: [CaptureFrame] = []
-      for frame in set.frames {
-        let key = "cal/" + PathMeta.baseName(frame.path)
-        objects[key] = try Data(contentsOf: URL(fileURLWithPath: frame.path))
-        var moved = frame
-        moved.path = "s3://astro/" + key
-        frames.append(moved)
-      }
-      sets.append(FrameSet(key: set.key, frames: frames, indices: set.indices))
+      var remote = inventory
+      remote.sets = sets
+      return Self(
+        inventory: remote, bucket: FrameStagerTests.FakeBucket(objects: objects),
+        work: root.appendingPathComponent("work/run_C"))
     }
-    var remote = inventory
-    remote.sets = sets
-    let bucket = FrameStagerTests.FakeBucket(objects: objects)
 
-    // First build: the raw frames have to be read, so they are downloaded.
-    var builder = MasterBuilder(runner: PipelineSiril().runner)
-    builder.stager = FrameStager(stores: [bucket.store])
-    let built = try await builder.build(
-      remote, into: work.appendingPathComponent("masters"), work: work)
-    #expect(!built.masters.isEmpty)
-    let downloaded = bucket.downloaded.count
-    #expect(downloaded > 0, "a master built from a bucket's frames reads them")
+    /// A builder that reads this bucket and knows what it holds now — what
+    /// `Preprocessor.readingBuckets` hands step 1 at the start of every run.
+    func builder() async -> MasterBuilder {
+      var builder = MasterBuilder(runner: PipelineSiril().runner)
+      builder.stager = FrameStager(stores: [bucket.store])
+      builder.identities = await builder.stager.identities(
+        of: inventory.sets.flatMap { $0.frames.map(\.path) })
+      return builder
+    }
 
-    // Second build with those masters as the library — `reuse` only considers library masters,
-    // which is what `CalibrationLibrary.reindex` marks them as.
-    let library = built.masters.map { master -> CalibrationMaster in
+    /// The calibration frames' keys in the bucket.
+    var keys: [String] {
+      inventory.sets.filter { $0.key.type != .light }.flatMap {
+        $0.frames.compactMap { ProjectSource.remoteParts(of: $0.path)?.key }
+      }
+    }
+  }
+
+  /// The first run's masters as the library, as `CalibrationLibrary.reindex` marks them: `reuse`
+  /// only considers library masters.
+  static func library(_ masters: [CalibrationMaster]) -> [CalibrationMaster] {
+    masters.map { master in
       var fromLibrary = master
       fromLibrary.fromLibrary = true
       return fromLibrary
     }
-    let reused = try await builder.build(
-      remote, into: work.appendingPathComponent("masters2"), work: work, library: library)
+  }
+
+  @Test(
+    "testRemoteCalibrationDownloadedOnlyWhenBuilding: a library master is reused, not refetched",
+    .scratchDirectory)
+  func testRemoteCalibrationDownloadedOnlyWhenBuilding() async throws {
+    let night = try RemoteCalibration.make()
+    // First run: the raw frames have to be read, so they are downloaded.
+    let built = try await night.builder().build(
+      night.inventory, into: night.work.appendingPathComponent("masters"), work: night.work)
+    #expect(!built.masters.isEmpty)
+    let downloaded = night.bucket.downloaded.count
+    #expect(downloaded > 0, "a master built from a bucket's frames reads them")
+
+    // Second run, the bucket listed again as every run does before step 1.
+    let reused = try await night.builder().build(
+      night.inventory, into: night.work.appendingPathComponent("masters2"), work: night.work,
+      library: Self.library(built.masters))
 
     #expect(
-      reused.warnings.contains { $0.contains("reused library master") },
-      "the proof held: \(reused.warnings)")
+      reused.warnings.filter { $0.contains("reused library master") }.count
+        == built.masters.count, "the proof held for every master: \(reused.warnings)")
     #expect(
-      bucket.downloaded.count == downloaded,
-      "a reused master never fetches its frames again: \(bucket.downloaded.count) vs \(downloaded)")
+      night.bucket.downloaded.count == downloaded,
+      "a reused master never fetches its frames again: \(night.bucket.downloaded.count)")
+  }
+
+  @Test(
+    "testFrameUploadedAgainRebuildsItsMasterOnly: a new ETag under the same key is a new frame",
+    .scratchDirectory)
+  func testFrameUploadedAgainRebuildsItsMasterOnly() async throws {
+    let night = try RemoteCalibration.make()
+    let built = try await night.builder().build(
+      night.inventory, into: night.work.appendingPathComponent("masters"), work: night.work)
+    let downloaded = night.bucket.downloaded.count
+    // A flat: no other master is stacked with it, so only its own proof is at stake here.
+    let changed = try #require(
+      night.inventory.sets.first { $0.key.type == .flat && !$0.frames.isEmpty })
+    let key = try #require(ProjectSource.remoteParts(of: changed.frames[0].path)?.key)
+    night.bucket.replace(key, with: Data("another exposure".utf8))
+
+    let second = try await night.builder().build(
+      night.inventory, into: night.work.appendingPathComponent("masters2"), work: night.work,
+      library: Self.library(built.masters))
+
+    #expect(
+      second.warnings.filter { $0.contains("rebuilding the") }.count == 1,
+      "only the set holding the new upload is rebuilt: \(second.warnings)")
+    #expect(
+      second.warnings.filter { $0.contains("reused library master") }.count
+        == built.masters.count - 1, "every other master still proves its frames")
+    #expect(
+      night.bucket.downloaded.count - downloaded == changed.frames.count,
+      "and only its frames are downloaded again")
+  }
+
+  @Test(
+    "testRemoteSigCarriesIdentities: a bucket-built master signs the bytes it read",
+    .scratchDirectory)
+  func testRemoteSigCarriesIdentities() async throws {
+    let night = try RemoteCalibration.make()
+    let builder = await night.builder()
+
+    let built = try await builder.build(
+      night.inventory, into: night.work.appendingPathComponent("masters"), work: night.work)
+
+    let master = try #require(built.masters.first)
+    let set = try #require(
+      night.inventory.sets.first { $0.key.type != .light && master.satisfies($0.key) })
+    let paths = set.frames.map(\.path)
+    let recorded = try #require(PoolSignature.read(at: PoolSignature.sidecar(of: master.path)))
+    #expect(
+      recorded.hash == PoolSignature.of(paths, identities: builder.identities),
+      "the .sig names each frame by what the bucket holds (size|etag)")
+    #expect(
+      recorded.hash != PoolSignature.of(paths),
+      "never by its key alone: `s3://…|?` matches whatever is uploaded there next")
   }
 
   @Test("a run whose bucket has no connection is refused before Siril starts", .scratchDirectory)

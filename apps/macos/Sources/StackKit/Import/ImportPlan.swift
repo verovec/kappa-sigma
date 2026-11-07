@@ -76,16 +76,24 @@ package struct ImportPlan: Equatable, Sendable {
   package var inventory: Inventory
   /// The library masters it was matched against, kept to replan without rescanning.
   package var library: [CalibrationMaster]
+  /// What a bucket answered of the scan's remote frames (`size|etag` by virtual path, card
+  /// 0181), kept with the library: a replan proves a bucket master as the scan did.
+  package var identities: [String: String]
   package var nights: [Night]
   package var calibration: [Channel]
   package var warnings: [String] { inventory.warnings }
 
   /// The plan of `inventory`, matched against `library` plus what the capture would build.
-  package init(inventory: Inventory, library: [CalibrationMaster], request: ImportRequest) {
+  package init(
+    inventory: Inventory, library: [CalibrationMaster], request: ImportRequest,
+    identities: [String: String] = [:]
+  ) {
     self.inventory = inventory
     self.library = library
+    self.identities = identities
     nights = Self.nights(inventory)
-    let candidates = CalibrationPreview.candidates(inventory: inventory, library: library)
+    let candidates = CalibrationPreview.candidates(
+      inventory: inventory, library: library, identities: identities)
     let proposed = CalibrationPreview(
       inventory: inventory, masters: candidates, force: request.forceCalibration)
     let applied = CalibrationPreview(

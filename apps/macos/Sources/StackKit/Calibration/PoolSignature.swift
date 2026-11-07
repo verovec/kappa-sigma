@@ -48,9 +48,16 @@ package enum PoolSignature {
 
   /// Whether the master at `master` was stacked from exactly `frames` (`builtFromSet`); a master
   /// without a sidecar proves nothing and is rebuilt once.
+  ///
+  /// A frame of a bucket proves only by what the bucket answers of it now: without its identity
+  /// (a listing that failed) nothing says its bytes are the ones stacked, and a `.sig` written
+  /// from its key alone (before card 0181) would match whatever was uploaded there since.
   package static func proves(
     master: String, builtFrom frames: [String], identities: [String: String] = [:]
   ) -> Bool {
+    guard frames.allSatisfy({ !$0.hasPrefix("s3://") || identities[$0] != nil }) else {
+      return false
+    }
     guard let recorded = read(at: sidecar(of: master)), !recorded.hash.isEmpty else { return false }
     return recorded.hash == of(frames, identities: identities)
   }

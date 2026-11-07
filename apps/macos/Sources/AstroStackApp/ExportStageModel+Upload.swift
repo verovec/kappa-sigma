@@ -113,13 +113,6 @@ extension ExportStageModel {
   /// deleted then.
   func upload(_ urls: [URL], to remote: RemotePlan?, discardPartial: Bool) async -> UploadOutcome {
     guard let remote else { return .none }
-    // A window may have imported this prefix while the files were written: R7 is judged again
-    // before the first object is sent (card 0180).
-    let location = RemoteLocation(bucket: remote.target.bucket, prefix: remote.key)
-    guard ExportGuard.remoteRefusal(location, sources: services.remoteSources()) == nil else {
-      let refusal = UserFacingError.exportS3(.captureBucket(remote.url))
-      return .failed(String(localized: refusal.message))
-    }
     var sent: [String] = []
     for (index, url) in urls.enumerated() {
       uploadProgress = (index + 1, urls.count)
@@ -229,12 +222,8 @@ extension ExportStageModel {
   }
 
   /// `s3://bucket/key` as bucket and key.
-  package nonisolated static func split(_ url: String) -> (String, String)? {
-    guard url.hasPrefix("s3://") else { return nil }
-    let rest = url.dropFirst("s3://".count)
-    let parts = rest.split(separator: "/", maxSplits: 1, omittingEmptySubsequences: false)
-    guard let bucket = parts.first, !bucket.isEmpty else { return nil }
-    return (String(bucket), parts.count > 1 ? String(parts[1]) : "")
+  package static func split(_ url: String) -> (String, String)? {
+    ProjectSource.remoteFolder(of: url).map { ($0.bucket, $0.prefix) }
   }
 
   /// A failure as the user reads it: S3's own words as sent, else the shared sentence.

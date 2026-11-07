@@ -20,15 +20,15 @@ package struct ArrowRepeat: Equatable, Sendable {
   /// A key that is not held.
   package init() {}
 
-  /// The steps one key event moves: ↑/↓ (`accelerating`) by `multiplier(_:)`, ←/→ one per press
-  /// or repeat, never faster; `nil` on a release, which moves nothing.
+  /// The steps one key event moves: ↑/↓ (`accelerating`) 1 on a press then the current tier on
+  /// each repeat, ←/→ one per press or repeat, never faster; `nil` on a release, which moves
+  /// nothing.
   package mutating func steps(_ phase: Phase, accelerating: Bool) -> Int? {
     if accelerating { return multiplier(phase) }
     return phase == .up ? nil : Self.tiers[0]
   }
 
-  /// The steps `phase` moves: 1 on a press, the current tier on a repeat, `nil` on a release.
-  package mutating func multiplier(_ phase: Phase) -> Int? {
+  private mutating func multiplier(_ phase: Phase) -> Int? {
     switch phase {
     case .down:
       repeats = 0

@@ -5,11 +5,12 @@ package import SwiftUI
 /// the default badge, and its help: the one-line « why » on hover, the card on click (0086).
 ///
 /// RenderKit never imports the app: the caller passes `format` and `parse` (the app's
-/// `AstroFormat.parameter` and `parameter(parsing:)`, which round-trip exactly). Every row steps
-/// (cards 0085, 0179): by the panel's `step`, else `ParameterStep.default(for:)` of its range.
-/// ↑/↓ in the field or on the focused slider move one step per press and speed up while held
-/// (`ArrowRepeat`); ←/→ on the slider move one step per press; ⇧ or ⌥ a fine step; an ⌥-drag
-/// runs at a tenth of the pointer's travel. The field shows the value applied at once (R2).
+/// `AstroFormat.parameter` and `parameter(parsing:)`, which round-trip exactly). Every field steps
+/// (cards 0085, 0179): ↑/↓ move one step per press and speed up while held (`ArrowRepeat`), by
+/// the panel's `step`, else `ParameterStep.default(for:near:)` of the range and the default; ⇧
+/// or ⌥ a fine step. With a declared `step` the slider takes focus too: ←/→ one step per press,
+/// ↑/↓ as in the field, and an ⌥-drag runs at a tenth of the pointer's travel. The field shows
+/// the value applied (R2).
 package struct ParameterRow: View {
   /// Where an ⌥-drag's gearing began: the value and the pointer then.
   private struct Gearing: Equatable {
@@ -37,6 +38,9 @@ package struct ParameterRow: View {
   /// The value the last arrow wrote, until the binding shows it: auto-repeats arrive before the
   /// row is drawn again, and stepping from the binding then would step from a stale value.
   @State private var pending: Double?
+  /// Arrow releases: each one shows the binding's value again, once the row is drawn, so a write
+  /// the model rounded or refused never stays in the field (R2).
+  @State private var releases = 0
   @FocusState private var editing: Bool
 
   /// A row editing `parameter`; `help` is its « ? » (summary on hover, content on click);
@@ -73,6 +77,13 @@ package struct ParameterRow: View {
     .onAppear { text = format(parameter.value) }
     // The slider and reset move the value while the field may have focus: always show it.
     .onChange(of: parameter.value) {
+      pending = nil
+      text = format(parameter.value)
+    }
+    // After a release the binding is the truth again: what the model kept, rounded or refused.
+    // Only after an arrow wrote: a blocked step leaves the text typed as it was.
+    .task(id: releases) {
+      guard releases > 0, pending != nil else { return }
       pending = nil
       text = format(parameter.value)
     }
@@ -148,36 +159,45 @@ package struct ParameterRow: View {
     }
   }
 
-  /// The slider takes focus, arrows move it, ⌥ is tracked for the drag gearing.
-  private func stepped<Content: View>(_ slider: Content) -> some View {
-    slider
-      .focusable()
-      .onKeyPress(
-        keys: [.leftArrow, .rightArrow, .upArrow, .downArrow], phases: [.down, .repeat, .up]
-      ) { press in
-        arrow(press, typed: false)
-      }
-      .onModifierKeysChanged(mask: .option) { _, held in fineHeld = !held.isEmpty }
+  /// With a declared step the slider takes focus, arrows move it, ⌥ is tracked for the gearing;
+  /// without one it stays out of the tab loop, as it was (the field still steps).
+  @ViewBuilder private func stepped<Content: View>(_ slider: Content) -> some View {
+    if step != nil {
+      slider
+        .focusable()
+        .onKeyPress(
+          keys: [.leftArrow, .rightArrow, .upArrow, .downArrow], phases: [.down, .repeat, .up]
+        ) { press in
+          arrow(press, typed: false)
+        }
+        .onModifierKeysChanged(mask: .option) { _, held in fineHeld = !held.isEmpty }
+    } else {
+      slider
+    }
   }
 
-  /// The row's step: the panel's, else a decade of its range.
-  private var arrowStep: ParameterStep { step ?? .default(for: parameter.range) }
+  /// The row's step: the panel's, else a decade of its range near its default.
+  private var arrowStep: ParameterStep {
+    step ?? .default(for: parameter.range, near: parameter.defaultValue)
+  }
 
   /// One arrow event, applied to the value and shown in the field.
   ///
-  /// ↑/↓ move by `ArrowRepeat`'s tier, ←/→ one step per press or repeat.
-  /// The step starts from the value the row last wrote (`pending`), else the binding's. From the
-  /// field (`typed`), what was typed is applied first. The field then shows the new value (R2).
+  /// ↑/↓ move by `ArrowRepeat`'s tier, ←/→ one step per press or repeat. The step starts from
+  /// the value the row last wrote (`pending`), else the binding's. From the field (`typed`),
+  /// what was typed is applied first; text that does not read as a number blocks the step and
+  /// stays for the user to fix, never replaced by another value.
   private func arrow(_ press: KeyPress, typed: Bool) -> KeyPress.Result {
     let vertical = press.key == .upArrow || press.key == .downArrow
-    let phase: ArrowRepeat.Phase =
-      press.phase == .up ? .up : press.phase == .repeat ? .repeat : .down
-    guard let times = arrows.steps(phase, accelerating: vertical) else {
+    guard let times = arrows.steps(ArrowRepeat.Phase(press.phase), accelerating: vertical) else {
+      releases &+= 1
       return vertical ? .handled : .ignored
     }
     var edited = parameter
     if let pending { edited.set(pending) }
-    if typed && text != format(edited.value) { _ = edited.commit(text, parse: parse) }
+    if typed && text != format(edited.value) {
+      guard edited.commit(text, parse: parse) else { return .handled }
+    }
     let fine = !press.modifiers.isDisjoint(with: [.shift, .option])
     let forward = press.key == .upArrow || press.key == .rightArrow
     edited.nudge(arrowStep.moved(edited.value, forward: forward, fine: fine, times: times))
@@ -191,7 +211,7 @@ package struct ParameterRow: View {
   ///
   /// The gearing re-anchors where ⌥ was pressed or released, so the value never jumps.
   private func slide(to pointer: Double) {
-    guard dragging, fineHeld else {
+    guard let step, dragging, fineHeld else {
       gearing = nil
       parameter.slide(pointer, on: dragRange)
       return
@@ -199,7 +219,7 @@ package struct ParameterRow: View {
     let gearing = self.gearing ?? Gearing(anchor: parameter.value, start: pointer)
     self.gearing = gearing
     parameter.slide(
-      arrowStep.fineDragValue(anchor: gearing.anchor, start: gearing.start, pointer: pointer),
+      step.fineDragValue(anchor: gearing.anchor, start: gearing.start, pointer: pointer),
       on: dragRange)
   }
 
@@ -208,5 +228,12 @@ package struct ParameterRow: View {
     pending = nil
     _ = parameter.commitEdit(text, format: format, parse: parse)
     text = format(parameter.value)
+  }
+}
+
+extension ArrowRepeat.Phase {
+  /// The phase of a SwiftUI key press.
+  fileprivate init(_ phase: KeyPress.Phases) {
+    self = phase == .up ? .up : phase == .repeat ? .repeat : .down
   }
 }

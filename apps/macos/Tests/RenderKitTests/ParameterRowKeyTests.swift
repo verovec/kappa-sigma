@@ -110,28 +110,58 @@ struct ParameterRowKeyTests {
   struct Host: View {
     let box: Box
     let step: ParameterStep?
+    /// The model rounds what it is sent, as a whole-number Stacking knob does.
+    let rounds: Bool
     @State private var value: ParameterValue
 
-    init(box: Box, step: ParameterStep?) {
+    init(box: Box, step: ParameterStep?, rounds: Bool = false) {
       self.box = box
       self.step = step
+      self.rounds = rounds
       _value = State(initialValue: box.value)
     }
 
     var body: some View {
       ParameterRow(
-        .renderKit("Hα blend"), parameter: $value, key: "keys", step: step,
-        format: { String($0) }, parse: { Double($0) }
+        .renderKit("Hα blend"),
+        parameter: Binding(
+          get: { value },
+          set: { sent in
+            var kept = sent
+            if rounds { kept.set(sent.value.rounded()) }
+            value = kept
+          }),
+        key: "keys", step: step, format: { String($0) }, parse: { Double($0) }
       )
       .padding()
       .onChange(of: value) { box.value = value }
     }
   }
 
+  /// A row over a binding the test builds: one that lags, or one that refuses.
+  struct BindingHost: View {
+    let binding: Binding<ParameterValue>
+
+    var body: some View {
+      ParameterRow(
+        .renderKit("Hα blend"), parameter: binding, key: "keys",
+        format: { String($0) }, parse: { Double($0) }
+      )
+      .padding()
+    }
+  }
+
   /// A row over `value` in a window; `step` as a panel would pass it.
-  static func hosted(_ value: ParameterValue, step: ParameterStep? = nil) -> Hosted {
+  static func hosted(
+    _ value: ParameterValue, step: ParameterStep? = nil, rounds: Bool = false
+  ) -> Hosted {
     let box = Box(value)
-    let host = NSHostingView(rootView: Host(box: box, step: step))
+    return hosted(box, Host(box: box, step: step, rounds: rounds))
+  }
+
+  /// `view` in an offscreen window, `box` holding what the test reads.
+  static func hosted(_ box: Box, _ view: some View) -> Hosted {
+    let host = NSHostingView(rootView: view)
     let window = NSWindow(
       contentRect: NSRect(x: 0, y: 0, width: 420, height: 140), styleMask: [.titled],
       backing: .buffered, defer: false)

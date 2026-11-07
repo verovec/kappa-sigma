@@ -27,6 +27,15 @@ struct S3TestEnvironmentTests {
   static let rows: [Row] = [
     Row(name: "unset: skip", env: [:], expected: nil),
     Row(
+      name: "placeholders in .env: the defaults",
+      env: [
+        "ASTROSTACK_S3_LIVE_ENDPOINT": "http://127.0.0.1:9000", "ASTROSTACK_S3_LIVE_REGION": "",
+        "ASTROSTACK_S3_LIVE_BUCKET": "", "ASTROSTACK_S3_LIVE_ACCESS_KEY": "",
+      ],
+      expected: Expected(
+        url: "http://127.0.0.1:9000", region: "us-east-1", bucket: "astrostack-live",
+        access: "minioadmin", path: true)),
+    Row(
       name: "skip flag wins over an endpoint",
       env: ["ASTROSTACK_SKIP_LIVE": "1", "ASTROSTACK_S3_LIVE_ENDPOINT": "http://127.0.0.1:9000"],
       expected: nil),
@@ -67,20 +76,24 @@ struct S3TestEnvironmentTests {
   }
 
   @Test(
-    "testOnlyJustS3LiveRunsTheSuites",
+    "testOnlyTheS3RecipeRunsTheSuites",
     arguments: [
       ([:], false),
       (["ASTROSTACK_S3_LIVE_ENDPOINT": "https://s3.example.net"], false),  // .env alone: no
       (["ASTROSTACK_S3_LIVE": "1"], true),
       (["ASTROSTACK_S3_LIVE": "1", "ASTROSTACK_SKIP_LIVE": "1"], false),
     ] as [([String: String], Bool)])
-  func testOnlyJustS3LiveRunsTheSuites(_ env: [String: String], _ requested: Bool) {
+  func testOnlyTheS3RecipeRunsTheSuites(_ env: [String: String], _ requested: Bool) {
     #expect(LiveS3Environment.isRequested(env) == requested)
   }
 
   @Test(
     "testRemovePrefixRefusesWhatIsNotARun",
-    arguments: ["", "captures/M31/", "astrostack-live/", "Astrostack-live/x/"])
+    arguments: [
+      "", "captures/M31/", "astrostack-live/", "Astrostack-live/x/", "astrostack-live/2026",
+      "astrostack-live/20261107-\(run)",
+      "astrostack-live/20261107-\(run)/sub/",
+    ])
   func testRemovePrefixRefusesWhatIsNotARun(_ prefix: String) async throws {
     // Refused before any request: the endpoint is never contacted.
     let live = try #require(
@@ -100,19 +113,32 @@ struct S3TestEnvironmentTests {
     #expect(first != second)
   }
 
+  static let run = "6F9619FF-8B86-D011-B42D-00CF4FC964FF"
+
   @Test("testPrefixSweepKeepsToday")
   func testPrefixSweepKeepsToday() {
     let now = Date(timeIntervalSince1970: 1_794_052_800)  // 2026-11-07 12:00 UTC
+    let run = Self.run
     let keys = [
-      "astrostack-live/20261107-a/x.fit",  // today: a run may be writing it
-      "astrostack-live/20261106-b/x.fit",  // yesterday: within the day's grace
-      "astrostack-live/20261104-c/x.fit",  // stale: a killed run left it
-      "astrostack-live/20261104-c/sub/y.fit",
-      "astrostack-live/not-a-date/x.fit",  // never ours to judge
-      "captures/20200101-d/x.fit",  // outside the live root: never touched
+      "astrostack-live/20261107-\(run)/x.fit",  // today: a run may be writing it
+      "astrostack-live/20261106-\(run)/x.fit",  // yesterday: within the day's grace
+      "astrostack-live/20261104-\(run)/x.fit",  // stale: a killed run left it
+      "astrostack-live/20261104-\(run)/sub/y.fit",
+      "astrostack-live/12345678-ABCD-4ABC-8ABC-123456789ABC/x.fit",  // a bare UUID, not a day
+      "astrostack-live/20261399-\(run)/x.fit",  // no such day
+      "astrostack-live/20261104-not-a-uuid/x.fit",
+      "astrostack-live/not-a-date/x.fit",
+      "captures/20200101-\(run)/x.fit",  // outside the live root: never touched
     ]
     #expect(
-      LiveS3Environment.staleKeys(keys, now: now)
-        == ["astrostack-live/20261104-c/x.fit", "astrostack-live/20261104-c/sub/y.fit"])
+      LiveS3Environment.staleKeys(keys, now: now) == [
+        "astrostack-live/20261104-\(run)/x.fit", "astrostack-live/20261104-\(run)/sub/y.fit",
+      ])
+  }
+
+  @Test("testRunPrefixShape")
+  func testRunPrefixShape() {
+    #expect(LiveS3Environment.isRunPrefix(LiveS3Environment.runPrefix()))
+    #expect(LiveS3Environment.isRunPrefix("astrostack-live/20261107-\(Self.run)/"))
   }
 }

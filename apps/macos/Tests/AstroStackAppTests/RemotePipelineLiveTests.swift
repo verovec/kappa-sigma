@@ -125,30 +125,15 @@ struct RemotePipelineLiveTests {
     let names = try FileManager.default.contentsOfDirectory(atPath: folder.path)
     var digests: [String: String] = [:]
     for name in names.sorted() where name.hasPrefix("master_") && name.hasSuffix(".fits") {
-      let url = folder.appendingPathComponent(name)
-      let file = try FITSFile.read(at: url)
-      let cards = try Self.headerCards(of: Data(contentsOf: url)).filter { !$0.hasPrefix("DATE ") }
+      let file = try FITSFile.read(at: folder.appendingPathComponent(name))
       var hasher = SHA256()
-      hasher.update(data: Data(cards.joined().utf8))
+      for card in file.header.cards where card.keyword != "DATE" {
+        hasher.update(data: Data(card.raw.utf8))
+      }
       hasher.update(data: file.dataUnit)
       digests[name] = hasher.finalize().map { String(format: "%02x", $0) }.joined()
     }
     return digests
-  }
-
-  /// The 80-column cards of the primary header, through `END`.
-  static func headerCards(of bytes: Data) throws -> [String] {
-    var cards: [String] = []
-    var offset = bytes.startIndex
-    while offset + 80 <= bytes.endIndex {
-      guard let card = String(bytes: bytes[offset..<offset + 80], encoding: .ascii) else {
-        throw CocoaError(.fileReadCorruptFile)
-      }
-      cards.append(card)
-      if card.hasPrefix("END ") { return cards }
-      offset += 80
-    }
-    throw CocoaError(.fileReadCorruptFile)
   }
 
   /// Each set's frame count, by set.

@@ -1,6 +1,5 @@
 package import Foundation
 package import RemoteKit
-internal import Synchronization
 package import Testing
 
 /// The live S3 suites' one configuration (card 0183): `LiveS3Tests`, `LiveExportS3Tests` and
@@ -9,8 +8,8 @@ package import Testing
 /// They run only under `just s3-live` (`ASTROSTACK_S3_LIVE=1`, `isRequested`): an endpoint left in
 /// `.env` never turns them on inside `just check`. A local MinIO by default (minioadmin keys,
 /// path-style, bucket `astrostack-live`); a real bucket when `.env` names one. Every test writes
-/// under its own `runPrefix()` and removes it; what a killed run left is reaped a day later by the
-/// next process (`sweepOnce`).
+/// under its own `runPrefix()` and removes it; what a killed run left is reaped a day later
+/// (`sweep`, run by `LiveS3Tests.testSweepRemovesDayOldRunsOnly`).
 package struct LiveS3Environment: Sendable {
   /// What the helpers refuse.
   package enum Refusal: Error, Equatable {
@@ -38,7 +37,9 @@ package struct LiveS3Environment: Sendable {
 
   /// The configuration `environment` names; `nil` (a requested suite then fails) without
   /// `ASTROSTACK_S3_LIVE_ENDPOINT`, with a non-http(s) one, or under `ASTROSTACK_SKIP_LIVE=1`.
-  package init?(environment: [String: String]) {
+  package init?(environment given: [String: String]) {
+    // A placeholder line of `.env` (`KEY=`) is no value: the default applies.
+    let environment = given.filter { !$0.value.isEmpty }
     guard environment["ASTROSTACK_SKIP_LIVE"] != "1",
       let text = environment["ASTROSTACK_S3_LIVE_ENDPOINT"], let url = URL(string: text),
       let endpoint = try? S3Endpoint(
@@ -64,13 +65,12 @@ package struct LiveS3Environment: Sendable {
 
   private static let transport = HTTPTransport.urlSession()
 
-  /// One test's run: the bucket made sure of, what killed runs left swept (once per process, best
-  /// effort), and a prefix of its own handed to `body` with the client; the prefix is removed
-  /// afterwards whether `body` returned, threw or was cancelled.
+  /// One test's run: the bucket made sure of, and a prefix of its own handed to `body` with the
+  /// client; the prefix is removed afterwards whether `body` returned, threw or was cancelled,
+  /// and listed again to prove it (a DELETE answers 204 even for a key it did not find).
   package func withRun(_ body: (S3Client, String) async throws -> Void) async throws {
     let client = client()
     try await ensureBucket(client)
-    await sweepOnce(client: client)
     let prefix = Self.runPrefix()
     do {
       try await body(client, prefix)
@@ -83,9 +83,16 @@ package struct LiveS3Environment: Sendable {
 
   /// `removePrefix` in a task of its own: a test cancelled by its time limit still cleans up.
   private func removeUncancelled(_ prefix: String, _ client: S3Client) async {
-    let removal = await Task { try await removePrefix(prefix, client: client) }.result
-    if case .failure(let error) = removal {
+    let removal = await Task {
+      try await removePrefix(prefix, client: client)
+      return try await client.list(bucket: bucket, prefix: prefix).map(\.key)
+    }.result
+    switch removal {
+    case .success(let left) where !left.isEmpty:
+      Issue.record("\(left.count) objects left under \(prefix) after removal: \(left.prefix(3))")
+    case .failure(let error):
       Issue.record("could not remove \(prefix) from \(bucket): \(error)")
+    case .success: break
     }
   }
 
@@ -95,20 +102,37 @@ package struct LiveS3Environment: Sendable {
     "\(root)\(day(of: now))-\(UUID().uuidString)/"
   }
 
-  /// The keys of `keys` a run older than `staleAge` left under `root`; a key whose run segment
-  /// carries no day is never judged (it is not ours to delete).
+  /// The keys of `keys` a run older than `staleAge` left under `root`; a key whose run segment is
+  /// not `<yyyyMMdd>-<UUID>` (a real day, a whole UUID) is never judged: it is not ours to delete.
   package static func staleKeys(_ keys: [String], now: Date) -> [String] {
     let cutoff = day(of: now.addingTimeInterval(-staleAge))
     return keys.filter { key in
       guard key.hasPrefix(root) else { return false }
       let run = key.dropFirst(root.count).prefix { $0 != "/" }
-      let stamp = run.prefix(8)
-      guard stamp.count == 8, stamp.allSatisfy(\.isASCII), stamp.allSatisfy(\.isNumber),
-        run.dropFirst(8).first == "-"
-      else { return false }
+      guard let stamp = runDay(String(run)) else { return false }
       return stamp < cutoff
     }
   }
+
+  /// True for a run's own prefix and nothing wider: `root` + `<yyyyMMdd>-<UUID>` + `/`.
+  package static func isRunPrefix(_ prefix: String) -> Bool {
+    guard prefix.hasPrefix(root), prefix.hasSuffix("/") else { return false }
+    let run = prefix.dropFirst(root.count).dropLast()
+    return !run.contains("/") && runDay(String(run)) != nil
+  }
+
+  /// The day of a run segment `<yyyyMMdd>-<UUID>`, `nil` for anything else.
+  private static func runDay(_ run: String) -> String? {
+    let stamp = String(run.prefix(8))
+    guard run.dropFirst(8).first == "-", UUID(uuidString: String(run.dropFirst(9))) != nil,
+      stamp.allSatisfy(\.isASCII), stamp.allSatisfy(\.isNumber),
+      let parsed = try? Date(stamp, strategy: dayStyle), day(of: parsed) == stamp
+    else { return nil }
+    return stamp
+  }
+
+  private static let dayStyle = Date.ISO8601FormatStyle().year().month().day()
+    .dateSeparator(.omitted)
 
   /// The bucket, created when the service says it does not exist; an existing one (listable with
   /// these keys) is used as is, so a real bucket needs no CreateBucket permission. Outside
@@ -138,12 +162,10 @@ package struct LiveS3Environment: Sendable {
     }
   }
 
-  /// Deletes every object under `prefix` (a run's own cleanup); a prefix that is not a run's
-  /// (outside `root`, or `root` itself) is refused, never listed.
+  /// Deletes every object under `prefix` (a run's own cleanup); anything but a run's own prefix
+  /// (`isRunPrefix`) is refused, never listed: another session's runs share the bucket.
   package func removePrefix(_ prefix: String, client: S3Client) async throws {
-    guard prefix.hasPrefix(Self.root), prefix.count > Self.root.count else {
-      throw Refusal.notARunPrefix(prefix)
-    }
+    guard Self.isRunPrefix(prefix) else { throw Refusal.notARunPrefix(prefix) }
     try await delete(try await client.list(bucket: bucket, prefix: prefix).map(\.key), client)
   }
 
@@ -152,18 +174,6 @@ package struct LiveS3Environment: Sendable {
     let keys = try await client.list(bucket: bucket, prefix: Self.root).map(\.key)
     try await delete(Self.staleKeys(keys, now: now), client)
   }
-
-  /// `sweep`, the first time a test of this process asks; later calls do nothing. Housekeeping:
-  /// a sweep that fails fails no test (the next process tries again).
-  package func sweepOnce(client: S3Client) async {
-    let first = Self.swept.withLock { swept in
-      defer { swept = true }
-      return !swept
-    }
-    if first { try? await sweep(client: client) }
-  }
-
-  private static let swept = Mutex(false)
 
   /// Deletes `keys`, `limit` requests in flight.
   private func delete(_ keys: [String], _ client: S3Client) async throws {
@@ -186,9 +196,7 @@ package struct LiveS3Environment: Sendable {
   }
 
   /// `yyyyMMdd` of `date`, UTC: one spelling on every host.
-  private static func day(of date: Date) -> String {
-    date.formatted(.iso8601.year().month().day().dateSeparator(.omitted))
-  }
+  private static func day(of date: Date) -> String { date.formatted(dayStyle) }
 }
 
 extension Trait where Self == ConditionTrait {

@@ -92,6 +92,20 @@ struct LiveS3Tests {
     }
   }
 
+  @Test("What a run killed days ago left is swept; a run of today is kept", .scratchDirectory)
+  func testSweepRemovesDayOldRunsOnly() async throws {
+    let live = try #require(LiveS3Environment.current)
+    let file = try Self.file(try ScratchDirectory.url.appendingPathComponent("s"), bytes: 16)
+    let killed = LiveS3Environment.runPrefix(now: Date().addingTimeInterval(-3 * 24 * 3600))
+    try await live.withRun { client, prefix in
+      _ = try await client.upload(file: file, bucket: live.bucket, key: killed + "x.fit")
+      _ = try await client.upload(file: file, bucket: live.bucket, key: prefix + "x.fit")
+      try await live.sweep(client: client)
+      #expect(try await client.list(bucket: live.bucket, prefix: killed).isEmpty)
+      #expect(try await client.list(bucket: live.bucket, prefix: prefix).count == 1)
+    }
+  }
+
   /// A file of `bytes` pseudo-random bytes (seeded, so a failure reproduces).
   static func file(_ url: URL, bytes: Int) throws -> URL {
     var generator = SplitMix(state: UInt64(bytes))

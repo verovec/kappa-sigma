@@ -68,7 +68,7 @@ struct S3ClientLookupTests {
     }
   }
 
-  @Test("a run's buckets: a refused connection's bucket answers the refusal, the others read")
+  @Test("a run's buckets: a refused connection's bucket keeps its refusal, the others read")
   func testRunStoresSurfaceTheKeychainRefusal() async throws {
     let refusal = S3ConnectionStore.Refusal.keychain(KeychainError(status: -25293))
     let refused = UUID()
@@ -78,13 +78,15 @@ struct S3ClientLookupTests {
       RunStoresTests.source(2, bucket: "other"),
     ]
 
-    let stores = await ImportPlanning.runStores(
+    let buckets = await ImportPlanning.runStores(
       sources, client: { id in if id == refused { throw refusal } else { return client } })
 
-    #expect(stores.map(\.bucket) == ["astro", "other"], "the run still gets every bucket")
-    let astro = try #require(stores.first)
-    await #expect(throws: refusal) { _ = try await astro.list("M31") }
-    #expect(UserFacingError(refusal) == .s3Connection(refusal), "the run shows the refusal")
+    #expect(buckets.stores.map(\.bucket) == ["other"])
+    let reading = try #require(
+      buckets.refusal(reading: ["/local/a.fits", "s3://astro/M31/l.fits"]))
+    #expect(reading as? S3ConnectionStore.Refusal == refusal, "a run reading the bucket says why")
+    #expect(buckets.refusal(reading: ["/local/a.fits", "s3://other/M31/l.fits"]) == nil)
+    #expect(UserFacingError(refusal) == .s3Connection(refusal), "in the refusal's own words")
   }
 
   @Test("buckets sharing one connection: the Keychain is read once")
@@ -103,6 +105,6 @@ struct S3ClientLookupTests {
         return client
       })
 
-    #expect(stores.count == 3 && lookups.onMain.count == 1)
+    #expect(stores.stores.count == 3 && lookups.onMain.count == 1)
   }
 }

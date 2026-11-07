@@ -106,18 +106,16 @@ extension S3ClientTests {
     }
   }
 
-  /// The parts of `tenBytes` in 4-byte parts, each tagged with its own MD5 as S3 does.
-  static let partTags = ["0123", "4567", "89"].map { FileDigest.md5Hex(Data($0.utf8)) }
+  /// The ETags S3 gives `tenBytes`: one PUT, and 4-byte parts (« 0123 », « 4567 », « 89 »),
+  /// computed outside Swift (Python `hashlib`) so the code never checks itself.
+  static let singleETag = "781e5e245d69b566979b86e28d23f2c7"
+  static let multipartETag = "61e3716e3a7767581863b67c4e785584-3"
 
-  /// A server whose parts answer their MD5, whose creating request answers 412, and whose HEAD
-  /// shows ten bytes tagged `etag`.
+  /// A server whose creating request answers 412 and whose HEAD shows ten bytes tagged `etag`.
   static func refusingServer(headETag etag: String) -> Fake {
     multipartServer { request in
       if creates(request) {
         return .error(412, code: "PreconditionFailed", message: "precondition")
-      }
-      if let part = request.query("partNumber").flatMap(Int.init) {
-        return .make(200, headers: ["etag": "\"\(partTags[part - 1])\""])
       }
       if request.method == "HEAD" {
         return .make(200, headers: ["content-length": "10", "etag": "\"\(etag)\""])
@@ -132,14 +130,13 @@ extension S3ClientTests {
   func testUploadOwnObjectAfterLostAnswer(row: NoOverwriteRow) async throws {
     let file = try ScratchDirectory.url.appendingPathComponent("final.tif")
     try Self.tenBytes.write(to: file)
-    let etag =
-      row.multipart
-      ? try #require(FileDigest.multipartETag(Self.partTags)) : FileDigest.md5Hex(Self.tenBytes)
+    // An uppercase ETag (some S3-compatible services) is the same tag.
+    let etag = (row.multipart ? Self.multipartETag : Self.singleETag).uppercased()
 
     let object = try await Self.refusingServer(headETag: etag).client(policy: row.policy)
       .upload(file: file, bucket: "exports", key: "M31/final.tif", ifNoneMatch: true)
 
-    #expect(object.size == 10 && object.etag == etag)
+    #expect(object.size == 10 && object.etag.lowercased() == etag.lowercased())
   }
 
   @Test(
@@ -160,29 +157,14 @@ extension S3ClientTests {
     }
   }
 
-  struct ETagRow: Sendable, CustomTestStringConvertible {
-    let parts: [String]
-    let expected: String?
-    var testDescription: String { "\(parts.count) parts → \(expected ?? "nil")" }
-  }
-
-  @Test(
-    "a multipart ETag is the MD5 of the parts' binary MD5s and their count; else nothing",
-    arguments: [
-      // md5(md5("a")) — the one-part case of the AWS rule, checked by hand.
-      ETagRow(
-        parts: ["0cc175b9c0f1b6a831c399e269772661"],
-        expected: FileDigest.md5Hex(
-          Data([
-            0x0c, 0xc1, 0x75, 0xb9, 0xc0, 0xf1, 0xb6, 0xa8, 0x31, 0xc3, 0x99, 0xe2, 0x69, 0x77,
-            0x26,
-            0x61,
-          ])) + "-1"),
-      ETagRow(parts: [], expected: nil),
-      ETagRow(parts: ["p1"], expected: nil),
-      ETagRow(parts: [String(repeating: "z", count: 32)], expected: nil),
-    ])
-  func testMultipartETag(row: ETagRow) {
-    #expect(FileDigest.multipartETag(row.parts) == row.expected)
+  @Test("a multipart ETag is the MD5 of the parts' binary MD5s and their count")
+  func testMultipartETag() {
+    let parts = ["0123", "4567", "89"].map { FileDigest.md5(Data($0.utf8)) }
+    #expect(FileDigest.multipartETag(parts) == Self.multipartETag)
+    #expect(
+      FileDigest.multipartETag([FileDigest.md5(Data("a".utf8))])
+        == "b6ff9a06b7e20bcb2858c5b8ff744aea-1")
+    #expect(FileDigest.multipartETag([]) == nil)
+    #expect(FileDigest.md5Hex(Self.tenBytes) == Self.singleETag)
   }
 }

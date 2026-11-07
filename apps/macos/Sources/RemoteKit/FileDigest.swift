@@ -15,37 +15,15 @@ package enum FileDigest {
     Insecure.MD5.hash(data: data).hexString
   }
 
-  /// The ETag S3 gives an object completed from parts tagged `parts` (each its part's hex MD5):
-  /// the MD5 of the parts' binary MD5s, then `-<count>`; `nil` when a tag is not an MD5 (SSE-KMS
-  /// or SSE-C), so nothing can be told from it.
-  package static func multipartETag(_ parts: [String]) -> String? {
-    var md5s = Data()
-    for tag in parts {
-      guard tag.utf8.count == 32, let bytes = hexBytes(tag) else { return nil }
-      md5s.append(contentsOf: bytes)
-    }
-    return parts.isEmpty ? nil : "\(Insecure.MD5.hash(data: md5s).hexString)-\(parts.count)"
+  /// The ETag S3 gives an object completed from parts whose MD5s are `parts` (computed from the
+  /// bytes sent, never read back from the service): the MD5 of those MD5s, then `-<count>`.
+  package static func multipartETag(_ parts: [Data]) -> String? {
+    guard !parts.isEmpty else { return nil }
+    return "\(Insecure.MD5.hash(data: Data(parts.joined())).hexString)-\(parts.count)"
   }
 
-  private static func hexBytes(_ hex: String) -> [UInt8]? {
-    let digits = Array(hex.lowercased().utf8)
-    var bytes: [UInt8] = []
-    for index in stride(from: 0, to: digits.count, by: 2) {
-      guard let high = nibble(digits[index]), let low = nibble(digits[index + 1]) else {
-        return nil
-      }
-      bytes.append(high << 4 | low)
-    }
-    return bytes
-  }
-
-  private static func nibble(_ digit: UInt8) -> UInt8? {
-    switch digit {
-    case UInt8(ascii: "0")...UInt8(ascii: "9"): digit - UInt8(ascii: "0")
-    case UInt8(ascii: "a")...UInt8(ascii: "f"): digit - UInt8(ascii: "a") + 10
-    default: nil
-    }
-  }
+  /// The binary MD5 of `data` (a part's, for `multipartETag`).
+  package static func md5(_ data: Data) -> Data { Data(Insecure.MD5.hash(data: data)) }
 
   /// The base64 SHA-256 of `url` (an `x-amz-checksum-sha256` value).
   package static func sha256Base64(_ url: URL) throws -> String {

@@ -37,7 +37,7 @@ extension S3Client {
         // Ours if a lost answer was retried: same size, the ETag of a single PUT = its MD5. A
         // key that may not read (HEAD 403) cannot tell: the refusal stands.
         if let object = (try? await head(bucket: bucket, key: key)) ?? nil,
-          object.size == Int64(body.count), object.etag == FileDigest.md5Hex(body)
+          object.size == Int64(body.count), object.etag.lowercased() == FileDigest.md5Hex(body)
         {
           return object
         }
@@ -60,11 +60,12 @@ extension S3Client {
     let condition: [String: String]
   }
 
-  /// One uploaded part, as CompleteMultipartUpload lists it.
+  /// One uploaded part, as CompleteMultipartUpload lists it, and the MD5 of the bytes sent.
   private struct Part {
     let number: Int
     let etag: String
     let checksum: String
+    let md5: Data
   }
 
   private func multipart(
@@ -125,7 +126,7 @@ extension S3Client {
         : try await head(bucket: bucket, key: key)
       let ours =
         status == 412
-        ? object?.etag == FileDigest.multipartETag(parts.map(\.etag))
+        ? object?.etag.lowercased() == FileDigest.multipartETag(parts.map(\.md5))
         : object?.etag.hasSuffix("-\(parts.count)") == true
       if let object, object.size == size, ours { return object }
       throw S3Error.service(status: status, code: code, message: message, requestID: requestID)
@@ -157,7 +158,8 @@ extension S3Client {
       guard let etag = response.etag, !etag.isEmpty else {
         throw S3Error.invalidResponse("UploadPart \(number) of \(key) without ETag")
       }
-      parts.append(Part(number: number, etag: etag, checksum: digest.base64))
+      parts.append(
+        Part(number: number, etag: etag, checksum: digest.base64, md5: FileDigest.md5(body)))
       sent += Int64(body.count)
       progress?(.transferred(bytes: sent, total: max(size, sent)))
     }

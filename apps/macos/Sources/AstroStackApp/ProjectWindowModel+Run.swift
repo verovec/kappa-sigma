@@ -112,8 +112,9 @@ extension ProjectWindowModel {
     model.start(
       {
         // Looked up here, off the main actor: a Keychain prompt never freezes the window.
+        let looked = await buckets(remote)
         var prepared = prepared
-        prepared.stores = await buckets(remote)
+        prepared.stores = looked.stores
         let plan = try await planning(record.request)
         // A scan that moved since the series were chosen is refused, never stacked in part.
         if let scope {
@@ -121,6 +122,8 @@ extension ProjectWindowModel {
           guard unlisted.isEmpty else { throw PreprocessError.scopeOutdated(unlisted) }
         }
         let inventory = scope.map { plan.inventory.scoped($0) } ?? plan.inventory
+        // A bucket the Keychain refused stops the run here, in the refusal's words (card 0185).
+        if let refusal = looked.refusal(in: inventory) { throw refusal }
         // Refused before Siril starts, never left to fail mid-run on a full disk (card 0098).
         try Self.checkScratch(inventory, settings: settings, folder: scratch, room: room)
         return start(try prepared.request(inventory: inventory, library: plan.library))

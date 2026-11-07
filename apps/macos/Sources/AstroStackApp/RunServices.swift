@@ -23,10 +23,10 @@ package nonisolated struct RunServices: Sendable {
   /// The buckets a run of these sources may read (card 0154); none by default.
   ///
   /// A run of a local capture is exactly what it was; looked up off the main actor (card 0185).
-  package var buckets: Buckets = { _ in [] }
+  package var buckets: Buckets = { _ in RunBuckets() }
 
   /// The buckets of a run's sources, looked up when the run starts.
-  package typealias Buckets = @Sendable ([ProjectSource]) async -> [RemoteObjectStore]
+  package typealias Buckets = @Sendable ([ProjectSource]) async -> RunBuckets
 
   /// Services from their parts.
   package init(
@@ -35,7 +35,7 @@ package nonisolated struct RunServices: Sendable {
     timeZone: TimeZone = .current,
     room: @escaping @Sendable (URL) -> Int64? = ScratchSpace.available(at:),
     scratchFolder: (@Sendable () -> URL)? = nil,
-    buckets: @escaping Buckets = { _ in [] }
+    buckets: @escaping Buckets = { _ in RunBuckets() }
   ) {
     self.buckets = buckets
     self.run = run

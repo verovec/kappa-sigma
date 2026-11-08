@@ -82,18 +82,15 @@ extension ImportPlanning {
   ) async -> RunBuckets {
     var buckets = RunBuckets()
     var looked: [UUID: Result<S3Client?, any Error>] = [:]
-    // Each bucket name's endpoint so far: one name on two endpoints is two buckets (card 0186).
-    var hosts: [String: Set<String>] = [:]
     for source in sources where source.kind == .remoteNight {
-      guard let bucket = source.bucket, let id = source.connectionID.flatMap(UUID.init(uuidString:))
+      // A bucket already read is done; one refused so far may still be read by another
+      // connection, which then wins (a refused connection never hides a working one).
+      guard let bucket = source.bucket, !buckets.stores.contains(where: { $0.bucket == bucket }),
+        let id = source.connectionID.flatMap(UUID.init(uuidString:))
       else { continue }
       if looked[id] == nil {
         do { looked[id] = .success(try await client(id)) } catch { looked[id] = .failure(error) }
       }
-      if case .success(let s3?) = looked[id] { hosts[bucket, default: []].insert(Self.host(s3)) }
-      // A bucket already read is done; one refused so far may still be read by another
-      // connection, which then wins (a refused connection never hides a working one).
-      guard !buckets.stores.contains(where: { $0.bucket == bucket }) else { continue }
       switch looked[id] {
       case .success(let s3?):
         // A name this connection cannot address (0184) is refused before Siril, in its words.
@@ -107,26 +104,13 @@ extension ImportPlanning {
       case .success(nil), nil: continue
       }
     }
-    for (bucket, named) in hosts where named.count > 1 {
-      buckets.stores.removeAll { $0.bucket == bucket }
-      buckets.refusals[bucket] = RemoteImportProblem.bucketOnTwoEndpoints(
-        bucket: bucket, hosts: named.sorted())
-    }
     buckets.stores.sort { $0.bucket < $1.bucket }
     return buckets
   }
-}
-
-extension ImportPlanning {
-  /// The endpoint `client` names a bucket on, `host[:port]` (the scheme is the same server).
-  nonisolated static func host(_ client: S3Client) -> String { client.endpoint.host.lowercased() }
 }
 
 /// Why a bucket could not be read for an import (card 0169).
 package enum RemoteImportProblem: Error, Equatable, Sendable {
   /// The connection is gone from Settings, or its secret is.
   case connectionMissing
-  /// Sources name `bucket` through connections on several endpoints (`hosts`): two buckets of one
-  /// name, which a project cannot tell apart (card 0186).
-  case bucketOnTwoEndpoints(bucket: String, hosts: [String])
 }

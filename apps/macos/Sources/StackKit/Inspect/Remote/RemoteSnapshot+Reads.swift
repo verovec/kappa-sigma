@@ -138,15 +138,15 @@ extension RemoteSnapshot {
     case side(Result<Data, any Error>)
   }
 
-  /// Runs `work` over `items` with at most `parallelism` in flight, handing each answer to
-  /// `collect` on the caller (cancellation checked between items).
+  /// Runs `work` over `items` with at most `width` in flight, handing each answer to `collect`
+  /// on the caller (cancellation checked between items); the first failure cancels the rest.
   static func inParallel<Item: Sendable, Answer: Sendable>(
-    _ items: [Item], work: @escaping @Sendable (Item) async throws -> Answer?,
-    collect: (Answer) throws -> Void
+    _ items: [Item], width: Int = parallelism,
+    work: @escaping @Sendable (Item) async throws -> Answer?, collect: (Answer) throws -> Void
   ) async throws {
     try await withThrowingTaskGroup(of: Answer?.self) { group in
       var next = items.makeIterator()
-      for _ in 0..<parallelism {
+      for _ in 0..<width {
         guard let item = next.next() else { break }
         group.addTask { try await work(item) }
       }

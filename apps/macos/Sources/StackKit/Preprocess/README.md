@@ -73,9 +73,13 @@ The buckets belong to the request (`PreprocessRequest.remoteStores`, filled by t
 project's remote sources and their Settings connections — `ImportPlanning.runStores`); an empty
 list is a local run, and then nothing is ever downloaded. `RemoteObjectStore.download` is the
 store's own verified download (`.part`, size and checksum, atomic rename) when it has one.
-`FrameStager.identities(of:)` lists each bucket once, over the longest prefix its keys share, so
-`LaneRecord.framesDigest` can compare `size|etag` where a local frame compares size and mtime: a
-frame re-uploaded under the same key re-runs its lane. A calibration set's raw frames are staged
+`FrameStager.identities(of:)` lists each folder the run's keys sit in (never the bucket's root),
+so `LaneRecord.framesDigest` can compare `size|etag` where a local frame compares size and mtime:
+a frame re-uploaded under the same key re-runs its lane. A listing that fails stops the run with
+the folder named (card 0186). The stager checks every download against what the run listed
+(`FrameStager.expected`): an object uploaded again since fails its lane, named, and leaves
+nothing behind. Downloads run `FrameStager.parallelism` (4) at once, each under its positional
+name, through `RemoteSnapshot.inParallel`. A calibration set's raw frames are staged
 only when a master has to be built from them — a library master proven by its `.sig` is reused
 without reading a single frame.
 

@@ -45,16 +45,32 @@ struct FrameStagerHonestyTests {
     #expect(staged.identities == listed)
   }
 
-  @Test("a folder holding more objects than a run lists is refused, named")
-  func testIdentitiesBeyondTheCapAreRefused() async throws {
+  @Test("a folder of many objects is listed whole: a run's identities have no cap")
+  func testIdentitiesOfALargeFolder() async throws {
     let objects = (0...RemoteSnapshot.maxObjects).map {
       RemoteObjectStore.Object(key: "M31/f_\($0).fits", size: 1, etag: "e")
     }
     let store = RemoteObjectStore(bucket: "astro", list: { _ in objects }, get: { _, _ in Data() })
 
-    await #expect(throws: PreprocessError.self) {
-      _ = try await FrameStager(stores: [store]).identities(of: ["s3://astro/M31/f_1.fits"])
-    }
+    let identities = try await FrameStager(stores: [store]).identities(
+      of: ["s3://astro/M31/f_1.fits"])
+
+    #expect(identities == ["s3://astro/M31/f_1.fits": "1|e"])
+  }
+
+  @Test(
+    "a store without ETags matches on size and stages the identity the run listed",
+    .scratchDirectory)
+  func testSizeOnlyMatchKeepsTheListedIdentity() async throws {
+    let root = try ScratchDirectory.url
+    let bucket = FakeBucket(objects: ["M31/r_1.fits": Data("one".utf8)], fetching: false)
+    let path = "s3://astro/M31/r_1.fits"
+    let listed = try await FrameStager(stores: [bucket.store]).identities(of: [path])
+
+    let staged = try await FrameStager(stores: [bucket.store], expected: listed).stage(
+      [path], into: root.appendingPathComponent("light_L"))
+
+    #expect(staged.identities == listed, "never `3|`, which would prove no master again")
   }
 
   @Test(

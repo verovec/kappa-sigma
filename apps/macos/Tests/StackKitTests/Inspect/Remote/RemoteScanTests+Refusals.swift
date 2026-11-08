@@ -66,4 +66,18 @@ struct RemoteScanRefusalTests {
       #expect(path == "s3://astro/M31" && limit == RemoteSnapshot.maxObjects)
     }
   }
+
+  @Test("an output/ folder the walk skips never counts toward the cap")
+  func testOutputFolderDoesNotCount() async throws {
+    let objects =
+      (0...RemoteSnapshot.maxObjects).map {
+        RemoteObjectStore.Object(key: "M31/output/run/f_\($0).fits", size: 1, etag: "e")
+      } + [RemoteObjectStore.Object(key: "M31/notes.txt", size: 1, etag: "e")]
+    let store = RemoteObjectStore(
+      bucket: "astro", list: { _ in objects }, get: { _, _ in Data() })
+
+    let snapshot = try await RemoteSnapshot.load(store: store, prefix: "M31")
+
+    #expect(snapshot.listing.files == ["s3://astro/M31/notes.txt"])
+  }
 }

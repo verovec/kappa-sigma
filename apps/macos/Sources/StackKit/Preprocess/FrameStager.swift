@@ -79,14 +79,21 @@ package struct FrameStager: Sendable {
           path: path, key: parts.key, store: store, destination: destination,
           expected: expected[path]))
     }
-    try await Self.inParallel(downloads) { object, download in
-      staged.remote += 1
-      staged.bytes += object.size
-      staged.identities[download.path] = object.identity
-      if staged.remote % Self.progressStep == 0 || staged.remote == downloads.count {
-        progress(staged.remote, downloads.count, staged.bytes)
-      }
-    }
+    let total = downloads.count
+    try await RemoteSnapshot.inParallel(
+      downloads, width: Self.parallelism,
+      work: { download in (try await download.run(), download) },
+      collect: { object, download in
+        staged.remote += 1
+        staged.bytes += object.size
+        // A store that cannot say an ETag matched on its size: the object is the one listed, and
+        // what the run listed is what signs it (a `size|` would never prove a master again).
+        staged.identities[download.path] =
+          object.etag.isEmpty ? download.expected ?? object.identity : object.identity
+        if staged.remote % Self.progressStep == 0 || staged.remote == total {
+          progress(staged.remote, total, staged.bytes)
+        }
+      })
     return staged
   }
 
@@ -108,27 +115,6 @@ package struct FrameStager: Sendable {
     }
   }
 
-  /// Runs `downloads` `parallelism` at once, each answer handed to `collect` on the caller.
-  ///
-  /// The first failure cancels the others; each removes its own `.part`.
-  static func inParallel(
-    _ downloads: [Download],
-    collect: (RemoteObjectStore.Object, Download) throws -> Void
-  ) async throws {
-    try await withThrowingTaskGroup(of: (RemoteObjectStore.Object, Download).self) { group in
-      var next = downloads.makeIterator()
-      for _ in 0..<parallelism {
-        guard let download = next.next() else { break }
-        group.addTask { (try await download.run(), download) }
-      }
-      while let (object, download) = try await group.next() {
-        try Task.checkCancellation()
-        try collect(object, download)
-        if let download = next.next() { group.addTask { (try await download.run(), download) } }
-      }
-    }
-  }
-
   /// The buckets `paths` name that this run has no connection for, sorted.
   ///
   /// The run refuses before Siril starts rather than failing a lane half way (card 0154): the
@@ -146,9 +132,9 @@ package struct FrameStager: Sendable {
 
   /// What identifies each remote frame of `paths` right now (`size|etag`), by virtual path.
   ///
-  /// One listing per folder the run's keys sit in — never the whole bucket. A listing that
-  /// fails, or a folder too large to list, stops the run with the folder named (card 0186): a
-  /// frame without identity would rebuild its master and re-run its lane on every run.
+  /// One listing per folder the run's keys sit in — never the whole bucket. A listing that fails
+  /// stops the run with the folder named (card 0186): a frame without identity would rebuild its
+  /// master and re-run its lane on every run.
   @concurrent
   package func identities(of paths: [String]) async throws -> [String: String] {
     var byBucket: [String: [String: String]] = [:]
@@ -177,18 +163,12 @@ package struct FrameStager: Sendable {
     -> [RemoteObjectStore.Object]
   {
     let folder = "s3://" + store.bucket + "/" + prefix
-    let objects: [RemoteObjectStore.Object]
     do {
-      objects = try await store.list(prefix)
+      return try await store.list(prefix)
     } catch {
       if error is CancellationError || Task.isCancelled { throw CancellationError() }
       throw PreprocessError.remoteFrameUnavailable(path: folder, reason: String(describing: error))
     }
-    guard objects.count <= RemoteSnapshot.maxObjects else {
-      throw PreprocessError.remoteFrameUnavailable(
-        path: folder, reason: "more than \(RemoteSnapshot.maxObjects) objects to list")
-    }
-    return objects
   }
 
   /// The folders `keys` sit in, each once: what a listing has to cover, and no more.

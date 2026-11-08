@@ -12512,22 +12512,6 @@
           }
         }
       }
-    },
-    "The bucket %@ is on two endpoints (%@): import it through one.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The bucket %@ is on two endpoints (%@): import it through one."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Le bucket %@ est sur deux points d’accès (%@) : importez-le par un seul."
-          }
-        }
-      }
     }
   },
   "version": "1.0"

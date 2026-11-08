@@ -194,6 +194,11 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     case .unreadableFolder(let path):
       .app("The folder \(path) cannot be read: check that it exists and AstroStack can open it.")
     case .noFolders: .app("Choose a capture folder first.")
+    case .remoteUnreadable(let path, let reason):
+      .app(
+        "\(path) cannot be read: \(reason). Check that the connection's key may read this prefix.")
+    case .remoteTooLarge(let path, let limit):
+      .app("\(path) holds more than \(limit) objects: choose a narrower prefix.")
     }
   }
 

@@ -8,7 +8,9 @@ extension RemoteSnapshot {
   ///
   /// A side file is a frame's SharpCap sidecar or an `info.txt`; `parallelism` reads at a time,
   /// `progress` hears the headers read. A side file that fails (or is too large) is absent for the
-  /// scan and said as a warning (`sideFailures`); a header's error is the frame's skip warning.
+  /// scan and said as a warning (`sideFailures`); a header's error is the frame's skip warning,
+  /// unless the store reads it as the bucket's (`failsTheScan`, card 0186): then the scan stops
+  /// with the frame and the service's words.
   mutating func readHeadersAndSideFiles(
     store: RemoteObjectStore, progress: @escaping @Sendable (ScanProgress) -> Void
   ) async throws {
@@ -24,7 +26,11 @@ extension RemoteSnapshot {
     try await Self.inParallel(frames + sides) { path -> (String, Read)? in
       guard let object = objects[path] else { return nil }
       if InventoryBuilder.isFITS(path) {
-        return (path, .header(await Self.header(of: object, store: store)))
+        let header = await Self.header(of: object, store: store)
+        if case .failure(let error) = header, store.failsTheScan(error) {
+          throw InspectError.remoteUnreadable(path: path, reason: String(describing: error))
+        }
+        return (path, .header(header))
       }
       guard object.size <= Self.sideFileLimit else {
         return (path, .side(.failure(TooLarge(bytes: object.size))))

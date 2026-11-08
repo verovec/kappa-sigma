@@ -2,8 +2,9 @@ package import Foundation
 package import RemoteKit
 package import Testing
 
-/// The live S3 suites' one configuration (card 0183): `LiveS3Tests`, `LiveExportS3Tests` and
-/// `RemotePipelineLiveTests` read it from the environment `just s3-live` sets.
+/// The live S3 suites' one configuration (card 0183): `LiveS3Tests`, `LiveExportS3Tests`,
+/// `RemotePipelineLiveTests` and `LiveRemoteStagerTests` read it from the environment
+/// `just s3-live` sets.
 ///
 /// They run only under `just s3-live` (`ASTROSTACK_S3_LIVE=1`, `isRequested`): an endpoint left in
 /// `.env` never turns them on inside `just check`. A local MinIO by default (minioadmin keys,

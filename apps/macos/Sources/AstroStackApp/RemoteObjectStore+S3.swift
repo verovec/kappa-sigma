@@ -9,10 +9,13 @@ extension RemoteObjectStore {
   nonisolated package static func s3(_ client: S3Client, bucket: String) -> Self {
     Self(
       bucket: bucket,
+      // One more than a scan reads (card 0186): enough to tell a prefix too large, never a page
+      // of a whole bucket listed by mistake.
       list: { prefix in
-        try await client.list(bucket: bucket, prefix: prefix).map {
-          Object(key: $0.key, size: $0.size, etag: $0.etag)
-        }
+        try await client.list(bucket: bucket, prefix: prefix, limit: RemoteSnapshot.maxObjects + 1)
+          .map {
+            Object(key: $0.key, size: $0.size, etag: $0.etag)
+          }
       },
       get: { key, range in try await client.get(bucket: bucket, key: key, range: range) },
       // A whole frame goes through `S3Client.download` (card 0154): written to `<name>.part`,
@@ -21,7 +24,21 @@ extension RemoteObjectStore {
         let object = try await client.download(
           bucket: bucket, key: key, to: destination, expect: nil)
         return Object(key: object.key, size: object.size, etag: object.etag)
-      })
+      },
+      failsTheScan: isBucketFailure)
+  }
+
+  /// Whether a read's failure is the bucket's answer for every object (card 0186): a refused
+  /// key, a service or network down, a transfer cut — not an object gone (404) or shrunk (416)
+  /// since the listing, nor a cancellation, which are the frame's or nobody's.
+  nonisolated package static func isBucketFailure(_ error: any Error) -> Bool {
+    switch error {
+    case is CancellationError: false
+    case S3Error.service(let status, _, _, _): status != 404 && status != 416
+    case is S3Error: true
+    case let error as URLError: error.code != .cancelled
+    default: false
+    }
   }
 
   /// The line the Données inventory shows under a remote scan whose pixel checks were not run on

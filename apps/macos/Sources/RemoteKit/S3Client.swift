@@ -74,10 +74,21 @@ package struct S3Client: Sendable {
     try await listing(bucket: bucket, prefix: prefix, delimiter: delimiter, limit: nil)
   }
 
-  /// The pages of a ListObjectsV2 call, gathered.
-  private func listing(bucket: String, prefix: String, delimiter: String?, limit: Int?)
-    async throws -> S3Listing
+  /// The sub-prefixes alone of one level under `prefix` (card 0186): « Browse » pages through a
+  /// folder of thousands of frames without keeping a single key.
+  @concurrent
+  package func listPrefixes(bucket: String, prefix: String, delimiter: String) async throws
+    -> [String]
   {
+    try await listing(
+      bucket: bucket, prefix: prefix, delimiter: delimiter, limit: nil, keepingObjects: false
+    ).prefixes
+  }
+
+  /// The pages of a ListObjectsV2 call, gathered.
+  private func listing(
+    bucket: String, prefix: String, delimiter: String?, limit: Int?, keepingObjects: Bool = true
+  ) async throws -> S3Listing {
     if let limit, limit <= 0 { return S3Listing(objects: [], prefixes: []) }
     var objects: [S3Object] = []
     var prefixes: [String] = []
@@ -93,7 +104,7 @@ package struct S3Client: Sendable {
       let response = try await perform(
         S3Request(method: "GET", bucket: bucket, key: "", query: query))
       let page = try S3ListPage.parse(response.body)
-      objects += page.objects
+      if keepingObjects { objects += page.objects }
       prefixes += page.prefixes
       token = page.continuationToken
       if let limit, objects.count >= limit {

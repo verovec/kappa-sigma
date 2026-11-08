@@ -26,7 +26,15 @@ extension UserFacingError {
     switch problem {
     case .connectionMissing:
       .app("The S3 connection is gone or has no secret: check Settings › S3 connections.")
+    case .bucketOnTwoEndpoints(let bucket, let hosts):
+      twoEndpoints(bucket, hosts.joined(separator: ", "))
     }
+  }
+
+  /// One bucket name read on several endpoints (card 0186): two buckets the project cannot tell
+  /// apart.
+  private static func twoEndpoints(_ bucket: String, _ hosts: String) -> LocalizedStringResource {
+    .app("The bucket \(bucket) is on two endpoints (\(hosts)): import it through one.")
   }
 
   /// What went wrong with an export's S3 side (card 0152); the service's words kept as sent.

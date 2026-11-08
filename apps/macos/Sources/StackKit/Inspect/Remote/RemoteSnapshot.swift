@@ -16,6 +16,9 @@ package struct RemoteSnapshot: Sendable {
   static let sideFileLimit: Int64 = 1 << 20
   /// Requests in flight at once.
   static let parallelism = 8
+  /// The objects a scan reads under one prefix at most (card 0186): beyond, the prefix is
+  /// refused and named — a bucket's root listed by mistake would page millions of keys.
+  package static let maxObjects = 20_000
 
   /// The virtual root of the scan: `s3://<bucket>/<prefix>` without its trailing `/`.
   package let root: String
@@ -58,6 +61,9 @@ package struct RemoteSnapshot: Sendable {
     let folder = key.isEmpty ? "" : key + "/"
     let found = try await store.list(folder)
     let root = ProjectSource.remotePath(bucket: store.bucket, prefix: key)
+    guard found.count <= maxObjects else {
+      throw InspectError.remoteTooLarge(path: root, limit: maxObjects)
+    }
     var objects: [String: RemoteObjectStore.Object] = [:]
     for object in found where object.key.hasPrefix(folder) {
       objects[path(bucket: store.bucket, key: object.key)] = object

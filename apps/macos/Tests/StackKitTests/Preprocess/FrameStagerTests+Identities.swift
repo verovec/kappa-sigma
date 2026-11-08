@@ -16,7 +16,7 @@ extension FrameStagerTests {
     let paths = ["s3://astro/M31/r_1.fits", "s3://astro/M31/r_2.fits"]
     let stager = FrameStager(stores: [bucket.store])
 
-    let listed = await stager.identities(of: paths)
+    let listed = try await stager.identities(of: paths)
     let staged = try await stager.stage(paths, into: root.appendingPathComponent("light_L"))
 
     // Both sides of a master's proof hash the same thing: its `.sig` is written from the bytes

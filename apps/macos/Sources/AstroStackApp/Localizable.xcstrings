@@ -12480,6 +12480,54 @@
           }
         }
       }
+    },
+    "%@ cannot be read: %@. Check that the connection's key may read this prefix.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ cannot be read: %@. Check that the connection's key may read this prefix."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ ne peut pas être lu : %@. Vérifiez que la clé de la connexion peut lire ce préfixe."
+          }
+        }
+      }
+    },
+    "%@ holds more than %lld objects: choose a narrower prefix.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ holds more than %lld objects: choose a narrower prefix."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ contient plus de %lld objets : choisissez un préfixe plus étroit."
+          }
+        }
+      }
+    },
+    "The bucket %@ is on two endpoints (%@): import it through one.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The bucket %@ is on two endpoints (%@): import it through one."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le bucket %@ est sur deux points d’accès (%@) : importez-le par un seul."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

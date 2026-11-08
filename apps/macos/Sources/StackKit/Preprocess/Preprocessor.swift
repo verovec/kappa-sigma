@@ -53,7 +53,7 @@ package actor Preprocessor {
           ? "no S3 connection for this bucket in this run"
           : "no S3 connection for \(missing.count) of this run's buckets")
     }
-    request.remoteIdentities = await stager.identities(of: paths)
+    request.remoteIdentities = try await stager.identities(of: paths)
     return request
   }
 

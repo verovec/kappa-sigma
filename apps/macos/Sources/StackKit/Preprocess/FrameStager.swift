@@ -28,19 +28,29 @@ package struct FrameStager: Sendable {
 
   /// One line every `progressStep` frames, and always on the last.
   static let progressStep = 8
+  /// Downloads in flight at once (card 0186): a lane's transfer is the network's, not one frame's
+  /// round trips in a row.
+  package static let parallelism = 4
 
   /// The buckets this run may read, by name (a run may mix nights of two buckets).
   package var stores: [String: RemoteObjectStore]
+  /// What the run listed for each remote frame, `size|etag` by virtual path (card 0186): a
+  /// download that reads another object fails the lane rather than stacking bytes nothing listed.
+  package var expected: [String: String]
 
-  /// A stager over `stores`; without any, only frames of this Mac can be staged.
-  package init(stores: [RemoteObjectStore] = []) {
+  /// A stager over `stores`, checking each download against `expected`; without any store, only
+  /// frames of this Mac can be staged.
+  package init(stores: [RemoteObjectStore] = [], expected: [String: String] = [:]) {
     self.stores = Dictionary(
       stores.map { ($0.bucket, $0) }, uniquingKeysWith: { first, _ in first })
+    self.expected = expected
   }
 
   /// Stages `paths` into `folder` in their own order, and says what came from a bucket.
   ///
-  /// `progress` hears the downloads; a path of this Mac costs nothing and is not counted.
+  /// `progress` hears the downloads; a path of this Mac costs nothing and is not counted. The
+  /// downloads run `parallelism` at once, each under its positional name: the order they end in
+  /// changes nothing Siril reads.
   @discardableResult
   package func stage(
     _ paths: [String], into folder: URL, progress: @escaping Progress = { _, _, _ in }
@@ -48,7 +58,7 @@ package struct FrameStager: Sendable {
     let files = FileManager.default
     try files.createDirectory(at: folder, withIntermediateDirectories: true)
     var staged = Staged()
-    let remote = paths.filter { ProjectSource.remoteParts(of: $0) != nil }.count
+    var downloads: [Download] = []
     for (index, path) in paths.enumerated() {
       try Task.checkCancellation()
       let destination = folder.appendingPathComponent(Self.name(of: path, at: index))
@@ -64,15 +74,44 @@ package struct FrameStager: Sendable {
         throw PreprocessError.remoteFrameUnavailable(
           path: path, reason: "no connection for the bucket \(parts.bucket) in this run")
       }
-      let object = try await store.download(parts.key, to: destination)
-      staged.remote += 1
-      staged.bytes += object.size
-      staged.identities[path] = object.identity
-      if staged.remote % Self.progressStep == 0 || staged.remote == remote {
-        progress(staged.remote, remote, staged.bytes)
+      downloads.append(
+        Download(
+          path: path, key: parts.key, store: store, destination: destination,
+          expected: expected[path]))
+    }
+    let total = downloads.count
+    try await RemoteSnapshot.inParallel(
+      downloads, width: Self.parallelism,
+      work: { download in (try await download.run(), download) },
+      collect: { object, download in
+        staged.remote += 1
+        staged.bytes += object.size
+        // A download checked against the listing is the object listed: what the run listed signs
+        // it, also when a side had no ETag (a `size|` would never prove a master again).
+        staged.identities[download.path] = download.expected ?? object.identity
+        if staged.remote % Self.progressStep == 0 || staged.remote == total {
+          progress(staged.remote, total, staged.bytes)
+        }
+      })
+    return staged
+  }
+
+  /// One frame of a bucket to write under its positional name.
+  struct Download: Sendable {
+    let path: String
+    let key: String
+    let store: RemoteObjectStore
+    let destination: URL
+    let expected: String?
+
+    /// The download, a changed object said as the frame that could not be read (R2).
+    func run() async throws -> RemoteObjectStore.Object {
+      do {
+        return try await store.download(key, to: destination, expecting: expected)
+      } catch let changed as RemoteObjectStore.Changed {
+        throw PreprocessError.remoteFrameUnavailable(path: path, reason: changed.description)
       }
     }
-    return staged
   }
 
   /// The buckets `paths` name that this run has no connection for, sorted.
@@ -92,11 +131,11 @@ package struct FrameStager: Sendable {
 
   /// What identifies each remote frame of `paths` right now (`size|etag`), by virtual path.
   ///
-  /// One listing per bucket, over the longest prefix the run's keys share — never the whole
-  /// bucket. A listing that fails answers nothing for that bucket: the digest then falls back to
-  /// the path alone, which is what a missing local file already does.
+  /// One listing per folder the run's keys sit in — never the whole bucket. A listing that fails
+  /// stops the run with the folder named (card 0186): a frame without identity would rebuild its
+  /// master and re-run its lane on every run.
   @concurrent
-  package func identities(of paths: [String]) async -> [String: String] {
+  package func identities(of paths: [String]) async throws -> [String: String] {
     var byBucket: [String: [String: String]] = [:]
     for path in paths {
       guard let parts = ProjectSource.remoteParts(of: path) else { continue }
@@ -108,7 +147,7 @@ package struct FrameStager: Sendable {
       // One listing per folder the keys sit in: a run whose lights and calibration live apart
       // shares no prefix, and listing the empty one would page the whole bucket.
       for prefix in Self.folders(of: Array(keys.keys)) {
-        guard let objects = try? await store.list(prefix) else { continue }
+        let objects = try await Self.listing(prefix, of: store)
         for object in objects {
           guard let path = keys[object.key] else { continue }
           identities[path] = object.identity
@@ -118,7 +157,22 @@ package struct FrameStager: Sendable {
     return identities
   }
 
-  /// The folders `keys` sit in, each once: what a listing has to cover, and no more.
+  /// `prefix` of `store`, its failure said as the folder that could not be read.
+  private static func listing(_ prefix: String, of store: RemoteObjectStore) async throws
+    -> [RemoteObjectStore.Object]
+  {
+    let folder = "s3://" + store.bucket + "/" + prefix
+    do {
+      return try await store.list(prefix)
+    } catch {
+      if error is CancellationError || Task.isCancelled { throw CancellationError() }
+      throw PreprocessError.remoteFrameUnavailable(
+        path: folder, reason: RemoteObjectStore.words(of: error))
+    }
+  }
+
+  /// The folders `keys` sit in, each once and none inside another (a listing is recursive: the
+  /// parent's already holds the child's keys): what a listing has to cover, and no more.
   ///
   /// A key at the bucket's root has no folder, and then the listing is the bucket — the only
   /// case where it has to be.
@@ -127,7 +181,9 @@ package struct FrameStager: Sendable {
     for key in keys {
       folders.insert(key.lastIndex(of: "/").map { String(key[...$0]) } ?? "")
     }
-    return folders.sorted()
+    return folders.filter { folder in
+      !folders.contains { $0 != folder && folder.hasPrefix($0) }
+    }.sorted()
   }
 
   /// The longest `/`-bounded prefix every key shares (`""` when they share none).

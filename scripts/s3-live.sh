@@ -35,4 +35,4 @@ case "$endpoint" in
 esac
 cd "$pkg"
 ASTROSTACK_S3_LIVE=1 ASTROSTACK_S3_LIVE_ENDPOINT="$endpoint" exec swift test "$@" --no-parallel \
-  --filter 'LiveS3Tests|LiveExportS3Tests|RemotePipelineLiveTests'
+  --filter 'LiveS3Tests|LiveExportS3Tests|RemotePipelineLiveTests|LiveRemoteStagerTests'

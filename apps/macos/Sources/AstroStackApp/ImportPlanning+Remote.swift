@@ -17,7 +17,7 @@ extension ImportPlanning {
       guard let s3 = try await client(connection) else {
         throw RemoteImportProblem.connectionMissing
       }
-      return try await s3.list(bucket: bucket, prefix: prefix, delimiter: "/").prefixes
+      return try await s3.listPrefixes(bucket: bucket, prefix: prefix, delimiter: "/")
     }
   }
 
@@ -106,6 +106,18 @@ extension ImportPlanning {
     }
     buckets.stores.sort { $0.bucket < $1.bucket }
     return buckets
+  }
+}
+
+extension ImportPlanning {
+  /// The stager of a master rebuilt from a bucket (Données): it checks each download against a
+  /// listing made now (card 0186), as a run's does against the run's — a frame uploaded again
+  /// mid-rebuild fails it, named, instead of signing a master with bytes nothing listed.
+  package nonisolated static func rebuildStager(stores: [RemoteObjectStore], paths: [String])
+    async throws -> FrameStager
+  {
+    FrameStager(
+      stores: stores, expected: try await FrameStager(stores: stores).identities(of: paths))
   }
 }
 

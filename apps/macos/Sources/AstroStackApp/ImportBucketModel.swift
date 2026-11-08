@@ -8,8 +8,8 @@ internal import Observation
 /// « this prefix holds nothing », which is a verdict nobody measured (R2).
 @Observable
 package final class ImportBucketModel {
-  /// Lists the sub-prefixes of one level, as `S3Client.list(bucket:prefix:delimiter:)` answers
-  /// them (full prefixes, each ending in `/`).
+  /// Lists the sub-prefixes of one level, as `S3Client.listPrefixes(bucket:prefix:delimiter:)`
+  /// answers them (full prefixes, each ending in `/`).
   package typealias Browsing =
     @Sendable (_ connection: UUID, _ bucket: String, _ prefix: String) async throws -> [String]
 

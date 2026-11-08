@@ -218,7 +218,7 @@ struct FrameStagerTests {
       "/c/M31/local.fits", "s3://astro/M31/2026-10-19/l_3.fits",
     ]
 
-    let identities = await FrameStager(stores: [bucket.store]).identities(of: paths)
+    let identities = try await FrameStager(stores: [bucket.store]).identities(of: paths)
 
     #expect(identities.count == 3, "only the bucket's frames: \(identities)")
     #expect(identities["s3://astro/M31/2026-10-18/l_1.fits"] == "3|e")
@@ -231,20 +231,25 @@ struct FrameStagerTests {
 
   @Test("a bucket this run cannot read answers no identity, and the digest falls back")
   func testIdentitiesWithoutAStore() async throws {
-    let identities = await FrameStager().identities(of: ["s3://astro/M31/l_1.fits"])
+    let identities = try await FrameStager().identities(of: ["s3://astro/M31/l_1.fits"])
 
     #expect(identities.isEmpty, "no store, nothing read — never a guessed identity")
   }
 
-  @Test("a listing that fails leaves that bucket's frames without an identity")
+  // Card 0186: a failed listing is said (the folder named), no longer an empty answer the
+  // digest silently fell back from — that fallback rebuilt masters and re-ran lanes every run.
+  @Test("a listing that fails stops the run with the folder named, never a frame without identity")
   func testIdentitiesWhenTheListingFails() async throws {
     let bucket = FakeBucket(objects: ["M31/l_1.fits": Data("one".utf8)])
     bucket.failListing(true)
 
-    let identities = await FrameStager(stores: [bucket.store]).identities(
-      of: ["s3://astro/M31/l_1.fits"])
-
-    #expect(identities.isEmpty)
+    await #expect {
+      _ = try await FrameStager(stores: [bucket.store]).identities(
+        of: ["s3://astro/M31/l_1.fits"])
+    } throws: { error in
+      guard case PreprocessError.remoteFrameUnavailable(let path, _) = error else { return false }
+      return path == "s3://astro/M31/"
+    }
   }
 
   @Test(
@@ -289,7 +294,7 @@ struct FrameStagerTests {
       "M31/l_1.fits": Data("one".utf8), "calib/d_1.fits": Data("two".utf8),
     ])
 
-    let identities = await FrameStager(stores: [bucket.store]).identities(
+    let identities = try await FrameStager(stores: [bucket.store]).identities(
       of: ["s3://astro/M31/l_1.fits", "s3://astro/calib/d_1.fits"])
 
     #expect(identities.count == 2)

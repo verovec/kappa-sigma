@@ -9,6 +9,10 @@ extension RemoteSnapshot {
   /// A side file is a frame's SharpCap sidecar or an `info.txt`; `parallelism` reads at a time,
   /// `progress` hears the headers read. A side file that fails (or is too large) is absent for the
   /// scan and said as a warning (`sideFailures`); a header's error is the frame's skip warning.
+  /// When no header at all could be read and the store reads the failures as the bucket's
+  /// (`failsTheScan`, card 0186), the scan stops with a frame and the service's words: a key that
+  /// may list but not read is never an empty « successful » scan, while one archived or
+  /// encrypted frame among readable ones stays that frame's skip.
   mutating func readHeadersAndSideFiles(
     store: RemoteObjectStore, progress: @escaping @Sendable (ScanProgress) -> Void
   ) async throws {
@@ -48,6 +52,25 @@ extension RemoteSnapshot {
       case .side(.failure(let error)): sideFailures[path] = String(describing: error)
       }
     }
+    try refuseIfNothingRead(store)
+  }
+
+  /// Throws the bucket's refusal when every FITS header failed and one failed for the bucket.
+  func refuseIfNothingRead(_ store: RemoteObjectStore) throws {
+    let frames = listing.files.filter(InventoryBuilder.isFITS)
+    guard !frames.isEmpty else { return }
+    var refusal: (path: String, error: any Error)?
+    for path in frames.sorted() {
+      switch headers[path] {
+      case .success?: return
+      case .failure(let error)? where refusal == nil && store.failsTheScan(error):
+        refusal = (path, error)
+      default: continue
+      }
+    }
+    guard let refusal else { return }
+    throw InspectError.remoteUnreadable(
+      path: refusal.path, reason: RemoteObjectStore.words(of: refusal.error))
   }
 
   /// Fetches the centred runs `asked` lists (path → largest count), one ranged read each; a frame
@@ -132,15 +155,17 @@ extension RemoteSnapshot {
     case side(Result<Data, any Error>)
   }
 
-  /// Runs `work` over `items` with at most `parallelism` in flight, handing each answer to
-  /// `collect` on the caller (cancellation checked between items).
+  /// Runs `work` over `items` with at most `width` in flight, handing each answer to `collect`
+  /// on the caller (cancellation checked between items); the first failure cancels the rest.
   static func inParallel<Item: Sendable, Answer: Sendable>(
-    _ items: [Item], work: @escaping @Sendable (Item) async throws -> Answer?,
-    collect: (Answer) throws -> Void
+    _ items: [Item], width: Int = parallelism,
+    work: @escaping @Sendable (Item) async throws -> Answer?, collect: (Answer) throws -> Void
   ) async throws {
+    // No slot would run nothing and drop every item without a word.
+    precondition(width > 0, "inParallel needs at least one slot")
     try await withThrowingTaskGroup(of: Answer?.self) { group in
       var next = items.makeIterator()
-      for _ in 0..<parallelism {
+      for _ in 0..<width {
         guard let item = next.next() else { break }
         group.addTask { try await work(item) }
       }

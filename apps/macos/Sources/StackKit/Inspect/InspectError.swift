@@ -10,4 +10,10 @@ package enum InspectError: Error, Equatable, Sendable {
   case unreadableFolder(String)
   /// `scan` was called without a folder.
   case noFolders
+  /// A frame of an S3 prefix the bucket refused to read (card 0186): its virtual path and the
+  /// service's own words. Every frame would fail the same way, so the scan stops (R2).
+  case remoteUnreadable(path: String, reason: String)
+  /// An S3 prefix holding more objects than a scan reads (card 0186): its virtual path and the
+  /// limit.
+  case remoteTooLarge(path: String, limit: Int)
 }

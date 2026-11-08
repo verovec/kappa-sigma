@@ -9,7 +9,8 @@ extension Preprocessor {
   {
     emitter.begin("building master calibration frames")
     var builder = MasterBuilder(runner: reporting(emitter))
-    builder.stager = FrameStager(stores: request.remoteStores)
+    builder.stager = FrameStager(
+      stores: request.remoteStores, expected: request.remoteIdentities)
     builder.identities = request.remoteIdentities
     // Step 1 can transfer many gigabytes from a bucket: it says so, under its own step.
     builder.stagingReport = { done, total, bytes in
@@ -42,7 +43,8 @@ extension Preprocessor {
     var stacker = ChannelStacker(
       runner: tools.runner, settings: settings, trailProbe: tools.trailProbe
     ) { emitter.line($0) }
-    stacker.stager = FrameStager(stores: request.remoteStores)
+    stacker.stager = FrameStager(
+      stores: request.remoteStores, expected: request.remoteIdentities)
     // The downloads are the lane's own step: « 16/120 frames · 3.2 GB » under it.
     stacker.stagingReport = { done, total, bytes in
       emitter.line("downloading \(done)/\(total) frames · \(PreprocessError.gigabytes(bytes))")

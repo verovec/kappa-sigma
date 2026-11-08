@@ -93,7 +93,7 @@ module (Foundation and CryptoKit only), with no AWS SDK and no helper process.
 
 - `swift test --filter RemoteKitTests`: signer vectors, addressing, client behaviour over a
   scripted transport, and the URLSession transport over a stub `URLProtocol`. No network.
-- `just s3-live` (card 0183): the three live suites, serially, against one endpoint.
+- `just s3-live` (card 0183): the four live suites, serially, against one endpoint.
   - `LiveS3Tests`: a 70 MiB multipart and a 1 KiB upload, list, head, a range, downloads and
     deletes; a listing past one page (1 001 keys) and one level of it; keys with a space, a `+`,
     accents and nested folders round-tripped as written. Not `a//b`: MinIO refuses an empty path
@@ -103,6 +103,10 @@ module (Foundation and CryptoKit only), with no AWS SDK and no helper process.
   - `RemotePipelineLiveTests` (app): a synthetic night uploaded, recorded as a project source,
     scanned and run from the bucket; masters and `bundle.json` equal the same night run from
     disk, and a rerun downloads no calibration frame (card 0181).
+  - `LiveRemoteStagerTests` (app, card 0186): an object uploaded again between a run's listing
+    and the lane's download fails the lane, named; an unchanged one is staged as listed. A key
+    that may list but not read (403 on a header) is pinned in unit tests only: MinIO grants such
+    a key through its admin API alone.
   - Endpoint: the argument, else `ASTROSTACK_S3_LIVE_ENDPOINT` (`.env`), else
     `http://127.0.0.1:9000`. A loopback endpoint starts a local MinIO in Docker first
     (`just s3-minio`, stopped by `just s3-minio-stop`) and uses MinIO's keys whatever `.env` says;

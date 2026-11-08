@@ -16,6 +16,11 @@ package struct RemoteSnapshot: Sendable {
   static let sideFileLimit: Int64 = 1 << 20
   /// Requests in flight at once.
   static let parallelism = 8
+  /// The FITS frames a scan reads under one prefix at most (card 0186).
+  ///
+  /// Beyond, the prefix is refused and named before a header is read — a bucket's root chosen by
+  /// mistake. Sidecars, previews and the `output/` folders the walk skips do not count.
+  package static let maxObjects = 20_000
 
   /// The virtual root of the scan: `s3://<bucket>/<prefix>` without its trailing `/`.
   package let root: String
@@ -67,6 +72,9 @@ package struct RemoteSnapshot: Sendable {
         String($0.key.dropFirst(folder.count))
       },
       under: root, skippingOutput: true)
+    guard listing.files.lazy.filter(InventoryBuilder.isFITS).count <= maxObjects else {
+      throw InspectError.remoteTooLarge(path: root, limit: maxObjects)
+    }
     var snapshot = Self(root: root, listing: listing, objects: objects)
     snapshot.seed(from: cache)
     try await snapshot.readHeadersAndSideFiles(store: store, progress: progress)

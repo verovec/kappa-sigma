@@ -47,10 +47,10 @@ struct RemoteCalibrationTests {
 
     /// A builder that reads this bucket and knows what it holds now — what
     /// `Preprocessor.readingBuckets` hands step 1 at the start of every run.
-    func builder() async -> MasterBuilder {
+    func builder() async throws -> MasterBuilder {
       var builder = MasterBuilder(runner: PipelineSiril().runner)
       builder.stager = FrameStager(stores: [bucket.store])
-      builder.identities = await builder.stager.identities(
+      builder.identities = try await builder.stager.identities(
         of: inventory.sets.flatMap { $0.frames.map(\.path) })
       return builder
     }
@@ -132,7 +132,7 @@ struct RemoteCalibrationTests {
     .scratchDirectory)
   func testRemoteSigCarriesIdentities() async throws {
     let night = try RemoteCalibration.make()
-    let builder = await night.builder()
+    let builder = try await night.builder()
 
     let built = try await builder.build(
       night.inventory, into: night.work.appendingPathComponent("masters"), work: night.work)

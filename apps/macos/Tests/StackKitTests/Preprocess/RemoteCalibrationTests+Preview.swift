@@ -8,7 +8,7 @@ extension RemoteCalibrationTests {
   static func builtLibrary() async throws -> (RemoteCalibration, MasterBuilder, [CalibrationMaster])
   {
     let night = try RemoteCalibration.make()
-    let builder = await night.builder()
+    let builder = try await night.builder()
     let built = try await builder.build(
       night.inventory, into: night.work.appendingPathComponent("masters"), work: night.work)
     return (night, builder, Self.library(built.masters))

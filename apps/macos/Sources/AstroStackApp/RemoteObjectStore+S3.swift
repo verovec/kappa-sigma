@@ -21,7 +21,26 @@ extension RemoteObjectStore {
         let object = try await client.download(
           bucket: bucket, key: key, to: destination, expect: nil)
         return Object(key: object.key, size: object.size, etag: object.etag)
-      })
+      },
+      failsTheScan: isBucketFailure)
+  }
+
+  /// Whether a read's failure is the bucket's answer for every object (card 0186).
+  ///
+  /// A refused key, a bucket gone (`404 NoSuchBucket`), a service or network down, a transfer
+  /// cut — not an object gone (`404 NoSuchKey`), shrunk (416) or archived (`403
+  /// InvalidObjectState`) since the listing, nor a cancellation, which are the frame's or nobody's.
+  nonisolated package static func isBucketFailure(_ error: any Error) -> Bool {
+    switch error {
+    case is CancellationError: false
+    case S3Error.service(404, let code, _, _): code == "NoSuchBucket"
+    // One object archived (Glacier): that frame's, never the bucket's.
+    case S3Error.service(403, "InvalidObjectState", _, _): false
+    case S3Error.service(let status, _, _, _): status != 416
+    case is S3Error: true
+    case let error as URLError: error.code != .cancelled
+    default: false
+    }
   }
 
   /// The line the Données inventory shows under a remote scan whose pixel checks were not run on

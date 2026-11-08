@@ -1,0 +1,101 @@
+import Foundation
+import RemoteKit
+import TestSupport
+import Testing
+
+/// Card 0184: a stalled answer ends in a timeout, which `S3Client` retries; the live
+/// configuration bounds every transfer instead of URLSession's 7-day default.
+extension URLSessionTransportTests {
+  enum Call: String, CaseIterable, Sendable { case send, download }
+
+  @Test("a stalled answer times out and is retryable", .scratchDirectory, arguments: Call.allCases)
+  func testTimesOut(call: Call) async throws {
+    let host = "stall-\(call.rawValue).test"
+    Self.route(host, .init(status: 200, headers: [:], body: Data(), stalls: true))
+    // The whole-transfer limit far away: only the stall can end this request.
+    let configuration = HTTPTransport.configuration(idle: 0.2)
+    configuration.protocolClasses = [Stub.self]
+    let transport = HTTPTransport.urlSession(configuration, transfer: 600)
+    let request = HTTPRequest(
+      method: "GET", url: try #require(URL(string: "http://\(host)/b/k")), headers: [:])
+    let destination = try ScratchDirectory.url.appendingPathComponent("k.part")
+
+    let error = await #expect(throws: URLError.self) {
+      switch call {
+      case .send: _ = try await transport.send(request)
+      case .download: _ = try await transport.download(request, destination, { _ in })
+      }
+    }
+
+    #expect(error?.code == .timedOut)
+    #expect(S3Error.isRetryable(try #require(error)))
+  }
+
+  @Test(
+    "a transfer that used its whole time is not retried: a new try would start over",
+    .scratchDirectory, arguments: Call.allCases)
+  func testTransferLimitIsNotRetried(call: Call) async throws {
+    let host = "long-\(call.rawValue).test"
+    Self.route(host, .init(status: 200, headers: [:], body: Data(), stalls: true))
+    // The stall limit far away: only the whole-transfer limit can end this request.
+    let configuration = HTTPTransport.configuration(idle: 600)
+    configuration.protocolClasses = [Stub.self]
+    let transport = HTTPTransport.urlSession(configuration, transfer: 0.2)
+    let request = HTTPRequest(
+      method: "GET", url: try #require(URL(string: "http://\(host)/b/k")), headers: [:])
+    let destination = try ScratchDirectory.url.appendingPathComponent("k.part")
+
+    let error = await #expect(throws: S3Error.self) {
+      switch call {
+      case .send: _ = try await transport.send(request)
+      case .download: _ = try await transport.download(request, destination, { _ in })
+      }
+    }
+
+    #expect(error == .transferTimedOut(seconds: 0.2))
+    #expect(!S3Error.isRetryable(try #require(error)))
+  }
+
+  @Test("the live limits: a stall within a minute, a whole transfer within 6 h")
+  func testDefaultConfigurationBoundsEveryTransfer() {
+    let configuration = HTTPTransport.configuration()
+
+    #expect(configuration.timeoutIntervalForRequest == HTTPTransport.idleTimeout)
+    // A stall is seen within a minute; a transfer is bounded far below URLSession's 7 days,
+    // yet a 4 GB object at 200 kB/s still fits.
+    #expect(HTTPTransport.idleTimeout <= 60)
+    #expect(HTTPTransport.transferTimeout < 7 * 24 * 3600)
+    #expect(HTTPTransport.transferTimeout >= 4e9 / 200e3)
+    // Still ephemeral: no cache on disk between launches.
+    #expect((configuration.urlCache?.diskCapacity ?? 0) == 0)
+  }
+
+  @Test("the limit reads in its largest whole unit")
+  func testTransferLimitWords() {
+    #expect(
+      S3Error.transferTimedOut(seconds: HTTPTransport.transferTimeout).description
+        == "Transfer stopped after 6 h, the limit for one request")
+    #expect(S3Error.transferTimedOut(seconds: 5400).description.contains("90 min"))
+    #expect(S3Error.transferTimedOut(seconds: 0.2).description.contains("0.2 s"))
+    #expect(S3Error.transferTimedOut(seconds: 45).description.contains("45 s"))
+    #expect(S3Error.transferTimedOut(seconds: 0.30000000000000004).description.contains("0.3 s"))
+    #expect(S3Error.transferTimedOut(seconds: 0.25).description.contains("0.25 s"))
+  }
+
+  @Test("a caller already cancelled sends nothing")
+  func testCancelledCallerSendsNothing() async throws {
+    let host = "cancelled.test"
+    Self.route(host, .init(status: 200, headers: [:], body: Data()))
+    let transport = Self.transport()
+    let request = HTTPRequest(
+      method: "PUT", url: try #require(URL(string: "http://\(host)/b/k")), headers: [:])
+
+    let outcome = await Task {
+      withUnsafeCurrentTask { $0?.cancel() }
+      return try await transport.send(request)
+    }.result
+
+    #expect(throws: CancellationError.self) { try outcome.get() }
+    #expect(Self.received(host) == nil)
+  }
+}

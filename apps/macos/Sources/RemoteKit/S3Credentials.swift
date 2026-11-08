@@ -16,3 +16,35 @@ package struct S3Credentials: Sendable, Equatable {
     self.sessionToken = sessionToken
   }
 }
+
+// MARK: - Printing (card 0184)
+
+/// Printed, logged or dumped, the credentials show the last 4 characters of the access key and
+/// never the secret or the session token: a client or signer printed whole stays safe to share.
+extension S3Credentials: CustomStringConvertible, CustomDebugStringConvertible, CustomReflectable {
+  /// `S3Credentials(accessKey: …MPLE, secretKey: <redacted>, sessionToken: <redacted>)`.
+  package var description: String {
+    "S3Credentials(accessKey: \(shownAccessKey), secretKey: \(Self.redacted)"
+      + (sessionToken == nil ? ")" : ", sessionToken: \(Self.redacted))")
+  }
+
+  /// The same as `description`.
+  package var debugDescription: String { description }
+
+  /// The redacted fields, for `dump` and `Mirror`.
+  package var customMirror: Mirror {
+    var children: [(label: String?, value: Any)] = [
+      ("accessKey", shownAccessKey), ("secretKey", Self.redacted),
+    ]
+    if sessionToken != nil { children.append(("sessionToken", Self.redacted)) }
+    return Mirror(self, children: children, displayStyle: .struct)
+  }
+
+  private static let redacted = "<redacted>"
+
+  /// The last 4 characters, as the AWS CLI shows them (every AWS key starts `AKIA` or `ASIA`, so
+  /// a prefix tells none apart); a key too short to hide most of it shows nothing.
+  private var shownAccessKey: String {
+    accessKey.count >= 12 ? "…\(accessKey.suffix(4))" : Self.redacted
+  }
+}

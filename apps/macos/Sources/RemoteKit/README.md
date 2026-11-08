@@ -46,7 +46,22 @@ module (Foundation and CryptoKit only), with no AWS SDK and no helper process.
 - Listings ask for `encoding-type=url` and decode keys (`+` is a space), so a key XML cannot carry
   survives. Leading whitespace before `<?xml` (S3's keep-alive) is skipped.
 - Redirects are refused (`RedirectRefusal`): a 3xx such as `PermanentRedirect` is an error, never a
-  signed request replayed to another host.
+  signed request replayed to another host. When the answer names the bucket's region
+  (`x-amz-bucket-region`) and that explains it, the error is `S3Error.wrongRegion`: the service's
+  answer as sent, then the region and what to change (the region, or the endpoint when a 301
+  names the connection's own region). Besides a 301, only an answer naming another region: a
+  3xx, a 400 with a region code (`AuthorizationHeaderMalformed`), a HEAD's body-less 400. A 403
+  or a 400 `RequestTimeout` keep their words (the latter stays retried).
+- Every request is bounded: 60 s without bytes (`HTTPTransport.configuration()`, `idleTimeout`,
+  retried as a timeout) and 6 h in all (`urlSession(_:transfer:)`, `transferTimeout`, a 4 GB
+  object at 200 kB/s), which ends in `S3Error.transferTimedOut` and is never retried: a new try
+  would start from byte 0. URLSession's own resource timeout is left alone.
+- A bucket name the endpoint cannot address is refused before anything is sent
+  (`S3Endpoint.validate(bucket:)`, `S3Error.invalidBucket`): virtual-host needs a host name, with
+  no dot over https; path-style only refuses an empty name or a `/`.
+- `S3Credentials` print redacted (last 4 characters of the access key, never the secret or the
+  token), so credentials, a signer or a client can be printed whole. The signed wire request
+  (`HTTPRequest`) carries `Authorization` and `x-amz-security-token` as sent: never log it.
 - Uploads send `x-amz-checksum-sha256` on every body, so the service refuses a corrupted part.
   A failed or cancelled multipart upload is aborted from a fresh task, because a cancelled task's
   requests fail at once.

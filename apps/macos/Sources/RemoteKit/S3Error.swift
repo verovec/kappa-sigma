@@ -16,6 +16,14 @@ package enum S3Error: Error, Sendable, Equatable, CustomStringConvertible {
   case checksumMismatch(key: String, expected: String, actual: String)
   /// The object's ETag changed since it was listed.
   case objectChanged(key: String, expectedETag: String, actualETag: String)
+  /// The service's `answer` (a refused redirect, or a request signed for the wrong region) named
+  /// `region` as the bucket's: either not the `connection`'s region, or one `host` does not serve.
+  indirect case wrongRegion(
+    bucket: String, region: String, connection: String, host: String, answer: Self)
+  /// One request ran for `seconds`, the limit for a whole transfer; retrying would start over.
+  case transferTimedOut(seconds: Double)
+  /// `name` cannot be addressed on this endpoint, for `reason`; nothing was sent.
+  case invalidBucket(name: String, reason: String)
 
   /// One line for the user, the S3 code and message verbatim.
   package var description: String {
@@ -31,7 +39,28 @@ package enum S3Error: Error, Sendable, Equatable, CustomStringConvertible {
       "\(key): checksum \(actual), \(expected) expected"
     case .objectChanged(let key, let expected, let actual):
       "\(key) changed on the server (ETag \(actual), \(expected) listed)"
+    case .wrongRegion(let bucket, let region, let connection, let host, let answer):
+      "\(answer.description) — bucket \(bucket) is in region \(region), "
+        + (region.caseInsensitiveCompare(connection) == .orderedSame
+          ? "which \(host) does not serve: use that region's endpoint"
+          : "the connection says \(connection)")
+    case .transferTimedOut(let seconds):
+      "Transfer stopped after \(Self.duration(seconds)), the limit for one request"
+    case .invalidBucket(let name, let reason): "Bucket name \"\(name)\": \(reason)"
     }
+  }
+
+  /// `seconds` in the largest whole unit: « 6 h », « 90 min », « 0.25 s ».
+  static func duration(_ seconds: Double) -> String {
+    if seconds >= 3600, seconds.truncatingRemainder(dividingBy: 3600) == 0 {
+      return "\(Int(seconds / 3600)) h"
+    }
+    if seconds >= 60, seconds.truncatingRemainder(dividingBy: 60) == 0 {
+      return "\(Int(seconds / 60)) min"
+    }
+    // To the millisecond: the limit shown is the one applied, without binary noise.
+    let millis = (seconds * 1000).rounded() / 1000
+    return millis == millis.rounded() ? "\(Int(millis)) s" : "\(millis) s"
   }
 
   /// The codes S3 documents as « try again », also sent inside a 200 (CompleteMultipartUpload).

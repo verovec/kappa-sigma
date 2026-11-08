@@ -13,6 +13,8 @@ import Testing
 final class ExportS3Fake: Sendable {
   private struct State {
     var head: Int
+    /// HEAD statuses answered first, one per HEAD, before `head`.
+    var heads: [Int] = []
     var put: Int
     var bodies: [String: Data] = [:]
     var methods: [String] = []
@@ -31,11 +33,13 @@ final class ExportS3Fake: Sendable {
   private let state: Mutex<State>
 
   init(
-    head: Int = 404, put: Int = 200, okPuts: Int? = nil, cancelPut: Bool = false,
-    cancelHead: Bool = false
+    head: Int = 404, heads: [Int] = [], put: Int = 200, okPuts: Int? = nil,
+    cancelPut: Bool = false, cancelHead: Bool = false
   ) {
     state = Mutex(
-      State(head: head, put: put, okPuts: okPuts, cancelPut: cancelPut, cancelHead: cancelHead))
+      State(
+        head: head, heads: heads, put: put, okPuts: okPuts, cancelPut: cancelPut,
+        cancelHead: cancelHead))
   }
 
   var deleted: [String] { state.withLock { $0.deleted } }
@@ -66,8 +70,8 @@ final class ExportS3Fake: Sendable {
       state.methods.append(request.method)
       switch request.method {
       case "HEAD":
-        return HTTPResponse(
-          status: state.head, headers: state.head == 200 ? ["content-length": "1"] : [:])
+        let status = state.heads.isEmpty ? state.head : state.heads.removeFirst()
+        return HTTPResponse(status: status, headers: status == 200 ? ["content-length": "1"] : [:])
       case "DELETE":
         state.deleted.append(key)
         state.bodies[key] = nil

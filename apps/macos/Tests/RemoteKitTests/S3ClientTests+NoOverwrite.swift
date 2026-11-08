@@ -106,6 +106,28 @@ extension S3ClientTests {
     }
   }
 
+  @Test(
+    "a cancel during the HEAD that would recognise our object is a cancel, never « already there »",
+    .scratchDirectory, arguments: noOverwriteRows)
+  func testCancelDuringRecognitionStaysACancel(row: NoOverwriteRow) async throws {
+    let file = try ScratchDirectory.url.appendingPathComponent("final.tif")
+    try Self.tenBytes.write(to: file)
+    let fake = Self.multipartServer { request in
+      if Self.creates(request) {
+        return .error(412, code: "PreconditionFailed", message: "precondition")
+      }
+      if request.method == "HEAD" { throw URLError(.cancelled) }
+      return nil
+    }
+
+    await #expect {
+      _ = try await fake.client(policy: row.policy)
+        .upload(file: file, bucket: "exports", key: "M31/final.tif", ifNoneMatch: true)
+    } throws: { error in
+      (error as? URLError)?.code == .cancelled
+    }
+  }
+
   /// The ETags S3 gives `tenBytes`: one PUT, and 4-byte parts (« 0123 », « 4567 », « 89 »),
   /// computed outside Swift (Python `hashlib`) so the code never checks itself.
   static let singleETag = "781e5e245d69b566979b86e28d23f2c7"

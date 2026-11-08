@@ -1,5 +1,5 @@
 internal import Foundation
-internal import ProjectKit
+package import ProjectKit
 package import StackKit
 
 /// The buckets a run may read, and those whose connection the Keychain refused (card 0185).
@@ -29,6 +29,19 @@ package nonisolated struct RunBuckets: Sendable {
       }
     }
     return nil
+  }
+
+  /// The remote sources of `sources` whose bucket a frame of `inventory` is read from: a run
+  /// looks up only those connections, so a run of this Mac's frames never asks the Keychain.
+  package static func sources(_ sources: [ProjectSource], readBy inventory: Inventory)
+    -> [ProjectSource]
+  {
+    let read = Set(
+      inventory.sets.flatMap {
+        $0.frames.compactMap { ProjectSource.remoteParts(of: $0.path)?.bucket }
+      })
+    guard !read.isEmpty else { return [] }
+    return sources.filter { $0.kind == .remoteNight && $0.bucket.map(read.contains) == true }
   }
 
   /// `refusal(reading:)` over every frame of `inventory`.

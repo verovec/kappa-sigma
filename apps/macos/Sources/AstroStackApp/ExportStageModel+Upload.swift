@@ -71,6 +71,8 @@ extension ExportStageModel {
     }
     guard let client = await client(s3.connectionID) else { return nil }
     let plan = RemotePlan(client: client, target: s3, key: key)
+    // Said on the stage only once the plan holds: a plan that fails uploads nothing.
+    var unchecked = false
     for name in names {
       do {
         if try await client.head(bucket: s3.bucket, key: plan.objectKey(name)) != nil {
@@ -81,7 +83,7 @@ extension ExportStageModel {
         // A write-only key (the export key Settings recommends) may not read: S3 answers 403
         // for a missing object then. Nothing can be told here — said on the stage; the upload
         // asks the service never to replace an object (`If-None-Match`, card 0185).
-        remoteUnchecked = true
+        unchecked = true
         continue
       } catch  where Self.isCancellation(error) {
         return nil  // the user stopped it: nothing to report
@@ -90,6 +92,7 @@ extension ExportStageModel {
         return nil
       }
     }
+    remoteUnchecked = unchecked
     return plan
   }
 

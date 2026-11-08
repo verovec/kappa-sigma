@@ -36,7 +36,7 @@ extension S3Client {
       } catch S3Error.service(412, let code, let message, let requestID) where ifNoneMatch {
         // Ours if a lost answer was retried: same size, the ETag of a single PUT = its MD5. A
         // key that may not read (HEAD 403) cannot tell: the refusal stands.
-        if let object = (try? await head(bucket: bucket, key: key)) ?? nil,
+        if let object = try await recognisable(bucket: bucket, key: key),
           object.size == Int64(body.count), object.etag.lowercased() == FileDigest.md5Hex(body)
         {
           return object
@@ -123,7 +123,7 @@ extension S3Client {
       // makes it ours; a key that may not read (HEAD 403) cannot tell, the refusal stands.
       let object =
         status == 412
-        ? (try? await head(bucket: bucket, key: key)) ?? nil
+        ? try await recognisable(bucket: bucket, key: key)
         : try await head(bucket: bucket, key: key)
       let ours =
         status == 412
@@ -194,5 +194,22 @@ extension S3Client {
       "<CompleteMultipartUpload xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
       + items.joined() + "</CompleteMultipartUpload>"
     return Data(xml.utf8)
+  }
+
+  /// The object at `key` as a HEAD sees it, to recognise our own after a 412.
+  ///
+  /// `nil` when the key may not read it (a write-only key: 403) or the HEAD fails — the refusal
+  /// then stands. A cancel is never taken for « cannot tell »: it is the caller's answer.
+  func recognisable(bucket: String, key: String) async throws -> S3Object? {
+    do {
+      return try await head(bucket: bucket, key: key)
+    } catch let error as URLError where error.code == .cancelled {
+      throw error
+    } catch is CancellationError {
+      throw CancellationError()
+    } catch {
+      try Task.checkCancellation()
+      return nil
+    }
   }
 }

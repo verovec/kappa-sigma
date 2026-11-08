@@ -83,15 +83,19 @@ extension ImportPlanning {
     var buckets = RunBuckets()
     var looked: [UUID: Result<S3Client?, any Error>] = [:]
     for source in sources where source.kind == .remoteNight {
-      guard let bucket = source.bucket, !buckets.names(bucket),
+      // A bucket already read is done; one refused so far may still be read by another
+      // connection, which then wins (a refused connection never hides a working one).
+      guard let bucket = source.bucket, !buckets.stores.contains(where: { $0.bucket == bucket }),
         let id = source.connectionID.flatMap(UUID.init(uuidString:))
       else { continue }
       if looked[id] == nil {
         do { looked[id] = .success(try await client(id)) } catch { looked[id] = .failure(error) }
       }
       switch looked[id] {
-      case .success(let s3?): buckets.stores.append(.s3(s3, bucket: bucket))
-      case .failure(let error): buckets.refusals[bucket] = error
+      case .success(let s3?):
+        buckets.stores.append(.s3(s3, bucket: bucket))
+        buckets.refusals[bucket] = nil
+      case .failure(let error): buckets.refusals[bucket] = buckets.refusals[bucket] ?? error
       case .success(nil), nil: continue
       }
     }

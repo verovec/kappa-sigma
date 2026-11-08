@@ -12481,22 +12481,6 @@
         }
       }
     },
-    "%@ cannot be read: %@. Check that the connection's key may read this prefix.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ cannot be read: %@. Check that the connection's key may read this prefix."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ ne peut pas être lu : %@. Vérifiez que la clé de la connexion peut lire ce préfixe."
-          }
-        }
-      }
-    },
     "%@ holds more than %lld objects: choose a narrower prefix.": {
       "localizations": {
         "en": {
@@ -12509,6 +12493,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ contient plus de %lld objets : choisissez un préfixe plus étroit."
+          }
+        }
+      }
+    },
+    "%@ cannot be read: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ cannot be read: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ ne peut pas être lu : %@"
           }
         }
       }

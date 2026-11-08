@@ -24,7 +24,7 @@ extension ImportPlanning {
           let sources = RunBuckets.sources((try? store?.sources() ?? []) ?? [], reading: paths)
           let buckets = await runStores(sources)
           if let refusal = buckets.refusal(reading: paths) { throw refusal }
-          builder.stager = FrameStager(stores: buckets.stores)
+          builder.stager = try await rebuildStager(stores: buckets.stores, paths: paths)
         }
         let result = try await rebuild(
           set, of: inventory, pool: pool, library: library, replace: replace, builder: builder)

@@ -39,6 +39,33 @@ struct RemoteScanRefusalTests {
   }
 
   @Test(
+    "one frame refused among readable ones stays that frame's skip (an archived frame)",
+    .scratchDirectory)
+  func testOneRefusedFrameAmongReadable() async throws {
+    let base = try InventoryBuilderFallbackTests.folder("archived")
+    for name in ["l_1", "l_2"] {
+      try TestFITS.write(
+        "lights/\(name).fits", in: base, pixel: 900,
+        cards: InventoryBuilderTests.asi("'Light Frame'", filter: "'L'", exptime: "120.0"))
+    }
+    let memory = try MemoryStore(tree: base, prefix: "M31/")
+    let store = RemoteObjectStore(
+      bucket: "astro", list: memory.store.list,
+      get: { key, range in
+        if key.hasSuffix("l_2.fits") { throw Denied() }
+        return try await memory.store.get(key, range)
+      },
+      failsTheScan: { _ in true })
+
+    let inventory = try await RemoteScan(
+      store: store, prefix: "M31", timeZone: RemoteScanTests.zone
+    ).inventory()
+
+    #expect(inventory.frames.map(\.path) == ["s3://astro/M31/lights/l_1.fits"])
+    #expect(inventory.warnings.contains { $0.contains("l_2.fits") }, "\(inventory.warnings)")
+  }
+
+  @Test(
     "a header the object alone fails (gone since the listing) stays the frame's skip",
     .scratchDirectory)
   func testHeaderTheObjectFailsIsASkip() async throws {

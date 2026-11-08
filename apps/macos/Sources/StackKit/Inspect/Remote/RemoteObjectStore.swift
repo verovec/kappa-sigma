@@ -75,11 +75,18 @@ package struct RemoteObjectStore: Sendable {
   }
 
   /// Whether `object` is the one listed as `identity`: its size and ETag, or its size alone
-  /// when the store cannot say an ETag (an in-memory one).
+  /// when either side has no ETag (an in-memory store, a listing or gateway that drops them).
   static func object(_ object: Object, matches identity: String) -> Bool {
-    object.etag.isEmpty
-      ? identity.hasPrefix(Object.identity(size: object.size, etag: ""))
-      : object.identity == identity
+    let size = Object.identity(size: object.size, etag: "")
+    guard !object.etag.isEmpty, !identity.hasSuffix("|") else { return identity.hasPrefix(size) }
+    return object.identity == identity
+  }
+
+  /// `error` in a sentence: a network error's own description, else what it says of itself
+  /// (an S3 answer's code and message as sent).
+  package static func words(of error: any Error) -> String {
+    (error as NSError).domain == NSURLErrorDomain
+      ? error.localizedDescription : String(describing: error)
   }
 
   /// A key whose bytes are no longer the object a run listed.

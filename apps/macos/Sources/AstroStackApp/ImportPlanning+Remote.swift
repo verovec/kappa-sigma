@@ -109,6 +109,18 @@ extension ImportPlanning {
   }
 }
 
+extension ImportPlanning {
+  /// The stager of a master rebuilt from a bucket (Données): it checks each download against a
+  /// listing made now (card 0186), as a run's does against the run's — a frame uploaded again
+  /// mid-rebuild fails it, named, instead of signing a master with bytes nothing listed.
+  package nonisolated static func rebuildStager(stores: [RemoteObjectStore], paths: [String])
+    async throws -> FrameStager
+  {
+    FrameStager(
+      stores: stores, expected: try await FrameStager(stores: stores).identities(of: paths))
+  }
+}
+
 /// Why a bucket could not be read for an import (card 0169).
 package enum RemoteImportProblem: Error, Equatable, Sendable {
   /// The connection is gone from Settings, or its secret is.

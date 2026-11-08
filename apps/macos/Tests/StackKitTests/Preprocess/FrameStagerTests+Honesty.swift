@@ -11,15 +11,18 @@ import Testing
 struct FrameStagerHonestyTests {
   typealias FakeBucket = FrameStagerTests.FakeBucket
 
+  // A same-size upload is told by its ETag alone (the store that has one); a store without
+  // ETags can only tell a size.
   @Test(
     "an object uploaded again since the run listed it fails the lane, named",
-    .scratchDirectory, arguments: [true, false])
-  func testChangedObjectFailsTheLane(fetching: Bool) async throws {
+    .scratchDirectory,
+    arguments: [(true, "one, again"), (false, "one, again"), (true, "two")])
+  func testChangedObjectFailsTheLane(fetching: Bool, again: String) async throws {
     let root = try ScratchDirectory.url
     let bucket = FakeBucket(objects: ["M31/r_1.fits": Data("one".utf8)], fetching: fetching)
     let path = "s3://astro/M31/r_1.fits"
     let listed = try await FrameStager(stores: [bucket.store]).identities(of: [path])
-    bucket.replace("M31/r_1.fits", with: Data("one, again".utf8))
+    bucket.replace("M31/r_1.fits", with: Data(again.utf8))
     let staged = root.appendingPathComponent("light_L")
 
     await #expect {
@@ -43,6 +46,34 @@ struct FrameStagerHonestyTests {
       [path], into: root.appendingPathComponent("light_L"))
 
     #expect(staged.identities == listed)
+  }
+
+  @Test(
+    "a folder inside another is not listed again: the parent's listing holds its keys",
+    arguments: [
+      (["M31/l.fits", "M31/calib/d.fits"], ["M31/"]),
+      (["l.fits", "M31/l.fits"], [""]),
+      (["M31/a/l.fits", "M31/b/l.fits"], ["M31/a/", "M31/b/"]),
+    ])
+  func testNestedFoldersListedOnce(keys: [String], folders: [String]) {
+    #expect(FrameStager.folders(of: keys) == folders)
+  }
+
+  @Test("a listing without ETags matches a download on its size", .scratchDirectory)
+  func testListingWithoutETags() async throws {
+    let root = try ScratchDirectory.url
+    let store = RemoteObjectStore(
+      bucket: "astro", list: { _ in [] }, get: { _, _ in Data("one".utf8) },
+      fetch: { key, destination in
+        try Data("one".utf8).write(to: destination)
+        return RemoteObjectStore.Object(key: key, size: 3, etag: "abc")
+      })
+    let path = "s3://astro/M31/r_1.fits"
+
+    let staged = try await FrameStager(stores: [store], expected: [path: "3|"]).stage(
+      [path], into: root.appendingPathComponent("light_L"))
+
+    #expect(staged.identities == [path: "3|"], "the identity the run listed signs it")
   }
 
   @Test("a folder of many objects is listed whole: a run's identities have no cap")

@@ -86,10 +86,9 @@ package struct FrameStager: Sendable {
       collect: { object, download in
         staged.remote += 1
         staged.bytes += object.size
-        // A store that cannot say an ETag matched on its size: the object is the one listed, and
-        // what the run listed is what signs it (a `size|` would never prove a master again).
-        staged.identities[download.path] =
-          object.etag.isEmpty ? download.expected ?? object.identity : object.identity
+        // A download checked against the listing is the object listed: what the run listed signs
+        // it, also when a side had no ETag (a `size|` would never prove a master again).
+        staged.identities[download.path] = download.expected ?? object.identity
         if staged.remote % Self.progressStep == 0 || staged.remote == total {
           progress(staged.remote, total, staged.bytes)
         }
@@ -167,11 +166,13 @@ package struct FrameStager: Sendable {
       return try await store.list(prefix)
     } catch {
       if error is CancellationError || Task.isCancelled { throw CancellationError() }
-      throw PreprocessError.remoteFrameUnavailable(path: folder, reason: String(describing: error))
+      throw PreprocessError.remoteFrameUnavailable(
+        path: folder, reason: RemoteObjectStore.words(of: error))
     }
   }
 
-  /// The folders `keys` sit in, each once: what a listing has to cover, and no more.
+  /// The folders `keys` sit in, each once and none inside another (a listing is recursive: the
+  /// parent's already holds the child's keys): what a listing has to cover, and no more.
   ///
   /// A key at the bucket's root has no folder, and then the listing is the bucket — the only
   /// case where it has to be.
@@ -180,7 +181,9 @@ package struct FrameStager: Sendable {
     for key in keys {
       folders.insert(key.lastIndex(of: "/").map { String(key[...$0]) } ?? "")
     }
-    return folders.sorted()
+    return folders.filter { folder in
+      !folders.contains { $0 != folder && folder.hasPrefix($0) }
+    }.sorted()
   }
 
   /// The longest `/`-bounded prefix every key shares (`""` when they share none).

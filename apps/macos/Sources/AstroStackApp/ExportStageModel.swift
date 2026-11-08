@@ -35,11 +35,17 @@ package final class ExportStageModel {
   /// The next export writes its files on this Mac (card 0152).
   package var local: Bool
   /// The next export's S3 copy, `nil` for none (card 0152).
-  package var s3: S3Target?
+  package var s3: S3Target? {
+    // What the last export's key could not check says nothing of another target (card 0185).
+    didSet { if s3 != oldValue { remoteUnchecked = false } }
+  }
   /// The S3 connections the form offers, as Settings held them when last read (card 0177).
   package internal(set) var s3Connections: [S3Connection]
   /// The file being uploaded, n of N, while an S3 copy runs.
   package internal(set) var uploadProgress: (file: Int, files: Int)?
+  /// The last export's S3 key could not look for objects already there (a write-only key: HEAD
+  /// answers 403): the service alone refused an overwrite then, where it can (card 0185).
+  package internal(set) var remoteUnchecked = false
   /// The time `{date}` and `{time}` stand for: the one shown is the one written to (R2), a new
   /// one after each export.
   var stamp: Date

@@ -69,8 +69,10 @@ extension ExportStageModel {
       failure = .exportS3(.captureBucket(s3.url(key)))
       return nil
     }
-    guard let client = client(s3.connectionID) else { return nil }
+    guard let client = await client(s3.connectionID) else { return nil }
     let plan = RemotePlan(client: client, target: s3, key: key)
+    // Said on the stage only once the plan holds: a plan that fails uploads nothing.
+    var unchecked = false
     for name in names {
       do {
         if try await client.head(bucket: s3.bucket, key: plan.objectKey(name)) != nil {
@@ -79,8 +81,11 @@ extension ExportStageModel {
         }
       } catch S3Error.service(403, _, _, _) {
         // A write-only key (the export key Settings recommends) may not read: S3 answers 403
-        // for a missing object then. Nothing can be told; the upload decides.
-        continue
+        // for a missing object then. Nothing can be told here — said on the stage; the upload
+        // asks the service never to replace an object (`If-None-Match`, card 0185).
+        // The same key cannot see the other names either: one HEAD says it.
+        unchecked = true
+        break
       } catch  where Self.isCancellation(error) {
         return nil  // the user stopped it: nothing to report
       } catch {
@@ -88,19 +93,18 @@ extension ExportStageModel {
         return nil
       }
     }
+    remoteUnchecked = unchecked
     return plan
   }
 
   /// The client of connection `id`, or `nil` with `failure` set.
-  private func client(_ id: UUID) -> S3Client? {
+  private func client(_ id: UUID) async -> S3Client? {
     do {
-      guard let client = try services.s3Client(id) else {
+      guard let client = try await services.s3Client(id) else {
         failure = .exportS3(.connectionMissing)
         return nil
       }
       return client
-    } catch let refusal as S3ConnectionStore.Refusal {
-      failure = .s3Connection(refusal)
     } catch {
       failure = UserFacingError(error)
     }
@@ -110,7 +114,9 @@ extension ExportStageModel {
   /// Uploads `urls` (the very files written) one after another.
   ///
   /// The first failure or a cancel stops it; with `discardPartial`, the objects already sent are
-  /// deleted then.
+  /// deleted then. The service is asked never to replace an object (`If-None-Match: *`), Resend
+  /// included: its refusal is said as the object already there (card 0185). An object this very
+  /// copy wrote is recognised by its size and ETag where the key can read it.
   func upload(_ urls: [URL], to remote: RemotePlan?, discardPartial: Bool) async -> UploadOutcome {
     guard let remote else { return .none }
     var sent: [String] = []
@@ -120,8 +126,13 @@ extension ExportStageModel {
       do {
         try Task.checkCancellation()
         _ = try await remote.client.upload(
-          file: url, bucket: remote.target.bucket, key: key, contentType: Self.contentType(url))
+          file: url, bucket: remote.target.bucket, key: key, contentType: Self.contentType(url),
+          ifNoneMatch: true)
         sent.append(key)
+      } catch S3Error.service(412, _, _, _) {
+        if discardPartial { await Self.discard(sent, from: remote) }
+        let refusal = UserFacingError.exportWouldOverwrite(path: remote.target.url(key))
+        return .failed(String(localized: refusal.message))
       } catch {
         if discardPartial { await Self.discard(sent, from: remote) }
         return Self.isCancellation(error) ? .cancelled : .failed(Self.text(error))
@@ -169,13 +180,14 @@ extension ExportStageModel {
       return
     }
     failure = nil
+    remoteUnchecked = false
     // The capture sources may have changed since the export: R7 is judged again.
     let location = RemoteLocation(bucket: bucket, prefix: key)
     guard ExportGuard.remoteRefusal(location, sources: services.remoteSources()) == nil else {
       failure = .exportS3(.captureBucket(url))
       return
     }
-    guard let client = client(connection) else { return }
+    guard let client = await client(connection) else { return }
     isExporting = true
     defer {
       isExporting = false

@@ -46,16 +46,28 @@ package struct ExportTargetsForm: View {
         Text(UserFacingError.exportS3(.noDestination).message)
           .font(.caption).foregroundStyle(DesignColor.statusError.color)
       }
-      if let progress = model.uploadProgress {
-        HStack {
-          Text(.app("Uploading file \(progress.file) of \(progress.files)…")).font(.caption)
-          Spacer()
-          Button(.app("Cancel")) { model.cancelExport() }
-        }
-      }
+      uploadLines
     }
     // A connection added through « S3 connections… » shows when the user comes back (card 0177).
     .task { await model.followSettings(DefaultsChanges.live) }
+  }
+
+  /// What the S3 copy says while and after it runs: what the key could not check (card 0185),
+  /// the file being sent with « Cancel ».
+  @ViewBuilder private var uploadLines: some View {
+    if model.remoteUnchecked {
+      Text(
+        .app("This key cannot see existing objects: the service was told never to replace one.")
+      )
+      .font(.caption).foregroundStyle(.secondary)
+    }
+    if let progress = model.uploadProgress {
+      HStack {
+        Text(.app("Uploading file \(progress.file) of \(progress.files)…")).font(.caption)
+        Spacer()
+        Button(.app("Cancel")) { model.cancelExport() }
+      }
+    }
   }
 
   @ViewBuilder private var s3Fields: some View {

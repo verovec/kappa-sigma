@@ -99,13 +99,15 @@ extension ProjectWindowModel {
     // The run re-plans the import silently: its own progress is the run's journal.
     let planning = ImportViewModel.silent(services(store).planning)
     let start = runs.run
-    // Read before the run starts: the sources as the project records them now (card 0154).
-    let stores = runs.buckets(sources)
+    // Read before the run starts: the sources as the project records them now (card 0154);
+    // their clients are looked up in the run's task, off the main actor (card 0185).
+    let remote = sources
+    let buckets = runs.buckets
     let model = RunViewModel(runID: runID, output: output)
     let gate = model.gate
     let prepared = RunRequestPlan(
       output: output, work: work, runID: runID, mode: record.mode, settings: settings,
-      gate: gate, resuming: resume != nil, stores: stores, laneKnobs: record.laneKnobs)
+      gate: gate, resuming: resume != nil, laneKnobs: record.laneKnobs)
     run = model
     refresh()
     model.start(
@@ -117,6 +119,13 @@ extension ProjectWindowModel {
           guard unlisted.isEmpty else { throw PreprocessError.scopeOutdated(unlisted) }
         }
         let inventory = scope.map { plan.inventory.scoped($0) } ?? plan.inventory
+        // Looked up here, off the main actor (a Keychain prompt never freezes the window), and
+        // only for the buckets this inventory reads: a run of local frames never asks.
+        let looked = await buckets(RunBuckets.sources(remote, readBy: inventory))
+        var prepared = prepared
+        prepared.stores = looked.stores
+        // A bucket the Keychain refused stops the run here, in the refusal's words (card 0185).
+        if let refusal = looked.refusal(in: inventory) { throw refusal }
         // Refused before Siril starts, never left to fail mid-run on a full disk (card 0098).
         try Self.checkScratch(inventory, settings: settings, folder: scratch, room: room)
         return start(try prepared.request(inventory: inventory, library: plan.library))

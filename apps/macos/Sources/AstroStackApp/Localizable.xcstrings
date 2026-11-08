@@ -12464,6 +12464,22 @@
           }
         }
       }
+    },
+    "This key cannot see existing objects: the service was told never to replace one.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This key cannot see existing objects: the service was told never to replace one."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette clé ne voit pas les objets existants : le service a reçu l’ordre de n’en remplacer aucun."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

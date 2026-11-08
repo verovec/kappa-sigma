@@ -46,6 +46,7 @@ extension ExportStageModel {
   package func export() async {
     guard !isExporting else { return }
     failure = nil
+    remoteUnchecked = false
     written = []
     // Busy from the first check: the S3 checks are network calls (no second export, no Resend).
     isExporting = true

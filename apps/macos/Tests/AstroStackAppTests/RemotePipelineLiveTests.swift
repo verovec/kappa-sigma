@@ -90,8 +90,12 @@ struct RemotePipelineLiveTests {
         client: { [client] _ in client })
       let plan = try await planning(target, ImportRequest(paths: [target.path])) { _ in }
       let downloads = Downloads()
-      let stores = ImportPlanning.runStores(try project.store.sources()) { [client] _ in client }
-      return (plan.inventory, stores.map(downloads.counting), downloads)
+      let buckets = await ImportPlanning.runStores(try project.store.sources()) { [client] _ in
+        client
+      }
+      // The live connection's client is handed over as is: no bucket of the run may be refused.
+      #expect(buckets.refusals.isEmpty)
+      return (plan.inventory, buckets.stores.map(downloads.counting), downloads)
     }
 
   }

@@ -16,6 +16,8 @@ final class ExportS3Fake: Sendable {
     var put: Int
     var bodies: [String: Data] = [:]
     var methods: [String] = []
+    /// Each PUT's `If-None-Match` header (card 0185), `nil` when absent.
+    var conditions: [String?] = []
     var deleted: [String] = []
     /// PUTs after this many succeed answer `put` (nil: every PUT does).
     var okPuts: Int?
@@ -40,6 +42,7 @@ final class ExportS3Fake: Sendable {
 
   var bodies: [String: Data] { state.withLock { $0.bodies } }
   var methods: [String] { state.withLock { $0.methods } }
+  var conditions: [String?] { state.withLock { $0.conditions } }
   func answer(put: Int) { state.withLock { $0.put = put } }
 
   /// A client of this fake (path-style on 127.0.0.1, no backoff waits).
@@ -71,6 +74,7 @@ final class ExportS3Fake: Sendable {
         return HTTPResponse(status: 204)
       case "PUT":
         state.puts += 1
+        state.conditions.append(request.headers["if-none-match"])
         let failing = state.okPuts.map { state.puts > $0 } ?? (state.put != 200)
         guard !failing else {
           return HTTPResponse(

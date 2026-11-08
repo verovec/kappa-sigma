@@ -1,20 +1,22 @@
 package import Foundation
 package import ProjectKit
-package import RemoteKit
+internal import RemoteKit
 package import StackKit
 
 // MARK: - Importing a bucket prefix (card 0169)
 
 extension ImportPlanning {
   /// The client of a Settings connection; the app's one transport, as exports use it.
-  package typealias Client = @Sendable (UUID) throws -> S3Client?
+  package typealias Client = S3ClientLookup
 
   /// Lists one level of a bucket for « Browse »: the sub-prefixes alone, never the whole bucket.
   package nonisolated static func browsing(client: @escaping Client = ExportServices.liveClient)
     -> ImportBucketModel.Browsing
   {
     { connection, bucket, prefix in
-      guard let s3 = try client(connection) else { throw RemoteImportProblem.connectionMissing }
+      guard let s3 = try await client(connection) else {
+        throw RemoteImportProblem.connectionMissing
+      }
       return try await s3.list(bucket: bucket, prefix: prefix, delimiter: "/").prefixes
     }
   }
@@ -30,7 +32,7 @@ extension ImportPlanning {
     client: @escaping Client = ExportServices.liveClient
   ) -> ImportViewModel.RemotePlanning {
     { target, request, progress in
-      guard let s3 = try client(target.connectionID) else {
+      guard let s3 = try await client(target.connectionID) else {
         throw RemoteImportProblem.connectionMissing
       }
       progress(.library)
@@ -69,22 +71,41 @@ extension ImportPlanning {
 
 extension ImportPlanning {
   /// The buckets a run of this project may read (card 0154): one store per remote source
-  /// (card 0168), through the Settings connection its own row names.
+  /// (card 0168), through the Settings connection its own row names, each looked up once.
   ///
   /// A source whose connection is gone contributes nothing: the run refuses with that bucket's
-  /// name rather than stacking the lanes it could read (R2).
+  /// name rather than stacking the lanes it could read (R2). A connection whose secret the
+  /// Keychain refuses is kept with its refusal (card 0185): a run that reads that bucket is
+  /// refused with those words before Siril starts, one that never does runs as before.
   package nonisolated static func runStores(
-    _ sources: [ProjectSource], client: @escaping Client = ExportServices.liveClient
-  ) -> [RemoteObjectStore] {
-    var byBucket: [String: RemoteObjectStore] = [:]
+    _ sources: [ProjectSource], client: Client = ExportServices.liveClient
+  ) async -> RunBuckets {
+    var buckets = RunBuckets()
+    var looked: [UUID: Result<S3Client?, any Error>] = [:]
     for source in sources where source.kind == .remoteNight {
-      guard let bucket = source.bucket, byBucket[bucket] == nil,
-        let id = source.connectionID.flatMap(UUID.init(uuidString:)),
-        let s3 = (try? client(id)) ?? nil
+      // A bucket already read is done; one refused so far may still be read by another
+      // connection, which then wins (a refused connection never hides a working one).
+      guard let bucket = source.bucket, !buckets.stores.contains(where: { $0.bucket == bucket }),
+        let id = source.connectionID.flatMap(UUID.init(uuidString:))
       else { continue }
-      byBucket[bucket] = .s3(s3, bucket: bucket)
+      if looked[id] == nil {
+        do { looked[id] = .success(try await client(id)) } catch { looked[id] = .failure(error) }
+      }
+      switch looked[id] {
+      case .success(let s3?):
+        // A name this connection cannot address (0184) is refused before Siril, in its words.
+        do { try s3.endpoint.validate(bucket: bucket) } catch {
+          buckets.refusals[bucket] = buckets.refusals[bucket] ?? error
+          continue
+        }
+        buckets.stores.append(.s3(s3, bucket: bucket))
+        buckets.refusals[bucket] = nil
+      case .failure(let error): buckets.refusals[bucket] = buckets.refusals[bucket] ?? error
+      case .success(nil), nil: continue
+      }
     }
-    return byBucket.values.sorted { $0.bucket < $1.bucket }
+    buckets.stores.sort { $0.bucket < $1.bucket }
+    return buckets
   }
 }
 

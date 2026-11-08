@@ -10,6 +10,20 @@ package enum FileDigest {
     try digest(url, into: Insecure.MD5()).hexString
   }
 
+  /// The lowercase hex MD5 of `data` (the ETag of a single PUT of it).
+  package static func md5Hex(_ data: Data) -> String {
+    Insecure.MD5.hash(data: data).hexString
+  }
+
+  /// The ETag S3 gives an object completed from parts whose MD5s are `parts` (computed from the
+  /// bytes sent, never read back from the service): the MD5 of those MD5s, then `-<count>`.
+  package static func multipartETag(_ parts: [Data]) -> String {
+    "\(Insecure.MD5.hash(data: Data(parts.joined())).hexString)-\(parts.count)"
+  }
+
+  /// The binary MD5 of `data` (a part's, for `multipartETag`).
+  package static func md5(_ data: Data) -> Data { Data(Insecure.MD5.hash(data: data)) }
+
   /// The base64 SHA-256 of `url` (an `x-amz-checksum-sha256` value).
   package static func sha256Base64(_ url: URL) throws -> String {
     Data(try digest(url, into: SHA256())).base64EncodedString()

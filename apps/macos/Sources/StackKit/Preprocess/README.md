@@ -73,7 +73,8 @@ The buckets belong to the request (`PreprocessRequest.remoteStores`, filled by t
 project's remote sources and their Settings connections — `ImportPlanning.runStores`); an empty
 list is a local run, and then nothing is ever downloaded. `RemoteObjectStore.download` is the
 store's own verified download (`.part`, size and checksum, atomic rename) when it has one.
-`FrameStager.identities(of:)` lists each folder the run's keys sit in (never the bucket's root),
+`FrameStager.identities(of:)` lists each folder the run's keys sit in, a folder inside another
+once (the bucket's root only when a key sits there),
 so `LaneRecord.framesDigest` can compare `size|etag` where a local frame compares size and mtime:
 a frame re-uploaded under the same key re-runs its lane. A listing that fails stops the run with
 the folder named (card 0186). The stager checks every download against what the run listed

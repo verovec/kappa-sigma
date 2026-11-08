@@ -80,7 +80,7 @@ struct RemoteScanRefusalTests {
     arguments: [(RemoteSnapshot.maxObjects, false), (RemoteSnapshot.maxObjects + 1, true)])
   func testListingBeyondTheCapIsRefused(count: Int, refused: Bool) async throws {
     let objects = (0..<count).map {
-      RemoteObjectStore.Object(key: "M31/f_\($0).txt", size: 1, etag: "e")
+      RemoteObjectStore.Object(key: "M31/f_\($0).fits", size: 1, etag: "e")
     }
     let store = RemoteObjectStore(
       bucket: "astro", list: { _ in objects }, get: { _, _ in Data() })
@@ -92,6 +92,23 @@ struct RemoteScanRefusalTests {
       #expect(refused)
       #expect(path == "s3://astro/M31" && limit == RemoteSnapshot.maxObjects)
     }
+  }
+
+  @Test("sidecars never count toward the cap: only the frames a scan reads")
+  func testSidecarsDoNotCount() async throws {
+    let objects = (0..<RemoteSnapshot.maxObjects).flatMap { index in
+      ["M31/f_\(index).fits", "M31/f_\(index).fits.txt"].map {
+        RemoteObjectStore.Object(key: $0, size: 1, etag: "e")
+      }
+    }
+    // Every frame and sidecar read fails as the object's: the cap is the only refusal possible.
+    let store = RemoteObjectStore(
+      bucket: "astro", list: { _ in objects },
+      get: { _, _ in throw CocoaError(.fileNoSuchFile) })
+
+    let snapshot = try await RemoteSnapshot.load(store: store, prefix: "M31")
+
+    #expect(snapshot.listing.files.count == 2 * RemoteSnapshot.maxObjects)
   }
 
   @Test("an output/ folder the walk skips never counts toward the cap")

@@ -161,6 +161,8 @@ extension RemoteSnapshot {
     _ items: [Item], width: Int = parallelism,
     work: @escaping @Sendable (Item) async throws -> Answer?, collect: (Answer) throws -> Void
   ) async throws {
+    // No slot would run nothing and drop every item without a word.
+    precondition(width > 0, "inParallel needs at least one slot")
     try await withThrowingTaskGroup(of: Answer?.self) { group in
       var next = items.makeIterator()
       for _ in 0..<width {

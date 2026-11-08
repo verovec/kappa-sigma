@@ -20,6 +20,10 @@ struct RemoteObjectStoreS3FailureTests {
       (S3Error.service(status: 404, code: "NoSuchKey", message: nil, requestID: nil), false),
       (S3Error.service(status: 404, code: nil, message: nil, requestID: nil), false),
       (S3Error.service(status: 404, code: "NoSuchBucket", message: nil, requestID: nil), true),
+      (
+        S3Error.service(status: 403, code: "InvalidObjectState", message: nil, requestID: nil),
+        false
+      ),
       (S3Error.service(status: 416, code: "InvalidRange", message: nil, requestID: nil), false),
       (S3Error.service(status: 500, code: "InternalError", message: nil, requestID: nil), true),
       (S3Error.transferTimedOut(seconds: 60), true),

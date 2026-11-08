@@ -51,7 +51,8 @@ struct CalibrationStagePane: View {
         .app("Calibration masters"), detail: .app("What the next run applies to each light set."),
         help: StageHelp.help(.calibration, locale: locale))
       Spacer()
-      if model.isScanning {
+      // The same scan as Données' (card 0182): a bucket read in flight offers Cancel here too.
+      if model.isScanning || model.isScanningRemote {
         ProgressView().controlSize(.small)
         Button(.app("Cancel")) { model.cancelScan() }
           .accessible(.calibrationCancelScan, label: .app("Cancel"))

@@ -46,8 +46,11 @@ package struct BackgroundExtractionProcess: ImageProcess {
   ])
 
   package static let steps: [String: Double] = [
-    "smoothing": 0.05, "rbfSmooth": 0.05, "samples": 1, "tolerance": 0.1, "degree": 1,
+    "smoothing": 0.05, "rbfSmooth": 0.05, "tolerance": 0.1,
   ]
+
+  /// The sample count and the polynomial degree are whole numbers.
+  package static let wholeNumbers: Set<String> = ["samples", "degree"]
 
   /// The values of the chosen engine, shown without the disclosure.
   package static func promoted(_ params: ParamSet) -> Set<String> {

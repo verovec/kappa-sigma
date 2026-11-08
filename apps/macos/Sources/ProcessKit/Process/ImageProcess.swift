@@ -50,9 +50,13 @@ package protocol ImageProcess {
   /// (`ParamSchema.visible(disclosed:promoted:hidden:)`); none by default.
   static func promoted(_ params: ParamSet) -> Set<String>
 
-  /// The arrow step of number parameters that need a finer one than the panel's default (a
-  /// tenth of it with ⇧ or ⌥), by id.
+  /// The arrow step of number parameters that need another one than the panel's default (a
+  /// decade of the slider's range), by id; a tenth of it with ⇧ or ⌥.
   static var steps: [String: Double] { get }
+
+  /// Number parameters the process reads as whole numbers (counts, whole pixels), by id: their
+  /// arrows move one per press, ⇧ too, and land on whole numbers (card 0179); none by default.
+  static var wholeNumbers: Set<String> { get }
 
   /// The slider range of number parameters whose useful travel depends on the image, by id, for
   /// a `width` × `height` head (full-resolution pixels); none by default. Display only: the
@@ -150,6 +154,9 @@ extension ImageProcess {
 
   /// The panel's default steps.
   package static var steps: [String: Double] { [:] }
+
+  /// No whole-number parameter.
+  package static var wholeNumbers: Set<String> { [] }
 
   /// None: the panel's sliders span the schema bounds.
   package static func displayRanges(width: Int, height: Int) -> [String: ClosedRange<Double>] {

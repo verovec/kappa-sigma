@@ -262,7 +262,10 @@ in en/fr; the English title is the key, resolved with `ProcessKitResources.title
   shown never enforced), `suggestions`. The app wraps it in `StudioModel` (every step mirrored in
   ProjectKit) and `StudioWorkspaceModel` (catalogue, panel, live preview, compare, mask).
 - `ImageProcess.promoted(_:)` names advanced parameters the current values make relevant (shown
-  without the disclosure); `ImageProcess.steps` gives finer arrow steps (a tenth with ⇧ or ⌥).
+  without the disclosure); `ImageProcess.steps` gives a param its arrow step (a tenth with ⇧ or
+  ⌥), `ImageProcess.wholeNumbers` the params read as whole numbers (counts, whole pixels: one
+  per press, ⇧ too, card 0179); any other param steps by a decade of its slider's range
+  (`ParameterStep.default`), and a held ↑/↓ goes faster.
   `HistogramHandled` processes (levels, stretch) put their values as handles on the head's
   histogram in the panel.
 - A host-tool step (StarNet 0091, background extraction 0092) records its result and the layers

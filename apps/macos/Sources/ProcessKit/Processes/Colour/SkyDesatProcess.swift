@@ -38,6 +38,9 @@ package struct SkyDesatProcess: ImageProcess {
       + band("nebula", "Bright signal", low: 0.02, high: 0.10)
       + band("floor", "Sky floor", low: 1e-4, high: 4e-4))
 
+  /// The star-core guard is read as whole pixels.
+  package static let wholeNumbers: Set<String> = ["coreGuardPx"]
+
   /// The two ends of a brightness-relative band, as fractions of the sky level.
   private static func band(_ id: String, _ title: String, low: Double, high: Double) -> [ParamSpec]
   {

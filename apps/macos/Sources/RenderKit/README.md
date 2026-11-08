@@ -55,10 +55,18 @@ The viewer's stretch stays display-only (R2) but reads and edits precisely:
   (−5…5), target background (0.01…0.6), highlights (0.5…1), raw c0 / m / c1 — each editing one
   parameter only, defaulting to the autostretch (reset lands on it exactly). `STFControls` draws
   them with `ParameterRow`s; ids `fr.astrostack.parameter.stf.<k|r|g|b>.<row>.<part>`.
-- **Steps** (`ParameterStep`, `ParameterRow(…, step:)`): with a step the slider takes focus and
-  moves one step per arrow, a tenth with ⇧ or ⌥; an ⌥-drag runs at a tenth of the pointer's travel
-  (re-anchored where ⌥ toggles, so the value never jumps). Without a step the row is the plain
-  slider it was. Each row's « why » states its steps.
+- **Steps** (`ParameterStep`, `ParameterRow(…, step:)`, cards 0085, 0179): every field steps
+  with ↑/↓, by the panel's `step` or else `ParameterStep.default(for:)` (a hundredth of the
+  slider's range, on a decade); `ParameterStep.wholeNumber` moves one per press, ⇧ too, landing
+  on whole numbers (counts, whole pixels). A press moves one step, a held key 1, 2, 5 then 10
+  steps per auto-repeat, by eights of repeats (`ArrowRepeat`: counted in repeats, never in
+  time). ⇧ or ⌥ a fine step; ⌘ and ⌃ stay the field's. Typed text is applied before the step;
+  text that does not read blocks it. Repeats step from the value the row last wrote (a binding
+  shows a write only once the row is drawn again); after a release the field shows the binding,
+  so a write the model rounds or refuses never stays shown (R2). With a declared `step` the
+  slider takes focus too: ←/→ one step per press or repeat, never faster, ↑/↓ as in the field,
+  and an ⌥-drag runs at a tenth of the pointer's travel (re-anchored where ⌥ toggles, so the
+  value never jumps). Each STF row's « why » states its steps.
 - **Display-domain histogram**: `ViewerFrame.histogramDomain` (`linear` | `display`); in the
   display domain the `histogram` kernel bins `stf(x)` through `STF.h` (the functions
   `Display.metal` uses too) with the frame's stretch in `HistogramUniforms`, and the viewer counts

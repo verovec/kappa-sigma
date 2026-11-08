@@ -13,8 +13,8 @@ struct PixelReadoutSummaryTests {
     "pixel, channels and sky in each language",
     arguments: [
       ("en", 3, "2, 1 · R 0.120000 G 0.120000 B 0.120000 · RA "),
-      ("fr", 3, "2, 1 · R 0,120000 G 0,120000 B 0,120000 · AD "),
-      ("fr", 1, "2, 1 · K 0,120000 · AD "),
+      ("fr", 3, "2, 1 · R 0.120000 G 0.120000 B 0.120000 · AD "),
+      ("fr", 1, "2, 1 · K 0.120000 · AD "),
     ])
   func testSummary(language: String, planes: Int, prefix: String) throws {
     let model = try ViewerViewTests.model(planes: planes)

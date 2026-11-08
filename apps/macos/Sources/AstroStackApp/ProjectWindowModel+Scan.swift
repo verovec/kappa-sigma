@@ -16,11 +16,13 @@ extension ProjectWindowModel {
     }
     let request: ImportRequest
     do {
-      guard let planned = try runRequest() else { return scanRemoteOnly() }
+      // A project whose captures are all in buckets: the remote sources alone (card 0169).
+      guard let planned = try runRequest() else { return startRemoteScan() }
       request = planned
     } catch {
       self.error = UserFacingError(error)
-      return
+      // The folders' request does not hold: the buckets are read all the same (card 0182).
+      return startRemoteScan()
     }
     let planning = ImportViewModel.silent(services(store).planning)
     isScanning = true
@@ -35,8 +37,9 @@ extension ProjectWindowModel {
         scanTask = nil
         refresh()
         // After the local plan, never before it: one unreachable bucket would otherwise hold
-        // back a purely local Rescan — and Run with it (card 0100's `awaitsRescan`).
-        await rescanRemoteSources()
+        // back a purely local Rescan — and Run with it (card 0100's `awaitsRescan`). Its own
+        // task, so Cancel and the next Rescan still reach it (card 0182).
+        startRemoteScan()
       } catch {
         guard !Task.isCancelled else { return }
         // The folders no longer read as scanned: the last scan stops describing them. A
@@ -44,34 +47,40 @@ extension ProjectWindowModel {
         dropScan()
         refresh()
         if !(error is CancellationError) { self.error = UserFacingError(error) }
+        // A folder that does not read never keeps the buckets from being read (card 0182).
+        startRemoteScan()
       }
     }
   }
 
-  /// A project whose captures are all in buckets: nothing to read on this Mac, the remote
-  /// sources alone are scanned (card 0169).
-  func scanRemoteOnly() {
-    guard !remoteSources.isEmpty else { return }
-    isScanning = true
-    scanTask = Task {
-      await rescanRemoteSources()
-      guard !Task.isCancelled else { return }
-      isScanning = false
-      scanTask = nil
-    }
+  /// Stops the scan in flight, the buckets' too (card 0182): the user's Cancel, a new Rescan, a
+  /// closing window.
+  ///
+  /// The previous scan, if any, and each bucket's last count stay shown.
+  package func cancelScan() {
+    cancelLocalScan()
+    cancelRemoteScan()
   }
 
-  /// Stops the scan in flight; the previous scan, if any, stays shown.
-  package func cancelScan() {
+  /// Stops the plan of this Mac's folders only (card 0182): what Run and an adopted Add replace.
+  ///
+  /// A bucket read in flight goes on, since it plans no folder; an Add followed by a Rescan stops
+  /// it like any Rescan, and reads it again after the folders.
+  func cancelLocalScan() {
     scanTask?.cancel()
     scanTask = nil
     isScanning = false
     rescanAfterAdd = false
   }
 
-  /// Waits for the scan in flight, if any.
+  /// Waits for the scan in flight, if any: the local plan, then the buckets it started, and any
+  /// scan that replaced one of them meanwhile.
   package func scanSettled() async {
-    await scanTask?.value
+    while let task = scanTask ?? remoteScanTask {
+      await task.value
+      // A task that ended without letting go of its slot (none does today) must not spin here.
+      if task == scanTask || task == remoteScanTask { return }
+    }
   }
 
   /// After Add: the sheet's plan becomes the window's scan only when it is settled (planned for
@@ -82,13 +91,13 @@ extension ProjectWindowModel {
     guard let sheet, let plan = sheet.plan, !sheet.isScanning, sheet.request == request,
       let run = try? runRequest(), Self.sameRequest(request, run)
     else { return dropScan() }
-    cancelScan()
+    cancelLocalScan()
     scan = plan
   }
 
-  /// The project changed in a way the last scan does not describe.
+  /// The project changed in a way the last scan of its folders does not describe.
   func dropScan() {
-    cancelScan()
+    cancelLocalScan()
     scan = nil
   }
 

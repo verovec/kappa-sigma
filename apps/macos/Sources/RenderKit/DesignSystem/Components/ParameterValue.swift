@@ -43,6 +43,13 @@ package struct ParameterValue: Equatable, Sendable {
     set(min(max(newValue, slider.lowerBound), slider.upperBound))
   }
 
+  /// Sets `newValue` from an arrow key: clamped to the slider's range, widened to hold the value
+  /// as it is, so a typed value past the slider is stepped from where it stands, never snapped
+  /// back inside (card 0179).
+  package mutating func nudge(_ newValue: Double) {
+    slide(newValue, on: range.widened(toHold: [value]))
+  }
+
   /// Back to the default.
   package mutating func reset() {
     value = defaultValue

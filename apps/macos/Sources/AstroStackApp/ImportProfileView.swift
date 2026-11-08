@@ -149,7 +149,7 @@ package struct ImportProfileView: View {
     String(localized: ProcessKitResources.title(key, locale: locale))
   }
 
-  /// A value as the panel writes it, numbers in `locale` (« 0,115 »).
+  /// A value as the panel writes it, numbers in `locale` (« 0.115 »).
   nonisolated static func text(_ value: ParamValue?, _ locale: Locale) -> String {
     switch value {
     case .number(let number): AstroFormat(locale: locale).parameter(number)

@@ -15,6 +15,10 @@ struct FrameStagerTests {
     /// What the bucket holds and what it was asked.
     struct State {
       var objects: [String: Data] = [:]
+      /// Each object's ETag: « e » as first stored, a new one on every `replace` — what S3 does
+      /// when a key is uploaded again.
+      var etags: [String: String] = [:]
+      var uploads = 0
       var downloaded: [String] = []
       var listed: [String] = []
       var failure = false
@@ -22,10 +26,26 @@ struct FrameStagerTests {
     }
 
     private let state = Mutex(State())
+    /// Whether the store downloads whole objects itself, as the S3 one does; without it,
+    /// `RemoteObjectStore.download` writes `get` out through its own `.part`.
+    let fetching: Bool
 
-    init(bucket: String = "astro", objects: [String: Data]) {
+    init(bucket: String = "astro", objects: [String: Data], fetching: Bool = true) {
       self.bucket = bucket
-      state.withLock { $0.objects = objects }
+      self.fetching = fetching
+      state.withLock {
+        $0.objects = objects
+        $0.etags = objects.mapValues { _ in "e" }
+      }
+    }
+
+    /// Uploads `data` again under `key`: a new ETag, as a real bucket gives it.
+    func replace(_ key: String, with data: Data) {
+      state.withLock {
+        $0.uploads += 1
+        $0.objects[key] = data
+        $0.etags[key] = "e\($0.uploads)"
+      }
     }
 
     var downloaded: [String] { state.withLock { $0.downloaded } }
@@ -37,27 +57,40 @@ struct FrameStagerTests {
     func failListing(_ failing: Bool) { state.withLock { $0.listingFailure = failing } }
 
     var store: RemoteObjectStore {
-      RemoteObjectStore(
+      // A whole object answers with the ETag the listing gives, as `S3Client.download` does:
+      // what a build read can be compared with what a run listed.
+      let fetch: Fetch = { key, destination in
+        let (data, etag) = try self.read(key)
+        try data.write(to: destination, options: .atomic)
+        return RemoteObjectStore.Object(key: key, size: Int64(data.count), etag: etag)
+      }
+      return RemoteObjectStore(
         bucket: bucket,
         list: { prefix in
-          let objects = try self.state.withLock { state -> [String: Data] in
+          try self.state.withLock { state -> [RemoteObjectStore.Object] in
             state.listed.append(prefix)
             if state.listingFailure { throw CocoaError(.fileReadNoPermission) }
-            return state.objects
+            return state.objects.filter { $0.key.hasPrefix(prefix) }.map {
+              RemoteObjectStore.Object(
+                key: $0.key, size: Int64($0.value.count), etag: state.etags[$0.key] ?? "e")
+            }
           }
-          return
-            objects
-            .filter { $0.key.hasPrefix(prefix) }
-            .map { RemoteObjectStore.Object(key: $0.key, size: Int64($0.value.count), etag: "e") }
         },
-        get: { key, _ in
-          let data = self.state.withLock { state -> Data? in
-            state.downloaded.append(key)
-            return state.failure ? nil : state.objects[key]
-          }
-          guard let data else { throw CocoaError(.fileNoSuchFile) }
-          return data
-        })
+        get: { key, _ in try self.read(key).data }, fetch: fetching ? fetch : nil)
+    }
+
+    /// A whole-object download, as `RemoteObjectStore` takes it.
+    typealias Fetch = @Sendable (String, URL) async throws -> RemoteObjectStore.Object
+
+    /// One read of `key`, recorded: its bytes and ETag, or the failure the test scripted.
+    private func read(_ key: String) throws -> (data: Data, etag: String) {
+      let object = state.withLock { state -> (Data, String)? in
+        state.downloaded.append(key)
+        guard !state.failure, let data = state.objects[key] else { return nil }
+        return (data, state.etags[key] ?? "e")
+      }
+      guard let object else { throw CocoaError(.fileNoSuchFile) }
+      return object
     }
   }
 

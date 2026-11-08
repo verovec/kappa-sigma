@@ -53,7 +53,11 @@ struct DataStagePane: View {
         if let lights = state?.lights {
           Text(.app("\(lights) lights read in place")).font(.caption2).foregroundStyle(.secondary)
         }
-        if let failure = state?.failure {
+        if state?.isScanning == true {
+          // The last failure waits for this read's answer: shown beside it, it would read as
+          // the current state; a cancelled read shows it again.
+          Text(.app("Scanning…")).font(.caption2).foregroundStyle(.secondary)
+        } else if let failure = state?.failure {
           // Its own words: `S3Error` already starts with « S3 », and a missing connection names
           // Settings — prefixing either would read « S3: S3 403 … ».
           StatusBadge(.error, failure.message)
@@ -70,11 +74,12 @@ struct DataStagePane: View {
         .app("Capture nights"), detail: .app("Read, never written."),
         help: StageHelp.help(.data, locale: locale))
       Spacer()
-      if model.isScanning {
+      // A bucket read in flight is a scan too (card 0182): Cancel stops it.
+      if model.isScanning || model.isScanningRemote {
         ProgressView().controlSize(.small)
         Button(.app("Cancel")) { model.cancelScan() }
           .accessible(.dataCancelScan, label: .app("Cancel"))
-      } else if !model.nightPaths.isEmpty {
+      } else if !model.nightPaths.isEmpty || !model.remoteSources.isEmpty {
         // A legacy run alone is a source, never a capture: nothing to rescan.
         Button(.app("Rescan")) { model.rescan() }
           .accessible(.dataRescan, label: .app("Rescan"))

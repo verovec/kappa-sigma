@@ -178,9 +178,9 @@ package final class ProcessPanelModel {
     type.schema.specs.contains { $0.level == .advanced && !hidden.contains($0.id) }
   }
 
-  /// The arrow step of `id`, when the process gives one.
+  /// The arrow step of `id`, when the process gives one: whole numbers by one, ⇧ too (card 0179).
   package func step(for id: String) -> ParameterStep? {
-    type.steps[id].map(ParameterStep.init)
+    type.wholeNumbers.contains(id) ? .wholeNumber : type.steps[id].map(ParameterStep.init)
   }
 
   /// The slider range of `spec`: the process's display range on the head when it gives one, else
@@ -251,7 +251,7 @@ package final class ProcessPanelModel {
   }
 
   /// The solution the head carries, as the plate-solve panel words it: « Already solved: centre
-  /// 22h18m51,8s +56°08′05″, 1,52″/px ».
+  /// 22h18m51.8s +56°08′05″, 1.52″/px ».
   package nonisolated static func solvedWords(_ status: PlateSolveStatus, locale: Locale) -> String
   {
     let format = AstroFormat(locale: locale)

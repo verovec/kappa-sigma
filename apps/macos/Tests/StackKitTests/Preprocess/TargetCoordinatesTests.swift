@@ -17,6 +17,24 @@ struct TargetCoordinatesTests {
     #expect(abs(try #require(TargetCoordinates.declination(dec)) - wantDec) <= 1e-6)
   }
 
+  /// Card 0178: a comma typed by habit in the plate-solve fields reads as the decimal mark.
+  @Test(
+    "a comma reads as the decimal mark, in either form",
+    arguments: [
+      ("00 42 44,3", "+41 16 09,5", 10.684583333, 41.269305556),
+      ("10,6846", "41,2692", 10.6846, 41.2692),
+    ])
+  func testCommaDecimal(ra: String, dec: String, wantRA: Double, wantDec: Double) throws {
+    #expect(abs(try #require(TargetCoordinates.rightAscension(ra)) - wantRA) <= 1e-6)
+    #expect(abs(try #require(TargetCoordinates.declination(dec)) - wantDec) <= 1e-6)
+  }
+
+  @Test("a comma that is not between two digits is refused, never read as a separator")
+  func testStrayCommaRefused() {
+    #expect(TargetCoordinates.rightAscension("10, 41") == nil)
+    #expect(TargetCoordinates.declination("41,") == nil)
+  }
+
   @Test("empty or unparseable is no hint")
   func testInvalid() {
     #expect(

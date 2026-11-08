@@ -43,7 +43,7 @@ extension Preprocessor {
       runner: tools.runner, settings: settings, trailProbe: tools.trailProbe
     ) { emitter.line($0) }
     stacker.stager = FrameStager(stores: request.remoteStores)
-    // The downloads are the lane's own step: « 16/120 frames · 3,2 Go » under it.
+    // The downloads are the lane's own step: « 16/120 frames · 3.2 GB » under it.
     stacker.stagingReport = { done, total, bytes in
       emitter.line("downloading \(done)/\(total) frames · \(PreprocessError.gigabytes(bytes))")
     }

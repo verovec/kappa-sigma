@@ -87,7 +87,8 @@ extension ProjectWindowModel {
     }
     let scope = resume == nil ? scope : record.scope
     // The run plans the same folders again: a Rescan still reading them only competes for disk.
-    cancelScan()
+    // A bucket read goes on (card 0182): it reads no folder of this Mac.
+    cancelLocalScan()
     let runID =
       resume.map { URL(fileURLWithPath: $0.bundlePath).lastPathComponent }
       ?? Self.unusedRunID(runs.nextRunID, in: folder)

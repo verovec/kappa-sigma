@@ -93,6 +93,11 @@ extension ImportPlanning {
       }
       switch looked[id] {
       case .success(let s3?):
+        // A name this connection cannot address (0184) is refused before Siril, in its words.
+        do { try s3.endpoint.validate(bucket: bucket) } catch {
+          buckets.refusals[bucket] = buckets.refusals[bucket] ?? error
+          continue
+        }
         buckets.stores.append(.s3(s3, bucket: bucket))
         buckets.refusals[bucket] = nil
       case .failure(let error): buckets.refusals[bucket] = buckets.refusals[bucket] ?? error

@@ -83,8 +83,9 @@ extension ExportStageModel {
         // A write-only key (the export key Settings recommends) may not read: S3 answers 403
         // for a missing object then. Nothing can be told here — said on the stage; the upload
         // asks the service never to replace an object (`If-None-Match`, card 0185).
+        // The same key cannot see the other names either: one HEAD says it.
         unchecked = true
-        continue
+        break
       } catch  where Self.isCancellation(error) {
         return nil  // the user stopped it: nothing to report
       } catch {

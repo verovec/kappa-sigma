@@ -36,10 +36,15 @@ package nonisolated struct RunBuckets: Sendable {
   package static func sources(_ sources: [ProjectSource], readBy inventory: Inventory)
     -> [ProjectSource]
   {
-    let read = Set(
-      inventory.sets.flatMap {
-        $0.frames.compactMap { ProjectSource.remoteParts(of: $0.path)?.bucket }
-      })
+    Self.sources(sources, reading: inventory.sets.flatMap { $0.frames.map(\.path) })
+  }
+
+  /// The remote sources of `sources` whose bucket a path of `paths` is read from (a master
+  /// rebuild asks only for the connections of its own set's buckets).
+  package static func sources(_ sources: [ProjectSource], reading paths: [String])
+    -> [ProjectSource]
+  {
+    let read = Set(paths.compactMap { ProjectSource.remoteParts(of: $0)?.bucket })
     guard !read.isEmpty else { return [] }
     return sources.filter { $0.kind == .remoteNight && $0.bucket.map(read.contains) == true }
   }

@@ -43,6 +43,12 @@ module (Foundation and CryptoKit only), with no AWS SDK and no helper process.
   size is read through symbolic links (lanes link their frames).
 - A retried CompleteMultipartUpload that finds `NoSuchUpload` (the first answer was lost) checks
   the object with HEAD: same size and part count is success, anything else stays the error.
+- `upload(…, ifNoneMatch: true)` sends `If-None-Match: *` on the request that creates the object
+  (the PUT, or CompleteMultipartUpload): the service refuses to replace one, 412
+  `PreconditionFailed` thrown as sent. A 412 on the object this upload wrote (a retry after a
+  lost answer) is recognised by HEAD — same size and exact ETag: the MD5 of one PUT, the MD5 of
+  the parts' MD5s for multipart — and returned; a key that may not read (403) cannot tell, and
+  the refusal stands. A cancel during that HEAD stays a cancel (card 0185).
 - Listings ask for `encoding-type=url` and decode keys (`+` is a space), so a key XML cannot carry
   survives. Leading whitespace before `<?xml` (S3's keep-alive) is skipped.
 - Redirects are refused (`RedirectRefusal`): a 3xx such as `PermanentRedirect` is an error, never a

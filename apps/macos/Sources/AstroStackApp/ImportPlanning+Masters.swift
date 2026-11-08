@@ -21,7 +21,8 @@ extension ImportPlanning {
         // A set of this Mac's frames never asks the Keychain (no prompt for a local rebuild).
         let paths = set.frames.map(\.path)
         if paths.contains(where: { ProjectSource.remoteParts(of: $0) != nil }) {
-          let buckets = await runStores((try? store?.sources() ?? []) ?? [])
+          let sources = RunBuckets.sources((try? store?.sources() ?? []) ?? [], reading: paths)
+          let buckets = await runStores(sources)
           if let refusal = buckets.refusal(reading: paths) { throw refusal }
           builder.stager = FrameStager(stores: buckets.stores)
         }

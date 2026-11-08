@@ -88,20 +88,19 @@ extension ExportStageModelTests {
   }
 
   @Test(
-    "a plan that fails after a name the key cannot see leaves no « cannot check » notice",
+    "a key that cannot see one name cannot see the others: one HEAD, not one per file",
     .scratchDirectory)
-  func testFailedPlanLeavesNoUncheckedNotice() async throws {
+  func testOneUnseenNameStopsTheChecks() async throws {
     let opened = try StudioModelTests.project()
     defer { try? opened.package.close() }
-    // The first name cannot be seen (403), the next one is refused outright (400).
-    let fake = ExportS3Fake(head: 400, heads: [403])
+    let fake = ExportS3Fake(head: 403)
     let model = try Self.s3Model(opened, fake: fake, local: false, s3: true)
-    model.settings.formats = [.png16, .tiff16]  // two names: one unseen, one refused
+    model.settings.formats = [.png16, .tiff16, .fits32]
 
     await model.export()
 
-    #expect(model.failure != nil)
-    #expect(fake.methods.filter { $0 == "HEAD" }.count >= 2, "\(fake.methods)")
-    #expect(!model.remoteUnchecked, "nothing was uploaded: no notice about what was")
+    #expect(model.failure == nil && model.remoteUnchecked)
+    #expect(fake.methods.filter { $0 == "HEAD" }.count == 1, "\(fake.methods)")
+    #expect(fake.conditions.count == 3 && fake.conditions.allSatisfy { $0 == "*" })
   }
 }

@@ -42,9 +42,10 @@ package struct GeometryProcess: GeometricProcess {
     ])
 
   /// Whole pixels: the crop arrows move one pixel.
-  package static let steps: [String: Double] = [
-    "cropLeft": 1, "cropTop": 1, "cropRight": 1, "cropBottom": 1, "angle": 0.1,
-  ]
+  package static let steps: [String: Double] = ["angle": 0.1]
+
+  /// The crops are whole pixels: the plan refuses a fraction.
+  package static let wholeNumbers: Set<String> = ["cropLeft", "cropTop", "cropRight", "cropBottom"]
 
   /// Each crop slides up to one pixel short of the side it crops: a crop that leaves no pixel is
   /// refused by the plan, a larger typed value is kept as typed (R2).

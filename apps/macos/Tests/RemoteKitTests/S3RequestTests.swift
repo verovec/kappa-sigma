@@ -32,6 +32,12 @@ struct S3RequestTests {
       url: "http://minio.local:9000/astro/N%C3%A9buleuse/nuit%201/a%2Bb%3Dc.fits",
       host: "minio.local:9000"),
     Row(
+      label: "an empty path segment kept as written (AWS accepts `a//b`, MinIO refuses it)",
+      endpoint: "https://s3.eu-west-3.amazonaws.com", addressing: .virtualHost,
+      bucket: "captures", key: "M31//Light_001.fits", query: [],
+      url: "https://captures.s3.eu-west-3.amazonaws.com/M31//Light_001.fits",
+      host: "captures.s3.eu-west-3.amazonaws.com"),
+    Row(
       label: "listing a prefix, path-style", endpoint: "http://127.0.0.1:9000",
       addressing: .pathStyle, bucket: "astro", key: "",
       query: [.init("prefix", "M31/nuit 1/"), .init("list-type", "2")],

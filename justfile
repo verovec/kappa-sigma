@@ -66,12 +66,23 @@ test-live *args:
 test-heavy *args:
     cd {{pkg}} && swift test -c release {{swiftflags}} --no-parallel --filter Live {{args}}
 
-# Start the server yourself: `minio server /tmp/minio --address 127.0.0.1:9000` (minioadmin x2).
-# It writes and deletes under a random prefix of ASTROSTACK_S3_LIVE_BUCKET (astrostack-live), so
-# never point it at a capture bucket. Keys: ASTROSTACK_S3_LIVE_ACCESS_KEY / _SECRET_KEY.
-# Live S3 round trip (RemoteKit) against a local MinIO you started; this recipe starts nothing.
-s3-live endpoint="http://127.0.0.1:9000":
-    cd {{pkg}} && ASTROSTACK_S3_LIVE_ENDPOINT={{quote(endpoint)}} swift test {{swiftflags}} --no-parallel --filter 'LiveS3Tests|LiveExportS3Tests'
+# Endpoint: the argument, else ASTROSTACK_S3_LIVE_ENDPOINT, else http://127.0.0.1:9000.
+# A loopback endpoint starts a local MinIO in Docker first (`s3-minio`); any other endpoint is a
+# real bucket named by `.env` (ASTROSTACK_S3_LIVE_ENDPOINT/_REGION/_ACCESS_KEY/_SECRET_KEY/_BUCKET,
+# _ADDRESSING=virtual for AWS-style). The suites write and delete under `astrostack-live/<day>-<id>/`
+# of that bucket: never point them at a capture bucket.
+# The live S3 suites (round trip, export to S3, a night stacked from a bucket), serial.
+s3-live endpoint="":
+    @./scripts/s3-live.sh {{pkg}} {{quote(endpoint)}} {{swiftflags}}
+
+# Start the local MinIO the live S3 suites use (Docker, 127.0.0.1:9000, minioadmin x2).
+s3-minio port="9000":
+    @./scripts/s3-minio.sh {{quote(port)}}
+
+# Stop the local MinIO container of `port`; its test data goes with it.
+[confirm("Stop the local MinIO and drop its test data?")]
+s3-minio-stop port="9000":
+    @docker rm -f "astrostack-minio-{{port}}" >/dev/null 2>&1 && echo "s3-minio: stopped" || echo "s3-minio: not running"
 
 # Coverage report (lcov + summary) under apps/macos/.build/coverage.
 coverage:

@@ -30,10 +30,9 @@ package struct ExportServices: Sendable {
   package var s3Connections: @Sendable () -> [S3Connection]
   /// Puts text on the pasteboard (« Copy S3 URL »).
   package var copy: @MainActor @Sendable (String) -> Void
-  /// Where the open projects' remote captures are, never an export target (R7 on remote).
-  ///
-  /// Empty until remote nights exist (card 0153).
-  package var remoteSources: @Sendable () -> [RemoteLocation]
+  /// Where every open project's remote captures are, never an export target (R7 on remote,
+  /// card 0180): read on the main actor, where the windows are.
+  package var remoteSources: @MainActor @Sendable () -> [RemoteLocation]
 
   /// Services from their parts.
   package init(
@@ -46,7 +45,7 @@ package struct ExportServices: Sendable {
     reveal: @escaping @MainActor @Sendable ([URL]) -> Void = { _ in },
     s3Client: @escaping @Sendable (UUID) throws -> S3Client? = Self.liveClient,
     s3Connections: @escaping @Sendable () -> [S3Connection] = { S3ConnectionStore().connections },
-    remoteSources: @escaping @Sendable () -> [RemoteLocation] = { [] },
+    remoteSources: @escaping @MainActor @Sendable () -> [RemoteLocation] = { [] },
     copy: @escaping @MainActor @Sendable (String) -> Void = { _ in }
   ) {
     self.tools = tools
@@ -74,10 +73,11 @@ package struct ExportServices: Sendable {
       endpoint: try connection.s3Endpoint(), credentials: credentials, transport: transport)
   }
 
-  /// The installed StarNet, the real home and clock, the Finder.
+  /// The installed StarNet, the real home and clock, the Finder, the open projects' captures.
   package static let live = Self(
     tools: WelcomeWindow.hostTools,
     reveal: { NSWorkspace.shared.activateFileViewerSelecting($0) },
+    remoteSources: { ProjectDocument.openRemoteLocations() },
     copy: { text in
       NSPasteboard.general.clearContents()
       NSPasteboard.general.setString(text, forType: .string)

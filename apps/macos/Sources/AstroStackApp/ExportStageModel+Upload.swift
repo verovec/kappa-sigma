@@ -223,11 +223,7 @@ extension ExportStageModel {
 
   /// `s3://bucket/key` as bucket and key.
   package static func split(_ url: String) -> (String, String)? {
-    guard url.hasPrefix("s3://") else { return nil }
-    let rest = url.dropFirst("s3://".count)
-    let parts = rest.split(separator: "/", maxSplits: 1, omittingEmptySubsequences: false)
-    guard let bucket = parts.first, !bucket.isEmpty else { return nil }
-    return (String(bucket), parts.count > 1 ? String(parts[1]) : "")
+    ProjectSource.remoteFolder(of: url).map { ($0.bucket, $0.prefix) }
   }
 
   /// A failure as the user reads it: S3's own words as sent, else the shared sentence.

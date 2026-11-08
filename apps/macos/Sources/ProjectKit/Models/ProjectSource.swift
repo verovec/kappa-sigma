@@ -63,14 +63,27 @@ package struct ProjectSource: Equatable, Sendable {
   /// The inverse of `remotePath(bucket:prefix:)`: `s3://astro/M31/l.fits` is the key `M31/l.fits`
   /// of the bucket `astro`. A path with no key (the bucket's root) is no frame.
   package static func remoteParts(of path: String) -> (bucket: String, key: String)? {
+    guard let folder = remoteFolder(of: path), !folder.prefix.isEmpty else { return nil }
+    return (folder.bucket, folder.prefix)
+  }
+
+  /// The bucket and prefix a virtual path names, `""` for the bucket's root (`s3://astro`);
+  /// `nil` when the path is a file of this Mac or names no bucket.
+  package static func remoteFolder(of path: String) -> (bucket: String, prefix: String)? {
     let scheme = "s3://"
     guard path.hasPrefix(scheme) else { return nil }
-    let rest = path.dropFirst(scheme.count)
-    guard let slash = rest.firstIndex(of: "/") else { return nil }
-    let bucket = String(rest[rest.startIndex..<slash])
-    let key = String(rest[rest.index(after: slash)...])
-    guard !bucket.isEmpty, !key.isEmpty else { return nil }
-    return (bucket, key)
+    let parts = path.dropFirst(scheme.count)
+      .split(separator: "/", maxSplits: 1, omittingEmptySubsequences: false)
+    guard let bucket = parts.first, !bucket.isEmpty else { return nil }
+    return (String(bucket), parts.count > 1 ? String(parts[1]) : "")
+  }
+
+  /// The bucket and prefix a remote night reads its captures from (card 0180): its columns,
+  /// else its virtual path, so a row written without them still names them; `nil` when local.
+  package var remoteFolder: (bucket: String, prefix: String)? {
+    guard kind == .remoteNight else { return nil }
+    if let bucket, let prefix { return (bucket, prefix) }
+    return Self.remoteFolder(of: path)
   }
 
   /// `prefix` as it is stored and as the scan lists it: without its trailing `/`, which a

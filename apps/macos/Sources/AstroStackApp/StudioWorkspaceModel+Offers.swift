@@ -26,7 +26,11 @@ extension StudioWorkspaceModel {
       return suggestions + ColourCalibrationProcess.suggestions(header: studio.header)
     }
     guard type == LevelsProcess.self else { return suggestions }
-    return suggestions + Self.displaySuggestions(viewer.model.frame.stf)
+    // Remembered where the suggestion is built: `watchDisplayStretch` rebuilds it for another
+    // stretch only.
+    let stf = viewer.model.frame.stf
+    displayStretchOffered = stf
+    return suggestions + Self.displaySuggestions(stf)
   }
 
   /// The sidebar's object changed (a choice, the catalogue read): an open plate-solve panel offers
@@ -64,7 +68,11 @@ extension StudioWorkspaceModel {
     } onChange: { [weak self] in
       Task { @MainActor in
         guard let self, !self.isRetired else { return }
-        if let panel = self.panel, panel.type == LevelsProcess.self {
+        // The frame carries the zoom too (card 0187): a wheel tick wakes this up with the
+        // stretch the suggestion was built for, and the head is not measured again for it.
+        if let panel = self.panel, panel.type == LevelsProcess.self,
+          self.viewer.model.frame.stf != self.displayStretchOffered
+        {
           panel.suggestions = self.offers(for: panel.type, params: panel.params)
         }
         self.watchDisplayStretch()

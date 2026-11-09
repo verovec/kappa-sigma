@@ -141,6 +141,8 @@ package final class StudioWorkspaceModel {
   }
   /// The head's input-histogram sample, kept while the head is the same image (card 0128).
   @ObservationIgnored var headSample: (head: AstroImage, sample: HeadSample)?
+  /// The display stretch the levels' suggestion was last built for (`watchDisplayStretch`).
+  @ObservationIgnored var displayStretchOffered: [STFParameters]?
   /// The failure shown is a preview's (the next preview clears it).
   @ObservationIgnored var previewFailed = false
 

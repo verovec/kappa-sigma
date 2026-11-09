@@ -3,52 +3,76 @@ internal import ImageKit
 internal import ProcessKit
 
 extension StudioWorkspaceModel {
-  /// Renders the panel's values now (the debounced preview calls it one frame after a change).
+  /// Renders the panel's values now, in place of a render scheduled or in flight, and waits
+  /// for it (a render the history moves under meanwhile is cancelled like any other).
   package func previewNow() async {
-    drawPreview()
+    startPreview()
+    await previewTask?.value
   }
 
-  /// Draws the panel's values on the head now; a failure shows the head, never an older preview.
-  func drawPreview() {
-    guard let panel else { return }
+  /// Draws the panel's values on the head, or the chain from the step being edited.
+  ///
+  /// While a main step of the panel's process is edited (card 0158) the chain is that step with
+  /// the panel's values and the steps after it, up to the first host tool, each under its
+  /// recorded mask (0160). A failure shows the head, never an older preview. A chain lets the
+  /// main actor go between its steps (card 0187): a render cancelled meanwhile — the next value,
+  /// the panel closed — shows nothing, and is no failure.
+  func drawPreview() async {
+    // Cancelled before it started (the history moved, the panel closed): nothing is drawn — not
+    // even the head's values, which a suspended panel must not show before Apply (R2).
+    guard !Task.isCancelled, let panel else { return }
+    guard let editing = editedStep else { return drawHeadPreview() }
     do {
-      let (preview, isChain) = try previewImage(panel)
-      // Through the head's display stretch: an auto-stretch fitted to the preview would hide
-      // the very change the process makes (what is shown is what Apply records, R2).
-      let same = preview.planes.count == headStatistics.count
-      willShow(panel.type.id, panel.params)
-      try show(preview, statistics: same ? headStatistics : nil, subject: .preview)
-      isPreviewing = true
-      // A chain is not the panel's values on the head: Apply never records it as such.
-      shown = isChain ? nil : (panel.type.id, panel.params, mask)
-      // A preview clears only a preview's failure: an Apply or Undo failure stays in view.
-      if previewFailed { failure = nil }
-      previewFailed = false
+      let chain = try await studio.previewChain(from: editing, params: panel.params)
+      guard !Task.isCancelled, self.panel === panel else { return }
+      chainStoppedBefore = chain.stoppedBefore
+      try display(chain.image, of: panel, isChain: true)
+    } catch is CancellationError {
+      // Replaced or closed while it rendered: the viewer stays as it is.
     } catch {
-      shown = nil
-      chainStoppedBefore = nil
-      failure = UserFacingError(error).message
-      previewFailed = true
-      if isPreviewing {
-        isPreviewing = false
-        try? show(head, statistics: headStatistics)
-      }
+      previewFailed(error)
     }
   }
 
-  /// The panel's values on the head; while a main step of the panel's process is edited (card
-  /// 0158), that step with them and the steps after it, up to the first host tool, each under
-  /// its recorded mask (0160) — and whether it is that chain.
-  private func previewImage(_ panel: ProcessPanelModel) throws -> (AstroImage, isChain: Bool) {
-    guard let editing = editedStep else {
+  /// Draws the panel's values on the head now (one GPU step): what Apply shows before it
+  /// records when nothing was drawn yet (R2).
+  func drawHeadPreview() {
+    guard let panel else { return }
+    do {
       chainStoppedBefore = nil
       let image = try studio.preview(
         panel.type.id, params: panel.params, on: selection, mask: maskImage())
-      return (image, false)
+      try display(image, of: panel, isChain: false)
+    } catch {
+      previewFailed(error)
     }
-    let chain = try studio.previewChain(from: editing, params: panel.params)
-    chainStoppedBefore = chain.stoppedBefore
-    return (chain.image, true)
+  }
+
+  /// Shows `preview` as the panel's values (`isChain`: the chain from the edited step).
+  private func display(_ preview: AstroImage, of panel: ProcessPanelModel, isChain: Bool) throws {
+    // Through the head's display stretch: an auto-stretch fitted to the preview would hide
+    // the very change the process makes (what is shown is what Apply records, R2).
+    let same = preview.planes.count == headStatistics.count
+    willShow(panel.type.id, panel.params)
+    try show(preview, statistics: same ? headStatistics : nil, subject: .preview)
+    isPreviewing = true
+    // A chain is not the panel's values on the head: Apply never records it as such.
+    shown = isChain ? nil : (panel.type.id, panel.params, mask)
+    // A preview clears only a preview's failure: an Apply or Undo failure stays in view.
+    if previewFailed { failure = nil }
+    previewFailed = false
+  }
+
+  /// The preview failed: the head is shown with the reason.
+  private func previewFailed(_ error: any Error) {
+    shown = nil
+    chainStoppedBefore = nil
+    failure = UserFacingError(error).message
+    previewFailed = true
+    if isPreviewing {
+      isPreviewing = false
+      try? show(head, statistics: headStatistics)
+    }
   }
 
   /// The main step the open panel edits (card 0158): `editing` when the panel is that step's
@@ -83,7 +107,10 @@ extension StudioWorkspaceModel {
   package func resumePreview() {
     guard panel != nil else { return }
     isPreviewSuspended = false
-    drawPreview()
+    // The head's values show at once (Apply records what it showed, R2); a chain is a task's
+    // work, drawn in place of any render scheduled or in flight.
+    guard editedStep != nil else { return drawHeadPreview() }
+    startPreview()
   }
 
   /// A value moved: the suggestions follow the values they depend on, the preview follows.
@@ -101,12 +128,18 @@ extension StudioWorkspaceModel {
 
   func schedulePreview() {
     isPreviewSuspended = false
+    // One frame: a slider drag renders its last position, not every intermediate one.
+    startPreview(debounce: .milliseconds(16))
+  }
+
+  /// The one launcher of a render (card 0187): replaces the render scheduled or in flight,
+  /// waits `debounce` when given, and draws unless cancelled meanwhile.
+  func startPreview(debounce: Duration? = nil) {
     previewTask?.cancel()
     previewTask = Task { [weak self] in
-      // One frame: a slider drag renders its last position, not every intermediate one.
-      try? await Task.sleep(for: .milliseconds(16))
+      if let debounce { try? await Task.sleep(for: debounce) }
       guard !Task.isCancelled else { return }
-      await self?.previewNow()
+      await self?.drawPreview()
     }
   }
 

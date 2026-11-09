@@ -34,6 +34,9 @@ package final class StudioSession {
   /// keyed on that step and the history's step files (card 0158): a drag re-renders the chain,
   /// not the disk reads.
   var chainInput: ChainInput?
+  /// The head's statistics, keyed on its step file (card 0187): measured once per head, not at
+  /// every suggestion or preview (26 Mpx × 3 planes each time).
+  var headStats: (file: String, stats: LayerStats)?
 
   /// A session over `history` and `bundle`, running the processes of `registry` on `device`;
   /// `branches` are those beside the history's folder unless given.
@@ -97,9 +100,14 @@ package final class StudioSession {
     return present
   }
 
-  /// The statistics the next step gets.
+  /// The statistics the next step gets: the bundle's before any step, else the head's, measured
+  /// once per head (a step file is never written twice).
   package var stepStats: LayerStats {
-    history.steps.isEmpty ? bundle.stats : LayerStats.measured(history.current)
+    guard let file = history.steps.last?.file else { return bundle.stats }
+    if let headStats, headStats.file == file { return headStats.stats }
+    let stats = LayerStats.measured(history.current)
+    headStats = (file, stats)
+    return stats
   }
 
   /// `processID` with `params` on `input` (the head by default) at `scale` for `purpose`,

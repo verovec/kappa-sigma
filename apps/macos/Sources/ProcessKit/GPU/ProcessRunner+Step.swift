@@ -67,17 +67,19 @@ extension ProcessRunner {
   }
 
   /// `applied(_:input:…)` on the GPU (card 0188): the chain preview's step, every image a
-  /// texture until the chain's last.
+  /// texture until the chain's last; at `scale` > 1 on a proxy (card 0189: `.px` values divide
+  /// by it, a moved grid is sized at it, no plate solution is carried).
   package func applied(
     _ process: any ImageProcess, input: (image: GPUImage, metadata: ImageMetadata),
-    stats: LayerStats, layers: [String: GPUImage], layerStats: [String: LayerStats],
-    roles: Set<LayerRole>, mask: GPUImage? = nil
+    stats: LayerStats, scale: Double = 1, layers: [String: GPUImage],
+    layerStats: [String: LayerStats], roles: Set<LayerRole>, mask: GPUImage? = nil
   ) throws -> GPUStep {
     let (result, moved) = try image(
-      process, input: input, stats: stats, layers: layers, layerStats: layerStats, mask: mask)
+      process, input: input, stats: stats, scale: scale, layers: layers, layerStats: layerStats,
+      mask: mask)
     let layers = try movedLayers(
       process, layers: layers, width: input.image.width, height: input.image.height,
-      bottomUp: input.metadata.rowOrder == .bottomUp, roles: roles)
+      scale: scale, bottomUp: input.metadata.rowOrder == .bottomUp, roles: roles)
     return GPUStep(
       result: result, metadata: moved, outputs: layers.outputs, replacing: layers.replacing)
   }
@@ -87,7 +89,7 @@ extension ProcessRunner {
   /// replaced bundle layers otherwise; nothing for any other process or at the identity.
   package func movedLayers(
     _ process: any ImageProcess, layers: [String: GPUImage], width: Int, height: Int,
-    bottomUp: Bool, roles: Set<LayerRole>
+    scale: Double = 1, bottomUp: Bool, roles: Set<LayerRole>
   ) throws -> (outputs: [LayerRole: GPUImage], replacing: [String: GPUImage]) {
     guard let geometric = Self.moving(process) else { return ([:], [:]) }
     var outputs: [LayerRole: GPUImage] = [:]
@@ -95,7 +97,8 @@ extension ProcessRunner {
     for (id, layer) in layers {
       guard layer.width == width, layer.height == height else { throw ProcessError.sizeMismatch }
       let moved = try run(
-        geometric, input: layer, stats: LayerStats(channels: []), rowsBottomUp: bottomUp)
+        geometric, input: layer, stats: LayerStats(channels: []), scale: scale,
+        rowsBottomUp: bottomUp)
       if let role = LayerRole(rawValue: id), roles.contains(role) {
         outputs[role] = moved
       } else {

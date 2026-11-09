@@ -67,13 +67,25 @@ package final class StudioWorkspaceModel {
   package var editing: Int? {
     didSet {
       guard editing != oldValue else { return }
-      // The chain's cached input (a full-resolution context) is not kept past the edit.
-      if editing == nil { studio.session.endChainPreview() }
+      // The chain's cached input (a full-resolution context) is not kept past the edit, nor the
+      // full render a drag armed.
+      if editing == nil {
+        studio.session.endChainPreview()
+        fullPreviewTask?.cancel()
+        chainPreviewReduced = false
+      }
       if panel != nil { schedulePreview() }
     }
   }
   /// The host-tool step the chain preview stopped before, if any (the banner names it).
   package internal(set) var chainStoppedBefore: Int?
+  /// The viewer shows the chain rendered on a proxy (card 0189): a drag's frame, replaced by the
+  /// full render once the value rests; the badge says so.
+  package internal(set) var chainPreviewReduced = false
+  /// The full render armed by a drag's change, `fullPreviewDelay` after the last one (card 0189).
+  @ObservationIgnored var fullPreviewTask: Task<Void, Never>?
+  /// How long after the last change the full render lands; a test moves it.
+  @ObservationIgnored package var fullPreviewDelay: Duration = .milliseconds(250)
   /// The other history whose head compare shows, if any (card 0119).
   package internal(set) var comparingWith: StudioSelection?
   /// The history version whose head compare shows, if any (card 0159).
@@ -170,6 +182,7 @@ package final class StudioWorkspaceModel {
   package func retire() {
     isRetired = true
     previewTask?.cancel()
+    fullPreviewTask?.cancel()
     toolTask?.cancel()
     headNoise.close()
     headSample = nil

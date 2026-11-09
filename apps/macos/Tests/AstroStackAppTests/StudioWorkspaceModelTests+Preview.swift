@@ -76,6 +76,61 @@ struct StudioWorkspaceModelPreviewTests {
     #expect(workspace.isPreviewing && workspace.failure == nil, "a cancel is not a failure")
   }
 
+  /// A drag renders the chain on a proxy first (said reduced), then the full render lands once
+  /// the value rests (card 0189).
+  @Test("testPreview_DragShowsReducedThenFull", .scratchDirectory)
+  func testPreview_DragShowsReducedThenFull() async throws {
+    let opened = try StudioModelTests.project()
+    defer { try? opened.package.close() }
+    let workspace = try await Self.editingWorkspace(opened)
+    // The 8 × 8 test image is reduced to a half: a proxy exists. The full render is armed far
+    // away: the drag's frame is observed on its own, then Preview renders full at once.
+    workspace.studio.session.proxyMaxSide = 4
+    workspace.fullPreviewDelay = .seconds(60)
+    let panel = try #require(workspace.panel)
+
+    panel.set("targetBackground", .number(0.33))
+    await workspace.settlePreview()
+    #expect(workspace.chainPreviewReduced, "the proxy lands first")
+    #expect(workspace.isPreviewing)
+    await workspace.previewNow()
+
+    #expect(!workspace.chainPreviewReduced, "the full render replaced it")
+    let full = try await workspace.studio.previewChain(from: 1, params: panel.params, level: .full)
+    #expect(workspace.viewer.model.image.planes == full.image.planes)
+  }
+
+  /// Once the value rests, the full render lands by itself and is the last to land.
+  @Test("testPreview_FullRenderLandsAfterTheSettle", .scratchDirectory)
+  func testPreview_FullRenderLandsAfterTheSettle() async throws {
+    let opened = try StudioModelTests.project()
+    defer { try? opened.package.close() }
+    let workspace = try await Self.editingWorkspace(opened)
+    workspace.studio.session.proxyMaxSide = 4
+    workspace.fullPreviewDelay = .milliseconds(1)
+    let panel = try #require(workspace.panel)
+
+    panel.set("targetBackground", .number(0.33))
+    await workspace.settlePreview()
+    await workspace.settleFullPreview()
+
+    #expect(!workspace.chainPreviewReduced, "the frame at rest is the full one")
+    let full = try await workspace.studio.previewChain(from: 1, params: panel.params, level: .full)
+    #expect(workspace.viewer.model.image.planes == full.image.planes)
+  }
+
+  @Test("testPreview_PreviewNowIsFull", .scratchDirectory)
+  func testPreview_PreviewNowIsFull() async throws {
+    let opened = try StudioModelTests.project()
+    defer { try? opened.package.close() }
+    let workspace = try await Self.editingWorkspace(opened)
+    workspace.studio.session.proxyMaxSide = 4
+
+    await workspace.previewNow()
+
+    #expect(workspace.isPreviewing && !workspace.chainPreviewReduced)
+  }
+
   /// The order two main-actor tasks ran in.
   @MainActor
   final class Order {

@@ -325,6 +325,18 @@ in en/fr; the English title is the key, resolved with `ProcessKitResources.title
   `LayerStats.measured`, `GPUStatsTests`). The chain reads back once, its last image
   (`GPUImage.image(metadata:)`): 22 Mpx, 7 steps in 330 ms (`LiveChainLatencyTests`, release,
   local — the budget that would catch a read-back per step coming back).
+- A drag renders on a proxy (card 0189): `previewChain(from:params:level: .proxy)` reduces the
+  cached input — image, context layers, masks — by `ProxyLevel.factor` (the smallest integer
+  bringing the longer side under 1600 px; 1 = no proxy, the full render) with `Resample`
+  (`Shaders/Resample.metal`: a box average of the finite values per cell, ImageKit's
+  `FITSFile.downsampled(pooling: .mean)` rule; bilinear back), kept in `ChainInput.proxy` for
+  the edit. Each step runs at `scale: factor` (the `.px` rule, `PxUnitsScale`), a geometric step
+  is sized at that scale, and the result is upsampled to the size the full chain ends on (the
+  `outputSize(scale: 1)` walk), `ChainPreview.reduced`. Statistics: step k reads its input's
+  full-resolution ones; intermediate images are measured reduced with their MADN scaled back by
+  the factor (`LayerStats.scalingMADN`, exact for independent noise). The frame at rest is
+  always a `.full` render — the app arms it 250 ms after the last change
+  (`StudioWorkspaceModel.fullPreviewDelay`) and it cancels any proxy frame still in flight.
 - What a chain step reads is a `ChainState`: step k's input comes from
   `History.context(…, before: k)` (the overlay of the steps before k only), then each step's
   written layers overlay it by the same rule (`History.note` + `History.stats(ofWritten:…)`, the

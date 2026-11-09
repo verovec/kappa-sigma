@@ -21,6 +21,9 @@ struct StudioEditHeader: View {
         Text(line).font(.caption).foregroundStyle(DesignColor.textSecondary.color)
       }
       if let notice = model.chainStopNotice(locale: locale) { StatusBadge(.attention, notice) }
+      if model.chainPreviewReduced {
+        StatusBadge(.attention, .app("Reduced preview while adjusting — full resolution at rest"))
+      }
       if model.editUsesRecordedMask {
         StatusBadge(.ok, .app("Edited under the mask it was applied with"))
       }

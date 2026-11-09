@@ -15,7 +15,13 @@ extension StudioSession {
   /// The caller's task's work (card 0187): between two steps it lets the caller's actor go and
   /// stops with `CancellationError` once cancelled — a drag's next position is not queued behind
   /// the whole chain of the one before.
-  package func previewChain(from k: Int, params: ParamSet) async throws -> ChainPreview {
+  ///
+  /// At `level` `.proxy` (card 0189) the chain renders on the input reduced by
+  /// `ProxyLevel.factor` — every `.px` value scaled with it — and the result comes back at the
+  /// size the full chain ends on, `reduced`; an input that already fits renders full.
+  package func previewChain(from k: Int, params: ParamSet, level: ChainLevel = .full)
+    async throws -> ChainPreview
+  {
     let steps = history.steps
     guard steps.indices.contains(k) else { throw HistoryError.noStep(k) }
     let stop = toolStep(from: k, revising: k, params: params)
@@ -24,7 +30,12 @@ extension StudioSession {
       throw PipelineError.maskMoved(step: masked)
     }
     let input = try chainInput(k, until: end)
-    var state = input.state
+    let proxy = level == .proxy ? try chainProxy(of: input) : nil
+    var state = proxy?.state ?? input.state
+    let scale = Double(proxy?.factor ?? 1)
+    // The size the full chain ends on, followed step by step: a proxy comes back to it.
+    var fullSize = (width: input.state.image.width, height: input.state.image.height)
+    let bottomUp = input.state.metadata.rowOrder == .bottomUp
     for index in k..<end {
       if index > k { await Task.yield() }
       try Task.checkCancellation()
@@ -34,16 +45,52 @@ extension StudioSession {
       // The recorded values as the replay reads them: a refused value stops it with its name.
       let values = try PipelineRunner.values(
         of: PipelineStep(recipe: recipe), schema: type.schema, at: index)
+      let process = try type.init(params: values, device: device)
+      if proxy != nil, let geometric = process as? any GeometricProcess,
+        !Swift.type(of: geometric).isIdentity(values)
+      {
+        fullSize = try geometric.outputSize(
+          width: fullSize.width, height: fullSize.height, scale: 1, bottomUp: bottomUp)
+      }
+      // A proxy's intermediate images are measured reduced: their MADN is scaled back by the
+      // factor (independent noise), the frame at rest measures full.
       let step = try runner.applied(
-        type.init(params: values, device: device), input: (state.image, state.metadata),
-        stats: try state.stats ?? gpuStats.measure(state.image), layers: state.layers,
-        layerStats: state.layerStats, roles: state.roles, mask: input.masks[index])
+        process, input: (state.image, state.metadata),
+        stats: try state.stats ?? gpuStats.measure(state.image).scalingMADN(by: scale),
+        scale: scale, layers: state.layers, layerStats: state.layerStats, roles: state.roles,
+        mask: (proxy?.masks ?? input.masks)[index])
       try state.advance(
         past: step, of: recipe.processID, moving: registry.movingIDs, stack: bundle.layerStats,
-        measure: gpuStats)
+        measure: gpuStats, madnScale: scale)
     }
-    // The one read-back of the chain (card 0188): its last image, for the viewer.
-    return ChainPreview(image: state.image.image(metadata: state.metadata), stoppedBefore: stop)
+    // The one read-back of the chain (card 0188): its last image, for the viewer — a proxy
+    // brought back to the full size first (card 0189); the full render is read as it is.
+    let image =
+      proxy == nil
+      ? state.image
+      : try resample.upsample(state.image, toWidth: fullSize.width, toHeight: fullSize.height)
+    return ChainPreview(
+      image: image.image(metadata: state.metadata), stoppedBefore: stop, reduced: proxy != nil)
+  }
+
+  /// `input` reduced for a drag, built on the first proxy frame of the edit and kept with it;
+  /// `nil` when the input already fits under `proxyMaxSide` (nothing to reduce).
+  private func chainProxy(of input: ChainInput) throws -> ChainProxy? {
+    let factor = ProxyLevel.factor(
+      width: input.state.image.width, height: input.state.image.height, maxSide: proxyMaxSide)
+    guard factor > 1 else { return nil }
+    if let proxy = input.proxy, proxy.factor == factor { return proxy }
+    let image = try resample.downsample(input.state.image, by: factor)
+    var state = input.state
+    state.image = image
+    // Step k reads its input's full-resolution statistics (the bundle's, or measured on the
+    // upload) and the layers' full ones: a box average would shrink the noise by the factor and
+    // move every MADN-driven black point on the drag frame.
+    state.layers = try input.state.layers.mapValues { try resample.downsample($0, by: factor) }
+    let masks = try input.masks.mapValues { try resample.downsample($0, by: factor) }
+    let proxy = ChainProxy(factor: factor, state: state, masks: masks)
+    chainInput?.proxy = proxy
+    return proxy
   }
 
   /// The first step from `start` that runs a host tool, step `k` read with `params`, or `nil`.

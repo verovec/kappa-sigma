@@ -5,7 +5,8 @@ internal import ImageKit
 /// The input of step k and the recorded masks of the steps from k to end, on the GPU.
 ///
 /// Read over the history's step `files` and uploaded once (card 0188): a drag re-renders the
-/// chain, not the disk reads nor the uploads.
+/// chain, not the disk reads nor the uploads. Its reduction for a drag (card 0189) is built on
+/// the first proxy frame and kept with it.
 struct ChainInput {
   /// The step the chain starts from.
   let k: Int
@@ -17,4 +18,6 @@ struct ChainInput {
   let state: ChainState
   /// The recorded mask of each masked step from `k`, by index, on the GPU.
   let masks: [Int: GPUImage]
+  /// The same, reduced for a drag, once a proxy frame asked for it.
+  var proxy: ChainProxy?
 }

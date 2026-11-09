@@ -68,6 +68,18 @@ struct LiveChainLatencyTests {
       let measured = frames.map { "\($0)" }.joined(separator: ", ")
       table.append("k=\(k) steps=\(Self.steps.count - k): \(measured)")
     }
+    // The proxy a drag renders on (card 0189): the same 7 steps from k = 0, reduced.
+    let first = try #require(registry.type(id: Self.steps[0]))
+    let params = ParamSet(schema: first.schema)
+    _ = try await session.previewChain(from: 0, params: params, level: .proxy)
+    var proxyFrames: [Duration] = []
+    for _ in 0..<3 {
+      proxyFrames.append(
+        try await clock.measure {
+          _ = try await session.previewChain(from: 0, params: params, level: .proxy)
+        })
+    }
+    table.append("k=0 steps=7 proxy: \(proxyFrames.map { "\($0)" }.joined(separator: ", "))")
     // Card 0161's record; printed. The budget reads the best frame: the chain's capability, not
     // the Mac's load at that second (a flaky budget is worse than none).
     print("LiveChainLatencyTests (0188, GPU-resident chain):\n" + table.joined(separator: "\n"))

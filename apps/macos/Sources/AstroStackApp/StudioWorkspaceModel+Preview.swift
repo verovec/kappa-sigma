@@ -6,8 +6,15 @@ extension StudioWorkspaceModel {
   /// Renders the panel's values now, in place of a render scheduled or in flight, and waits
   /// for it (a render the history moves under meanwhile is cancelled like any other).
   package func previewNow() async {
+    fullPreviewTask?.cancel()
     startPreview()
     await previewTask?.value
+  }
+
+  /// Waits for the full render a drag armed, if any (a test sees the frame at rest without
+  /// sleeping).
+  package func settleFullPreview() async {
+    await fullPreviewTask?.value
   }
 
   /// Draws the panel's values on the head, or the chain from the step being edited.
@@ -16,17 +23,22 @@ extension StudioWorkspaceModel {
   /// the panel's values and the steps after it, up to the first host tool, each under its
   /// recorded mask (0160). A failure shows the head, never an older preview. A chain lets the
   /// main actor go between its steps (card 0187): a render cancelled meanwhile — the next value,
-  /// the panel closed — shows nothing, and is no failure.
-  func drawPreview() async {
+  /// the panel closed — shows nothing, and is no failure. At `level` `.proxy` (card 0189) the
+  /// chain renders reduced, a drag's frame; the badge says so until a full render lands.
+  func drawPreview(level: ChainLevel = .full) async {
     // Cancelled before it started (the history moved, the panel closed): nothing is drawn — not
     // even the head's values, which a suspended panel must not show before Apply (R2).
     guard !Task.isCancelled, let panel else { return }
     guard let editing = editedStep else { return drawHeadPreview() }
     do {
-      let chain = try await studio.previewChain(from: editing, params: panel.params)
+      let chain = try await studio.previewChain(from: editing, params: panel.params, level: level)
       guard !Task.isCancelled, self.panel === panel else { return }
       chainStoppedBefore = chain.stoppedBefore
       try display(chain.image, of: panel, isChain: true)
+      chainPreviewReduced = chain.reduced
+      // No proxy to render on (the input fits): this frame is the full one, the armed full
+      // render has nothing to add.
+      if level == .proxy, !chain.reduced { fullPreviewTask?.cancel() }
     } catch is CancellationError {
       // Replaced or closed while it rendered: the viewer stays as it is.
     } catch {
@@ -40,6 +52,7 @@ extension StudioWorkspaceModel {
     guard let panel else { return }
     do {
       chainStoppedBefore = nil
+      chainPreviewReduced = false
       let image = try studio.preview(
         panel.type.id, params: panel.params, on: selection, mask: maskImage())
       try display(image, of: panel, isChain: false)
@@ -128,25 +141,38 @@ extension StudioWorkspaceModel {
 
   func schedulePreview() {
     isPreviewSuspended = false
-    // One frame: a slider drag renders its last position, not every intermediate one.
-    startPreview(debounce: .milliseconds(16))
+    // One frame: a slider drag renders its last position, not every intermediate one. A chain
+    // renders its frames on a proxy (card 0189) and the full render follows once the value
+    // rests: 250 ms after the last change.
+    guard editedStep != nil else { return startPreview(debounce: .milliseconds(16)) }
+    startPreview(debounce: .milliseconds(16), level: .proxy)
+    fullPreviewTask?.cancel()
+    fullPreviewTask = Task { [weak self] in
+      try? await Task.sleep(for: self?.fullPreviewDelay ?? .zero)
+      guard !Task.isCancelled, let self else { return }
+      // A proxy frame still in flight is dropped: the full render is the last to land.
+      self.previewTask?.cancel()
+      await self.drawPreview(level: .full)
+    }
   }
 
   /// The one launcher of a render (card 0187): replaces the render scheduled or in flight,
   /// waits `debounce` when given, and draws unless cancelled meanwhile.
-  func startPreview(debounce: Duration? = nil) {
+  func startPreview(debounce: Duration? = nil, level: ChainLevel = .full) {
     previewTask?.cancel()
     previewTask = Task { [weak self] in
       if let debounce { try? await Task.sleep(for: debounce) }
       guard !Task.isCancelled else { return }
-      await self?.drawPreview()
+      await self?.drawPreview(level: level)
     }
   }
 
   func stopPreview() {
     previewTask?.cancel()
+    fullPreviewTask?.cancel()
     shown = nil
     chainStoppedBefore = nil
+    chainPreviewReduced = false
     guard isPreviewing else { return }
     isPreviewing = false
     try? show(head)
@@ -169,6 +195,8 @@ extension StudioWorkspaceModel {
     chainStoppedBefore = nil
     previewTask?.cancel()
     previewTask = nil
+    fullPreviewTask?.cancel()
+    chainPreviewReduced = false
     isPreviewSuspended = panel.map { !$0.type.runsTool($0.params) } ?? false
   }
 

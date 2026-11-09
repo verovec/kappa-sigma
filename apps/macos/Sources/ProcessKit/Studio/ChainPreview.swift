@@ -7,4 +7,6 @@ package struct ChainPreview {
   package let image: AstroImage
   /// The index of the first host-tool step of the chain, or `nil` when it rendered to the head.
   package let stoppedBefore: Int?
+  /// Rendered on a proxy (card 0189): the full size, not the full pixels — said to the user.
+  package let reduced: Bool
 }

@@ -1,14 +1,17 @@
 internal import ImageKit
 internal import Metal
 
-/// What the next step of a chain preview reads (card 0158), held in memory.
+/// What the next step of a chain preview reads (card 0158), held on the GPU (card 0188).
 ///
 /// As a history at that step would give it: its input image, the context layers and their
 /// statistics, whether each written layer was only moved since the stack, and the roles written
-/// so far.
+/// so far. Nothing is read back between two steps: the image and the layers stay textures, and
+/// their statistics are measured there (`GPUStats`).
 struct ChainState {
   /// The image the next step receives.
-  var image: AstroImage
+  var image: GPUImage
+  /// Its metadata (the plate solution moved by every geometric step so far).
+  var metadata: ImageMetadata
   /// Its statistics when already known (the bundle's for the original image), else measured.
   var stats: LayerStats?
   /// The layers the next step reads: the bundle's, overlaid by what the steps wrote.
@@ -20,30 +23,24 @@ struct ChainState {
   /// The roles the steps so far wrote layers for (`History.layerRoles`).
   var roles: Set<LayerRole>
 
-  /// What a step applied (`ProcessRunner.applied`): its image, its role outputs, the bundle
-  /// layers it rewrote.
-  typealias Step = (
-    result: AstroImage, outputs: [LayerRole: AstroImage], replacing: [String: AstroImage]
-  )
-
   /// After `step` of `processID`: what the step after it reads, by the rule of
   /// `History.context` (`moving`: the geometric processes; `stack`: the bundle's layer
-  /// statistics, whose continuum fit a moved layer keeps).
+  /// statistics, whose continuum fit a moved layer keeps), the written layers measured on the GPU.
   mutating func advance(
-    past step: Step, of processID: String, moving: Set<String>, stack: [String: LayerStats],
-    device: MTLDevice
+    past step: GPUStep, of processID: String, moving: Set<String>,
+    stack: [String: LayerStats], measure: GPUStats
   ) throws {
-    let (result, outputs, replacing) = step
     // A step's role output wins over a bundle layer of the same id, as in `writtenFiles`.
-    let written = replacing.merging(outputs.map { ($0.key.rawValue, $0.value) }) { $1 }
+    let written = step.replacing.merging(step.outputs.map { ($0.key.rawValue, $0.value) }) { $1 }
     History.note(written: written.keys, by: processID, moving: moving, in: &onlyMoved)
     for (id, layer) in written {
-      layers[id] = try GPUImage(device: device, image: layer)
+      layers[id] = layer
       layerStats[id] = History.stats(
-        ofWritten: layer, onlyMoved: onlyMoved[id] == true, stack: stack[id])
+        measured: try measure.measure(layer), onlyMoved: onlyMoved[id] == true, stack: stack[id])
     }
-    roles.formUnion(outputs.keys)
-    image = result
+    roles.formUnion(step.outputs.keys)
+    image = step.result
+    metadata = step.metadata
     stats = nil
   }
 }

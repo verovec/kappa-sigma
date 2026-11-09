@@ -57,7 +57,9 @@ with sources, is `docs/engineering/swift-quality-playbook.md` — read it once p
   precompiled `.metallib`) with identical compile options, both tested.
 - Fast-math is off for every oracle-pinned kernel (`mathMode = .safe`,
   `mathFloatingPointFunctions = .precise`); reductions use a fixed order; no atomics in pinned
-  kernels. MPS is allowed for unpinned stock operators only.
+  kernels — except an order-independent reduction (a minimum, a maximum, an exact integer
+  count), which is deterministic whatever the thread order and says so in the kernel's header
+  (`Stats.metal`, `Histogram.metal`). MPS is allowed for unpinned stock operators only.
 - Every Metal kernel has a CPU oracle in its tests. Preview and Apply run the same shader.
 - Heavy CPU math goes through Accelerate (`vDSP`, `vImage.PixelBuffer<PlanarF>`); no hand-rolled
   loops where vDSP exists. Hot loops may use `Span`/`InlineArray` (macOS 26 floor).

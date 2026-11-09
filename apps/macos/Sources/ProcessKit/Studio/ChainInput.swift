@@ -1,9 +1,11 @@
 internal import ImageKit
 
-/// What a chain preview starts from, kept for the drags of one edit (card 0158).
+// MARK: - The cached input of a chain preview (card 0158)
+
+/// The input of step k and the recorded masks of the steps from k to end, on the GPU.
 ///
-/// Step `k`'s input and the recorded masks of the steps from it to `end`, read over the history's step
-/// `files`.
+/// Read over the history's step `files` and uploaded once (card 0188): a drag re-renders the
+/// chain, not the disk reads nor the uploads.
 struct ChainInput {
   /// The step the chain starts from.
   let k: Int
@@ -13,6 +15,6 @@ struct ChainInput {
   let files: [String]
   /// What step `k` reads.
   let state: ChainState
-  /// The recorded mask of each masked step from `k`, by index.
-  let masks: [Int: AstroImage]
+  /// The recorded mask of each masked step from `k`, by index, on the GPU.
+  let masks: [Int: GPUImage]
 }

@@ -316,6 +316,15 @@ in en/fr; the English title is the key, resolved with `ProcessKitResources.title
   Each step is `ProcessRunner.applied` (the one Apply step: image + moved layers, shared with
   `StudioSession.apply` and `PipelineRunner`), its values read by `PipelineRunner.values`, its
   statistics those of its input (the bundle's for the original).
+- The chain stays on the GPU (card 0188): `ChainState.image` is a `GPUImage` with its metadata,
+  each step is `ProcessRunner.applied(_:input: (GPUImage, metadata), …) -> GPUStep` (the
+  `AstroImage` variants wrap it), the masks are uploaded once with the chain's input
+  (`ChainInput`), and a step's input and written layers are measured where they are by
+  `GPUStats` (`Shaders/Stats.metal`: finite extremes through ordered-uint atomics — exact in any
+  order — and the strided sample `AutoSTF.sampleMedianAndMADN` takes; equal to
+  `LayerStats.measured`, `GPUStatsTests`). The chain reads back once, its last image
+  (`GPUImage.image(metadata:)`): 22 Mpx, 7 steps in 330 ms (`LiveChainLatencyTests`, release,
+  local — the budget that would catch a read-back per step coming back).
 - What a chain step reads is a `ChainState`: step k's input comes from
   `History.context(…, before: k)` (the overlay of the steps before k only), then each step's
   written layers overlay it by the same rule (`History.note` + `History.stats(ofWritten:…)`, the

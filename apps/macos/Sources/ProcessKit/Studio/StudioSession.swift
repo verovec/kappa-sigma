@@ -23,6 +23,8 @@ package final class StudioSession {
   /// The GPU it runs on (the viewer draws on the same one).
   package let device: MTLDevice
   let runner: ProcessRunner
+  /// Measures a chain step's images where they are, on the GPU (card 0188).
+  let gpuStats: GPUStats
   /// The layers of `bundle` on the GPU: the stack's, uploaded once, and the branch heads.
   var bundleLayers: [String: GPUImage]
   /// The last manual Apply left the image, its solution and its layers as they were (an
@@ -56,6 +58,7 @@ package final class StudioSession {
     self.branches = branches
     self.bundle = branches.overlay(bundle, baseID: Self.baseLayerID(bundle.layers.keys))
     runner = try ProcessRunner(device: device)
+    gpuStats = try GPUStats(device: device)
     bundleLayers = try self.bundle.layers.mapValues { try GPUImage(device: device, image: $0) }
     // A history opened over the stacked base layer starts from its branch head (card 0118).
     if let baseID = Self.baseLayerID(bundle.layers.keys), let head = branches.branch(baseID)?.head {

@@ -15,7 +15,7 @@ extension StudioWorkspaceModel {
       resumePreview()
       return
     }
-    if !isShowing(panel) { drawPreview() }
+    if !isShowing(panel) { drawHeadPreview() }
     guard isShowing(panel) else { return }
     // The values applied: a geometry panel is back at the identity once the pixels moved.
     let (id, params) = (panel.type.id, panel.params)

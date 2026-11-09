@@ -308,6 +308,11 @@ in en/fr; the English title is the key, resolved with `ProcessKitResources.title
 - `StudioSession.previewChain(from: k, params:)` renders applied step k with new values, then
   k+1… with their recorded ones, **in memory** at full resolution — the pixels a revise (0157,
   `PipelineRunner.run`) writes, the history untouched (`ChainPreview { image, stoppedBefore }`).
+  It is `async` and the caller's task's work (card 0187): between two steps it yields the
+  caller's actor and checks cancellation, so a drag's next position cancels the chain of the
+  one before (`StudioSessionChainCancelTests`). `stepStats` is measured once per head, keyed on
+  the head's step file; `LayerStats.measured` reads a plane's extremes in one pass (the lazy
+  `filter(\.isFinite).min()` it replaced cost ~19 s a 26 Mpx plane unoptimised).
   Each step is `ProcessRunner.applied` (the one Apply step: image + moved layers, shared with
   `StudioSession.apply` and `PipelineRunner`), its values read by `PipelineRunner.values`, its
   statistics those of its input (the bundle's for the original).

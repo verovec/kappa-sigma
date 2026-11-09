@@ -28,7 +28,7 @@ extension StudioWorkspaceModelTests {
     workspace.editing = 1
     await workspace.settlePreview()
 
-    let chain = try studio.previewChain(from: 1, params: params)
+    let chain = try await studio.previewChain(from: 1, params: params)
     #expect(workspace.isPreviewing && workspace.chainStoppedBefore == nil)
     #expect(workspace.viewer.model.image.planes == chain.image.planes)
     let head = try studio.preview(StretchProcess.id, params: params)

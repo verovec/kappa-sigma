@@ -11,11 +11,36 @@ extension LayerStats {
     LayerStats(
       channels: image.planes.map { plane in
         let (median, madn) = AutoSTF.medianAndMADN(plane)
-        let finite = plane.lazy.filter(\.isFinite)
-        return ChannelStats(
-          median: median, madn: madn, minimum: Double(finite.min() ?? 0),
-          maximum: Double(finite.max() ?? 0))
+        let (minimum, maximum) = finiteExtremes(plane)
+        return ChannelStats(median: median, madn: madn, minimum: minimum, maximum: maximum)
       })
+  }
+
+  /// The smallest and largest finite value of `plane` (`0` for each when it has none), the first
+  /// of equal values winning (signed zeros), in one pass.
+  ///
+  /// Written out on the buffer on purpose (card 0187): the lazy `filter(\.isFinite).min()` it
+  /// replaces ran a key-path getter and generic metadata lookups per pixel — ~19 s a 26 Mpx plane
+  /// unoptimised, the Studio's every preview and open — and vDSP's extremes say nothing about a
+  /// NaN, which a stacked plane can hold. The pointer, not `Span`: 0.8 s against 5.3 s for
+  /// 3 × 26 Mpx unoptimised (`LiveLayerStatsBudgetTests`), the build the app runs in daily.
+  static func finiteExtremes(_ plane: [Float]) -> (minimum: Double, maximum: Double) {
+    plane.withUnsafeBufferPointer { buffer in
+      guard let base = buffer.baseAddress else { return (0, 0) }
+      var minimum = Float.nan
+      var maximum = Float.nan
+      var index = 0
+      while index < buffer.count {
+        let value = unsafe base[index]
+        index += 1
+        guard value.isFinite else { continue }
+        // A NaN compares false: the first finite value takes both.
+        if !(minimum <= value) { minimum = value }
+        if !(maximum >= value) { maximum = value }
+      }
+      guard minimum.isFinite else { return (0, 0) }
+      return (Double(minimum), Double(maximum))
+    }
   }
 
   /// These statistics with the continuum fit (`continuum_k`, its reference) of `recorded`: a

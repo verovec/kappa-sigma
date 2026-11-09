@@ -11,7 +11,11 @@ extension StudioSession {
   /// 0160, k included). The chain stops before the first host-tool step (k included): that step
   /// runs at the revise. A crop, turn or flip k with a masked step after it is refused
   /// (`PipelineError.maskMoved`), as the revise refuses it.
-  package func previewChain(from k: Int, params: ParamSet) throws -> ChainPreview {
+  ///
+  /// The caller's task's work (card 0187): between two steps it lets the caller's actor go and
+  /// stops with `CancellationError` once cancelled — a drag's next position is not queued behind
+  /// the whole chain of the one before.
+  package func previewChain(from k: Int, params: ParamSet) async throws -> ChainPreview {
     let steps = history.steps
     guard steps.indices.contains(k) else { throw HistoryError.noStep(k) }
     let stop = toolStep(from: k, revising: k, params: params)
@@ -22,6 +26,8 @@ extension StudioSession {
     let input = try chainInput(k, until: end)
     var state = input.state
     for index in k..<end {
+      if index > k { await Task.yield() }
+      try Task.checkCancellation()
       let recipe = Self.recipe(of: steps[index], revising: index == k ? params : nil)
       // Rendered only before `stop`: its process is registered (an unknown one stops there).
       guard let type = registry.type(id: recipe.processID) else { break }

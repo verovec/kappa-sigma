@@ -104,7 +104,7 @@ struct StudioSessionChainTests {
     let session = try Self.session("applied")
     try Self.applying(recorded, on: session)
 
-    let preview = try session.previewChain(from: k, params: edited.params)
+    let preview = try await session.previewChain(from: k, params: edited.params)
 
     var revised = recorded
     revised[k] = edited
@@ -123,7 +123,7 @@ struct StudioSessionChainTests {
       result: Self.ramp(0.01), outputs: [.backgroundModel: Self.ramp(0.02)])
     try Self.applying([try Self.gain(0.9)], on: session)
 
-    let preview = try session.previewChain(from: 0, params: try Self.gain(0.6).params)
+    let preview = try await session.previewChain(from: 0, params: try Self.gain(0.6).params)
 
     #expect(preview.stoppedBefore == 2)
     let expected = try await Self.replayed([try Self.gain(0.6), try Self.stretch(0.2)], "scratch")
@@ -131,13 +131,13 @@ struct StudioSessionChainTests {
   }
 
   @Test("a host-tool step k itself stops the chain at k, on its input", .scratchDirectory)
-  func testPreviewChain_ToolStepStopsAtItself() throws {
+  func testPreviewChain_ToolStepStopsAtItself() async throws {
     let session = try Self.session("applied")
     try Self.applying([try Self.gain(1.5)], on: session)
     let tool = ParamSet(schema: BackgroundExtractionProcess.schema)
     try session.apply(BackgroundExtractionProcess.id, params: tool, result: Self.ramp(0.01))
 
-    let preview = try session.previewChain(from: 1, params: tool)
+    let preview = try await session.previewChain(from: 1, params: tool)
 
     #expect(preview.stoppedBefore == 1)
     #expect(Self.same(preview.image, try session.history.output(ofStep: 0)))
@@ -151,7 +151,7 @@ struct StudioSessionChainTests {
     let session = try Self.session("applied")
     try Self.applying(recorded, on: session)
 
-    let preview = try session.previewChain(from: 0, params: try Self.gain(0.5).params)
+    let preview = try await session.previewChain(from: 0, params: try Self.gain(0.5).params)
 
     #expect(preview.image.width == 3, "the combination read the RGB layer the crop moved")
     let expected = try await Self.replayed(
@@ -160,7 +160,7 @@ struct StudioSessionChainTests {
   }
 
   @Test("testPreviewChain_LeavesHistoryUntouched", .scratchDirectory)
-  func testPreviewChain_LeavesHistoryUntouched() throws {
+  func testPreviewChain_LeavesHistoryUntouched() async throws {
     let session = try Self.session("applied")
     try Self.applying([try Self.gain(1.5), try Self.crop(), try Self.gain(0.8)], on: session)
     let directory = session.history.directory
@@ -174,7 +174,7 @@ struct StudioSessionChainTests {
     )
 
     for gain in [0.4, 0.6, 0.9] {
-      _ = try session.previewChain(from: 0, params: try Self.gain(gain).params)
+      _ = try await session.previewChain(from: 0, params: try Self.gain(gain).params)
     }
 
     #expect(session.history.steps == steps)
@@ -184,50 +184,50 @@ struct StudioSessionChainTests {
   }
 
   @Test("the cached input of step k follows the history: an undo re-reads it", .scratchDirectory)
-  func testPreviewChain_CacheFollowsTheHistory() throws {
+  func testPreviewChain_CacheFollowsTheHistory() async throws {
     let session = try Self.session("applied")
     try Self.applying([try Self.gain(1.5), try Self.gain(2), try Self.gain(0.5)], on: session)
     let edit = try Self.gain(1).params
-    let first = try session.previewChain(from: 2, params: edit)
+    let first = try await session.previewChain(from: 2, params: edit)
     #expect(Self.same(first.image, try session.history.output(ofStep: 1)))
 
     try session.history.undo()
     try session.history.undo()
     try Self.applying([try Self.gain(3), try Self.gain(0.5)], on: session)
-    let again = try session.previewChain(from: 2, params: edit)
+    let again = try await session.previewChain(from: 2, params: edit)
 
     #expect(Self.same(again.image, try session.history.output(ofStep: 1)), "the new step 1")
     #expect(!Self.same(again.image, first.image))
   }
 
   @Test("a branch move on the base layer starts the chain from its new head", .scratchDirectory)
-  func testPreviewChain_BranchMoveRereadsInput() throws {
+  func testPreviewChain_BranchMoveRereadsInput() async throws {
     let session = try Self.session("applied")
     try Self.applying([try Self.gain(1.5)], on: session)
     let edit = try Self.gain(1).params
-    let before = try session.previewChain(from: 0, params: edit)
+    let before = try await session.previewChain(from: 0, params: edit)
 
     try session.applyBranch(
       "RGB", DenoiseProcess.id, params: ParamSet(schema: DenoiseProcess.schema))
-    let after = try session.previewChain(from: 0, params: edit)
+    let after = try await session.previewChain(from: 0, params: edit)
 
     #expect(!Self.same(after.image, before.image), "the original is the branch's new head")
   }
 
   @Test("a step out of the history is refused", .scratchDirectory)
-  func testPreviewChain_NoStep() throws {
+  func testPreviewChain_NoStep() async throws {
     let session = try Self.session("applied")
     try Self.applying([try Self.gain(1.5)], on: session)
-    #expect(throws: HistoryError.self) {
-      try session.previewChain(from: 1, params: try Self.gain(1).params)
+    await #expect(throws: HistoryError.self) {
+      _ = try await session.previewChain(from: 1, params: try Self.gain(1).params)
     }
   }
 
   @Test("ending the edit drops the cached input", .scratchDirectory)
-  func testEndChainPreview_DropsTheCache() throws {
+  func testEndChainPreview_DropsTheCache() async throws {
     let session = try Self.session("applied")
     try Self.applying([try Self.gain(1.5), try Self.gain(2)], on: session)
-    _ = try session.previewChain(from: 1, params: try Self.gain(1).params)
+    _ = try await session.previewChain(from: 1, params: try Self.gain(1).params)
     #expect(session.chainInputFiles != nil)
 
     session.endChainPreview()
@@ -251,7 +251,7 @@ struct StudioSessionChainTests {
     let masked = try Self.gain(2)
     try session.apply(masked.id, params: masked.params, mask: Self.halfMask)
 
-    let preview = try session.previewChain(from: 0, params: try Self.gain(0.5).params)
+    let preview = try await session.previewChain(from: 0, params: try Self.gain(0.5).params)
 
     let expected = try await Self.replayed(
       [try Self.gain(0.5), masked], "scratch", masks: [1: Self.halfMask])
@@ -263,15 +263,15 @@ struct StudioSessionChainTests {
   @Test(
     "a crop k with a masked step after it is refused, as the revise refuses it",
     .scratchDirectory)
-  func testPreviewChain_MovedMaskRefused() throws {
+  func testPreviewChain_MovedMaskRefused() async throws {
     let session = try Self.session("applied")
     let flat = Step(id: GeometryProcess.id, params: ParamSet(schema: GeometryProcess.schema))
     try Self.applying([flat], on: session)
     let masked = try Self.gain(2)
     try session.apply(masked.id, params: masked.params, mask: Self.halfMask)
 
-    #expect(throws: PipelineError.maskMoved(step: 1)) {
-      try session.previewChain(from: 0, params: try Self.crop().params)
+    await #expect(throws: PipelineError.maskMoved(step: 1)) {
+      _ = try await session.previewChain(from: 0, params: try Self.crop().params)
     }
   }
 }

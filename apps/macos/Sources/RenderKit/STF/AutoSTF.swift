@@ -26,12 +26,22 @@ package enum AutoSTF {
   /// Upper median and normalised MAD of a plane's finite values (NaN/Inf blanks left out; a
   /// 64 Ki-sample stride above that size).
   package static func medianAndMADN(_ plane: [Float]) -> (median: Double, madn: Double) {
-    let stride = max(1, plane.count / 65_536)
-    let sample = Swift.stride(from: 0, to: plane.count, by: stride)
-      .map { Double(plane[$0]) }.filter(\.isFinite)
-    guard !sample.isEmpty else { return (0, 0) }
-    let median = upperMedian(sample)
-    let mad = upperMedian(sample.map { abs($0 - median) })
+    let stride = sampleStride(count: plane.count)
+    return sampleMedianAndMADN(Swift.stride(from: 0, to: plane.count, by: stride).map { plane[$0] })
+  }
+
+  /// The stride `medianAndMADN` samples a plane of `count` values with: every value up to 64 Ki,
+  /// then one in `count / 65 536` — the rule a GPU-gathered sample follows (card 0188).
+  package static func sampleStride(count: Int) -> Int {
+    max(1, count / 65_536)
+  }
+
+  /// Upper median and normalised MAD of the finite values of `sample`, already strided.
+  package static func sampleMedianAndMADN(_ sample: [Float]) -> (median: Double, madn: Double) {
+    let finite = sample.map { Double($0) }.filter(\.isFinite)
+    guard !finite.isEmpty else { return (0, 0) }
+    let median = upperMedian(finite)
+    let mad = upperMedian(finite.map { abs($0 - median) })
     return (median, mad * madToSigma)
   }
 

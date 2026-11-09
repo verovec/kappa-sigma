@@ -62,8 +62,12 @@ extension History {
   static func stats(ofWritten image: AstroImage, onlyMoved: Bool, stack: LayerStats?)
     -> LayerStats
   {
-    let measured = LayerStats.measured(image)
-    return onlyMoved ? measured.keepingFit(of: stack) : measured
+    stats(measured: LayerStats.measured(image), onlyMoved: onlyMoved, stack: stack)
+  }
+
+  /// The same rule over statistics already `measured` (on the GPU, card 0188).
+  static func stats(measured: LayerStats, onlyMoved: Bool, stack: LayerStats?) -> LayerStats {
+    onlyMoved ? measured.keepingFit(of: stack) : measured
   }
 }
 

@@ -35,14 +35,15 @@ extension StudioSession {
       let values = try PipelineRunner.values(
         of: PipelineStep(recipe: recipe), schema: type.schema, at: index)
       let step = try runner.applied(
-        type.init(params: values, device: device), input: state.image,
-        stats: state.stats ?? LayerStats.measured(state.image), layers: state.layers,
+        type.init(params: values, device: device), input: (state.image, state.metadata),
+        stats: try state.stats ?? gpuStats.measure(state.image), layers: state.layers,
         layerStats: state.layerStats, roles: state.roles, mask: input.masks[index])
       try state.advance(
         past: step, of: recipe.processID, moving: registry.movingIDs, stack: bundle.layerStats,
-        device: device)
+        measure: gpuStats)
     }
-    return ChainPreview(image: state.image, stoppedBefore: stop)
+    // The one read-back of the chain (card 0188): its last image, for the viewer.
+    return ChainPreview(image: state.image.image(metadata: state.metadata), stoppedBefore: stop)
   }
 
   /// The first step from `start` that runs a host tool, step `k` read with `params`, or `nil`.
@@ -100,13 +101,17 @@ extension StudioSession {
     let image = try history.image(file: before.last?.file)
     let context = try history.contextAndMoves(
       over: bundleLayers, stats: bundle.layerStats, device: device, moving: moving, before: k)
+    // Uploaded once per edit, with the masks, and measured there (card 0188): the chain starts
+    // on the GPU.
+    let uploaded = try GPUImage(device: device, image: image)
     let state = ChainState(
-      image: image, stats: k == 0 ? bundle.stats : LayerStats.measured(image),
+      image: uploaded, metadata: image.metadata,
+      stats: k == 0 ? bundle.stats : try gpuStats.measure(uploaded),
       layers: context.layers, layerStats: context.stats, onlyMoved: context.onlyMoved,
       roles: Set(before.flatMap { $0.outputs.keys }))
-    var masks: [Int: AstroImage] = [:]
+    var masks: [Int: GPUImage] = [:]
     for index in steps.indices[k..<end] where steps[index].mask != nil {
-      masks[index] = try history.mask(ofStep: index)
+      masks[index] = try history.mask(ofStep: index).map { try GPUImage(device: device, image: $0) }
     }
     let input = ChainInput(k: k, end: end, files: files, state: state, masks: masks)
     chainInput = input

@@ -48,6 +48,11 @@ package final class GPUImage {
     try GPUImage(device: device, width: width, height: height, channels: planes.count)
   }
 
+  /// The image read back with `metadata`: the one way a texture leaves the GPU (card 0188).
+  package func image(metadata: ImageMetadata) -> AstroImage {
+    AstroImage(width: width, height: height, planes: read(), metadata: metadata)
+  }
+
   /// The planes read back (after the commands writing them completed).
   package func read() -> [[Float]] {
     planes.map { texture in

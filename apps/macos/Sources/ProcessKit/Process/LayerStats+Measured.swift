@@ -43,6 +43,21 @@ extension LayerStats {
     }
   }
 
+  /// These statistics with every MADN multiplied by the reduction factor.
+  ///
+  /// What a plane reduced by a box average of factor × factor cells (card 0189) would read at
+  /// full resolution, for independent noise — the drag's frame, never the frame at rest. Median
+  /// and extremes stay.
+  package func scalingMADN(by factor: Double) -> LayerStats {
+    guard factor != 1 else { return self }
+    return LayerStats(
+      channels: channels.map {
+        ChannelStats(
+          median: $0.median, madn: $0.madn * factor, minimum: $0.minimum, maximum: $0.maximum)
+      },
+      continuumK: continuumK, continuumReference: continuumReference)
+  }
+
   /// These statistics with the continuum fit (`continuum_k`, its reference) of `recorded`: a
   /// layer measured again after a step keeps the fit made on the stack (card 0090).
   package func keepingFit(of recorded: LayerStats?) -> LayerStats {

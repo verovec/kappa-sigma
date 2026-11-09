@@ -25,10 +25,11 @@ struct ChainState {
 
   /// After `step` of `processID`: what the step after it reads, by the rule of
   /// `History.context` (`moving`: the geometric processes; `stack`: the bundle's layer
-  /// statistics, whose continuum fit a moved layer keeps), the written layers measured on the GPU.
+  /// statistics, whose continuum fit a moved layer keeps), the written layers measured on the GPU
+  /// — on a proxy (card 0189) their MADN scaled back by `madnScale`, the reduction factor.
   mutating func advance(
     past step: GPUStep, of processID: String, moving: Set<String>,
-    stack: [String: LayerStats], measure: GPUStats
+    stack: [String: LayerStats], measure: GPUStats, madnScale: Double = 1
   ) throws {
     // A step's role output wins over a bundle layer of the same id, as in `writtenFiles`.
     let written = step.replacing.merging(step.outputs.map { ($0.key.rawValue, $0.value) }) { $1 }
@@ -36,7 +37,8 @@ struct ChainState {
     for (id, layer) in written {
       layers[id] = layer
       layerStats[id] = History.stats(
-        measured: try measure.measure(layer), onlyMoved: onlyMoved[id] == true, stack: stack[id])
+        measured: try measure.measure(layer).scalingMADN(by: madnScale),
+        onlyMoved: onlyMoved[id] == true, stack: stack[id])
     }
     roles.formUnion(step.outputs.keys)
     image = step.result

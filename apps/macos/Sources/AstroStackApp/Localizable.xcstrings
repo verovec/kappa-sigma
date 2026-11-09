@@ -497,6 +497,22 @@
         }
       }
     },
+    "Reduced preview while adjusting — full resolution at rest": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reduced preview while adjusting — full resolution at rest"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aperçu réduit pendant le réglage — pleine résolution au repos"
+          }
+        }
+      }
+    },
     "already included in": {
       "localizations": {
         "en": {

@@ -25,6 +25,10 @@ package final class StudioSession {
   let runner: ProcessRunner
   /// Measures a chain step's images where they are, on the GPU (card 0188).
   let gpuStats: GPUStats
+  /// Reduces a chain's input for a drag and brings its result back (card 0189).
+  let resample: Resample
+  /// The longer side a drag's proxy is kept under (`ProxyLevel.maxSide`; a test lowers it).
+  package var proxyMaxSide = ProxyLevel.maxSide
   /// The layers of `bundle` on the GPU: the stack's, uploaded once, and the branch heads.
   var bundleLayers: [String: GPUImage]
   /// The last manual Apply left the image, its solution and its layers as they were (an
@@ -59,6 +63,7 @@ package final class StudioSession {
     self.bundle = branches.overlay(bundle, baseID: Self.baseLayerID(bundle.layers.keys))
     runner = try ProcessRunner(device: device)
     gpuStats = try GPUStats(device: device)
+    resample = try Resample(device: device)
     bundleLayers = try self.bundle.layers.mapValues { try GPUImage(device: device, image: $0) }
     // A history opened over the stacked base layer starts from its branch head (card 0118).
     if let baseID = Self.baseLayerID(bundle.layers.keys), let head = branches.branch(baseID)?.head {

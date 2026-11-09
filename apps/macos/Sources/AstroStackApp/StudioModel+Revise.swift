@@ -52,8 +52,10 @@ extension StudioModel {
 
   /// Applied step `index` with `params` and the steps after it, rendered in memory (card 0158):
   /// what `reviseStep` would write, up to the first host tool; nothing recorded.
-  package func previewChain(from index: Int, params: ParamSet) async throws -> ChainPreview {
-    try await session.previewChain(from: index, params: params)
+  package func previewChain(from index: Int, params: ParamSet, level: ChainLevel = .full)
+    async throws -> ChainPreview
+  {
+    try await session.previewChain(from: index, params: params, level: level)
   }
 
   /// Refuses a revise of step `index` with `params` that moves the pixels (under its recorded or

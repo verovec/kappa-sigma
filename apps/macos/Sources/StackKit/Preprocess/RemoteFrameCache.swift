@@ -1,3 +1,4 @@
+internal import CryptoKit
 package import Foundation
 internal import ProjectKit
 
@@ -17,15 +18,24 @@ package struct RemoteFrameCache: Sendable, Equatable {
     self.root = root
   }
 
-  /// Where the copy of `key` of `bucket` is kept.
+  /// Where the copy of `key` of `bucket` is kept: `root/<bucket>/<digest of the key>/<name>`.
   ///
-  /// Always under `root/<bucket>/`: a key is the bucket's own spelling, so its empty, `.` and
-  /// `..` parts are spelled out rather than walked.
+  /// The folder is a digest of the key as the bucket spells it, so two keys never share a copy
+  /// — not two that differ by case on a case-insensitive volume, nor by an empty part — and no
+  /// key can name a file outside `root`. The frame keeps its own name, for the eye.
   package func file(bucket: String, key: String) -> URL {
-    let parts =
-      ([bucket] + key.split(separator: "/", omittingEmptySubsequences: true).map(String.init))
-      .map { part in part == "." ? "%2E" : part == ".." ? "%2E%2E" : part }
-    return parts.reduce(root) { $0.appendingPathComponent($1) }
+    let digest = SHA256.hash(data: Data(key.utf8)).prefix(12)
+      .map { String(format: "%02x", $0) }.joined()
+    let last = key.split(separator: "/").last.map(String.init) ?? ""
+    let name = last.isEmpty || last == "." || last == ".." ? "frame" : last
+    return root.appendingPathComponent(Self.folder(of: bucket), isDirectory: true)
+      .appendingPathComponent(digest, isDirectory: true).appendingPathComponent(name)
+  }
+
+  /// A bucket's own folder under `root`: its name, which S3 keeps free of `/` and of `..`.
+  private static func folder(of bucket: String) -> String {
+    let name = bucket.replacingOccurrences(of: "/", with: "_")
+    return name.isEmpty || name == "." || name == ".." ? "bucket" : name
   }
 
   /// The file holding the identity `file` was downloaded as.
@@ -33,11 +43,14 @@ package struct RemoteFrameCache: Sendable, Equatable {
     file.appendingPathExtension(Self.identityExtension)
   }
 
-  /// The kept copy of `key` when it is the object `identity` names; `nil` when there is none, or
-  /// it was downloaded as another object.
+  /// The kept copy of `key` when it is the object `identity` names; `nil` when there is none, it
+  /// was downloaded as another object, or `identity` cannot tell.
+  ///
+  /// An identity without an ETag (`size|`: a listing or gateway that drops them) proves nothing
+  /// of a kept copy — every frame of one camera has the same size — so it is downloaded again.
   package func copy(bucket: String, key: String, identity: String) -> URL? {
     let file = file(bucket: bucket, key: key)
-    guard FileManager.default.fileExists(atPath: file.path),
+    guard !identity.hasSuffix("|"), FileManager.default.fileExists(atPath: file.path),
       let kept = try? String(contentsOf: identityFile(of: file), encoding: .utf8),
       kept == identity
     else { return nil }
@@ -55,29 +68,22 @@ package struct RemoteFrameCache: Sendable, Equatable {
     try? FileManager.default.removeItem(at: file)
   }
 
-  /// A copy of the frame at the virtual `path` is kept, whatever it was downloaded as: what an
-  /// estimate made before the run's listing can know.
-  package func holds(_ path: String) -> Bool {
-    guard let parts = ProjectSource.remoteParts(of: path) else { return false }
-    let file = file(bucket: parts.bucket, key: parts.key)
-    return FileManager.default.fileExists(atPath: file.path)
-      && FileManager.default.fileExists(atPath: identityFile(of: file).path)
+  /// The frames of `paths` (virtual paths) a copy is kept of, whatever each was downloaded as.
+  ///
+  /// What an estimate made before a run's listing can know. Read once, off the main actor.
+  package func kept(among paths: [String]) -> Set<String> {
+    Set(
+      paths.filter { path in
+        guard let parts = ProjectSource.remoteParts(of: path) else { return false }
+        let file = file(bucket: parts.bucket, key: parts.key)
+        return FileManager.default.fileExists(atPath: file.path)
+          && FileManager.default.fileExists(atPath: identityFile(of: file).path)
+      })
   }
 
-  /// The bytes the kept frames take on disk (their identity files are not counted).
+  /// The bytes the kept frames take on disk, as the scratch sweep and the Finder count them.
   package func size() -> Int64 {
-    let keys: [URLResourceKey] = [.isRegularFileKey, .fileSizeKey]
-    guard
-      let walker = FileManager.default.enumerator(at: root, includingPropertiesForKeys: keys)
-    else { return 0 }
-    var total: Int64 = 0
-    for case let url as URL in walker where url.pathExtension != Self.identityExtension {
-      guard let values = try? url.resourceValues(forKeys: Set(keys)),
-        values.isRegularFile == true
-      else { continue }
-      total += Int64(values.fileSize ?? 0)
-    }
-    return total
+    LeftoverSweep.allocatedBytes(root)
   }
 
   /// The extension of an identity file.

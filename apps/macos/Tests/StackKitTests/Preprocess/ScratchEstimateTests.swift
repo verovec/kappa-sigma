@@ -178,8 +178,7 @@ struct ScratchEstimateTests {
   }
 
   @Test(
-    "testEstimate_CachedFramesNotCounted: kept frames cost nothing, the others stay for the run",
-    .scratchDirectory)
+    "testEstimate_CachedFramesNotCounted: kept frames cost nothing, the others stay for the run")
   func testEstimate_CachedFramesNotCounted() throws {
     var remote = Self.set("2026-09-22", count: 4, width: 4656, height: 3520, bayer: "", filter: "L")
     for index in remote.frames.indices {
@@ -193,19 +192,19 @@ struct ScratchEstimateTests {
     let inLane = try ScratchEstimate(inventory, settings: settings)
     #expect(inLane.bytes == 4 * (2 * copy + raw), "no cache: the downloads go with the lane")
 
-    let cache = RemoteFrameCache(root: try ScratchDirectory.url.appendingPathComponent("P"))
-    let none = try ScratchEstimate(inventory, settings: settings, cache: cache)
+    let none = try ScratchEstimate(inventory, settings: settings, kept: [])
     #expect(none.bytes == 4 * (2 * copy + raw), "nothing kept yet: every frame is downloaded")
+    #expect(none.keptBytes == 4 * raw, "and stays after the run")
 
-    for index in 0..<3 {
-      let file = cache.file(bucket: "astro", key: "M31/l_\(index).fits")
-      try FileManager.default.createDirectory(
-        at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
-      try Data("frame".utf8).write(to: file)
-      try cache.keep(file, as: "5|e")
-    }
-    let kept = try ScratchEstimate(inventory, settings: settings, cache: cache)
+    let paths = Set(remote.frames.prefix(3).map(\.path))
+    let kept = try ScratchEstimate(inventory, settings: settings, kept: paths)
     #expect(kept.bytes == 4 * 2 * copy + raw, "three kept: one download left")
-    #expect(kept.lane == inLane.lane)
+    #expect(kept.lane == inLane.lane && kept.keptBytes == raw)
+
+    #expect(ScratchEstimate.queued([]) == nil)
+    #expect(ScratchEstimate.queued([inLane, inLane]) == inLane.bytes, "nothing kept: the peak")
+    #expect(
+      ScratchEstimate.queued([none, none]) == 4 * 2 * copy + 2 * 4 * raw,
+      "a queue keeps each run's downloads: the next run finds them on the disk")
   }
 }

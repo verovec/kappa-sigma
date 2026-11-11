@@ -42,6 +42,9 @@ package struct FrameStager: Sendable {
   /// Where a bucket's frames are kept between runs (card 0191); `nil` downloads them into the
   /// lane's folder, to go with it.
   package var cache: RemoteFrameCache?
+  /// Hears how many frames of a staging came from the copies an earlier run kept, when some
+  /// did: the journal says which bytes were stacked (R2).
+  package var keptReport: @Sendable (_ frames: Int) -> Void = { _ in }
 
   /// A stager over `stores`, checking each download against `expected` and keeping the frames
   /// in `cache`; without any store, only frames of this Mac can be staged.
@@ -84,7 +87,6 @@ package struct FrameStager: Sendable {
           path: path, reason: "no connection for the bucket \(parts.bucket) in this run")
       }
       let listed = expected[path]
-      let kept = cache?.file(bucket: parts.bucket, key: parts.key)
       // The copy an earlier run kept is this frame only when it was downloaded as the object
       // this run listed (card 0191); linked as a frame of this Mac is.
       if let listed, let copy = cache?.copy(bucket: parts.bucket, key: parts.key, identity: listed)
@@ -97,8 +99,9 @@ package struct FrameStager: Sendable {
       downloads.append(
         Download(
           path: path, key: parts.key, store: store, destination: destination, expected: listed,
-          kept: kept, cache: cache))
+          cache: cache))
     }
+    if staged.cached > 0 { keptReport(staged.cached) }
     let total = downloads.count
     try await RemoteSnapshot.inParallel(
       downloads, width: Self.parallelism,
@@ -123,9 +126,7 @@ package struct FrameStager: Sendable {
     let store: RemoteObjectStore
     let destination: URL
     let expected: String?
-    /// Where the frame is kept between runs, with the cache that keeps it; `nil` writes it into
-    /// the lane.
-    var kept: URL?
+    /// What keeps the frame between runs; `nil` writes it into the lane.
     var cache: RemoteFrameCache?
 
     /// The download, a changed object said as the frame that could not be read (R2).
@@ -133,7 +134,8 @@ package struct FrameStager: Sendable {
     /// A kept frame is downloaded where it is kept, then linked into the lane; a download that
     /// fails keeps nothing, so the next run reads the bucket again.
     func run() async throws -> RemoteObjectStore.Object {
-      guard let kept, let cache else { return try await written(to: destination) }
+      guard let cache else { return try await written(to: destination) }
+      let kept = cache.file(bucket: store.bucket, key: key)
       cache.drop(kept)
       try FileManager.default.createDirectory(
         at: kept.deletingLastPathComponent(), withIntermediateDirectories: true)

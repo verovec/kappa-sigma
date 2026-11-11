@@ -13,10 +13,7 @@ extension RemoteFrameCache {
   package nonisolated init(project: URL, scratch: URL) {
     let path = project.standardizedFileURL.path
     let digest = SHA256.hash(data: Data(path.utf8)).prefix(4)
-      .map { byte in
-        let hex = String(byte, radix: 16)
-        return hex.count == 1 ? "0" + hex : hex
-      }.joined()
+      .map { String(format: "%02x", $0) }.joined()
     let name = project.deletingPathExtension().lastPathComponent
     self.init(
       root: scratch.appendingPathComponent(Self.folderName, isDirectory: true)

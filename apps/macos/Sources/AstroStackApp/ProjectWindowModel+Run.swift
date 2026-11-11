@@ -201,7 +201,7 @@ extension ProjectWindowModel {
     queuedScopes = []
     queueActive = false
     refresh()
-    listLeftoverStacks()
+    readWhatTheRunsLeft()
     if let recorded = queueRecorded {
       queueRecorded = nil
       selectStack(recorded.stack.id)

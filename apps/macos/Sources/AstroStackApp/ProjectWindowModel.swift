@@ -24,6 +24,7 @@ package final class ProjectWindowModel {
       integration = scan.map { IntegrationSummary.make(inventory: $0.inventory) }
       coverage = scan.map(CoverageMatrix.init(plan:))
       series.replace(inventory: scan?.inventory)
+      refreshKeptFrames()
     }
   }
   /// The series the next run stacks, from the last scan (card 0095): one run per checked object.
@@ -44,6 +45,9 @@ package final class ProjectWindowModel {
   /// What the Données stage knows of each remote source (card 0169), by virtual path.
   package internal(set) var remoteStates: [String: RemoteSourceState] = [:]
   var scanTask: Task<Void, Never>?
+  /// The bucket frames of `scan` the project keeps between runs (card 0191), as last read.
+  var keptRemoteFrames: Set<String> = []
+  var keptFramesTask: Task<Void, Never>?
   /// The one scan of the buckets that may write `remoteStates` (card 0182).
   var remoteScanTask: Task<Void, Never>?
   /// The prefix that scan is reading now: the one owner of a row's « Scanning… » (card 0182).

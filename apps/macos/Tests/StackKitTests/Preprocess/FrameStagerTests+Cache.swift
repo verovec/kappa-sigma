@@ -1,5 +1,6 @@
 import Foundation
 import StackKit
+import Synchronization
 import TestSupport
 import Testing
 
@@ -50,7 +51,7 @@ struct FrameStagerCacheTests {
     #expect(
       try FileManager.default.contentsOfDirectory(atPath: again.path).sorted()
         == ["00001_r_1.fits", "00002_r_2.fits"], "the names Siril reads are today's")
-    #expect(cache.size() == Int64("remote one".utf8.count + "remote two".utf8.count))
+    #expect(cache.size() > 0, "the copies stay, and weigh what the disk says")
   }
 
   /// What makes a kept frame unusable for a run.
@@ -107,17 +108,113 @@ struct FrameStagerCacheTests {
 
   @Test(
     "a key cannot name a file outside the project's copies",
-    arguments: ["../../x.fits", "a/../../../x.fits", "/abs/x.fits", "a//b/./x.fits", ".."])
+    arguments: ["../../x.fits", "a/../../../x.fits", "/abs/x.fits", "a//b/./x.fits", "..", ""])
   func testFile_StaysUnderTheRoot(key: String) {
     let cache = RemoteFrameCache(root: URL(fileURLWithPath: "/scratch/remote-frames/P"))
-    let file = cache.file(bucket: "astro", key: key).standardizedFileURL.path
-    #expect(file.hasPrefix("/scratch/remote-frames/P/astro/"), "\(file)")
+    for bucket in ["astro", "..", "a/b"] {
+      let file = cache.file(bucket: bucket, key: key).standardizedFileURL.path
+      #expect(file.hasPrefix("/scratch/remote-frames/P/"), "\(bucket) \(key) → \(file)")
+      #expect(file.split(separator: "/").count == 6, "bucket, digest, name: \(file)")
+    }
   }
 
-  @Test("a path of the project's copies is known as one; anything else is not")
-  func testHolds() {
+  @Test(
+    "two keys never share a copy, however alike a volume reads them",
+    arguments: [
+      ("n1/Light_001.fit", "n1/light_001.fit"), ("n1//x.fit", "n1/x.fit"), ("a/b", "a/b/c.fit"),
+      ("n1/x.fit", "n2/x.fit"),
+    ])
+  func testFile_OneCopyAKey(one: String, other: String) {
     let cache = RemoteFrameCache(root: URL(fileURLWithPath: "/scratch/remote-frames/P"))
-    #expect(cache.holds("s3://astro/M31/n1/r_1.fits") == false, "nothing downloaded yet")
-    #expect(cache.size() == 0, "a root that does not exist weighs nothing")
+    let files = [one, other].map { cache.file(bucket: "astro", key: $0) }
+    #expect(
+      files[0].deletingLastPathComponent().path.lowercased()
+        != files[1].deletingLastPathComponent().path.lowercased(),
+      "each key has a folder of its own")
+    #expect(cache.file(bucket: "astro", key: one) == files[0], "and always the same one")
+  }
+
+  @Test(
+    "a listing without ETags proves nothing of a kept copy: it is downloaded again",
+    .scratchDirectory)
+  func testStage_NoETag_NeverTrustsTheCopy() async throws {
+    let root = try ScratchDirectory.url
+    let cache = RemoteFrameCache(root: root.appendingPathComponent("remote-frames/P"))
+    let bucket = Self.bucket()
+    let sizes = Dictionary(
+      uniqueKeysWithValues: zip(Self.paths, ["remote one", "remote two"]).map {
+        ($0, "\($1.utf8.count)|")
+      })
+    let stager = FrameStager(stores: [bucket.store], expected: sizes, cache: cache)
+
+    try await stager.stage(Self.paths, into: root.appendingPathComponent("run_1/light_L"))
+    let second = try await stager.stage(
+      Self.paths, into: root.appendingPathComponent("run_2/light_L"))
+
+    #expect(bucket.downloaded.count == 4 && second.cached == 0 && second.remote == 2)
+  }
+
+  @Test(
+    "a lane staged from kept copies says so; one that downloads everything does not",
+    .scratchDirectory)
+  func testStage_KeptFramesAreSaid() async throws {
+    let root = try ScratchDirectory.url
+    let cache = RemoteFrameCache(root: root.appendingPathComponent("remote-frames/P"))
+    let bucket = Self.bucket()
+    let said = Mutex<[Int]>([])
+    var stager = try await Self.stager(bucket, cache: cache)
+    stager.keptReport = { count in said.withLock { $0.append(count) } }
+
+    try await stager.stage(Self.paths, into: root.appendingPathComponent("run_1/light_L"))
+    #expect(said.withLock { $0 }.isEmpty)
+    try await stager.stage(Self.paths, into: root.appendingPathComponent("run_2/light_L"))
+    #expect(said.withLock { $0 } == [2])
+  }
+
+  @Test(
+    "testStage_Cancelled_LeavesNoPartialFile: nothing kept of a frame half read",
+    .scratchDirectory)
+  func testStage_Cancelled_LeavesNoPartialFile() async throws {
+    let root = try ScratchDirectory.url
+    let cache = RemoteFrameCache(root: root.appendingPathComponent("remote-frames/P"))
+    let started = Gate(width: FrameStager.parallelism)
+    let store = RemoteObjectStore(
+      bucket: "astro", list: { _ in [] },
+      get: { _, _ in
+        await started.arrive()
+        // Held until cancelled: a stream nothing yields to ends only when its task is.
+        let (held, open) = AsyncStream<Void>.makeStream()
+        for await _ in held {}
+        open.finish()
+        try Task.checkCancellation()
+        return Data()
+      })
+    let paths = (0..<(FrameStager.parallelism * 2)).map { "s3://astro/M31/r_\($0).fits" }
+    let folder = root.appendingPathComponent("light_L")
+
+    let lane = Task {
+      try await FrameStager(stores: [store], cache: cache).stage(paths, into: folder)
+    }
+    await started.passed()
+    lane.cancel()
+
+    await #expect(throws: CancellationError.self) { _ = try await lane.value }
+    let left =
+      FileManager.default.enumerator(at: cache.root, includingPropertiesForKeys: nil)?
+      .compactMap { $0 as? URL }.filter { !$0.hasDirectoryPath } ?? []
+    #expect(left.isEmpty, "\(left.map(\.lastPathComponent))")
+    #expect(cache.kept(among: paths).isEmpty)
+  }
+
+  @Test("the frames kept are known by their virtual paths; nothing else is", .scratchDirectory)
+  func testKept() async throws {
+    let root = try ScratchDirectory.url
+    let cache = RemoteFrameCache(root: root.appendingPathComponent("remote-frames/P"))
+    #expect(cache.kept(among: Self.paths).isEmpty && cache.size() == 0, "nothing downloaded yet")
+
+    try await Self.stager(Self.bucket(), cache: cache).stage(
+      [Self.paths[0]], into: root.appendingPathComponent("run_1/light_L"))
+
+    #expect(cache.kept(among: Self.paths + ["/disk/l.fits"]) == [Self.paths[0]])
   }
 }

@@ -86,15 +86,21 @@ without reading a single frame.
 
 **Frames kept between runs (card 0191).** With `PreprocessRequest.remoteCache` (a
 `RemoteFrameCache`: one folder a project under the scratch folder, set by the app) a bucket frame is
-downloaded once into `<cache>/<bucket>/<key>`, beside a `.identity` file holding the `size|etag`
-the run listed, and the lane gets a symlink to it — exactly what a frame of this Mac gets. A later
-run links the kept copy only when its identity is the one that run's own listing answers
-(`RemoteFrameCache.copy`); an object uploaded again, a copy without its identity file, or a missing
-copy is downloaded again. A download that fails keeps nothing. The lane's cleanup removes links,
-never the copies: they stay until the user removes them (card 0192). Without a cache the downloads
-go into the lane's folder and with it, as before. `ScratchEstimate(_:settings:cache:)` then counts
-every frame not kept yet once for the whole run, on top of the largest lane's copies, and nothing
-for a frame already kept.
+downloaded once into `<cache>/<bucket>/<digest of its key>/<name>`, beside a `.identity` file
+holding the `size|etag` the run listed, and the lane gets a symlink to it — exactly what a frame of
+this Mac gets. The digest folder gives every key a copy of its own (two keys that differ by case, or
+by an empty part, never share one) and keeps any key inside the cache. A later run links the kept
+copy only when its identity is the one that run's own listing answers (`RemoteFrameCache.copy`); an
+object uploaded again, a copy without its identity file, a missing copy, or a listing without ETags
+(`size|` proves nothing: every frame of a camera has one size) is downloaded again. A download that
+fails or is cancelled keeps nothing. The lane's cleanup removes links, never the copies: they stay
+until the user removes them (card 0192) — or until macOS purges them when the scratch folder is the
+default one under the temporary directory, in which case they are simply downloaded again. A step
+that took frames from the kept copies says so in the journal (`FrameStager.keptReport`). Without a
+cache the downloads go into the lane's folder and with it, as before.
+`ScratchEstimate(_:settings:kept:)` then counts the lights not kept yet once for the whole run (and,
+as before, the largest calibration set not kept yet), on top of the largest lane's copies, and
+nothing for a frame already kept; `ScratchEstimate.queued` adds up what each run of a queue keeps.
 
 **Scratch budget (card 0098).** `ScratchEstimate(inventory, settings:)` is the peak the work
 folder reaches: lanes run one after another and each removes its folders, so the largest lane

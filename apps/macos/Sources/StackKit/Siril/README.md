@@ -23,6 +23,19 @@ modes (`PreprocessLiveTests`, parameterised over the two). `SirilRunner.make(mod
 builds either; `SirilRunner.pipe(_:)` replays each script as a `cd` to its folder plus its lines
 in one session. The oracles were recorded in script mode, which stays one argument away.
 
+**The pipe's command limit (card 0193).** Siril reads 512 bytes of its pipe at a time, newline
+included (measured on 1.4.4): a command of 511 bytes is answered `status: error command too long or
+malformed`, which names no verb, and a longer one is cut — its tail runs as a command of its own.
+`SirilSession.maxCommandBytes` is 510. `SirilRunner.pipe(_:fallback:)` hands a script holding a
+longer line (its `cd` counts) to the script-mode runner, whole: the same commands, read from a file.
+`make(mode: .pipe…)` sets that fallback; the script still runs alone (`SirilSession.alone` holds the
+queue) and a journal line says it left the pipe. Script mode was checked on the real Siril: a line
+of 624 bytes is read whole. The session itself refuses a longer command, and a script holding one,
+before sending anything (`SirilError.commandTooLong`); and an error status that arrives before the
+command started fails that command even when it names no verb, instead of being waited out. What makes a command long is the scratch folder: under the default
+`$TMPDIR` each master path is ~130 bytes, and a `calibrate` naming a bias, a dark, a flat and a
+defect list passes the limit.
+
 ## Pipe protocol (Siril 1.4.4, checked)
 
 `ready` once; per command `status: starting <verb>`, `log:` / `progress:` lines, then

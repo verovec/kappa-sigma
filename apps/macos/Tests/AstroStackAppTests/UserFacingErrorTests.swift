@@ -43,6 +43,13 @@ struct UserFacingErrorTests {
       error: SirilError.sessionFailed(reason: "pipe busy"), names: "pipe busy",
       english: "Siril could not start: pipe busy"),
     Case(
+      error: SirilError.commandTooLong(command: "calibrate_single", bytes: 594),
+      names: "calibrate_single",
+      english:
+        "“calibrate_single” is too long for Siril: "
+        + "shorten the path of the scratch or project folder."
+    ),
+    Case(
       error: InspectError.unknownFilterSet("uhc"), names: "uhc",
       english:
         "“uhc” is not a filter set: use unknown, broadband, dualband, dualband-sii, multiband."),

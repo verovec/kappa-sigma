@@ -20,6 +20,18 @@ package actor SirilSession {
   /// The folder of the running Siril's FIFOs and owner marker; `nil` when none runs.
   package var fifoFolder: URL? { instance?.folder }
 
+  /// The longest command Siril reads from its pipe, in bytes (measured on 1.4.4, card 0193).
+  ///
+  /// It reads 512 bytes at a time, the newline included: a line of 511 is answered `status: error
+  /// command too long or malformed` — which names no verb, so no reply would ever match — and a
+  /// longer one is cut, its tail run as a command of its own.
+  package static let maxCommandBytes = 510
+
+  /// Whether Siril reads `command` whole from its pipe: the one rule of the limit.
+  package static func fits(_ command: String) -> Bool {
+    command.utf8.count <= maxCommandBytes
+  }
+
   /// A session over the `siril-cli` at `binary`, working in `workDirectory`; `start` fails if
   /// Siril does not say `ready` within `readyTimeout`.
   package init(binary: String, workDirectory: URL, readyTimeout: Duration = .seconds(60)) {
@@ -73,9 +85,22 @@ package actor SirilSession {
   {
     await acquire()
     defer { release() }
+    // Refused whole: a script cut at its long command would leave the session in its folder
+    // with half its work done.
+    if let long = commands.first(where: { !Self.fits($0) }) { throw Self.tooLong(long) }
     var log: [String] = []
     for command in commands { log += try await perform(command, onLine: onLine) }
     return log
+  }
+
+  /// Runs `body` with the session's queue held: what must not overlap a script of this session
+  /// though it does not go through its pipe (a script handed to script mode, card 0193).
+  package func alone<Value: Sendable>(_ body: @Sendable () async throws -> Value) async rethrows
+    -> Value
+  {
+    await acquire()
+    defer { release() }
+    return try await body()
   }
 
   /// One command, with the queue already held.
@@ -83,11 +108,14 @@ package actor SirilSession {
     -> [String]
   {
     try Task.checkCancellation()
+    let verb = Self.verb(of: command)
+    // Never sent: Siril would answer nothing this command could be matched to (card 0193).
+    guard Self.fits(command) else { throw Self.tooLong(command) }
     if instance == nil { try await start() }
     guard let instance else { throw SirilError.sessionFailed(reason: "no instance") }
-    let verb = String(command.split(separator: " ").first ?? "")
     try instance.send(command)
     var log: [String] = []
+    var started = false
     while let raw = await instance.nextLine() {
       let line = SirilLine(parsing: raw)
       onLine(line)
@@ -95,8 +123,14 @@ package actor SirilSession {
         switch status {
         case .success: return log
         case .error: throw SirilError.commandFailed(command: verb, hint: Self.hint(log))
-        case .starting, .exit: continue
+        case .starting: started = true
+        case .exit: continue
         }
+      } else if line.status == .error, !started {
+        // An error before the command even started names no verb of ours (« command too long or
+        // malformed »): it is this command's all the same — the only one sent — and waiting for
+        // a reply that names it would wait for ever (card 0193).
+        throw SirilError.commandFailed(command: verb, hint: line.text)
       } else if line.status == nil, raw.hasPrefix("log:") {
         log.append(line.text)
       }
@@ -136,6 +170,16 @@ package actor SirilSession {
   }
 
   // MARK: - Helpers
+
+  /// The verb of `command`: its first word.
+  private static func verb(of command: String) -> String {
+    String(command.split(separator: " ").first ?? "")
+  }
+
+  /// The refusal of a command the pipe would not read whole.
+  private static func tooLong(_ command: String) -> SirilError {
+    .commandTooLong(command: verb(of: command), bytes: command.utf8.count)
+  }
 
   /// The verb a `status: <word> <verb>` line names.
   private static func statusVerb(_ raw: String) -> String? {

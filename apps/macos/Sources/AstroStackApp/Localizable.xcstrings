@@ -12656,6 +12656,22 @@
           }
         }
       }
+    },
+    "“%@” is too long for Siril: shorten the path of the scratch or project folder.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” is too long for Siril: shorten the path of the scratch or project folder."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« %@ » est trop longue pour Siril : raccourcissez le chemin du dossier scratch ou du projet."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

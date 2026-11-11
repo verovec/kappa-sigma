@@ -3,7 +3,8 @@ import Foundation
 /// A stand-in `siril-cli` written as a shell script, speaking both modes the driver uses:
 /// `-s script` (prints each line as `log:`; a line containing `fail` exits 1) and
 /// `-p -r in -w out` (pipe mode: `ready`, then per command `status: starting`, progress, log,
-/// `status: success`; `fail…` answers `status: error`; `boom…` dies mid-command).
+/// `status: success`; `fail…` answers `status: error`; `boom…` dies mid-command; `malformed…` is
+/// refused before it starts, with Siril's status that names no verb).
 enum FakeSiril {
   static let script = #"""
     #!/bin/bash
@@ -32,6 +33,9 @@ enum FakeSiril {
     echo "ready" >&4
     while IFS= read -r cmd <&3; do
       verb="${cmd%% *}"
+      if [ "$verb" = malformed ]; then
+        echo "status: error command too long or malformed" >&4; continue
+      fi
       echo "status: starting $verb" >&4
       case "$verb" in
         boom) echo "log: about to crash" >&4; exit 3 ;;

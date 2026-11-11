@@ -137,4 +137,54 @@ struct ProjectWindowModelKeptFramesTests {
       #expect(host.fittingSize.height > 0, "button: \(offers)")
     }
   }
+
+  /// What the project is in when the Export stage decides to offer the removal.
+  enum Offer: String, CaseIterable, Sendable {
+    case noExport, exportNothingKept, exportAndKept
+  }
+
+  @Test(
+    "testRemoveDownloaded_OfferedAfterAnExport: something kept, and an export made",
+    .scratchDirectory, arguments: Offer.allCases)
+  func testRemoveDownloaded_OfferedAfterAnExport(offer: Offer) async throws {
+    let heard = Remote.Heard()
+    let (project, window) = try await Remote.project(heard)
+    defer { try? project.close() }
+    window.startRun()
+    await ProjectScopeTests.queueSettled(window)
+    if offer != .noExport {
+      let stack = try #require(try project.store.stacks().last)
+      let image = try #require(try project.store.images(stackID: stack.id).first)
+      try project.store.addExport(
+        stackID: stack.id, imageID: image.id, headStepID: nil, folder: "/tmp/exports",
+        settingsJSON: "{}", files: ["final.png"])
+    }
+    if offer != .exportNothingKept { try Self.keep(in: try #require(window.remoteFrameCache)) }
+    window.refresh()
+    window.rescan()
+    await window.scanSettled()
+    await window.keptFramesSettled()
+
+    #expect(window.offersKeptFramesRemoval == (offer == .exportAndKept), "\(offer.rawValue)")
+    #expect((window.keptFrames != nil) == (offer != .exportNothingKept))
+  }
+
+  @Test("a paused run is not continued while a removal goes", .scratchDirectory)
+  func testNoContinueDuringARemoval() async throws {
+    let (project, window) = try await Remote.project(Remote.Heard())
+    defer { try? project.close() }
+    try Self.keep(in: try #require(window.remoteFrameCache))
+    window.rescan()
+    await window.scanSettled()
+    await window.keptFramesSettled()
+
+    window.removeKeptFrames()
+    window.continueRun(1)
+    #expect(window.isRemovingKeptFrames && !window.isStacking, "held: the removal owns the folder")
+    window.rescan()
+    await window.scanSettled()
+    #expect(window.isRemovingKeptFrames || window.keptFrames == nil, "a rescan does not race it")
+    await window.keptFramesSettled()
+    #expect(!window.isRemovingKeptFrames && window.keptFrames == nil)
+  }
 }

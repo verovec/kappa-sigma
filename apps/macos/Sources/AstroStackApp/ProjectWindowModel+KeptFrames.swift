@@ -26,6 +26,8 @@ extension ProjectWindowModel {
   /// Reads again what the project keeps of its bucket frames, off the main actor: after a scan,
   /// after a run and after a removal, the moments it can change.
   func refreshKeptFrames() {
+    // A removal owns the folder until it ends, and reads it again itself.
+    guard !isRemovingKeptFrames else { return }
     keptFramesTask?.cancel()
     guard let cache = remoteFrameCache else {
       (keptRemoteFrames, keptFramesCache, keptFrames, keptFramesTask) = ([], nil, nil, nil)
@@ -61,10 +63,10 @@ extension ProjectWindowModel {
     }
   }
 
-  /// The Export stage offers the removal: something is kept, and an export of the stack shown
-  /// was made — before that, the frames may still be wanted for another run.
+  /// The Export stage offers the removal: something is kept, and the journey reads the export
+  /// as done (`JourneyState`) — before that, the frames may still be wanted for another run.
   package var offersKeptFramesRemoval: Bool {
-    keptFrames != nil && exportStage?.exports.isEmpty == false
+    keptFrames != nil && statuses[.export] == .done
   }
 
   /// The kept frames can be removed now: there are some, no run is linking them into a lane,
@@ -83,9 +85,12 @@ extension ProjectWindowModel {
   package func removeKeptFrames() {
     guard canRemoveKeptFrames, let kept = keptFrames else { return }
     let cache = RemoteFrameCache(root: kept.folder)
+    // The app's one list of what no deletion touches (the astro folder chosen and the default
+    // one, the app's data), then this project's own: its folders of this Mac and its package.
     let protected =
-      sources.filter { $0.kind != .remoteNight }.map { URL(fileURLWithPath: $0.path) }
-      + [ImportPlanning.libraryFolder] + [folder()].compactMap { $0 }
+      AppDelegate.protectedFolders() + [ImportPlanning.libraryFolder]
+      + sources.filter { $0.kind != .remoteNight }.map { URL(fileURLWithPath: $0.path) }
+      + [folder()].compactMap { $0 }
     keptFramesTask?.cancel()
     isRemovingKeptFrames = true
     keptFramesTask = Task {

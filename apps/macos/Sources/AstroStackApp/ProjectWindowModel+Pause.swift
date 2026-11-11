@@ -17,7 +17,8 @@ extension ProjectWindowModel {
 
   /// Continues the paused run `id`: the same run id, folder and record, its done lanes reused.
   package func continueRun(_ id: Int64) {
-    guard !isStacking else { return }
+    // A removal of the kept bucket frames holds a run back, a continued one too (card 0192).
+    guard !isStacking, !isRemovingKeptFrames else { return }
     guard isSaved() else {
       error = .projectUnsaved
       return

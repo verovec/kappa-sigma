@@ -12,10 +12,6 @@ struct ExportStagePane: View {
       if model.stacks.count > 1 { StackPicker(model: model) }
       if let export = model.exportStage {
         ExportStageView(model: export)
-        // Once an export is made, the frames downloaded for it can go (card 0192).
-        if model.offersKeptFramesRemoval {
-          KeptFramesLine(model: model).padding([.horizontal, .bottom], DesignMetrics.spacingM)
-        }
       } else {
         EmptyState(
           .app("Export"),
@@ -26,6 +22,11 @@ struct ExportStagePane: View {
         .task(id: model.selectedStack?.id) {
           if model.studio == nil { await model.openStudio() } else { model.retryWorkspace() }
         }
+      }
+      // Once an export is made, the frames downloaded for it can go (card 0192) — offered
+      // whichever stack is shown, and while the Studio's image still loads.
+      if model.offersKeptFramesRemoval {
+        KeptFramesLine(model: model).padding([.horizontal, .bottom], DesignMetrics.spacingM)
       }
     }
   }

@@ -27,8 +27,8 @@ package enum PreprocessError: Error, Equatable, Sendable {
   /// the run, or the download failed. The lane fails with this text — never stacks what it has.
   case remoteFrameUnavailable(path: String, reason: String)
   /// The folder of a project's kept bucket frames was refused for removal (card 0192): it is not
-  /// a project's own folder under the scratch folder, or it touches a capture, the library or
-  /// the package. Nothing was deleted.
+  /// a project's own folder under the scratch folder — one that touches a capture, the library
+  /// or the package is not either. Nothing was deleted.
   case keptFramesNotRemovable(path: String)
 }
 
@@ -58,8 +58,7 @@ extension PreprocessError: LocalizedError {
     case .remoteFrameUnavailable(let path, let reason):
       "\(path) could not be read for this run: \(reason)"
     case .keptFramesNotRemovable(let path):
-      "\(path) was not removed: it is not this project's own folder of downloaded frames, or it "
-        + "touches a capture, the library or the project"
+      "\(path) was not removed: it is not this project's own folder of downloaded frames"
     }
   }
 

@@ -138,4 +138,25 @@ struct RemoteFrameCacheRemovalTests {
     try cache.remove(scratch: scratch, protected: [])
     #expect(!FileManager.default.fileExists(atPath: cache.root.path))
   }
+
+  @Test(
+    "a link standing where a project's copies would be is refused: its target is not deleted",
+    .scratchDirectory)
+  func testRemove_SymlinkedRoot_Refused() throws {
+    let base = try ScratchDirectory.url
+    let scratch = base.appendingPathComponent("Work")
+    let home = scratch.appendingPathComponent(RemoteFrameCache.folderName)
+    let capture = base.appendingPathComponent("captures/M31")
+    let files = FileManager.default
+    try files.createDirectory(at: home, withIntermediateDirectories: true)
+    try files.createDirectory(at: capture, withIntermediateDirectories: true)
+    try Data("light".utf8).write(to: capture.appendingPathComponent("l_1.fits"))
+    let link = home.appendingPathComponent("M31-0a1b2c3d")
+    try files.createSymbolicLink(at: link, withDestinationURL: capture)
+    let cache = RemoteFrameCache(root: link)
+
+    #expect(!cache.isRemovable(scratch: scratch, protected: []))
+    #expect(throws: PreprocessError.self) { try cache.remove(scratch: scratch, protected: []) }
+    #expect(files.fileExists(atPath: capture.appendingPathComponent("l_1.fits").path))
+  }
 }

@@ -12641,18 +12641,18 @@
         }
       }
     },
-    "%@ was not removed: it touches a capture, the library or the project.": {
+    "%@ was not removed: it is not this project's folder of downloaded frames.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ was not removed: it touches a capture, the library or the project."
+            "value": "%@ was not removed: it is not this project's folder of downloaded frames."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ n’a pas été supprimé : il touche une capture, la bibliothèque ou le projet."
+            "value": "%@ n’a pas été supprimé : ce n’est pas le dossier des poses téléchargées de ce projet."
           }
         }
       }

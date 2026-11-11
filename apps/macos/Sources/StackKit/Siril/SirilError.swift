@@ -17,4 +17,7 @@ package enum SirilError: Error, Equatable, Sendable {
   case restarted(command: String)
   /// The session could not start (pipes or process).
   case sessionFailed(reason: String)
+  /// A command longer than Siril reads from its pipe (`SirilSession.maxCommandBytes`): refused
+  /// before it is sent — Siril would cut it and run its tail as another command.
+  case commandTooLong(command: String, bytes: Int)
 }

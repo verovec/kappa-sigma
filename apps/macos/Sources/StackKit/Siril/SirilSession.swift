@@ -20,6 +20,13 @@ package actor SirilSession {
   /// The folder of the running Siril's FIFOs and owner marker; `nil` when none runs.
   package var fifoFolder: URL? { instance?.folder }
 
+  /// The longest command Siril reads from its pipe, in bytes (measured on 1.4.4, card 0193).
+  ///
+  /// It reads 512 bytes at a time, the newline included: a line of 511 is answered `status: error
+  /// command too long or malformed` — which names no verb, so no reply would ever match — and a
+  /// longer one is cut, its tail run as a command of its own.
+  package static let maxCommandBytes = 510
+
   /// A session over the `siril-cli` at `binary`, working in `workDirectory`; `start` fails if
   /// Siril does not say `ready` within `readyTimeout`.
   package init(binary: String, workDirectory: URL, readyTimeout: Duration = .seconds(60)) {
@@ -83,9 +90,13 @@ package actor SirilSession {
     -> [String]
   {
     try Task.checkCancellation()
+    let verb = String(command.split(separator: " ").first ?? "")
+    // Never sent: Siril would answer nothing this command could be matched to (card 0193).
+    guard command.utf8.count <= Self.maxCommandBytes else {
+      throw SirilError.commandTooLong(command: verb, bytes: command.utf8.count)
+    }
     if instance == nil { try await start() }
     guard let instance else { throw SirilError.sessionFailed(reason: "no instance") }
-    let verb = String(command.split(separator: " ").first ?? "")
     try instance.send(command)
     var log: [String] = []
     while let raw = await instance.nextLine() {

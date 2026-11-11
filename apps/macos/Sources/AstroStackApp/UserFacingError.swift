@@ -177,6 +177,8 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
     case .restarted(let command):
       .app("Siril stopped during “\(command)” and was restarted; run the step again.")
     case .sessionFailed(let reason): .app("Siril could not start: \(reason)")
+    case .commandTooLong(let command, let bytes):
+      .app("“\(command)” is too long for Siril (\(bytes) bytes): choose a shorter scratch folder.")
     }
   }
 

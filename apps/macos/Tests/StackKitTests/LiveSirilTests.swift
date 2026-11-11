@@ -82,4 +82,22 @@ struct LiveSirilTests {
     let written = ["fit", "fits"].map { out.appendingPathExtension($0) }
     #expect(written.contains { FileManager.default.fileExists(atPath: $0.path) })
   }
+
+  @Test(
+    "a script whose folder is longer than the pipe reads still runs: script mode takes it",
+    .scratchDirectory)
+  func testLongFolderRunsThroughTheFallback() async throws {
+    let scratch = try ScratchDirectory.url
+    // A folder whose `cd` line is over 510 bytes: what a deep scratch folder does to a lane.
+    var folder = scratch
+    while "cd \"\(folder.path)\"".utf8.count <= SirilSession.maxCommandBytes {
+      folder.appendPathComponent(String(repeating: "d", count: 100))
+    }
+    let runner = SirilRunner.make(mode: .pipe, binary: try SirilTool.locate(), work: scratch)
+
+    // No command but the header and the `cd`: Siril accepts the script, or this throws.
+    _ = try await runner.run(SirilScript([]), folder) { _ in }
+
+    #expect(FileManager.default.fileExists(atPath: folder.path))
+  }
 }

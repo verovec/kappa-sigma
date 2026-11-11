@@ -53,4 +53,52 @@ struct SirilPipeRunnerTests {
     let log = try await runner.run(SirilScript([.load("a")]), scratch) { _ in }
     #expect(log.contains("load a"))
   }
+
+  @Test(
+    "testLongCommand_RunsAsAScript: a line Siril would not read from its pipe goes to script mode",
+    .scratchDirectory, arguments: [(510, true), (511, false), (600, false)])
+  func testLongCommand_RunsAsAScript(bytes: Int, throughThePipe: Bool) async throws {
+    let scratch = try ScratchDirectory.url
+    let runner = SirilRunner.make(
+      mode: .pipe, binary: try FakeSiril.install(in: scratch), work: scratch)
+    // `load <name>`: the name pads the line to `bytes`.
+    let name = String(repeating: "x", count: bytes - "load ".utf8.count)
+    let script = SirilScript([.load(name), .save("b")])
+
+    let log = try await runner.run(script, scratch.appendingPathComponent("lane")) { _ in }
+
+    #expect(log.contains("load " + name) && log.contains("save b"), "the same commands either way")
+    #expect(
+      log.contains("done cd ") == throughThePipe,
+      "\(bytes) bytes: \(throughThePipe ? "one command at a time" : "the whole script, from a file")"
+    )
+  }
+
+  @Test(
+    "what fits the pipe: every command of 510 bytes or less",
+    arguments: [
+      ([510], true), ([511], false), ([3, 510, 12], true), ([3, 512], false), ([], true),
+    ])
+  func testFitsThePipe(lengths: [Int], fits: Bool) {
+    let commands = lengths.map { String(repeating: "é", count: $0 / 2) + ($0 % 2 == 1 ? "x" : "") }
+    #expect(commands.map(\.utf8.count) == lengths, "bytes, not characters")
+    #expect(SirilRunner.fitsThePipe(commands) == fits)
+  }
+
+  @Test(
+    "testExec_CommandOverTheLimit_Refused: named, and Siril is not even started",
+    .scratchDirectory)
+  func testExec_CommandOverTheLimit_Refused() async throws {
+    let scratch = try ScratchDirectory.url
+    let session = SirilSession(binary: try FakeSiril.install(in: scratch), workDirectory: scratch)
+    let long = "calibrate_single " + String(repeating: "x", count: 600)
+
+    await #expect(
+      throws: SirilError.commandTooLong(command: "calibrate_single", bytes: long.utf8.count)
+    ) {
+      _ = try await session.exec(long)
+    }
+    #expect(await session.launches == 0)
+    #expect(try await session.exec("load a") == ["done load a"], "the session still works")
+  }
 }

@@ -9,6 +9,11 @@ package struct ProjectSource: Equatable, Sendable {
     /// An S3 prefix read where it stands (card 0168): `path` is its virtual `s3://bucket/prefix`
     /// and its frames are never copied into the project.
     case remoteNight = "remote_night"
+
+    /// A capture night, wherever it is read from (card 0190).
+    ///
+    /// A folder of this Mac or a bucket prefix; a legacy run is a source, never a capture.
+    package var isCaptureNight: Bool { self == .night || self == .remoteNight }
   }
 
   /// Row id.

@@ -26,7 +26,11 @@ extension ProjectStore {
   }
 
   /// Records an S3 prefix as a remote night (card 0168) and returns it; recording the same bucket
-  /// and prefix again returns the existing row, with the connection it was first read through.
+  /// and prefix again returns the existing row, now read through `connectionID` (card 0190).
+  ///
+  /// The import that records it just read the prefix through that connection: it is the one
+  /// that works. A row kept on the connection it was first read through could never be repaired
+  /// once Settings lost that connection, and every plan of the project would fail on it.
   ///
   /// The path is the virtual `s3://bucket/prefix` the scan walks — never canonicalised as a file
   /// path, which would mangle the scheme.
@@ -43,7 +47,9 @@ extension ProjectStore {
         sql: """
           INSERT INTO sources (kind, path, read_only, connection_id, bucket, prefix, created_at,
             updated_at)
-          VALUES (?, ?, 1, ?, ?, ?, ?, ?) ON CONFLICT (kind, path) DO NOTHING
+          VALUES (?, ?, 1, ?, ?, ?, ?, ?) ON CONFLICT (kind, path) DO UPDATE
+          SET connection_id = excluded.connection_id, updated_at = excluded.updated_at
+          WHERE connection_id IS NOT excluded.connection_id
           """,
         arguments: [kind.rawValue, path, connectionID, bucket, key, stamp, stamp])
       let row = try Row.fetchOne(

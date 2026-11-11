@@ -38,7 +38,8 @@ package final class ProjectWindowModel {
   package private(set) var integration: IntegrationSummary?
   /// The calibration coverage of `scan`, the matcher's verdict as is.
   package private(set) var coverage: CoverageMatrix?
-  /// A Rescan is reading this Mac's folders (what Run waits for after Add, card 0100).
+  /// A Rescan is planning the capture nights, folders and bucket nights alike (what Run waits
+  /// for after Add, card 0100).
   package internal(set) var isScanning = false
   /// What the Données stage knows of each remote source (card 0169), by virtual path.
   package internal(set) var remoteStates: [String: RemoteSourceState] = [:]
@@ -309,7 +310,7 @@ package final class ProjectWindowModel {
   /// The profile every capture night of `sources` kept at import, or `nil` when they differ or
   /// one kept none (a legacy run has no say): the knobs' help and the Studio's step 0 read it.
   nonisolated static func agreedProfileID(_ sources: [ProjectSource]) -> String? {
-    let kept = Set(sources.filter { $0.kind == .night }.map(\.profileID))
+    let kept = Set(sources.filter(\.kind.isCaptureNight).map(\.profileID))
     return kept.count == 1 ? kept.first.flatMap { $0 } : nil
   }
 }

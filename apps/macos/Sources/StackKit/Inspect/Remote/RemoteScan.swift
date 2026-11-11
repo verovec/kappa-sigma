@@ -42,24 +42,11 @@ package struct RemoteScan: Sendable {
     cache: RemoteScanCache = .empty, overrides: InspectOverrides = InspectOverrides(),
     progress: @escaping @Sendable (ScanProgress) -> Void = { _ in }
   ) async throws -> Scanned {
-    var snapshot = try await RemoteSnapshot.load(
-      store: store, prefix: prefix, cache: cache, progress: progress)
-    progress(.classifying)
-    // The runs a pass asks for can change what the next one classifies: a few passes settle it;
-    // the last pass answers with what it has (every read it misses names its frame).
-    for _ in 1..<Self.passes {
-      try Task.checkCancellation()
-      let asked = RemoteSnapshot.Asked()
-      let inventory = try classify(snapshot, asked: asked, overrides: overrides)
-      guard !asked.missingSamples.isEmpty else {
-        return Scanned(inventory: finished(inventory, snapshot, asked), cache: snapshot.cache)
-      }
-      try await snapshot.fetchSamples(asked.missingSamples, store: store)
-    }
-    try Task.checkCancellation()
-    let asked = RemoteSnapshot.Asked()
-    let inventory = try classify(snapshot, asked: asked, overrides: overrides)
-    return Scanned(inventory: finished(inventory, snapshot, asked), cache: snapshot.cache)
+    // One prefix of `CaptureScan` (card 0190): the same snapshot, the same passes.
+    let scanned = try await CaptureScan(
+      roots: [.prefix(.init(store: store, prefix: prefix, cache: cache))], timeZone: timeZone
+    ).scan(overrides: overrides, progress: progress)
+    return Scanned(inventory: scanned.inventory, cache: scanned.caches.values.first ?? .empty)
   }
 
   /// An inventory and what reading it fetched, for the next scan of the same prefix.
@@ -68,29 +55,6 @@ package struct RemoteScan: Sendable {
     package let inventory: Inventory
     /// What was read, to keep with the source (`ProjectStore.setRemoteScan`).
     package let cache: RemoteScanCache
-  }
-
-  /// Today's scan over `snapshot`, its unanswered pixel reads told to `asked`.
-  private func classify(
-    _ snapshot: RemoteSnapshot, asked: RemoteSnapshot.Asked, overrides: InspectOverrides
-  ) throws -> Inventory {
-    try InventoryBuilder(
-      timeZone: timeZone, pixels: snapshot.pixels(asked), source: snapshot.source
-    ).scan(paths: [snapshot.root], overrides: overrides)
-  }
-
-  /// `inventory` with the frames whose checks were not made, and the side files that failed.
-  private func finished(
-    _ inventory: Inventory, _ snapshot: RemoteSnapshot, _ asked: RemoteSnapshot.Asked
-  ) -> Inventory {
-    var inventory = inventory
-    inventory.notCheckedRemotely = Self.unchecked(
-      asked.framesUnanswered, planes: asked.framesNeedingPlanes, in: inventory)
-    for (path, why) in snapshot.sideFailures.sorted(by: { $0.key < $1.key }) {
-      inventory.warnings.append(
-        "s3: could not read \(InspectWalk.relative(path, to: snapshot.root)): \(why)")
-    }
-    return inventory
   }
 
   /// Scan passes at most: the first learns the runs, the next reads with them.

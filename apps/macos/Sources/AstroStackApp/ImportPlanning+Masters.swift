@@ -10,7 +10,9 @@ extension ImportPlanning {
   ) -> ImportServices {
     let index = LibraryIndex(store: store, folder: library)
     let planning: ImportViewModel.ProgressPlanning = { request, progress in
-      try await plan(request, index: index, timeZone: timeZone, progress: progress)
+      // A night of the project read from a bucket is planned with its folders (card 0190).
+      try await plan(
+        request, store: store, index: index, timeZone: timeZone, progress: progress)
     }
     let masters = MasterServices(
       inspect: { path in try await inspect(path) },

@@ -26,6 +26,10 @@ extension UserFacingError {
     switch problem {
     case .connectionMissing:
       .app("The S3 connection is gone or has no secret: check Settings › S3 connections.")
+    case .bucketOnTwoConnections(let bucket):
+      .app(
+        "Two S3 connections read nested prefixes of \(bucket): import both through one connection."
+      )
     }
   }
 

@@ -9,7 +9,7 @@ extension ProjectWindowModel {
   /// stored with the latest stack and then those of each import this session, merged (a later
   /// choice wins); `nil` without a night.
   func runRequest() throws -> ImportRequest? {
-    let nights = sources.filter { $0.kind == .night }.map(\.path)
+    let nights = nightPaths
     guard !nights.isEmpty else { return nil }
     let base = try latestStackRecord()?.request ?? ImportRequest(paths: nights)
     var request = imports.reduce(base) { $0.merging($1) }
@@ -24,7 +24,7 @@ extension ProjectWindowModel {
   /// one (`needsSeries`): a run of every light would only fail after the plan.
   /// While every night is rescanned after Add a night, Run waits for the plan (card 0100).
   package var canRun: Bool {
-    !isStacking && !awaitsRescan && sources.contains { $0.kind == .night }
+    !isStacking && !awaitsRescan && !nightPaths.isEmpty
       && (series.isEmpty ? !needsSeries : !series.scopes.isEmpty)
   }
 
@@ -87,7 +87,7 @@ extension ProjectWindowModel {
     }
     let scope = resume == nil ? scope : record.scope
     // The run plans the same folders again: a Rescan still reading them only competes for disk.
-    // A bucket read goes on (card 0182): it reads no folder of this Mac.
+    // The per-row bucket read goes on (card 0182): it only counts each prefix for its row.
     cancelLocalScan()
     let runID =
       resume.map { URL(fileURLWithPath: $0.bundlePath).lastPathComponent }
@@ -120,7 +120,8 @@ extension ProjectWindowModel {
         }
         let inventory = scope.map { plan.inventory.scoped($0) } ?? plan.inventory
         // Looked up here, off the main actor (a Keychain prompt never freezes the window), and
-        // only for the buckets this inventory reads: a run of local frames never asks.
+        // only for the buckets this inventory reads. The plan above already read every bucket
+        // night of the project (card 0190): a project of folders alone never asks.
         let looked = await buckets(RunBuckets.sources(remote, readBy: inventory))
         var prepared = prepared
         prepared.stores = looked.stores

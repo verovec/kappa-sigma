@@ -73,7 +73,8 @@ GRDB 7), and later `images/`, `recipes/`, `history/` (design §4.5). No UI, no A
   virtual `s3://bucket/prefix` (`ProjectSource.remotePath`, the one spelling StackKit's scan walks
   — `RemoteSnapshot.root`), kept as it is spelled; the local `addSource(kind:path:)` canonicalises
   with `URL(fileURLWithPath:)`, which would eat the scheme. Recording the same bucket and prefix
-  again returns the existing row with the connection it was first read through.
+  again returns the existing row, re-pointed to the connection it was just imported through
+  (card 0190: every plan reads the row's connection, and one Settings lost could not be repaired).
 - `remoteScan(of:)` / `setRemoteScan(_:of:)` / `deleteRemoteScan(of:)` keep what the last scan of
   a source read (`remote_scans`, one JSON body per virtual path, through the same named-JSON
   mechanism as `pipelines`): hand it to `RemoteScan.scan(cache:)` and only the keys whose ETag

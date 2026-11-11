@@ -7,7 +7,7 @@ extension ProjectWindowModel {
   package var restackPlan: RestackPlan? {
     RestackPlan(
       series: series,
-      nightSourceIDs: sources.filter { $0.kind == .night }.map(\.id),
+      nightSourceIDs: sources.filter(\.kind.isCaptureNight).map(\.id),
       lastStackSourceIDs: stacks.last?.sourceIDs)
   }
 

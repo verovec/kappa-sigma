@@ -205,6 +205,18 @@ struct ScratchEstimateTests {
     #expect(ScratchEstimate.queued([inLane, inLane]) == inLane.bytes, "nothing kept: the peak")
     #expect(
       ScratchEstimate.queued([none, none]) == 4 * 2 * copy + 2 * 4 * raw,
-      "a queue keeps each run's downloads: the next run finds them on the disk")
+      "a queue keeps each run's lights: the next run finds them on the disk")
+
+    // The runs of a queue share the capture's calibration: it is downloaded, and counted, once.
+    var darks = Self.set("", count: 2, width: 4656, height: 3520, bayer: "", filter: "")
+    for index in darks.frames.indices {
+      darks.frames[index].type = .dark
+      darks.frames[index].path = "s3://astro/M31/d_\(index).fits"
+    }
+    darks.key.type = .dark
+    let withDarks = try ScratchEstimate(Self.scan([remote, darks]), settings: settings, kept: [])
+    #expect(withDarks.keptLightBytes == 4 * raw && withDarks.keptCalibrationBytes == 2 * raw)
+    #expect(
+      ScratchEstimate.queued([withDarks, withDarks]) == 4 * 2 * copy + 2 * 4 * raw + 2 * raw)
   }
 }

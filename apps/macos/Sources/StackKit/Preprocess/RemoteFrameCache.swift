@@ -44,17 +44,27 @@ package struct RemoteFrameCache: Sendable, Equatable {
   }
 
   /// The kept copy of `key` when it is the object `identity` names; `nil` when there is none, it
-  /// was downloaded as another object, or `identity` cannot tell.
+  /// was downloaded as another object, it no longer has that object's size, or `identity`
+  /// cannot tell.
   ///
   /// An identity without an ETag (`size|`: a listing or gateway that drops them) proves nothing
   /// of a kept copy — every frame of one camera has the same size — so it is downloaded again.
+  /// A copy cut short (a disk unplugged, a crash) is not the object either.
   package func copy(bucket: String, key: String, identity: String) -> URL? {
     let file = file(bucket: bucket, key: key)
-    guard !identity.hasSuffix("|"), FileManager.default.fileExists(atPath: file.path),
+    guard Self.proves(identity),
       let kept = try? String(contentsOf: identityFile(of: file), encoding: .utf8),
-      kept == identity
+      kept == identity,
+      let size = try? file.resourceValues(forKeys: [.fileSizeKey]).fileSize,
+      identity.hasPrefix("\(size)|")
     else { return nil }
     return file
+  }
+
+  /// Whether `identity` (`size|etag`) can prove a kept copy: only with an ETag.
+  package static func proves(_ identity: String?) -> Bool {
+    guard let identity else { return false }
+    return !identity.hasSuffix("|") && identity.contains("|")
   }
 
   /// Records that `file` holds the object `identity` names, once its download is whole.

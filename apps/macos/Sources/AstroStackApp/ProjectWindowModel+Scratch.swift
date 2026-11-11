@@ -15,7 +15,9 @@ extension ProjectWindowModel {
     let queued = series.scopes.isEmpty ? [inventory] : series.scopes.map { inventory.scoped($0) }
     // What the project keeps of its bucket frames was read when the scan or a run ended, never
     // here: this is asked by every pass of the Stacking stage's body.
-    let kept = remoteFrameCache == nil ? nil : keptRemoteFrames
+    // Frames kept in another folder (the scratch setting changed since) are not kept here.
+    let cache = remoteFrameCache
+    let kept = cache.map { $0 == keptFramesCache ? keptRemoteFrames : [] }
     let needed = ScratchEstimate.queued(
       queued.compactMap { try? ScratchEstimate($0, settings: settings, kept: kept) })
     guard let needed, needed > 0 else { return nil }
@@ -39,15 +41,13 @@ extension ProjectWindowModel {
     let paths = (scan?.inventory.frames ?? []).map(\.path)
       .filter { ProjectSource.remoteParts(of: $0) != nil }
     guard let cache = remoteFrameCache, !paths.isEmpty else {
-      keptRemoteFrames = []
-      keptFramesTask = nil
+      (keptRemoteFrames, keptFramesCache, keptFramesTask) = ([], nil, nil)
       return
     }
     keptFramesTask = Task {
-      let kept = await Self.kept(among: paths, in: cache)
+      let kept = await cache.keptOffActor(among: paths)
       guard !Task.isCancelled else { return }
-      keptRemoteFrames = kept
-      keptFramesTask = nil
+      (keptRemoteFrames, keptFramesCache, keptFramesTask) = (kept, cache, nil)
     }
   }
 
@@ -62,13 +62,13 @@ extension ProjectWindowModel {
   package func keptFramesSettled() async {
     await keptFramesTask?.value
   }
+}
 
-  /// The frames of `paths` kept in `cache`, read off the caller's actor.
+nonisolated extension RemoteFrameCache {
+  /// `kept(among:)` off the caller's actor: two file checks and a digest a frame.
   @concurrent
-  nonisolated static func kept(among paths: [String], in cache: RemoteFrameCache) async
-    -> Set<String>
-  {
-    cache.kept(among: paths)
+  func keptOffActor(among paths: [String]) async -> Set<String> {
+    kept(among: paths)
   }
 }
 
@@ -77,8 +77,9 @@ nonisolated extension RunRequestPlan {
   ///
   /// The refusal is `PreprocessError.scratchFull`; a plan the engine refuses is left to the run,
   /// which names its own reason. Frames the project already keeps (card 0191) cost nothing.
+  @concurrent
   package func checkScratch(_ inventory: Inventory, folder: URL, room: @Sendable (URL) -> Int64?)
-    throws
+    async throws
   {
     let kept = cache?.kept(among: inventory.frames.map(\.path))
     guard let estimate = try? ScratchEstimate(inventory, settings: settings, kept: kept)

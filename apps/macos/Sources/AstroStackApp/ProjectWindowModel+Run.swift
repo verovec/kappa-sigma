@@ -130,7 +130,7 @@ extension ProjectWindowModel {
         // A bucket the Keychain refused stops the run here, in the refusal's words (card 0185).
         if let refusal = looked.refusal(in: inventory) { throw refusal }
         // Refused before Siril starts, never left to fail mid-run on a full disk (card 0098).
-        try prepared.checkScratch(inventory, folder: scratch, room: room)
+        try await prepared.checkScratch(inventory, folder: scratch, room: room)
         return start(try prepared.request(inventory: inventory, library: plan.library))
       },
       completion: { [weak self] outcome in

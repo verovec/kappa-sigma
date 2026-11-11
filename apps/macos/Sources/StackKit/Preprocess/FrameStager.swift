@@ -99,7 +99,8 @@ package struct FrameStager: Sendable {
       downloads.append(
         Download(
           path: path, key: parts.key, store: store, destination: destination, expected: listed,
-          cache: cache))
+          // A frame no listing can prove next time is not worth keeping: it goes with its lane.
+          cache: RemoteFrameCache.proves(listed) ? cache : nil))
     }
     if staged.cached > 0 { keptReport(staged.cached) }
     let total = downloads.count
@@ -131,19 +132,21 @@ package struct FrameStager: Sendable {
 
     /// The download, a changed object said as the frame that could not be read (R2).
     ///
-    /// A kept frame is downloaded where it is kept, then linked into the lane; a download that
-    /// fails keeps nothing, so the next run reads the bucket again.
+    /// A kept frame is downloaded into the lane like any other — its `.part` goes with the run's
+    /// work folder if the app dies — then moved where it is kept and linked back; a download
+    /// that fails keeps nothing, so the next run reads the bucket again.
     func run() async throws -> RemoteObjectStore.Object {
-      guard let cache else { return try await written(to: destination) }
+      let object = try await written(to: destination)
+      guard let cache else { return object }
       let kept = cache.file(bucket: store.bucket, key: key)
       cache.drop(kept)
-      try FileManager.default.createDirectory(
-        at: kept.deletingLastPathComponent(), withIntermediateDirectories: true)
       do {
-        let object = try await written(to: kept)
+        let files = FileManager.default
+        try files.createDirectory(
+          at: kept.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try files.moveItem(at: destination, to: kept)
         try cache.keep(kept, as: expected ?? object.identity)
-        try FileManager.default.createSymbolicLink(
-          atPath: destination.path, withDestinationPath: kept.path)
+        try files.createSymbolicLink(atPath: destination.path, withDestinationPath: kept.path)
         return object
       } catch {
         cache.drop(kept)

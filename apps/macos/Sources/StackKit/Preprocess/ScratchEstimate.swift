@@ -20,10 +20,14 @@ package struct ScratchEstimate: Equatable, Sendable {
   package var bytes: Int64
   /// The lane that sets it.
   package var lane: String
-  /// The part of `bytes` that stays after the run (card 0191).
+  /// The lights the run downloads and keeps (card 0191): part of `bytes` that stays after it.
   ///
-  /// The bucket frames it downloads and keeps; zero for a run that downloads into its lanes.
-  package var keptBytes: Int64 = 0
+  /// Zero for a run that downloads into its lanes.
+  package var keptLightBytes: Int64 = 0
+  /// The calibration frames the run is counted to download and keep (its largest set not kept).
+  package var keptCalibrationBytes: Int64 = 0
+  /// The part of `bytes` that stays after the run.
+  package var keptBytes: Int64 { keptLightBytes + keptCalibrationBytes }
 
   /// The estimate of a run of `inventory` with `settings`; throws the plan's own refusal
   /// (no lights, several objects, mono + colour).
@@ -52,8 +56,9 @@ package struct ScratchEstimate: Equatable, Sendable {
       let lights = inventory.sets.filter { $0.key.type == .light }.reduce(Int64(0)) { total, set in
         total + Self.rawRemoteBytes(set) { !kept.contains($0.path) }
       }
-      keptBytes = lights + (heaviestSet?.0 ?? 0)
-      bytes = (peak?.1 ?? 0) + keptBytes
+      keptLightBytes = lights
+      keptCalibrationBytes = heaviestSet?.0 ?? 0
+      bytes = (peak?.1 ?? 0) + lights + (heaviestSet?.0 ?? 0)
       lane = peak?.0 ?? ""
       return
     }
@@ -68,12 +73,14 @@ package struct ScratchEstimate: Equatable, Sendable {
 
   /// What a queue of runs needs, one after another (card 0191).
   ///
-  /// The largest of their peaks without what each keeps, plus everything they keep — a run's
-  /// downloads are still there when the next one starts. For runs that keep nothing, the
-  /// largest peak.
+  /// The largest of their peaks without what each keeps, plus the lights they all keep — a
+  /// run's downloads are still there when the next one starts — plus the calibration once: the
+  /// runs of a queue share the capture's calibration sets, and the first one keeps them for the
+  /// others. For runs that keep nothing, the largest peak.
   package static func queued(_ estimates: [Self]) -> Int64? {
     guard let peak = estimates.map({ $0.bytes - $0.keptBytes }).max() else { return nil }
-    return peak + estimates.reduce(0) { $0 + $1.keptBytes }
+    return peak + estimates.reduce(0) { $0 + $1.keptLightBytes }
+      + (estimates.map(\.keptCalibrationBytes).max() ?? 0)
   }
 
   /// Refuses a run whose peak exceeds `room`, the bytes left on the volume of `folder`

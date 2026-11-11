@@ -47,6 +47,8 @@ package final class ProjectWindowModel {
   var scanTask: Task<Void, Never>?
   /// The bucket frames of `scan` the project keeps between runs (card 0191), as last read.
   var keptRemoteFrames: Set<String> = []
+  /// The cache they were read in: another scratch folder keeps none of them.
+  var keptFramesCache: RemoteFrameCache?
   var keptFramesTask: Task<Void, Never>?
   /// The one scan of the buckets that may write `remoteStates` (card 0182).
   var remoteScanTask: Task<Void, Never>?

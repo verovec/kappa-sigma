@@ -56,7 +56,7 @@ struct FrameStagerCacheTests {
 
   /// What makes a kept frame unusable for a run.
   enum Stale: String, CaseIterable, Sendable {
-    case changedInTheBucket, fileGone, identityGone
+    case changedInTheBucket, fileGone, identityGone, cutShort
   }
 
   @Test(
@@ -75,6 +75,7 @@ struct FrameStagerCacheTests {
     case .changedInTheBucket: bucket.replace(Self.keys[0], with: Data("uploaded again".utf8))
     case .fileGone: try FileManager.default.removeItem(at: kept)
     case .identityGone: try FileManager.default.removeItem(at: cache.identityFile(of: kept))
+    case .cutShort: try Data("remote".utf8).write(to: kept)
     }
     let second = try await Self.stager(bucket, cache: cache).stage(
       Self.paths, into: root.appendingPathComponent("run_2/light_L"))
@@ -152,6 +153,9 @@ struct FrameStagerCacheTests {
       Self.paths, into: root.appendingPathComponent("run_2/light_L"))
 
     #expect(bucket.downloaded.count == 4 && second.cached == 0 && second.remote == 2)
+    #expect(
+      cache.size() == 0, "and nothing is kept that no listing could prove: it goes with the lane")
+    #expect(try Self.bytes(second) == ["remote one", "remote two"])
   }
 
   @Test(

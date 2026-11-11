@@ -374,6 +374,11 @@ nonisolated package struct AccessibilityID: Hashable, Sendable, CustomStringConv
     Self("import", "bucketFolder", prefix)
   }
 
+  /// One level of the bucket form's path, by its prefix (`""` = the root).
+  package static func importBucketCrumb(_ prefix: String) -> Self {
+    Self("import", "bucketCrumb", prefix)
+  }
+
   /// A button opening the Settings window, on the tab it names (`last`: the tab last shown) —
   /// card 0177.
   package static func openSettings(_ tab: String) -> Self {

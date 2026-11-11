@@ -12337,18 +12337,34 @@
         }
       }
     },
-    "bucket name": {
+    "bucket name, or s3://bucket/folder/": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "bucket name"
+            "value": "bucket name, or s3://bucket/folder/"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "nom du bucket"
+            "value": "nom du bucket, ou s3://bucket/dossier/"
+          }
+        }
+      }
+    },
+    "The bucket's root: a scan reads every folder of it.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The bucket's root: a scan reads every folder of it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Racine du bucket : l'analyse lit tous ses dossiers."
           }
         }
       }

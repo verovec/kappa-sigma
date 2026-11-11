@@ -119,3 +119,27 @@ struct ImportBucketViewTests {
     #expect(ImportBucketView.name(of: prefix) == name)
   }
 }
+
+extension ImportBucketViewTests {
+  @Test(
+    "the folder list has a height of its own: every row up to the cap, then it scrolls",
+    arguments: zip([1, 5, 9, 10, 400], [32.0, 136.0, 240.0, 260.0, 260.0]))
+  func testListHeight(rows: Int, height: Double) {
+    let got = Double(ImportBucketView.listHeight(rows: rows))
+    #expect(got == height, "got \(got)")
+  }
+
+  @Test("a listed level makes the form taller by its list, in a popover-sized host")
+  func testListedLevelGrowsTheForm() async {
+    let model = Self.model(folders: ["astro/"])
+    model.connectionID = Self.connection.id
+    model.bucket = "astrophoto"
+    let host = NSHostingView(rootView: ImportBucketView(model: model) { _ in })
+    let before = host.fittingSize.height
+    model.browse()
+    await model.settled()
+    host.layoutSubtreeIfNeeded()
+    let grown = host.fittingSize.height - before
+    #expect(grown >= ImportBucketView.listHeight(rows: 1), "grew by \(grown)")
+  }
+}

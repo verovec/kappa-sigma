@@ -13,7 +13,7 @@
   },
   "permissions": {
     "allow": [
-      "Bash(just)", "Bash(just *)", "Bash(./scripts/*)",
+      "Bash(just)", "Bash(just *)", "Bash(just merge *)", "Bash(./scripts/*)",
       "Bash(git status*)", "Bash(git diff*)", "Bash(git log*)", "Bash(git add *)", "Bash(git commit *)",
       "Bash(git switch *)", "Bash(git branch *)", "Bash(git pull*)", "Bash(git fetch*)", "Bash(git push *)",
       "Bash(git rev-parse *)", "Bash(git ls-files*)", "Bash(git grep *)", "Bash(git show *)",

@@ -20,10 +20,13 @@ package final class ImportBucketModel {
   package var connectionID: UUID? {
     didSet { if connectionID != oldValue { startOver() } }
   }
-  /// The bucket's name, as typed; changing it starts over.
+  /// The bucket's name, as typed — or a whole pasted location (`s3://bucket/folder/`), which
+  /// « Browse » splits into the bucket and the prefix it names; changing it starts over.
   package var bucket = "" {
-    didSet { if bucket != oldValue { startOver() } }
+    didSet { if bucket != oldValue && !isAdopting { startOver() } }
   }
+  /// Whether `bucket` is being rewritten to the name a pasted location held: not a new bucket.
+  private var isAdopting = false
   /// Where in the bucket the browse stands (`""` = its root).
   package private(set) var prefix = ""
   /// The sub-prefixes of `prefix`, as the last successful listing answered them.
@@ -84,9 +87,43 @@ package final class ImportBucketModel {
 
   /// What the Import sheet would scan: `nil` until a connection and a bucket are both chosen.
   package var target: RemoteImportTarget? {
-    let name = bucket.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard let connectionID, !name.isEmpty else { return nil }
-    return RemoteImportTarget(connectionID: connectionID, bucket: name, prefix: prefix)
+    let typed = Self.location(bucket)
+    guard let connectionID, !typed.bucket.isEmpty else { return nil }
+    return RemoteImportTarget(
+      connectionID: connectionID, bucket: typed.bucket, prefix: typed.prefix ?? prefix)
+  }
+
+  /// What the bucket field holds: a bare name (`prefix` is `nil`: the browse decides where), or
+  /// a location — `s3://bucket/folder`, `bucket/folder` — whose folder is the prefix meant.
+  package static func location(_ text: String) -> (bucket: String, prefix: String?) {
+    var rest = Substring(text.trimmingCharacters(in: .whitespacesAndNewlines))
+    let scheme = "s3://"
+    let hasScheme = rest.lowercased().hasPrefix(scheme)
+    if hasScheme { rest = rest.dropFirst(scheme.count) }
+    guard let slash = rest.firstIndex(of: "/") else {
+      return (String(rest), hasScheme ? "" : nil)
+    }
+    let parts = rest[rest.index(after: slash)...].split(separator: "/")
+    return (String(rest[..<slash]), parts.isEmpty ? "" : parts.joined(separator: "/") + "/")
+  }
+
+  /// One level of the way from the bucket's root to `prefix`.
+  package struct Crumb: Equatable, Identifiable, Sendable {
+    /// The folder's name; the bucket's for the root.
+    package let name: String
+    /// The full prefix of the level (`""` = the root).
+    package let prefix: String
+    package var id: String { prefix }
+  }
+
+  /// The levels from the bucket's root down to where the browse stands, the root first.
+  package var crumbs: [Crumb] {
+    var walked = ""
+    let levels = prefix.split(separator: "/").map { part -> Crumb in
+      walked += part + "/"
+      return Crumb(name: String(part), prefix: walked)
+    }
+    return [Crumb(name: Self.location(bucket).bucket, prefix: "")] + levels
   }
 
   /// The prefix one level up, `nil` at the bucket's root.
@@ -98,6 +135,7 @@ package final class ImportBucketModel {
 
   /// Lists the current prefix; a listing already running is replaced.
   package func browse() {
+    adoptLocation()
     guard let target else { return }
     listing?.cancel()
     isBrowsing = true
@@ -120,7 +158,25 @@ package final class ImportBucketModel {
     }
   }
 
-  /// Goes down into `folder` (a full prefix of `folders`) and lists it.
+  /// Lists the level the browse stands on unless it was read already, is being read, or failed:
+  /// what the form does on its own when it opens, so the folders are there without a click.
+  package func browseIfUnread() {
+    guard !hasListed, !isBrowsing, error == nil else { return }
+    browse()
+  }
+
+  /// A pasted location becomes the bucket it names and the prefix it points at.
+  private func adoptLocation() {
+    let typed = Self.location(bucket)
+    guard let typedPrefix = typed.prefix else { return }
+    startOver()
+    isAdopting = true
+    bucket = typed.bucket
+    isAdopting = false
+    prefix = typedPrefix
+  }
+
+  /// Goes to `folder` (a full prefix: one of `folders`, or a crumb's) and lists it.
   package func enter(_ folder: String) {
     prefix = folder
     browse()

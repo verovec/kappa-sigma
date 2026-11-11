@@ -27,7 +27,10 @@ struct ProjectWindowModelRemoteRunTests {
   /// What a window over a saved project heard: the requests planned, the sources whose buckets
   /// a run looked up, and the requests run.
   struct Heard {
+    /// The requests the project's planner was asked (Rescan, Run).
     let planned = Recorded<ImportRequest>()
+    /// The prefixes read on their own (the Import sheet, each bucket row).
+    let readAlone = Recorded<ImportRequest>()
     let lookedUp = Recorded<[ProjectSource]>()
     let ran = Recorded<PreprocessRequest>()
   }
@@ -45,7 +48,10 @@ struct ProjectWindowModelRemoteRunTests {
       services: { _ in
         ImportServices(
           planning: ImportViewModel.reporting(plan),
-          remotePlanning: { _, request, _ in try await plan(request) },
+          remotePlanning: { _, request, _ in
+            heard.readAlone.append(request)
+            return ImportPlan(inventory: inventory(), library: [], request: request)
+          },
           browsing: { _, _, _ in [] })
       },
       runs: RunServices(
@@ -104,18 +110,44 @@ struct ProjectWindowModelRemoteRunTests {
     #expect(none.runBlocker == nil, "a night to stack: nothing holds Run back")
   }
 
+  @Test(
+    "a bucket night counts for the kept profile and for what a re-stack adds",
+    .scratchDirectory)
+  func testRemoteNight_CountsAsANight() async throws {
+    let heard = Heard()
+    let (project, window) = try await Self.project(heard)
+    defer { try? project.close() }
+    let galaxy = ProjectWindowModelProfileTests.galaxy
+
+    try project.store.setProfile(galaxy, kind: .remoteNight, path: Self.night)
+    window.refresh()
+    #expect(window.knobs.profile?.id == galaxy, "the profile its import kept")
+
+    window.startRun()
+    await ProjectScopeTests.queueSettled(window)
+    _ = try project.store.addSource(
+      remote: ProjectWindowModelBucketTests.connection.id.uuidString, bucket: "astro",
+      prefix: "M31/2026-10-19")
+    window.refresh()
+    window.rescan()
+    await window.scanSettled()
+    #expect(window.restackPlan?.added == 1, "a bucket night imported since the last stack")
+    #expect(window.knobs.profile == nil, "a night that kept no profile counts")
+  }
+
   @Test("Rescan plans the bucket night with the run's request", .scratchDirectory)
   func testRescan_PlansTheRemoteNight() async throws {
     let heard = Heard()
     let (project, window) = try await Self.project(heard)
     defer { try? project.close() }
-    let before = heard.planned.all.count
+    #expect(heard.planned.all.isEmpty, "until now the sheet alone read the prefix")
 
     window.rescan()
     await window.scanSettled()
 
-    let planned = heard.planned.all.dropFirst(before).map(\.paths)
-    #expect(planned.contains([Self.night]), "one plan of every capture night: \(planned)")
+    #expect(
+      heard.planned.all.map(\.paths) == [[Self.night]],
+      "the project's planner plans the bucket night, as it plans a folder")
     #expect(window.integration != nil && window.error == nil)
   }
 

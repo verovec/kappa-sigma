@@ -1,4 +1,7 @@
 package import Foundation
+internal import ImageKit
+internal import ProjectKit
+internal import Synchronization
 
 /// The inventory of a capture read from several roots at once (card 0190): folders of this Mac
 /// and S3 prefixes, classified together.
@@ -64,7 +67,7 @@ package struct CaptureScan: Sendable {
   ) async throws -> Scanned {
     var loaded: [Loaded] = []
     var paths: [String] = []
-    for root in roots {
+    for root in Self.distinct(roots) {
       switch root {
       case .folder(let path): paths.append(path)
       case .prefix(let prefix):
@@ -78,15 +81,19 @@ package struct CaptureScan: Sendable {
     progress(.classifying)
     // The folders are walked aloud; a capture of buckets alone already told its reads.
     let silent: @Sendable (ScanProgress) -> Void = { _ in }
-    let walking = loaded.count < roots.count ? progress : silent
+    let walking = loaded.count < paths.count ? progress : silent
+    // What a pass read of this Mac serves the next: only the buckets' answers change between two.
+    let disk = DiskReads()
     // The runs a pass asks for can change what the next one classifies: a few passes settle it;
     // the last pass answers with what it has (every read it misses names its frame).
-    for pass in 1...RemoteScan.passes {
+    var pass = 1
+    while true {
       try Task.checkCancellation()
       let asked = RemoteSnapshot.Asked()
       let inventory = try InventoryBuilder(
-        timeZone: timeZone, pixels: Self.pixels(loaded, asked), source: Self.source(loaded)
-      ).scan(paths: paths, overrides: overrides, progress: walking)
+        timeZone: timeZone, pixels: Self.pixels(loaded, asked, disk),
+        source: Self.source(loaded, disk)
+      ).scan(paths: paths, overrides: overrides, progress: pass == 1 ? walking : silent)
       let missing = asked.missingSamples
       guard !missing.isEmpty, pass < RemoteScan.passes else {
         return Scanned(
@@ -99,8 +106,59 @@ package struct CaptureScan: Sendable {
         guard !own.isEmpty else { continue }
         try await loaded[index].snapshot.fetchSamples(own, store: loaded[index].store)
       }
+      pass += 1
     }
-    throw CancellationError()  // Unreachable: the last pass returns.
+  }
+
+  /// `roots` without a prefix another prefix of the same bucket already covers (or repeats):
+  /// the outer one lists the inner one's frames, and a frame walked twice would be stacked twice.
+  static func distinct(_ roots: [Root]) -> [Root] {
+    let spelled = roots.map { root -> String? in
+      guard case .prefix(let prefix) = root else { return nil }
+      return ProjectSource.remotePath(
+        bucket: prefix.store.bucket, prefix: ProjectSource.key(prefix.prefix))
+    }
+    return roots.indices.filter { index in
+      guard let own = spelled[index] else { return true }
+      return !spelled.indices.contains { other in
+        guard other != index, let outer = spelled[other] else { return false }
+        return own.hasPrefix(outer + "/") || (own == outer && other < index)
+      }
+    }.map { roots[$0] }
+  }
+
+  /// What the scan read of this Mac's folders, kept from one pass to the next: listings, headers
+  /// and centred runs (whole planes are read again — they are large, and rarely asked twice).
+  final class DiskReads: Sendable {
+    private struct State {
+      var listings: [String: InspectWalk.Listing] = [:]
+      var headers: [String: Result<FITSHeader, any Error>] = [:]
+      var samples: [String: Result<[Double], any Error>] = [:]
+    }
+    private let state = Mutex(State())
+
+    func listing(under root: String, skippingOutput: Bool) throws -> InspectWalk.Listing {
+      let key = "\(skippingOutput)|\(root)"
+      if let held = state.withLock({ $0.listings[key] }) { return held }
+      let read = try FrameSource.files.listing(under: root, skippingOutput: skippingOutput)
+      state.withLock { $0.listings[key] = read }
+      return read
+    }
+
+    func header(_ path: String) throws -> FITSHeader {
+      if let held = state.withLock({ $0.headers[path] }) { return try held.get() }
+      let read = Result { try FrameSource.files.header(path) }
+      state.withLock { $0.headers[path] = read }
+      return try read.get()
+    }
+
+    func centerSample(_ path: String, _ count: Int) throws -> [Double] {
+      let key = "\(count)|\(path)"
+      if let held = state.withLock({ $0.samples[key] }) { return try held.get() }
+      let read = Result { try PixelReader.files.centerSample(path, count) }
+      state.withLock { $0.samples[key] = read }
+      return try read.get()
+    }
   }
 
   /// A prefix once listed and read, with the bucket its pixel runs come from.
@@ -122,12 +180,18 @@ package struct CaptureScan: Sendable {
   }
 
   /// Listings, headers and side files: each prefix's snapshot, the disk for everything else.
-  static func source(_ loaded: [Loaded]) -> FrameSource {
+  static func source(_ loaded: [Loaded], _ disk: DiskReads) -> FrameSource {
     guard !loaded.isEmpty else { return .files }
-    let sources = loaded.map { ($0, $0.snapshot.source) }
+    let local = FrameSource(
+      walk: { root, skippingOutput in
+        try disk.listing(under: root, skippingOutput: skippingOutput)
+      },
+      header: { path in try disk.header(path) },
+      contents: { path in FrameSource.files.contents(path) })
+    let sources = loaded.map { ($0.snapshot.root, $0.snapshot.source) }
     let pick: @Sendable (String) -> FrameSource = { path in
-      let owner = Self.owner(of: path, in: loaded)
-      return sources.first { $0.0.snapshot.root == owner?.snapshot.root }?.1 ?? .files
+      let owner = Self.owner(of: path, in: loaded)?.snapshot.root
+      return sources.first { $0.0 == owner }?.1 ?? local
     }
     return FrameSource(
       walk: { root, skippingOutput in
@@ -139,12 +203,17 @@ package struct CaptureScan: Sendable {
 
   /// Pixels: the centred runs each snapshot holds (what it lacks is told to `asked`), the files
   /// of this Mac for everything else.
-  static func pixels(_ loaded: [Loaded], _ asked: RemoteSnapshot.Asked) -> PixelReader {
+  static func pixels(_ loaded: [Loaded], _ asked: RemoteSnapshot.Asked, _ disk: DiskReads)
+    -> PixelReader
+  {
     guard !loaded.isEmpty else { return .files }
-    let readers = loaded.map { ($0, $0.snapshot.pixels(asked)) }
+    let local = PixelReader(
+      planes: { path in try PixelReader.files.planes(path) },
+      centerSample: { path, count in try disk.centerSample(path, count) })
+    let readers = loaded.map { ($0.snapshot.root, $0.snapshot.pixels(asked)) }
     let pick: @Sendable (String) -> PixelReader = { path in
-      let owner = Self.owner(of: path, in: loaded)
-      return readers.first { $0.0.snapshot.root == owner?.snapshot.root }?.1 ?? .files
+      let owner = Self.owner(of: path, in: loaded)?.snapshot.root
+      return readers.first { $0.0 == owner }?.1 ?? local
     }
     return PixelReader(
       planes: { path in try pick(path).planes(path) },

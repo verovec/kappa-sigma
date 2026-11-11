@@ -21,6 +21,7 @@ nonisolated struct CapturePlanner: Sendable {
   ///
   /// A bucket path without a target, or whose connection is gone, throws
   /// `RemoteImportProblem.connectionMissing`: never a plan of the other paths alone (R2).
+  @concurrent
   func plan(
     _ request: ImportRequest, targets: [String: RemoteImportTarget],
     progress: @escaping @Sendable (ScanProgress) -> Void

@@ -44,6 +44,7 @@ extension ImportPlanning {
   ///
   /// A request of folders alone is today's local plan, untouched. A bucket path with no source,
   /// or whose connection is gone, fails the plan — never the folders alone (R2).
+  @concurrent
   package nonisolated static func plan(
     _ request: ImportRequest, store: ProjectStore?, index: LibraryIndex, timeZone: TimeZone,
     client: @escaping Client = ExportServices.liveClient,

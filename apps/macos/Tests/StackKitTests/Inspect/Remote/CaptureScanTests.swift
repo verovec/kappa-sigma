@@ -93,4 +93,58 @@ struct CaptureScanTests {
       ).scan()
     }
   }
+
+  @Test(
+    "a prefix inside another prefix of the capture is walked once: no frame counted twice",
+    .scratchDirectory)
+  func testScan_NestedPrefixes_NoDuplicate() async throws {
+    let base = try Self.tree()
+    let memory = try MemoryStore(tree: base, prefix: "night/")
+    let outer = try await CaptureScan(
+      roots: [.prefix(.init(store: memory.store, prefix: "night"))], timeZone: Self.zone
+    ).scan()
+
+    let nested = try await CaptureScan(
+      roots: [
+        .prefix(.init(store: memory.store, prefix: "night/calib")),
+        .prefix(.init(store: memory.store, prefix: "night")),
+        .prefix(.init(store: memory.store, prefix: "night/")),
+      ], timeZone: Self.zone
+    ).scan()
+
+    #expect(nested.inventory.frames.count == 9)
+    #expect(
+      nested.inventory.frames.map(\.path).sorted() == outer.inventory.frames.map(\.path).sorted())
+    #expect(Array(nested.caches.keys) == ["s3://astro/night"], "the covering prefix alone is read")
+  }
+
+  @Test(
+    "a bucket frame typed by its pixels takes a second pass: the folders scan the same",
+    .scratchDirectory)
+  func testScan_SecondPass_KeepsTheDiskReads() async throws {
+    let base = try Self.tree()
+    try TestFITS.write("calib/x/a_flat.fits", in: base, pixel: 30000, cards: ["EXPTIME": "2.0"])
+    try TestFITS.write("calib/x/b_zero.fits", in: base, pixel: 300, cards: ["EXPTIME": "0.0"])
+    let folders = ["lights", "calib"].map { base.appendingPathComponent($0).path }
+    let local = try InventoryBuilder(timeZone: Self.zone).scan(paths: folders)
+    let memory = try MemoryStore(tree: base, prefix: "night/")
+
+    let scanned = try await CaptureScan(
+      roots: [.folder(folders[0]), .prefix(.init(store: memory.store, prefix: "night/calib"))],
+      timeZone: Self.zone
+    ).scan()
+
+    let differences = InventoryJSON.differences(
+      recorded: Self.object(local) { $0 },
+      actual: Self.object(scanned.inventory) {
+        $0.replacingOccurrences(of: "s3://astro/night", with: base.path)
+      })
+    #expect(differences.isEmpty, "\(differences.joined(separator: "\n"))")
+    #expect(scanned.inventory.frames.count { $0.classSource == .heuristic } == 2)
+    #expect(
+      memory.gets.contains {
+        $0.key == "night/calib/x/a_flat.fits" && ($0.range?.lowerBound ?? 0) > 0
+      },
+      "its centred run was fetched: a second pass ran")
+  }
 }

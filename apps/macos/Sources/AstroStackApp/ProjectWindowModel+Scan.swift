@@ -17,12 +17,12 @@ extension ProjectWindowModel {
     }
     let request: ImportRequest
     do {
-      // A project whose captures are all in buckets: the remote sources alone (card 0169).
-      guard let planned = try runRequest() else { return startRemoteScan() }
+      // No capture night, of this Mac or of a bucket: nothing to plan.
+      guard let planned = try runRequest() else { return }
       request = planned
     } catch {
       self.error = UserFacingError(error)
-      // The folders' request does not hold: the buckets are read all the same (card 0182).
+      // The request does not hold: each bucket row is read all the same (card 0182).
       return startRemoteScan()
     }
     let planning = ImportViewModel.silent(services(store).planning)
@@ -65,10 +65,12 @@ extension ProjectWindowModel {
     cancelRemoteScan()
   }
 
-  /// Stops the plan of this Mac's folders only (card 0182): what Run and an adopted Add replace.
+  /// Stops the plan of the capture nights — folders and bucket nights alike (card 0190): what
+  /// Run and an adopted Add replace.
   ///
-  /// A bucket read in flight goes on, since it plans no folder; an Add followed by a Rescan stops
-  /// it like any Rescan, and reads it again after the folders.
+  /// The per-row bucket read that follows a plan (card 0182) goes on if it is in flight: it
+  /// only counts each prefix for its row. A Rescan stops it like any Rescan and starts it again
+  /// after the plan.
   func cancelLocalScan() {
     scanTask?.cancel()
     scanTask = nil
@@ -76,7 +78,7 @@ extension ProjectWindowModel {
     rescanAfterAdd = false
   }
 
-  /// Waits for the scan in flight, if any: the local plan, then the buckets it started, and any
+  /// Waits for the scan in flight, if any: the plan, then the bucket rows it started, and any
   /// scan that replaced one of them meanwhile.
   package func scanSettled() async {
     while let task = scanTask ?? remoteScanTask {
@@ -109,7 +111,7 @@ extension ProjectWindowModel {
   /// Folders of this Mac and bucket prefixes, in the order they were imported. A legacy run
   /// (0043) is a source, never a capture.
   package var nightPaths: [String] {
-    sources.filter { $0.kind == .night || $0.kind == .remoteNight }.map(\.path)
+    sources.filter(\.kind.isCaptureNight).map(\.path)
   }
 
   /// The same request, its folders compared as the store records them.

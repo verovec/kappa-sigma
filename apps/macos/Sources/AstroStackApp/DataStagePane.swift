@@ -79,7 +79,7 @@ struct DataStagePane: View {
         ProgressView().controlSize(.small)
         Button(.app("Cancel")) { model.cancelScan() }
           .accessible(.dataCancelScan, label: .app("Cancel"))
-      } else if !model.nightPaths.isEmpty || !model.remoteSources.isEmpty {
+      } else if !model.nightPaths.isEmpty {
         // A legacy run alone is a source, never a capture: nothing to rescan.
         Button(.app("Rescan")) { model.rescan() }
           .accessible(.dataRescan, label: .app("Rescan"))

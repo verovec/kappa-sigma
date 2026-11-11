@@ -309,7 +309,7 @@ package final class ProjectWindowModel {
   /// The profile every capture night of `sources` kept at import, or `nil` when they differ or
   /// one kept none (a legacy run has no say): the knobs' help and the Studio's step 0 read it.
   nonisolated static func agreedProfileID(_ sources: [ProjectSource]) -> String? {
-    let kept = Set(sources.filter { $0.kind == .night }.map(\.profileID))
+    let kept = Set(sources.filter(\.kind.isCaptureNight).map(\.profileID))
     return kept.count == 1 ? kept.first.flatMap { $0 } : nil
   }
 }

@@ -31,9 +31,22 @@ nonisolated struct CapturePlanner: Sendable {
     var read: [RemoteImportTarget] = []
     // One lookup a connection, as a run's stores do: the Keychain may wait on the user.
     var clients: [UUID: S3Client] = [:]
-    // A prefix another one of the request covers is never read: its connection has no say.
-    let covered = CaptureScan.covered(
-      request.paths.map { ProjectSource.remoteFolder(of: $0) == nil ? nil : $0 })
+    // A prefix another one of the request covers is never read — provided both are read
+    // through one connection: a path names its bucket, not its connection, so the same bucket
+    // name behind two of them cannot be scanned as one capture, and is said (R2).
+    let remote = request.paths.map { ProjectSource.remoteFolder(of: $0) == nil ? nil : $0 }
+    let covered = CaptureScan.covered(remote)
+    for index in covered {
+      let inner = request.paths[index]
+      let outers = request.paths.filter { $0 != inner && inner.hasPrefix($0 + "/") }
+      for outer in outers {
+        guard let one = targets[outer]?.connectionID, let other = targets[inner]?.connectionID,
+          one != other
+        else { continue }
+        throw RemoteImportProblem.bucketOnTwoConnections(
+          ProjectSource.remoteFolder(of: inner)?.bucket ?? inner)
+      }
+    }
     for (index, path) in request.paths.enumerated() where !covered.contains(index) {
       guard ProjectSource.remoteFolder(of: path) != nil else {
         roots.append(.folder(path))

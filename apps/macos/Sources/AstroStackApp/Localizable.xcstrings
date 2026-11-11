@@ -11617,6 +11617,22 @@
         }
       }
     },
+    "Two S3 connections read nested prefixes of %@: import both through one connection.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Two S3 connections read nested prefixes of %@: import both through one connection."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deux connexions S3 lisent des préfixes imbriqués de %@ : importez les deux par une seule connexion."
+          }
+        }
+      }
+    },
     "AstroStack never writes into %@: captures are read there. Choose another prefix.": {
       "localizations": {
         "en": {

@@ -162,10 +162,9 @@ struct ImportPlanningCaptureTests {
     let capture = try Self.capture(lights: .bucket, calib: .bucket, name: "K")
     defer { try? capture.project.close() }
     let store = capture.project.store
-    // A night inside the lights prefix, recorded through a connection Settings no longer has.
-    let gone = UUID()
+    // A night inside the lights prefix, read through the same connection: covered, never read.
     let inner = try store.addSource(
-      remote: gone.uuidString, bucket: "astro", prefix: "night/lights/sub")
+      remote: Self.connection.uuidString, bucket: "astro", prefix: "night/lights/sub")
     let asked = Mutex<[UUID]>([])
     let s3 = capture.client
 
@@ -174,10 +173,52 @@ struct ImportPlanningCaptureTests {
       index: LibraryIndex(store: store, folder: try ScratchDirectory.url), timeZone: Self.zone,
       client: { id in
         asked.withLock { $0.append(id) }
-        return id == Self.connection ? s3 : nil
+        return s3
       })
 
-    #expect(asked.withLock { $0 } == [Self.connection], "two prefixes, one connection, one lookup")
+    #expect(
+      asked.withLock { $0 } == [Self.connection], "three prefixes, one connection, one lookup")
     #expect(plan.inventory.frames.count == 6, "the covered prefix adds no frame twice")
+  }
+
+  @Test(
+    "a prefix inside another one read through another connection is refused, the bucket named",
+    .scratchDirectory)
+  func testPlan_NestedPrefixOnAnotherConnection_Refused() async throws {
+    let capture = try Self.capture(lights: .bucket, calib: .bucket, name: "N")
+    defer { try? capture.project.close() }
+    let store = capture.project.store
+    let inner = try store.addSource(
+      remote: UUID().uuidString, bucket: "astro", prefix: "night/lights/sub")
+    let s3 = capture.client
+
+    await #expect(throws: RemoteImportProblem.bucketOnTwoConnections("astro")) {
+      _ = try await ImportPlanning.plan(
+        ImportRequest(paths: capture.paths + [inner.path]), store: store,
+        index: LibraryIndex(store: store, folder: try ScratchDirectory.url), timeZone: Self.zone,
+        client: { _ in s3 })
+    }
+  }
+
+  @Test(
+    "a prefix imported again through a new connection is planned through it", .scratchDirectory)
+  func testPlan_ReimportedPrefix_UsesTheNewConnection() async throws {
+    let capture = try Self.capture(lights: .bucket, calib: .bucket, name: "R")
+    defer { try? capture.project.close() }
+    let store = capture.project.store
+    let recreated = UUID()
+    // Settings lost the first connection; the user imports both prefixes again through a new one.
+    for folder in ["lights", "calib"] {
+      try store.addSource(
+        remote: recreated.uuidString, bucket: "astro", prefix: "night/" + folder)
+    }
+    let s3 = capture.client
+
+    let plan = try await ImportPlanning.plan(
+      ImportRequest(paths: capture.paths), store: store,
+      index: LibraryIndex(store: store, folder: try ScratchDirectory.url), timeZone: Self.zone,
+      client: { id in id == recreated ? s3 : nil })
+
+    #expect(plan.inventory.frames.count == 6, "the plan no longer fails on the dead connection")
   }
 }

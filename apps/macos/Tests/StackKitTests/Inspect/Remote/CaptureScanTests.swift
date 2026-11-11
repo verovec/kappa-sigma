@@ -159,4 +159,35 @@ struct CaptureScanTests {
   func testCovered(prefixes: [String?], covered: [Int]) {
     #expect(CaptureScan.covered(prefixes) == Set(covered))
   }
+
+  @Test(
+    "a light set with an unchecked frame keeps no measured verdict; an asserted one stands"
+  )
+  func testWithoutUncheckedVerdicts() throws {
+    var inventory = FilterSetScanTests.inventory([
+      FilterSetScanTests.osc("/disk/a.fits", .light, exposureMs: 60_000),
+      FilterSetScanTests.osc("s3://astro/n/b.fits", .light, exposureMs: 120_000),
+      FilterSetScanTests.osc("s3://astro/n/bias.fits", .bias, exposureMs: 0),
+    ])
+    let checked = FilterSetScanTests.id(inventory, .light, 60_000)
+    let unchecked = FilterSetScanTests.id(inventory, .light, 120_000)
+    inventory.filterSets = [checked: .broadband, unchecked: .dualband]
+    inventory.regroup()
+
+    #expect(
+      CaptureScan.withoutUncheckedVerdicts(inventory, overrides: InspectOverrides()) == inventory,
+      "every frame checked: nothing changes")
+
+    inventory.notCheckedRemotely = ["s3://astro/n/b.fits"]
+    let left = CaptureScan.withoutUncheckedVerdicts(inventory, overrides: InspectOverrides())
+    #expect(left.filterSets == [checked: .broadband], "the unchecked set is undecided again")
+    #expect(left.sets.first { $0.key.id == unchecked }?.filterSet == .unknown)
+    #expect(left.sets.first { $0.key.id == checked }?.filterSet == .broadband)
+
+    let set = try #require(inventory.sets.first { $0.key.id == unchecked })
+    var overrides = InspectOverrides()
+    overrides.filterSets = [set.overrideID: .dualband]
+    let kept = CaptureScan.withoutUncheckedVerdicts(inventory, overrides: overrides)
+    #expect(kept.filterSets[unchecked] == .dualband, "what the user asserted is not a measurement")
+  }
 }

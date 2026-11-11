@@ -97,7 +97,7 @@ package struct CaptureScan: Sendable {
       let missing = asked.missingSamples
       guard !missing.isEmpty, pass < RemoteScan.passes else {
         return Scanned(
-          inventory: Self.finished(inventory, loaded, asked),
+          inventory: Self.finished(inventory, loaded, asked, overrides: overrides),
           caches: Dictionary(
             loaded.map { ($0.snapshot.root, $0.snapshot.cache) }, uniquingKeysWith: { $1 }))
       }
@@ -217,18 +217,44 @@ package struct CaptureScan: Sendable {
 
   /// `inventory` with the bucket frames whose checks were not made, and the side files that
   /// failed, prefix by prefix.
-  static func finished(_ inventory: Inventory, _ loaded: [Loaded], _ asked: RemoteSnapshot.Asked)
-    -> Inventory
-  {
+  static func finished(
+    _ inventory: Inventory, _ loaded: [Loaded], _ asked: RemoteSnapshot.Asked,
+    overrides: InspectOverrides
+  ) -> Inventory {
     var inventory = inventory
     inventory.notCheckedRemotely = RemoteScan.unchecked(
       asked.framesUnanswered, planes: asked.framesNeedingPlanes, in: inventory)
+    inventory = Self.withoutUncheckedVerdicts(inventory, overrides: overrides)
     for prefix in loaded {
       for (path, why) in prefix.snapshot.sideFailures.sorted(by: { $0.key < $1.key }) {
         inventory.warnings.append(
           "s3: could not read \(InspectWalk.relative(path, to: prefix.snapshot.root)): \(why)")
       }
     }
+    return inventory
+  }
+
+  /// `inventory` without the measured filter-set verdict of a light set holding a frame that was
+  /// not checked (`notCheckedRemotely`).
+  ///
+  /// In a capture read from both sides the classifier would otherwise answer from the frames of
+  /// this Mac alone (the bias in a bucket, the lights on disk) and the run would apply it. The
+  /// set stays undecided, as it is when the whole capture is in a bucket; a verdict the user
+  /// asserted (`overrides.filterSets`) stands.
+  package static func withoutUncheckedVerdicts(_ inventory: Inventory, overrides: InspectOverrides)
+    -> Inventory
+  {
+    let unchecked = Set(inventory.notCheckedRemotely)
+    guard !unchecked.isEmpty else { return inventory }
+    var inventory = inventory
+    let asserted = FilterSetOverrides.resolve(overrides.filterSets, sets: inventory.sets).verdicts
+    for set in inventory.sets
+    where set.key.type == .light && asserted[set.key.id] == nil
+      && set.frames.contains(where: { unchecked.contains($0.path) })
+    {
+      inventory.filterSets[set.key.id] = nil
+    }
+    inventory.applyFilterSets()
     return inventory
   }
 }

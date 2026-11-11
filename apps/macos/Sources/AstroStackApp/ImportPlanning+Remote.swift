@@ -140,4 +140,8 @@ extension ImportPlanning {
 package enum RemoteImportProblem: Error, Equatable, Sendable {
   /// The connection is gone from Settings, or its secret is.
   case connectionMissing
+  /// Two nights of the project name the same bucket through two connections, one prefix inside
+  /// the other (card 0190): a frame's path names its bucket, not its connection, so the capture
+  /// cannot be told apart.
+  case bucketOnTwoConnections(String)
 }

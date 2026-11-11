@@ -20,7 +20,10 @@ struct RemoteSourcesStoreTests {
 
     #expect(first.path == "s3://astro/nights/M31", "the scheme survives: no URL(fileURLWithPath:)")
     #expect(first.id == again.id, "UNIQUE (kind, path): one source per bucket and prefix")
-    #expect(again.connectionID == "conn-1", "the connection it was read through is not re-pointed")
+    #expect(
+      again.connectionID == "conn-2",
+      "imported again, it is read through the connection that just read it (card 0190)")
+    #expect(try store.sources().count == 1)
     #expect(again.bucket == "astro" && again.prefix == "nights/M31")
     #expect(first.readOnly && first.profileID == nil && first.kind == .remoteNight)
   }

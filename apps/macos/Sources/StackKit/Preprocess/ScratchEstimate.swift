@@ -23,13 +23,27 @@ package struct ScratchEstimate: Equatable, Sendable {
 
   /// The estimate of a run of `inventory` with `settings`; throws the plan's own refusal
   /// (no lights, several objects, mono + colour).
-  package init(_ inventory: Inventory, settings: PreprocessSettings) throws {
+  ///
+  /// With `cache` (card 0191) a bucket's frames are kept between runs instead of going with
+  /// their lane: every frame not kept yet is downloaded once and stays, so the run needs the
+  /// largest lane's copies plus all of those downloads — and nothing for a frame already kept.
+  package init(
+    _ inventory: Inventory, settings: PreprocessSettings, cache: RemoteFrameCache? = nil
+  ) throws {
     let plan = try Preprocessor.plan(inventory)
     let lanes = plan.channels.map { lane, groups in
-      (lane, Self.laneBytes(groups, flatten: settings.flattenBackground))
+      (lane, Self.laneBytes(groups, flatten: settings.flattenBackground, raw: cache == nil))
     }
     // Ties broken by name: the same scan always names the same lane.
     let peak = lanes.max { ($0.1, $1.0) < ($1.1, $0.0) }
+    if let cache {
+      let downloads = inventory.sets.reduce(Int64(0)) { total, set in
+        total + Self.rawRemoteBytes(set) { !cache.holds($0.path) }
+      }
+      bytes = (peak?.1 ?? 0) + downloads
+      lane = peak?.0 ?? ""
+      return
+    }
     // Step 1 downloads a bucket's raw calibration frames into `work/masters/cal_<name>`, one set
     // at a time, each removed when its master is built (card 0154): the largest of them can
     // exceed a lane, and card 0098's check has to see it.
@@ -54,13 +68,19 @@ package struct ScratchEstimate: Equatable, Sendable {
 
   /// One lane: its lights × the copies its steps write × one light's bytes, plus the copy
   /// `convert` writes of a night that is not FITS (a camera raw), before calibration.
-  package static func laneBytes(_ groups: [FrameSet], flatten: Bool) -> Int64 {
+  ///
+  /// `raw` adds the bucket frames the lane downloads into its own folder; a run that keeps them
+  /// elsewhere (card 0191) counts them once for the whole run instead.
+  package static func laneBytes(_ groups: [FrameSet], flatten: Bool, raw: Bool = true) -> Int64 {
     // `GroupedChannelStacker.register` flattens only a lane of several nights.
     let copies: Int64 = flatten && groups.count > 1 ? 3 : 2
     // The frames a lane downloads sit in its folder beside the copies Siril writes.
-    let raw = groups.reduce(Int64(0)) { total, group in
-      total + Self.rawRemoteBytes(group)
-    }
+    let raw =
+      !raw
+      ? 0
+      : groups.reduce(Int64(0)) { total, group in
+        total + Self.rawRemoteBytes(group)
+      }
     return groups.reduce(0) { total, group in
       let converted = SirilIngest(paths: group.frames.map(\.path)) == .convert
       return group.frames.reduce(total) { sum, frame in
@@ -73,9 +93,13 @@ package struct ScratchEstimate: Equatable, Sendable {
   ///
   /// Their stored size, which for a 16-bit capture is half a 32-bit copy; a frame of this Mac
   /// costs nothing, being symlinked where it stands.
-  package static func rawRemoteBytes(_ group: FrameSet) -> Int64 {
+  ///
+  /// `counted` leaves out the frames it refuses (those a cache already keeps).
+  package static func rawRemoteBytes(
+    _ group: FrameSet, counted: (CaptureFrame) -> Bool = { _ in true }
+  ) -> Int64 {
     group.frames.reduce(0) { total, frame in
-      guard ProjectSource.remoteParts(of: frame.path) != nil else { return total }
+      guard ProjectSource.remoteParts(of: frame.path) != nil, counted(frame) else { return total }
       return total + Int64(frame.width) * Int64(frame.height) * Int64(max(frame.channels, 1)) * 2
     }
   }

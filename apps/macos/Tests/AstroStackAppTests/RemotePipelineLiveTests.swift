@@ -58,13 +58,14 @@ struct RemotePipelineLiveTests {
     /// The run of `inventory` into `out-<run>` / `work-<run>` over `stores`.
     func run(
       _ inventory: Inventory, _ run: String, stores: [RemoteObjectStore] = [],
-      library: [CalibrationMaster] = []
+      library: [CalibrationMaster] = [], cache: RemoteFrameCache? = nil
     ) async throws -> PreprocessResult {
       let work = root.appendingPathComponent("work-\(run)")
       var request = PreprocessRequest(
         inventory: inventory, output: root.appendingPathComponent("out-\(run)"), work: work,
         runID: run, mode: .deepsky, library: library)
       request.remoteStores = stores
+      request.remoteCache = cache
       let tools = Preprocessor.Tools(
         runner: SirilRunner.make(mode: .default, binary: binary, work: work))
       return try await Preprocessor(tools: tools).perform(request) { _ in }

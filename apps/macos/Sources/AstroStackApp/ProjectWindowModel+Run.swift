@@ -101,13 +101,15 @@ extension ProjectWindowModel {
     let start = runs.run
     // Read before the run starts: the sources as the project records them now (card 0154);
     // their clients are looked up in the run's task, off the main actor (card 0185).
-    let remote = sources
-    let buckets = runs.buckets
+    let (remote, buckets) = (sources, runs.buckets)
     let model = RunViewModel(runID: runID, output: output)
     let gate = model.gate
+    // The frames a bucket night downloads stay for the next run (card 0191), in a folder of
+    // this project's own beside the work folders.
     let prepared = RunRequestPlan(
       output: output, work: work, runID: runID, mode: record.mode, settings: settings,
-      gate: gate, resuming: resume != nil, laneKnobs: record.laneKnobs)
+      gate: gate, resuming: resume != nil, laneKnobs: record.laneKnobs,
+      cache: RemoteFrameCache(project: folder, scratch: scratch))
     run = model
     refresh()
     model.start(
@@ -128,7 +130,7 @@ extension ProjectWindowModel {
         // A bucket the Keychain refused stops the run here, in the refusal's words (card 0185).
         if let refusal = looked.refusal(in: inventory) { throw refusal }
         // Refused before Siril starts, never left to fail mid-run on a full disk (card 0098).
-        try Self.checkScratch(inventory, settings: settings, folder: scratch, room: room)
+        try prepared.checkScratch(inventory, folder: scratch, room: room)
         return start(try prepared.request(inventory: inventory, library: plan.library))
       },
       completion: { [weak self] outcome in

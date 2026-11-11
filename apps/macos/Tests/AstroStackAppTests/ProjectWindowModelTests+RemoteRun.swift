@@ -170,4 +170,28 @@ struct ProjectWindowModelRemoteRunTests {
     #expect(heard.lookedUp.all.first?.map(\.path) == [Self.night], "only the buckets it reads")
     #expect(try project.store.stacks().count == 1)
   }
+
+  @Test(
+    "the run keeps what it downloads in a folder of this project's own, under the scratch folder",
+    .scratchDirectory)
+  func testRun_KeepsItsDownloadsForTheProject() async throws {
+    let heard = Heard()
+    let (project, window) = try await Self.project(heard)
+    defer { try? project.close() }
+    let scratch = try ScratchDirectory.url.appendingPathComponent("work")
+
+    window.startRun()
+    await ProjectScopeTests.queueSettled(window)
+
+    let cache = try #require(heard.ran.all.first?.remoteCache)
+    #expect(cache == window.remoteFrameCache, "the folder the stages read is the run's")
+    #expect(cache == RemoteFrameCache(project: project.url, scratch: scratch))
+    let parent = cache.root.deletingLastPathComponent().standardizedFileURL.path
+    #expect(parent == scratch.appendingPathComponent("remote-frames").standardizedFileURL.path)
+    #expect(cache.root.lastPathComponent.hasPrefix("M31-"), "named after the project")
+    let other = RemoteFrameCache(
+      project: project.url.deletingLastPathComponent().appendingPathComponent("x/M31.astrostack"),
+      scratch: scratch)
+    #expect(other != cache, "two projects of one name never share their copies")
+  }
 }

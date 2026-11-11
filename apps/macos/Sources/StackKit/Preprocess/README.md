@@ -84,6 +84,18 @@ name, through `RemoteSnapshot.inParallel`. A calibration set's raw frames are st
 only when a master has to be built from them — a library master proven by its `.sig` is reused
 without reading a single frame.
 
+**Frames kept between runs (card 0191).** With `PreprocessRequest.remoteCache` (a
+`RemoteFrameCache`: one folder a project under the scratch folder, set by the app) a bucket frame is
+downloaded once into `<cache>/<bucket>/<key>`, beside a `.identity` file holding the `size|etag`
+the run listed, and the lane gets a symlink to it — exactly what a frame of this Mac gets. A later
+run links the kept copy only when its identity is the one that run's own listing answers
+(`RemoteFrameCache.copy`); an object uploaded again, a copy without its identity file, or a missing
+copy is downloaded again. A download that fails keeps nothing. The lane's cleanup removes links,
+never the copies: they stay until the user removes them (card 0192). Without a cache the downloads
+go into the lane's folder and with it, as before. `ScratchEstimate(_:settings:cache:)` then counts
+every frame not kept yet once for the whole run, on top of the largest lane's copies, and nothing
+for a frame already kept.
+
 **Scratch budget (card 0098).** `ScratchEstimate(inventory, settings:)` is the peak the work
 folder reaches: lanes run one after another and each removes its folders, so the largest lane
 sets it, at one 32-bit copy of each light per Siril step that writes one (`pp_`, `r_`, plus

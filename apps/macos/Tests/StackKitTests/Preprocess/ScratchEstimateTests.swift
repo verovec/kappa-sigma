@@ -1,6 +1,7 @@
 import FilterKit
 import Foundation
 import StackKit
+import TestSupport
 import Testing
 
 /// `ScratchEstimate` is the disk a run's Siril work folder peaks at, pinned against the two runs
@@ -174,5 +175,37 @@ struct ScratchEstimateTests {
     #expect(error.localizedDescription.contains("81 GB"))
     #expect(error.localizedDescription.contains("40 GB free"))
     #expect(error.localizedDescription.contains("/Volumes/Scratch"))
+  }
+
+  @Test(
+    "testEstimate_CachedFramesNotCounted: kept frames cost nothing, the others stay for the run",
+    .scratchDirectory)
+  func testEstimate_CachedFramesNotCounted() throws {
+    var remote = Self.set("2026-09-22", count: 4, width: 4656, height: 3520, bayer: "", filter: "L")
+    for index in remote.frames.indices {
+      remote.frames[index].path = "s3://astro/M31/l_\(index).fits"
+    }
+    let inventory = Self.scan([remote])
+    let copy = Int64(4656 * 3520 * 4)
+    let raw = Int64(4656 * 3520 * 2)
+    let settings = PreprocessSettings.preset(.deepsky)
+
+    let inLane = try ScratchEstimate(inventory, settings: settings)
+    #expect(inLane.bytes == 4 * (2 * copy + raw), "no cache: the downloads go with the lane")
+
+    let cache = RemoteFrameCache(root: try ScratchDirectory.url.appendingPathComponent("P"))
+    let none = try ScratchEstimate(inventory, settings: settings, cache: cache)
+    #expect(none.bytes == 4 * (2 * copy + raw), "nothing kept yet: every frame is downloaded")
+
+    for index in 0..<3 {
+      let file = cache.file(bucket: "astro", key: "M31/l_\(index).fits")
+      try FileManager.default.createDirectory(
+        at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+      try Data("frame".utf8).write(to: file)
+      try cache.keep(file, as: "5|e")
+    }
+    let kept = try ScratchEstimate(inventory, settings: settings, cache: cache)
+    #expect(kept.bytes == 4 * 2 * copy + raw, "three kept: one download left")
+    #expect(kept.lane == inLane.lane)
   }
 }

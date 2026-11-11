@@ -74,24 +74,26 @@ struct StackingStagePane: View {
 
   /// Why Run is greyed, with the one action that ungreys it; nothing while a run goes.
   @ViewBuilder private var blocker: some View {
-    if !running && model.nightPaths.isEmpty && !model.sources.isEmpty {
+    switch running ? nil : model.runBlocker {
+    case .legacyRunsOnly:
       notice(
         .app("Import a capture night to stack: an imported run is shown, never stacked again."))
-    } else if !running && model.nightPaths.isEmpty {
+    case .noNight:
       notice(.app("Import a capture night to stack."))
-    } else if !running && model.needsSave {
+    case .unsaved:
       HStack(alignment: .firstTextBaseline) {
         notice(.app("Save the project first: its masters and stacks are written inside it."))
         Button(.app("Save…")) { model.save() }
           .accessible(.stackingSave, label: .app("Save…"))
       }
       .padding(.trailing, DesignMetrics.spacingM)
-    } else if !running && !model.series.isEmpty && model.series.scopes.isEmpty {
+    case .noSeriesChecked:
       notice(.app("Check at least one series to stack."))
-    } else if !running && model.needsSeries {
+    case .seriesUnknown:
       notice(
         .app("This project stacks several objects: Rescan (Données › Rescan) to choose the series.")
       )
+    case nil: EmptyView()
     }
   }
 

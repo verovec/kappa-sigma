@@ -85,7 +85,7 @@ extension ProjectWindowModel {
     for source in remoteSources {
       // Stopped before or between reads: nothing more is written, not even « Scanning… ».
       guard !Task.isCancelled else { return }
-      guard let target = Self.target(of: source) else {
+      guard let target = RemoteImportTarget(source: source) else {
         update(source.path) { $0.failure = .remoteImport(.connectionMissing) }
         continue
       }
@@ -105,15 +105,6 @@ extension ProjectWindowModel {
         update(source.path) { $0.failure = UserFacingError(error) }
       }
     }
-  }
-
-  /// The target a remote source row names (card 0168 stores all three); `nil` when the row was
-  /// written by a build that did not, or its connection id is not one.
-  static func target(of source: ProjectSource) -> RemoteImportTarget? {
-    guard let bucket = source.bucket, let prefix = source.prefix,
-      let connection = source.connectionID.flatMap(UUID.init(uuidString:))
-    else { return nil }
-    return RemoteImportTarget(connectionID: connection, bucket: bucket, prefix: prefix)
   }
 
   /// Changes the state of `path`, keeping what the change leaves alone.

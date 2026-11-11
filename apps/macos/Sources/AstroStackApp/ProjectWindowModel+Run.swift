@@ -9,7 +9,7 @@ extension ProjectWindowModel {
   /// stored with the latest stack and then those of each import this session, merged (a later
   /// choice wins); `nil` without a night.
   func runRequest() throws -> ImportRequest? {
-    let nights = sources.filter { $0.kind == .night }.map(\.path)
+    let nights = nightPaths
     guard !nights.isEmpty else { return nil }
     let base = try latestStackRecord()?.request ?? ImportRequest(paths: nights)
     var request = imports.reduce(base) { $0.merging($1) }
@@ -24,7 +24,7 @@ extension ProjectWindowModel {
   /// one (`needsSeries`): a run of every light would only fail after the plan.
   /// While every night is rescanned after Add a night, Run waits for the plan (card 0100).
   package var canRun: Bool {
-    !isStacking && !awaitsRescan && sources.contains { $0.kind == .night }
+    !isStacking && !awaitsRescan && !nightPaths.isEmpty
       && (series.isEmpty ? !needsSeries : !series.scopes.isEmpty)
   }
 

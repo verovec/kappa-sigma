@@ -104,8 +104,8 @@ struct ProjectWindowModelBucketTests {
     window.add(sheet.request)
     await window.scanSettled()
 
-    // `runRequest()` names local nights alone, so no plan is adopted and no rescan follows: the
-    // count the sheet read is the only measurement there is, and the stage keeps it.
+    // The prefix is the project's only night: no rescan follows the Add, and the row keeps the
+    // count the sheet read (card 0190: the sheet's plan is the project's scan too).
     let state = try #require(window.remoteState(of: "s3://astro/M31/2026-10-18"))
     #expect(state.lights == 1 && state.failure == nil)
   }

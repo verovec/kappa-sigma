@@ -31,23 +31,37 @@ extension ImportPlanning {
     store: ProjectStore?, index: LibraryIndex, timeZone: TimeZone = .current,
     client: @escaping Client = ExportServices.liveClient
   ) -> ImportViewModel.RemotePlanning {
-    { target, request, progress in
-      guard let s3 = try await client(target.connectionID) else {
-        throw RemoteImportProblem.connectionMissing
-      }
-      progress(.library)
-      let masters = try await index.masters()
-      try Task.checkCancellation()
-      let scan = RemoteScan(
-        store: .s3(s3, bucket: target.bucket), prefix: target.prefix, timeZone: timeZone)
-      let scanned = try await scan.scan(
-        cache: cachedScan(store, of: target), overrides: request.overrides, progress: progress)
-      keep(scanned.cache, store, of: target)
-      // What the scan listed proves a bucket master as the run will (card 0181).
-      return ImportPlan(
-        inventory: scanned.inventory, library: masters, request: request,
-        identities: scanned.cache.identities(bucket: target.bucket))
+    let planner = CapturePlanner(store: store, index: index, timeZone: timeZone, client: client)
+    return { target, request, progress in
+      // The sheet's prefix is not a source yet: its connection is the one the user just chose.
+      try await planner.plan(request, targets: [target.path: target], progress: progress)
     }
+  }
+
+  /// Plans `request` against the library `index` holds, wherever its paths are read from
+  /// (card 0190): folders of this Mac, and bucket prefixes through the connection the project's
+  /// source of that path records.
+  ///
+  /// A request of folders alone is today's local plan, untouched. A bucket path with no source,
+  /// or whose connection is gone, fails the plan — never the folders alone (R2).
+  package nonisolated static func plan(
+    _ request: ImportRequest, store: ProjectStore?, index: LibraryIndex, timeZone: TimeZone,
+    client: @escaping Client = ExportServices.liveClient,
+    progress: @escaping @Sendable (ScanProgress) -> Void = { _ in }
+  ) async throws -> ImportPlan {
+    let remote = request.paths.filter { ProjectSource.remoteFolder(of: $0) != nil }
+    guard !remote.isEmpty else {
+      return try await plan(request, index: index, timeZone: timeZone, progress: progress)
+    }
+    let sources = try store?.sources() ?? []
+    var targets: [String: RemoteImportTarget] = [:]
+    for path in remote {
+      targets[path] = sources.first { $0.kind == .remoteNight && $0.path == path }
+        .flatMap(RemoteImportTarget.init(source:))
+    }
+    return try await CapturePlanner(
+      store: store, index: index, timeZone: timeZone, client: client
+    ).plan(request, targets: targets, progress: progress)
   }
 
   /// What the last scan of `target` read, `.empty` when there is none or this build cannot read

@@ -75,7 +75,8 @@ struct CaptureScanTests {
     }
   }
 
-  @Test("a prefix that cannot be listed fails the scan: never the other roots alone",
+  @Test(
+    "a prefix that cannot be listed fails the scan: never the other roots alone",
     .scratchDirectory)
   func testScan_PrefixRefused_FailsWhole() async throws {
     let base = try Self.tree()

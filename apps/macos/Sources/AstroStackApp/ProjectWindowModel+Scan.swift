@@ -1,4 +1,5 @@
 internal import Foundation
+internal import ProjectKit
 internal import StackKit
 
 /// The Données stage's scan (0078): Rescan on demand over the capture nights, through the same
@@ -36,9 +37,10 @@ extension ProjectWindowModel {
         rescanAfterAdd = false
         scanTask = nil
         refresh()
-        // After the local plan, never before it: one unreachable bucket would otherwise hold
-        // back a purely local Rescan — and Run with it (card 0100's `awaitsRescan`). Its own
-        // task, so Cancel and the next Rescan still reach it (card 0182).
+        // After the plan, never before it, and in a task of its own, so Cancel and the next
+        // Rescan still reach it (card 0182): each bucket row is read again for its own count —
+        // the plan above already read them with the folders (card 0190), and what it kept of
+        // each prefix (card 0168) spares these reads their headers.
         startRemoteScan()
       } catch {
         guard !Task.isCancelled else { return }
@@ -47,7 +49,8 @@ extension ProjectWindowModel {
         dropScan()
         refresh()
         if !(error is CancellationError) { self.error = UserFacingError(error) }
-        // A folder that does not read never keeps the buckets from being read (card 0182).
+        // The plan failed as a whole (R2: never the readable half alone); each bucket is then
+        // read on its own, so its row says which one refuses and why (card 0182).
         startRemoteScan()
       }
     }
@@ -101,8 +104,13 @@ extension ProjectWindowModel {
     scan = nil
   }
 
-  /// The capture nights among the sources: a legacy run (0043) is a source, never a capture.
-  var nightPaths: [String] { sources.filter { $0.kind == .night }.map(\.path) }
+  /// The capture nights among the sources, wherever they are read from (card 0190).
+  ///
+  /// Folders of this Mac and bucket prefixes, in the order they were imported. A legacy run
+  /// (0043) is a source, never a capture.
+  package var nightPaths: [String] {
+    sources.filter { $0.kind == .night || $0.kind == .remoteNight }.map(\.path)
+  }
 
   /// The same request, its folders compared as the store records them.
   static func sameRequest(_ lhs: ImportRequest, _ rhs: ImportRequest) -> Bool {
@@ -116,8 +124,10 @@ extension ProjectWindowModel {
     Set(lhs.map(standardPath)) == Set(rhs.map(standardPath))
   }
 
-  /// A folder as the store records it (a standardized file path).
+  /// A night as the store records it: a standardized file path, or a bucket prefix's virtual
+  /// path as it is.
   static func standardPath(_ path: String) -> String {
-    URL(fileURLWithPath: path).standardizedFileURL.path
+    guard ProjectSource.remoteFolder(of: path) == nil else { return path }
+    return URL(fileURLWithPath: path).standardizedFileURL.path
   }
 }

@@ -62,9 +62,9 @@ extension ProjectWindowModel {
           try store.setProfile(kept.id, kind: kind, path: path)
         }
       }
-      // The sheet just read that prefix: its count is a measurement, so the stage shows it
-      // instead of a bare row until the user rescans (a remote-only project adopts no plan,
-      // `runRequest()` naming local nights alone).
+      // The sheet just read that prefix: its count is a measurement, so its row shows it
+      // until the user rescans — whether or not the sheet's plan becomes the project's scan
+      // below (it does when that prefix is every night of the project, card 0190).
       if let remote, let plan = importing?.plan, plan.inventory.root == remote.path {
         adoptRemoteScan(plan, of: remote)
       }

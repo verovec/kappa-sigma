@@ -21,13 +21,18 @@ package nonisolated struct RunRequestPlan: Sendable {
   package var stores: [RemoteObjectStore]
   /// The lane-scoped knobs a split run takes (card 0121).
   package var laneKnobs: [FilterSet: KnobPatch]
+  /// Where the frames the run downloads from its buckets are kept between runs (card 0191);
+  /// `nil` for a run that downloads into its lanes.
+  package var cache: RemoteFrameCache?
 
   /// A plan of the run's own choices.
   package init(
     output: URL, work: URL, runID: String, mode: PreprocessRequest.Mode,
     settings: PreprocessSettings, gate: PauseGate, resuming: Bool,
-    stores: [RemoteObjectStore] = [], laneKnobs: [FilterSet: KnobPatch] = [:]
+    stores: [RemoteObjectStore] = [], laneKnobs: [FilterSet: KnobPatch] = [:],
+    cache: RemoteFrameCache? = nil
   ) {
+    self.cache = cache
     self.output = output
     self.work = work
     self.runID = runID
@@ -50,6 +55,7 @@ package nonisolated struct RunRequestPlan: Sendable {
     request.pause = gate
     request.resuming = resuming
     request.remoteStores = stores
+    request.remoteCache = cache
     for (lane, patch) in laneKnobs {
       try request.overrideLane(lane, with: KnobSchema.laneAccepted(patch).accepted)
     }

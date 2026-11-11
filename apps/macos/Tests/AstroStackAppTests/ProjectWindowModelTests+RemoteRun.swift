@@ -18,6 +18,7 @@ struct ProjectWindowModelRemoteRunTests {
     for index in inventory.frames.indices {
       let name = URL(fileURLWithPath: inventory.frames[index].path).lastPathComponent
       inventory.frames[index].path = "\(night)/\(index)_\(name)"
+      (inventory.frames[index].width, inventory.frames[index].height) = (400, 300)
     }
     inventory.root = night
     inventory.regroup()
@@ -169,5 +170,58 @@ struct ProjectWindowModelRemoteRunTests {
     #expect(request.inventory.frames.count { $0.type == .light } == 3)
     #expect(heard.lookedUp.all.first?.map(\.path) == [Self.night], "only the buckets it reads")
     #expect(try project.store.stacks().count == 1)
+  }
+
+  @Test(
+    "the run keeps what it downloads in a folder of this project's own, under the scratch folder",
+    .scratchDirectory)
+  func testRun_KeepsItsDownloadsForTheProject() async throws {
+    let heard = Heard()
+    let (project, window) = try await Self.project(heard)
+    defer { try? project.close() }
+    let scratch = try ScratchDirectory.url.appendingPathComponent("work")
+
+    window.startRun()
+    await ProjectScopeTests.queueSettled(window)
+
+    let cache = try #require(heard.ran.all.first?.remoteCache)
+    #expect(cache == window.remoteFrameCache, "the folder the stages read is the run's")
+    #expect(cache == RemoteFrameCache(project: project.url, scratch: scratch))
+    let parent = cache.root.deletingLastPathComponent().standardizedFileURL.path
+    #expect(parent == scratch.appendingPathComponent("remote-frames").standardizedFileURL.path)
+    #expect(cache.root.lastPathComponent.hasPrefix("M31-"), "named after the project")
+    let other = RemoteFrameCache(
+      project: project.url.deletingLastPathComponent().appendingPathComponent("x/M31.astrostack"),
+      scratch: scratch)
+    #expect(other != cache, "two projects of one name never share their copies")
+  }
+
+  @Test(
+    "the scratch the next run needs leaves out the bucket frames the project already keeps",
+    .scratchDirectory)
+  func testScratchBudget_LeavesOutKeptFrames() async throws {
+    let heard = Heard()
+    let (project, window) = try await Self.project(heard)
+    defer { try? project.close() }
+    await window.keptFramesSettled()
+    let before = try #require(window.scratchBudget?.neededBytes)
+
+    // Two of the three lights are kept, as a run would have left them.
+    let cache = try #require(window.remoteFrameCache)
+    let lights = Self.inventory().frames.filter { $0.type == .light }.map(\.path)
+    for path in lights.prefix(2) {
+      let parts = try #require(ProjectSource.remoteParts(of: path))
+      let file = cache.file(bucket: parts.bucket, key: parts.key)
+      try FileManager.default.createDirectory(
+        at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+      try Data("frame".utf8).write(to: file)
+      try cache.keep(file, as: "5|e")
+    }
+    window.rescan()
+    await window.scanSettled()
+    await window.keptFramesSettled()
+
+    let after = try #require(window.scratchBudget?.neededBytes)
+    #expect(after < before, "two downloads fewer: \(before) → \(after)")
   }
 }

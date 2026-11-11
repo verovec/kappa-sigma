@@ -35,6 +35,15 @@ package struct PreprocessRequest: Sendable {
   /// A frame re-uploaded under the same key changes it, so its lane re-runs. Empty for a capture
   /// of this Mac, which keeps every digest exactly as it was.
   package var remoteIdentities: [String: String] = [:]
+  /// Where the frames downloaded from the buckets are kept between runs (card 0191); `nil`
+  /// downloads them into each lane's folder, to go with it.
+  package var remoteCache: RemoteFrameCache?
+
+  /// The stager of this run's frames: its buckets, what it listed of them, and where it keeps
+  /// what it downloads.
+  package var stager: FrameStager {
+    FrameStager(stores: remoteStores, expected: remoteIdentities, cache: remoteCache)
+  }
 
   /// A request; without `settings`, the preset of `mode`.
   package init(

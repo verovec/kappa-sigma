@@ -16,6 +16,8 @@ package struct FrameStager: Sendable {
     package var remote = 0
     /// The bytes downloaded.
     package var bytes: Int64 = 0
+    /// The frames of a bucket taken from the copies kept by an earlier run (card 0191).
+    package var cached = 0
     /// Virtual path → `size|etag`, as the bucket answered it.
     package var identities: [String: String] = [:]
     /// Where each frame was staged, in the order it was given: what Siril reads, and what a
@@ -37,13 +39,23 @@ package struct FrameStager: Sendable {
   /// What the run listed for each remote frame, `size|etag` by virtual path (card 0186): a
   /// download that reads another object fails the lane rather than stacking bytes nothing listed.
   package var expected: [String: String]
+  /// Where a bucket's frames are kept between runs (card 0191); `nil` downloads them into the
+  /// lane's folder, to go with it.
+  package var cache: RemoteFrameCache?
+  /// Hears how many frames of a staging came from the copies an earlier run kept, when some
+  /// did: the journal says which bytes were stacked (R2).
+  package var keptReport: @Sendable (_ frames: Int) -> Void = { _ in }
 
-  /// A stager over `stores`, checking each download against `expected`; without any store, only
-  /// frames of this Mac can be staged.
-  package init(stores: [RemoteObjectStore] = [], expected: [String: String] = [:]) {
+  /// A stager over `stores`, checking each download against `expected` and keeping the frames
+  /// in `cache`; without any store, only frames of this Mac can be staged.
+  package init(
+    stores: [RemoteObjectStore] = [], expected: [String: String] = [:],
+    cache: RemoteFrameCache? = nil
+  ) {
     self.stores = Dictionary(
       stores.map { ($0.bucket, $0) }, uniquingKeysWith: { first, _ in first })
     self.expected = expected
+    self.cache = cache
   }
 
   /// Stages `paths` into `folder` in their own order, and says what came from a bucket.
@@ -74,11 +86,23 @@ package struct FrameStager: Sendable {
         throw PreprocessError.remoteFrameUnavailable(
           path: path, reason: "no connection for the bucket \(parts.bucket) in this run")
       }
+      let listed = expected[path]
+      // The copy an earlier run kept is this frame only when it was downloaded as the object
+      // this run listed (card 0191); linked as a frame of this Mac is.
+      if let listed, let copy = cache?.copy(bucket: parts.bucket, key: parts.key, identity: listed)
+      {
+        try files.createSymbolicLink(atPath: destination.path, withDestinationPath: copy.path)
+        staged.cached += 1
+        staged.identities[path] = listed
+        continue
+      }
       downloads.append(
         Download(
-          path: path, key: parts.key, store: store, destination: destination,
-          expected: expected[path]))
+          path: path, key: parts.key, store: store, destination: destination, expected: listed,
+          // A frame no listing can prove next time is not worth keeping: it goes with its lane.
+          cache: RemoteFrameCache.proves(listed) ? cache : nil))
     }
+    if staged.cached > 0 { keptReport(staged.cached) }
     let total = downloads.count
     try await RemoteSnapshot.inParallel(
       downloads, width: Self.parallelism,
@@ -103,11 +127,45 @@ package struct FrameStager: Sendable {
     let store: RemoteObjectStore
     let destination: URL
     let expected: String?
+    /// What keeps the frame between runs; `nil` writes it into the lane.
+    var cache: RemoteFrameCache?
 
     /// The download, a changed object said as the frame that could not be read (R2).
+    ///
+    /// A kept frame is downloaded into the lane like any other — its `.part` goes with the run's
+    /// work folder if the app dies — then moved where it is kept and linked back. Keeping is an
+    /// economy, never a condition: when it cannot be done (the folder refuses, the disk is
+    /// full) the frame stays in the lane and the run goes on, as it does without a cache.
     func run() async throws -> RemoteObjectStore.Object {
+      let object = try await written(to: destination)
+      // Only a frame its listing can prove next time is kept (`RemoteFrameCache.proves`).
+      guard let cache, let expected else { return object }
+      let kept = cache.file(bucket: store.bucket, key: key)
+      let files = FileManager.default
+      cache.drop(kept)
       do {
-        return try await store.download(key, to: destination, expecting: expected)
+        try files.createDirectory(
+          at: kept.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try files.moveItem(at: destination, to: kept)
+      } catch {
+        return object
+      }
+      do {
+        try cache.keep(kept, as: expected)
+        try files.createSymbolicLink(atPath: destination.path, withDestinationPath: kept.path)
+      } catch {
+        // Back where Siril reads it; nothing half kept for the next run.
+        try? files.removeItem(at: destination)
+        try files.moveItem(at: kept, to: destination)
+        cache.drop(kept)
+      }
+      return object
+    }
+
+    /// The object written to `file`.
+    private func written(to file: URL) async throws -> RemoteObjectStore.Object {
+      do {
+        return try await store.download(key, to: file, expecting: expected)
       } catch let changed as RemoteObjectStore.Changed {
         throw PreprocessError.remoteFrameUnavailable(path: path, reason: changed.description)
       }

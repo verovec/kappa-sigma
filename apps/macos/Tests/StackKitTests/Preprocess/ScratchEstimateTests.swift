@@ -1,6 +1,7 @@
 import FilterKit
 import Foundation
 import StackKit
+import TestSupport
 import Testing
 
 /// `ScratchEstimate` is the disk a run's Siril work folder peaks at, pinned against the two runs
@@ -174,5 +175,48 @@ struct ScratchEstimateTests {
     #expect(error.localizedDescription.contains("81 GB"))
     #expect(error.localizedDescription.contains("40 GB free"))
     #expect(error.localizedDescription.contains("/Volumes/Scratch"))
+  }
+
+  @Test(
+    "testEstimate_CachedFramesNotCounted: kept frames cost nothing, the others stay for the run")
+  func testEstimate_CachedFramesNotCounted() throws {
+    var remote = Self.set("2026-09-22", count: 4, width: 4656, height: 3520, bayer: "", filter: "L")
+    for index in remote.frames.indices {
+      remote.frames[index].path = "s3://astro/M31/l_\(index).fits"
+    }
+    let inventory = Self.scan([remote])
+    let copy = Int64(4656 * 3520 * 4)
+    let raw = Int64(4656 * 3520 * 2)
+    let settings = PreprocessSettings.preset(.deepsky)
+
+    let inLane = try ScratchEstimate(inventory, settings: settings)
+    #expect(inLane.bytes == 4 * (2 * copy + raw), "no cache: the downloads go with the lane")
+
+    let none = try ScratchEstimate(inventory, settings: settings, kept: [])
+    #expect(none.bytes == 4 * (2 * copy + raw), "nothing kept yet: every frame is downloaded")
+    #expect(none.keptBytes == 4 * raw, "and stays after the run")
+
+    let paths = Set(remote.frames.prefix(3).map(\.path))
+    let kept = try ScratchEstimate(inventory, settings: settings, kept: paths)
+    #expect(kept.bytes == 4 * 2 * copy + raw, "three kept: one download left")
+    #expect(kept.lane == inLane.lane && kept.keptBytes == raw)
+
+    #expect(ScratchEstimate.queued([]) == nil)
+    #expect(ScratchEstimate.queued([inLane, inLane]) == inLane.bytes, "nothing kept: the peak")
+    #expect(
+      ScratchEstimate.queued([none, none]) == 4 * 2 * copy + 2 * 4 * raw,
+      "a queue keeps each run's lights: the next run finds them on the disk")
+
+    // The runs of a queue share the capture's calibration: it is downloaded, and counted, once.
+    var darks = Self.set("", count: 2, width: 4656, height: 3520, bayer: "", filter: "")
+    for index in darks.frames.indices {
+      darks.frames[index].type = .dark
+      darks.frames[index].path = "s3://astro/M31/d_\(index).fits"
+    }
+    darks.key.type = .dark
+    let withDarks = try ScratchEstimate(Self.scan([remote, darks]), settings: settings, kept: [])
+    #expect(withDarks.keptLightBytes == 4 * raw && withDarks.keptCalibrationBytes == 2 * raw)
+    #expect(
+      ScratchEstimate.queued([withDarks, withDarks]) == 4 * 2 * copy + 2 * 4 * raw + 2 * raw)
   }
 }

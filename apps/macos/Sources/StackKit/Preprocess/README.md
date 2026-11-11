@@ -84,6 +84,27 @@ name, through `RemoteSnapshot.inParallel`. A calibration set's raw frames are st
 only when a master has to be built from them — a library master proven by its `.sig` is reused
 without reading a single frame.
 
+**Frames kept between runs (card 0191).** With `PreprocessRequest.remoteCache` (a
+`RemoteFrameCache`: one folder a project under the scratch folder, set by the app) a bucket frame is
+downloaded once into `<cache>/<bucket>/<digest of its key>/<name>`, beside a `.identity` file
+holding the `size|etag` the run listed, and the lane gets a symlink to it — exactly what a frame of
+this Mac gets. The digest folder gives every key a copy of its own (two keys that differ by case, or
+by an empty part, never share one) and keeps any key inside the cache. A later run links the kept
+copy only when its identity is the one that run's own listing answers (`RemoteFrameCache.copy`); an
+object uploaded again, a copy without its identity file, a missing copy or one that no longer has
+the listed size is downloaded again. A frame whose listing carries no ETag (`size|` proves nothing:
+every frame of a camera has one size) is not kept at all — it goes with its lane, as before. Each
+download lands in the lane first (its `.part` is the work folder's, swept with it if the app dies)
+and is then moved where it is kept. A download that fails or is cancelled keeps nothing. The lane's cleanup removes links, never the copies: they stay
+until the user removes them (card 0192) — or until macOS purges them when the scratch folder is the
+default one under the temporary directory, in which case they are simply downloaded again. A step
+that took frames from the kept copies says so in the journal (`FrameStager.keptReport`). Without a
+cache the downloads go into the lane's folder and with it, as before.
+`ScratchEstimate(_:settings:kept:)` then counts the lights not kept yet once for the whole run (and,
+as before, the largest calibration set not kept yet), on top of the largest lane's copies, and
+nothing for a frame already kept; `ScratchEstimate.queued` adds up the lights each run of a queue keeps, and their shared calibration
+once.
+
 **Scratch budget (card 0098).** `ScratchEstimate(inventory, settings:)` is the peak the work
 folder reaches: lanes run one after another and each removes its folders, so the largest lane
 sets it, at one 32-bit copy of each light per Siril step that writes one (`pp_`, `r_`, plus

@@ -9,8 +9,8 @@ extension Preprocessor {
   {
     emitter.begin("building master calibration frames")
     var builder = MasterBuilder(runner: reporting(emitter))
-    builder.stager = FrameStager(
-      stores: request.remoteStores, expected: request.remoteIdentities)
+    builder.stager = request.stager
+    builder.stager.keptReport = { emitter.line(Self.keptLine($0, of: "calibration frames")) }
     builder.identities = request.remoteIdentities
     // Step 1 can transfer many gigabytes from a bucket: it says so, under its own step.
     builder.stagingReport = { done, total, bytes in
@@ -43,8 +43,8 @@ extension Preprocessor {
     var stacker = ChannelStacker(
       runner: tools.runner, settings: settings, trailProbe: tools.trailProbe
     ) { emitter.line($0) }
-    stacker.stager = FrameStager(
-      stores: request.remoteStores, expected: request.remoteIdentities)
+    stacker.stager = request.stager
+    stacker.stager.keptReport = { emitter.line(Self.keptLine($0, of: "frames")) }
     // The downloads are the lane's own step: « 16/120 frames · 3.2 GB » under it.
     stacker.stagingReport = { done, total, bytes in
       emitter.line("downloading \(done)/\(total) frames · \(PreprocessError.gigabytes(bytes))")
@@ -184,5 +184,11 @@ extension Preprocessor {
     let png = fits.deletingLastPathComponent().appendingPathComponent(stage + "_preview.png")
     guard (try? tools.preview(fits, png)) != nil else { return }
     emitter.preview(stage: stage, png: png)
+  }
+
+  /// The journal line of the frames a step took from the copies an earlier run kept
+  /// (card 0191): which bytes were stacked is said, also when nothing was downloaded.
+  static func keptLine(_ count: Int, of what: String) -> String {
+    "\(count) \(what) from the copies kept by an earlier run"
   }
 }

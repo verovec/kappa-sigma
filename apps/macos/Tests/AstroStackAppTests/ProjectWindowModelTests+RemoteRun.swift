@@ -18,6 +18,7 @@ struct ProjectWindowModelRemoteRunTests {
     for index in inventory.frames.indices {
       let name = URL(fileURLWithPath: inventory.frames[index].path).lastPathComponent
       inventory.frames[index].path = "\(night)/\(index)_\(name)"
+      (inventory.frames[index].width, inventory.frames[index].height) = (400, 300)
     }
     inventory.root = night
     inventory.regroup()
@@ -193,5 +194,34 @@ struct ProjectWindowModelRemoteRunTests {
       project: project.url.deletingLastPathComponent().appendingPathComponent("x/M31.astrostack"),
       scratch: scratch)
     #expect(other != cache, "two projects of one name never share their copies")
+  }
+
+  @Test(
+    "the scratch the next run needs leaves out the bucket frames the project already keeps",
+    .scratchDirectory)
+  func testScratchBudget_LeavesOutKeptFrames() async throws {
+    let heard = Heard()
+    let (project, window) = try await Self.project(heard)
+    defer { try? project.close() }
+    await window.keptFramesSettled()
+    let before = try #require(window.scratchBudget?.neededBytes)
+
+    // Two of the three lights are kept, as a run would have left them.
+    let cache = try #require(window.remoteFrameCache)
+    let lights = Self.inventory().frames.filter { $0.type == .light }.map(\.path)
+    for path in lights.prefix(2) {
+      let parts = try #require(ProjectSource.remoteParts(of: path))
+      let file = cache.file(bucket: parts.bucket, key: parts.key)
+      try FileManager.default.createDirectory(
+        at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+      try Data("frame".utf8).write(to: file)
+      try cache.keep(file, as: "5|e")
+    }
+    window.rescan()
+    await window.scanSettled()
+    await window.keptFramesSettled()
+
+    let after = try #require(window.scratchBudget?.neededBytes)
+    #expect(after < before, "two downloads fewer: \(before) → \(after)")
   }
 }

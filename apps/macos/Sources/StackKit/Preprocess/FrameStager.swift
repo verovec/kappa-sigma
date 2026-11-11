@@ -133,25 +133,33 @@ package struct FrameStager: Sendable {
     /// The download, a changed object said as the frame that could not be read (R2).
     ///
     /// A kept frame is downloaded into the lane like any other — its `.part` goes with the run's
-    /// work folder if the app dies — then moved where it is kept and linked back; a download
-    /// that fails keeps nothing, so the next run reads the bucket again.
+    /// work folder if the app dies — then moved where it is kept and linked back. Keeping is an
+    /// economy, never a condition: when it cannot be done (the folder refuses, the disk is
+    /// full) the frame stays in the lane and the run goes on, as it does without a cache.
     func run() async throws -> RemoteObjectStore.Object {
       let object = try await written(to: destination)
-      guard let cache else { return object }
+      // Only a frame its listing can prove next time is kept (`RemoteFrameCache.proves`).
+      guard let cache, let expected else { return object }
       let kept = cache.file(bucket: store.bucket, key: key)
+      let files = FileManager.default
       cache.drop(kept)
       do {
-        let files = FileManager.default
         try files.createDirectory(
           at: kept.deletingLastPathComponent(), withIntermediateDirectories: true)
         try files.moveItem(at: destination, to: kept)
-        try cache.keep(kept, as: expected ?? object.identity)
-        try files.createSymbolicLink(atPath: destination.path, withDestinationPath: kept.path)
-        return object
       } catch {
-        cache.drop(kept)
-        throw error
+        return object
       }
+      do {
+        try cache.keep(kept, as: expected)
+        try files.createSymbolicLink(atPath: destination.path, withDestinationPath: kept.path)
+      } catch {
+        // Back where Siril reads it; nothing half kept for the next run.
+        try? files.removeItem(at: destination)
+        try files.moveItem(at: kept, to: destination)
+        cache.drop(kept)
+      }
+      return object
     }
 
     /// The object written to `file`.

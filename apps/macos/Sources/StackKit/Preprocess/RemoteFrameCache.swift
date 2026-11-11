@@ -68,8 +68,12 @@ package struct RemoteFrameCache: Sendable, Equatable {
   }
 
   /// Records that `file` holds the object `identity` names, once its download is whole.
+  ///
+  /// The copy becomes read-only: lanes reach it through links, and a tool writing through one
+  /// would leave bytes the identity no longer describes.
   package func keep(_ file: URL, as identity: String) throws {
     try Data(identity.utf8).write(to: identityFile(of: file), options: .atomic)
+    try FileManager.default.setAttributes([.posixPermissions: 0o444], ofItemAtPath: file.path)
   }
 
   /// Forgets the copy at `file`: before it is downloaded again, and when a download fails.

@@ -75,7 +75,10 @@ struct FrameStagerCacheTests {
     case .changedInTheBucket: bucket.replace(Self.keys[0], with: Data("uploaded again".utf8))
     case .fileGone: try FileManager.default.removeItem(at: kept)
     case .identityGone: try FileManager.default.removeItem(at: cache.identityFile(of: kept))
-    case .cutShort: try Data("remote".utf8).write(to: kept)
+    case .cutShort:
+      // A kept copy is read-only: what cuts it short replaces the file (a crash, a disk gone).
+      try FileManager.default.removeItem(at: kept)
+      try Data("remote".utf8).write(to: kept)
     }
     let second = try await Self.stager(bucket, cache: cache).stage(
       Self.paths, into: root.appendingPathComponent("run_2/light_L"))
@@ -196,8 +199,11 @@ struct FrameStagerCacheTests {
     let paths = (0..<(FrameStager.parallelism * 2)).map { "s3://astro/M31/r_\($0).fits" }
     let folder = root.appendingPathComponent("light_L")
 
+    // Each frame listed with an ETag: every download is one the cache would keep.
+    let listed = Dictionary(uniqueKeysWithValues: paths.map { ($0, "0|e") })
     let lane = Task {
-      try await FrameStager(stores: [store], cache: cache).stage(paths, into: folder)
+      try await FrameStager(stores: [store], expected: listed, cache: cache)
+        .stage(paths, into: folder)
     }
     await started.passed()
     lane.cancel()
@@ -220,5 +226,34 @@ struct FrameStagerCacheTests {
       [Self.paths[0]], into: root.appendingPathComponent("run_1/light_L"))
 
     #expect(cache.kept(among: Self.paths + ["/disk/l.fits"]) == [Self.paths[0]])
+  }
+
+  @Test("a frame that cannot be kept stays in its lane: the run goes on", .scratchDirectory)
+  func testStage_CacheRefuses_FrameStaysInTheLane() async throws {
+    let root = try ScratchDirectory.url
+    // A file where the project's folder should be: nothing can be kept under it.
+    let blocked = root.appendingPathComponent("remote-frames")
+    try Data("not a folder".utf8).write(to: blocked)
+    let cache = RemoteFrameCache(root: blocked.appendingPathComponent("P"))
+    let bucket = Self.bucket()
+
+    let staged = try await Self.stager(bucket, cache: cache).stage(
+      Self.paths, into: root.appendingPathComponent("run_1/light_L"))
+
+    #expect(staged.remote == 2 && staged.cached == 0)
+    #expect(try Self.bytes(staged) == ["remote one", "remote two"])
+    #expect(cache.kept(among: Self.paths).isEmpty)
+  }
+
+  @Test("a kept copy is read-only: nothing writes through a lane's link", .scratchDirectory)
+  func testKeptCopyIsReadOnly() async throws {
+    let root = try ScratchDirectory.url
+    let cache = RemoteFrameCache(root: root.appendingPathComponent("remote-frames/P"))
+    try await Self.stager(Self.bucket(), cache: cache).stage(
+      Self.paths, into: root.appendingPathComponent("run_1/light_L"))
+
+    let kept = cache.file(bucket: "astro", key: Self.keys[0])
+    let mode = try FileManager.default.attributesOfItem(atPath: kept.path)[.posixPermissions]
+    #expect((mode as? NSNumber)?.intValue == 0o444)
   }
 }

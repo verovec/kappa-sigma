@@ -15,9 +15,9 @@ extension ProjectWindowModel {
     let queued = series.scopes.isEmpty ? [inventory] : series.scopes.map { inventory.scoped($0) }
     // What the project keeps of its bucket frames was read when the scan or a run ended, never
     // here: this is asked by every pass of the Stacking stage's body.
-    // Frames kept in another folder (the scratch setting changed since) are not kept here.
-    let cache = remoteFrameCache
-    let kept = cache.map { $0 == keptFramesCache ? keptRemoteFrames : [] }
+    // Nothing was read of a project without bucket frames: its estimate is the one it always
+    // had. Frames kept in another folder (the scratch setting changed since) are not kept here.
+    let kept = keptFramesCache.map { $0 == remoteFrameCache ? keptRemoteFrames : [] }
     let needed = ScratchEstimate.queued(
       queued.compactMap { try? ScratchEstimate($0, settings: settings, kept: kept) })
     guard let needed, needed > 0 else { return nil }

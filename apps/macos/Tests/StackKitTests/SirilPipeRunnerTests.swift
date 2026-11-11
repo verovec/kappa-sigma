@@ -70,7 +70,7 @@ struct SirilPipeRunnerTests {
     #expect(log.contains("load " + name) && log.contains("save b"), "the same commands either way")
     #expect(
       log.contains("done cd ") == throughThePipe,
-      "\(bytes) bytes: \(throughThePipe ? "one command at a time" : "the whole script, from a file")"
+      "\(bytes) bytes: \(throughThePipe ? "command by command" : "the whole script, from a file")"
     )
   }
 

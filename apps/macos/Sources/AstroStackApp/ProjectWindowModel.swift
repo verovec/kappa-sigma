@@ -38,7 +38,8 @@ package final class ProjectWindowModel {
   package private(set) var integration: IntegrationSummary?
   /// The calibration coverage of `scan`, the matcher's verdict as is.
   package private(set) var coverage: CoverageMatrix?
-  /// A Rescan is reading this Mac's folders (what Run waits for after Add, card 0100).
+  /// A Rescan is planning the capture nights, folders and bucket nights alike (what Run waits
+  /// for after Add, card 0100).
   package internal(set) var isScanning = false
   /// What the Données stage knows of each remote source (card 0169), by virtual path.
   package internal(set) var remoteStates: [String: RemoteSourceState] = [:]

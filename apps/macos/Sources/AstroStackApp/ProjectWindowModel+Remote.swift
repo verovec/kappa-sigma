@@ -49,7 +49,8 @@ extension ProjectWindowModel {
       path: target.path, lights: plan.inventory.frames.count { $0.type == .light })
   }
 
-  /// The buckets are being read (card 0182): after the local plan, never holding Run back.
+  /// Each bucket row is being read for its own count (card 0182): after the plan, never
+  /// holding Run back — the plan itself reads the bucket nights (card 0190).
   package var isScanningRemote: Bool { remoteScanTask != nil }
 
   /// Scans the remote sources in a task of their own (card 0182).

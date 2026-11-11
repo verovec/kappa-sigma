@@ -1,5 +1,6 @@
 package import Foundation
 internal import Observation
+internal import ProjectKit
 package import StackKit
 
 /// One lane at the Tri stage (card 0069): its grades as rows, the user's keep / reject toggles,
@@ -158,11 +159,12 @@ package final class FrameReviewViewModel {
   package var currentRow: Row? { rows.first { $0.index == current } }
 
   /// The light frame `index` stands for, to open in the viewer (card 0125): the capture, read-only
-  /// (R7); nil for an unknown index or a frame without a path.
+  /// (R7); nil for an unknown index, a frame without a path, or a frame read from a bucket
+  /// (card 0190: its path is virtual, there is no file of this Mac to open).
   package func previewURL(of index: Int) -> URL? {
-    guard let path = rows.first(where: { $0.index == index })?.path, !path.isEmpty else {
-      return nil
-    }
+    guard let path = rows.first(where: { $0.index == index })?.path, !path.isEmpty,
+      ProjectSource.remoteFolder(of: path) == nil
+    else { return nil }
     return URL(fileURLWithPath: path)
   }
 

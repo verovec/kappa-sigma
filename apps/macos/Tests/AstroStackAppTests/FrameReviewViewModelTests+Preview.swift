@@ -46,4 +46,13 @@ extension FrameReviewViewModelTests {
     }
     #expect(model.previewURL(of: 2)?.isFileURL == true)
   }
+
+  @Test("a frame read from a bucket has no file of this Mac to open", arguments: LaneKind.allCases)
+  func testPreviewURL_remoteFrame(_ kind: LaneKind) {
+    var frames = Self.frames()
+    frames.grades[0].path = "s3://astro/M31/l_001.fits"
+    let model = kind.model(frames)
+    #expect(model.previewURL(of: 1) == nil, "a virtual path is not a file URL")
+    #expect(model.previewURL(of: 2) != nil)
+  }
 }

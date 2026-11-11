@@ -49,6 +49,8 @@ package final class ProjectWindowModel {
   var keptRemoteFrames: Set<String> = []
   /// The cache they were read in: another scratch folder keeps none of them.
   var keptFramesCache: RemoteFrameCache?
+  /// What the project keeps of its bucket frames on disk (card 0192); `nil` when nothing.
+  package internal(set) var keptFrames: KeptFrames?
   var keptFramesTask: Task<Void, Never>?
   /// The one scan of the buckets that may write `remoteStates` (card 0182).
   var remoteScanTask: Task<Void, Never>?
@@ -173,7 +175,7 @@ package final class ProjectWindowModel {
       selection = saved.stage.flatMap(JourneyStage.init(rawValue:)) ?? .data
     }
     refresh()
-    listLeftoverStacks()
+    readWhatTheRunsLeft()
     if case .failure(let failure) = latest { error = UserFacingError(failure) }
     if case .failure(let failure) = settings { error = UserFacingError(failure) }
   }

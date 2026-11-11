@@ -12,6 +12,8 @@ struct ExportStagePane: View {
       if model.stacks.count > 1 { StackPicker(model: model) }
       if let export = model.exportStage {
         ExportStageView(model: export)
+        // Once an export is made, the frames downloaded for it can go (card 0192).
+        if model.offersKeptFramesRemoval { KeptFramesLine(model: model) }
       } else {
         EmptyState(
           .app("Export"),

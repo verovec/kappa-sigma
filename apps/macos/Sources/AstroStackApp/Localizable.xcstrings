@@ -12560,6 +12560,86 @@
           }
         }
       }
+    },
+    "Downloaded from the bucket: %@ kept in %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Downloaded from the bucket: %1$@ kept in %2$@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Téléchargé depuis le bucket : %1$@ conservés dans %2$@."
+          }
+        }
+      }
+    },
+    "Remove Downloaded Frames…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove Downloaded Frames…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer les poses téléchargées…"
+          }
+        }
+      }
+    },
+    "Deletes only the copies downloaded from the bucket.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deletes only the copies downloaded from the bucket."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ne supprime que les copies téléchargées depuis le bucket."
+          }
+        }
+      }
+    },
+    "Remove the downloaded frames?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove the downloaded frames?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer les poses téléchargées ?"
+          }
+        }
+      }
+    },
+    "Frees %@. The bucket and this Mac's captures stay; the next run downloads again.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frees %@. The bucket and this Mac's captures stay; the next run downloads again."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Libère %@. Le bucket et les captures de ce Mac restent ; le prochain run retélécharge les poses."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

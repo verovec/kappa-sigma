@@ -33,43 +33,6 @@ extension ProjectWindowModel {
   package var remoteFrameCache: RemoteFrameCache? {
     folder().map { RemoteFrameCache(project: $0, scratch: runs.scratch) }
   }
-
-  /// Reads again which bucket frames of the scan the project keeps, off the main actor: after a
-  /// scan and after a run, the two moments it can change.
-  func refreshKeptFrames() {
-    keptFramesTask?.cancel()
-    let paths = (scan?.inventory.frames ?? []).map(\.path)
-      .filter { ProjectSource.remoteParts(of: $0) != nil }
-    guard let cache = remoteFrameCache, !paths.isEmpty else {
-      (keptRemoteFrames, keptFramesCache, keptFramesTask) = ([], nil, nil)
-      return
-    }
-    keptFramesTask = Task {
-      let kept = await cache.keptOffActor(among: paths)
-      guard !Task.isCancelled else { return }
-      (keptRemoteFrames, keptFramesCache, keptFramesTask) = (kept, cache, nil)
-    }
-  }
-
-  /// What a queue of runs left on disk, read once it ends: the stacks no row names (card 0113)
-  /// and the bucket frames now kept (card 0191).
-  func readWhatTheRunsLeft() {
-    listLeftoverStacks()
-    refreshKeptFrames()
-  }
-
-  /// Waits for `refreshKeptFrames` in flight, if any.
-  package func keptFramesSettled() async {
-    await keptFramesTask?.value
-  }
-}
-
-nonisolated extension RemoteFrameCache {
-  /// `kept(among:)` off the caller's actor: two file checks and a digest a frame.
-  @concurrent
-  func keptOffActor(among paths: [String]) async -> Set<String> {
-    kept(among: paths)
-  }
 }
 
 nonisolated extension RunRequestPlan {

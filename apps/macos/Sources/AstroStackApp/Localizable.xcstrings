@@ -12657,18 +12657,18 @@
         }
       }
     },
-    "“%@” is too long for Siril (%lld bytes): choose a shorter scratch folder.": {
+    "“%@” is too long for Siril: shorten the path of the scratch or project folder.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "“%1$@” is too long for Siril (%2$lld bytes): choose a shorter scratch folder."
+            "value": "“%@” is too long for Siril: shorten the path of the scratch or project folder."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "« %1$@ » est trop longue pour Siril (%2$lld octets) : choisissez un dossier scratch au chemin plus court."
+            "value": "« %@ » est trop longue pour Siril : raccourcissez le chemin du dossier scratch ou du projet."
           }
         }
       }

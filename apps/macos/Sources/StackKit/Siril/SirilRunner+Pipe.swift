@@ -6,15 +6,16 @@ extension SirilRunner {
   ///
   /// A script holding a command longer than the pipe reads (`SirilSession.maxCommandBytes`,
   /// card 0193) is handed whole to `fallback`, the script mode: the same commands in the same
-  /// order, read from a file, which has no such limit. Without a fallback the session refuses
-  /// the command (`SirilError.commandTooLong`).
-  package static func pipe(_ session: SirilSession, fallback: Self? = nil) -> Self {
+  /// order, read from a file, which has no such limit. It still runs alone — the session's queue
+  /// is held, so two Sirils never work at once — and says so on `onLine`.
+  package static func pipe(_ session: SirilSession, fallback: Self) -> Self {
     Self(run: { script, directory, onLine in
       try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
       let commands =
         ["cd \"\(directory.path)\""] + script.render().split(separator: "\n").map(String.init)
-      if let fallback, !Self.fitsThePipe(commands) {
-        return try await fallback.run(script, directory, onLine)
+      if let long = commands.first(where: { !SirilSession.fits($0) }) {
+        onLine(SirilLine(parsing: "log: " + Self.fallbackNote(long)))
+        return try await session.alone { try await fallback.run(script, directory, onLine) }
       }
       // One unit: another script's `cd` must not land between this one's commands.
       let lines = try await session.execScript(commands, onLine: onLine)
@@ -22,9 +23,11 @@ extension SirilRunner {
     })
   }
 
-  /// Whether every command of `commands` is one Siril reads whole from its pipe.
-  package static func fitsThePipe(_ commands: [String]) -> Bool {
-    commands.allSatisfy { $0.utf8.count <= SirilSession.maxCommandBytes }
+  /// The journal line of a script that left the pipe for script mode, naming the command.
+  package static func fallbackNote(_ command: String) -> String {
+    let verb = command.split(separator: " ").first.map(String.init) ?? ""
+    return "\(verb): a command of \(command.utf8.count) bytes, more than Siril's pipe reads "
+      + "(\(SirilSession.maxCommandBytes)) — this script runs in script mode"
   }
 
   /// The runner for `mode` over the `siril-cli` at `binary`; a pipe session works from `work`,

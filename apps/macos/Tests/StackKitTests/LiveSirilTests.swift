@@ -84,20 +84,28 @@ struct LiveSirilTests {
   }
 
   @Test(
-    "a script whose folder is longer than the pipe reads still runs: script mode takes it",
+    "a script with a line longer than the pipe reads runs whole in script mode, on the real Siril",
     .scratchDirectory)
-  func testLongFolderRunsThroughTheFallback() async throws {
+  func testLongLineRunsThroughTheFallback() async throws {
     let scratch = try ScratchDirectory.url
-    // A folder whose `cd` line is over 510 bytes: what a deep scratch folder does to a lane.
-    var folder = scratch
-    while "cd \"\(folder.path)\"".utf8.count <= SirilSession.maxCommandBytes {
-      folder.appendPathComponent(String(repeating: "d", count: 100))
+    // A frame so deep that `load <path>` is over 510 bytes: what a deep scratch folder does to
+    // a `calibrate` naming its masters.
+    var deep = scratch
+    while "load \(deep.path)/frame".utf8.count <= SirilSession.maxCommandBytes {
+      deep.appendPathComponent(String(repeating: "d", count: 100))
     }
+    try TestFITS.write("frame.fits", in: deep, pixel: 1200, cards: [:])
+    let sink = LineSink()
     let runner = SirilRunner.make(mode: .pipe, binary: try SirilTool.locate(), work: scratch)
+    let script = SirilScript([.load(deep.appendingPathComponent("frame").path), .save("copy")])
 
-    // No command but the header and the `cd`: Siril accepts the script, or this throws.
-    _ = try await runner.run(SirilScript([]), folder) { _ in }
+    // Cut at 510 bytes, Siril would load nothing and the save would fail the script.
+    _ = try await runner.run(script, scratch.appendingPathComponent("lane"), sink.append)
 
-    #expect(FileManager.default.fileExists(atPath: folder.path))
+    #expect(
+      FileManager.default.fileExists(
+        atPath: scratch.appendingPathComponent("lane/copy.fits").path),
+      "the long `load` was read whole: its image was saved")
+    #expect(sink.lines.first?.text.contains("script mode") == true)
   }
 }

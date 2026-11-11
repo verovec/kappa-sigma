@@ -296,7 +296,9 @@ arm64 Go does.
   probe and the edge measurement, which are the only decisions read from pixels.
 - `SirilMode.default` is `.pipe`; `SirilRunner.make(mode:binary:work:)` builds either mode. A
   pipe session runs each script as one unit (`SirilSession.execScript`), and the pair rescue
-  ends with `setfindstar reset` because the session outlives the script that relaxed it.
+  ends with `setfindstar reset` because the session outlives the script that relaxed it. A script
+  with a command too long for the pipe runs in a fresh `siril-cli -s` instead (card 0193,
+  `Siril/README.md`): no script may rely on state an earlier one left in the session.
 - Settings come from `PreprocessSettings.preset(mode)` (deepsky, or nebula: lenient grading and a
   degree-2 sky) unless the request carries its own. `solveCoordinates` feeds the parity
   probes' `platesolve`. Stacked masters lose their pointing cards, so without it they rarely

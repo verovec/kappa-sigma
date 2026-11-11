@@ -28,6 +28,8 @@ struct DataStagePane: View {
           ForEach(model.sources, id: \.id) { source in
             sourceRow(source)
           }
+          // What the bucket nights take on this Mac; removed from the Export stage (card 0192).
+          KeptFramesLine(model: model, offersRemoval: false)
           scanned
           if !model.stacks.isEmpty {
             Divider()

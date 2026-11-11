@@ -3,9 +3,6 @@ package import Foundation
 package import StackKit
 
 extension RemoteFrameCache {
-  /// The folder under the scratch folder that holds every project's kept bucket frames.
-  package nonisolated static let folderName = "remote-frames"
-
   /// The kept frames of the project saved at `project`, under `scratch` (card 0191).
   ///
   /// One folder a project, named after the package and a digest of where it is saved: two

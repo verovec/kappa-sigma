@@ -105,6 +105,17 @@ as before, the largest calibration set not kept yet), on top of the largest lane
 nothing for a frame already kept; `ScratchEstimate.queued` adds up the lights each run of a queue keeps, and their shared calibration
 once.
 
+**Removing the kept frames (card 0192).** `RemoteFrameCache.remove(scratch:protected:)` deletes a
+project's folder of copies as a whole. It is the only deletion here, and `isRemovable` decides it
+on paths alone, with `LeftoverSweep`'s rule (links resolved, names without case): the folder must
+sit directly under `<scratch>/remote-frames`, and must not be, hold or lie inside any `protected`
+path — the app names the capture nights, the library and the package. Anything else throws
+`PreprocessError.keptFramesNotRemovable` with nothing deleted. Tests delete only inside a scratch
+directory; the predicate has its own table (`RemoteFrameCacheRemovalTests`). The app removes exactly
+the folder it showed and the user confirmed, offers it from the Export stage once an export exists,
+never during a run (lanes hold links to the copies) — and Run waits while a removal goes. Nothing
+is ever written to a bucket.
+
 **Scratch budget (card 0098).** `ScratchEstimate(inventory, settings:)` is the peak the work
 folder reaches: lanes run one after another and each removes its folders, so the largest lane
 sets it, at one 32-bit copy of each light per Siril step that writes one (`pp_`, `r_`, plus

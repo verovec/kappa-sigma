@@ -235,7 +235,14 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
         folder: (folder as NSString).abbreviatingWithTildeInPath)
     case .remoteFrameUnavailable(let path, let reason):
       .app("\(path) could not be read for this run: \(reason)")
+    case .keptFramesNotRemovable(let path): keptFramesNotRemovable(path)
     }
+  }
+
+  /// The folder refused for removal (card 0192), spelled as the line that showed it.
+  private static func keptFramesNotRemovable(_ path: String) -> LocalizedStringResource {
+    let folder = (path as NSString).abbreviatingWithTildeInPath
+    return .app("\(folder) was not removed: it is not this project's folder of downloaded frames.")
   }
 
   /// The run would fill the scratch volume (card 0098): the need, the room, where to act.

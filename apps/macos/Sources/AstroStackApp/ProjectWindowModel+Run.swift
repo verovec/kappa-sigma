@@ -24,7 +24,7 @@ extension ProjectWindowModel {
   /// one (`needsSeries`): a run of every light would only fail after the plan.
   /// While every night is rescanned after Add a night, Run waits for the plan (card 0100).
   package var canRun: Bool {
-    !isStacking && !awaitsRescan && !nightPaths.isEmpty
+    !isStacking && !awaitsRescan && !isRemovingKeptFrames && !nightPaths.isEmpty
       && (series.isEmpty ? !needsSeries : !series.scopes.isEmpty)
   }
 

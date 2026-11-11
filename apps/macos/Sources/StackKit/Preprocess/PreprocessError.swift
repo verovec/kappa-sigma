@@ -26,6 +26,10 @@ package enum PreprocessError: Error, Equatable, Sendable {
   /// A frame of a bucket could not be staged for its lane (card 0154): its connection is not in
   /// the run, or the download failed. The lane fails with this text — never stacks what it has.
   case remoteFrameUnavailable(path: String, reason: String)
+  /// The folder of a project's kept bucket frames was refused for removal (card 0192): it is not
+  /// a project's own folder under the scratch folder, or it touches a capture, the library or
+  /// the package. Nothing was deleted.
+  case keptFramesNotRemovable(path: String)
 }
 
 extension PreprocessError: LocalizedError {
@@ -53,6 +57,9 @@ extension PreprocessError: LocalizedError {
         + "\(Self.gigabytes(available)) free — free some space or choose another scratch folder"
     case .remoteFrameUnavailable(let path, let reason):
       "\(path) could not be read for this run: \(reason)"
+    case .keptFramesNotRemovable(let path):
+      "\(path) was not removed: it is not this project's own folder of downloaded frames, or it "
+        + "touches a capture, the library or the project"
     }
   }
 

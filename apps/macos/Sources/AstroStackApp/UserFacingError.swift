@@ -235,6 +235,8 @@ package nonisolated enum UserFacingError: LocalizedError, Equatable {
         folder: (folder as NSString).abbreviatingWithTildeInPath)
     case .remoteFrameUnavailable(let path, let reason):
       .app("\(path) could not be read for this run: \(reason)")
+    case .keptFramesNotRemovable(let path):
+      .app("\(path) was not removed: it touches a capture, the library or the project.")
     }
   }
 

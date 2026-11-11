@@ -13,7 +13,9 @@ struct ExportStagePane: View {
       if let export = model.exportStage {
         ExportStageView(model: export)
         // Once an export is made, the frames downloaded for it can go (card 0192).
-        if model.offersKeptFramesRemoval { KeptFramesLine(model: model) }
+        if model.offersKeptFramesRemoval {
+          KeptFramesLine(model: model).padding([.horizontal, .bottom], DesignMetrics.spacingM)
+        }
       } else {
         EmptyState(
           .app("Export"),

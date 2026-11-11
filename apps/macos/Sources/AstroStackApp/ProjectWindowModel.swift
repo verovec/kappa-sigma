@@ -51,6 +51,8 @@ package final class ProjectWindowModel {
   var keptFramesCache: RemoteFrameCache?
   /// What the project keeps of its bucket frames on disk (card 0192); `nil` when nothing.
   package internal(set) var keptFrames: KeptFrames?
+  /// A removal of them is going (card 0192): Run and a second removal wait for it.
+  package internal(set) var isRemovingKeptFrames = false
   var keptFramesTask: Task<Void, Never>?
   /// The one scan of the buckets that may write `remoteStates` (card 0182).
   var remoteScanTask: Task<Void, Never>?

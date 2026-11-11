@@ -65,8 +65,11 @@ struct ProjectWindowModelKeptFramesTests {
     let before = try #require(window.scratchBudget?.neededBytes)
 
     window.removeKeptFrames()
+    #expect(window.isRemovingKeptFrames && !window.canRun && !window.canRemoveKeptFrames)
+    window.removeKeptFrames()
     await window.keptFramesSettled()
 
+    #expect(!window.isRemovingKeptFrames && window.canRun, "Run waited for the removal")
     #expect(window.keptFrames == nil && window.error == nil)
     #expect(!FileManager.default.fileExists(atPath: cache.root.path))
     #expect(neighbour.size() > 0, "another project's copies stay")
@@ -102,7 +105,8 @@ struct ProjectWindowModelKeptFramesTests {
     arguments: [Locale(identifier: "en"), Locale(identifier: "fr")])
   func testLineWords(locale: Locale) {
     let kept = KeptFrames(
-      bytes: 5_200_000_000, folder: URL(fileURLWithPath: "/Volumes/Scratch/remote-frames/M31"))
+      bytes: 5_200_000_000, folder: URL(fileURLWithPath: "/Volumes/Scratch/remote-frames/M31"),
+      scratch: URL(fileURLWithPath: "/Volumes/Scratch"))
     let size = AstroFormat(locale: locale).bytes(kept.bytes)
     let notice = String(localized: KeptFramesLine.notice(kept, locale: locale))
     let consequence = String(localized: KeptFramesLine.consequence(kept, locale: locale))

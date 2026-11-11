@@ -36,7 +36,6 @@ package struct KeptFramesLine: View {
             .accessible(.exportRemoveKeptFrames, label: .app("Remove Downloaded Frames…"))
         }
       }
-      .padding([.horizontal, .bottom], DesignMetrics.spacingM)
       .confirmationDialog(
         Text(.app("Remove the downloaded frames?")), isPresented: $confirming
       ) {

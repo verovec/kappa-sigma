@@ -8,11 +8,14 @@ package nonisolated struct KeptFrames: Equatable, Sendable {
   package var bytes: Int64
   /// The folder of this project's copies.
   package var folder: URL
+  /// The scratch folder it was read under: what a removal is checked against.
+  package var scratch: URL
 
-  /// `bytes` kept in `folder`.
-  package init(bytes: Int64, folder: URL) {
+  /// `bytes` kept in `folder`, under `scratch`.
+  package init(bytes: Int64, folder: URL, scratch: URL) {
     self.bytes = bytes
     self.folder = folder
+    self.scratch = scratch
   }
 }
 
@@ -30,13 +33,15 @@ extension ProjectWindowModel {
     }
     let paths = (scan?.inventory.frames ?? []).map(\.path)
       .filter { ProjectSource.remoteParts(of: $0) != nil }
+    let scratch = runs.scratch
     keptFramesTask = Task {
-      let read = await cache.readOffActor(among: paths)
-      guard !Task.isCancelled else { return }
+      guard let read = await cache.readOffActor(among: paths), !Task.isCancelled else { return }
       keptRemoteFrames = read.kept
       // Without a bucket frame in the scan nothing was looked up: the budget is the local one.
       keptFramesCache = paths.isEmpty ? nil : cache
-      keptFrames = read.bytes > 0 ? KeptFrames(bytes: read.bytes, folder: cache.root) : nil
+      keptFrames =
+        read.bytes > 0
+        ? KeptFrames(bytes: read.bytes, folder: cache.root, scratch: scratch) : nil
       keptFramesTask = nil
     }
   }
@@ -62,27 +67,34 @@ extension ProjectWindowModel {
     keptFrames != nil && exportStage?.exports.isEmpty == false
   }
 
-  /// The kept frames can be removed now: there are some, and no run is linking them into a lane.
-  package var canRemoveKeptFrames: Bool { keptFrames != nil && !isStacking }
+  /// The kept frames can be removed now: there are some, no run is linking them into a lane,
+  /// and no removal is already going.
+  package var canRemoveKeptFrames: Bool {
+    keptFrames != nil && !isStacking && !isRemovingKeptFrames
+  }
 
-  /// Deletes this project's kept bucket frames; the next run downloads them again.
+  /// Deletes the kept bucket frames the stage shows; the next run downloads them again.
   ///
-  /// Only the folder of copies `RemoteFrameCache.isRemovable` allows: never a capture night, the
-  /// library or the package, which are named to it. A refusal or a failure is shown; nothing
-  /// while a run is going.
+  /// Exactly the folder `keptFrames` names and the dialog confirmed — never one recomputed from
+  /// a setting that changed since (values applied = values shown, R2) — and only when
+  /// `RemoteFrameCache.isRemovable` allows it: never a capture night, the library or the
+  /// package, which are named to it. Run waits while it goes (`canRun`). A refusal or a failure
+  /// is shown; nothing while a run is going.
   package func removeKeptFrames() {
-    guard canRemoveKeptFrames, let cache = remoteFrameCache else { return }
-    let scratch = runs.scratch
+    guard canRemoveKeptFrames, let kept = keptFrames else { return }
+    let cache = RemoteFrameCache(root: kept.folder)
     let protected =
       sources.filter { $0.kind != .remoteNight }.map { URL(fileURLWithPath: $0.path) }
       + [ImportPlanning.libraryFolder] + [folder()].compactMap { $0 }
     keptFramesTask?.cancel()
+    isRemovingKeptFrames = true
     keptFramesTask = Task {
       do {
-        try await cache.removeOffActor(scratch: scratch, protected: protected)
+        try await cache.removeOffActor(scratch: kept.scratch, protected: protected)
       } catch {
         self.error = UserFacingError(error)
       }
+      isRemovingKeptFrames = false
       refreshKeptFrames()
     }
   }
@@ -90,10 +102,13 @@ extension ProjectWindowModel {
 
 nonisolated extension RemoteFrameCache {
   /// The frames of `paths` kept and the bytes every kept frame takes, read off the caller's
-  /// actor: file checks and a digest a frame, then a walk of the folder.
+  /// actor: file checks and a digest a frame, then a walk of the folder. `nil` when the read
+  /// was cancelled between the two (a newer read replaced it).
   @concurrent
-  func readOffActor(among paths: [String]) async -> (kept: Set<String>, bytes: Int64) {
-    (kept(among: paths), size())
+  func readOffActor(among paths: [String]) async -> (kept: Set<String>, bytes: Int64)? {
+    let kept = kept(among: paths)
+    guard !Task.isCancelled else { return nil }
+    return (kept, size())
   }
 
   /// `remove(scratch:protected:)` off the caller's actor.

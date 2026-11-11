@@ -58,6 +58,10 @@ struct RemoteFrameCacheRemovalTests {
       root: "/Volumes/Scratch/AstroStack/Work/remote-frames/M31-0a1b2c3d",
       protected: ["/Users/po/AstroStack/Projects/M31.astrostack", "/Users/po/astro/library"],
       removable: true, why: "a project's copies, its package and library elsewhere"),
+    Case(
+      root: "/Volumes/Scratch/AstroStack/Work/remote-frames/M31-0a1b2c3d",
+      protected: ["/volumes/scratch/astrostack/work/REMOTE-FRAMES/m31-0a1b2c3d/night"],
+      removable: false, why: "a capture inside it, spelled in another case"),
   ]
 
   @Test("testRemovable: decided on the paths, nothing touched", arguments: cases)
@@ -98,10 +102,10 @@ struct RemoteFrameCacheRemovalTests {
       try Data("mine".utf8).write(to: file)
     }
 
-    let freed = try mine.remove(scratch: scratch, protected: [capture.deletingLastPathComponent()])
+    try mine.remove(scratch: scratch, protected: [capture.deletingLastPathComponent()])
 
     let files = FileManager.default
-    #expect(freed > 0 && !files.fileExists(atPath: mine.root.path))
+    #expect(!files.fileExists(atPath: mine.root.path))
     #expect(mine.size() == 0 && mine.kept(among: ["s3://astro/M31/l_1.fits"]).isEmpty)
     #expect(other.size() > 0, "another project's copies are not this one's")
     #expect(files.fileExists(atPath: capture.path) && files.fileExists(atPath: run.path))
@@ -120,8 +124,8 @@ struct RemoteFrameCacheRemovalTests {
     // A cache pointed at a capture night by mistake: the worst a wrong root can be.
     let wrong = RemoteFrameCache(root: capture)
 
-    #expect(throws: RemoteFrameCache.NotRemovable(path: capture.path)) {
-      _ = try wrong.remove(scratch: scratch, protected: [])
+    #expect(throws: PreprocessError.keptFramesNotRemovable(path: capture.path)) {
+      try wrong.remove(scratch: scratch, protected: [])
     }
     #expect(FileManager.default.fileExists(atPath: capture.appendingPathComponent("l_1.fits").path))
   }
@@ -131,6 +135,7 @@ struct RemoteFrameCacheRemovalTests {
     let scratch = try ScratchDirectory.url.appendingPathComponent("Work")
     let cache = RemoteFrameCache(
       root: scratch.appendingPathComponent(RemoteFrameCache.folderName + "/M31-0a1b2c3d"))
-    #expect(try cache.remove(scratch: scratch, protected: []) == 0)
+    try cache.remove(scratch: scratch, protected: [])
+    #expect(!FileManager.default.fileExists(atPath: cache.root.path))
   }
 }

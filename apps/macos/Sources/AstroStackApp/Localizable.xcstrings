@@ -12640,6 +12640,22 @@
           }
         }
       }
+    },
+    "%@ was not removed: it touches a capture, the library or the project.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ was not removed: it touches a capture, the library or the project."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ n’a pas été supprimé : il touche une capture, la bibliothèque ou le projet."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -147,4 +147,16 @@ struct CaptureScanTests {
       },
       "its centred run was fetched: a second pass ran")
   }
+
+  @Test(
+    "which prefixes a capture reads: one inside another and a repeat are covered",
+    arguments: [
+      (["s3://a/M31", "s3://a/M31/n1", nil, "s3://a/M31"], [1, 3]),
+      (["s3://a/M31/n1", "s3://a/M31/n2", "s3://b/M31"], []),
+      (["s3://a/M3", "s3://a/M31"], []),
+      ([nil, nil], []),
+    ] as [([String?], [Int])])
+  func testCovered(prefixes: [String?], covered: [Int]) {
+    #expect(CaptureScan.covered(prefixes) == Set(covered))
+  }
 }

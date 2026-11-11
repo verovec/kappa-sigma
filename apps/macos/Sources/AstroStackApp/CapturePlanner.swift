@@ -31,13 +31,16 @@ nonisolated struct CapturePlanner: Sendable {
     var read: [RemoteImportTarget] = []
     // One lookup a connection, as a run's stores do: the Keychain may wait on the user.
     var clients: [UUID: S3Client] = [:]
-    for path in request.paths {
+    // A prefix another one of the request covers is never read: its connection has no say.
+    let covered = CaptureScan.covered(
+      request.paths.map { ProjectSource.remoteFolder(of: $0) == nil ? nil : $0 })
+    for (index, path) in request.paths.enumerated() where !covered.contains(index) {
       guard ProjectSource.remoteFolder(of: path) != nil else {
         roots.append(.folder(path))
         continue
       }
-      // A prefix another one of the request covers is never read: its connection has no say.
-      guard !Self.isCovered(path, in: request.paths) else { continue }
+      // A Keychain lookup may wait on the user: a cancelled plan asks for no more of them.
+      try Task.checkCancellation()
       guard let target = targets[path] else { throw RemoteImportProblem.connectionMissing }
       if clients[target.connectionID] == nil {
         clients[target.connectionID] = try await client(target.connectionID)
@@ -63,15 +66,5 @@ nonisolated struct CapturePlanner: Sendable {
     }
     return ImportPlan(
       inventory: scanned.inventory, library: masters, request: request, identities: identities)
-  }
-
-  /// `path` lies inside another bucket path of `paths`, or repeats an earlier one: the scan
-  /// reads the covering prefix alone (`CaptureScan.distinct`).
-  static func isCovered(_ path: String, in paths: [String]) -> Bool {
-    guard let own = paths.firstIndex(of: path) else { return false }
-    return paths.indices.contains { other in
-      guard other != own, ProjectSource.remoteFolder(of: paths[other]) != nil else { return false }
-      return path.hasPrefix(paths[other] + "/") || (path == paths[other] && other < own)
-    }
   }
 }

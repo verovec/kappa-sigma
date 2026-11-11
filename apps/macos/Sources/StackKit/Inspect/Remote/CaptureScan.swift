@@ -118,13 +118,24 @@ package struct CaptureScan: Sendable {
       return ProjectSource.remotePath(
         bucket: prefix.store.bucket, prefix: ProjectSource.key(prefix.prefix))
     }
-    return roots.indices.filter { index in
-      guard let own = spelled[index] else { return true }
-      return !spelled.indices.contains { other in
-        guard other != index, let outer = spelled[other] else { return false }
-        return own.hasPrefix(outer + "/") || (own == outer && other < index)
-      }
-    }.map { roots[$0] }
+    let covered = Self.covered(spelled)
+    return roots.indices.filter { !covered.contains($0) }.map { roots[$0] }
+  }
+
+  /// The positions of `prefixes` that another one covers: the one rule for which prefixes a
+  /// capture reads.
+  ///
+  /// Each is a bucket root (`s3://bucket/prefix`), `nil` for a folder of this Mac. Covered: a
+  /// prefix inside another, or the repeat of an earlier one.
+  package static func covered(_ prefixes: [String?]) -> Set<Int> {
+    Set(
+      prefixes.indices.filter { index in
+        guard let own = prefixes[index] else { return false }
+        return prefixes.indices.contains { other in
+          guard other != index, let outer = prefixes[other] else { return false }
+          return own.hasPrefix(outer + "/") || (own == outer && other < index)
+        }
+      })
   }
 
   /// What the scan read of this Mac's folders, kept from one pass to the next.

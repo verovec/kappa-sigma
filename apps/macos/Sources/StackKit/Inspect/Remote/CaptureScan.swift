@@ -78,10 +78,11 @@ package struct CaptureScan: Sendable {
         paths.append(snapshot.root)
       }
     }
-    progress(.classifying)
-    // The folders are walked aloud; a capture of buckets alone already told its reads.
+    // The folders are walked aloud, their own steps ending in `classifying`; a capture of
+    // buckets alone already told its reads and goes straight to it.
     let silent: @Sendable (ScanProgress) -> Void = { _ in }
     let walking = loaded.count < paths.count ? progress : silent
+    if loaded.count == paths.count { progress(.classifying) }
     // What a pass read of this Mac serves the next: only the buckets' answers change between two.
     let disk = DiskReads()
     // The runs a pass asks for can change what the next one classifies: a few passes settle it;
@@ -91,8 +92,7 @@ package struct CaptureScan: Sendable {
       try Task.checkCancellation()
       let asked = RemoteSnapshot.Asked()
       let inventory = try InventoryBuilder(
-        timeZone: timeZone, pixels: Self.pixels(loaded, asked, disk),
-        source: Self.source(loaded, disk)
+        timeZone: timeZone, pixels: Self.pixels(loaded, asked), source: Self.source(loaded, disk)
       ).scan(paths: paths, overrides: overrides, progress: pass == 1 ? walking : silent)
       let missing = asked.missingSamples
       guard !missing.isEmpty, pass < RemoteScan.passes else {
@@ -127,13 +127,14 @@ package struct CaptureScan: Sendable {
     }.map { roots[$0] }
   }
 
-  /// What the scan read of this Mac's folders, kept from one pass to the next: listings, headers
-  /// and centred runs (whole planes are read again — they are large, and rarely asked twice).
+  /// What the scan read of this Mac's folders, kept from one pass to the next.
+  ///
+  /// Listings and headers. Pixels are read again by a pass that needs them — a centred run is megabytes a
+  /// frame, and a second pass only happens when a bucket frame is typed by its pixels.
   final class DiskReads: Sendable {
     private struct State {
       var listings: [String: InspectWalk.Listing] = [:]
       var headers: [String: Result<FITSHeader, any Error>] = [:]
-      var samples: [String: Result<[Double], any Error>] = [:]
     }
     private let state = Mutex(State())
 
@@ -151,14 +152,6 @@ package struct CaptureScan: Sendable {
       state.withLock { $0.headers[path] = read }
       return try read.get()
     }
-
-    func centerSample(_ path: String, _ count: Int) throws -> [Double] {
-      let key = "\(count)|\(path)"
-      if let held = state.withLock({ $0.samples[key] }) { return try held.get() }
-      let read = Result { try PixelReader.files.centerSample(path, count) }
-      state.withLock { $0.samples[key] = read }
-      return try read.get()
-    }
   }
 
   /// A prefix once listed and read, with the bucket its pixel runs come from.
@@ -172,11 +165,13 @@ package struct CaptureScan: Sendable {
     }
   }
 
-  /// The prefix `path` is read from — the deepest when one prefix lies inside another; `nil` for
-  /// a path of this Mac.
-  static func owner(of path: String, in loaded: [Loaded]) -> Loaded? {
-    loaded.filter { $0.holds(InventoryBuilder.clean(path)) }
-      .max { $0.snapshot.root.count < $1.snapshot.root.count }
+  /// What reads `path`: the one of `readers` whose prefix holds it (`distinct` leaves no prefix
+  /// inside another), `fallback` for a path of this Mac.
+  static func pick<Reader>(_ path: String, _ readers: [(Loaded, Reader)], or fallback: Reader)
+    -> Reader
+  {
+    let clean = InventoryBuilder.clean(path)
+    return readers.first { $0.0.holds(clean) }?.1 ?? fallback
   }
 
   /// Listings, headers and side files: each prefix's snapshot, the disk for everything else.
@@ -188,36 +183,25 @@ package struct CaptureScan: Sendable {
       },
       header: { path in try disk.header(path) },
       contents: { path in FrameSource.files.contents(path) })
-    let sources = loaded.map { ($0.snapshot.root, $0.snapshot.source) }
-    let pick: @Sendable (String) -> FrameSource = { path in
-      let owner = Self.owner(of: path, in: loaded)?.snapshot.root
-      return sources.first { $0.0 == owner }?.1 ?? local
-    }
+    let sources = loaded.map { ($0, $0.snapshot.source) }
     return FrameSource(
       walk: { root, skippingOutput in
-        try pick(root).listing(under: root, skippingOutput: skippingOutput)
+        try Self.pick(root, sources, or: local).listing(under: root, skippingOutput: skippingOutput)
       },
-      header: { path in try pick(path).header(path) },
-      contents: { path in pick(path).contents(path) })
+      header: { path in try Self.pick(path, sources, or: local).header(path) },
+      contents: { path in Self.pick(path, sources, or: local).contents(path) })
   }
 
   /// Pixels: the centred runs each snapshot holds (what it lacks is told to `asked`), the files
   /// of this Mac for everything else.
-  static func pixels(_ loaded: [Loaded], _ asked: RemoteSnapshot.Asked, _ disk: DiskReads)
-    -> PixelReader
-  {
+  static func pixels(_ loaded: [Loaded], _ asked: RemoteSnapshot.Asked) -> PixelReader {
     guard !loaded.isEmpty else { return .files }
-    let local = PixelReader(
-      planes: { path in try PixelReader.files.planes(path) },
-      centerSample: { path, count in try disk.centerSample(path, count) })
-    let readers = loaded.map { ($0.snapshot.root, $0.snapshot.pixels(asked)) }
-    let pick: @Sendable (String) -> PixelReader = { path in
-      let owner = Self.owner(of: path, in: loaded)?.snapshot.root
-      return readers.first { $0.0 == owner }?.1 ?? local
-    }
+    let readers = loaded.map { ($0, $0.snapshot.pixels(asked)) }
     return PixelReader(
-      planes: { path in try pick(path).planes(path) },
-      centerSample: { path, count in try pick(path).centerSample(path, count) })
+      planes: { path in try Self.pick(path, readers, or: .files).planes(path) },
+      centerSample: { path, count in
+        try Self.pick(path, readers, or: .files).centerSample(path, count)
+      })
   }
 
   /// `inventory` with the bucket frames whose checks were not made, and the side files that

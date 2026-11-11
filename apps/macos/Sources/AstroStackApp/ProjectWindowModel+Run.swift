@@ -120,7 +120,8 @@ extension ProjectWindowModel {
         }
         let inventory = scope.map { plan.inventory.scoped($0) } ?? plan.inventory
         // Looked up here, off the main actor (a Keychain prompt never freezes the window), and
-        // only for the buckets this inventory reads: a run of local frames never asks.
+        // only for the buckets this inventory reads. The plan above already read every bucket
+        // night of the project (card 0190): a project of folders alone never asks.
         let looked = await buckets(RunBuckets.sources(remote, readBy: inventory))
         var prepared = prepared
         prepared.stores = looked.stores

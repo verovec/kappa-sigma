@@ -80,8 +80,8 @@ offset, bin, warmer first).
 - Several roots scan as one capture (card 0190): `CaptureScan(roots:timeZone:).scan()` takes
   folders of this Mac and bucket prefixes in one ordered list, loads one `RemoteSnapshot` per
   prefix, and runs the synchronous scan once over them all through a composite `FrameSource` /
-  `PixelReader` (a path under a prefix's root is read from its snapshot, the deepest when prefixes
-  nest; anything else from disk). Grouping and verdicts therefore see the union: the darks of a
+  `PixelReader` (a path under a prefix's root is read from its snapshot, anything else from disk; a prefix
+  another prefix of the capture covers is dropped first, so no frame is walked twice). Grouping and verdicts therefore see the union: the darks of a
   calibration prefix serve the lights of another prefix or of a folder. `RemoteScan` is the
   one-prefix case of it. A prefix that cannot be read fails the whole scan, never the other roots
   alone (R2). `Scanned.caches` answers what was read of each prefix, by its root.

@@ -126,24 +126,33 @@ package struct ChannelCombinationProcess: ImageProcess {
 
   /// The reason a slot's row carries while it reads a layer the stack lacks (card 0135).
   package static let missingLayerReason = "the slot needs a layer the stack lacks"
-  package static let rowReasons = [missingLayerReason, profileReason]
+  /// The reason a slot's row carries while it reads a colour plane (`Ha.r`) of a layer the stack
+  /// holds without one (card 0195).
+  package static let planeReason = "the slot reads a colour plane of a layer that has none"
+  package static let rowReasons = [
+    missingLayerReason, profileReason, planeReason, profilePlaneReason,
+  ]
 
   /// The layers the slots name, whatever the bundle holds.
   package static func layersAsked(_ params: ParamSet) -> Set<String> {
     Set(layersNeeded(params: params))
   }
 
-  /// Each slot whose source names a layer outside `layerIDs`, every missing layer named as the
-  /// panel writes it.
-  package static func unavailableReasons(_ params: ParamSet, layerIDs: Set<String>)
-    -> [String: RowNote]
-  {
+  /// Each slot whose source cannot be read: a layer outside `layerIDs`, every missing one named
+  /// as the panel writes it, or a colour plane of a layer `planes` counts fewer than three for
+  /// (`LayerPlane.isReadable`, the rule the render applies — card 0195).
+  package static func unavailableReasons(
+    _ params: ParamSet, layerIDs: Set<String>, planes: [String: Int]
+  ) -> [String: RowNote] {
     var notes: [String: RowNote] = [:]
     for slot in slotSources {
-      let missing = layers(of: params.choice(slot)).filter { !layerIDs.contains($0) }
-      guard !missing.isEmpty else { continue }
-      let names = missing.map(EmissionLine.name(ofLayer:))
-      notes[slot] = RowNote(reason: missingLayerReason, subject: names.joined(separator: " + "))
+      let read = tokens(of: params.choice(slot)).map { LayerPlane($0) }
+      let missing = read.map(\.layer).filter { !layerIDs.contains($0) }
+      let flat = read.filter { !$0.isReadable(planes: planes) }.map(\.layer)
+      guard let reason = missing.isEmpty ? (flat.isEmpty ? nil : planeReason) : missingLayerReason
+      else { continue }
+      let names = (missing.isEmpty ? flat : missing).map(EmissionLine.name(ofLayer:))
+      notes[slot] = RowNote(reason: reason, subject: names.joined(separator: " + "))
     }
     return notes
   }

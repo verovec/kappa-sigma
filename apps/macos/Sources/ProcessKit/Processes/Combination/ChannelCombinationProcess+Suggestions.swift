@@ -3,9 +3,10 @@
 extension ChannelCombinationProcess {
   /// Why every slot is offered a palette's source; the suggestion's subject names the palette.
   package static let spelledReason = "the layers spell a palette this step does not read"
-  /// Why a slot that cannot run is offered another source, when the layers spell no palette.
+  /// Why a slot that cannot run (a layer the stack lacks, a colour plane of a layer that has
+  /// none) is offered another source, when the layers spell no palette.
   package static let lackingReason =
-    "the slot reads a layer the stack lacks: the source this stack opens on"
+    "the slot's source cannot be read on this stack: the source the stack opens on"
   /// Every reason the combination's suggestions give: keys of the catalog.
   package static let suggestionReasons = [spelledReason, lackingReason, skyBlackReason]
 
@@ -24,14 +25,14 @@ extension ChannelCombinationProcess {
 
   /// One suggestion per slot of `params` that `initialParams(planes:)` would fill otherwise.
   ///
-  /// Asked only when the step shows less colour than the layers could give: a slot reads a layer
-  /// outside `planes`, or the layers spell a palette while a colour slot is a leftover of a grey
+  /// Asked only when the step shows less colour than the layers could give: a slot cannot be
+  /// read on `planes` (`unavailableReasons(_:layerIDs:planes:)`), or the layers spell a palette while a colour slot is a leftover of a grey
   /// (`isLeftover`). With a palette spelled every slot goes to it (never a mix of two palettes),
   /// and the offer lasts until the last slot is taken; a luminance the stack holds is not offered
   /// away. Without one, only the slots that cannot run move.
   package static func sourceSuggestions(_ params: ParamSet, planes: [String: Int]) -> [Suggestion] {
     let layerIDs = Set(planes.keys)
-    let lacking = Set(unavailableReasons(params, layerIDs: layerIDs).keys)
+    let lacking = Set(unavailableReasons(params, layerIDs: layerIDs, planes: planes).keys)
     let palette = Palette.spelled(planes: planes)
     guard let opening = try? initialParams(planes: planes) else { return [] }
     if lacking.isEmpty {

@@ -114,7 +114,11 @@ package protocol ImageProcess {
   /// Why a row's value cannot run on a bundle of `layerIDs`, by parameter id: shown under the
   /// row, never greying the process (the panel would close). By default, each asked layer the
   /// bundle lacks, on the first row about it, with the first reason the process lists.
-  static func unavailableReasons(_ params: ParamSet, layerIDs: Set<String>) -> [String: RowNote]
+  /// `planes` counts the planes of the bundle's layers (card 0195: a token may name a plane the
+  /// layer does not have); a layer it does not count is judged on its presence alone.
+  static func unavailableReasons(
+    _ params: ParamSet, layerIDs: Set<String>, planes: [String: Int]
+  ) -> [String: RowNote]
 
   /// Every reason a row note of the process may give (`unavailableReasons(_:layerIDs:)`, and
   /// the combination's `profileNotes`): English keys of the catalog.
@@ -123,8 +127,9 @@ package protocol ImageProcess {
   /// The options a bundle of `layerIDs` cannot run, by parameter then option, with the reason
   /// (a catalog key, listed in `rowReasons`): shown greyed, never switched away from (R2). By
   /// default, the current value of every layer parameter whose row carries a note (card 0139).
-  static func unavailableOptions(_ params: ParamSet, layerIDs: Set<String>)
-    -> [String: [String: String]]
+  static func unavailableOptions(
+    _ params: ParamSet, layerIDs: Set<String>, planes: [String: Int]
+  ) -> [String: [String: String]]
 
   /// The palettes a bundle of `planes` offers this process (card 0139): templates that fill
   /// visible parameters, never a hidden setting. `nil` for a process without a palette menu
@@ -222,9 +227,9 @@ extension ImageProcess {
 
   /// Each asked layer absent from `layerIDs`, on the first row about it (`needsLayer`), with the
   /// first catalog reason and the layer named as the panel writes it (a line's name).
-  package static func unavailableReasons(_ params: ParamSet, layerIDs: Set<String>)
-    -> [String: RowNote]
-  {
+  package static func unavailableReasons(
+    _ params: ParamSet, layerIDs: Set<String>, planes: [String: Int]
+  ) -> [String: RowNote] {
     guard let reason = rowReasons.first else { return [:] }
     var notes: [String: RowNote] = [:]
     for layer in layersAsked(params).subtracting(layerIDs) {
@@ -236,16 +241,30 @@ extension ImageProcess {
     return notes
   }
 
+  /// The notes of a bundle whose plane counts are not known: presence alone is judged.
+  package static func unavailableReasons(_ params: ParamSet, layerIDs: Set<String>)
+    -> [String: RowNote]
+  {
+    unavailableReasons(params, layerIDs: layerIDs, planes: [:])
+  }
+
+  /// The greyed options of a bundle whose plane counts are not known.
+  package static func unavailableOptions(_ params: ParamSet, layerIDs: Set<String>)
+    -> [String: [String: String]]
+  {
+    unavailableOptions(params, layerIDs: layerIDs, planes: [:])
+  }
+
   /// No row reason.
   package static var rowReasons: [String] { [] }
 
   /// The current value of each noted layer parameter, with the note's reason: the one « layer
   /// missing » rule, worded on the row and greyed on its value.
-  package static func unavailableOptions(_ params: ParamSet, layerIDs: Set<String>)
-    -> [String: [String: String]]
-  {
+  package static func unavailableOptions(
+    _ params: ParamSet, layerIDs: Set<String>, planes: [String: Int]
+  ) -> [String: [String: String]] {
     var greyed: [String: [String: String]] = [:]
-    for (id, note) in unavailableReasons(params, layerIDs: layerIDs) {
+    for (id, note) in unavailableReasons(params, layerIDs: layerIDs, planes: planes) {
       guard case .layer? = schema.spec(id)?.kind else { continue }
       greyed[id] = [params.choice(id): note.reason]
     }

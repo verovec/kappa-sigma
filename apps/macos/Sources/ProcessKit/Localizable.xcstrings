@@ -3185,6 +3185,22 @@
         }
       }
     },
+    "the slot reads a colour plane of a layer that has none": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the slot reads a colour plane of a layer that has none"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "le canal lit un plan couleur d’une couche qui n’en a pas"
+          }
+        }
+      }
+    },
     "the profile asks for a layer the stack lacks": {
       "localizations": {
         "en": {
@@ -3197,6 +3213,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "le profil demande une couche que l’empilement n’a pas"
+          }
+        }
+      }
+    },
+    "the profile asks for a colour plane of a layer that has none": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the profile asks for a colour plane of a layer that has none"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "le profil demande un plan couleur d’une couche qui n’en a pas"
           }
         }
       }
@@ -3233,18 +3265,18 @@
         }
       }
     },
-    "the slot reads a layer the stack lacks: the source this stack opens on": {
+    "the slot's source cannot be read on this stack: the source the stack opens on": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "the slot reads a layer the stack lacks: the source this stack opens on"
+            "value": "the slot's source cannot be read on this stack: the source the stack opens on"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "le canal lit une couche que l’empilement n’a pas : la source sur laquelle cet empilement s’ouvre"
+            "value": "la source du canal ne peut pas être lue sur cet empilement : la source sur laquelle il s’ouvre"
           }
         }
       }

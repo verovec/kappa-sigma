@@ -215,4 +215,21 @@ struct ChannelCombinationSuggestionTests {
       params: ParamSet(schema: ChannelCombinationProcess.schema), device: device)
     #expect(natural.suggestions(stats: LayerStats(channels: []), layers: colour).isEmpty)
   }
+
+  @Test(
+    "testSuggestions_PlaneTokenOnMonoLayer: a colour plane of a one-plane layer is offered away",
+    arguments: [
+      Case(
+        sources: ["Ha.r", "Ha.g", "Ha.b", "none"], planes: mono("Ha"),
+        offered: ["rSource": "Ha", "gSource": "Ha", "bSource": "Ha"], subject: nil),
+      Case(
+        sources: ["Ha.r", "Ha.g", "Ha.b", "none"], planes: mono("Ha", "OIII"),
+        offered: ["rSource": "Ha", "gSource": "OIII", "bSource": "OIII"], subject: "HOO"),
+    ])
+  func testSuggestions_PlaneTokenOnMonoLayer(row: Case) throws {
+    let suggestions = ChannelCombinationProcess.sourceSuggestions(
+      try Self.params(row.sources), planes: row.planes)
+    #expect(Self.offered(suggestions) == row.offered)
+    #expect(Set(suggestions.map(\.subject)) == [row.subject])
+  }
 }

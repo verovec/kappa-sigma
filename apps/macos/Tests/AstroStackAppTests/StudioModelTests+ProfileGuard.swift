@@ -101,4 +101,48 @@ extension StudioModelTests {
     workspace.editStep(0)
     #expect(try #require(workspace.panel).rowNotes.isEmpty)
   }
+
+  @Test(
+    "testStepZero_ProfilePlaneTokenOnMonoLayer: an OSC dual-band profile opens a mono stack",
+    .scratchDirectory)
+  func testStepZero_ProfilePlaneTokenOnMonoLayer() throws {
+    let planes = ["Ha": 1, "OIII": 1]
+    let (workspace, opened) = try Self.workspace(
+      planes: planes, profile: ["Ha.r", "Ha.g", "Ha.b", "none"])
+    defer { try? opened.package.close() }
+    let step = try #require(workspace.studio.steps.first)
+    #expect(
+      ChannelCombinationProcess.slotSources.map(step.params.choice)
+        == ["Ha", "OIII", "OIII", "none"])
+    workspace.editStep(0)
+    let panel = try #require(workspace.panel)
+    #expect(Set(panel.rowNotes.keys) == ["rSource", "gSource", "bSource"])
+    let reason = ChannelCombinationProcess.profilePlaneReason
+    #expect(panel.rowNotes["rSource"]?.reason == reason)
+    #expect(
+      ProcessPanelModel.words(reason: reason, subject: "Ha", locale: Locale(identifier: "fr"))
+        == "le profil demande un plan couleur d’une couche qui n’en a pas (Ha)")
+  }
+
+  @Test(
+    "a slot set to a colour plane of a one-plane layer says why it cannot run, in fr and en",
+    .scratchDirectory)
+  func testPanel_PlaneTokenOnMonoLayer() throws {
+    let (workspace, opened) = try Self.workspace(
+      planes: ["Ha": 1, "OIII": 1], profile: ["Ha", "OIII", "OIII", "none"])
+    defer { try? opened.package.close() }
+    workspace.choose(
+      ChannelCombinationProcess.id, params: try Self.combination(["Ha.r", "OIII", "OIII", "none"]))
+    let panel = try #require(workspace.panel)
+    let reason = ChannelCombinationProcess.planeReason
+    let note = try #require(panel.rowNotes["rSource"])
+    #expect(note.reason == reason)
+    #expect(Set(panel.rowNotes.keys) == ["rSource"])
+    #expect(
+      ProcessPanelModel.words(reason: reason, subject: "Ha", locale: Locale(identifier: "fr"))
+        == "le canal lit un plan couleur d’une couche qui n’en a pas (Ha)")
+    #expect(
+      ProcessPanelModel.words(reason: reason, subject: "Ha", locale: Locale(identifier: "en"))
+        == "the slot reads a colour plane of a layer that has none (Ha)")
+  }
 }

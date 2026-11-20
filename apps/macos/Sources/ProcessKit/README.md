@@ -39,7 +39,13 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   LRGB → RGB → the palette the layers spell → mono on `Filter.monoSource`) and returns the reason, and `Palette.oiiiAsBlue(present:)`
   offers OIII in the blue slot without a B filter — both suggestions, never applied (card 0137). A
   missing layer gives `unavailableReason` ("HOO needs an OIII layer") and `ProcessError.missingLayer`
-  — never another layer (R2).
+  — never another layer (R2). `blackSuggestions(_:layers:)` (card 0172,
+  `ChannelCombinationProcess+Black.swift`) offers each slot's black at its plane's bundle median
+  (the sky: raw mono masters carry their own offset, which sets the R:G:B ratios at black 0) —
+  none on a colour bundle, a grey of one plane, a √(A·B) slot or a black the user set; the
+  defaults stay 0 (step 0 byte-identical). To add another combination suggestion: a function next to it, its reason in
+  `suggestionReasons` + the catalog (en, fr), its list appended in `suggestions(stats:layers:)`
+  with distinct param ids.
 - **Masks** (card 0054): `Mask` = `MaskSource` (luminosity range with linear soft edges; stars
   proxy = luma above its local mean, until 0055's star layer) + feather (box blur of
   `round(px / scale)`: a hard edge becomes a linear ramp) + invert, built by `MaskBuilder`.

@@ -3185,6 +3185,22 @@
         }
       }
     },
+    "the sky level of the slot's layer on the stack: subtracted, the channel ratios show the colour": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the sky level of the slot's layer on the stack: subtracted, the channel ratios show the colour"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "le niveau de ciel de la couche du canal à l’empilement : soustrait, les rapports entre canaux montrent la couleur"
+          }
+        }
+      }
+    },
     "the continuum scale fitted on the stack": {
       "localizations": {
         "en": {

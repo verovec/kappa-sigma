@@ -116,7 +116,8 @@ package protocol ImageProcess {
   /// bundle lacks, on the first row about it, with the first reason the process lists.
   static func unavailableReasons(_ params: ParamSet, layerIDs: Set<String>) -> [String: RowNote]
 
-  /// Every reason `unavailableReasons(_:layerIDs:)` may give: English keys of the catalog.
+  /// Every reason a row note of the process may give (`unavailableReasons(_:layerIDs:)`, and
+  /// the combination's `profileNotes`): English keys of the catalog.
   static var rowReasons: [String] { get }
 
   /// The options a bundle of `layerIDs` cannot run, by parameter then option, with the reason

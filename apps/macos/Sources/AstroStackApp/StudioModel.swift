@@ -28,6 +28,9 @@ package final class StudioModel {
   package private(set) var head: AstroImage
   /// The stack's header (its base layer's): where suggestions read pointing and optics.
   @ObservationIgnored package let header: FITSHeader?
+  /// The kept profile's channel combination, as the profile wrote it (card 0194): what step 0
+  /// was fitted from, and what the combination panel compares its rows with.
+  @ObservationIgnored package let profileCombination: ParamSet?
 
   @ObservationIgnored let store: ProjectStore
   /// The project image (role `studio`) the history is mirrored on.
@@ -40,8 +43,8 @@ package final class StudioModel {
   ///
   /// Its files are in `stackFolder` inside the project package `packageFolder`; its outputs keep
   /// `header`'s descriptive cards. A fresh history starts with the channel combination of
-  /// `combination` (the kept profile's values), else its defaults — a step like any other, never
-  /// hidden (R2).
+  /// `combination` (the kept profile's values, fitted to the layers the bundle holds — card
+  /// 0194), else its defaults — a step like any other, never hidden (R2).
   package init(
     store: ProjectStore, stackID: Int64, packageFolder: URL, stackFolder: URL,
     bundle: PipelineBundle, header: FITSHeader? = nil, combination: ParamSet? = nil,
@@ -66,6 +69,7 @@ package final class StudioModel {
       history: history, bundle: bundle, registry: registry, device: device, branches: branches)
     self.store = store
     self.header = header
+    profileCombination = combination
     self.stackID = stackID
     packageRoot = packageFolder
     let images = try store.images(stackID: stackID)
@@ -75,9 +79,12 @@ package final class StudioModel {
     head = history.current
     if history.steps.isEmpty && !history.canRedo {
       // The palette the bundle's layers spell (card 0138): the schema's defaults on OSC.
+      // A kept profile's sources the stack lacks fall back slot by slot (card 0194).
+      let planes = session.layerPlanes()
       let params =
-        try combination
-        ?? ChannelCombinationProcess.initialParams(planes: session.layerPlanes())
+        try combination.map {
+          try ChannelCombinationProcess.reconciled(profile: $0, planes: planes).params
+        } ?? ChannelCombinationProcess.initialParams(planes: planes)
       try apply(ChannelCombinationProcess.id, params: params)
     }
     refresh()

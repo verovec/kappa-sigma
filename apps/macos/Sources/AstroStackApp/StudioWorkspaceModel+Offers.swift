@@ -98,6 +98,12 @@ extension StudioWorkspaceModel {
     let layerPlanes = studio.session.layerPlanes()
     if panel.layerPlanes != layerPlanes { panel.layerPlanes = layerPlanes }
     if panel.layerIDs != layerIDs { panel.layerIDs = layerIDs }
+    // What the kept profile asked for and the stack lacks, on the combination's rows (0194).
+    if panel.type == ChannelCombinationProcess.self, let profile = studio.profileCombination {
+      panel.extraNotes = {
+        ChannelCombinationProcess.profileNotes(profile: profile, params: $0, layerIDs: layerIDs)
+      }
+    }
     panel.headSize = (head.width, head.height)
     // A head already solved says so on the plate-solve panel (card 0130); a new solve stays a choice.
     panel.solved =

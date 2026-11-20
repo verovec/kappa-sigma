@@ -54,6 +54,10 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   `StudioSession.suggestions(for:params:before:)` (a later step still gets the head's).
   To add another combination suggestion: a function next to these, its reason in
   `suggestionReasons` + the catalog (en, fr), its list appended in `suggestions(stats:layers:)`.
+  A kept profile's combination goes through
+  `reconciled(profile:planes:)` before it becomes step 0 (card 0194,
+  `ChannelCombinationProcess+Profile.swift`): a slot whose layer the stack lacks takes the opening
+  source, and `profileNotes(profile:params:layerIDs:)` names what the profile asked on that row.
 - **Masks** (card 0054): `Mask` = `MaskSource` (luminosity range with linear soft edges; stars
   proxy = luma above its local mean, until 0055's star layer) + feather (box blur of
   `round(px / scale)`: a hard edge becomes a linear ramp) + invert, built by `MaskBuilder`.

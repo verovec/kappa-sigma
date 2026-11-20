@@ -3185,6 +3185,22 @@
         }
       }
     },
+    "the profile asks for a layer the stack lacks": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the profile asks for a layer the stack lacks"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "le profil demande une couche que l’empilement n’a pas"
+          }
+        }
+      }
+    },
     "the slot's layer on the stack, 2.8 σ under its sky: subtracted, the channel ratios show the colour": {
       "localizations": {
         "en": {

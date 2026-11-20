@@ -69,6 +69,11 @@ package final class ProcessPanelModel {
   ///
   /// Shown under the row, never greying the process; kept with the values and the layers.
   package private(set) var rowNotes: [String: RowNote] = [:]
+  /// Notes the workspace adds for the current values (card 0194: what a kept profile asked for);
+  /// a row's own note comes first.
+  @ObservationIgnored package var extraNotes: (ParamSet) -> [String: RowNote] = { _ in [:] } {
+    didSet { refreshLayerRows() }
+  }
   /// The head's size in full-resolution pixels (`nil` until the workspace sets it).
   ///
   /// Setting it sizes the sliders the process sizes from the image (`displayRanges`).
@@ -116,7 +121,8 @@ package final class ProcessPanelModel {
   private func refreshLayerRows() {
     let hiddenNow = layerIDs.map { type.hiddenParameters(params, layerIDs: $0) } ?? []
     if hiddenNow != hidden { hidden = hiddenNow }
-    let notesNow = layerIDs.map { type.unavailableReasons(params, layerIDs: $0) } ?? [:]
+    let own = layerIDs.map { type.unavailableReasons(params, layerIDs: $0) } ?? [:]
+    let notesNow = own.merging(extraNotes(params)) { own, _ in own }
     if notesNow != rowNotes { rowNotes = notesNow }
     let greyedNow = layerIDs.map { type.unavailableOptions(params, layerIDs: $0) } ?? [:]
     guard greyedNow != layerGreyed else { return }

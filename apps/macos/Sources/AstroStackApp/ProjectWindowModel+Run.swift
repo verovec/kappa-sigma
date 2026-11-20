@@ -310,7 +310,7 @@ extension ProjectWindowModel {
   }
 
   /// The Studio's working image of stack `stackID`: its layers read off the main actor, its
-  /// history opened (step 0 = the channel combination of the kept profile, else the defaults).
+  /// history opened (step 0 = the kept profile's channel combination fitted to its layers, else the defaults).
   func openWorkspace(
     _ source: LegacyRunSource, stackID: Int64, folder: URL, bundlePath: String
   ) async throws {

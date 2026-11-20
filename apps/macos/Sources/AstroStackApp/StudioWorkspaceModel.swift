@@ -74,6 +74,9 @@ package final class StudioWorkspaceModel {
         fullPreviewTask?.cancel()
         chainPreviewReduced = false
       }
+      // What the panel is offered follows what it edits: the step's own inputs, or the head's
+      // (card 0172).
+      if let panel { panel.suggestions = offers(for: panel.type, params: panel.params) }
       if panel != nil { schedulePreview() }
     }
   }

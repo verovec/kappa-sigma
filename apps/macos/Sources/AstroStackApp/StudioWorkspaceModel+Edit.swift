@@ -19,8 +19,6 @@ extension StudioWorkspaceModel {
     choose(step.processID, params: step.params)
     // After `choose`, which ends any other edit.
     editing = index
-    // `choose` offered the head's values: the step's own inputs now (card 0172).
-    if let panel { panel.suggestions = offers(for: panel.type, params: panel.params) }
     failure = nil
   }
 

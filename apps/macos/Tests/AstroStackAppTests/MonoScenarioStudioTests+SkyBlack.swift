@@ -80,5 +80,25 @@ extension MonoScenarioStudioTests {
     #expect(workspace.failure == nil)
     #expect(try Self.blacks(workspace) == stack)
     #expect(try #require(workspace.studio.steps.first).params == recorded)
+
+    // Another process chosen during that edit is on the head: offered the head's statistics.
+    workspace.choose(ChannelCombinationProcess.id, params: recorded)
+    #expect(workspace.editing == nil)
+    let head = ChannelCombinationProcess.blackSuggestions(
+      recorded, layers: try workspace.studio.session.layerStats())
+    #expect(try Self.blacks(workspace) == head)
+    #expect(ids.isEmpty || head != stack, "the cropped layers have another sky")
+  }
+
+  @Test("testBlacksTakenStayShown: on a mono head too, a black the step subtracts is on screen")
+  func testBlacksTakenStayShown() throws {
+    let params = try ChannelCombinationProcess.initialParams(planes: ["R": 1, "G": 1, "B": 1])
+    let panel = ProcessPanelModel(type: ChannelCombinationProcess.self, params: params)
+    panel.headStats = LayerStats(
+      channels: [ChannelStats(median: 0.1, madn: 0.01, minimum: 0, maximum: 1)])
+    #expect(!panel.visibleSpecs.map(\.id).contains("gBlack"))
+    panel.set("gBlack", .number(0.0086))
+    #expect(panel.visibleSpecs.map(\.id).contains("gBlack"))
+    #expect(!panel.visibleSpecs.map(\.id).contains("rBlack"))
   }
 }

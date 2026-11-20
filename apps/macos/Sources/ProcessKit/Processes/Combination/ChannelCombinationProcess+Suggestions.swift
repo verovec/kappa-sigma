@@ -16,8 +16,10 @@ extension ChannelCombinationProcess {
     // The step context also holds the outputs of later steps, by role (a starless, a background
     // model): no colour source, as `StudioSession.layerPlanes()` says.
     let stack = layers.filter { LayerRole(rawValue: $0.key) == nil }
-    return Self.sourceSuggestions(params, planes: stack.mapValues { $0.channels.count })
-      + Self.blackSuggestions(params, layers: stack)
+    let sources = Self.sourceSuggestions(params, planes: stack.mapValues { $0.channels.count })
+    // A slot about to read another layer is not offered the sky of the one it reads now.
+    return sources
+      + Self.blackSuggestions(params, layers: stack, pending: Set(sources.map(\.paramID)))
   }
 
   /// One suggestion per slot of `params` that `initialParams(planes:)` would fill otherwise.

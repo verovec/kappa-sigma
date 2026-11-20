@@ -5,8 +5,8 @@ import ProcessKit
 import TestSupport
 import Testing
 
-/// Card 0172: an applied step being edited is offered values from what THAT step reads — the
-/// layers before it — not from the head the later steps left.
+/// Card 0172: step 0 being edited is offered values from the stack it read, not from the head the
+/// later steps left.
 @Suite(
   "StudioSession — the suggestions of an edited step read its own inputs",
   .enabled(if: MTLCreateSystemDefaultDevice() != nil))
@@ -39,7 +39,7 @@ struct StudioSessionSuggestionContextTests {
   }
 
   @Test("testSuggestions_BeforeAnEditedStep", .scratchDirectory)
-  func testSuggestions_BeforeAnEditedStep() async throws {
+  func testSuggestions_BeforeAnEditedStep() throws {
     let session = try Self.session("edited")
     let combination = try ChannelCombinationProcess.initialParams(planes: ["R": 1, "G": 1, "B": 1])
     let type = ChannelCombinationProcess.self
@@ -60,17 +60,8 @@ struct StudioSessionSuggestionContextTests {
     #expect(
       try session.suggestions(for: type, params: combination, before: 0) == stack,
       "step 0 read the stack's layers")
-    #expect(
-      try session.suggestions(for: type, params: combination, before: 1) == stack,
-      "the crop read them too")
-    let afterCrop = try session.suggestions(for: type, params: combination, before: 2)
-    #expect(afterCrop == head, "the gain read the cropped layers")
-
-    // The same once the chain preview of that edit holds its input.
-    _ = try await session.previewChain(from: 2, params: gain.params)
-    #expect(try session.suggestions(for: type, params: combination, before: 2) == afterCrop)
-    #expect(
-      try session.suggestions(for: type, params: combination, before: 9) == head,
-      "no such step: the head")
+    // A later step's inputs are not held without a read: the head's, as for the next step.
+    #expect(try session.suggestions(for: type, params: combination, before: 2) == head)
+    #expect(try session.suggestions(for: type, params: combination, before: 9) == head)
   }
 }

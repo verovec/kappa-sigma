@@ -1,5 +1,6 @@
 import Metal
 import ProcessKit
+import RenderKit
 import Testing
 
 /// Card 0172: each slot's black point is offered just under the sky its layer measures on the
@@ -65,23 +66,23 @@ extension ChannelCombinationSuggestionTests {
   static let blacksOffered: [Row] = [
     Row(
       name: "LRGB at the M42 skies of 0170", sources: ["R", "G", "B", "L"], medians: m42,
-      ids: ["rBlack", "gBlack", "bBlack", "lBlack"], values: [0.02322, 0.00860, 0.02423, 0.1596]),
+      ids: ["rBlack", "gBlack", "bBlack", "lBlack"], values: [0.0232, 0.0086, 0.0242, 0.1596]),
     Row(
       name: "RGB without luminance: three slots", sources: ["R", "G", "B", "none"], medians: m42,
-      ids: ["rBlack", "gBlack", "bBlack"], values: [0.02322, 0.00860, 0.02423]),
+      ids: ["rBlack", "gBlack", "bBlack"], values: [0.0232, 0.0086, 0.0242]),
     Row(
       name: "SHO: each line's own sky", sources: ["SII", "Ha", "OIII", "none"],
       medians: ["SII": [0.004], "Ha": [0.00183], "OIII": [0.006]],
-      ids: ["rBlack", "gBlack", "bBlack"], values: [0.004, 0.00183, 0.006]),
+      ids: ["rBlack", "gBlack", "bBlack"], values: [0.004, 0.0018, 0.006]),
     Row(
-      name: "2.8 σ of the layer's noise under its sky: the sky itself is not clipped",
+      name: "2.8 σ of the layer's noise under its sky, to the four decimals its row shows",
       sources: ["R", "G", "B", "L"], medians: m42, madn: 0.001,
       ids: ["rBlack", "gBlack", "bBlack", "lBlack"],
-      values: [0.02042, 0.00580, 0.02143, 0.1568]),
+      values: [0.0204, 0.0058, 0.0214, 0.1568]),
     Row(
       name: "a black set for another source is offered this one's",
       sources: ["Ha", "G", "B", "none"], blacks: ["rBlack": 0.02322], medians: m42,
-      ids: ["rBlack", "gBlack", "bBlack"], values: [0.00183, 0.00860, 0.02423]),
+      ids: ["rBlack", "gBlack", "bBlack"], values: [0.0018, 0.0086, 0.0242]),
     Row(
       name: "a sky above the range is clamped to it", sources: ["R", "G", "B", "none"],
       medians: ["R": [1.4], "G": [0.5], "B": [1]],
@@ -110,26 +111,30 @@ extension ChannelCombinationSuggestionTests {
       sources: ["Ha", "OIII", "OIII", "none"],
       medians: ["RGB": [0.02, 0.03, 0.025], "Ha": [0.002], "OIII": [0.003]], ids: [], values: []),
     Row(
-      name: "a √(A·B) slot gets none, the others theirs",
+      name: "a √(A·B) slot has no sky: the colour slots go together or not at all",
       sources: ["Ha", "Ha*OIII", "OIII", "none"], medians: ["Ha": [0.002], "OIII": [0.003]],
-      ids: ["rBlack", "bBlack"], values: [0.002, 0.003]),
+      ids: [], values: []),
     Row(
       name: "a black already at its sky is not offered again", sources: ["R", "G", "B", "L"],
-      blacks: ["gBlack": 0.00860], medians: m42,
-      ids: ["rBlack", "bBlack", "lBlack"], values: [0.02322, 0.02423, 0.1596]),
+      blacks: ["gBlack": 0.0086], medians: m42,
+      ids: ["rBlack", "bBlack", "lBlack"], values: [0.0232, 0.0242, 0.1596]),
     Row(
-      name: "a noise deeper than the sky leaves the black where it is",
-      sources: ["R", "G", "B", "none"], medians: m42, madn: 0.005,
-      ids: ["rBlack", "bBlack"], values: [0.00922, 0.01023]),
-    Row(
-      name: "a layer the bundle has no statistics of", sources: ["R", "G", "B", "L"],
-      medians: ["R": [0.02322], "B": [0.02423], "L": [0.1596]],
-      ids: ["rBlack", "bBlack", "lBlack"], values: [0.02322, 0.02423, 0.1596]),
-    Row(
-      name: "a sky at or under 0 leaves the black where it is",
+      name: "a colour layer without statistics: no colour black, the luminance its own",
       sources: ["R", "G", "B", "L"],
-      medians: ["R": [0], "G": [-0.001], "B": [0.02423], "L": [.nan]],
-      ids: ["bBlack"], values: [0.02423]),
+      medians: ["R": [0.02322], "B": [0.02423], "L": [0.1596]],
+      ids: ["lBlack"], values: [0.1596]),
+    Row(
+      name: "a colour sky at or under 0, a luminance without a number: none",
+      sources: ["R", "G", "B", "L"],
+      medians: ["R": [0], "G": [-0.001], "B": [0.02423], "L": [.nan]], ids: [], values: []),
+    Row(
+      name: "a noise deeper than one colour sky: two channels alone would be a cast",
+      sources: ["R", "G", "B", "L"], medians: m42, madn: 0.005,
+      ids: ["lBlack"], values: [0.1456]),
+    Row(
+      name: "a level under what a row can show is no black",
+      sources: ["SII", "Ha", "OIII", "none"],
+      medians: ["SII": [0.004], "Ha": [0.00004], "OIII": [0.006]], ids: [], values: []),
     Row(
       name: "a grey of one layer has no ratio to give back", sources: ["L", "L", "L", "none"],
       medians: m42, ids: [], values: []),
@@ -162,7 +167,7 @@ extension ChannelCombinationSuggestionTests {
     #expect(
       suggestions
         == Self.expected(
-          ["rBlack", "gBlack", "bBlack", "lBlack"], [0.02322, 0.00860, 0.02423, 0.1596]))
+          ["rBlack", "gBlack", "bBlack", "lBlack"], [0.0232, 0.0086, 0.0242, 0.1596]))
     #expect(Set(suggestions.map(\.paramID)).count == suggestions.count, "one per parameter")
     #expect(
       suggestions.map(\.reason).allSatisfy(ChannelCombinationProcess.suggestionReasons.contains))
@@ -176,6 +181,8 @@ extension ChannelCombinationSuggestionTests {
     #expect(ChannelCombinationProcess.promoted(untouched).isEmpty)
     #expect(ChannelCombinationProcess.showsSuggestedRows, "an offered black is on screen")
     #expect(!LevelsProcess.showsSuggestedRows, "elsewhere a suggested row waits for Advanced")
+    // The reason names the figure the level is built with.
+    #expect(AutoSTF.shadowsClip == -2.8 && ChannelCombinationProcess.skyBlackReason.contains("2.8"))
     let set = try Self.params(
       sources: ["R", "G", "B", "L"], blacks: ["gBlack": 0.004, "lBlack": 0.1])
     #expect(ChannelCombinationProcess.promoted(set) == ["gBlack", "lBlack"])
@@ -194,7 +201,13 @@ extension ChannelCombinationSuggestionTests {
     // A later step's output, by role: neither a source nor a sky.
     layers[LayerRole.starless.rawValue] = LayerStats(channels: [])
     let suggestions = process.suggestions(stats: LayerStats(channels: []), layers: layers)
-    #expect(suggestions.map(\.paramID) == ["bSource", "rBlack", "gBlack", "lBlack"])
+    // The colour blacks wait for the blue source: a sky taken from two channels is a cast.
+    #expect(suggestions.map(\.paramID) == ["bSource", "lBlack"])
+    // A slot about to read another layer is not offered the sky of the one it reads now.
+    let leftover = try Self.params(sources: ["L", "L", "B", "none"])
+    let offered = try ChannelCombinationProcess(params: leftover, device: device)
+      .suggestions(stats: LayerStats(channels: []), layers: layers)
+    #expect(offered.map(\.paramID) == ["rSource", "gSource", "lSource"])
     #expect(Set(suggestions.map(\.paramID)).count == suggestions.count)
     #expect(
       suggestions.map(\.reason).allSatisfy(ChannelCombinationProcess.suggestionReasons.contains))

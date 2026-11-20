@@ -46,9 +46,12 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   slot's black at its plane's bundle median − 2.8 MADN (card 0172, `blackSuggestions(_:layers:)`
   in `ChannelCombinationProcess+Black.swift`; `AutoSTF.shadowsClip`: raw mono masters carry
   their own sky offset, which sets the R:G:B ratios at black 0; under the sky so its noise is
-  not clipped) — none on a colour bundle, a grey of one plane, a √(A·B) slot or a black already
-  there; the defaults stay 0 (step 0 byte-identical), a non-zero black is `promoted`, an offered one shown (`showsSuggestedRows`). An applied
-  step being edited is offered what it read: `StudioSession.suggestions(for:params:before:)`.
+  not clipped; four decimals, what the row shows) — none on a colour bundle or a grey of one
+  plane; the three colour slots together or not at all (a √(A·B) slot, a missing statistic, a
+  level ≤ 0 or a source about to be replaced withholds them); the defaults stay 0 (step 0
+  byte-identical), a non-zero black is `promoted`, an offered one shown (`showsSuggestedRows`).
+  Step 0 being edited is offered what it read, the stack:
+  `StudioSession.suggestions(for:params:before:)` (a later step still gets the head's).
   To add another combination suggestion: a function next to these, its reason in
   `suggestionReasons` + the catalog (en, fr), its list appended in `suggestions(stats:layers:)`.
 - **Masks** (card 0054): `Mask` = `MaskSource` (luminosity range with linear soft edges; stars

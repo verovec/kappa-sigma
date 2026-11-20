@@ -39,7 +39,10 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   LRGB → RGB → the palette the layers spell → mono on `Filter.monoSource`) and returns the reason, and `Palette.oiiiAsBlue(present:)`
   offers OIII in the blue slot without a B filter — both suggestions, never applied (card 0137). A
   missing layer gives `unavailableReason` ("HOO needs an OIII layer") and `ProcessError.missingLayer`
-  — never another layer (R2).
+  — never another layer (R2). Its `suggestions(stats:layers:)` (card 0171,
+  `ChannelCombinationProcess+Suggestions.swift`) offers the sources `initialParams(planes:)` opens
+  on when a recorded step is a grey while the layers spell a palette, or reads a layer the stack
+  lacks: the history is never rewritten.
 - **Masks** (card 0054): `Mask` = `MaskSource` (luminosity range with linear soft edges; stars
   proxy = luma above its local mean, until 0055's star layer) + feather (box blur of
   `round(px / scale)`: a hard edge becomes a linear ramp) + invert, built by `MaskBuilder`.

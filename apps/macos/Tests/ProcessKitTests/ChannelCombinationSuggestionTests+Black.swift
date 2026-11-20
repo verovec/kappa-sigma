@@ -2,16 +2,17 @@ import Metal
 import ProcessKit
 import Testing
 
-/// Card 0172: each slot's black point is offered at the sky its layer measures on the stack,
-/// never set (R2) — the defaults stay 0 and step 0 keeps its bytes.
+/// Card 0172: each slot's black point is offered just under the sky its layer measures on the
+/// stack (median − 2.8 MADN, the autostretch's shadows), never set (R2) — the defaults stay 0 and
+/// step 0 keeps its bytes.
 @Suite("ChannelCombination suggestions: per-channel black points from the measured sky")
 struct ChannelCombinationSuggestionTests {
-  /// Bundle statistics with `medians` per layer, one entry per plane.
-  static func stats(_ medians: [String: [Double]]) -> [String: LayerStats] {
+  /// Bundle statistics with `medians` per layer, one entry per plane, each with the noise `madn`.
+  static func stats(_ medians: [String: [Double]], madn: Double = 0) -> [String: LayerStats] {
     medians.mapValues { planes in
       LayerStats(
         channels: planes.map {
-          ChannelStats(median: $0, madn: 0.001, minimum: 0, maximum: 1)
+          ChannelStats(median: $0, madn: madn, minimum: 0, maximum: 1)
         })
     }
   }
@@ -32,11 +33,26 @@ struct ChannelCombinationSuggestionTests {
     }
   }
 
+  /// `suggestions` are the row's: its ids in slot order, its values within 1e-12 (a median less
+  /// a multiple of the noise is not a literal), the one reason.
+  static func expect(_ suggestions: [Suggestion], _ row: Row) {
+    #expect(suggestions.map(\.paramID) == row.ids)
+    for (suggestion, value) in zip(suggestions, row.values) {
+      #expect(suggestion.reason == ChannelCombinationProcess.skyBlackReason)
+      guard case .number(let offered) = suggestion.value else {
+        Issue.record("\(suggestion.paramID) is not a number")
+        continue
+      }
+      #expect(abs(offered - value) <= 1e-12, "\(suggestion.paramID): \(offered)")
+    }
+  }
+
   struct Row: CustomTestStringConvertible, Sendable {
     let name: String
     let sources: [String]
     var blacks: [String: Double] = [:]
     let medians: [String: [Double]]
+    var madn: Double = 0
     let ids: [String]
     let values: [Double]
     var testDescription: String { name }
@@ -59,6 +75,15 @@ struct ChannelCombinationSuggestionTests {
       medians: ["SII": [0.004], "Ha": [0.00183], "OIII": [0.006]],
       ids: ["rBlack", "gBlack", "bBlack"], values: [0.004, 0.00183, 0.006]),
     Row(
+      name: "2.8 σ of the layer's noise under its sky: the sky itself is not clipped",
+      sources: ["R", "G", "B", "L"], medians: m42, madn: 0.001,
+      ids: ["rBlack", "gBlack", "bBlack", "lBlack"],
+      values: [0.02042, 0.00580, 0.02143, 0.1568]),
+    Row(
+      name: "a black set for another source is offered this one's",
+      sources: ["Ha", "G", "B", "none"], blacks: ["rBlack": 0.02322], medians: m42,
+      ids: ["rBlack", "gBlack", "bBlack"], values: [0.00183, 0.00860, 0.02423]),
+    Row(
       name: "a sky above the range is clamped to it", sources: ["R", "G", "B", "none"],
       medians: ["R": [1.4], "G": [0.5], "B": [1]],
       ids: ["rBlack", "gBlack", "bBlack"], values: [1, 0.5, 1]),
@@ -71,10 +96,10 @@ struct ChannelCombinationSuggestionTests {
 
   @Test("testBlackSuggestions_MonoLRGB", arguments: offered)
   func testBlackSuggestions_MonoLRGB(row: Row) throws {
-    let params = try Self.params(sources: row.sources)
+    let params = try Self.params(sources: row.sources, blacks: row.blacks)
     let suggestions = ChannelCombinationProcess.blackSuggestions(
-      params, layers: Self.stats(row.medians))
-    #expect(suggestions == Self.expected(row.ids, row.values))
+      params, layers: Self.stats(row.medians, madn: row.madn))
+    Self.expect(suggestions, row)
   }
 
   static let withheld: [Row] = [
@@ -90,9 +115,13 @@ struct ChannelCombinationSuggestionTests {
       sources: ["Ha", "Ha*OIII", "OIII", "none"], medians: ["Ha": [0.002], "OIII": [0.003]],
       ids: ["rBlack", "bBlack"], values: [0.002, 0.003]),
     Row(
-      name: "a black already set is the user's", sources: ["R", "G", "B", "L"],
-      blacks: ["gBlack": 0.004], medians: m42,
+      name: "a black already at its sky is not offered again", sources: ["R", "G", "B", "L"],
+      blacks: ["gBlack": 0.00860], medians: m42,
       ids: ["rBlack", "bBlack", "lBlack"], values: [0.02322, 0.02423, 0.1596]),
+    Row(
+      name: "a noise deeper than the sky leaves the black where it is",
+      sources: ["R", "G", "B", "none"], medians: m42, madn: 0.005,
+      ids: ["rBlack", "bBlack"], values: [0.00922, 0.01023]),
     Row(
       name: "a layer the bundle has no statistics of", sources: ["R", "G", "B", "L"],
       medians: ["R": [0.02322], "B": [0.02423], "L": [0.1596]],
@@ -117,8 +146,8 @@ struct ChannelCombinationSuggestionTests {
   func testBlackSuggestions_None(row: Row) throws {
     let params = try Self.params(sources: row.sources, blacks: row.blacks)
     let suggestions = ChannelCombinationProcess.blackSuggestions(
-      params, layers: Self.stats(row.medians))
-    #expect(suggestions == Self.expected(row.ids, row.values))
+      params, layers: Self.stats(row.medians, madn: row.madn))
+    Self.expect(suggestions, row)
   }
 
   @Test(
@@ -140,5 +169,14 @@ struct ChannelCombinationSuggestionTests {
       suggestions.map(\.reason).allSatisfy(ChannelCombinationProcess.suggestionReasons.contains))
     #expect(process.params == params)
     for slot in ["r", "g", "b", "l"] { #expect(process.params.number(slot + "Black") == 0) }
+  }
+
+  @Test("testPromoted: a black the step subtracts is shown without the disclosure (R2)")
+  func testPromoted() throws {
+    let untouched = try Self.params(sources: ["R", "G", "B", "L"])
+    #expect(ChannelCombinationProcess.promoted(untouched).isEmpty)
+    let set = try Self.params(
+      sources: ["R", "G", "B", "L"], blacks: ["gBlack": 0.004, "lBlack": 0.1])
+    #expect(ChannelCombinationProcess.promoted(set) == ["gBlack", "lBlack"])
   }
 }

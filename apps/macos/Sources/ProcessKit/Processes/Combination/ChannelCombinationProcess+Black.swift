@@ -1,6 +1,8 @@
 internal import FilterKit
+internal import RenderKit
 
-/// Card 0172: the black point of each slot, offered at the sky its layer measures on the stack.
+/// Card 0172: the black point of each slot, offered just under the sky its layer measures on
+/// the stack.
 ///
 /// The slots read raw linear masters, so with every black at 0 each master's sky offset sets the
 /// R:G:B ratios instead of the object. R2: the sky is the bundle's statistic, shown as a
@@ -8,36 +10,48 @@ internal import FilterKit
 extension ChannelCombinationProcess {
   /// Why a slot's black point is offered: an English key of the catalog.
   package static let skyBlackReason =
-    "the sky level of the slot's layer on the stack: subtracted, the channel ratios show the colour"
+    "the slot's layer on the stack, 2.8 σ under its sky: subtracted, the channel ratios show "
+    + "the colour"
 
+  /// Every reason the combination's suggestions give: English keys of the catalog.
   package static let suggestionReasons = [skyBlackReason]
+
+  /// The black parameter of each slot, R, G, B, then L.
+  static let slotBlacks = ["rBlack", "gBlack", "bBlack", "lBlack"]
 
   /// The black points of the slots, R, G, B then L; never applied by the process (R2).
   package func suggestions(stats: LayerStats, layers: [String: LayerStats]) -> [Suggestion] {
     Self.blackSuggestions(params, layers: layers)
   }
 
-  /// For each slot reading one plane with its black still at 0: that plane's bundle median (the
-  /// sky of a deep-sky master), inside the parameter's range.
+  /// A black the step subtracts is shown without the disclosure: what is applied is on screen.
+  package static func promoted(_ params: ParamSet) -> Set<String> {
+    Set(slotBlacks.filter { params.number($0) != 0 })
+  }
+
+  /// For each slot reading one plane: that plane's bundle median less 2.8 MADN — the shadows the
+  /// autostretch places (`AutoSTF.shadowsClip`), under the sky so its noise is not clipped to 0 —
+  /// inside the parameter's range.
   ///
   /// None on a colour bundle (its base is one calibrated image, not three masters with their own
   /// offsets), on a grey (one plane in the three colour slots has no ratio to give back), for a
-  /// √(A·B) slot (the sky of a product is not a layer's), for a black the user set, nor without
-  /// a per-plane statistic above 0.
+  /// √(A·B) slot (the sky of a product is not a layer's), for a black already there, nor
+  /// without a per-plane statistic leaving a level above 0.
   package static func blackSuggestions(_ params: ParamSet, layers: [String: LayerStats])
     -> [Suggestion]
   {
     let colour = Set(slotSources.prefix(3).map(params.choice))
     guard layers[Filter.color] == nil, colour.count > 1 else { return [] }
-    return slotSources.compactMap { slot in
+    return zip(slotSources, slotBlacks).compactMap { slot, black in
       let source = params.choice(slot)
-      let black = String(slot.dropLast("Source".count)) + "Black"
-      guard source != "none", !source.contains("*"), params.number(black) == 0,
+      guard source != "none", !source.contains("*"),
         case .number(_, let bounds)? = schema.spec(black)?.kind,
-        let sky = LayerPlane(source).stats(in: layers)?.median, sky > 0
+        let sky = LayerPlane(source).stats(in: layers)
       else { return nil }
-      return Suggestion(
-        paramID: black, value: .number(min(sky, bounds.upperBound)), reason: skyBlackReason)
+      let level = min(sky.median + AutoSTF.shadowsClip * sky.madn, bounds.upperBound)
+      // The source may have changed since a black was taken: offered again unless it is there.
+      guard level > 0, level != params.number(black) else { return nil }
+      return Suggestion(paramID: black, value: .number(level), reason: skyBlackReason)
     }
   }
 }

@@ -13,7 +13,8 @@ extension StudioWorkspaceModel {
     let session = studio.session
     let measured =
       selection.layerID.map { try? session.branchSuggestions($0, for: type, params: params) }
-      ?? (try? session.suggestions(for: type, params: params))
+      // An applied step being edited is offered what it read, not what the head holds.
+      ?? (try? session.suggestions(for: type, params: params, before: editing))
     let suggestions = measured ?? []
     if type == PlateSolveProcess.self {
       let object = catalogueObject().map {

@@ -26,12 +26,34 @@ extension ProjectWindowModel {
     let applied = workspace.studio.steps.map {
       Recipe(processID: $0.processID, params: $0.params)
     }
-    let (pipeline, warnings) = Self.pipeline(
-      applied: applied, profile: keptProfile(of: stackID)?.pipeline)
+    // The profile's combination as step 0 took it: fitted to this stack's layers (card 0194).
+    let profile = try keptProfile(of: stackID).map {
+      try Self.fitted($0.pipeline, planes: workspace.studio.session.layerPlanes())
+    }
+    let (pipeline, warnings) = Self.pipeline(applied: applied, profile: profile)
     let sidebar = try PipelineSidebarModel(
       workspace: workspace, pipeline: pipeline, warnings: warnings, store: store, base: roles)
     sidebar.onReplay = { [weak self] in self?.isChoosingReplay = true }
     return sidebar
+  }
+
+  /// `profile` with each channel combination fitted to a bundle of `planes`.
+  ///
+  /// The column never replays a source the stack lacks (`ChannelCombinationProcess.reconciled`);
+  /// a combination whose every source exists keeps its recipe as written.
+  package static func fitted(_ profile: Pipeline, planes: [String: Int]) throws -> Pipeline {
+    var fitted = profile
+    for index in fitted.steps.indices
+    where fitted.steps[index].recipe.processID == ChannelCombinationProcess.id {
+      let asked = ParamSet.loading(
+        fitted.steps[index].recipe.params, onto: ChannelCombinationProcess.schema
+      ).params
+      let result = try ChannelCombinationProcess.reconciled(profile: asked, planes: planes)
+      guard !result.dropped.isEmpty else { continue }
+      fitted.steps[index].recipe = Recipe(
+        processID: ChannelCombinationProcess.id, params: result.params)
+    }
+    return fitted
   }
 
   /// The pipeline a history of `applied` steps shows: `profile` while the history follows it,

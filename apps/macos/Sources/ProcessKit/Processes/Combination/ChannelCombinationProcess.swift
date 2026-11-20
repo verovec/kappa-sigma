@@ -7,7 +7,9 @@ package import Metal
 /// the luminance at its opacity. The first node of every pipeline; its input only sets the size.
 ///
 /// R2: a source missing from the bundle is an error with the reason, never replaced by another
-/// layer (the slot's row says it first, `unavailableReasons(_:layerIDs:)`).
+/// layer at render (the slot's row says it first, `unavailableReasons(_:layerIDs:)`). The one
+/// fitting happens before step 0 exists, on a kept profile's values, and is said on the row
+/// (`reconciled(profile:planes:)`, card 0194).
 package struct ChannelCombinationProcess: ImageProcess {
   package static let id = "channel-combination"
   package static let title = "Channel combination"
@@ -124,7 +126,7 @@ package struct ChannelCombinationProcess: ImageProcess {
 
   /// The reason a slot's row carries while it reads a layer the stack lacks (card 0135).
   package static let missingLayerReason = "the slot needs a layer the stack lacks"
-  package static let rowReasons = [missingLayerReason]
+  package static let rowReasons = [missingLayerReason, profileReason]
 
   /// The layers the slots name, whatever the bundle holds.
   package static func layersAsked(_ params: ParamSet) -> Set<String> {

@@ -57,7 +57,13 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   A kept profile's combination goes through
   `reconciled(profile:planes:)` before it becomes step 0 (card 0194,
   `ChannelCombinationProcess+Profile.swift`): a slot whose layer the stack lacks takes the opening
-  source, and `profileNotes(profile:params:layerIDs:)` names what the profile asked on that row.
+  source, and `profileNotes(profile:params:layerIDs:planes:)` names what the profile asked on that
+  row.
+  « Cannot be read » is one rule (card 0195): `unavailableReasons(_:layerIDs:planes:)` notes a
+  layer the stack lacks and a colour plane of a layer that has none (`LayerPlane.isReadable`, what
+  `texture` applies at render); the row note, the greyed option, the profile fitting and the
+  suggestions all ask it. The caller passes the bundle's plane counts (the panel its
+  `layerPlanes`); the two-argument forms judge presence alone.
 - **Masks** (card 0054): `Mask` = `MaskSource` (luminosity range with linear soft edges; stars
   proxy = luma above its local mean, until 0055's star layer) + feather (box blur of
   `round(px / scale)`: a hard edge becomes a linear ramp) + invert, built by `MaskBuilder`.
@@ -460,8 +466,9 @@ that reads bundle layers declares them in `layersRead`, or its steps never go st
   its note, so it can be switched off). A line process implements `layersAsked` beside
   `layersRead` (the latter may add bundle-derived layers, a continuum reference, which must not
   keep a row on screen). A row's value that cannot run says why under the row:
-  `unavailableReasons(_:layerIDs:)` → `[paramID: RowNote]` (reason = a catalog key listed in the
-  static `rowReasons`, subject = the layer's name), set by the workspace on open, on
+  `unavailableReasons(_:layerIDs:planes:)` → `[paramID: RowNote]` (the protocol requirement — the
+  two-argument form is a shortcut that judges presence alone, never the one to override; reason
+  = a catalog key listed in the static `rowReasons`, subject = the layer's name), set by the workspace on open, on
   `headChanged` and on every value change. The default covers a process whose rows carry
   `needsLayer`: each asked layer the bundle lacks, on the first row about it, with the first
   listed reason (the screens and the injection add nothing); a process whose rows name layers
@@ -471,7 +478,7 @@ that reads bundle layers declares them in `layersRead`, or its steps never go st
 - **Palette menu and layer greying** (card 0139): `Palette.available(planes:)` lists the palettes
   whose every source its slot lists for the bundle (0138's `LayerPlane.options` rule);
   `ImageProcess.palettes(planes:)` answers `nil` by default (no menu) and, for the combination,
-  that list (empty = « Custom » alone); `ImageProcess.unavailableOptions(_:layerIDs:)` →
+  that list (empty = « Custom » alone); `ImageProcess.unavailableOptions(_:layerIDs:planes:)` →
   `[param: [option: reasonKey]]` greys, by default, the current value of every layer parameter
   whose row carries a note. The panel model merges the layer greying with a tool probe's
   (`toolOptions`) into `unavailableOptions`; the app words a token with `LayerPlaneWords`

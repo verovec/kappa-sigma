@@ -118,4 +118,63 @@ struct ChannelCombinationReconcileTests {
       profile: profile, params: back, layerIDs: Set(planes.keys))
     #expect(Set(notes.keys) == ["gSource", "bSource"])
   }
+
+  @Test(
+    "testReconciled_PlaneTokenOnMonoLayer: a colour plane of a one-plane layer is a lost source",
+    arguments: [
+      // A profile copied from an OSC dual-band stack (Hα was a colour lane), kept on a mono one.
+      Case(
+        profile: ["Ha.r", "Ha.g", "Ha.b", "none"], planes: mono("Ha", "OIII"),
+        sources: ["Ha", "OIII", "OIII", "none"], dropped: ["rSource", "gSource", "bSource"]),
+      Case(
+        profile: ["Ha.r", "OIII", "OIII", "L.g"], planes: mono("L", "Ha", "OIII"),
+        sources: ["Ha", "OIII", "OIII", "none"], dropped: ["rSource", "lSource"]),
+      // The same tokens on a colour lane are read: the profile as it is.
+      Case(
+        profile: ["Ha.r", "Ha.g", "Ha.b", "none"], planes: ["Ha": 3, "OIII": 1],
+        sources: ["Ha.r", "Ha.g", "Ha.b", "none"], dropped: []),
+    ])
+  func testReconciled_PlaneTokenOnMonoLayer(row: Case) throws {
+    let profile = try Self.params(row.profile)
+    let result = try ChannelCombinationProcess.reconciled(profile: profile, planes: row.planes)
+    #expect(ChannelCombinationProcess.slotSources.map(result.params.choice) == row.sources)
+    #expect(result.dropped == row.dropped)
+    let layerIDs = Set(row.planes.keys)
+    #expect(
+      ChannelCombinationProcess.unavailableReasons(
+        result.params, layerIDs: layerIDs, planes: row.planes
+      ).isEmpty)
+    let notes = ChannelCombinationProcess.profileNotes(
+      profile: profile, params: result.params, layerIDs: layerIDs, planes: row.planes)
+    #expect(Set(notes.keys) == Set(row.dropped))
+    // The layer is there: the note says the profile asked for a plane of it, not a lost layer.
+    #expect(
+      notes.values.allSatisfy { $0.reason == ChannelCombinationProcess.profilePlaneReason })
+    #expect(
+      ChannelCombinationProcess.rowReasons.contains(ChannelCombinationProcess.profilePlaneReason))
+  }
+
+  @Test("the row of a slot reading a colour plane of a one-plane layer says so, and greys it")
+  func testUnavailableReasons_PlaneTokenOnMonoLayer() throws {
+    let params = try Self.params(["Ha.r", "OIII", "S.g", "none"])
+    let planes = Self.mono("Ha", "OIII")
+    let layerIDs = Set(planes.keys)
+    let reason = ChannelCombinationProcess.planeReason
+    #expect(ChannelCombinationProcess.rowReasons.contains(reason))
+    #expect(
+      ChannelCombinationProcess.unavailableReasons(params, layerIDs: layerIDs, planes: planes) == [
+        "rSource": RowNote(reason: reason, subject: EmissionLine.name(ofLayer: "Ha")),
+        // An absent layer stays « lacking », whatever its token.
+        "bSource": RowNote(reason: ChannelCombinationProcess.missingLayerReason, subject: "S"),
+      ])
+    #expect(
+      ChannelCombinationProcess.unavailableOptions(params, layerIDs: layerIDs, planes: planes) == [
+        "rSource": ["Ha.r": reason],
+        "bSource": ["S.g": ChannelCombinationProcess.missingLayerReason],
+      ])
+    // Without the plane counts only presence is judged: what every caller got before.
+    #expect(
+      Set(ChannelCombinationProcess.unavailableReasons(params, layerIDs: layerIDs).keys)
+        == ["bSource"])
+  }
 }

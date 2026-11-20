@@ -101,4 +101,31 @@ struct LayerPlaneTests {
       planes: row.layers, allowsNone: row.allowsNone, allowsProduct: row.allowsProduct)
     #expect(got == row.expected)
   }
+
+  @Test(
+    "testIsReadable: a plane token needs a colour layer; a layer of unknown planes is not judged",
+    arguments: [
+      ("Ha", ["Ha": 1], true), ("Ha.r", ["Ha": 1], false), ("Ha.b", ["Ha": 2], false),
+      ("RGB.g", ["RGB": 3], true), ("RGB", ["RGB": 3], true), ("Ha.r", ["Ha": 3], true),
+      // Presence is another question (`unavailableReasons` asks the layer ids).
+      ("Ha.r", ["OIII": 1], true), ("starless", [:], true),
+    ])
+  func testIsReadable(token: String, planes: [String: Int], expected: Bool) {
+    #expect(LayerPlane(token).isReadable(planes: planes) == expected)
+  }
+
+  @Test(
+    "the rule the textures apply is the one the panels ask",
+    .enabled(if: MTLCreateSystemDefaultDevice() != nil),
+    arguments: ["R", "R.r", "R.b", "RGB", "RGB.r", "RGB.b"])
+  func testIsReadable_MatchesTexture(token: String) throws {
+    let device = try #require(MTLCreateSystemDefaultDevice())
+    let layers = [
+      "R": try GPUImage(device: device, width: 4, height: 2, channels: 1),
+      "RGB": try GPUImage(device: device, width: 4, height: 2, channels: 3),
+    ]
+    let plane = LayerPlane(token)
+    let read = (try? plane.texture(in: layers, width: 4, height: 2)) != nil
+    #expect(plane.isReadable(planes: layers.mapValues { $0.planes.count }) == read)
+  }
 }

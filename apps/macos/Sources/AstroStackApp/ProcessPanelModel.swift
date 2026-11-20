@@ -56,7 +56,11 @@ package final class ProcessPanelModel {
   /// The planes of each bundle layer (card 0138), set with `layerIDs`: the layers a layer
   /// parameter lists (a step output is readable by hand, never offered).
   package var layerPlanes: [String: Int] = [:] {
-    didSet { refreshLayerOptions() }
+    didSet {
+      refreshLayerOptions()
+      // The notes judge a plane token on these counts (card 0195).
+      refreshLayerRows()
+    }
   }
   /// The tokens the bundle offers each layer parameter (card 0138), kept with the layers.
   private var layerOptions: [String: [String]] = [:]
@@ -121,10 +125,12 @@ package final class ProcessPanelModel {
   private func refreshLayerRows() {
     let hiddenNow = layerIDs.map { type.hiddenParameters(params, layerIDs: $0) } ?? []
     if hiddenNow != hidden { hidden = hiddenNow }
-    let own = layerIDs.map { type.unavailableReasons(params, layerIDs: $0) } ?? [:]
+    let own =
+      layerIDs.map { type.unavailableReasons(params, layerIDs: $0, planes: layerPlanes) } ?? [:]
     let notesNow = own.merging(extraNotes(params)) { own, _ in own }
     if notesNow != rowNotes { rowNotes = notesNow }
-    let greyedNow = layerIDs.map { type.unavailableOptions(params, layerIDs: $0) } ?? [:]
+    let greyedNow =
+      layerIDs.map { type.unavailableOptions(params, layerIDs: $0, planes: layerPlanes) } ?? [:]
     guard greyedNow != layerGreyed else { return }
     layerGreyed = greyedNow
     refreshGreyed()

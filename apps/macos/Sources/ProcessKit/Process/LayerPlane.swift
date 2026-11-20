@@ -46,6 +46,14 @@ package struct LayerPlane: Equatable, Sendable {
     return image.planes[plane]
   }
 
+  /// Whether a bundle of `planes` (planes per layer id) lets the token be read.
+  ///
+  /// The rule `texture` applies, for a panel to say before a render fails (card 0195). A layer
+  /// `planes` does not count is not judged here — whether it exists is the layer ids' question.
+  package func isReadable(planes: [String: Int]) -> Bool {
+    planes[layer].map { Self.readable(planes: $0, whole: token == layer) } ?? true
+  }
+
   /// Whether a layer of `planes` planes is read by a whole token (its first plane) or a plane
   /// token (one of the three colour planes).
   private static func readable(planes: Int, whole: Bool) -> Bool {

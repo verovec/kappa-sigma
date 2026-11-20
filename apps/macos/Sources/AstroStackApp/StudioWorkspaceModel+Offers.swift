@@ -101,7 +101,8 @@ extension StudioWorkspaceModel {
     // What the kept profile asked for and the stack lacks, on the combination's rows (0194).
     if panel.type == ChannelCombinationProcess.self, let profile = studio.profileCombination {
       panel.extraNotes = {
-        ChannelCombinationProcess.profileNotes(profile: profile, params: $0, layerIDs: layerIDs)
+        ChannelCombinationProcess.profileNotes(
+          profile: profile, params: $0, layerIDs: layerIDs, planes: layerPlanes)
       }
     }
     panel.headSize = (head.width, head.height)

@@ -30,13 +30,13 @@ extension ChannelCombinationProcess {
 
   /// For each slot reading one plane: that plane's bundle median less 2.8 MADN — the shadows the
   /// autostretch places (`AutoSTF.shadowsClip`), under the sky so its noise is not clipped to 0 —
-  /// inside the parameter's range, to four decimals.
+  /// to four decimals, rounded down.
   ///
   /// None on a colour bundle (its base is one calibrated image, not three masters with their own
   /// offsets) nor on a grey (one plane in the three colour slots has no ratio to give back). The
   /// three colour slots are offered together or not at all — a sky subtracted from two channels
   /// is a cast of its own: none when one of them is a √(A·B) product (its sky is not a layer's),
-  /// lacks a per-plane statistic, measures no level above 0, or is in `pending` (the slots whose
+  /// lacks a per-plane statistic, measures no level inside the parameter's range, or is in `pending` (the slots whose
   /// source another suggestion is about to replace). A black already there is not offered again.
   package static func blackSuggestions(
     _ params: ParamSet, layers: [String: LayerStats], pending: Set<String> = []
@@ -56,7 +56,7 @@ extension ChannelCombinationProcess {
   }
 
   /// The level offered to parameter `black` for the plane `source` names, or `nil` without one
-  /// above 0.
+  /// above 0 and inside its range.
   private static func blackLevel(
     of source: String, _ black: String, layers: [String: LayerStats]
   ) -> Double? {
@@ -64,8 +64,10 @@ extension ChannelCombinationProcess {
       case .number(_, let bounds)? = schema.spec(black)?.kind,
       let sky = LayerPlane(source).stats(in: layers)
     else { return nil }
-    let raw = min(sky.median + AutoSTF.shadowsClip * sky.madn, bounds.upperBound)
-    let level = (raw * blackDecimals).rounded() / blackDecimals
-    return level > 0 ? level : nil
+    let raw = sky.median + AutoSTF.shadowsClip * sky.madn
+    // Rounded down, never up into the sky (the hair added keeps 0.0086 from reading 0.0085); a
+    // level the parameter cannot hold is no level, not its bound.
+    let level = (raw * blackDecimals + 1e-6).rounded(.down) / blackDecimals
+    return level > 0 && level <= bounds.upperBound ? level : nil
   }
 }

@@ -84,9 +84,9 @@ extension ChannelCombinationSuggestionTests {
       sources: ["Ha", "G", "B", "none"], blacks: ["rBlack": 0.02322], medians: m42,
       ids: ["rBlack", "gBlack", "bBlack"], values: [0.0018, 0.0086, 0.0242]),
     Row(
-      name: "a sky above the range is clamped to it", sources: ["R", "G", "B", "none"],
-      medians: ["R": [1.4], "G": [0.5], "B": [1]],
-      ids: ["rBlack", "gBlack", "bBlack"], values: [1, 0.5, 1]),
+      name: "rounded down, never up into the sky", sources: ["SII", "Ha", "OIII", "none"],
+      medians: ["SII": [0.00198], "Ha": [0.02329], "OIII": [0.5]], madn: 0.00001,
+      ids: ["rBlack", "gBlack", "bBlack"], values: [0.0019, 0.0232, 0.4999]),
     Row(
       name: "the planes of a 3-plane layer: each plane's sky",
       sources: ["Ha 7nm.r", "Ha 7nm.g", "Ha 7nm.b", "none"],
@@ -131,6 +131,9 @@ extension ChannelCombinationSuggestionTests {
       name: "a noise deeper than one colour sky: two channels alone would be a cast",
       sources: ["R", "G", "B", "L"], medians: m42, madn: 0.005,
       ids: ["lBlack"], values: [0.1456]),
+    Row(
+      name: "a sky above the range is no level, not its bound", sources: ["R", "G", "B", "none"],
+      medians: ["R": [1.4], "G": [0.5], "B": [1]], ids: [], values: []),
     Row(
       name: "a level under what a row can show is no black",
       sources: ["SII", "Ha", "OIII", "none"],
@@ -179,10 +182,6 @@ extension ChannelCombinationSuggestionTests {
   func testPromoted() throws {
     let untouched = try Self.params(sources: ["R", "G", "B", "L"])
     #expect(ChannelCombinationProcess.promoted(untouched).isEmpty)
-    #expect(ChannelCombinationProcess.showsSuggestedRows, "an offered black is on screen")
-    #expect(!LevelsProcess.showsSuggestedRows, "elsewhere a suggested row waits for Advanced")
-    // The reason names the figure the level is built with.
-    #expect(AutoSTF.shadowsClip == -2.8 && ChannelCombinationProcess.skyBlackReason.contains("2.8"))
     let set = try Self.params(
       sources: ["R", "G", "B", "L"], blacks: ["gBlack": 0.004, "lBlack": 0.1])
     #expect(ChannelCombinationProcess.promoted(set) == ["gBlack", "lBlack"])
@@ -212,5 +211,17 @@ extension ChannelCombinationSuggestionTests {
     #expect(
       suggestions.map(\.reason).allSatisfy(ChannelCombinationProcess.suggestionReasons.contains))
     #expect(process.params == params)
+  }
+
+  @Test("testShowsSuggestedRows: an offered black is on screen; elsewhere the row waits")
+  func testShowsSuggestedRows() {
+    #expect(ChannelCombinationProcess.showsSuggestedRows)
+    #expect(!LevelsProcess.showsSuggestedRows)
+  }
+
+  @Test("testSkyBlackReason_NamesTheClip: the sentence says the σ the level is built with")
+  func testSkyBlackReason_NamesTheClip() {
+    #expect(AutoSTF.shadowsClip == -2.8)
+    #expect(ChannelCombinationProcess.skyBlackReason.contains("2.8 σ"))
   }
 }

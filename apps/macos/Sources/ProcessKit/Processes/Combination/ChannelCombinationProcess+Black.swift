@@ -13,16 +13,8 @@ extension ChannelCombinationProcess {
     "the slot's layer on the stack, 2.8 σ under its sky: subtracted, the channel ratios show "
     + "the colour"
 
-  /// Every reason the combination's suggestions give: English keys of the catalog.
-  package static let suggestionReasons = [skyBlackReason]
-
   /// The black parameter of each slot, R, G, B, then L.
   static let slotBlacks = ["rBlack", "gBlack", "bBlack", "lBlack"]
-
-  /// The black points of the slots, R, G, B then L; never applied by the process (R2).
-  package func suggestions(stats: LayerStats, layers: [String: LayerStats]) -> [Suggestion] {
-    Self.blackSuggestions(params, layers: layers)
-  }
 
   /// A black the step subtracts is shown without the disclosure: what is applied is on screen.
   package static func promoted(_ params: ParamSet) -> Set<String> {

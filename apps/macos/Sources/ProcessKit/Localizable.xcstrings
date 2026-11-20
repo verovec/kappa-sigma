@@ -3201,6 +3201,38 @@
         }
       }
     },
+    "the layers spell a palette this step does not read": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the layers spell a palette this step does not read"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "les couches épellent une palette que cette étape ne lit pas"
+          }
+        }
+      }
+    },
+    "the slot reads a layer the stack lacks: the source this stack opens on": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the slot reads a layer the stack lacks: the source this stack opens on"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "le canal lit une couche que l’empilement n’a pas : la source sur laquelle cet empilement s’ouvre"
+          }
+        }
+      }
+    },
     "the continuum scale fitted on the stack": {
       "localizations": {
         "en": {

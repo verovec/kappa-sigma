@@ -43,6 +43,13 @@ package enum Palette: String, CaseIterable, Sendable {
     return nil
   }
 
+  /// The palette a bundle of `planes` spells: a palette reads whole layers, so only the 1-plane
+  /// ones spell one, and a colour bundle (`Filter.color`) spells none.
+  package static func spelled(planes: [String: Int]) -> Self? {
+    guard planes[Filter.color] == nil else { return nil }
+    return spelled(by: Set(planes.keys.filter { planes[$0] == 1 }))
+  }
+
   /// Sources of the R, G, B and L slots, in that order.
   package var sources: [String] {
     switch self {

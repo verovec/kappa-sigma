@@ -5,8 +5,7 @@ import Testing
 /// Card 0172: each slot's black point is offered just under the sky its layer measures on the
 /// stack (median − 2.8 MADN, the autostretch's shadows), never set (R2) — the defaults stay 0 and
 /// step 0 keeps its bytes.
-@Suite("ChannelCombination suggestions: per-channel black points from the measured sky")
-struct ChannelCombinationSuggestionTests {
+extension ChannelCombinationSuggestionTests {
   /// Bundle statistics with `medians` per layer, one entry per plane, each with the noise `madn`.
   static func stats(_ medians: [String: [Double]], madn: Double = 0) -> [String: LayerStats] {
     medians.mapValues { planes in
@@ -63,7 +62,7 @@ struct ChannelCombinationSuggestionTests {
     "L": [0.1596], "R": [0.02322], "G": [0.00860], "B": [0.02423], "Ha": [0.00183],
   ]
 
-  static let offered: [Row] = [
+  static let blacksOffered: [Row] = [
     Row(
       name: "LRGB at the M42 skies of 0170", sources: ["R", "G", "B", "L"], medians: m42,
       ids: ["rBlack", "gBlack", "bBlack", "lBlack"], values: [0.02322, 0.00860, 0.02423, 0.1596]),
@@ -94,7 +93,7 @@ struct ChannelCombinationSuggestionTests {
       ids: ["rBlack", "gBlack", "bBlack"], values: [0.01, 0.02, 0.03]),
   ]
 
-  @Test("testBlackSuggestions_MonoLRGB", arguments: offered)
+  @Test("testBlackSuggestions_MonoLRGB", arguments: blacksOffered)
   func testBlackSuggestions_MonoLRGB(row: Row) throws {
     let params = try Self.params(sources: row.sources, blacks: row.blacks)
     let suggestions = ChannelCombinationProcess.blackSuggestions(
@@ -102,7 +101,7 @@ struct ChannelCombinationSuggestionTests {
     Self.expect(suggestions, row)
   }
 
-  static let withheld: [Row] = [
+  static let blacksWithheld: [Row] = [
     Row(
       name: "an OSC bundle on its defaults", sources: ["RGB.r", "RGB.g", "RGB.b", "none"],
       medians: ["RGB": [0.02, 0.03, 0.025]], ids: [], values: []),
@@ -142,7 +141,7 @@ struct ChannelCombinationSuggestionTests {
       sources: ["Ha.r", "Ha.g", "Ha.b", "none"], medians: ["Ha": [0.01]], ids: [], values: []),
   ]
 
-  @Test("testBlackSuggestions_None", arguments: withheld)
+  @Test("testBlackSuggestions_None", arguments: blacksWithheld)
   func testBlackSuggestions_None(row: Row) throws {
     let params = try Self.params(sources: row.sources, blacks: row.blacks)
     let suggestions = ChannelCombinationProcess.blackSuggestions(
@@ -178,5 +177,25 @@ struct ChannelCombinationSuggestionTests {
     let set = try Self.params(
       sources: ["R", "G", "B", "L"], blacks: ["gBlack": 0.004, "lBlack": 0.1])
     #expect(ChannelCombinationProcess.promoted(set) == ["gBlack", "lBlack"])
+  }
+
+  @Test(
+    "testSuggestions_SourcesAndBlacksInOneList: cards 0171 and 0172 together, a parameter once",
+    .enabled(if: MTLCreateSystemDefaultDevice() != nil))
+  func testSuggestions_SourcesAndBlacksInOneList() throws {
+    let device = try #require(MTLCreateSystemDefaultDevice())
+    // The blue slot reads a layer this LRGB stack lacks: its source is offered, and the blacks
+    // of the slots that can be measured.
+    let params = try Self.params(sources: ["R", "G", "SII", "L"])
+    let process = try ChannelCombinationProcess(params: params, device: device)
+    var layers = Self.stats(Self.m42)
+    // A later step's output, by role: neither a source nor a sky.
+    layers[LayerRole.starless.rawValue] = LayerStats(channels: [])
+    let suggestions = process.suggestions(stats: LayerStats(channels: []), layers: layers)
+    #expect(suggestions.map(\.paramID) == ["bSource", "rBlack", "gBlack", "lBlack"])
+    #expect(Set(suggestions.map(\.paramID)).count == suggestions.count)
+    #expect(
+      suggestions.map(\.reason).allSatisfy(ChannelCombinationProcess.suggestionReasons.contains))
+    #expect(process.params == params)
   }
 }

@@ -39,15 +39,18 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   LRGB → RGB → the palette the layers spell → mono on `Filter.monoSource`) and returns the reason, and `Palette.oiiiAsBlue(present:)`
   offers OIII in the blue slot without a B filter — both suggestions, never applied (card 0137). A
   missing layer gives `unavailableReason` ("HOO needs an OIII layer") and `ProcessError.missingLayer`
-  — never another layer (R2). `blackSuggestions(_:layers:)` (card 0172,
-  `ChannelCombinationProcess+Black.swift`) offers each slot's black at its plane's bundle median
-  − 2.8 MADN (`AutoSTF.shadowsClip`: raw mono masters carry their own sky offset, which sets the
-  R:G:B ratios at black 0; under the sky so its noise is not clipped) — none on a colour bundle,
-  a grey of one plane, a √(A·B) slot or a black already there; the defaults stay 0 (step 0
-  byte-identical), a non-zero black is `promoted`. An applied step being edited is offered what
-  it read: `StudioSession.suggestions(for:params:before:)`. To add another combination
-  suggestion: a function next to it, its reason in `suggestionReasons` + the catalog (en, fr),
-  its list appended in `suggestions(stats:layers:)` with distinct param ids.
+  — never another layer (R2). Its `suggestions(stats:layers:)` offers, in one list with distinct
+  param ids: the sources `initialParams(planes:)` opens on when a recorded step is a grey while
+  the layers spell a palette, or reads a layer the stack lacks (card 0171,
+  `ChannelCombinationProcess+Suggestions.swift`: the history is never rewritten); and each
+  slot's black at its plane's bundle median − 2.8 MADN (card 0172, `blackSuggestions(_:layers:)`
+  in `ChannelCombinationProcess+Black.swift`; `AutoSTF.shadowsClip`: raw mono masters carry
+  their own sky offset, which sets the R:G:B ratios at black 0; under the sky so its noise is
+  not clipped) — none on a colour bundle, a grey of one plane, a √(A·B) slot or a black already
+  there; the defaults stay 0 (step 0 byte-identical), a non-zero black is `promoted`. An applied
+  step being edited is offered what it read: `StudioSession.suggestions(for:params:before:)`.
+  To add another combination suggestion: a function next to these, its reason in
+  `suggestionReasons` + the catalog (en, fr), its list appended in `suggestions(stats:layers:)`.
 - **Masks** (card 0054): `Mask` = `MaskSource` (luminosity range with linear soft edges; stars
   proxy = luma above its local mean, until 0055's star layer) + feather (box blur of
   `round(px / scale)`: a hard edge becomes a linear ramp) + invert, built by `MaskBuilder`.

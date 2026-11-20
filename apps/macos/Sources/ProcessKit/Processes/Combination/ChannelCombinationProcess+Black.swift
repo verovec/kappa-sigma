@@ -16,6 +16,9 @@ extension ChannelCombinationProcess {
   /// The black parameter of each slot, R, G, B, then L.
   static let slotBlacks = ["rBlack", "gBlack", "bBlack", "lBlack"]
 
+  /// A black one click would set is on screen first: its row shows while it is offered (R2).
+  package static let showsSuggestedRows = true
+
   /// A black the step subtracts is shown without the disclosure: what is applied is on screen.
   package static func promoted(_ params: ParamSet) -> Set<String> {
     Set(slotBlacks.filter { params.number($0) != 0 })

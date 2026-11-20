@@ -94,12 +94,13 @@ package final class ProcessPanelModel {
   }
 
   /// The parameters the panel shows: simple ones, advanced ones once disclosed, promoted by
-  /// the current values (the levels' per-channel rows once unlinked) or carrying a suggestion —
-  /// a value one click sets is a value on screen (R2, card 0172).
+  /// the current values (the levels' per-channel rows once unlinked) or, for a process that
+  /// asks for it, carrying a suggestion (the combination's blacks, card 0172).
   package var visibleSpecs: [ParamSpec] {
     // A mono head has no per-channel values to promote.
     let colour = (sample?.planes.count ?? headStats.channels.count) == 3
-    let promoted = (colour ? type.promoted(params) : []).union(suggestions.map(\.paramID))
+    let suggested = type.showsSuggestedRows ? suggestions.map(\.paramID) : []
+    let promoted = (colour ? type.promoted(params) : []).union(suggested)
     return type.schema.visible(disclosed: showsAdvanced, promoted: promoted, hidden: hidden)
   }
 

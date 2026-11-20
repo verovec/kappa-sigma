@@ -174,6 +174,8 @@ extension ChannelCombinationSuggestionTests {
   func testPromoted() throws {
     let untouched = try Self.params(sources: ["R", "G", "B", "L"])
     #expect(ChannelCombinationProcess.promoted(untouched).isEmpty)
+    #expect(ChannelCombinationProcess.showsSuggestedRows, "an offered black is on screen")
+    #expect(!LevelsProcess.showsSuggestedRows, "elsewhere a suggested row waits for Advanced")
     let set = try Self.params(
       sources: ["R", "G", "B", "L"], blacks: ["gBlack": 0.004, "lBlack": 0.1])
     #expect(ChannelCombinationProcess.promoted(set) == ["gBlack", "lBlack"])

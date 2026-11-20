@@ -6,15 +6,20 @@ extension ChannelCombinationProcess {
   /// Why a slot that cannot run is offered another source, when the layers spell no palette.
   package static let lackingReason =
     "the slot reads a layer the stack lacks: the source this stack opens on"
-  /// Every reason `sourceSuggestions` gives: keys of the catalog.
-  package static let suggestionReasons = [spelledReason, lackingReason]
+  /// Every reason the combination's suggestions give: keys of the catalog.
+  package static let suggestionReasons = [spelledReason, lackingReason, skyBlackReason]
 
-  /// The sources the stack opens on, for a step that is a grey or reads a layer the stack lacks.
+  /// The sources the stack opens on, for a step that is a grey or reads a layer the stack lacks,
+  /// then the black of each slot under its layer's sky (card 0172): one list, a suggestion per
+  /// parameter at most; never applied by the process (R2).
   package func suggestions(stats: LayerStats, layers: [String: LayerStats]) -> [Suggestion] {
     // The step context also holds the outputs of later steps, by role (a starless, a background
     // model): no colour source, as `StudioSession.layerPlanes()` says.
     let stack = layers.filter { LayerRole(rawValue: $0.key) == nil }
-    return Self.sourceSuggestions(params, planes: stack.mapValues { $0.channels.count })
+    let sources = Self.sourceSuggestions(params, planes: stack.mapValues { $0.channels.count })
+    // A slot about to read another layer is not offered the sky of the one it reads now.
+    return sources
+      + Self.blackSuggestions(params, layers: stack, pending: Set(sources.map(\.paramID)))
   }
 
   /// One suggestion per slot of `params` that `initialParams(planes:)` would fill otherwise.

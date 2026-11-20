@@ -50,6 +50,10 @@ package protocol ImageProcess {
   /// (`ParamSchema.visible(disclosed:promoted:hidden:)`); none by default.
   static func promoted(_ params: ParamSet) -> Set<String>
 
+  /// Whether an advanced parameter carrying a suggestion is shown without the disclosure: for a
+  /// process whose suggestions are the only sign that row matters (card 0172); false by default.
+  static var showsSuggestedRows: Bool { get }
+
   /// The arrow step of number parameters that need another one than the panel's default (a
   /// decade of the slider's range), by id; a tenth of it with ⇧ or ⌥.
   static var steps: [String: Double] { get }
@@ -152,6 +156,9 @@ extension ImageProcess {
 
   /// No promotion.
   package static func promoted(_ params: ParamSet) -> Set<String> { [] }
+
+  /// Suggested advanced rows stay behind the disclosure.
+  package static var showsSuggestedRows: Bool { false }
 
   /// The panel's default steps.
   package static var steps: [String: Double] { [:] }

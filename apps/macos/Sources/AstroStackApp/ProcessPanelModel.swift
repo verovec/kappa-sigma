@@ -98,13 +98,17 @@ package final class ProcessPanelModel {
     refreshLayerOptions()
   }
 
-  /// The parameters the panel shows: simple ones, advanced ones once disclosed or promoted by
-  /// the current values (the levels' per-channel rows once unlinked).
+  /// The parameters the panel shows: simple ones, advanced ones once disclosed, promoted by
+  /// the current values (the levels' per-channel rows once unlinked) or, for a process that
+  /// asks for it, carrying a suggestion (the combination's blacks, card 0172).
   package var visibleSpecs: [ParamSpec] {
-    // A mono head has no per-channel values to promote.
-    let colour = (sample?.planes.count ?? headStats.channels.count) == 3
-    return type.schema.visible(
-      disclosed: showsAdvanced, promoted: colour ? type.promoted(params) : [], hidden: hidden)
+    // A mono head has no per-channel values to promote — but for a process that builds its own
+    // image (the combination), whose rows do not describe the head.
+    let colour =
+      type.replacesInput || (sample?.planes.count ?? headStats.channels.count) == 3
+    let suggested = type.showsSuggestedRows ? suggestions.map(\.paramID) : []
+    let promoted = (colour ? type.promoted(params) : []).union(suggested)
+    return type.schema.visible(disclosed: showsAdvanced, promoted: promoted, hidden: hidden)
   }
 
   /// The parameters hidden for the bundle (card 0135); none until the workspace sets the layers.

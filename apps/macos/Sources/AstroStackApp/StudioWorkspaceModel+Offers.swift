@@ -13,7 +13,7 @@ extension StudioWorkspaceModel {
     let session = studio.session
     let measured =
       selection.layerID.map { try? session.branchSuggestions($0, for: type, params: params) }
-      ?? (try? session.suggestions(for: type, params: params))
+      ?? (try? session.suggestions(for: type, params: params, before: editedStep(of: type)))
     let suggestions = measured ?? []
     if type == PlateSolveProcess.self {
       let object = catalogueObject().map {
@@ -31,6 +31,16 @@ extension StudioWorkspaceModel {
     let stf = viewer.model.frame.stf
     displayStretchOffered = stf
     return suggestions + Self.displaySuggestions(stf)
+  }
+
+  /// The applied step being edited when it is a step of `type`: it is offered what it read, not
+  /// what the head holds (card 0172). `editing` outlives its panel for a moment (another panel
+  /// opening, the head moving), and a panel of another process is on the head.
+  private func editedStep(of type: any ImageProcess.Type) -> Int? {
+    guard let editing, studio.steps.indices.contains(editing),
+      studio.steps[editing].processID == type.id
+    else { return nil }
+    return editing
   }
 
   /// The sidebar's object changed (a choice, the catalogue read): an open plate-solve panel offers

@@ -39,10 +39,22 @@ non-destructive history, recipes and the registry (design §2, §4.1).
   LRGB → RGB → the palette the layers spell → mono on `Filter.monoSource`) and returns the reason, and `Palette.oiiiAsBlue(present:)`
   offers OIII in the blue slot without a B filter — both suggestions, never applied (card 0137). A
   missing layer gives `unavailableReason` ("HOO needs an OIII layer") and `ProcessError.missingLayer`
-  — never another layer (R2). Its `suggestions(stats:layers:)` (card 0171,
-  `ChannelCombinationProcess+Suggestions.swift`) offers the sources `initialParams(planes:)` opens
-  on when a recorded step is a grey while the layers spell a palette, or reads a layer the stack
-  lacks: the history is never rewritten. A kept profile's combination goes through
+  — never another layer (R2). Its `suggestions(stats:layers:)` offers, in one list with distinct
+  param ids: the sources `initialParams(planes:)` opens on when a recorded step is a grey while
+  the layers spell a palette, or reads a layer the stack lacks (card 0171,
+  `ChannelCombinationProcess+Suggestions.swift`: the history is never rewritten); and each
+  slot's black at its plane's bundle median − 2.8 MADN (card 0172, `blackSuggestions(_:layers:)`
+  in `ChannelCombinationProcess+Black.swift`; `AutoSTF.shadowsClip`: raw mono masters carry
+  their own sky offset, which sets the R:G:B ratios at black 0; under the sky so its noise is
+  not clipped; four decimals, what the row shows) — none on a colour bundle or a grey of one
+  plane; the three colour slots together or not at all (a √(A·B) slot, a missing statistic, a
+  level ≤ 0 or a source about to be replaced withholds them); the defaults stay 0 (step 0
+  byte-identical), a non-zero black is `promoted`, an offered one shown (`showsSuggestedRows`).
+  Step 0 being edited is offered what it read, the stack:
+  `StudioSession.suggestions(for:params:before:)` (a later step still gets the head's).
+  To add another combination suggestion: a function next to these, its reason in
+  `suggestionReasons` + the catalog (en, fr), its list appended in `suggestions(stats:layers:)`.
+  A kept profile's combination goes through
   `reconciled(profile:planes:)` before it becomes step 0 (card 0194,
   `ChannelCombinationProcess+Profile.swift`): a slot whose layer the stack lacks takes the opening
   source, and `profileNotes(profile:params:layerIDs:)` names what the profile asked on that row.

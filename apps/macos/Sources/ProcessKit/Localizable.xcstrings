@@ -3201,6 +3201,22 @@
         }
       }
     },
+    "the slot's layer on the stack, 2.8 σ under its sky: subtracted, the channel ratios show the colour": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the slot's layer on the stack, 2.8 σ under its sky: subtracted, the channel ratios show the colour"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "la couche du canal à l’empilement, 2,8 σ sous son ciel : soustrait, les rapports entre canaux montrent la couleur"
+          }
+        }
+      }
+    },
     "the layers spell a palette this step does not read": {
       "localizations": {
         "en": {
